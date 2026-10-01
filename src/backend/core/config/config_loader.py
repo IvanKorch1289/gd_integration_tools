@@ -61,6 +61,20 @@ def _resolve_repo_root() -> Path:
 _REPO_ROOT: Path = _resolve_repo_root()
 
 
+def repo_root() -> Path:
+    """Публичный доступ к корню репозитория (каталог с ``pyproject.toml``).
+
+    Единая точка истины для ограничения FS-доступа (аудит 2026-10-01,
+    F-AL): ``AIFsFacade`` получает этот путь как ``allowed_read_roots``,
+    поэтому читать проект можно, а ``/etc`` — нет. Учитывает
+    ``GD_REPO_ROOT``-override, как и :func:`_resolve_repo_root`.
+
+    Returns:
+        Абсолютный путь к корню репозитория.
+    """
+    return _REPO_ROOT
+
+
 load_dotenv(_REPO_ROOT / ".env")
 
 

@@ -49,6 +49,7 @@ def _register_document_tools(mcp: Any) -> None:
         from src.backend.core.ai.fs_facade import AIFsFacade
         from src.backend.core.ai.workspace_manager import AIWorkspaceManager
         from src.backend.core.config.ai import ai_workspace_settings
+        from src.backend.core.config.config_loader import repo_root
 
         try:
             target = _Path(path)
@@ -56,8 +57,16 @@ def _register_document_tools(mcp: Any) -> None:
                 return encode_json({"error": f"File not found: {path}"}).decode("utf-8")
 
             wm = AIWorkspaceManager(root=ai_workspace_settings.workspace_root)
+            # F-AL (аудит 2026-10-01): capability_check=None отключает
+            # fs.read, а ограничения по корню не было — инструмент читал
+            # /etc/passwd. allowed_read_roots ограничивает чтение корнем
+            # проекта независимо от capability-check (R-V15-4: читать
+            # проект можно, читать систему — нет).
             facade = AIFsFacade(
-                workspace_manager=wm, capability_check=None, plugin="mcp"
+                workspace_manager=wm,
+                capability_check=None,
+                plugin="mcp",
+                allowed_read_roots=[repo_root()],
             )
             text, meta = await facade.read_as_markdown(target, mime=mime)
             return encode_json(

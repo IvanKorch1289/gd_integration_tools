@@ -12,14 +12,19 @@
 Capability-gate пробрасывается через ``capability_check`` callback (как
 в :class:`OutboundHttpClient`); если ``None`` — capability-проверка
 пропускается (для unit-тестов).
+
+Ограничение по корням (аудит 2026-10-01, F-AL): ``allowed_read_roots``
+независим от ``capability_check``. Отсутствие callback'а не должно
+означать «читать можно всё»: production-wiring обязан передать корни,
+внутри которых AI имеет право читать (по R-V15-4 — корень проекта).
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
-from src.backend.core.ai.errors import FsForbiddenWriteError
+from src.backend.core.ai.errors import FsForbiddenReadError, FsForbiddenWriteError
 from src.backend.core.ai.workspace_manager import AIWorkspaceManager, WorkspaceHandle
 
 __all__ = ("AIFsFacade",)
@@ -35,6 +40,11 @@ class AIFsFacade:
         workspace_manager: Менеджер выданных workspaces.
         capability_check: Опц. callback ``CapabilityGate.check``.
         plugin: Имя caller'а (для capability-event).
+        allowed_read_roots: Опц. корни, внутри которых ``read`` разрешён.
+            Проверяется **после** ``resolve()`` (симлинки и ``..``
+            нейтрализуются). Пустой список → любой ``read`` запрещён.
+            ``None`` — ограничение не задано (legacy-режим; в production
+            недопустим, см. F-AL).
 
     """
 
@@ -44,10 +54,41 @@ class AIFsFacade:
         workspace_manager: AIWorkspaceManager,
         capability_check: CapabilityChecker | None = None,
         plugin: str = "ai-agent",
+        allowed_read_roots: Sequence[Path] | None = None,
     ) -> None:
         self._wm = workspace_manager
         self._check = capability_check
         self._plugin = plugin
+        self._read_roots: tuple[Path, ...] = tuple(
+            Path(root).resolve() for root in (allowed_read_roots or ())
+        )
+        self._roots_declared = allowed_read_roots is not None
+
+    def _assert_readable(self, target: Path) -> None:
+        """Проверить, что ``target`` лежит внутри разрешённого корня.
+
+        Fail-closed: при объявленных корнях любой выход за них запрещён,
+        независимо от результата capability-check.
+
+        Args:
+            target: Путь к файлу (будет разрешён через ``resolve()``).
+
+        Raises:
+            FsForbiddenReadError: Путь вне ``allowed_read_roots``.
+        """
+        if not self._roots_declared:
+            return
+        if not self._read_roots:
+            raise FsForbiddenReadError(
+                path=str(target), reason="allowed_read_roots пуст — чтение запрещено"
+            )
+        resolved = target.resolve()
+        if not any(resolved.is_relative_to(root) for root in self._read_roots):
+            raise FsForbiddenReadError(
+                path=str(target),
+                reason="путь вне allowed_read_roots "
+                f"({', '.join(str(r) for r in self._read_roots)})",
+            )
 
     def read(self, path: str | Path) -> bytes:
         """Прочитать файл проекта.
@@ -59,11 +100,13 @@ class AIFsFacade:
         Raises:
             CapabilityDeniedError: Caller не задекларировал ``fs.read``
                 для этого пути.
+            FsForbiddenReadError: Путь вне ``allowed_read_roots`` (F-AL).
             FileNotFoundError: Файл не найден.
             IsADirectoryError: Путь указывает на каталог.
 
         """
         target = Path(path)
+        self._assert_readable(target)
         scope = target.as_posix()
         if self._check is not None:
             self._check(self._plugin, "fs.read", scope)

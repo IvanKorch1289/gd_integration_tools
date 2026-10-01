@@ -10,6 +10,7 @@ __all__ = (
     "AIGatewayEnforcementRequiredError",
     "AIGatewayProductionWiringError",
     "AIWorkspaceError",
+    "FsForbiddenReadError",
     "FsForbiddenWriteError",
     "GatewayError",
     "GatewayRateLimited",
@@ -172,6 +173,21 @@ class FsForbiddenWriteError(AIFsError):
         self.path = path
         self.reason = reason
         super().__init__(f"Forbidden write to {path!r}: {reason}")
+
+
+class FsForbiddenReadError(AIFsError):
+    """Попытка чтения файла вне разрешённых корней.
+
+    Аудит 2026-10-01 (F-AL): ``capability_check=None`` отключает единственный
+    барьер ``fs.read``, а ограничения по корню не было — MCP-инструмент
+    ``documents_to_markdown`` читал ``/etc/passwd``. Ограничение по корням
+    применяется независимо от наличия capability-check.
+    """
+
+    def __init__(self, *, path: str, reason: str) -> None:
+        self.path = path
+        self.reason = reason
+        super().__init__(f"Forbidden read of {path!r}: {reason}")
 
 
 class GatewayError(RuntimeError):

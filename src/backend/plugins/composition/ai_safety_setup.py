@@ -51,7 +51,14 @@ def _build_workspace_manager() -> AIWorkspaceManager:
 
 
 def _build_fs_facade() -> AIFsFacade:
-    """Сконструировать ``AIFsFacade`` поверх workspace_manager + capability_check."""
+    """Сконструировать ``AIFsFacade`` поверх workspace_manager + capability_check.
+
+    ``allowed_read_roots`` (F-AL) ограничивает чтение корнем репозитория
+    независимо от того, удалось ли поднять ``CapabilityGate``: «gate не
+    поднялся» не должно означать «читать можно весь диск».
+    """
+    from src.backend.core.config.config_loader import repo_root
+
     workspace_manager = get_service(AIWorkspaceManager)
     capability_check = None
     try:
@@ -66,6 +73,7 @@ def _build_fs_facade() -> AIFsFacade:
         workspace_manager=workspace_manager,
         capability_check=capability_check,
         plugin="ai-agent",
+        allowed_read_roots=[repo_root()],
     )
 
 
