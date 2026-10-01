@@ -49,12 +49,77 @@ def _is_tenant_aware(entity: Any) -> bool:
     return hasattr(entity, "tenant_id")
 
 
+def _final_froms(stmt: Any) -> list[Any]:
+    """Список FROM-элементов запроса с учётом перехода SQLAlchemy 1.4→2.0.
+
+    ``Select.froms`` помечен deprecated (SADeprecationWarning, удаляется),
+    ``Select.get_final_froms()`` — актуальный API.
+
+    Args:
+        stmt: SQLAlchemy statement.
+
+    Returns:
+        Список FROM-элементов (пустой для DML).
+    """
+    getter = getattr(stmt, "get_final_froms", None)
+    if callable(getter):
+        return list(getter())
+    return list(getattr(stmt, "froms", []))
+
+
+def _tenant_aware_entities(stmt: Any) -> list[Any]:
+    """Найти tenant-aware сущности, участвующие в запросе.
+
+    Две стратегии (аудит 2026-10-01, F-AM):
+
+    1. ``statement.column_descriptions`` — точная сущность SELECT-запроса.
+       Единственный надёжный источник для ``join``: у ``_ORMJoin`` атрибут
+       ``entity_namespace`` — коллекция колонок, а не класс, поэтому прежний
+       обход ``stmt.froms`` **молча не фильтровал join-запросы** (кросс-tenant
+       чтение воспроизведено на ``select(Order, User.id).join(...)``);
+    2. ``statement.entity_description`` — сущность ORM ``UPDATE``/``DELETE``
+       (у DML нет ни ``column_descriptions``, ни ``froms``);
+    3. откат на ``stmt.froms`` для запросов без column-описаний
+       (например ``select(func.count()).select_from(Order)``).
+
+    Args:
+        stmt: SQLAlchemy statement.
+
+    Returns:
+        Список tenant-aware mapped-классов (может быть пустым).
+    """
+    entities: list[Any] = []
+    for description in getattr(stmt, "column_descriptions", None) or []:
+        entity = description.get("entity") if isinstance(description, dict) else None
+        if entity is not None and _is_tenant_aware(entity):
+            entities.append(entity)
+    if entities:
+        return entities
+
+    dml_description = getattr(stmt, "entity_description", None)
+    if isinstance(dml_description, dict):
+        dml_entity = dml_description.get("entity")
+        if dml_entity is not None and _is_tenant_aware(dml_entity):
+            return [dml_entity]
+
+    for frm in _final_froms(stmt):
+        entity = getattr(frm, "entity_namespace", None)
+        if entity and _is_tenant_aware(entity):
+            entities.append(entity)
+    return entities
+
+
 def apply_tenant_filter(_target: Any = None) -> None:
     """Регистрирует SQLAlchemy event listeners для tenant isolation.
 
-    * ``do_orm_execute`` → auto-filter SELECT по ``tenant_id``
-      (S88 W2: це Session event).
+    * ``do_orm_execute`` → auto-filter **SELECT, UPDATE и DELETE** по ``tenant_id``
+      (S88 W2: це Session event). До F-AM DML отсекался условием
+      ``if not is_select: return``, из-за чего ``repository.update()`` и
+      ``repository.delete()`` меняли чужой tenant (воспроизведено: 1 строка).
     * ``before_flush`` → auto-set ``tenant_id`` на new objects.
+
+    Фильтруются **все** tenant-aware сущности запроса, а не только первая:
+    join двух tenant-aware таблиц иначе оставлял вторую неограниченной.
 
     Ідемпотентно: повторний виклик — no-op.
 
@@ -70,7 +135,11 @@ def apply_tenant_filter(_target: Any = None) -> None:
 
     @event.listens_for(Session, "do_orm_execute")
     def _filter_by_tenant(orm_execute_state: Any) -> None:
-        if not orm_execute_state.is_select:
+        if not (
+            orm_execute_state.is_select
+            or orm_execute_state.is_update
+            or orm_execute_state.is_delete
+        ):
             return
 
         tenant_id = get_tenant_id()
@@ -78,12 +147,9 @@ def apply_tenant_filter(_target: Any = None) -> None:
             return
 
         stmt = orm_execute_state.statement
-        for frm in getattr(stmt, "froms", []):
-            entity = getattr(frm, "entity_namespace", None)
-            if entity and _is_tenant_aware(entity):
-                stmt = stmt.where(entity.tenant_id == tenant_id)
-                orm_execute_state.statement = stmt
-                break
+        for entity in _tenant_aware_entities(stmt):
+            stmt = stmt.where(entity.tenant_id == tenant_id)
+        orm_execute_state.statement = stmt
 
     @event.listens_for(Session, "before_flush")
     def _set_tenant_on_new(
