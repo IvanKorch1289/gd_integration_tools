@@ -2,9 +2,11 @@
 """WAF-coverage gate (V15 R-V15-5, S1 DoD).
 
 Сканирует ``src/backend/`` (и плагины) на прямые использования
-``httpx.AsyncClient(...)``, ``httpx.Client(...)`` и module-level
-``httpx.get/post/...`` без явного :external-флага. Все такие callsite'ы
-обязаны идти через :class:`OutboundHttpClient` (см. ADR R-V15-5).
+``httpx.AsyncClient(...)``, ``httpx.Client(...)``, module-level
+``httpx.get/post/...`` без явного :external-флага, а также на браузерную
+навигацию ``page.goto(...)`` / ``context.goto(...)`` / ``*.reload()``.
+Все такие callsite'ы обязаны идти через
+:class:`OutboundHttpClient` (см. ADR R-V15-5) либо через url-guard.
 
 Allowlist живёт в ``tools/check_waf_coverage_allowlist.txt`` —
 известные :internal callsite'ы (внутренние сервисы кластера) или
@@ -38,11 +40,41 @@ ALLOWLIST_FILE = Path("tools/check_waf_coverage_allowlist.txt")
 # считается WAF-bypass'ом.
 _BANNED_CLASSES: frozenset[str] = frozenset({"AsyncClient", "Client"})
 
-# Пути, которые ВСЕГДА игнорируются (внутренние компоненты WAF/тесты).
-_INTERNAL_EXEMPT_PREFIXES: tuple[str, ...] = (
-    "src/backend/core/net/",
-    "src/backend/infrastructure/clients/transport/",
+# F-AP2 (re-audit 2026-10-01, HEAD 2037f9d59): браузерная навигация —
+# такой же outbound-вызов, как httpx, но гейт о нём не знал.
+#
+# До фикса ``grep -c "goto\|playwright\|browser" tools/check_waf_coverage.py``
+# давал 0, и гейт рапортовал «WAF coverage OK: 0 violations» при 10
+# реальных ``page.goto(...)`` без валидации URL. То есть дыра была
+# одновременно и в коде, и невидима для обязательного CI-гейта
+# ``make check-waf-coverage`` (V15 R-V15-5).
+#
+# Playwright уходит в сеть напрямую: ``page.goto()`` не проходит через
+# OutboundHttpClient, не проходит WAF-прокси и не проходит аудит
+# capability-гейта. Схема allow/validate та же: вызов обязан либо
+# проходить через url_guard, либо быть обоснован в allowlist.
+_BROWSER_NAV_METHODS: frozenset[str] = frozenset({"goto", "reload"})
+#: Объекты, чей ``.goto()`` реально уходит в сеть.
+_BROWSER_NAV_RECEIVERS: frozenset[str] = frozenset(
+    {"page", "context", "browser_context", "tab"}
 )
+
+# Пути, которые ВСЕГДА игнорируются (внутренние компоненты WAF/тесты).
+_INTERNAL_EXEMPT_PREFIXES: tuple[str, ...] = ("src/backend/core/net/",)
+
+# F-AP2 (re-audit 2026-10-01): exempt-prefix на весь
+# ``infrastructure/clients/transport/`` был слишком широким. Он существует
+# ради собственной HTTP-обвязки WAF (http_httpx/http_upstream/…), но заодно
+# скрывал ``browser.py`` — единственный файл в этом каталоге с
+# ``page.goto()``, и ``http/session_mixin.py``.
+#
+# Исключение перечислено явно: браузерный транспорт к OutboundHttpClient
+# отношения не имеет и гейтом покрываться обязан.
+_TRANSPORT_EXEMPT_FILES: frozenset[str] = frozenset(
+    {"http_httpx.py", "http_upstream.py", "httpx_cache_adapter.py"}
+)
+_TRANSPORT_EXEMPT_DIR: str = "src/backend/infrastructure/clients/transport/"
+_TRANSPORT_HTTP_DIR: str = "src/backend/infrastructure/clients/transport/http/"
 
 app = typer.Typer(
     name="check-waf-coverage",
@@ -124,6 +156,45 @@ def _is_httpx_violation(node: ast.AST, aliased_names: set[str]) -> bool:
     return False
 
 
+def _browser_receiver_names(func: ast.Attribute) -> bool:
+    """Возвращает ``True``, если receiver вызова — браузерный объект.
+
+    Покрывает оба наблюдавшихся в коде вида:
+
+    * ``page.goto(...)`` / ``context.goto(...)`` — Name-приёмник;
+    * ``self._page.goto(...)`` — Attribute-приёмник (``_page``, ``_context``).
+
+    Во втором случае атрибут не обязан начинаться с подчёркивания
+    (``self.browser.goto`` тоже встречается), поэтому проверяется
+    «хвост» имени целиком, а не префикс.
+    """
+    value = func.value
+    if isinstance(value, ast.Name):
+        return value.id.lstrip("_") in _BROWSER_NAV_RECEIVERS
+    if isinstance(value, ast.Attribute):
+        # ``self._page`` / ``self.page`` — приватное и публичное имя одного
+        # объекта, поэтому сравнение идёт без ведущего подчёркивания.
+        return value.attr.lstrip("_") in _BROWSER_NAV_RECEIVERS
+    return False
+
+
+def _is_browser_navigation_violation(node: ast.AST) -> bool:
+    """Возвращает ``True``, если node — браузерная навигация в сеть.
+
+    Ловит ``page.goto(...)`` / ``self._page.goto(...)`` / ``*.reload()`` —
+    Playwright уходит наружу напрямую, минуя ``OutboundHttpClient`` и,
+    следовательно, WAF-прокси (V15 R-V15-5).
+    """
+    if not isinstance(node, ast.Call):
+        return False
+    func = node.func
+    if not isinstance(func, ast.Attribute):
+        return False
+    if func.attr not in _BROWSER_NAV_METHODS:
+        return False
+    return _browser_receiver_names(func)
+
+
 def _scan_file(path: Path) -> list[tuple[int, str]]:
     """Возвращает список ``(line, snippet)`` нарушений в файле."""
     try:
@@ -138,7 +209,10 @@ def _scan_file(path: Path) -> list[tuple[int, str]]:
     aliased = _collect_aliased_names(tree)
     violations: list[tuple[int, str]] = []
     for node in ast.walk(tree):
-        if _is_httpx_violation(node, aliased):
+        is_hit = _is_httpx_violation(node, aliased) or _is_browser_navigation_violation(
+            node
+        )
+        if is_hit:
             assert isinstance(node, ast.Call)  # noqa: S101 — narrowing
             try:
                 snippet = ast.unparse(node).splitlines()[0]
@@ -149,8 +223,19 @@ def _scan_file(path: Path) -> list[tuple[int, str]]:
 
 
 def _is_internal_exempt(rel_path: str) -> bool:
-    """Внутренние компоненты WAF/transport — заведомо exempt."""
-    return rel_path.startswith(_INTERNAL_EXEMPT_PREFIXES)
+    """Внутренние компоненты WAF/transport — заведомо exempt.
+
+    Исключение по transport-каталогу — поимённое (F-AP2): exempt'ится
+    только собственная HTTP-обвязка WAF, но не браузерный транспорт.
+    """
+    if rel_path.startswith(_INTERNAL_EXEMPT_PREFIXES):
+        return True
+    # Собственная HTTP-обвязка WAF (включая transport/http/*) — exempt.
+    if rel_path.startswith(_TRANSPORT_HTTP_DIR):
+        return True
+    if rel_path.startswith(_TRANSPORT_EXEMPT_DIR):
+        return rel_path.rsplit("/", 1)[-1] in _TRANSPORT_EXEMPT_FILES
+    return False
 
 
 @app.callback(invoke_without_command=True)
@@ -183,14 +268,16 @@ def main(
 
     if violations:
         _err_console.print(
-            "WAF coverage violations (direct httpx.AsyncClient/Client usage):"
+            "WAF coverage violations (direct httpx.AsyncClient/Client usage "
+            "or browser navigation page.goto):"
         )
         for rel, line, snippet in violations:
             _err_console.print(f"  {rel}:{line}: {snippet}")
         _err_console.print()
         _err_console.print(
             "Эти callsite'ы обязаны идти через "
-            "src.backend.core.net.OutboundHttpClient или быть добавлены в "
+            "src.backend.core.net.OutboundHttpClient (httpx) либо через "
+            "url-guard с allowlist-схемой (page.goto) — либо быть добавлены в "
             f"{ALLOWLIST_FILE} с обоснованием :internal."
         )
         raise typer.Exit(code=1)
