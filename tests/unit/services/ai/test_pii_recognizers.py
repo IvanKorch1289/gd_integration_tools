@@ -16,18 +16,18 @@ from __future__ import annotations
 
 import pytest
 
-pytest.importorskip("presidio_analyzer")
+from tests.unit.services.ai.pii.recognizers._presidio_guard import (
+    skip_if_presidio_unavailable,
+)
 
-from src.backend.services.ai.pii.recognizers.credit_case_recognizer import (
-    CreditCaseRecognizer,
-)
-from src.backend.services.ai.pii.recognizers.inn_recognizer import (
-    InnRecognizer,
-    _inn_checksum_valid,
-)
-from src.backend.services.ai.pii.recognizers.passport_ru_recognizer import (
-    PassportRuRecognizer,
-)
+# F-W (аудит 2026-10-01): прежде стоял только ``pytest.importorskip("presidio_analyzer")``.
+# Он ловит лишь ImportError, а presidio тянет torch на уровне модуля, и CUDA-сборка
+# падает ValueError(libnvrtc) — модуль падал на collection и блокировал весь прогон.
+_recognizers = skip_if_presidio_unavailable("src.backend.services.ai.pii.recognizers")
+CreditCaseRecognizer = _recognizers.CreditCaseRecognizer
+InnRecognizer = _recognizers.InnRecognizer
+_inn_checksum_valid = _recognizers._inn_checksum_valid
+PassportRuRecognizer = _recognizers.PassportRuRecognizer
 from src.backend.services.ai.pii.recognizers.snils_recognizer import (
     SnilsRecognizer,
     _snils_check_digit_valid,

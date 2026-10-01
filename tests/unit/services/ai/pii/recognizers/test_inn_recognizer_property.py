@@ -14,7 +14,14 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from src.backend.services.ai.pii.recognizers.inn_recognizer import _inn_checksum_valid
+from tests.unit.services.ai.pii.recognizers._presidio_guard import (
+    skip_if_presidio_unavailable,
+)
+
+# F-W (аудит 2026-10-01): см. комментарий в test_inn_recognizer.py.
+_inn_checksum_valid = skip_if_presidio_unavailable(
+    "src.backend.services.ai.pii.recognizers.inn_recognizer"
+)._inn_checksum_valid
 
 PROP = settings(
     max_examples=50, suppress_health_check=[HealthCheck.function_scoped_fixture]

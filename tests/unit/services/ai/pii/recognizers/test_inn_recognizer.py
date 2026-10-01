@@ -10,10 +10,18 @@ from __future__ import annotations
 
 import pytest
 
-from src.backend.services.ai.pii.recognizers.inn_recognizer import (
-    InnRecognizer,
-    _inn_checksum_valid,
+from tests.unit.services.ai.pii.recognizers._presidio_guard import (
+    skip_if_presidio_unavailable,
 )
+
+# F-W (аудит 2026-10-01): presidio тянет torch на уровне модуля, CUDA-сборка
+# падает ValueError (libnvrtc) — importorskip это не ловит, и модуль падал
+# на collection, блокируя весь прогон pytest.
+_inn_module = skip_if_presidio_unavailable(
+    "src.backend.services.ai.pii.recognizers.inn_recognizer"
+)
+InnRecognizer = _inn_module.InnRecognizer
+_inn_checksum_valid = _inn_module._inn_checksum_valid
 
 # ── Real valid INN numbers (ФНС checksum algorithm) ───────────────
 VALID_INN_10 = "7707083893"  # Сбербанк (valid 10-digit ФНС checksum)
