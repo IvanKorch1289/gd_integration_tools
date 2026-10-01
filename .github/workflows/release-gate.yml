@@ -35,20 +35,30 @@ jobs:
         # GitHub API: checks API returns conclusion per check_run.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Аудит 2026-10-01 (F-Z): переменная REPO нигде не была объявлена,
+          # а скрипт работает под `set -u` → первый же `gh api` падал с
+          # "REPO: unbound variable" и гейт завершался exit 1 при ЛЮБОМ SHA.
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           SHA="${{ github.event.pull_request.head.sha || github.sha }}"
           echo "Aggregating checks for SHA=${SHA}"
 
           # Required upstream workflows.
+          # Идентификаторы — ИМЕНА ФАЙЛОВ, а не `name:` из YAML.
+          # Контракт GitHub API: "The ID of the workflow. You can also pass the
+          # workflow file name as a string." (docs.github.com REST actions/workflow-runs).
+          # Аудит 2026-10-01 (F-Z): "build-and-deploy" — имя job'а из
+          # docs-publish.yml, а не workflow-файла; контейнерный pipeline живёт
+          # в image.yml и триггерится на pull_request.
           REQUIRED=(
-            "lint"
-            "test"
-            "type"
-            "security"
-            "sbom"
-            "stubs-drift"
-            "build-and-deploy"
+            "lint.yml"
+            "test.yml"
+            "type.yml"
+            "security.yml"
+            "sbom.yml"
+            "stubs-drift.yml"
+            "image.yml"
           )
 
           FAILED=()
@@ -73,7 +83,7 @@ jobs:
               echo "  - ${f}"
             done
             echo ""
-            echo "Required: lint, test, type, security, sbom, stubs-drift, build-and-deploy"
+            echo "Required: ${REQUIRED[*]}"
             exit 1
           fi
 

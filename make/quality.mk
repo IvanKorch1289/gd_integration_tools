@@ -312,6 +312,10 @@ check-privacy-lifecycle: check-env ## Audit 2026-09-22: privacy lifecycle covera
 	@$(INFO) "Checking privacy lifecycle..."
 	@$(UV_RUN) python tools/checks/check_privacy_lifecycle.py
 
+check-release-gate: check-env ## Audit 2026-10-01 (F-Z): release-gate.yml не падает гарантированно
+	@$(INFO) "Checking release-gate consistency..."
+	@$(UV_RUN) python tools/checks/check_release_gate.py
+
 audit-2026-09-22: check-env ## Audit 2026-09-22: run all new production readiness gates
 	@$(INFO) "Running all audit-2026-09-22 gates..."
 	@$(UV_RUN) python tools/checks/check_alembic_migrations.py
