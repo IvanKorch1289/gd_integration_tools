@@ -111,14 +111,29 @@ class AgentSecurityFramework:
                 reason=f"prompt_injection: {desc}",
                 matched_pattern=desc,
             )
-            self._run_hooks("pre_llm", {"prompt": prompt, "decision": decision})
+            hook_decision = self._run_hooks(
+                "pre_llm", {"prompt": prompt, "decision": decision}
+            )
+            if hook_decision is not None and not hook_decision.allowed:
+                # SECURITY-P0-004: решение hook'а обязано влиять на ответ.
+                # Раньше результат отбрасывался, поэтому deny pre_llm-hook'а
+                # не имел никакого эффекта — fail-open.
+                return hook_decision
             return decision
-
         # Mask sensitive data в prompt
         masked = self._mask_sensitive(prompt)
-        return SecurityDecision(
+        clean_decision = SecurityDecision(
             allowed=True, masked_input=masked if masked != prompt else ""
         )
+        # SECURITY-P0-004: pre_llm-хуки обязаны выполняться и на «чистом»
+        # пути. Раньше они вызывались только при обнаруженной injection, то
+        # есть обычный prompt вообще не проверялся workflow-хуками.
+        hook_decision = self._run_hooks(
+            "pre_llm", {"prompt": prompt, "decision": clean_decision}
+        )
+        if hook_decision is not None and not hook_decision.allowed:
+            return hook_decision
+        return clean_decision
 
     def validate_command(
         self, command: str, *, context: dict[str, Any] | None = None
@@ -154,7 +169,17 @@ class AgentSecurityFramework:
                 return hook_decision
             return decision
 
-        return SecurityDecision(allowed=True)
+        clean_decision = SecurityDecision(allowed=True)
+        # Независимый re-аудит 2026-10-01 (N-3): тот же дефект, что был закрыт
+        # для pre_llm в validate_prompt, — «чистый» путь возвращал allow вообще
+        # без вызова pre_tool-хуков. Deny-хук workflow'а на безопасной по
+        # шаблону команде не выполнялся вовсе.
+        hook_decision = self._run_hooks(
+            "pre_tool", {"command": command, "decision": clean_decision}
+        )
+        if hook_decision is not None and not hook_decision.allowed:
+            return hook_decision
+        return clean_decision
 
     def validate_file_modification(
         self,
@@ -224,7 +249,14 @@ class AgentSecurityFramework:
                 return hook_decision
             return decision
 
-        return SecurityDecision(allowed=True)
+        clean_decision = SecurityDecision(allowed=True)
+        # N-3: «чистый» путь обязан прогонять pre_tool-хуки (см. validate_command).
+        hook_decision = self._run_hooks(
+            "pre_tool", {"file_path": file_path, "decision": clean_decision}
+        )
+        if hook_decision is not None and not hook_decision.allowed:
+            return hook_decision
+        return clean_decision
 
     def validate_sql(self, query: str) -> SecurityDecision:
         """Validate SQL query (S187).
@@ -259,7 +291,12 @@ class AgentSecurityFramework:
         decision = SecurityDecision(
             allowed=True, masked_input=masked if masked != output else ""
         )
-        self._run_hooks("post_tool", {"output": output, "decision": decision})
+        hook_decision = self._run_hooks(
+            "post_tool", {"output": output, "decision": decision}
+        )
+        if hook_decision is not None and not hook_decision.allowed:
+            # SECURITY-P0-004: см. pre_llm — deny hook'а не должен теряться.
+            return hook_decision
         return decision
 
     # ──────────────────── Internal helpers ────────────────────
@@ -290,6 +327,14 @@ class AgentSecurityFramework:
         S202 audit fix: ранее результаты hooks игнорировались — pre-made
         decision возвращался без проверки hook denials.
 
+        SECURITY-P0-004 (аудит 2026-10-01): раньше бросивший hook
+        приводил к ``continue`` — то есть к **allow**. Для banking/RPA/code/
+        data_export триггеров это означало, что сбой проверки тихо
+        превращался в разрешение операции (fail-open). Теперь сбой hook'а
+        даёт явный **deny** (fail-closed), как и требует модель угроз
+        безопасности. Если ``enable_workflow_hooks`` выключен, поведение
+        не меняется: hooks не выполняются вовсе.
+
         """
         if not self._policy.enable_workflow_hooks:
             return None
@@ -300,8 +345,23 @@ class AgentSecurityFramework:
             try:
                 decision = hook.check_fn(hook.name, context)
             except Exception as exc:
-                _logger.warning("hook %s raised: %s", hook.name, exc)
-                continue
+                # Fail-closed: неисполненная проверка безопасности не может
+                # дать allow. Ошибка hook'а = deny + явная причина для audit.
+                _logger.error(
+                    "hook %s raised for trigger=%s — DENY (fail-closed): %s",
+                    hook.name,
+                    trigger,
+                    exc,
+                )
+                return SecurityDecision(
+                    allowed=False,
+                    threat_level=ThreatLevel.HIGH,
+                    reason=(
+                        f"security hook {hook.name!r} failed for trigger "
+                        f"{trigger!r}: {type(exc).__name__}: {exc}"
+                    ),
+                    matched_pattern=hook.name,
+                )
             if not decision.allowed:
                 _logger.warning(
                     "hook denied: hook=%s reason=%s", hook.name, decision.reason
