@@ -23,15 +23,37 @@ from tests.unit.services.ai.pii.recognizers._presidio_guard import (
 # F-W (аудит 2026-10-01): прежде стоял только ``pytest.importorskip("presidio_analyzer")``.
 # Он ловит лишь ImportError, а presidio тянет torch на уровне модуля, и CUDA-сборка
 # падает ValueError(libnvrtc) — модуль падал на collection и блокировал весь прогон.
-_recognizers = skip_if_presidio_unavailable("src.backend.services.ai.pii.recognizers")
-CreditCaseRecognizer = _recognizers.CreditCaseRecognizer
-InnRecognizer = _recognizers.InnRecognizer
-_inn_checksum_valid = _recognizers._inn_checksum_valid
-PassportRuRecognizer = _recognizers.PassportRuRecognizer
-from src.backend.services.ai.pii.recognizers.snils_recognizer import (
-    SnilsRecognizer,
-    _snils_check_digit_valid,
+#
+# ВАЖНО (регрессия, пойманная на другом venv): гвард применяется к КАЖДОМУ
+# подмодулю отдельно, а не к пакету-реэкспорту. Пакет
+# ``src.backend.services.ai.pii.recognizers`` экспортирует только публичные
+# классы (``InnRecognizer`` и т.д.), но приватные хелперы
+# (``_inn_checksum_valid``, ``_snils_check_digit_valid``) живут в подмодулях
+# и через пакет недоступны. Первая версия фикса обращалась к пакету —
+# в окружении, где импорт падал по CUDA, это маскировалось skip'ом,
+# а в venv, где presidio импортируется штатно, давало AttributeError на
+# collection и снова блокировало весь прогон.
+_credit = skip_if_presidio_unavailable(
+    "src.backend.services.ai.pii.recognizers.credit_case_recognizer"
 )
+CreditCaseRecognizer = _credit.CreditCaseRecognizer
+
+_inn = skip_if_presidio_unavailable(
+    "src.backend.services.ai.pii.recognizers.inn_recognizer"
+)
+InnRecognizer = _inn.InnRecognizer
+_inn_checksum_valid = _inn._inn_checksum_valid
+
+_passport = skip_if_presidio_unavailable(
+    "src.backend.services.ai.pii.recognizers.passport_ru_recognizer"
+)
+PassportRuRecognizer = _passport.PassportRuRecognizer
+
+_snils = skip_if_presidio_unavailable(
+    "src.backend.services.ai.pii.recognizers.snils_recognizer"
+)
+SnilsRecognizer = _snils.SnilsRecognizer
+_snils_check_digit_valid = _snils._snils_check_digit_valid
 
 # ─── INN ──────────────────────────────────────────────────────────────────
 
