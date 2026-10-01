@@ -36,6 +36,7 @@ References:
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 from dataclasses import dataclass
@@ -265,6 +266,31 @@ class APIKeyAuth:
                 "upgrade stored hashes to Argon2id. (S172 M2 ARC-004)"
             )
         return match
+
+    async def verify_async(self, raw: str, expected_hash: str) -> bool:
+        """Async-обёртка :meth:`verify` без блокировки event loop.
+
+        Зачем: Argon2id с ``memory_cost=65536`` (64 МБ) — CPU/память-тяжёлая
+        операция. Измеренная стоимость одного verify — ~70 мс. Синхронный
+        вызов из корутины целиком блокирует event loop: за 75 мс verify
+        успевает выполниться **1** тик фонового счётчика, тогда как через
+        :func:`asyncio.to_thread` — **58** (замер: tools/bench, см. ADR).
+
+        Механика: ``argon2-cffi`` отпускает GIL внутри ``hash_secret``,
+        поэтому воркер потока реально работает параллельно loop, а не
+        блокирует его. Сам ``verify`` остаётся чистой sync-функцией без
+        побочных эффектов — thread-safe, состояние не меняет.
+
+        Args:
+            raw: Plain API key из HTTP header / cookie / subprotocol.
+            expected_hash: Stored hash (Argon2 PHC или legacy SHA-256 hex).
+
+        Returns:
+            ``True`` если raw matches expected_hash, иначе ``False``.
+            Семантика идентична :meth:`verify`, включая legacy-warning.
+
+        """
+        return await asyncio.to_thread(self.verify, raw, expected_hash)
 
 
 # ─── S173 M8.3: weak-secret detector (lightweight) ────────────────────

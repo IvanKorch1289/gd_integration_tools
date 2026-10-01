@@ -122,7 +122,7 @@ class AuthCoreMixin:
             if info is None or not info.is_active:
                 return AuthResult(is_authenticated=False)
 
-            if not api_key_auth.verify(secret, info.key_hash):
+            if not await api_key_auth.verify_async(secret, info.key_hash):
                 return AuthResult(is_authenticated=False)
 
             return AuthResult(
