@@ -15,6 +15,11 @@ from src.backend.core.logging import get_logger
 from src.backend.infrastructure.workflow.temporal_worker_runtime import (
     stop_temporal_worker_runtime,
 )
+from src.backend.plugins.composition.lifecycle.operations import (
+    Criticality,
+    LifecycleOperation,
+    LifecycleRunner,
+)
 from src.backend.plugins.composition.setup_infra.health import _register_health_checks
 from src.backend.plugins.composition.setup_infra.pools import (
     _clickhouse_enabled,
@@ -78,6 +83,12 @@ def _register_default_degradation_features() -> None:
                 name=name,
                 full_handler=_unsupported_full,
                 degraded_handler=_unsupported_degraded,
+                # SECURITY-P0-005: обработчики — заглушки, поэтому feature
+                # стартует в состоянии UNBOUND, а не HEALTHY. Иначе snapshot
+                # отдавал «healthy, error_rate=0.0» для того, что ни разу
+                # не выполнялось. Владелец feature'а подменяет заглушки
+                # явной регистрацией, и тогда bound=True по умолчанию.
+                bound=False,
             )
         )
     app_logger.info(
@@ -124,13 +135,49 @@ async def perform_infrastructure_operation(components: list[OperationItem]) -> N
 
 
 async def starting() -> None:
-    """Инициализирует инфраструктурные зависимости приложения."""
-    await perform_infrastructure_operation(starting_operations)
+    """Инициализирует инфраструктурные зависимости приложения.
+
+    Audit 2026-10-01: выполняется через :class:`LifecycleRunner` — топологический
+    порядок по ``dependencies``, таймаут на операцию, откат в обратном порядке
+    при падении REQUIRED-операции, структурированный отчёт.
+    """
+    global _infrastructure_runner  # noqa: PLW0603 — модульный runner
+    _infrastructure_runner = LifecycleRunner(_build_infrastructure_operations())
+    report = await _infrastructure_runner.start_all()
+    app_logger = get_logger("application")
+    app_logger.info(
+        "Инфраструктурный lifecycle завершён",
+        extra={
+            "lifecycle_report": report.to_dict(),
+            "degraded": [o.name for o in report.degraded],
+        },
+    )
 
 
 async def ending() -> None:
-    """Корректно завершает инфраструктурные зависимости приложения."""
-    await perform_infrastructure_operation(ending_operations)
+    """Корректно завершает инфраструктурные зависимости приложения.
+
+    Audit 2026-10-01: остановка идёт в **обратном** порядке старта, ошибки
+    одной stop-функции изолированы (было: ``raise`` прерывал цикл), повторный
+    вызов безопасен (идемпотентен).
+
+    Если ``starting()`` не вызывался (тест вызывает ``ending()`` напрямую) —
+    используется legacy-путь по ``ending_operations``, прежний контракт сохранён.
+    """
+    global _infrastructure_runner  # noqa: PLW0603 — модульный runner
+
+    if _infrastructure_runner is None:
+        await perform_infrastructure_operation(ending_operations)
+        return
+
+    app_logger = get_logger("application")
+    errors = await _infrastructure_runner.shutdown()
+    if errors:
+        app_logger.error(
+            "Ошибки при остановке инфраструктуры (shutdown изолирован)",
+            extra={"errors": errors},
+        )
+    _infrastructure_runner = None
 
 
 async def _register_agent_security_workflow_hooks() -> None:
@@ -139,18 +186,49 @@ async def _register_agent_security_workflow_hooks() -> None:
     До этого hooks были определены, но никогда не регистрировались в
     production startup — только в тестах. Это значит banking/RPA/code/data_export
     workflow-specific проверки НЕ выполнялись в production.
+
+    SECURITY-P0-004 (аудит 2026-10-01): сбой регистрации больше **не**
+    проглатывается. Раньше ``except Exception -> app_logger.debug(...)``
+    оставлял приложение стартовать с незарегистрированными (то есть
+    неисполняемыми) security-хуками, причём сообщение не было видно даже
+    при уровне INFO. Если hooks включены политикой безопасности
+    (``enable_workflow_hooks``), сбой регистрации — фатальный: старт падает.
+    Если hooks выключены политикой, несовпадение импорта ожидаемо и
+    допустимо (профиль без workflow-security).
     """
     try:
         from src.backend.core.ai.security import get_agent_security_framework
         from src.backend.core.ai.security.workflow_hooks import (
             register_all_workflow_hooks,
         )
+    except ImportError as exc:
+        # Профиль без AI-security: hooks не входят в поставку.
+        app_logger.info(
+            "AgentSecurityFramework hooks not available (optional): %s", exc
+        )
+        return
 
-        register_all_workflow_hooks(get_agent_security_framework())
-        app_logger.info("AgentSecurityFramework workflow hooks registered")
+    try:
+        framework = get_agent_security_framework()
+        register_all_workflow_hooks(framework)
     except Exception as exc:
-        # Non-fatal: framework optional в некоторых профилях
-        app_logger.debug("AgentSecurityFramework hooks registration skipped: %s", exc)
+        policy = getattr(
+            getattr(framework, "_policy", None), "enable_workflow_hooks", True
+        )
+        if policy:
+            app_logger.error(
+                "AgentSecurityFramework workflow hooks registration FAILED "
+                "(fail-closed, startup aborted): %s",
+                exc,
+            )
+            raise
+        app_logger.info(
+            "AgentSecurityFramework hooks disabled by policy — registration error ignored: %s",
+            exc,
+        )
+        return
+
+    app_logger.info("AgentSecurityFramework workflow hooks registered")
 
 
 async def _start_pool_monitors() -> None:
@@ -359,3 +437,123 @@ ending_operations: list[OperationItem] = [
     # D-A8-04 fix (cycle 1): graceful stop TemporalWorkerRuntime.
     ("stop_temporal_worker_runtime", stop_temporal_worker_runtime, None),
 ]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Typed lifecycle (audit 2026-10-01, F-E/F-F/F-J)
+# ─────────────────────────────────────────────────────────────────────────────
+# Кортежи ``OperationItem`` выше сохранены как backward-compatible API: на них
+# ссылаются ``setup_infra/__init__.py`` (re-export), документация конфигурации
+# (``core/config/features/infrastructure.py:435``) и тесты. Канонической
+# структурой данных для исполнения стал :class:`LifecycleOperation`
+# (``lifecycle/operations.py``): у операции появляются ``criticality``,
+# ``timeout`` и ``dependencies``, а парность start/stop задана явно, а не
+# двумя независимыми списками.
+#
+# Что это даёт по сравнению с ``perform_infrastructure_operation``:
+#   * откат в обратном порядке при падении REQUIRED-операции (было: отката нет);
+#   * таймаут на каждую операцию (было: только на EventBus в отдельной фазе);
+#   * падение одной stop-функции не пропускает остальные (было: ``raise``);
+#   * структурированный отчёт о старте вместо разрозненных log-строк.
+_INFRASTRUCTURE_PHASE = "infrastructure"
+
+
+def _build_infrastructure_operations() -> list[LifecycleOperation]:
+    """Собрать типизированные lifecycle-операции инфраструктуры.
+
+    Пары ``start``/``stop`` заданы явно. У stop-функций проверяемая
+    безопасность при незапущенном состоянии:
+
+    * ``_stop_scheduler_if_leader`` — по контракту docstring пропускает
+      non-leader инстансы, которые никогда не стартовали scheduler
+      (``setup_infra/scheduler_leader.py:170-180``);
+    * ``_close_workflow_audit_sink`` — ``if sink is None: return``
+      (``setup_infra/workflow_audit.py:58-60``).
+
+    Returns:
+        Список операций для :class:`LifecycleRunner`.
+
+    """
+    return [
+        LifecycleOperation(
+            name="register_default_degradation_features",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_register_default_degradation_features,
+        ),
+        LifecycleOperation(
+            name="register_health_checks",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_register_health_checks,
+        ),
+        LifecycleOperation(
+            name="register_pools_in_unified_manager",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_register_pools_in_unified_manager,
+        ),
+        LifecycleOperation(
+            # P0: до warmup — Mongo поднимается раньше прогрева пулов.
+            name="start_mongo_client",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_start_mongo_client,
+        ),
+        LifecycleOperation(
+            name="warmup_connection_pools",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_warmup_connection_pools,
+            dependencies=("start_mongo_client",),
+        ),
+        LifecycleOperation(
+            # S173: мониторы пулов имеют смысл только после их регистрации.
+            name="start_pool_monitors",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_start_pool_monitors,
+            dependencies=("register_pools_in_unified_manager",),
+        ),
+        LifecycleOperation(
+            # S189 / SECURITY-P0-004: banking/rpa/code/data_export hooks.
+            # REQUIRED: ранее сбой регистрации глотался, и приложение стартовало
+            # без исполняемых security-хуков.
+            name="register_agent_security_workflow_hooks",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_register_agent_security_workflow_hooks,
+            timeout=15.0,
+        ),
+        LifecycleOperation(
+            # D-AUDIT-A12-06: wire ConfigHotReloader в production lifespan.
+            name="start_config_hot_reload",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_start_config_hot_reload,
+            stop=_stop_config_hot_reload,
+        ),
+        LifecycleOperation(
+            # OPTIONAL: ClickHouse в dev_light выключен — деградация вместо падения.
+            name="init_workflow_audit_sink",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_init_workflow_audit_sink,
+            stop=_close_workflow_audit_sink,
+            enabled=_clickhouse_enabled,
+            criticality=Criticality.OPTIONAL,
+        ),
+        LifecycleOperation(
+            # D-A8-04 / D-AUDIT-704: worker со списком activities. REQUIRED:
+            # старт worker'а без activities означал бы ActivityNotRegisteredError
+            # уже во время выполнения workflow, то есть отказ «в рантайме».
+            name="start_temporal_worker_runtime",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_start_temporal_worker_runtime_with_activities,
+            stop=stop_temporal_worker_runtime,
+            timeout=60.0,
+        ),
+        LifecycleOperation(
+            name="start_scheduler_with_leader_election",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_start_scheduler_with_leader_election,
+            stop=_stop_scheduler_if_leader,
+            enabled=_redis_enabled,
+            dependencies=("register_pools_in_unified_manager",),
+        ),
+    ]
+
+
+#: Runner последнего запуска — нужен ``ending()`` для симметричного shutdown.
+_infrastructure_runner: LifecycleRunner | None = None

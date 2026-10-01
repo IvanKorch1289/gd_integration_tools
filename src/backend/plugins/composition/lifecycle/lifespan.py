@@ -100,6 +100,11 @@ async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
         )
         raise
     finally:
-        if startup_completed:
-            app_logger.info("Завершение работы приложения...")
-            await run_shutdown(app, task_registry)
+        # Audit 2026-10-01 (F-F): откат нужен и при НЕУДАЧНОМ старте.
+        # Раньше блок был под 'if startup_completed', из-за чего при падении
+        # на N-й фазе уже поднятые подсистемы (пулы, mongo, hot-reload,
+        # temporal worker) оставались жить без отката — процесс падал, но
+        # ресурсы не освобождались. run_shutdown идемпотентен и изолирует
+        # ошибки, поэтому безопасен и в этом пути.
+        app_logger.info("Завершение работы приложения...")
+        await run_shutdown(app, task_registry)
