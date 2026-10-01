@@ -84,4 +84,13 @@ pre-prod-check-ratchet: ## S36 w4: pre-prod-check + обновление baselin
 	$(UV_RUN) python tools/checks/pre_prod_check.py --ratchet
 	@$(SUCCESS) "pre-prod-check baseline updated"
 
+# Audit 2026-10-01: метрики README генерируются из кода, иначе они молча
+# устаревают (в README долго стояло «109 actions» при фактических 132).
+# docs-current-metrics-check — блокирующий CI-гейт против возврата проблемы.
+docs-current-metrics: check-env ##@ Docs Пересчитать блок «Текущие метрики» в README из кода
+	@$(INFO) "Regenerating README current-metrics block from code..."
+	@$(UV_RUN) python tools/generate_current_metrics.py --write
 
+docs-current-metrics-check: check-env ##@ Docs CI-гейт: README-метрики не устарели
+	@$(INFO) "Checking README current-metrics block against code..."
+	@$(UV_RUN) python tools/generate_current_metrics.py --check
