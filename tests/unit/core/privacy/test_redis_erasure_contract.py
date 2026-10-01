@@ -10,8 +10,15 @@ Per PRIVACY_REDIS_INVESTIGATION_2026-09-24 §4: контракт-тест
 3. Без redis_client → SKIPPED (error="redis_client not configured").
 4. Исключение клиента → FAILED с типом ошибки.
 
-Tenant-awareness (TenantContext/префикс-скоп) — deferred под privacy-ADR
-(см. KNOWN_ISSUES #3): тест фиксирует текущий контракт, не будущий.
+ВНИМАНИЕ (audit 30.09.2026): тесты ниже работают по FLAT-legacy схеме ключей
+(``user:42:profile`` — без ``tenant:<id>:``). После fail-closed фикса
+такой скан требует ЯВНОГО opt-in ``allow_global_scan=True``, поэтому каждый
+адаптер здесь строится с этим флагом. Контракт tenant-изоляции и fail-closed
+проверяет отдельный файл
+``test_redis_erasure_tenant_isolation.py``.
+
+Tenant-awareness (TenantContext/префикс-скоп) — см. ADR-0345; глобальный
+скан без opt-in запрещён.
 """
 
 from __future__ import annotations
@@ -38,6 +45,7 @@ class FakeRedis:
     async def scan(
         self, cursor: int, match: str = "*", count: int = 100
     ) -> tuple[int, list[str]]:
+        """Имитация ``SCAN MATCH`` над in-memory набором ключей."""
         if self.fail_on_scan:
             raise RuntimeError("scan exploded")
         # Простейшая glob-семантика: '*' → любой префикс/суффикс.
@@ -46,6 +54,7 @@ class FakeRedis:
         return 0, matched
 
     async def unlink(self, *keys: str) -> int:
+        """Имитация ``UNLINK``: удалить ключи и вернуть число удалённых."""
         deleted = 0
         for k in keys:
             if k in self.keys:
@@ -77,7 +86,7 @@ def _keys() -> list[str]:
 async def test_erase_removes_subject_keys_across_prefixes() -> None:
     """Erase удаляет все ключи с subject_id во всех префиксах."""
     fake = FakeRedis(_keys())
-    adapter = RedisErasureAdapter(redis_client=fake)
+    adapter = RedisErasureAdapter(redis_client=fake, allow_global_scan=True)
 
     result = await adapter.execute(
         subject_id="42",
@@ -100,7 +109,7 @@ async def test_erase_removes_subject_keys_across_prefixes() -> None:
 async def test_erase_no_matching_keys_zero_deleted() -> None:
     """Нет ключей субъекта → SUCCESS с records_affected=0."""
     fake = FakeRedis(["user:43:profile"])
-    adapter = RedisErasureAdapter(redis_client=fake)
+    adapter = RedisErasureAdapter(redis_client=fake, allow_global_scan=True)
 
     result = await adapter.execute(
         subject_id="999",
@@ -134,7 +143,7 @@ async def test_client_exception_failed() -> None:
     """Падение клиента → FAILED с типом исключения (не бросает наружу)."""
     fake = FakeRedis(_keys())
     fake.fail_on_scan = True
-    adapter = RedisErasureAdapter(redis_client=fake)
+    adapter = RedisErasureAdapter(redis_client=fake, allow_global_scan=True)
 
     result = await adapter.execute(
         subject_id="42",
@@ -151,7 +160,9 @@ async def test_client_exception_failed() -> None:
 async def test_custom_prefixes_narrow_scope() -> None:
     """Кастомные префиксы сужают SCAN (не задевают другие префиксы)."""
     fake = FakeRedis(_keys())
-    adapter = RedisErasureAdapter(redis_client=fake, key_prefixes=("cache:user:",))
+    adapter = RedisErasureAdapter(
+        redis_client=fake, key_prefixes=("cache:user:",), allow_global_scan=True
+    )
 
     result = await adapter.execute(
         subject_id="42",
