@@ -179,11 +179,20 @@ jobs:
 
       - name: Tenant isolation check (audit 2026-09-22)
         # Cross-tenant security: direct TenantContext.get() usage.
-        run: uv run python tools/checks/check_tenant_isolation.py --strict || true
+        # Блокирующий (аудит 2026-10-05, F-CI): `|| true` превращал гейт в
+        # чисто декларативный — провал печатался, а job оставался зелёным.
+        run: uv run python tools/checks/check_tenant_isolation.py --strict
 
       - name: Object authorization matrix (audit 2026-09-22)
         # Routes w/o ownership check + service .get(id) w/o tenant filter.
-        run: uv run python tools/checks/check_object_authorization.py || true
+        # Блокирующий (аудит 2026-10-05, F-CI). Две правки, обе обязательные:
+        #   1. `--strict` — без него гейт возвращает 0, даже печатая ❌
+        #      (check_object_authorization.py:219-221);
+        #   2. снят `|| true` — он подавлял даже ненулевой код возврата.
+        # Гейт на текущем коде падает (покрытие ownership 10.7%, 127 выборок
+        # без tenant-фильтра). Это ожидаемо: job будет красным до устранения
+        # D-4/D-4A/D-4C, и это честнее, чем зелёный job при ❌ в выводе.
+        run: uv run python tools/checks/check_object_authorization.py --strict
 
       - name: Canonical error contract (audit 2026-09-22)
         # RFC 9457, GraphQL extensions.code, gRPC Status, SOAP Fault, MCP.
