@@ -24,13 +24,19 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 from sqlalchemy import String, create_engine, delete, func, select, text, update
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
-from src.backend.core.tenancy import TenantContext, set_tenant
+from src.backend.core.tenancy import (
+    TenantContext,
+    bind_tenant,
+    set_tenant,
+    unbind_tenant,
+)
 from src.backend.core.tenancy import sqlalchemy_filter as tf
 
 TENANT_A = "tenant-a"
@@ -59,7 +65,7 @@ class User(tf.TenantMixin, Base):
 
 
 @pytest.fixture
-def seeded() -> Session:
+def seeded() -> Iterator[Session]:
     """Сессия с двумя tenant-строками в каждой таблице.
 
     Returns:
@@ -78,8 +84,18 @@ def seeded() -> Session:
         ]
     )
     session.commit()
-    set_tenant(TenantContext(tenant_id=TENANT_A))
-    return session
+    # bind_tenant/unbind_tenant вместо set_tenant: контекст tenant'а —
+    # общепроцессный ContextVar. Прежний вариант оставлял TENANT_A привязанным
+    # после теста, и тест на «контекст не утекает после запроса» падал при
+    # любом порядке прогона, где этот файл шёл раньше. Воспроизведено:
+    # test_tenant_filter_orm_dml.py + test_tenant_context_propagation_d1.py
+    # → FAILED, в одиночку D-1 тест проходит.
+    token = bind_tenant(TenantContext(tenant_id=TENANT_A))
+    try:
+        yield session
+    finally:
+        unbind_tenant(token)
+        session.close()
 
 
 def _raw_orders(session: Session) -> list[tuple[object, ...]]:
@@ -228,6 +244,12 @@ def test_non_tenant_entity_not_filtered(tmp_path: Path) -> None:
     with Session(engine) as session:
         session.add_all([Plain(id=1), Plain(id=2)])
         session.commit()
-        set_tenant(TenantContext(tenant_id=TENANT_A))
-        assert len(session.execute(select(Plain)).scalars().all()) == 2
-        set_tenant(TenantContext(tenant_id=TENANT_A))
+        # bind/unbind, а не set_tenant: контекст tenant'а — общепроцессный
+        # ContextVar. Прежний вариант оставлял TENANT_A привязанным после теста,
+        # из-за чего D-1 тест «контекст не утекает после запроса» становился
+        # order-dependent и падал при этом порядке файлов.
+        token = bind_tenant(TenantContext(tenant_id=TENANT_A))
+        try:
+            assert len(session.execute(select(Plain)).scalars().all()) == 2
+        finally:
+            unbind_tenant(token)
