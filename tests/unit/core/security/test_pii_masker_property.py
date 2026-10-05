@@ -8,10 +8,13 @@ Critical properties verified:
 
 from __future__ import annotations
 
+import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from src.backend.core.security.pii_masker import PIIMasker
+
+pytestmark = pytest.mark.property
 
 
 @settings(max_examples=200, suppress_health_check=[HealthCheck.too_slow])

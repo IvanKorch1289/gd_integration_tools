@@ -26,6 +26,8 @@ from src.backend.entrypoints.middlewares.security_headers import (
     SecurityHeadersMiddleware,
 )
 
+pytestmark = pytest.mark.security
+
 # Expected header set injected by the middleware.
 EXPECTED_HEADERS = {
     b"strict-transport-security": b"max-age=63072000; includeSubDomains",

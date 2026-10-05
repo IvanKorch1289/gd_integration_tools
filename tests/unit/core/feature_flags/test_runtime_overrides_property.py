@@ -14,10 +14,13 @@ We use inline `RuntimeFeatureFlagOverrides()` per test instead.
 
 from __future__ import annotations
 
+import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from src.backend.core.feature_flags.runtime_overrides import RuntimeFeatureFlagOverrides
+
+pytestmark = pytest.mark.property
 
 # Strategies
 st_flag = st.text(

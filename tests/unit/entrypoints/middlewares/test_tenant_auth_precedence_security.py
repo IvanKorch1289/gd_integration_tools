@@ -32,7 +32,8 @@ import pytest
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.entrypoints.middlewares.tenant import TenantMiddleware
 
-pytestmark = pytest.mark.asyncio
+pytestmark = pytest.mark.security
+
 
 AUTH_TENANT = "tenant-a"
 HEADER_TENANT = "tenant-b"

@@ -1208,6 +1208,13 @@ markers = [
     "e2e: end-to-end multi-protocol action tests",
     "perf: performance benchmarks (msgspec, plugin_sandbox)",
     "property: hypothesis property-based tests",
+    # F-X (аудит 2026-10-05): маркер `security` выбирал 0 тестов, потому что
+    # был НЕ зарегистрирован при включённом --strict-markers, и ни один тест
+    # его не использовал. `pytest -m security` завершался EXIT=5, что по
+    # контракту аудита означает «вердикта нет», а не PASS. Регистрация +
+    # разметка продуктовых security-тестов — tests/unit/tools/
+    # test_marker_coverage.py запрещает возврат пустых маркеров.
+    "security: security-инварианты (auth, tenant-изоляция, authz, fail-closed, security headers)",
     # Round 76: pytest-timeout НЕ был установлен, но @pytest.mark.timeout(N)
     # использовался в test_file_watcher.py (5 вызовов). Marker зарегистрирован
     # ниже, чтобы --strict-markers не блокировал collection.

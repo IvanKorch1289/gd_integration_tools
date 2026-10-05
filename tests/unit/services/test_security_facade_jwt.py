@@ -8,6 +8,8 @@ import pytest
 
 from src.backend.services.security.facade import SecurityFacade
 
+pytestmark = pytest.mark.security
+
 
 class TestJWTBlacklistFallback:
     """Тесты JWT blacklist Redis fallback (переписаны под async facade).

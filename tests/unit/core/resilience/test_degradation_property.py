@@ -17,6 +17,8 @@ from hypothesis import strategies as st
 
 from src.backend.core.resilience.degradation import DegradationMode, mode_at_least
 
+pytestmark = pytest.mark.property
+
 ALL_MODES = list(DegradationMode)
 STRICTNESS: dict[DegradationMode, int] = {
     DegradationMode.FULL: 0,

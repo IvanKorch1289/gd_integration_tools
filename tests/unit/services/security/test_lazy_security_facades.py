@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import pytest
 
+pytestmark = pytest.mark.security
+
 
 class TestCertStoreFacade:
     """cert_store_facade: lazy re-export ``CertStore``."""

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from src.backend.core.ai.security import (
     AgentSecurityFramework,
     AgentSecurityPolicy,
@@ -10,6 +12,8 @@ from src.backend.core.ai.security import (
     SecurityDecision,
     ThreatLevel,
 )
+
+pytestmark = pytest.mark.security
 
 
 def test_agent_security_module_all_exports_resolve() -> None:

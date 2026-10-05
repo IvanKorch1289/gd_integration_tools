@@ -11,6 +11,8 @@ from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.security import AuthValidateProcessor
 
+pytestmark = pytest.mark.security
+
 
 def _ex(body: Any = None) -> Exchange[Any]:
     return Exchange(in_message=Message(body=body, headers={}))
