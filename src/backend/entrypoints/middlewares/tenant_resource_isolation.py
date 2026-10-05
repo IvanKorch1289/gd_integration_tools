@@ -19,9 +19,10 @@ Registered checkers:
 - ``file`` → verify ``File.tenant_id == TenantContext.tenant_id``
 - ...
 
-Без зарегистрированных checker'ов middleware — pass-through (zero-cost):
-это позволяет wire'ить его глобально сразу, а checker'ы подключать
-постепенно (per resource_type) без изменения middleware-стека.
+Без зарегистрированных checker'ов middleware — pass-through, и этот пропуск
+логируется на уровне ``warning`` с явным текстом «object-level
+authorization НЕ выполнена» (D-4): невидимый fail-open раньше позволял
+считать, что object-авторизация работает, хотя она не выполнялась ни разу.
 
 Tenant identity берётся **только** из аутентифицированного контекста:
 ``AuthContext.metadata['tenant_id']`` → ``scope.state['tenant_id']``.
@@ -250,8 +251,26 @@ class TenantResourceIsolationMiddleware:
         resource_type, resource_id = match
         checker = self._checkers.get(resource_type)
         if checker is None:
-            # Нет checker'а → middleware skip (постепенное подключение).
-            logger.debug("no_ownership_checker resource_type=%s", resource_type)
+            # Нет checker'а → запрос проходит БЕЗ object-level проверки.
+            #
+            # D-4 (аудит 2026-10-05): это не «zero-cost» пропуск, а дыра.
+            # Раньше ветка логировалась на уровне ``debug`` и была невидима —
+            # поэтому объявление «object authorization есть» ничем не
+            # подтверждалось. Уровень повышен до ``warning``: отсутствие
+            # checker'а для защищённого resource_type — это событие
+            # безопасности, а не отладочная деталь.
+            #
+            # На текущей поверхности (/api/v1/auto/<entity>.<action>, id в теле)
+            # ветка недостижима: DEFAULT_PATTERNS не совпадают ни с одним живым
+            # путём. Логируется именно тот случай, когда checker'а нет, но
+            # ресурс всё же попал под паттерн.
+            logger.warning(
+                "tenant_isolation NO_CHECKER path=%s resource=%s/%s — "
+                "object-level authorization НЕ выполнена",
+                path,
+                resource_type,
+                resource_id,
+            )
             await self.app(scope, receive, send)
             return
 
