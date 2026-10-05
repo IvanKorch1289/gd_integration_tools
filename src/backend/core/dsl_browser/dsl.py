@@ -246,12 +246,32 @@ class BrowserDSL:
         # CSS — return as-is.
         return value
 
+    async def _guarded_goto(self, url: str, **kwargs: Any) -> Any:
+        """Навигация с SSRF-проверкой (F-AP1, CRITICAL).
+
+        Args:
+            url: Проверяемый и открываемый URL.
+            **kwargs: Аргументы, пробрасываемые в ``page.goto``.
+
+        Returns:
+            Ответ ``page.goto``.
+
+        Raises:
+            UrlNotAllowedError: URL отклонён политикой.
+
+        """
+        from src.backend.core.net.url_guard import assert_safe_url
+
+        return await self._page.goto(assert_safe_url(url), **kwargs)
+
     async def goto(self, url: str) -> StepResult:
         """Navigate page to URL.
 
         Args:
-            url: Absolute или relative URL. Передаётся в page.goto() напрямую —
-                selector strategy chain применяется только к DOM-операциям.
+            url: Absolute URL. До навигации проходит SSRF-проверку
+                :func:`src.backend.core.net.url_guard.assert_safe_url`
+                (F-AP1): не-HTTP схемы, loopback/private/link-local и
+                нестандартные записи IP-адресов отклоняются.
 
         Returns:
             :class:`StepResult` с success=True если page loaded без timeout.
@@ -263,7 +283,7 @@ class BrowserDSL:
         for attempt in range(self._config.retries + 1):
             attempts = attempt
             try:
-                await self._page.goto(url, timeout=self._config.timeout_ms)
+                await self._guarded_goto(url, timeout=self._config.timeout_ms)
                 duration = (time.monotonic() - start) * 1000
                 result = StepResult(
                     action=SemanticAction.NAVIGATE,

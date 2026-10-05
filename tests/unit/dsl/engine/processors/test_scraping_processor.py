@@ -1,4 +1,4 @@
-"""Unit-тесты scraping processors — _validate_url, _is_blocked_host, ScrapeProcessor, PaginateProcessor, ApiProxyProcessor.
+"""Unit-тесты scraping processors — _validate_url, ScrapeProcessor, PaginateProcessor, ApiProxyProcessor.
 
 S202 audit closure: все три процессора имеют ``required_capability =
 "rpa.http.request"`` (existing vocabulary). Capability-facade stub
@@ -20,7 +20,6 @@ from src.backend.dsl.engine.processors.scraping import (
     ApiProxyProcessor,
     PaginateProcessor,
     ScrapeProcessor,
-    _is_blocked_host,
     _validate_url,
 )
 
@@ -102,30 +101,81 @@ async def test_api_proxy_auth_check_denied_short_circuits() -> None:
     assert ex.out_message is None
 
 
-# ── _validate_url / _is_blocked_host ──
+# ── _validate_url (F-AP1: делегирует в core.net.url_guard) ──
+#
+# КОНТРАКТ ИЗМЕНЁН намеренно. До фикса ``ftp://example.com``, пустая строка и
+# ``not-a-url`` были закреплены тестом как РАЗРЕШЁННЫЕ — то есть уязвимость
+# была зафиксирована как ожидаемое поведение, а тест её охранял. Теперь эти
+# случаи блокируются, и тест это фиксирует.
+#
+# ``_is_blocked_host`` и его тесты удалены вместе с функцией: после перевода
+# ``_validate_url`` на общий guard функция осталась использоваться только
+# собственным тестом, то есть стала мёртвым кодом.
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    ("url", "expected_msg"),
+    ("url", "reason_fragment"),
     [
-        ("http://localhost/foo", "Blocked host: localhost"),
-        ("http://metadata.google.internal", "Blocked host: metadata.google.internal"),
-        ("http://metadata.aws", "Blocked host: metadata.aws"),
-        ("http://127.0.0.1", "Blocked private IP: 127.0.0.1"),
-        ("http://10.0.0.1", "Blocked private IP: 10.0.0.1"),
-        ("http://0.0.0.0", "Blocked private IP: 0.0.0.0"),
-        ("http://192.168.1.1", "Blocked private IP: 192.168.1.1"),
-        ("http://169.254.169.254", "Blocked private IP: 169.254.169.254"),
-        ("http://[::1]", "Blocked private IP: ::1"),
-        ("http://[fc00::1]", "Blocked private IP: fc00::1"),
-        ("http://[fe80::1]", "Blocked private IP: fe80::1"),
-        ("http://172.16.0.1", "Blocked private/loopback IP: 172.16.0.1"),
+        ("http://localhost/foo", "localhost"),
+        ("http://metadata.google.internal", "metadata.google.internal"),
+        ("http://metadata.aws", "metadata.aws"),
+        ("http://127.0.0.1", "127.0.0.1"),
+        ("http://10.0.0.1", "10.0.0.1"),
+        ("http://0.0.0.0", "0.0.0.0"),
+        ("http://192.168.1.1", "192.168.1.1"),
+        ("http://169.254.169.254", "169.254.169.254"),
+        ("http://[::1]", "::1"),
+        ("http://[fc00::1]", "fc00::1"),
+        ("http://[fe80::1]", "fe80::1"),
+        ("http://172.16.0.1", "172.16.0.1"),
+        # F-AP1: эти формы проходили раньше, потому что hostname был пуст
+        # либо нестандартная запись IP не разбиралась.
+        ("file:///etc/passwd", "file"),
+        ("data:text/html,<script>", "data"),
+        ("http://2130706433/", "127.0.0.1"),
     ],
 )
-def test_validate_url_blocks(url: str, expected_msg: str) -> None:
-    with pytest.raises(ValueError, match=expected_msg):
+def test_validate_url_blocks(url: str, reason_fragment: str) -> None:
+    """Отказ обязан называть причину, а не молчать.
+
+    Проверяется наличие существительного фрагмента в сообщении, а не точная
+    формулировка: текст ошибки — деталь реализации, а вот адрес/схема в нём
+    обязаны присутствовать, иначе отказ невозможно расследовать.
+
+    Args:
+        url: Отклоняемый URL.
+        reason_fragment: Обязательный фрагмент причины.
+
+    """
+    with pytest.raises(ValueError) as exc:
         _validate_url(url)
+    assert reason_fragment in str(exc.value), str(exc.value)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("url", "reason_fragment"),
+    [
+        # Раньше эти три были в блоке «allows» — они и были дырой.
+        ("ftp://example.com", "схема"),
+        ("", "пуст"),
+        ("not-a-url", "схем"),
+        ("chrome://settings", "схема"),
+        ("javascript:alert(1)", "схема"),
+    ],
+)
+def test_validate_url_blocks_non_http_and_malformed(url: str, reason_fragment: str) -> None:
+    """Не-HTTP схемы и мусор блокируются (F-AP1).
+
+    Args:
+        url: Отклоняемый URL.
+        reason_fragment: Обязательный фрагмент причины.
+
+    """
+    with pytest.raises(ValueError) as exc:
+        _validate_url(url)
+    assert reason_fragment in str(exc.value).lower(), str(exc.value)
 
 
 @pytest.mark.unit
@@ -136,37 +186,16 @@ def test_validate_url_blocks(url: str, expected_msg: str) -> None:
         "https://8.8.8.8",
         "https://1.1.1.1",
         "https://[2001:4860:4860::8888]",
-        "ftp://example.com",
-        "",
-        "not-a-url",
     ],
 )
 def test_validate_url_allows(url: str) -> None:
-    # should not raise
-    _validate_url(url)
+    """Легитимные адреса по-прежнему проходят.
 
+    Args:
+        url: Разрешённый URL.
 
-@pytest.mark.unit
-@pytest.mark.parametrize(
-    ("host", "expected_msg"),
-    [
-        ("localhost", "Blocked host: localhost"),
-        ("127.0.0.1", "Blocked private IP: 127.0.0.1"),
-        ("10.0.0.1", "Blocked private IP: 10.0.0.1"),
-        ("172.16.0.1", "Blocked private/loopback IP: 172.16.0.1"),
-        ("::1", "Blocked private IP: ::1"),
-    ],
-)
-def test_is_blocked_host_raises(host: str, expected_msg: str) -> None:
-    with pytest.raises(ValueError, match=expected_msg):
-        _is_blocked_host(host)
-
-
-@pytest.mark.unit
-@pytest.mark.parametrize("host", ["example.com", "8.8.8.8", "2001:4860:4860::8888", ""])
-def test_is_blocked_host_allows(host: str) -> None:
-    # should not raise
-    _is_blocked_host(host)
+    """
+    _validate_url(url)  # не должно бросать
 
 
 # ── ScrapeProcessor ──

@@ -325,7 +325,7 @@
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/core/privacy/delete_data_subject/_redis.py",
-    "line": 52,
+    "line": 116,
     "qualified_name": "RedisErasureAdapter.execute"
   },
   {
