@@ -1,246 +1,300 @@
 {
-  "source": "извлечено из кода, HEAD 3b509542e, интерпретатор .venv/bin/python 3.14.0",
-  "typed_lifecycle_operation": {
-    "exists": false,
-    "evidence": "grep -rn 'LifecycleOperation' по репо -> 0 совпадений",
-    "required_fields_per_objective": [
-      "name",
-      "phase",
-      "start",
-      "stop",
-      "enabled",
-      "criticality",
-      "timeout",
-      "dependencies"
-    ]
+  "source": "src/backend/plugins/composition/setup_infra/lifecycle.py",
+  "_provenance": {
+    "head": "2d9f4323ba7398c3de67f0a3cea044c557b2eb6f",
+    "generator": "artifacts/current_audit/generate_lifecycle_graph.py",
+    "method": "ast.parse по composition-слою; значения — ast.literal_eval",
+    "note": "Перегенерировано после fast-forward-слива fix/temporal-fail-closed-at. Количество операций не изменилось (11), но start_temporal_worker_runtime стал fail-closed: пустой activities/недоступный SDK/кластер теперь дают RuntimeError, а не тихий return."
   },
   "operation_structures": {
-    "STARTUP_PHASES": {
-      "file": "src/backend/plugins/composition/lifecycle/startup_phases/__init__.py",
-      "type": "tuple[Phase, ...]",
-      "phase_alias": "Callable[[FastAPI], Awaitable[None]]",
-      "actual_fields": [
-        "callable"
-      ],
-      "missing_fields": [
-        "name",
-        "phase",
-        "start",
-        "stop",
-        "enabled",
-        "criticality",
-        "timeout",
-        "dependencies"
-      ]
-    },
-    "starting_operations/ending_operations": {
-      "file": "src/backend/plugins/composition/setup_infra/lifecycle.py",
-      "alias_line": 37,
-      "operation_item": "str, Callable[[",
-      "missing_fields": [
-        "criticality",
-        "timeout",
-        "dependencies",
-        "stop"
-      ]
-    },
-    "run_shutdown": {
-      "file": "src/backend/plugins/composition/lifecycle/shutdown.py:45-247",
-      "actual_fields": [],
-      "note": "не структура данных, а 14 ручных последовательных try/except блоков"
-    }
+    "total": 11,
+    "required": 10,
+    "optional": 1,
+    "with_stop": 4,
+    "without_stop": 7
   },
+  "operations": [
+    {
+      "name": "register_default_degradation_features",
+      "phase": "infrastructure",
+      "criticality": "Criticality.REQUIRED",
+      "timeout": null,
+      "enabled": null,
+      "dependencies": null,
+      "has_start": true,
+      "has_stop": false,
+      "lineno": 495
+    },
+    {
+      "name": "register_health_checks",
+      "phase": "infrastructure",
+      "criticality": "Criticality.REQUIRED",
+      "timeout": null,
+      "enabled": null,
+      "dependencies": null,
+      "has_start": true,
+      "has_stop": false,
+      "lineno": 500
+    },
+    {
+      "name": "register_pools_in_unified_manager",
+      "phase": "infrastructure",
+      "criticality": "Criticality.REQUIRED",
+      "timeout": null,
+      "enabled": null,
+      "dependencies": null,
+      "has_start": true,
+      "has_stop": false,
+      "lineno": 505
+    },
+    {
+      "name": "start_mongo_client",
+      "phase": "infrastructure",
+      "criticality": "Criticality.REQUIRED",
+      "timeout": null,
+      "enabled": null,
+      "dependencies": null,
+      "has_start": true,
+      "has_stop": false,
+      "lineno": 510
+    },
+    {
+      "name": "warmup_connection_pools",
+      "phase": "infrastructure",
+      "criticality": "Criticality.REQUIRED",
+      "timeout": null,
+      "enabled": null,
+      "dependencies": [
+        "start_mongo_client"
+      ],
+      "has_start": true,
+      "has_stop": false,
+      "lineno": 516
+    },
+    {
+      "name": "start_pool_monitors",
+      "phase": "infrastructure",
+      "criticality": "Criticality.REQUIRED",
+      "timeout": null,
+      "enabled": null,
+      "dependencies": [
+        "register_pools_in_unified_manager"
+      ],
+      "has_start": true,
+      "has_stop": false,
+      "lineno": 522
+    },
+    {
+      "name": "register_agent_security_workflow_hooks",
+      "phase": "infrastructure",
+      "criticality": "Criticality.REQUIRED",
+      "timeout": 15.0,
+      "enabled": null,
+      "dependencies": null,
+      "has_start": true,
+      "has_stop": false,
+      "lineno": 529
+    },
+    {
+      "name": "start_config_hot_reload",
+      "phase": "infrastructure",
+      "criticality": "Criticality.REQUIRED",
+      "timeout": null,
+      "enabled": null,
+      "dependencies": null,
+      "has_start": true,
+      "has_stop": true,
+      "lineno": 538
+    },
+    {
+      "name": "init_workflow_audit_sink",
+      "phase": "infrastructure",
+      "criticality": "Criticality.OPTIONAL",
+      "timeout": null,
+      "enabled": null,
+      "dependencies": null,
+      "has_start": true,
+      "has_stop": true,
+      "lineno": 545
+    },
+    {
+      "name": "start_temporal_worker_runtime",
+      "phase": "infrastructure",
+      "criticality": "Criticality.REQUIRED",
+      "timeout": 60.0,
+      "enabled": null,
+      "dependencies": null,
+      "has_start": true,
+      "has_stop": true,
+      "lineno": 554
+    },
+    {
+      "name": "start_scheduler_with_leader_election",
+      "phase": "infrastructure",
+      "criticality": "Criticality.REQUIRED",
+      "timeout": null,
+      "enabled": null,
+      "dependencies": [
+        "register_pools_in_unified_manager"
+      ],
+      "has_start": true,
+      "has_stop": true,
+      "lineno": 564
+    }
+  ],
   "startup_phases": [
     {
-      "module": "observability",
-      "phase": "phase_otel_traces"
+      "index": 0,
+      "phase": "observability.phase_otel_traces",
+      "lineno": 30
     },
     {
-      "module": "observability",
-      "phase": "phase_otel_metrics"
+      "index": 1,
+      "phase": "observability.phase_otel_metrics",
+      "lineno": 30
     },
     {
-      "module": "observability",
-      "phase": "phase_config_validator"
+      "index": 2,
+      "phase": "observability.phase_config_validator",
+      "lineno": 30
     },
     {
-      "module": "observability",
-      "phase": "phase_sentry_init"
+      "index": 3,
+      "phase": "observability.phase_sentry_init",
+      "lineno": 30
     },
     {
-      "module": "observability",
-      "phase": "phase_logsink_router"
+      "index": 4,
+      "phase": "observability.phase_logsink_router",
+      "lineno": 30
     },
     {
-      "module": "observability",
-      "phase": "phase_audit_hmac_verify"
+      "index": 5,
+      "phase": "observability.phase_audit_hmac_verify",
+      "lineno": 30
     },
     {
-      "module": "infrastructure",
-      "phase": "phase_redis_cluster"
+      "index": 6,
+      "phase": "infrastructure.phase_redis_cluster",
+      "lineno": 30
     },
     {
-      "module": "infrastructure",
-      "phase": "phase_setup_infra"
+      "index": 7,
+      "phase": "infrastructure.phase_setup_infra",
+      "lineno": 30
     },
     {
-      "module": "infrastructure",
-      "phase": "phase_eventbus_startup"
+      "index": 8,
+      "phase": "infrastructure.phase_eventbus_startup",
+      "lineno": 30
     },
     {
-      "module": "services",
-      "phase": "phase_service_registration"
+      "index": 9,
+      "phase": "services.phase_service_registration",
+      "lineno": 30
     },
     {
-      "module": "services",
-      "phase": "phase_ai_gateway_singleton"
+      "index": 10,
+      "phase": "services.phase_ai_gateway_singleton",
+      "lineno": 30
     },
     {
-      "module": "services",
-      "phase": "phase_dsl_commands"
+      "index": 11,
+      "phase": "services.phase_dsl_commands",
+      "lineno": 30
     },
     {
-      "module": "services",
-      "phase": "phase_watchers"
+      "index": 12,
+      "phase": "services.phase_watchers",
+      "lineno": 30
     },
     {
-      "module": "services",
-      "phase": "phase_plugin_loader"
+      "index": 13,
+      "phase": "services.phase_plugin_loader",
+      "lineno": 30
     },
     {
-      "module": "services",
-      "phase": "phase_v11_loaders"
+      "index": 14,
+      "phase": "services.phase_v11_loaders",
+      "lineno": 30
     },
     {
-      "module": "services",
-      "phase": "phase_outbox_dispatcher"
+      "index": 15,
+      "phase": "services.phase_outbox_dispatcher",
+      "lineno": 30
     },
     {
-      "module": "services",
-      "phase": "phase_workflow_runtime"
+      "index": 16,
+      "phase": "services.phase_workflow_runtime",
+      "lineno": 30
     },
     {
-      "module": "services",
-      "phase": "phase_schema_registry"
+      "index": 17,
+      "phase": "services.phase_schema_registry",
+      "lineno": 30
     },
     {
-      "module": "services",
-      "phase": "phase_feature_flag_broadcaster"
+      "index": 18,
+      "phase": "services.phase_feature_flag_broadcaster",
+      "lineno": 30
     }
   ],
-  "starting_operations": [
-    "register_default_degradation_features",
-    "register_health_checks",
-    "register_pools_in_unified_manager",
-    "start_mongo_client",
-    "warmup_connection_pools",
-    "start_pool_monitors",
-    "register_agent_security_workflow_hooks",
-    "start_config_hot_reload",
-    "init_workflow_audit_sink",
-    "start_temporal_worker_runtime",
-    "start_scheduler_with_leader_election"
-  ],
-  "ending_operations": [
-    "close_workflow_audit_sink",
-    "stop_scheduler_if_leader",
-    "stop_config_hot_reload",
-    "stop_temporal_worker_runtime"
-  ],
-  "execution_model": {
-    "startup": {
-      "order": "sequential",
-      "topological": false,
-      "per_operation_timeout": false,
-      "evidence": [
-        "lifecycle/startup.py:224-225 'for phase in STARTUP_PHASES: await phase(app)'",
-        "setup_infra/lifecycle.py:101-123 'for name, operation, enabled_check in components:'",
-        "единственный таймаут — asyncio.timeout(5.0) на EventBus (startup.py:69)"
-      ]
-    },
-    "rollback": {
-      "reverse_order": false,
-      "evidence": "lifecycle/lifespan.py:102-105 'finally: if startup_completed: await run_shutdown(...)' — при False блок пропускается целиком",
-      "runtime_measured": "ROLLBACK ran: False (start:phase1-OK, start:phase2-OK, start:phase3-BOOM)"
-    },
-    "shutdown_isolation": {
-      "continues_after_failure": false,
-      "evidence": "setup_infra/lifecycle.py:117-123 raise внутри цикла; runtime: close_workflow_audit_sink RAN->raising, stop_scheduler_if_leader/stop_config_hot_reload/stop_temporal_worker_runtime НЕ вызваны, при этом shutdown.py:160 логирует 'Приложение остановлено'"
-    },
-    "shutdown_idempotency": {
-      "plugin_loader_shutdown_all_idempotent": false,
-      "evidence": "services/plugins/loader/__init__.py:208-218 не сбрасывает status и не удаляет из _loaded; runtime: on_shutdown_total=1 после первого вызова, =2 после второго. Для сравнения shutdown_one (:233) идемпотентен."
-    }
-  },
+  "startup_phase_total": 19,
   "readiness_endpoints": [
     {
-      "path": "/health/ready",
-      "impl": "app_factory.py:454-471",
-      "blocks_on_infrastructure_ready": false,
-      "in_production_manifests": [
-        "deploy/k8s/deployment-app.yaml:85,91",
-        "deploy/helm/gd-integration-tools/templates/deployment-app.yaml:70,76"
-      ],
-      "status": "FAIL_OPEN",
-      "measured_without_lifespan": "HTTP 200 {'status':'ok','message':'No health checks registered'}"
+      "path": "/health",
+      "file": "src/backend/plugins/composition/app_factory.py",
+      "lineno": 444,
+      "requires_auth": false
     },
     {
-      "path": "/readiness",
-      "impl": "entrypoints/api/v1/endpoints/health.py:95-100",
-      "blocks_on_infrastructure_ready": true,
-      "in_production_manifests": [],
-      "status": "FAIL_CLOSED",
-      "measured_without_lifespan": "HTTP 503 {'status':'initializing'}"
+      "path": "/health/live",
+      "file": "src/backend/plugins/composition/app_factory.py",
+      "lineno": 449,
+      "requires_auth": false
+    },
+    {
+      "path": "/ready",
+      "file": "src/backend/plugins/composition/app_factory.py",
+      "lineno": 454,
+      "requires_auth": false
+    },
+    {
+      "path": "/health/ready",
+      "file": "src/backend/plugins/composition/app_factory.py",
+      "lineno": 473,
+      "requires_auth": false
+    },
+    {
+      "path": "/livez",
+      "file": "src/backend/plugins/composition/app_factory.py",
+      "lineno": 484,
+      "requires_auth": false
+    },
+    {
+      "path": "/healthz",
+      "file": "src/backend/plugins/composition/app_factory.py",
+      "lineno": 489,
+      "requires_auth": false
     },
     {
       "path": "/readyz",
-      "impl": "app_factory.py",
-      "blocks_on_infrastructure_ready": false,
-      "in_production_manifests": [],
-      "status": "FAIL_OPEN"
-    },
-    {
-      "path": "/probe/ready",
-      "impl": "ОТСУТСТВУЕТ В src/",
-      "in_production_manifests": [
-        "deploy/k8s/deployment-worker.yaml:103-106"
-      ],
-      "status": "MANIFEST_REFERENCES_MISSING_ROUTE"
+      "file": "src/backend/plugins/composition/app_factory.py",
+      "lineno": 494,
+      "requires_auth": false
     }
   ],
-  "readiness_contradiction": {
-    "measured": "/health/ready -> 503 degraded (компонент payments_db degraded); /readiness -> 200 {'degraded': false}",
-    "cause": "app_factory.py:467-471 читает агрегатор (ok только при status=='ok'); health.py:106 читает ResilienceCoordinator, которому компонент не зарегистрирован (registered components: 0)"
-  },
-  "agent_security_hooks": {
-    "registration_fail_open": {
-      "file": "setup_infra/lifecycle.py:143-153",
-      "evidence": "except Exception -> app_logger.debug('AgentSecurityFramework hooks registration skipped') — startup продолжается, уровень лога не виден при INFO"
-    },
-    "enforcement_fail_open": {
-      "file": "core/ai/security/agent_security_framework.py:294-310",
-      "evidence": "for hook in self._hooks: ... except Exception -> _logger.warning(...); continue — бросивший hook приводит к allow; пустой _hooks также даёт allow"
-    }
-  },
-  "degradation_placeholders": {
-    "expected_state": "UNBOUND",
-    "reported_state": "HEALTHY",
-    "files": [
-      "setup_infra/lifecycle.py:59-65,76-82",
-      "core/resilience/graceful_degradation.py:112,272"
+  "operations_without_stop": {
+    "names": [
+      "register_default_degradation_features",
+      "register_health_checks",
+      "register_pools_in_unified_manager",
+      "start_mongo_client",
+      "warmup_connection_pools",
+      "start_pool_monitors",
+      "register_agent_security_workflow_hooks"
     ],
-    "measured_snapshot": {
-      "features": 4,
-      "state": "healthy",
-      "samples": 0,
-      "error_rate": 0.0
-    },
-    "note": "вызов заглушки fail-closed (NotImplementedError), но snapshot и UI (78_Плавная_деградация.py:53) показывают healthy — implicit success вместо UNBOUND"
-  },
-  "startup_phase_groups": {
-    "observability": 6,
-    "infrastructure": 3,
-    "services": 10
-  },
-  "startup_phase_total": 19
+    "count": 7,
+    "impact": "операции не откатываются при частичном старте (F-N5)"
+  }
 }

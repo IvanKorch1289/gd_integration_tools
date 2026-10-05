@@ -58,17 +58,17 @@ Inline-числа в тексте README могут разойтись с фак
      Проверка актуальности (CI-гейт): `... --check` → exit 1 при расхождении с кодом.
      Правьте код, а не этот блок. -->
 
-**Снимок кода:** `3b509542e96d` · сгенерировано 2026-10-01 09:24 UTC
+**Снимок кода:** `2d9f4323ba73` · сгенерировано 2026-10-05 06:16 UTC
 
 | Метрика | Значение | Источник |
 |---|---:|---|
-| HEAD | `3b509542e96d` | `git rev-parse HEAD` |
+| HEAD | `2d9f4323ba73` | `git rev-parse HEAD` |
 | Actions (runtime) | 132 | `ActionHandlerRegistry.list_actions()` после `create_app()` |
 | DSL-маршрутов | 0 | `RouteRegistry.list_routes()` |
 | Протоколов | 17 | пакеты entrypoints: api, asyncapi, cdc, email, express, filewatcher, graphql, grpc, http3, mcp, mqtt, scheduler, soap, sse, stream, webhook, websocket |
 | Middleware в стеке | 37 | `len(app.user_middleware)` |
 | OpenAPI paths / schemas | 414 / 142 | `app.openapi()` |
-| Тестов собрано | 20679 | `pytest --collect-only -q` |
+| Тестов собрано | 20961 | `pytest --collect-only -q` |
 | Порог покрытия | 70% | `[tool.coverage.report] fail_under` |
 | Layer baseline | Нарушений: 0 новых  (файлов: 2549; baseline: 22 legacy) | `tools/check_layers.py` |
 

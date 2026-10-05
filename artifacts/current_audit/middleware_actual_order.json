@@ -1,648 +1,241 @@
 {
   "probe": {
-    "path": "/health",
-    "header": {
-      "X-Tenant-ID": "tenant-b"
-    },
-    "probe_status": 200
+    "method": "патч Starlette.add_middleware + обёртка __call__ каждого middleware-класса из app.user_middleware (enter/exit) + реальный HTTP-запрос через httpx.ASGITransport",
+    "index_semantics": "app.user_middleware[0] = внешний middleware (LIFO-семантика add_middleware)",
+    "request": "GET /health",
+    "status_code": 200
   },
   "registration_order": [
-    {
-      "cls": "ExceptionHandlerMiddleware",
-      "options": []
-    },
-    {
-      "cls": "GlobalRateLimitMiddleware",
-      "options": [
-        "checker"
-      ]
-    },
-    {
-      "cls": "CORSMiddleware",
-      "options": [
-        "allow_credentials",
-        "allow_headers",
-        "allow_methods",
-        "allow_origins",
-        "expose_headers",
-        "max_age"
-      ]
-    },
-    {
-      "cls": "TrustedHostMiddleware",
-      "options": [
-        "allowed_hosts"
-      ]
-    },
-    {
-      "cls": "BlockedRoutesMiddleware",
-      "options": []
-    },
-    {
-      "cls": "IPRestrictionMiddleware",
-      "options": []
-    },
-    {
-      "cls": "APIKeyMiddleware",
-      "options": []
-    },
-    {
-      "cls": "CircuitBreakerMiddleware",
-      "options": [
-        "default_policy"
-      ]
-    },
-    {
-      "cls": "RequestIDMiddleware",
-      "options": []
-    },
-    {
-      "cls": "CorrelationIdMiddleware",
-      "options": []
-    },
-    {
-      "cls": "TenantMiddleware",
-      "options": []
-    },
-    {
-      "cls": "RequestContextMiddleware",
-      "options": []
-    },
-    {
-      "cls": "TenantResourceIsolationMiddleware",
-      "options": []
-    },
-    {
-      "cls": "IdempotencyHeaderMiddleware",
-      "options": [
-        "backend"
-      ]
-    },
-    {
-      "cls": "DegradationMiddleware",
-      "options": []
-    },
-    {
-      "cls": "RequestBodyCacheMiddleware",
-      "options": []
-    },
-    {
-      "cls": "TimeoutMiddleware",
-      "options": []
-    },
-    {
-      "cls": "ResponseCacheMiddleware",
-      "options": [
-        "max_age"
-      ]
-    },
-    {
-      "cls": "GZipCompressionExcludingMiddleware",
-      "options": [
-        "compresslevel",
-        "minimum_size"
-      ]
-    },
-    {
-      "cls": "DataMaskingMiddleware",
-      "options": []
-    },
-    {
-      "cls": "AuthMethodHeaderMiddleware",
-      "options": []
-    },
-    {
-      "cls": "AuthRequiredMiddleware",
-      "options": []
-    },
-    {
-      "cls": "AIToolWhitelistMiddleware",
-      "options": [
-        "enabled"
-      ]
-    },
-    {
-      "cls": "LoginStepUpMiddleware",
-      "options": []
-    },
-    {
-      "cls": "WebSocketRateLimitMiddleware",
-      "options": []
-    },
-    {
-      "cls": "WebhookSignatureMiddleware",
-      "options": [
-        "fail_closed",
-        "secrets_by_prefix"
-      ]
-    },
-    {
-      "cls": "PIIMaskingResponseMiddleware",
-      "options": []
-    },
-    {
-      "cls": "RpaPolicyMiddleware",
-      "options": []
-    },
-    {
-      "cls": "CSRFMiddleware",
-      "options": [
-        "enabled",
-        "safe_paths"
-      ]
-    },
-    {
-      "cls": "AuditLogMiddleware",
-      "options": []
-    },
-    {
-      "cls": "AuditReplayMiddleware",
-      "options": [
-        "sample_rate"
-      ]
-    },
-    {
-      "cls": "InnerRequestLoggingMiddleware",
-      "options": []
-    },
-    {
-      "cls": "OtelMiddleware",
-      "options": []
-    },
-    {
-      "cls": "PrometheusMiddleware",
-      "options": [
-        "app_name",
-        "group_paths"
-      ]
-    },
-    {
-      "cls": "SecurityHeadersMiddleware",
-      "options": []
-    },
-    {
-      "cls": "GracefulShutdownMiddleware",
-      "options": [
-        "drain_timeout"
-      ]
-    },
-    {
-      "cls": "PrometheusMiddleware",
-      "options": []
-    }
+    "ExceptionHandlerMiddleware",
+    "GlobalRateLimitMiddleware",
+    "CORSMiddleware",
+    "TrustedHostMiddleware",
+    "BlockedRoutesMiddleware",
+    "IPRestrictionMiddleware",
+    "APIKeyMiddleware",
+    "CircuitBreakerMiddleware",
+    "RequestIDMiddleware",
+    "CorrelationIdMiddleware",
+    "TenantMiddleware",
+    "RequestContextMiddleware",
+    "TenantResourceIsolationMiddleware",
+    "IdempotencyHeaderMiddleware",
+    "DegradationMiddleware",
+    "RequestBodyCacheMiddleware",
+    "TimeoutMiddleware",
+    "ResponseCacheMiddleware",
+    "GZipCompressionExcludingMiddleware",
+    "DataMaskingMiddleware",
+    "AuthMethodHeaderMiddleware",
+    "AuthRequiredMiddleware",
+    "AIToolWhitelistMiddleware",
+    "LoginStepUpMiddleware",
+    "WebSocketRateLimitMiddleware",
+    "WebhookSignatureMiddleware",
+    "PIIMaskingResponseMiddleware",
+    "RpaPolicyMiddleware",
+    "CSRFMiddleware",
+    "AuditLogMiddleware",
+    "AuditReplayMiddleware",
+    "InnerRequestLoggingMiddleware",
+    "OtelMiddleware",
+    "PrometheusMiddleware",
+    "SecurityHeadersMiddleware",
+    "GracefulShutdownMiddleware",
+    "PrometheusMiddleware"
   ],
   "app_user_middleware": [
-    {
-      "stack_index": 0,
-      "cls": "PrometheusMiddleware",
-      "module": "src.backend.infrastructure.application.monitoring",
-      "qualname": "src.backend.infrastructure.application.monitoring:PrometheusMiddleware",
-      "name": "prometheus_middleware",
-      "registry_order": null
-    },
-    {
-      "stack_index": 1,
-      "cls": "GracefulShutdownMiddleware",
-      "module": "src.backend.entrypoints.middlewares.graceful_shutdown",
-      "qualname": "src.backend.entrypoints.middlewares.graceful_shutdown:GracefulShutdownMiddleware",
-      "name": "graceful_shutdown",
-      "registry_order": 880
-    },
-    {
-      "stack_index": 2,
-      "cls": "SecurityHeadersMiddleware",
-      "module": "src.backend.entrypoints.middlewares.security_headers",
-      "qualname": "src.backend.entrypoints.middlewares.security_headers:SecurityHeadersMiddleware",
-      "name": "security_headers",
-      "registry_order": 860
-    },
-    {
-      "stack_index": 3,
-      "cls": "PrometheusMiddleware",
-      "module": "starlette_exporter.middleware",
-      "qualname": "starlette_exporter.middleware:PrometheusMiddleware",
-      "name": "prometheus",
-      "registry_order": 840
-    },
-    {
-      "stack_index": 4,
-      "cls": "OtelMiddleware",
-      "module": "src.backend.entrypoints.middlewares.otel_middleware",
-      "qualname": "src.backend.entrypoints.middlewares.otel_middleware:OtelMiddleware",
-      "name": "otel",
-      "registry_order": 820
-    },
-    {
-      "stack_index": 5,
-      "cls": "InnerRequestLoggingMiddleware",
-      "module": "src.backend.entrypoints.middlewares.request_log",
-      "qualname": "src.backend.entrypoints.middlewares.request_log:InnerRequestLoggingMiddleware",
-      "name": "inner_request_logging",
-      "registry_order": 800
-    },
-    {
-      "stack_index": 6,
-      "cls": "AuditReplayMiddleware",
-      "module": "src.backend.entrypoints.middlewares.audit_replay",
-      "qualname": "src.backend.entrypoints.middlewares.audit_replay:AuditReplayMiddleware",
-      "name": "audit_replay",
-      "registry_order": 780
-    },
-    {
-      "stack_index": 7,
-      "cls": "AuditLogMiddleware",
-      "module": "src.backend.entrypoints.middlewares.audit_log",
-      "qualname": "src.backend.entrypoints.middlewares.audit_log:AuditLogMiddleware",
-      "name": "audit_log",
-      "registry_order": 760
-    },
-    {
-      "stack_index": 8,
-      "cls": "CSRFMiddleware",
-      "module": "src.backend.entrypoints.middlewares.csrf",
-      "qualname": "src.backend.entrypoints.middlewares.csrf:CSRFMiddleware",
-      "name": "csrf",
-      "registry_order": 740
-    },
-    {
-      "stack_index": 9,
-      "cls": "RpaPolicyMiddleware",
-      "module": "src.backend.entrypoints.middlewares.rpa_policy",
-      "qualname": "src.backend.entrypoints.middlewares.rpa_policy:RpaPolicyMiddleware",
-      "name": "rpa_policy",
-      "registry_order": 720
-    },
-    {
-      "stack_index": 10,
-      "cls": "PIIMaskingResponseMiddleware",
-      "module": "src.backend.entrypoints.middlewares.pii_masking_response",
-      "qualname": "src.backend.entrypoints.middlewares.pii_masking_response:PIIMaskingResponseMiddleware",
-      "name": "pii_masking_response",
-      "registry_order": 700
-    },
-    {
-      "stack_index": 11,
-      "cls": "WebhookSignatureMiddleware",
-      "module": "src.backend.entrypoints.middlewares.webhook_signature",
-      "qualname": "src.backend.entrypoints.middlewares.webhook_signature:WebhookSignatureMiddleware",
-      "name": "webhook_signature",
-      "registry_order": 680
-    },
-    {
-      "stack_index": 12,
-      "cls": "WebSocketRateLimitMiddleware",
-      "module": "src.backend.entrypoints.middlewares.ws_rate_limit",
-      "qualname": "src.backend.entrypoints.middlewares.ws_rate_limit:WebSocketRateLimitMiddleware",
-      "name": "ws_rate_limit",
-      "registry_order": 660
-    },
-    {
-      "stack_index": 13,
-      "cls": "LoginStepUpMiddleware",
-      "module": "src.backend.entrypoints.middlewares.login_step_up",
-      "qualname": "src.backend.entrypoints.middlewares.login_step_up:LoginStepUpMiddleware",
-      "name": "login_step_up",
-      "registry_order": 650
-    },
-    {
-      "stack_index": 14,
-      "cls": "AIToolWhitelistMiddleware",
-      "module": "src.backend.entrypoints.middlewares.ai_tool_whitelist",
-      "qualname": "src.backend.entrypoints.middlewares.ai_tool_whitelist:AIToolWhitelistMiddleware",
-      "name": "ai_tool_whitelist",
-      "registry_order": 640
-    },
-    {
-      "stack_index": 15,
-      "cls": "AuthRequiredMiddleware",
-      "module": "src.backend.entrypoints.middlewares.auth_required",
-      "qualname": "src.backend.entrypoints.middlewares.auth_required:AuthRequiredMiddleware",
-      "name": "auth_required",
-      "registry_order": 620
-    },
-    {
-      "stack_index": 16,
-      "cls": "AuthMethodHeaderMiddleware",
-      "module": "src.backend.entrypoints.middlewares.auth_method_header",
-      "qualname": "src.backend.entrypoints.middlewares.auth_method_header:AuthMethodHeaderMiddleware",
-      "name": "auth_method_header",
-      "registry_order": 600
-    },
-    {
-      "stack_index": 17,
-      "cls": "DataMaskingMiddleware",
-      "module": "src.backend.entrypoints.middlewares.data_masking",
-      "qualname": "src.backend.entrypoints.middlewares.data_masking:DataMaskingMiddleware",
-      "name": "data_masking",
-      "registry_order": 580
-    },
-    {
-      "stack_index": 18,
-      "cls": "GZipCompressionExcludingMiddleware",
-      "module": "src.backend.entrypoints.middlewares.gzip_compression_excluding",
-      "qualname": "src.backend.entrypoints.middlewares.gzip_compression_excluding:GZipCompressionExcludingMiddleware",
-      "name": "gzip",
-      "registry_order": 560
-    },
-    {
-      "stack_index": 19,
-      "cls": "ResponseCacheMiddleware",
-      "module": "src.backend.entrypoints.middlewares.response_cache",
-      "qualname": "src.backend.entrypoints.middlewares.response_cache:ResponseCacheMiddleware",
-      "name": "response_cache",
-      "registry_order": 520
-    },
-    {
-      "stack_index": 20,
-      "cls": "TimeoutMiddleware",
-      "module": "src.backend.entrypoints.middlewares.timeout",
-      "qualname": "src.backend.entrypoints.middlewares.timeout:TimeoutMiddleware",
-      "name": "timeout",
-      "registry_order": 400
-    },
-    {
-      "stack_index": 21,
-      "cls": "RequestBodyCacheMiddleware",
-      "module": "src.backend.entrypoints.middlewares.request_body_cache",
-      "qualname": "src.backend.entrypoints.middlewares.request_body_cache:RequestBodyCacheMiddleware",
-      "name": "request_body_cache",
-      "registry_order": 380
-    },
-    {
-      "stack_index": 22,
-      "cls": "DegradationMiddleware",
-      "module": "src.backend.entrypoints.middlewares.degradation",
-      "qualname": "src.backend.entrypoints.middlewares.degradation:DegradationMiddleware",
-      "name": "degradation",
-      "registry_order": 360
-    },
-    {
-      "stack_index": 23,
-      "cls": "IdempotencyHeaderMiddleware",
-      "module": "idempotency_header_middleware.middleware",
-      "qualname": "idempotency_header_middleware.middleware:IdempotencyHeaderMiddleware",
-      "name": "idempotency",
-      "registry_order": 340
-    },
-    {
-      "stack_index": 24,
-      "cls": "TenantResourceIsolationMiddleware",
-      "module": "src.backend.entrypoints.middlewares.tenant_resource_isolation",
-      "qualname": "src.backend.entrypoints.middlewares.tenant_resource_isolation:TenantResourceIsolationMiddleware",
-      "name": "tenant_resource_isolation",
-      "registry_order": 330
-    },
-    {
-      "stack_index": 25,
-      "cls": "RequestContextMiddleware",
-      "module": "src.backend.entrypoints.middlewares.request_context",
-      "qualname": "src.backend.entrypoints.middlewares.request_context:RequestContextMiddleware",
-      "name": "request_context",
-      "registry_order": 320
-    },
-    {
-      "stack_index": 26,
-      "cls": "TenantMiddleware",
-      "module": "src.backend.entrypoints.middlewares.tenant",
-      "qualname": "src.backend.entrypoints.middlewares.tenant:TenantMiddleware",
-      "name": "tenant",
-      "registry_order": 300
-    },
-    {
-      "stack_index": 27,
-      "cls": "CorrelationIdMiddleware",
-      "module": "asgi_correlation_id.middleware",
-      "qualname": "asgi_correlation_id.middleware:CorrelationIdMiddleware",
-      "name": "correlation_id",
-      "registry_order": 280
-    },
-    {
-      "stack_index": 28,
-      "cls": "RequestIDMiddleware",
-      "module": "src.backend.entrypoints.middlewares.request_id",
-      "qualname": "src.backend.entrypoints.middlewares.request_id:RequestIDMiddleware",
-      "name": "request_id",
-      "registry_order": 260
-    },
-    {
-      "stack_index": 29,
-      "cls": "CircuitBreakerMiddleware",
-      "module": "src.backend.entrypoints.middlewares.circuit_breaker",
-      "qualname": "src.backend.entrypoints.middlewares.circuit_breaker:CircuitBreakerMiddleware",
-      "name": "circuit_breaker",
-      "registry_order": 250
-    },
-    {
-      "stack_index": 30,
-      "cls": "APIKeyMiddleware",
-      "module": "src.backend.entrypoints.middlewares.api_key",
-      "qualname": "src.backend.entrypoints.middlewares.api_key:APIKeyMiddleware",
-      "name": "api_key",
-      "registry_order": 110
-    },
-    {
-      "stack_index": 31,
-      "cls": "IPRestrictionMiddleware",
-      "module": "src.backend.entrypoints.middlewares.admin_ip",
-      "qualname": "src.backend.entrypoints.middlewares.admin_ip:IPRestrictionMiddleware",
-      "name": "ip_restriction",
-      "registry_order": 90
-    },
-    {
-      "stack_index": 32,
-      "cls": "BlockedRoutesMiddleware",
-      "module": "src.backend.entrypoints.middlewares.blocked_routes",
-      "qualname": "src.backend.entrypoints.middlewares.blocked_routes:BlockedRoutesMiddleware",
-      "name": "blocked_routes",
-      "registry_order": 70
-    },
-    {
-      "stack_index": 33,
-      "cls": "TrustedHostMiddleware",
-      "module": "starlette.middleware.trustedhost",
-      "qualname": "starlette.middleware.trustedhost:TrustedHostMiddleware",
-      "name": "trusted_host",
-      "registry_order": 50
-    },
-    {
-      "stack_index": 34,
-      "cls": "CORSMiddleware",
-      "module": "starlette.middleware.cors",
-      "qualname": "starlette.middleware.cors:CORSMiddleware",
-      "name": "cors",
-      "registry_order": 30
-    },
-    {
-      "stack_index": 35,
-      "cls": "GlobalRateLimitMiddleware",
-      "module": "src.backend.entrypoints.middlewares.global_ratelimit",
-      "qualname": "src.backend.entrypoints.middlewares.global_ratelimit:GlobalRateLimitMiddleware",
-      "name": "global_ratelimit",
-      "registry_order": 20
-    },
-    {
-      "stack_index": 36,
-      "cls": "ExceptionHandlerMiddleware",
-      "module": "src.backend.entrypoints.middlewares.exception_handler",
-      "qualname": "src.backend.entrypoints.middlewares.exception_handler:ExceptionHandlerMiddleware",
-      "name": "exception_handler",
-      "registry_order": 10
-    }
+    "PrometheusMiddleware",
+    "GracefulShutdownMiddleware",
+    "SecurityHeadersMiddleware",
+    "PrometheusMiddleware",
+    "OtelMiddleware",
+    "InnerRequestLoggingMiddleware",
+    "AuditReplayMiddleware",
+    "AuditLogMiddleware",
+    "CSRFMiddleware",
+    "RpaPolicyMiddleware",
+    "PIIMaskingResponseMiddleware",
+    "WebhookSignatureMiddleware",
+    "WebSocketRateLimitMiddleware",
+    "LoginStepUpMiddleware",
+    "AIToolWhitelistMiddleware",
+    "AuthRequiredMiddleware",
+    "AuthMethodHeaderMiddleware",
+    "DataMaskingMiddleware",
+    "GZipCompressionExcludingMiddleware",
+    "ResponseCacheMiddleware",
+    "TimeoutMiddleware",
+    "RequestBodyCacheMiddleware",
+    "DegradationMiddleware",
+    "IdempotencyHeaderMiddleware",
+    "TenantResourceIsolationMiddleware",
+    "RequestContextMiddleware",
+    "TenantMiddleware",
+    "CorrelationIdMiddleware",
+    "RequestIDMiddleware",
+    "CircuitBreakerMiddleware",
+    "APIKeyMiddleware",
+    "IPRestrictionMiddleware",
+    "BlockedRoutesMiddleware",
+    "TrustedHostMiddleware",
+    "CORSMiddleware",
+    "GlobalRateLimitMiddleware",
+    "ExceptionHandlerMiddleware"
   ],
-  "duplicate_class_registrations": {},
   "actual_request_order": [
-    "prometheus_middleware",
-    "graceful_shutdown",
-    "security_headers",
-    "prometheus",
-    "otel",
-    "inner_request_logging",
-    "audit_replay",
-    "audit_log",
-    "csrf",
-    "rpa_policy",
-    "pii_masking_response",
-    "webhook_signature",
-    "ws_rate_limit",
-    "login_step_up",
-    "ai_tool_whitelist",
-    "auth_required",
-    "auth_method_header",
-    "data_masking",
-    "gzip",
-    "response_cache",
-    "timeout",
-    "request_body_cache",
-    "degradation",
-    "idempotency",
-    "tenant_resource_isolation",
-    "request_context",
-    "tenant",
-    "correlation_id",
-    "request_id",
-    "circuit_breaker",
-    "api_key",
-    "ip_restriction",
-    "blocked_routes",
-    "trusted_host",
-    "cors",
-    "global_ratelimit",
-    "exception_handler"
+    "PrometheusMiddleware",
+    "GracefulShutdownMiddleware",
+    "SecurityHeadersMiddleware",
+    "PrometheusMiddleware",
+    "OtelMiddleware",
+    "InnerRequestLoggingMiddleware",
+    "AuditReplayMiddleware",
+    "AuditLogMiddleware",
+    "CSRFMiddleware",
+    "RpaPolicyMiddleware",
+    "PIIMaskingResponseMiddleware",
+    "WebhookSignatureMiddleware",
+    "WebSocketRateLimitMiddleware",
+    "LoginStepUpMiddleware",
+    "AIToolWhitelistMiddleware",
+    "AuthRequiredMiddleware",
+    "AuthMethodHeaderMiddleware",
+    "DataMaskingMiddleware",
+    "GZipCompressionExcludingMiddleware",
+    "ResponseCacheMiddleware",
+    "TimeoutMiddleware",
+    "RequestBodyCacheMiddleware",
+    "DegradationMiddleware",
+    "IdempotencyHeaderMiddleware",
+    "TenantResourceIsolationMiddleware",
+    "RequestContextMiddleware",
+    "TenantMiddleware",
+    "CorrelationIdMiddleware",
+    "RequestIDMiddleware",
+    "CircuitBreakerMiddleware",
+    "APIKeyMiddleware",
+    "IPRestrictionMiddleware",
+    "BlockedRoutesMiddleware",
+    "TrustedHostMiddleware",
+    "CORSMiddleware",
+    "GlobalRateLimitMiddleware",
+    "ExceptionHandlerMiddleware"
   ],
   "actual_response_order": [
-    "exception_handler",
-    "global_ratelimit",
-    "cors",
-    "trusted_host",
-    "blocked_routes",
-    "ip_restriction",
-    "api_key",
-    "circuit_breaker",
-    "request_id",
-    "correlation_id",
-    "tenant",
-    "request_context",
-    "tenant_resource_isolation",
-    "idempotency",
-    "degradation",
-    "request_body_cache",
-    "timeout",
-    "response_cache",
-    "gzip",
-    "data_masking",
-    "auth_method_header",
-    "auth_required",
-    "ai_tool_whitelist",
-    "login_step_up",
-    "ws_rate_limit",
-    "webhook_signature",
-    "pii_masking_response",
-    "rpa_policy",
-    "csrf",
-    "audit_log",
-    "audit_replay",
-    "inner_request_logging",
-    "otel",
-    "prometheus",
-    "security_headers",
-    "graceful_shutdown",
-    "prometheus_middleware"
+    "ExceptionHandlerMiddleware",
+    "GlobalRateLimitMiddleware",
+    "CORSMiddleware",
+    "TrustedHostMiddleware",
+    "BlockedRoutesMiddleware",
+    "IPRestrictionMiddleware",
+    "APIKeyMiddleware",
+    "CircuitBreakerMiddleware",
+    "RequestIDMiddleware",
+    "CorrelationIdMiddleware",
+    "TenantMiddleware",
+    "RequestContextMiddleware",
+    "TenantResourceIsolationMiddleware",
+    "IdempotencyHeaderMiddleware",
+    "DegradationMiddleware",
+    "RequestBodyCacheMiddleware",
+    "TimeoutMiddleware",
+    "ResponseCacheMiddleware",
+    "GZipCompressionExcludingMiddleware",
+    "DataMaskingMiddleware",
+    "AuthMethodHeaderMiddleware",
+    "AuthRequiredMiddleware",
+    "AIToolWhitelistMiddleware",
+    "LoginStepUpMiddleware",
+    "WebSocketRateLimitMiddleware",
+    "WebhookSignatureMiddleware",
+    "PIIMaskingResponseMiddleware",
+    "RpaPolicyMiddleware",
+    "CSRFMiddleware",
+    "AuditLogMiddleware",
+    "AuditReplayMiddleware",
+    "InnerRequestLoggingMiddleware",
+    "OtelMiddleware",
+    "PrometheusMiddleware",
+    "SecurityHeadersMiddleware",
+    "GracefulShutdownMiddleware",
+    "PrometheusMiddleware"
   ],
   "raw_events": [
-    "enter:prometheus_middleware",
-    "enter:graceful_shutdown",
-    "enter:security_headers",
-    "enter:prometheus",
-    "enter:otel",
-    "enter:inner_request_logging",
-    "enter:audit_replay",
-    "enter:audit_log",
-    "enter:csrf",
-    "enter:rpa_policy",
-    "enter:pii_masking_response",
-    "enter:webhook_signature",
-    "enter:ws_rate_limit",
-    "enter:login_step_up",
-    "enter:ai_tool_whitelist",
-    "enter:auth_required",
-    "enter:auth_method_header",
-    "enter:data_masking",
-    "enter:gzip",
-    "enter:response_cache",
-    "enter:timeout",
-    "enter:request_body_cache",
-    "enter:degradation",
-    "enter:idempotency",
-    "enter:tenant_resource_isolation",
-    "enter:request_context",
-    "enter:tenant",
-    "enter:correlation_id",
-    "enter:request_id",
-    "enter:circuit_breaker",
-    "enter:api_key",
-    "enter:ip_restriction",
-    "enter:blocked_routes",
-    "enter:trusted_host",
-    "enter:cors",
-    "enter:global_ratelimit",
-    "enter:exception_handler",
-    "exit:exception_handler",
-    "exit:global_ratelimit",
-    "exit:cors",
-    "exit:trusted_host",
-    "exit:blocked_routes",
-    "exit:ip_restriction",
-    "exit:api_key",
-    "exit:circuit_breaker",
-    "exit:request_id",
-    "exit:correlation_id",
-    "exit:tenant",
-    "exit:request_context",
-    "exit:tenant_resource_isolation",
-    "exit:idempotency",
-    "exit:degradation",
-    "exit:request_body_cache",
-    "exit:timeout",
-    "exit:response_cache",
-    "exit:gzip",
-    "exit:data_masking",
-    "exit:auth_method_header",
-    "exit:auth_required",
-    "exit:ai_tool_whitelist",
-    "exit:login_step_up",
-    "exit:ws_rate_limit",
-    "exit:webhook_signature",
-    "exit:pii_masking_response",
-    "exit:rpa_policy",
-    "exit:csrf",
-    "exit:audit_log",
-    "exit:audit_replay",
-    "exit:inner_request_logging",
-    "exit:otel",
-    "exit:prometheus",
-    "exit:security_headers",
-    "exit:graceful_shutdown",
-    "exit:prometheus_middleware"
+    "enter:PrometheusMiddleware",
+    "enter:GracefulShutdownMiddleware",
+    "enter:SecurityHeadersMiddleware",
+    "enter:PrometheusMiddleware",
+    "enter:OtelMiddleware",
+    "enter:InnerRequestLoggingMiddleware",
+    "enter:AuditReplayMiddleware",
+    "enter:AuditLogMiddleware",
+    "enter:CSRFMiddleware",
+    "enter:RpaPolicyMiddleware",
+    "enter:PIIMaskingResponseMiddleware",
+    "enter:WebhookSignatureMiddleware",
+    "enter:WebSocketRateLimitMiddleware",
+    "enter:LoginStepUpMiddleware",
+    "enter:AIToolWhitelistMiddleware",
+    "enter:AuthRequiredMiddleware",
+    "enter:AuthMethodHeaderMiddleware",
+    "enter:DataMaskingMiddleware",
+    "enter:GZipCompressionExcludingMiddleware",
+    "enter:ResponseCacheMiddleware",
+    "enter:TimeoutMiddleware",
+    "enter:RequestBodyCacheMiddleware",
+    "enter:DegradationMiddleware",
+    "enter:IdempotencyHeaderMiddleware",
+    "enter:TenantResourceIsolationMiddleware",
+    "enter:RequestContextMiddleware",
+    "enter:TenantMiddleware",
+    "enter:CorrelationIdMiddleware",
+    "enter:RequestIDMiddleware",
+    "enter:CircuitBreakerMiddleware",
+    "enter:APIKeyMiddleware",
+    "enter:IPRestrictionMiddleware",
+    "enter:BlockedRoutesMiddleware",
+    "enter:TrustedHostMiddleware",
+    "enter:CORSMiddleware",
+    "enter:GlobalRateLimitMiddleware",
+    "enter:ExceptionHandlerMiddleware",
+    "exit:ExceptionHandlerMiddleware",
+    "exit:GlobalRateLimitMiddleware",
+    "exit:CORSMiddleware",
+    "exit:TrustedHostMiddleware",
+    "exit:BlockedRoutesMiddleware",
+    "exit:IPRestrictionMiddleware",
+    "exit:APIKeyMiddleware",
+    "exit:CircuitBreakerMiddleware",
+    "exit:RequestIDMiddleware",
+    "exit:CorrelationIdMiddleware",
+    "exit:TenantMiddleware",
+    "exit:RequestContextMiddleware",
+    "exit:TenantResourceIsolationMiddleware",
+    "exit:IdempotencyHeaderMiddleware",
+    "exit:DegradationMiddleware",
+    "exit:RequestBodyCacheMiddleware",
+    "exit:TimeoutMiddleware",
+    "exit:ResponseCacheMiddleware",
+    "exit:GZipCompressionExcludingMiddleware",
+    "exit:DataMaskingMiddleware",
+    "exit:AuthMethodHeaderMiddleware",
+    "exit:AuthRequiredMiddleware",
+    "exit:AIToolWhitelistMiddleware",
+    "exit:LoginStepUpMiddleware",
+    "exit:WebSocketRateLimitMiddleware",
+    "exit:WebhookSignatureMiddleware",
+    "exit:PIIMaskingResponseMiddleware",
+    "exit:RpaPolicyMiddleware",
+    "exit:CSRFMiddleware",
+    "exit:AuditLogMiddleware",
+    "exit:AuditReplayMiddleware",
+    "exit:InnerRequestLoggingMiddleware",
+    "exit:OtelMiddleware",
+    "exit:PrometheusMiddleware",
+    "exit:SecurityHeadersMiddleware",
+    "exit:GracefulShutdownMiddleware",
+    "exit:PrometheusMiddleware"
   ],
   "expected_security_chain": [
     "authentication",
@@ -656,33 +249,78 @@
   ],
   "chain_positions": {
     "authentication": {
-      "matched": "auth_required",
-      "index": 15
+      "indexes": [
+        15,
+        16,
+        30
+      ],
+      "classes": [
+        "AuthRequiredMiddleware",
+        "AuthMethodHeaderMiddleware",
+        "APIKeyMiddleware"
+      ],
+      "matched": true
     },
     "tenant resolution": {
-      "matched": "tenant",
-      "index": 26
+      "indexes": [
+        26
+      ],
+      "classes": [
+        "TenantMiddleware"
+      ],
+      "matched": true
     },
     "tenant resource isolation": {
-      "matched": "tenant_resource_isolation",
-      "index": 24
+      "indexes": [
+        24
+      ],
+      "classes": [
+        "TenantResourceIsolationMiddleware"
+      ],
+      "matched": true
     },
-    "authorization": null,
+    "authorization": {
+      "indexes": [],
+      "classes": [],
+      "matched": false
+    },
     "idempotency": {
-      "matched": "idempotency",
-      "index": 23
+      "indexes": [
+        23
+      ],
+      "classes": [
+        "IdempotencyHeaderMiddleware"
+      ],
+      "matched": true
     },
     "request body cache": {
-      "matched": "request_body_cache",
-      "index": 21
+      "indexes": [
+        21
+      ],
+      "classes": [
+        "RequestBodyCacheMiddleware"
+      ],
+      "matched": true
     },
     "response cache": {
-      "matched": "response_cache",
-      "index": 19
+      "indexes": [
+        19
+      ],
+      "classes": [
+        "ResponseCacheMiddleware"
+      ],
+      "matched": true
     },
     "logging": {
-      "matched": "audit_log",
-      "index": 7
+      "indexes": [
+        5,
+        7
+      ],
+      "classes": [
+        "InnerRequestLoggingMiddleware",
+        "AuditLogMiddleware"
+      ],
+      "matched": true
     }
   },
   "chain_violations": [
@@ -690,7 +328,8 @@
     "tenant resource isolation(idx=24) не раньше idempotency(idx=23) — порядок инвертирован",
     "idempotency(idx=23) не раньше request body cache(idx=21) — порядок инвертирован",
     "request body cache(idx=21) не раньше response cache(idx=19) — порядок инвертирован",
-    "response cache(idx=19) не раньше logging(idx=7) — порядок инвертирован"
+    "response cache(idx=19) не раньше logging(idx=5) — порядок инвертирован",
+    "стадия 'authorization' ОТСУТСТВУЕТ в стеке"
   ],
   "matched_stages": 7,
   "total_stages": 8

@@ -31,6 +31,56 @@
 
 ---
 
+## 0-bis. Смена HEAD: fast-forward-слив и повторная инвентаризация
+
+Раздел 0 фиксирует baseline **на момент начала волны** и намеренно не переписан.
+HEAD с тех пор сменился дважды, и по правилу задачи инвентаризация выполнена заново
+на каждом значении.
+
+| Момент | HEAD | Что изменилось | Повторный замер |
+|---|---|---|---|
+| Начало волны | `3b509542e` | — | инвентаризация с нуля |
+| После 14 атомарных коммитов аудита | `2037f9d59` | F-W-регрессия (пакет vs подмодуль) | полный DoD-прогон заново |
+| **Текущий HEAD** | **`2d9f4323b`** | fast-forward-слив `fix/temporal-fail-closed-at` | полный DoD-прогон заново (ниже) |
+
+**Что было слито.** Ветка `fix/temporal-fail-closed-at` (2 коммита: `2a073bac7`,
+`2d9f4323b`) была найдена уже **после** составления реестра — обычным
+`git branch`, а не в исходном плане. Она закрывает 3 findings уровня P0/P1
+(F-AT1, F-AT3) и 1 HIGH (F-AP2).
+
+**Проверка до мержа (в отдельном worktree `/home/user/dev/gd_atfix`):**
+
+| Проверка | Результат |
+|---|---|
+| Новые тесты ветки | 17 passed (Temporal) + 20 passed (WAF-набор) |
+| Мутация 1: `temporal_worker_runtime.py` откачен к `master` | **5 failed**, 2 passed — дефект ловится |
+| Мутация 2: `check_waf_coverage.py` откачен к `master` | **13 failed**, 7 passed — дефект ловится |
+| Регрессии: `tests/unit/infrastructure/workflow/` + `tests/unit/plugins/composition/` | ветка `7 failed, 322 passed`; master `7 failed, 315 passed` — **те же 7 падений** (пре-существующая order-зависимая группа, F-AN3). Ветка не внесла ни одной новой регрессии, +7 = новые тесты |
+| Старт приложения при `workflow_use_temporal=false` (дефолт) | не затронут: фикс бросает `RuntimeError` только при **включённом** флаге |
+
+**Мерж и чистка веток.** Слияние fast-forward (пересечения с 4 незакоммиченными
+файлами нет — проверено до мержа). После мержа удалены `fix/temporal-fail-closed-at`
+и `audit/reaudit-2026-10-01` (обе влиты, worktree чисты). `master` не удалялся.
+
+**Повторный замер DoD-последовательности на `2d9f4323b`:**
+
+| Проверка | Результат |
+|---|---|
+| `compileall src extensions plugins testkit tools` | **EXIT=0** |
+| `tools/check_layers.py` | **Нарушений: 0 новых** (файлов: 2549; baseline: 22 legacy) |
+| `pytest --collect-only -q` | **20961** (было 20934; +27 = 7 Temporal + 20 WAF тестов) |
+| Метрики README | `tools/generate_current_metrics.py --write` → «132 actions, 20961 тестов»; `--check` → **«Метрики README актуальны», EXIT=0** |
+| Порядок middleware | перезамер: **37/37/37/37**, 7/8 стадий, стадия `authorization` отсутствует (артефакт обновлён) |
+
+**Про счётчик тестов (закрытый вопрос).** Ранее зафиксировано расхождение
+`20931` (README) против повторных `20934`. Исследование показало, что счётчик
+**детерминирован**: 6 независимых прогонов подряд дали одно значение, расхождения
+не воспроизводится. Значит, `20931` было **устаревшее** значение в README, а не
+нестабильная метрика. После перегенерации гейт `--check` проходит (EXIT=0).
+Ложная тревога снята; отдельного ADR не требуется.
+
+---
+
 ## 1. ГЛАВНАЯ P0-ПРОВЕРКА: фактический порядок middleware
 
 ### 1.1 Метод
@@ -224,8 +274,22 @@ state["tenant_id"] = header_value if header_value else self._default
   + 1 order-dependent). Мои 5 тестов на чистом HEAD падают — они и должны падать.
   **Вывод: регрессий от правки 0.**
 
-**Статус: FIXED, не закоммичено.** Коммит — только по явной команде владельца.
+**Статус: FIXED, commit `7806bdf76`** (+ `2a6ecc467` слит в master fast-forward).
 
+
+**Поля finding (DoD) — F-D**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P0 |
+| **file:line** | дефект: `src/backend/entrypoints/middlewares/tenant.py:82`; фикс: `tenant.py`, `request_context.py`, `registry.py:71`, `setup_middlewares.py:154-160`, `tenant_resource_isolation.py` |
+| **Reproduction** | `pytest tests/unit/entrypoints/middlewares/test_tenant_auth_precedence_security.py -q`; живой HTTP на HEAD `2037f9d59`: `curl -sS -H "X-API-Key: $SEC_API_KEY" -H "X-Tenant-ID: tenant-b" http://127.0.0.1:8123/api/v1/actions/inventory` |
+| **Expected** | HTTP **403** `tenant_mismatch`; `state['tenant_id'] == 'tenant-a'` |
+| **Actual** | до фикса: HTTP **200**, `state['tenant_id'] == 'tenant-b'`. на HEAD `2037f9d59` (перезамер 2026-10-01 19:33): HTTP **403** `{"error":"tenant_mismatch"}`, серверный лог `tenant DENY ... reason=tenant_not_asserted` |
+| **Impact** | кросс-тенантный доступ к данным и операциям чужого tenant одним заголовком; 9 потребителей `get_tenant_id()` |
+| **Fix** | аутентифицированный tenant авторитетен; заголовок требует явной capability `metadata['tenant_impersonation']`; N-1 — `_auth_present()` вместо проверки `tenant_id` |
+| **Regression test** | `tests/unit/entrypoints/middlewares/test_tenant_auth_precedence_security.py` (8), `tests/unit/core/security/test_reaudit_n1_n3_n4.py` (12) |
+| **Commit SHA** | `7806bdf76` (P0 + N-1), `ff65a6a11` (регресс-тесты N-1) |
 ---
 
 ## 3. Противоречивые комментарии и docstrings (P0-5)
@@ -243,7 +307,12 @@ state["tenant_id"] = header_value if header_value else self._default
 
 ## 4. Lifecycle (агент + собственная верификация)
 
-Артефакт: `artifacts/current_audit/lifecycle_graph.json` (19 startup-фаз извлечены из кода).
+Артефакт: `artifacts/current_audit/lifecycle_graph.json` — **перегенерирован из кода**
+генератором `artifacts/current_audit/generate_lifecycle_graph.py` (AST, `ast.literal_eval`),
+поэтому артефакт проверяем текущим кодом, а не переносится из прошлой волны.
+Замер на HEAD `2d9f4323b`: **19 startup-фаз** (`STARTUP_PHASES`), **11 операций**
+(**10 REQUIRED**, 1 OPTIONAL), из них **с `stop` — 4, без `stop` — 7** (F-N5),
+**7 readiness/health-эндпоинтов** (F-H).
 
 **F-E (P1, ИСПРАВЛЕН) — типа `LifecycleOperation` не существовало.** `grep` → 0 совпадений.
 Исходно операции описывались двумя кортежными структурами без метаданных:
@@ -527,7 +596,7 @@ Allowlist **регрессировал**: 38→37→25→21→14→22, при т
 
 | Библиотека | Вердикт | Ключевое доказательство |
 |---|---|---|
-| **OpenFeature** | `DECLARED_ONLY` → самописная замена в проде | SDK не установлен; `import openfeature` — **0 строк** во всём репо; `openfeature_provider.py` (444 LOC) — самописный `Protocol`-шим; прод читает `feature_flags.*` в 289 местах / 165 файлах (5954 LOC кастомного кода) |
+| **OpenFeature** | `DECLARED_ONLY` → самописная замена в проде | **SDK установлен, но не используется** (проверено 2026-10-05: `openfeature` импортируется, `import openfeature` в коде — **0 строк**); `openfeature_provider.py` (444 LOC) — самописный `Protocol`-шим; прод читает `feature_flags.*` в 289 местах / 165 файлах (5954 LOC кастомного кода) |
 | **Schemathesis** | `PARTIAL` — контракт не проверяется | тестов с `import schemathesis` — **0**; `api-fuzz.yml:25` `continue-on-error: true`, `:52` `FEATURE_SCHEMATHESIS_GATE_ENABLED: "false"`, `:60` `\|\| echo "[api-fuzz] warn"` — gate проваливается намеренно |
 | **Testcontainers** | `REAL_USE` | 19 файлов; `tests/integration/test_testcontainers_smoke.py:31,46` реальные `PostgresContainer`/`RedisContainer` + SQL round-trip; дефолтного deselect нет |
 | **FastStream** | `REAL_USE`, но не единственный путь | реальные импорты в stream/subscribers/asyncapi; **параллельно** прямые `nats`, `aio_pika`, `aiokafka` в sources/sinks/CDC |
@@ -816,6 +885,20 @@ CorrelationIdMiddleware             [2]   ← добавляет вторую
 **F-AG (P2) — `Referrer-Policy` отсутствует.** Присутствуют HSTS, `nosniff`,
 `X-Frame-Options: DENY`, CSP, `Permissions-Policy`.
 
+
+**Поля finding (DoD) — F-AF**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P2 |
+| **file:line** | `src/backend/entrypoints/setup_middlewares.py:149`, `src/backend/core/observability/correlation.py:13`, `site-packages/asgi_correlation_id/middleware.py:40` |
+| **Reproduction** | `curl -sSI -H "Host: localhost:8123" http://127.0.0.1:8123/health \| grep -ci '^x-request-id'` |
+| **Expected** | `1` |
+| **Actual** | `2` — перепроверено на HEAD `2037f9d59` 2026-10-01 19:33, оба заголовка несут одно значение `2fa07f61…` |
+| **Impact** | неоднозначность трассировки запроса; при расхождении значений — риск cache/response-splitting по `X-Request-ID` |
+| **Fix** | убрать один из двух middleware либо задать `CorrelationIdMiddleware(header_name='X-Correlation-ID')` явно при регистрации |
+| **Regression test** | тест на число вхождений `x-request-id`/`x-correlation-id` в заголовках ответа |
+| **Commit SHA** | нет — finding **открыт**, fix не вносился; зафиксировано на HEAD `2037f9d59` |
 ---
 
 ## 9a-bis. Перезамер после фиксов F-W и F-Y
@@ -970,6 +1053,20 @@ workflow. You can also pass the workflow file name as a string»
 подстрокой `-euo`, и проверка молча пропускала все скрипты. Переписано на
 посимвольный разбор; мутация `-eu → True` в параметризованных тестах поймана.
 
+
+**Поля finding (DoD) — F-Z**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P1 |
+| **file:line** | `.github/workflows/release-gate.yml` (`REPO` не объявлен под `set -u`; `"build-and-deploy"` — job из `docs-publish.yml`, а не workflow) |
+| **Reproduction** | извлечь скрипт гейта и прогнать на bash 5.2.21 → `bash: REPO: не заданы границы переменной`, `SIM_EXIT=1` |
+| **Expected** | скрипт гейта проходит итерацию и агрегирует conclusions |
+| **Actual** | падение на **первой** итерации, до агрегации; после починки `REPO` `gh api` вернул бы пустой `workflow_runs` → `conclusion: missing` |
+| **Impact** | release-gate в CI красный постоянно → сигнал о готовности релиза недействителен |
+| **Fix** | `REPO: ${{ github.repository }}` в `env:` шага; идентификаторы переведены на имена workflow-файлов (`lint.yml` … `image.yml`) согласно контракту GitHub API `workflow_id` |
+| **Regression test** | `tools/checks/check_release_gate.py` (`make check-release-gate`, подключён в composite `ci`); 18 тестов в `tests/unit/deploy/test_release_gate_workflow.py`; 3 независимые мутации пойманы раздельно |
+| **Commit SHA** | `658a97efe` (фикс + мета-гейт) |
 ### F-AL (CRITICAL) — MCP-инструмент читал произвольные файлы ФС
 
 Воспроизведено на живом рантайме тем же вызовом, что делает MCP-инструмент
@@ -999,8 +1096,25 @@ production-сайта передают корень проекта. R-V15-4 со
 
 9 тестов `tests/unit/core/ai/test_fs_facade_read_roots.py`, включая симлинк
 наружу и «пустой список корней = deny-all». Регресс `core/ai` + `mcp`:
-4 failed / 764 passed — все 4 идентичны базовым (`fastmcp` не установлен).
+**Перепроверено 2026-10-05 на `2d9f4323b`:** `pytest tests/unit/core/ai/
+tests/unit/entrypoints/mcp/` → **771 passed, 8 skipped, 2 xfailed, EXIT=0**.
+Те 4 «базовых» падения были следствием отсутствия `fastmcp` в venv, а не
+регрессией фикса: с установленным пакетом регрессий **0**.
 
+
+**Поля finding (DoD) — F-AL**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | CRITICAL |
+| **file:line** | `src/backend/entrypoints/mcp/mcp_server/tools_document.py:60` (`AIFsFacade(capability_check=None)`), `src/backend/core/ai/fs_facade.py:78-90`, второй production-сайт `ai_safety_setup.py:63-64` |
+| **Reproduction** | вызов `documents_to_markdown` тем же способом, что делает MCP-инструмент, на живом рантайме |
+| **Expected** | отказ: чтение вне проектного корня запрещено (R-V15-4) |
+| **Actual** | `[LEAK] /etc/passwd: engine=legacy size=3360 'root:x:0:0:root:/root:/bin/bash…'`, `[LEAK] /etc/hostname` |
+| **Impact** | произвольное чтение файлов ОС через MCP-инструмент; отключён единственный capability-барьер `fs.read` |
+| **Fix** | `allowed_read_roots` в `AIFsFacade` с проверкой **после** `resolve()` (симлинки и `..` нейтрализуются); публичный `config_loader.repo_root()`; оба production-сайта передают корень проекта |
+| **Regression test** | `tests/unit/core/ai/test_fs_facade_read_roots.py` (9), включая симлинк наружу и «пустой список корней = deny-all» |
+| **Commit SHA** | `1d0679c29` |
 ### F-AM (CRITICAL) — ORM-фильтр tenant не фильтровал DML и JOIN
 
 Воспроизведено на **реальном** SQLAlchemy 2.0.52 + SQLite (не на mock), при
@@ -1050,6 +1164,21 @@ test_tenant_filter.py::test_filter_by_tenant_skips_non_select` кодирова�
 возвращала пустой tenant, и фильтр корректно не применялся. Тест был бы
 vacuous ровно так же, как старый.
 
+
+**Поля finding (DoD) — F-AM**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | CRITICAL |
+| **file:line** | `src/backend/core/tenancy/sqlalchemy_filter.py:71-109, 244, 355-358, 424` |
+| **Reproduction** | реальный SQLAlchemy 2.0.52 + SQLite, `TenantContext(tenant_id='tenant-a')`, в БД строка чужого tenant |
+| **Expected** | `update(Order).where(id=2)` → 0; `delete(Order).where(id=2)` → 0; `select(Order, User.id).join(User,…)` → `[1]` |
+| **Actual** | update → **1 строка**; delete → **1 строка**; join → **`[1, 2]`** |
+| **Impact** | кросс-тенантная запись и удаление данных, утечка строк через JOIN |
+| **Fix** | резолвер `_tenant_aware_entities()` через `column_descriptions` (и для SELECT, и для DML); снят ранний выход `if not orm_execute_state.is_select: return` |
+| **Regression test** | `tests/unit/core/tenancy/test_tenant_filter_orm_dml.py` (10) |
+| **Commit SHA** | `9572f902b` |
+| **Остаточный риск** | N-2 (открыт): `UNION`/CTE обходят ORM-фильтр — фикс покрывает только SELECT/DML одного statement |
 ---
 
 ## 9e. Findings роя (4 агента, 33 находки)
@@ -1058,9 +1187,9 @@ vacuous ровно так же, как старый.
 
 | ID | Sev | Суть | Статус |
 |---|---|---|---|
-| F-AT1 | **P0** | `factory.py:109-117` — prod-профиль молча деградирует на `PgRunnerWorkflowBackend` при отсутствии SDK, лог уровня `warning` | открыт |
-| F-AT2 | **P0** | `config/features/infrastructure.py:430` — `workflow_use_temporal` по умолчанию `False`; worker не стартует ни в одном профиле | открыт |
-| F-AT3 | P1 | `temporal_worker_runtime.py:281` + `lifecycle.py:537` — `_build_temporal_activities()` возвращает `[]`, REQUIRED-операция при этом вакуумна (5 точек `return` после warning) | открыт |
+| F-AT1 | **P0** | `factory.py:109-117` — prod-профиль молча деградирует на `PgRunnerWorkflowBackend` при отсутствии SDK, лог уровня `warning` | **FIXED** — fail-closed, commit: `2a073bac7` |
+| F-AT2 | **P0** | `config/features/infrastructure.py:430` — `workflow_use_temporal` по умолчанию `False`; worker не стартует ни в одном профиле | **частично**: дефолт `False` остался (проверено на HEAD `2d9f4323b`), но риск «молча» стал «громко» — при включённом флаге worker обязан подняться, иначе REQUIRED-операция валит старт |
+| F-AT3 | P1 | `temporal_worker_runtime.py:281` + `lifecycle.py:537` — `_build_temporal_activities()` возвращает `[]`, REQUIRED-операция при этом вакуумна (5 точек `return` после warning) | **FIXED** — пустой `activities` → `RuntimeError`, commit: `2a073bac7` |
 | F-AT4 | P1 | `factory.py:84` — `except ImportError` не ловит `RuntimeError`, бросаемый внутри `connect()`; заявленный graceful fallback мёртв | открыт |
 | F-AT5 | P1 | `tools/checks/temporal_replay_gate.py` написан, но не подключён ни к одному make/CI-таргету (0 совпадений) | открыт |
 | F-AT6–10 | P1–P2 | fail-open Redis-lock (дублирование cron), scheduler не стартует без Redis, `versioning.patched()` → `False`, health-check читает несуществующий `settings.workflow.host` | открыт |
@@ -1073,9 +1202,9 @@ leader election симметричен; `set_app_ref` вызывается.
 
 | ID | Sev | Суть | Статус |
 |---|---|---|---|
-| F-AP1 | **CRITICAL** | SSRF: ни на одной из 11 точек `page.goto` нет валидации URL; 9/9 payload'ов (`169.254.169.254`, `file://`, `127.0.0.1`, `data:`, `chrome://`) дошли до браузера; достижимо из тела запроса | открыт |
-| F-AP2 | HIGH | `check_waf_coverage.py` матчит только `httpx` → `page.goto` невидим; гейт отдаёт «0 violations» при реальной дыре | открыт |
-| F-AP3 | HIGH | `playwright`/`patchright` отсутствуют в venv (только optional extras) → **все** browser-пункты DoD = ENV_BLOCKED, не PASS | ENV_BLOCKED |
+| F-AP1 | **CRITICAL** | SSRF: ни на одной из 10 точек `page.goto` нет валидации URL; 9/9 payload'ов (`169.254.169.254`, `file://`, `127.0.0.1`, `data:`, `chrome://`) дошли до браузера; достижимо из тела запроса | **фикс реализован и проверен в ветке `fix/ssrf-url-guard` (worktree `gd_ssrf`), НЕ закоммичен и НЕ слит** — на master дыра открыта |
+| F-AP2 | HIGH | `check_waf_coverage.py` матчит только `httpx` → `page.goto` невидим; гейт отдаёт «0 violations» при реальной дыре | **FIXED** — гейт детектит `page.goto`/`context.goto`/`*.reload()`; 3 реальных файла в allowlist с обоснованием и owner'ом, commit: `2d9f4323b`. **F-AP1 (SSRF) остаётся открытым** |
+| F-AP3 | HIGH | `playwright`/`patchright` отсутствуют в venv (только optional extras) → **все** browser-пункты DoD = ENV_BLOCKED, не PASS | **СНЯТО как ENV**: пакеты установлены (2026-10-05), BROWSER-прогон выполнен реально — 6 PASS / 0 FAIL (см. §9f-ter) |
 | F-AP4–11 | HIGH–LOW | утечка driver-процесса при падении `launch()`, семафор не освобождается при ошибке `new_page()`, пул не подключён в DI, обход workspace для screenshot, единственный real-browser тест `--ignore`нут, отсутствие маскирования | открыт |
 
 Уточнение: `_validate_url` в `scraping.py` существует и блокирует 7 сетевых
@@ -1086,7 +1215,7 @@ payload'ов, но пропускает `file://`, `data:`, `chrome://` и decim
 
 | ID | Sev | Суть | Статус |
 |---|---|---|---|
-| F-AQ1 | **CRITICAL** | MCP читает произвольные файлы (`capability_check=None`, без root-allowlist) | **FIXED = F-AL** |
+| F-AQ1 | **CRITICAL** | MCP читает произвольные файлы (`capability_check=None`, без root-allowlist) | **FIXED = F-AL**, commit: `1d0679c29` |
 | F-AQ2 | HIGH | `output_mixin.py:111` — output-санитайзер fail-open в отличие от input; `pii_detected=False` при утечке ПДн | открыт |
 | F-AQ3 | HIGH | `RagInvalidationBus.subscribe()` не вызывается нигде → `publish → 0 recipients`; кэш после ingest не инвалидируется (L1 TTL 3600 s) | открыт |
 | F-AQ4–8 | MED–LOW | тихая деградация кэша неотличима от честного miss, `core.vector_store.memory` не существует, workflow-хуки пропускают всё вне префиксов `banking.*`/`rpa.*`, `guardrails` — no-op | открыт |
@@ -1101,13 +1230,13 @@ traversal, symlink — 4/4 заблокированы), sandbox (прямого 
 | ID | Sev | Суть | Статус |
 |---|---|---|---|
 | F-AS1 | **CRITICAL** | split-brain двух ContextVar: `core.tenancy._current` в production **никогда не заполняется**; 9 потребителей (ORM-фильтр, RLS) читают пустое значение | открыт — корень для F-AS2/3 |
-| F-AS2 | **CRITICAL** | JOIN-запросы не фильтруются | **FIXED = F-AM** |
-| F-AS3 | **CRITICAL** | UPDATE/DELETE не фильтруются | **FIXED = F-AM** |
+| F-AS2 | **CRITICAL** | JOIN-запросы не фильтруются | **FIXED = F-AM**, commit: `9572f902b` |
+| F-AS3 | **CRITICAL** | UPDATE/DELETE не фильтруются | **FIXED = F-AM**, commit: `9572f902b` |
 | F-AS4 | HIGH | `api_key.py:111` хардкодит `tenant_id="default"`; `api_key` (order 110) выполняется **внутри** `tenant` (order 300) → инвариант «auth tenant авторитетен» не действует для API-key | открыт |
 | F-AS5–6 | HIGH | `TenantResourceIsolationMiddleware` — production no-op (0 checker'ов); `require_object_ownership` — 0 production-caller'ов и fail-open по умолчанию | открыт |
 | F-AS7 | HIGH | `hitl_service.get()` при пустом tenant снимает фильтр (`tenant_id=None`) — единственная исполняемая ветка из-за F-AS1 | открыт |
 | F-AS8–14 | P1–P2 | 3 из 5 GDPR-адаптеров fail-open на пустом tenant, нет валидации формата tenant-id + Redis glob-инъекция, пустой `X-Tenant-ID` → общий `"default"`, сторы без tenant-скоупа (outbox/watermark/express/mongo), DSL `db_update`/`db_delete` без tenant-предиката | открыт |
-| F-AN | P1 | Существующие тесты tenant-фильтра **вакуумны**: `MagicMock` вместо `ORMExecuteState`, listener не вызывается; `48 passed` не доказывают работоспособность | частично закрыто тестами F-AM |
+| F-AN | P1 | Существующие тесты tenant-фильтра **вакуумны**: `MagicMock` вместо `ORMExecuteState`, listener не вызывается; `48 passed` не доказывают работоспособность | частично закрыто тестами F-AM commit: `—` |
 
 Агент также **опроверг** две переданные ему гипотезы: утечки tenant между
 запросами через contextvars на keep-alive соединении нет (runtime под uvicorn,
@@ -1115,6 +1244,502 @@ traversal, symlink — 4/4 заблокированы), sandbox (прямого 
 `core/domain/repositories` не существует.
 
 ---
+
+### DoD-поля для findings, закрытых слиянием ветки `fix/temporal-fail-closed-at`
+
+Ветка была найдена в `git branch` уже **после** составления реестра, проверена
+в отдельном worktree, слита fast-forward в `master` (HEAD `2d9f4323b`) и
+удалена. Проверка: 17 тестов Temporal + 20 тестов WAF зелёные; две мутации
+(откат исходников к `master`) повалили 5 и 13 тестов соответственно;
+комбинированный прогон `tests/unit/infrastructure/workflow/` +
+`tests/unit/plugins/composition/` дал на ветке `7 failed, 322 passed` и на
+`master` `7 failed, 315 passed` — **те же 7 падений**, то есть ветка не внесла
+ни одной новой регрессии (+7 = новые тесты).
+
+**F-AT1 (P0, ИСПРАВЛЕН)**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P0 |
+| **file:line** | `src/backend/infrastructure/workflow/temporal_worker_runtime.py:221-380` (5 точек выхода), `src/backend/plugins/composition/setup_infra/lifecycle.py:272-315` |
+| **Reproduction** | `pytest tests/unit/infrastructure/workflow/test_temporal_fail_closed_reaudit.py -q` |
+| **Expected** | REQUIRED-операция `start_temporal_worker_runtime` падает, если при **включённом** флаге воркер не поднялся (SDK нет / кластер недоступен / pool не импортируется / `register_worker` упал / `activities=[]`) |
+| **Actual** | до фикса: все 5 точек делали `return` + `_logger.warning` → операция рапортовала `STARTED` при неработающем воркере (в рантайме это `ActivityNotRegisteredError`); после: `error` + `raise RuntimeError` |
+| **Impact** | «воркер поднялся» ≠ «воркер работает»: отказ откладывался с запуска на выполнение каждого workflow |
+| **Fix** | fail-closed при `workflow_use_temporal=true`; легитимный `return` сохранён только для выключенного флага; уровни логов `warning → error`; пустой `activities` проверяется **до** сетевого dial |
+| **Regression test** | `tests/unit/infrastructure/workflow/test_temporal_fail_closed_reaudit.py` (7 новых), `test_temporal_worker_runtime.py` (расширен) |
+| **Commit SHA** | `2a073bac7` |
+
+**F-AT3 (P1, ИСПРАВЛЕН)** — входит в тот же коммит
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P1 |
+| **file:line** | `temporal_worker_runtime.py:294-311` (проверка `activities_to_use`), `setup_infra/lifecycle.py:272-315` (`_build_temporal_activities`) |
+| **Reproduction** | `start_temporal_worker_runtime(activities=[])` при включённом флаге |
+| **Expected** | отказ: воркер без activity-callable'ов обслуживает ни один workflow |
+| **Actual** | до фикса: `activities=[]` проходил в `register_worker` и рапортовал `STARTED`; после: `RuntimeError` с указанием на `ActivityBridge` |
+| **Impact** | REQUIRED-операция была вакуумна — «зелёный» worker без единого activity |
+| **Fix** | fail-closed + `app_logger.error` вместо `debug`; docstring `_build_temporal_activities` приведён в соответствие (F-AT4: `bridge.decorate()` бросает `RuntimeError`, а не `ImportError`) |
+| **Regression test** | `test_temporal_fail_closed_reaudit.py::TestFailClosedWhenEnabled` |
+| **Commit SHA** | `2a073bac7` |
+
+**F-AT2 (P0, ЧАСТИЧНО)**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P0 |
+| **file:line** | `src/backend/core/config/features/infrastructure.py:430-432` |
+| **Reproduction** | `grep -n -A3 workflow_use_temporal src/backend/core/config/features/infrastructure.py` |
+| **Expected** | durable-workflow рантайм включён хотя бы в production-профиле |
+| **Actual** | проверено на HEAD `2d9f4323b`: `default=False` — worker не стартует ни в одном профиле |
+| **Impact** | Temporal как durable-рантайм фактически не задействован; фикс F-AT1 этого не меняет — он лишь делает отказ **громким** вместо молчаливого |
+| **Fix** | решение владельца: либо `default=True` для production, либо явная фиксация «durable workflows выключены осознанно» с ADR |
+| **Regression test** | конфиг-тест на дефолт production-профиля |
+| **Commit SHA** | `2a073bac7` ( fail-closed часть); сам дефолт **не менялся** — находка открыта |
+
+**F-AP2 (HIGH, ИСПРАВЛЕН)**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | HIGH |
+| **file:line** | `tools/check_waf_coverage.py` (+109/-11), `tools/check_waf_coverage_allowlist.txt` (+23) |
+| **Reproduction** | `pytest tests/unit/tools/ -k "waf or navigation" -q`; прямая проверка: `waf._scan_file(Path("src/backend/infrastructure/clients/transport/browser.py"))` |
+| **Expected** | гейт WAF-coverage видит браузерную навигацию (`page.goto`, `context.goto`, `*.reload()`) и не выдаёт «0 violations» при наличии callsite'ов |
+| **Actual** | до фикса: матчился только `httpx` → `page.goto` невидим, 10 callsite'ов пропущены; после: `_scan_file` возвращает violations по `browser.py`; 3 реальных файла перенесены в allowlist **с явным долгом** (owner/target/reason) |
+| **Impact** | гейт давал ложное «0 violations» при реальной дыре; теперь allowlist не скрывает долг, а фиксирует его с обязательством снять до wire-up пула |
+| **Fix** | детекция браузерных вызовов + 3 записи allowlist с обоснованием недостижимости кода; тест `TestExemptionIsNotBlanket` запрещает «слепое» исключение транспорта |
+| **Regression test** | `tests/unit/tools/test_check_waf_coverage_browser_navigation.py` (20 тестов в наборе WAF) |
+| **Commit SHA** | `2d9f4323b` |
+| **Остаточный риск** | **F-AP1 (CRITICAL, SSRF) на этом коммите остаётся открытым** — allowlist лишь делает долг видимым. URL-guard написан **отдельно**, в ветке `fix/ssrf-url-guard` (см. блок F-AP1 ниже), и на `2d9f4323b` не входит |
+
+**F-AP1 (CRITICAL, КОД ЗАКРЫТ В ВЕТКЕ, НЕ СЛИТ)**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | CRITICAL |
+| **file:line** | новый `src/backend/core/net/url_guard.py`; входы — `src/backend/infrastructure/clients/transport/browser.py:152`, `src/backend/dsl/engine/processors/rpa_browser.py:72`, `src/backend/core/dsl_browser/dsl.py:265`; `scraping.py::_validate_url` переведён на общий guard; `tools/check_waf_coverage.py` научен распознавать защищённый callsite |
+| **Reproduction** | `cd /home/user/dev/gd_ssrf && .venv/bin/python -m pytest tests/unit/core/net/ -q` (на master эти тесты не существуют); исходная дыра на master: `page.goto(self._url)` в `rpa_browser.py:162,217` и `self._page.goto(url, …)` в `dsl.py:266` принимают URL без проверки |
+| **Expected** | URL, ведущие во внутреннюю сеть, отбрасываются **до** передачи в браузер; `page.goto` недостижим с небезопасным URL |
+| **Actual** | **до фикса**: 9/9 payload'ов доходили до браузера. **после**: 10 unguarded callsite'ов на `2d9f4323b` (7 в `browser.py`, 2 в `rpa_browser.py`, 1 в `dsl.py`) свёрнуты в 3 защищённых входа; запрещены схемы кроме http/https, loopback/private/link-local/unspecified/multicast/reserved, разбираются decimal `2130706433`, hex `0x7f000001`, octal `017700000001`, короткая форма `127.1` и IPv4-mapped IPv6; отказ fail-closed через `UrlNotAllowedError(ValueError)` |
+| **Impact** | закрывает CRITICAL с прямым путём «тело запроса → браузер»; побочно — гейт WAF-coverage переведён с декларации долга на **проверку** защиты: allowlist по `src/backend` пуст (0 записей), `tools/check_waf_coverage.py` → «WAF coverage OK: 0 violations», **EXIT=0** |
+| **Fix** | общий модуль guard + 3 защищённых входа; мёртвые `_is_blocked_host`/`_BLOCKED_*` в `scraping.py` удалены (33 строки) вместо дублирования логики |
+| **Regression test** | `test_url_guard.py` (58), `test_browser_navigation_guarded.py` (15), `test_check_waf_coverage_browser_navigation.py` (22), `test_scraping_processor.py` (50) — **145 тестов, `123 passed EXIT=0`** по первым трём файлам в этой сессии |
+| **Commit SHA** | **НЕТ — коммита не существует.** Ветка `fix/ssrf-url-guard` на базе `2d9f4323b`, 9 изменённых + 3 новых файла, слита только по команде владельца |
+| **Остаточный риск** | **DNS-rebinding не закрыт** (`127.0.0.1.nip.io` резолвится в loopback уже после валидации). Требуется прокси-уровень или ADR; блоклинг `*.nip.io` был бы имитацией защиты и не сделан |
+
+**Сверка полного `tests/unit/tools/` в worktree `gd_ssrf` (не «зелёный прогон», а разбор):**
+
+`4 failed, 997 passed, 2 skipped` за 421 с. Ни одно падение не вызвано фиксом:
+
+| Тест | Классификация | Доказательство |
+|---|---|---|
+| `test_sbom_canonical_path.py::…::test_canonical_sbom_exists` | **ENV, не регресс** | требует `dist/sbom/sbom.cdx.json`; `dist/` в `.gitignore:61`, в свежем worktree отсутствует, на master файл есть (65 726 Б, 29 сен) → на master тот же тест **passed** |
+| `test_unit_test_isolation_guards.py::test_cleanup_removes_polars_stub_…` | **базовый** | воспроизводится на master при прямом запуске |
+| `test_w11_p3_2_audit_legacy_processors.py::TestRealInventory::test_real_inventory_has_expected_files` | **базовый** | там же, `assert 800 <= total_loc <= 3000` против фактических 155 — ratchet Legacy-инвентаря, к SSRF отношения не имеет |
+| `test_w11_p3_2_audit_legacy_processors.py::TestRealInventory::test_real_inventory_total_loc` | **базовый** | там же |
+
+Ранний прогон давал 11 падений; 7 из них сняты правкой контракта гейта в этой же
+ветке, 2 остались в классе «свежий worktree», 3 — базовые. Итог: **0 регрессий**.
+
+---
+
+## 9f-bis. cURL-батарея на живом сервере — HEAD `2d9f4323b`
+
+Сервер поднят на HEAD `2d9f4323b` (uvicorn, `MONGO_ENABLED=false`), эндпоинты
+и ожидания взяты из **фактического** `/openapi.json` (414 путей), а не из README.
+Прогон воспроизводим: `artifacts/current_audit/curl_battery.sh` → `curl_results.json`.
+
+**Итог: 16 PASS, 0 FAIL.**
+
+| Проверка | Ожидаем | Факт | Вердикт |
+|---|---:|---:|---|
+| `/health` liveness | 200 | 200 | PASS |
+| `/metrics` | 200 | 200 | PASS |
+| `/openapi.json` | 200 | 200 | PASS |
+| `/docs` Swagger UI | 200 | 200 | PASS |
+| `/redoc` | 200 | 200 | PASS |
+| `/readiness` без auth | 401 | 401 | PASS |
+| `/health/ready` без auth | 503 | 503 | PASS — k8s-зонд; **политика отличается от `/readiness`** (F-G/F-H) |
+| auth отсутствует | 401 | 401 | PASS |
+| auth невалиден | 401 | 401 | PASS |
+| **tenant spoofing** (`X-API-Key` + `X-Tenant-ID: tenant-b`) | **403** | **403** `tenant_mismatch` | **PASS (P0)** |
+| детерминизм spoofing ×3 | 403 403 403 | 403 403 403 | PASS |
+| `X-Tenant-ID: default` (доверенный fallback) | 500 | 500 | PASS — auth проходит, падает обработчик (нет БД) |
+| неизвестный путь без auth | 401 | 401 | PASS |
+| неизвестный путь с auth | 404 | 404 | PASS |
+| GraphQL `POST /api/v1/graphql` `{__typename}` | 200 | 200 | PASS |
+| SOAP WSDL `/soap/wsdl` | 200 | 200 | PASS |
+| `GET /api/v1/actions/inventory` с auth | 500 | 500 | PASS — auth пройден, обработчик падает без БД |
+
+**Self-correction: три «FAIL» в первом прогоне были моими неверными ожиданиями,
+а не дефектами продукта.** Ожидания исправлены по фактическому контракту:
+`/soap?wsdl` отдаёт 307-редирект (канонический путь `/soap/wsdl`), GraphQL смонтирован
+на `/api/v1/graphql`, а не `/graphql`, а неизвестный путь с валидным ключом даёт 404
+(без ключа — 401, потому что auth-middleware перехватывает раньше маршрутизатора).
+Первая версия батареи дала 8 PASS / 5 FAIL — это была ошибка измерения, и она
+исправлена, а не замаскирована.
+
+**Security headers (живой ответ):** присутствуют `strict-transport-security`,
+`x-content-type-options: nosniff`, `x-frame-options: DENY`,
+`content-security-policy: default-src 'self'`, `permissions-policy`.
+**Отсутствует `referrer-policy`** — F-AG остаётся открытым (перепроверено на новом
+HEAD). **`x-request-id` приходит дважды** при одном значении — F-AF остаётся
+открытым (перепроверено).
+
+### F-AU (P1, НОВОЕ) — xdist-прогон `-m unit` OOM-убивается ядром
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P1 |
+| **file:line** | `Makefile:55` (`UNIT_TEST_JOBS ?= 2`), `make/pipelines.mk:39-45` (`unit-tests`), `make/pipelines.mk:33` (`ci` → `unit-tests`) |
+| **Reproduction** | `.venv/bin/python -m pytest -m unit -q --no-header -n 2 --dist loadfile` |
+| **Expected** | прогон доходит до конца и печатает итог |
+| **Actual** | прогон доходит до **99%**, после чего воркер `pytest-xdist` **убит ядром по OOM**, а контроллер **навсегда зависает** в ожидании мёртвого воркера (наблюдалось 34+ минуты без роста лога) |
+| **Evidence (1, xdist)** | `journalctl -k --since "-60 min"`: `oom-kill: … task=[pytest-xdist …]` / `Out of memory: Killed process 2308625 ([pytest-xdist r) … anon-rss:5209116kB` (5.2 ГБ) — 99% |
+| **Evidence (2, последовательно)** | `pytest -m unit -p no:randomly` **без xdist** → та же судьба: `EXIT=137` (SIGKILL) на **97%**. Ядро: `Out of memory: Killed process 2371530 (python) total-vm:17003932kB, anon-rss:6899284kB` (6.9 ГБ) |
+| **Контекст нагрузки** | На машине concurrently работают **4 проектных контейнера** (`gd-app-light`, `gd-worker-light`, `gd-grpc-light`, `compose-clamav-1`, все healthy, аптайм 2 суток); swap исчерпан — **3 754 из 4 095 МБ**. Ядро прямо называет инициатором `dockerd invoked oom-killer` |
+| **Impact** | `make unit-tests` и `make ci` **не дают результата ни в одной из двух топологий**: xdist → зависший контроллер после OOM воркера; последовательно → SIGKILL на 97%. Дефолт `-n 2` **не** является рабочим обходом, как предполагал `Makefile:43-48` (там описан OOM только для `-n auto`). **Следствие: полный эталонный прогон `-m unit` на этой машине недостижим** — не из-за кода, а из-за лимита памяти |
+| **Fix** | Разбивать `unit-tests` на **чанки по каталогам** (`-n` не помогает: воркер один потребляет 5–7 ГБ) — это единственный вариант, дающий вердикт на 15 ГБ; плюс гейт с таймаутом, чтобы «зависло» не выглядело как «идёт». Опционально — `systemd-run --scope -p MemoryMax=…` вокруг прогона, чтобы OOM не уносил соседние процессы |
+| **Regression test** | гейт, падающий при отсутствии итоговой строки pytest за отведённое время, вместо ожидания бесконечного «висит» |
+| **Commit SHA** | нет — finding **открыт**, fix не вносился; зафиксировано на HEAD `2d9f4323b` |
+
+**Следствие для методики:** xdist-прогоны на этой машине непригодны как эталон.
+Эталонный `-m unit` поэтому выполняется **последовательно** (`-p no:randomly`, без
+`-n`), а результат помечается честно — с указанием топологии.
+
+---
+
+## 9f-ter. BROWSER: реальный прогон Playwright (было ENV_BLOCKED)
+
+**Смена окружения (2026-10-05).** Ранее BROWSER был `ENV_BLOCKED`: биндинги
+`playwright`/`patchright` отсутствовали. Сейчас установлены также `temporalio`,
+`openfeature`, `schemathesis`, `testcontainers`, `fastmcp`. Значит, прежние
+ENV_BLOCKED-выводы **устарели** и перепроверены. Отсутствуют по-прежнему:
+`moto`, `aiomcache`.
+
+**Расхождение версий Chromium.** Библиотека Playwright ожидает сборку
+`chromium-1234`, а в кэше лежит `chromium-1243` (`~/.cache/ms-playwright`).
+Браузер подключён через явный `executable_path` — без скачивания из сети,
+поэтому прогон остаётся офлайн.
+
+Прогон воспроизводим: `artifacts/current_audit/browser_battery.py` →
+`browser_results.md` + `browser_artifacts/`.
+
+**Итог: 6 PASS, 0 FAIL, 0 SKIPPED.**
+
+| Проверка | Страница | HTTP | Ожидаем | Вердикт |
+|---|---|---:|---:|---|
+| `swagger-ui` | `/docs` | 200 | 200 | PASS |
+| `redoc` | `/redoc` | 200 | 200 | PASS |
+| `openapi-json` | `/openapi.json` | 200 | 200 | PASS |
+| `graphql-unauth` | `/api/v1/graphql` без auth | **401** | 401 | PASS — эндпоинт защищён, не отдаётся публично |
+| `graphql-auth` | `/api/v1/graphql` с auth | 200 | 200 | PASS |
+| `auth-header-masking` | `/api/v1/actions/inventory` | 401 | 401 | PASS — `set-cookie: <masked>` |
+
+**Сохранено:** `browser_artifacts/trace.zip` (**128 файлов, 1.4 МБ** —
+`trace.trace`, `trace.network`, 124 ресурса-скриншота), 5 PNG-скриншотов.
+
+**Гигиена секретов проверена явно:** значение `X-API-Key` в `browser_results.md`
+отсутствует (проверено grep), значения заголовков маскируются, тексты исключений
+Playwright не записываются (в них могут быть заголовки — это всплыло при первой
+версии скрипта, где ключ попал в текст `TimeoutError`; исправлено раздельными
+контекстами).
+
+**Что осталось непроверенным — честно, без PASS:**
+
+| Пункт | Статус | Причина |
+|---|---|---|
+| Streamlit-портал | `NOT_RUN` | отдельное приложение `src/frontend/streamlit_app` в этом прогоне не поднималось |
+| RPA local test page | `ENV_BLOCKED` | RPA-пул в приложение не подключён (F-AP6), навигация недостижима; проверено лишь отсутствие внешних обращений |
+| login flow | `NOT_RUN` | нужен интерактивный ввод учётных данных и работающее хранилище пользователей |
+
+**RPA-тест не ходил в интернет** — единственный сетевой префикс в прогоне
+`http://127.0.0.1:<port>`.
+
+**Self-correction:** первая версия батареи дала `graphql-ui → 404/401 FAIL`.
+Оказалось, что это моя неверная ожидалка: GraphQL смонтирован на `/api/v1/graphql`
+(не `/graphql`) и требует авторизации. Проверка разделена на «без auth → 401» и
+«с auth → 200», обе проходят.
+
+
+## 9f-qua. Перепроверка находок, ставших доказуемыми после смены окружения
+
+Ранее три findings нельзя было ни подтвердить, ни опровергнуть: нужные пакеты
+отсутствовали. Сейчас `schemathesis`, `temporalio`, `openfeature`, `playwright`
+установлены, поэтому находки перепроверены **исполнением**, а не чтением кода.
+
+| Finding | Прежний статус | Новый статус | Команда |
+|---|---|---|---|
+| **F-AP10** (schemathesis `--exitfirst`) | «не существует в 4.x» — из документации | **доказано**: `Error: No such option: --exitfirst`, **EXIT=2** | `.venv/bin/schemathesis run /tmp/oa2.json --checks=all --max-examples=1 --exitfirst` |
+| **F-AT11** (temporalio в base deps) | заявление в `pyproject.toml` | **подтверждено разбором**: в `project.dependencies` его нет, он в extras `workflow`/`test-workflow`/`test-all`/`testkit` | `python -c "import tomllib; …"` по `pyproject.toml` |
+| **F-AQ10** (OpenFeature не используется) | 0 импортов при 117 упоминаниях | **подтверждено**: пакет установлен и объявлен (`openfeature-sdk>=0.7,<1.0`, `pyproject.toml:624`), импортов в `src/` и `extensions/` — **0** | `grep -rn "^\s*\(from\|import\)\s\+openfeature" src/ extensions/` → пусто |
+
+**F-AP10 — полная репродукция (P1, чинится одной строкой):**
+
+```
+$ .venv/bin/schemathesis run /tmp/oa2.json --checks=all --max-examples=1 --exitfirst
+Usage: schemathesis run [OPTIONS] LOCATION
+Try 'schemathesis run -h' for help.
+
+Error: No such option: --exitfirst
+EXIT=2
+```
+
+Следствие: `tools/api_fuzz_runner.py:145` не выполняет ни одного fuzz-кейса и
+не пишет отчёт — contract-suite в CI де-факто пуст, при этом гейт выглядит
+работающим. Комментарий в коде («выходим после первой ошибки для скорости»)
+описывает несуществующее поведение.
+
+**F-AQ11 перепроверен попутно:** `uv sync --extra dev` против dependency-group
+остаётся некорректным (`UV_EXIT=2`) — это ошибка формы команды, не окружения.
+
+
+## 9f-qua-bis. F-T раскрыт полностью: какой интерпретатор и почему гейт падает
+
+Файл `.audit/quality-results.json` (tracked, и его переписывают тесты — см. F-Y)
+после прогонов содержит **свежие** результаты гейтов на `2d9f4323b`:
+`overall_status: FAIL`, `PASS: 9, FAIL: 1, ENV_FAILURE: 1`.
+
+| Гейт | Статус | Exit | Причина |
+|---|---|---:|---|
+| `check_docstrings` | **FAIL** | 1 | 1 отсутствующий docstring: `src/backend/entrypoints/graphql/graphql_guards.py:27` (`def enter_field`) |
+| `mypy_budget` | **ENV_FAILURE** | -1 | процесс не завершился (таймаут/память при последовательном прогоне) |
+
+**Пропущенный docstring — не мой и не из слитой ветки.** `git log` по файлу:
+последний коммит `7157ffd59` от 2026-09-30 (P0-фикс GraphQL depth-limit и
+политики интроспекции). Ветка `fix/temporal-fail-closed-at` GraphQL не трогала.
+
+**F-T («неверный интерпретатор») подтверждён исполнением, а не чтением.**
+`make/quality.mk:123` вызывает `python3`, то есть **системный 3.12**:
+
+```
+$ python3 --version
+Python 3.12.3
+$ python3 tools/check_docstrings.py src
+Warning: skipping src/frontend/streamlit_app/pages/_groups/schema/registry_tab.py:
+         multiple exception types must be parenthesized (registry_tab.py, line 112)
+Warning: skipping src/frontend/streamlit_app/pages/_groups/cron/builder/render.py: … line 117
+Warning: skipping src/frontend/streamlit_app/pages/_editor/visual/tab_canvas.py: … line 73
+Total: 1 missing docstrings in 1 file
+Files scanned: 2549
+```
+
+Синтаксис `except A, B:` (PEP 758) валиден в **3.14** и является SyntaxError в 3.12.
+Гейт не падает на этих файлах, а **молча пропускает их** — fail-open на 3 файла.
+Под venv 3.14 те же 3 файла сканируются, и результат совпадает: 2549 файлов,
+1 пропущенный docstring. То есть расхождение интерпретаторов **не меняет
+вердикт**, но делает покрытие разным — и это именно тот fail-open, о котором F-T.
+
+**Ещё одно: устаревшее утверждение в самом таргете.**
+`make/quality.mk:126` утверждает «Current baseline: 0 missing in 0 files
+(B4: ratchet complete — gate strict at 0)». Фактически baseline — **1** файл.
+Утверждение не соответствует коду и должно быть исправлено вместе с docstring.
+
+**Итог по F-T (P1, открыт):**
+
+| Поле | Значение |
+|---|---|
+| **file:line** | `make/quality.mk:123` (`python3` вместо `$(UV_RUN) python`), `make/quality.mk:126` (устаревший baseline), `src/backend/entrypoints/graphql/graphql_guards.py:27` |
+| **Reproduction** | `python3 tools/check_docstrings.py src` (3.12) и `.venv/bin/python tools/check_docstrings.py src` (3.14) — сравнить число `Files scanned` и список `Warning: skipping` |
+| **Expected** | гейт исполняется тем же интерпретатором, что и проект (3.14), и не пропускает файлы молча |
+| **Actual** | под `make` используется 3.12 → **3 файла пропущены** с Warning; вердикт FAIL из-за 1 docstring; baseline в комментарии таргета устарел |
+| **Impact** | fail-open на 3 файла + неверный baseline в документации таргета |
+| **Fix** | (1) `make/quality.mk:123` → `$(UV_RUN) python`; (2) добавить docstring `enter_field`; (3) привести baseline к фактическому `1` |
+| **Regression test** | тест, проверяющий, что make-таргеты гейтов используют интерпретатор проекта, а не `python3` |
+| **Commit SHA** | нет — finding **открыт**, fix не вносился; зафиксировано на HEAD `2d9f4323b` |
+
+
+### Маркеры DoD-прогона на `2d9f4323b`
+
+| Команда | Результат | Exit | Статус |
+|---|---|---:|---|
+| `pytest --collect-only -q` | 20961 collected | 0 | **PASS** |
+| `pytest -m e2e` | `8 passed, 7 skipped, 20953 deselected` (87.91 s) | **0** | **PASS** — арифметика сходится: 8 + 20953 = 20961 |
+| `pytest -m property` | `7 skipped, 20961 deselected` | **5** | **FAIL** — маркер мёртв (F-X) |
+| `pytest -m security` | `7 skipped, 20961 deselected` | **5** | **FAIL** — маркер мёртв (F-X) |
+| `pytest -m unit` (последовательно, без xdist) | **убит ядром по OOM на 97%**, `EXIT=137`; якорная причина: `anon-rss:6899284kB` | **ENV_FAILURE** | вердикта нет — **не** PASS и **не** FAIL продукта |
+| `pytest -m unit` **чанками по каталогам** (36 чанков) | `42 failed, 20 134 passed`; **27 чанков EXIT=0**, ни одного OOM | 0/1 | **вердикт получен** — фикс F-AU проверен, см. §9f-uni |
+| `pytest -m unit -n 2` (xdist) | воркер **OOM-убит ядром** на 99%, контроллер завис | — | **FAIL** (F-AU) |
+
+| `pytest -m integration` | `9 failed, 244 passed, 23 skipped, 1 error` (169.76 s) | **1** | **FAIL (частично среда)** — 3 из 10 = F-AS15/F-AR, 5 = ENV_BLOCKED (нет PG/Redis/testcontainers), 2 требуют разбора; см. §9f-int |
+
+
+## 9f-uni. Эталонный `-m unit`: фикс F-AU проверен, вердикт получен
+
+Монолитный прогон недостижим (два OOM). Предложенный в F-AU фикс — **разбить
+прогон по каталогам** — реализован как `artifacts/current_audit/unit_chunked.sh`
+и **проверен на практике**.
+
+**Результат: 36 чанков, 27 зелёных (EXIT=0), 9 с падениями, 0 OOM.**
+
+| Чанк | Exit | Итог |
+|---|---:|---|
+| `core` | 1 | 4 failed, 6 134 passed, 27 skipped |
+| `dsl` | 1 | 9 failed, 4 815 passed, 19 skipped |
+| `services` | 1 | 1 failed, 2 687 passed, 46 skipped |
+| `infrastructure` | 1 | 14 failed, 2 425 passed, 29 skipped |
+| `entrypoints` | 1 | 1 failed, 1 498 passed, 27 skipped |
+| `tools` | 1 | 3 failed, 997 passed, 1 skipped |
+| `plugins` | 1 | 7 failed, 179 passed, 2 skipped |
+| `notebooks` | 1 | 2 failed, 32 passed |
+| `docs` | 1 | 1 failed, 22 passed |
+| `frontend`, `cache`, `api`, `codegen`, `workflows`, `import_gateway`, `storage`, `security`, `log_sinks`, `deploy`, `messaging`, `ai`, `utilities`, `tenancy`, `telegram`, `sdk`, `schemas`, `notifications`, `mcp`, `integration`, `express`, `clients`, `testkit_pkg`, `sources`, `extensions`, `fallbacks` | **0** | все зелёные |
+| `tests/unit/test_*.py` (корень) | **0** | 35 passed |
+
+**Сводно: 42 failed, 20 134 passed, 160 skipped, 49 xfailed, 45 xpassed.**
+
+**Это закрывает главный вопрос DoD-п.5:** лимит памяти обходится разбиением по
+каталогам, а не параллелизмом. `-n 2` не помогает — один процесс и в
+последовательном режиме доходит до 6.9 ГБ RSS.
+
+### Побочный результат, важнее самого прогона: 93 теста — ложные падения
+
+| Прогон | HEAD | failed | passed |
+|---|---|---:|---:|
+| Монолитный (xdist, `-n 2`) | `2037f9d59` | **135** | 19 770 |
+| Чанковый по каталогам | `2d9f4323b` | **42** | 20 134 |
+
+Разница — **93 теста, которые падают только в общем прогоне** и не падают при
+изоляции своего каталога. Это независимое подтверждение **F-AN2 и F-AN3**
+(глобальный `action_handler_registry` и переподмена синглтонов как скрытое
+состояние между тестами): при изоляции каталога состояние не протаскивается, и
+падения исчезают.
+
+**Вывод для приоритетов:** из 135 «падений» реальных дефектов — **42**, а не 135.
+Ложный сигнал был **в 3,2 раза** больше истинного. Любая работа по «135 падениям»
+вела бы в тупик.
+
+**Оговорка о честности:** чанковый прогон меняет топологию, поэтому его числа
+**не** сопоставимы с монолитным напрямую — сопоставимо лишь то, что 93 теста
+переходят из failing в passing. Строка `42 failed` — это не «42 настоящих
+дефекта», а «42 падения, устойчивых к изоляции».
+
+**Пробел покрытия, который я не закрыл:** чанкер строит чанки из
+`tests/unit/*/`, поэтому 7 корневых файлов `tests/unit/test_*.py` в основной
+прогон не попали — они прогнаны отдельно (`35 passed, EXIT=0`), но это
+**дополнительный** запуск, а не часть чанкового.
+
+
+## 9f-uni-bis. Классификация 42 устойчивых падений по причинам
+
+Извлечены все `FAILED` из 36 чанковых логов и сгруппированы по тексту исключения.
+
+| Причина | Тестов | Файл | Класс |
+|---|---:|---|---|
+| `ValueError: purgatory.__spec__ is not set` | **11** | `infrastructure/database/test_smart_session_manager{,_wire}.py` | **зависимость**, не код проекта: пакет `purgatory` не задаёт `__spec__`, что ломает любой код, опирающийся на `importlib`. Лечится обновлением/заменой пакета |
+| `TypeError: <module …lifecycle.lifespan> is not a callable object` | **7** | `plugins/composition/test_lifecycle_smoke.py` (6) + `test_app_factory_smoke.py` (1) | **order-dependent** — см. ниже |
+| `binascii.Error: Invalid base64-encoded string` | 2 | — | входные данные теста |
+| `AssertionError: assert 0.00063 == 0.002` | 1 | — | тайминговая метрика, чувствительна к нагрузке |
+| `TypeError: WebDavProcessor.__init__() got an unexpected keyword argument` | 1 | — | **рассинхрон теста и сигнатуры** |
+| `JwtVerificationError` / `WSAuthError` | 2 | `core/auth`, `entrypoints/websocket` | окружение/время жизни ключа |
+| прочие одиночные (mongo defaults, cache namespace, feature-flag scope, dspy, doc references, dataframes, eip, dlq, vault, cert exporter) | 18 | — | смешанные |
+
+**Три крупнейших кластера — 25 из 42 тестов — не дефекты бизнес-логики.**
+`purgatory` (11) — проблема зависимости; `lifespan` (7) — артефакт порядка
+тестов; тайминги и бинарь — входные данные.
+
+### Гипотеза про `lifespan` проверена и **опровергнута**
+
+Наблюдение: пакет `lifecycle` связывает имя `lifespan` **дважды** —
+`__init__.py:20` (`from …lifecycle import lifespan as lifespan_module` → модуль)
+и `__init__.py:27-30` (`from …lifecycle.lifespan import lifespan` → функция).
+В пакете `__all__` есть и `lifespan`, и `lifespan_module`. Кажется, что при
+определённом порядке импорта атрибут может оказаться **модулем**, и тогда
+`app_factory.py:25` (`from …lifecycle import lifespan`) передаст в Starlette
+`lifespan=<module>` — то есть **приложение не стартует**.
+
+Проверка гипотезы:
+
+```
+исходно af.lifespan: function
+после перепривязки L.lifespan = <module>, af2.lifespan: function
+create_app: OK
+```
+
+**Гипотеза опровергнута:** `app_factory` связывает имя в собственном
+пространстве имён при импорте (`from … import lifespan` на строке 25), поэтому
+дальнейшие перепривязки атрибута пакета на него не влияют, и `create_app()`
+работает. Производственный риск **не подтверждён**; 7 падений — артефакт
+порядка тестов в одном прогоне (родственник F-AN3), а не дефект запуска.
+
+Это зафиксировано именно потому, что гипотеза была правдоподобной: без проверки
+она дала бы в реестр ложный CRITICAL.
+
+**Что реально требует работы:** 11 тестов `purgatory` (зависимость),
+1 `WebDavProcessor` (рассинхрон сигнатуры), и ~18 одиночных — их стоит
+разобрать точечно, но это уже не P0.
+
+
+## 9f-int. `-m integration` на `2d9f4323b` — закрыт пробел NOT_RUN
+
+```
+pytest -m integration -q --no-header -p no:randomly
+9 failed, 244 passed, 23 skipped, 20691 deselected, 1 error in 169.76s
+EXIT=1
+```
+
+**Классификация: 10 из 10 не-успехов — не новые дефекты.**
+
+| Тест | Причина | Класс |
+|---|---|---|
+| `test_mcp_tool_authz.py::test_authz_deny_when_enabled_and_not_in_allowlist` | `capability_denied:…invoke.credit` вместо `not_in_allowlist_or_public_ns` | **F-AS15** — уже в реестре, открыт |
+| `test_mcp_tool_authz.py::test_authz_allow_when_namespace_is_public` | то же расхождение контрактов | **F-AS15** |
+| `test_s19_k3_w2_composition.py::test_composition_demo_dsl_loads_with_flag_on` | `FeatureMixin.feature_flag() got an unexpected keyword argument 'flag'` | **F-AR** — уже в реестре, открыт |
+| `test_testcontainers_smoke.py::test_postgres_can_execute_query` | testcontainers недоступен | **ENV_BLOCKED** |
+| `test_snapshot_api_version_pg.py` (ERROR) | `DatabaseError: Failed to create database session for 'main'` | **ENV_BLOCKED** — нет PostgreSQL |
+| `test_cert_store_integration.py::test_postgres_history_two_versions` | `DatabaseError: Transaction failed for 'main'` | **ENV_BLOCKED** — нет PostgreSQL |
+| `test_mq_redis_streams.py` (2 теста) | `assert 0 == 1` — нет Redis | **ENV_BLOCKED** |
+| `test_auth_policies_wiring_cycle38.py::test_engine_enabled_with_both_urls_empty_raises` | `DID NOT RAISE ProductionWiringError` | **order-dependent** — см. ниже |
+| `test_workflow_registry_replay_cycle37.py::test_replay_uses_compiled_class_from_registry` | `TypeError: _RecordingReplayer.__init__() got an unexpected keyword argument 'workflow_runner'` | **устаревший стаб теста** — см. ниже |
+
+**Итог: 10 из 10 не-успехов разобраны.** 3 — ранее зафиксированные findings
+(F-AS15 ×2, F-AR); 5 — ENV_BLOCKED (нет PostgreSQL / Redis / testcontainers);
+1 — order-dependent (проходит изолированно и по файлу); 1 — устаревший стаб теста
+(прод-сигнатура корректна). **Новых дефектов прогон не дал**, что подтверждает
+отсутствие регрессий от слитой ветки.
+
+**Почему это не PASS.** `ENV_BLOCKED` не считается PASS по контракту задачи,
+поэтому общий вердикт — **FAIL (частично среда)**, а не «4 из 9 — наши».
+
+### Два оставшихся не-успеха разобраны до конца — оба не дефекты продукта
+
+**1. `test_auth_policies_wiring_cycle38` — order-dependent, не fail-open.**
+
+Тест утверждает, что при `engine_enabled=True` и двух пустых URL composition root
+обязан бросить `ProductionWiringError` (fail-loud против fake-active security).
+Проверка кода: `di.py:158` бросает исключение, `di.py:203-206` содержит
+`except ProductionWiringError: raise` перед общим `except Exception` — то есть
+fail-loud **не проглатывается**. Проверка исполнением:
+
+```
+$ pytest ".../test_engine_enabled_with_both_urls_empty_raises" -q
+1 passed in 2.16s
+$ pytest tests/integration/test_auth_policies_wiring_cycle38.py -q
+4 passed in 2.23s
+```
+
+Изолированно и всем файлом — **зелёные**. Значит в общем прогоне до теста
+доходит уже подменённое состояние, и ветка `engine_enabled` не активируется.
+Это **не** дыра в fail-loud, а тот же класс порядка, что F-AN2/F-AN3.
+
+**2. `test_workflow_registry_replay_cycle37` — устаревший стаб теста.**
+
+Прод код `temporal_backend.py:321` вызывает
+`Replayer(workflows=..., workflow_runner=UnsandboxedWorkflowRunner())` — это
+правильно: replay требует явного runner'а. Тестовый подменный класс
+`_RecordingReplayer.__init__(self, *, workflows)` принимает только `workflows`,
+поэтому падает на лишнем аргументе. **Прод-сигнатура корректна, тест отстал.**
+
+Итог: **из 10 не-успехов интеграции 8 — среда, порядок или устаревший стаб,
+2 — ранее зафиксированные findings (F-AS15, F-AR). Ни одного нового дефекта.**
+
+
+**Побочно:** в конце прогона asyncpg бросает
+`Exception ignored while calling deallocator Connection.__del__ … 'NoneType'
+object has no attribute 'warn'` — деструктор соединения после закрытия event
+loop. Не падает (exit 1 вызван тестами), но это шум при остановке БД-сессий.
+
 
 ## 9f. DoD-последовательность: полный замер на текущем HEAD
 
@@ -1151,7 +1776,7 @@ traversal, symlink — 4/4 заблокированы), sandbox (прямого 
 | **Impact** | goal-последовательность не воспроизводится «с нуля»; `make lint` не ловит эти каталоги, поэтому деградация не видна в CI. Уточнение к F-AC: агент оценивал в 295 нарушений, фактическое число — **34** (оценка завышена) |
 | **Fix** | 23 из 34 авто-фиксятся `ruff check --fix`; остальные 11 требуют ручного разбора. Формат: распространить ruff-конфиг на `tools`/`extensions`/`ops` |
 | **Regression test** | `ruff check .` в composite `ci` вместо `make lint` (warn-only) |
-| **Commit SHA** | не закоммичено |
+| **Commit SHA** | нет — finding **открыт**, fix не вносился; зафиксировано на HEAD `2037f9d59` |
 
 **Проверка, что это не моя регрессия:** пересечение 34 ошибок с 33 файлами,
 изменёнными в этой сессии, — **пусто**. Все мои файлы проходят
@@ -1166,6 +1791,20 @@ traversal, symlink — 4/4 заблокированы), sandbox (прямого 
 goal-последовательности физически не могут быть выполнены, и «зелёный» их
 статус был бы ложью.
 
+
+**Поля finding (DoD) — F-X**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P1 (блокирует 2 пункта DoD) |
+| **file:line** | `pyproject.toml` → `[tool.pytest.ini_options] markers`; ни один тест в `tests/` не несёт `property` / `security` |
+| **Reproduction** | `pytest -m property -q` и `pytest -m security -q` |
+| **Expected** | ≥ 1 собранный тест, exit 0 |
+| **Actual** | `no tests ran`, **exit 5** (код «ничего не выбрано») |
+| **Impact** | два обязательных пункта goal-последовательности физически невыполнимы; «зелёный» статус был бы ложью |
+| **Fix** | пометить существующие property/security-тесты или удалить мёртвые маркеры из конфигурации |
+| **Regression test** | гейт, падающий при `exit 5` на `-m <marker>` из обязательного набора |
+| **Commit SHA** | нет — finding **открыт**, fix не вносился; зафиксировано на HEAD `2037f9d59` |
 ## 9f-bis. Реальные прогоны `integration` и `e2e` (не только collect)
 
 ### `pytest -m e2e` → **PASS**
@@ -1218,7 +1857,7 @@ PYTEST_INTEGRATION_EXIT=1
 | **Impact** | `composition_demo` не грузится при включённом флаге — то есть декларативный путь DSL для feature-flag сломан |
 | **Fix** | схемы несовместимы полностью, а не по одному ключу. YAML-шаг передаёт **4** ключа (`flag`, `default`, `stop_on_disabled`, `output_field`), а `FeatureMixin.feature_flag(self, name: str)` принимает **1 позиционный** аргумент `name` (`feature_mixin.py:46-49`). Ближайший по имени `feature_flag_branch(flag, processors)` требует ещё и `processors`. Нужен выбор владельца: реализовать в миксине метод с этими 4 ключами либо сократить YAML-схему до совместимого `name` |
 | **Regression test** | существующий `test_composition_demo_dsl_loads_with_flag_on` станет зелёным |
-| **Commit SHA** | не закоммичено |
+| **Commit SHA** | нет — finding **открыт**, fix не вносился; зафиксировано на HEAD `2037f9d59` |
 
 **Точная причина расхождения (прочитано, а не предположено):**
 
@@ -1258,6 +1897,20 @@ def feature_flag(self, name: str) -> Self:
 какой слой должен срабатывать первым. До решения статус — расхождение
 контрактов, не подтверждённый дефект.
 
+
+**Поля finding (DoD) — F-AS15**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P2 |
+| **file:line** | `tests/integration/test_mcp_tool_authz.py` (ожидание) против фактического capability-gate в MCP-слое |
+| **Reproduction** | `pytest tests/integration/test_mcp_tool_authz.py -q` |
+| **Expected** | `not_in_allowlist_or_public_ns` |
+| **Actual** | `capability_denied:mcp.gateway.invoke.credit` |
+| **Impact** | расхождение контрактов между слоями: неясно, должен ли срабатывать namespace-allowlist раньше capability-gate. Юнитовые MCP-тесты проходят — регрессии волны нет |
+| **Fix** | решение владельца о каноническом порядке проверок; затем привести тест и код к одному контракту |
+| **Regression test** | требуется вместе с решением: параметризованный тест порядка namespace-allowlist → capability-gate |
+| **Commit SHA** | нет — finding **открыт**, fix не вносился; зафиксировано на HEAD `2037f9d59` |
 ---
 
 ## 9g. Обязательные артефакты DoD — все 9 на месте
@@ -1267,11 +1920,11 @@ def feature_flag(self, name: str) -> Self:
 | 1 | `file_inventory.csv` | 1 725 667 B | OK |
 | 2 | `import_graph.json` | 978 052 B | OK |
 | 3 | `middleware_actual_order.json` | 19 594 B | OK — 37/37 middleware |
-| 4 | `lifecycle_graph.json` | 8 185 B | OK — 19 startup-фаз |
+| 4 | `lifecycle_graph.json` | 7 583 B | **перегенерирован на `2d9f4323b`** — 19 фаз  11 операций (10 REQUIRED / 1 OPTIONAL)  7 без `stop`  7 readiness-эндпоинтов |
 | 5 | `dead_code_evidence.md` | **создан в этой волне** | 9 кандидатов, 7 каналов проверки |
 | 6 | `library_consolidation.md` | **создан в этой волне** | 6 библиотек, из них 2 работают |
 | 7 | `curl_results.json` | 13 834 B | OK — 27 сценариев |
-| 8 | `browser_results.md` | **создан в этой волне** | ENV_BLOCKED с доказательством |
+| 8 | `browser_results.md` | **перегенерирован в этой волне** | **6 PASS / 0 FAIL** реальным Playwright (§9f-ter) |
 | 9 | `final_report.md` | 99 290 B | этот документ |
 
 ### Два ложных утверждения предыдущих отчётов, опровергнутых перепроверкой
@@ -1345,8 +1998,22 @@ unknown = [name for name in action_names if name not in available]
 | **Impact** | 18 ложных падений; реальные дефекты в том же прогоне теряются в шуме. Тот же класс, что и 11 order-dependent падений `test_authorization_gateway*`, найденных ранее |
 | **Fix** | autouse-фикстура сброса/изоляции `action_handler_registry` между тестами; отдельно — сделать поведение `_validate_action_names` детерминированным (валидировать только при непустом **и зарегистрированном** наборе, либо всегда требовать полный реестр) |
 | **Regression test** | `test_validation_is_order_independent` — два прогона в разном порядке дают одинаковый результат |
-| **Commit SHA** | не закоммичено |
+| **Commit SHA** | нет — finding **открыт**, fix не вносился; зафиксировано на HEAD `2037f9d59` |
 
+
+**Поля finding (DoD) — F-AN2**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P1 (ложный сигнал в 18 падениях) |
+| **file:line** | `src/backend/dsl/builders/base/validation_mixin.py:66-84` — сверка `dispatch_action` с глобальным `action_handler_registry`; поллитер — `tests/unit/cache/test_admin_cache_dsl_actions.py` |
+| **Reproduction** | изоляция: `pytest tests/unit/dsl/blueprints/test_python_blueprints_focused.py -q` → `29 passed in 0.65s`; тот же файл в общем прогоне → 17 падений |
+| **Expected** | результат теста не зависит от порядка и от состава прогона |
+| **Actual** | зависит: глобальный registry как скрытое состояние между тестами |
+| **Impact** | 18 ложных падений `Unknown action(s) in pipeline`; дефекты продукта за ними нет, но сигнал CI недостоверен |
+| **Fix** | изолировать registry в фикстуре автотестов либо параметризовать сборку pipeline; отдельная правка валидатора — не нужна |
+| **Regression test** | прогон того же файла изолированно и в общем прогоне с фикстурой сброса registry — результаты должны совпадать |
+| **Commit SHA** | нет — finding **открыт**, fix не вносился; зафиксировано на HEAD `2037f9d59` |
 ### Поллитер F-AN2 найден: `tests/unit/cache/test_admin_cache_dsl_actions.py`
 
 | Проверка | Результат |
@@ -1489,7 +2156,7 @@ def _enable_gateway(monkeypatch):
 | **Impact** | 11 ложных падений в общем прогоне; ложный сигнал о состоянии authorization-шлюза |
 | **Fix** | привести поллитера к изоляции: не подменять глобальный `feature_flags` синглтон, а передавать stub через явный параметр/внедрение; либо жертве — патчить тот же объект, который читает `get_feature_flag_service()` |
 | **Regression test** | `test_order_independent` — прогон в обоих порядках обязан давать одинаковый результат |
-| **Commit SHA** | не закоммичено |
+| **Commit SHA** | нет — finding **открыт**, fix не вносился; зафиксировано на HEAD `2037f9d59` |
 
 ### Топология прогона меняет набор жертв (ключевое уточнение)
 
@@ -1529,8 +2196,8 @@ HITL-тест проверен отдельно: **в одиночку прох�
 
 | Finding | Поллитер | Жертва | Падений |
 |---|---|---|---:|
-| F-AN2 | любой тест, регистрирующий actions | 5 файлов `dsl/blueprints/*` | 18 |
-| F-AN3 | `core/tenancy/test_feature_flag_scope.py` | `core/security/test_authorization_gateway*` | 11 |
+| F-AN2 | любой тест, регистрирующий actions | 5 файлов `dsl/blueprints/*` | 18 commit: `—` |
+| F-AN3 | `core/tenancy/test_feature_flag_scope.py` | `core/security/test_authorization_gateway*` | 11 commit: `—` |
 | F-AN (ранее) | — | `test_authorization_gateway*` в кластере | (входит в 11) |
 
 Все три лечатся autouse-фикстурами сброса глобальных синглтонов
@@ -1553,7 +2220,7 @@ HITL-тест проверен отдельно: **в одиночку прох�
 | **Impact** | (1) набор падений недетерминирован и различается между локальным и CI-запуском — прямое продолжение F-AN3; (2) CI использует конфигурацию, которую сам проект документирует как приводящую к OOM и **зависанию** на 99% |
 | **Fix** | задать `UNIT_TEST_JOBS` через `-p xdist` переопределение в CI (например `-n 2`), либо вынести значение в переменную CI; продублировать предупреждение в workflow |
 | **Regression test** | проверка, что `addopts`/CI/`Makefile` используют одно значение числа воркеров |
-| **Commit SHA** | не закоммичено |
+| **Commit SHA** | нет — finding **открыт**, fix не вносился; зафиксировано на HEAD `2037f9d59` |
 
 **Дословное предупреждение владельцев проекта** (`Makefile:43-48`), которое CI
 игнорирует:
@@ -1705,24 +2372,105 @@ fail-closed, но означает, что транзиентный сбой API
 ни один из 12 фиксов не внёс регрессию. Методология обеих точек одинакова:
 `-m unit -n auto` (см. F-AN4 про расхождение топологий).
 
+## 9l. F-W-регрессия: мой collection-фикс сам ломал collection
+
+Обнаружено при обязательной перепроверке на новом HEAD (`ddac8db5f` → `2037f9d59`).
+HEAD сместился моими же коммитами, и контракт аудита потребовал переинвентаризации —
+она немедленно дала дефект.
+
+### Симптом
+
+```
+$ pytest --collect-only -q
+20894 tests collected, 1 error
+Interrupted: 1 error during collection
+```
+
+Ошибка:
+```
+tests/unit/services/ai/test_pii_recognizers.py:29
+  _inn_checksum_valid = _recognizers._inn_checksum_valid
+AttributeError: module 'src.backend.services.ai.pii.recognizers' has no
+attribute '_inn_checksum_valid'
+```
+
+То есть ровно тот класс проблемы, который F-W и закрывал (collection-ошибка,
+блокирующая **весь** прогон), мой фикс вернул в другой форме.
+
+### Причина
+
+Волна 2 (`d8e862f51`, F-W) заменила прямые импорты на гвард, обращаясь к
+**пакету**-реэкспорту:
+
+```python
+_recognizers = skip_if_presidio_unavailable("src.backend.services.ai.pii.recognizers")
+_inn_checksum_valid = _recognizers._inn_checksum_valid   # AttributeError
+```
+
+Пакет `src/backend/services/ai/pii/recognizers/__init__.py` реэкспортирует только
+публичные классы (`InnRecognizer` и т.д.). Приватные хелперы `_inn_checksum_valid` и
+`_snils_check_digit_valid` определены в подмодулях (`inn_recognizer.py`,
+`snils_recognizer.py`) и через пакет недоступны.
+
+### Почему это не было поймано раньше — и что из этого следует
+
+| Окружение | Поведение при импорте | Что видно |
+|---|---|---|
+| `/home/user/dev/gd_reaudit` (моя рабочая копия) | импорт падает `ValueError(libnvrtc)` → `pytest.skip` **до** обращения к атрибуту | collection EXIT=0, тесты SKIPPED |
+| `/home/user/dev/gd_integration_tools` (master) | presidio импортируется штатно → атрибут реально читается | collection прерван |
+
+**Это главный вывод волны.** Один и тот же коммит давал «зелёный» статус в одном
+venv и ронял весь прогон в другом, потому что `skip` маскировал обращение к
+несуществующему атрибуту. Формулировка «мутация поймана в обе стороны» для F-W
+оказалась неполной: мутация проверяла оба режима гварда, но не проверяла, что
+целевой модуль **экспортирует** запрашиваемые имена.
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P0 (блокирует collection целиком — тот же класс, что F-W) |
+| **file:line** | `tests/unit/services/ai/test_pii_recognizers.py:26-34` (было), `git show d8e862f51` |
+| **Reproduction** | `pytest --collect-only -q` в worktree с установленным presidio |
+| **Expected** | `N tests collected`, exit 0 |
+| **Actual** | `20894 tests collected, 1 error`, `Interrupted` |
+| **Impact** | **мой** регрессионный дефект; DoD-пункт «Clean Python 3.14 verification воспроизводим» не выполнялся бы в CI-окружении |
+| **Fix** | гвард применяется к каждому **подмодулю** отдельно (`credit_case` / `inn` / `passport_ru` / `snils`), структура импортов исходного теста восстановлена — `2037f9d59` |
+| **Regression test** | мутация «доступ к хелперу через пакет» → ровно та же collection-ошибка; исправленный файл — 37 collected, EXIT=0; 89 passed по трём PII-файлам |
+| **Commit SHA** | `2037f9d59` (исправление), `d8e862f51` (источник регрессии) |
+
+### Что теперь измерено на новом HEAD
+
+| Проверка | Exit | Результат |
+|---|---:|---|
+| `compileall` src/extensions/plugins/testkit/tools | 0 | OK ×5 |
+| `tools/check_layers.py` | 0 | `0 новых (файлов: 2549; baseline: 22 legacy)` |
+| `pytest --collect-only -q` | 0 | **20931 tests collected** (было 20894 + error) |
+| `ruff check .` | 1 | 34 ошибки (18 tools, 13 extensions, 3 ops) — пре-существующие, 0 файлов этой сессии |
+| порядок middleware | — | перезамер: **37/37** registration = user_middleware = request order, 7/8 стадий, те же 5 нарушений порядка |
+| `-m property` / `-m security` | 5 | `no tests collected` — маркеры по-прежнему мёртвые |
+
+**Стек middleware моими коммитами не менялся** — в `registry.py` и
+`setup_middlewares.py` правились только docstring'и, что и подтвердилось перезамером
+на новом HEAD. В `middleware_actual_order.json` добавлен блок `_provenance` с обоими
+HEAD и пояснением.
+
 ## 10. Реестр findings (дополнение)
 
 
 | ID | Sev | Область | Статус |
 |---|---|---|---|
-| F-D | **P0** | Tenant spoofing через `X-Tenant-ID` | **FIXED** (не закоммичено), 8 тестов, мутация поймана, регрессий 0 |
+| F-D | **P0** | Tenant spoofing через `X-Tenant-ID` | **FIXED** (`7806bdf76`), 8 тестов, мутация поймана, регрессий 0 |
 | F-A | P1 | Стадия authorization отсутствует в стеке middleware | открыт |
 | F-B | P1 | `tenant_resource_isolation` выполняется раньше `tenant` | задокументировано, поведение не менялось |
 | F-C | P2 | `request_body_cache` раньше `idempotency`; `cached_body` без читателей | открыт |
-| F-E | P1 | Нет типа `LifecycleOperation` | **FIXED** — тип + runner + миграция 11 операций, 20 тестов, 3 мутации |
-| F-F | P1 | Нет reverse-order rollback | **FIXED** — rollback в runner + `run_shutdown` при неудачном старте |
+| F-E | P1 | Нет типа `LifecycleOperation` | **FIXED** — тип + runner + миграция 11 операций, 20 тестов, 3 мутации commit: `0335d3923` |
+| F-F | P1 | Нет reverse-order rollback | **FIXED** — rollback в runner + `run_shutdown` при неудачном старте commit: `0335d3923` |
 | F-G | P1 | `/health/ready` fail-open и он же в k8s-манифестах | открыт |
 | F-H | P1 | Два readiness-эндпоинта, противоположные политики | открыт |
-| F-I | P1 | AgentSecurityFramework hooks fail-open (регистрация и enforcement) | **FIXED** (5 точек), 9 тестов, 3 мутации, регрессий 0 |
-| F-AH | P1 | Решение `pre_llm`/`post_tool` hook'а отбрасывалось; на «чистом» пути hooks не выполнялись вовсе | **FIXED** вместе с F-I |
-| F-J | P1 | Shutdown не изолирован: падение op пропускает остальные | **FIXED** — изоляция в runner, регресс 0 |
+| F-I | P1 | AgentSecurityFramework hooks fail-open (регистрация и enforcement) | **FIXED** (5 точек), 9 тестов, 3 мутации, регрессий 0 commit: `57906b34e` |
+| F-AH | P1 | Решение `pre_llm`/`post_tool` hook'а отбрасывалось; на «чистом» пути hooks не выполнялись вовсе | **FIXED** вместе с F-I commit: `57906b34e` |
+| F-J | P1 | Shutdown не изолирован: падение op пропускает остальные | **FIXED** — изоляция в runner, регресс 0 commit: `0335d3923` |
 | F-K | P2 | `PluginLoader.shutdown_all()` не идемпотентен | открыт |
-| F-L | P2 | Degradation-заглушки HEALTHY вместо UNBOUND | **FIXED** — `FeatureState.UNBOUND`, `bound=False`, `error_rate: null`; 7 тестов, мутация поймана |
+| F-L | P2 | Degradation-заглушки HEALTHY вместо UNBOUND | **FIXED** — `FeatureState.UNBOUND`, `bound=False`, `error_rate: null`; 7 тестов, мутация поймана commit: `7c16edef1` |
 | F-M | P2 | Манифест worker'а ссылается на несуществующий `/probe/ready` | открыт |
 | F-N | High | Гейт слоёв слеп к third-party; allowlist регрессировал 14→22 | открыт |
 | F-O | High | 9 domain-моделей на SQLAlchemy | открыт |
@@ -1730,49 +2478,50 @@ fail-closed, но означает, что транзиентный сбой API
 | F-Q | Med | DSL тянет infrastructure напрямую | открыт |
 | F-R | Med | Стадия compile декоративна, типизированного IR нет | открыт |
 | F-S | — | `Exchange` чист | **PASS** |
-| F-T | P1 | Гейт docstrings fail-open + неверный интерпретатор | открыт |
+| F-T | P1 | `make/quality.mk:123` вызывает системный `python3` (3.12) → 3 файла с PEP 758 `except A, B:` **молча пропускаются**; плюс 1 реально пропущенный docstring (`graphql_guards.py:27`, из чужого коммита `7157ffd59`) и устаревший «baseline: 0» в строке 126 | **подтверждён исполнением** (§9f-qua-bis) |
 | F-U | P1 | `check-object-auth` fail-open в двух слоях | открыт |
 | F-V | P2 | Гейты не покрывают `tests/` | открыт |
-| F-W | **P0** | 3 collection-ошибки (`torch` CUDA → `ValueError`) блокировали **все** прогоны | **FIXED** (гвард, только тесты), мутация поймана, collection exit 2 → 0 |
+| F-W | **P0** | 3 collection-ошибки (`torch` CUDA → `ValueError`) блокировали **все** прогоны | **FIXED** (гвард, только тесты), мутация поймана, collection exit 2 → 0; commit: `d8e862f51` + `2037f9d59` |
 | F-X | P1 | Маркеры `property`/`security` мёртвые: 0 тестов, `security` не зарегистрирован | открыт |
-| F-Y | P1 | 2 теста портят tracked-файлы (`docs/adr/WIKI.md`, `.audit/quality-results.json`) | **FIXED** (побайтовый снимок + restore), sha не меняются |
-| F-Z | P1 | `release-gate.yml` падает всегда: `REPO` не определён при `set -u` **и** `build-and-deploy` не существует | **FIXED** — обе причины + meta-гейт `check_release_gate.py` в `ci`; 18 тестов, 7 падают на HEAD |
-| F-AL | **CRITICAL** | MCP-инструмент `documents_to_markdown` читал произвольные файлы ФС (`/etc/passwd`, 3360 B) | **FIXED** — `allowed_read_roots` + `resolve()`-проверка + `config_loader.repo_root()`; 9 тестов, регрессий 0 |
-| F-AM | **CRITICAL** | ORM-фильтр tenant не фильтровал UPDATE/DELETE и JOIN-запросы | **FIXED** — резолвер `column_descriptions`/`entity_description`/`froms`; 12 тестов на реальном ORM; контракт DML изменён осознанно (нужен ADR) |
-| F-AN | P1 | Тесты tenant-фильтра вакуумны (`MagicMock`, listener не вызывается) | частично закрыто реальными ORM-тестами F-AM; старый тест переписан |
-| F-AT1 | **P0** | Prod-профиль Temporal молча деградирует на `PgRunner` при отсутствии SDK | открыт |
-| F-AT2 | **P0** | `workflow_use_temporal` по умолчанию `False` — worker выключен во всех профилях | открыт |
-| F-AT3 | P1 | `_build_temporal_activities()` → `[]`; REQUIRED-операция worker'а вакуумна | открыт |
+| F-Y | P1 | 2 теста портят tracked-файлы (`docs/adr/WIKI.md`, `.audit/quality-results.json`) | **FIXED** (побайтовый снимок + restore), sha не меняются commit: `df76a8fec` |
+| F-Z | P1 | `release-gate.yml` падает всегда: `REPO` не определён при `set -u` **и** `build-and-deploy` не существует | **FIXED** — обе причины + meta-гейт `check_release_gate.py` в `ci`; 18 тестов, 7 падают на HEAD commit: `658a97efe` |
+| F-AL | **CRITICAL** | MCP-инструмент `documents_to_markdown` читал произвольные файлы ФС (`/etc/passwd`, 3360 B) | **FIXED** — `allowed_read_roots` + `resolve()`-проверка + `config_loader.repo_root()`; 9 тестов, регрессий 0 commit: `1d0679c29` |
+| F-AM | **CRITICAL** | ORM-фильтр tenant не фильтровал UPDATE/DELETE и JOIN-запросы | **FIXED** — резолвер `column_descriptions`/`entity_description`/`froms`; 12 тестов на реальном ORM; контракт DML изменён осознанно (нужен ADR) commit: `9572f902b` |
+| F-AN | P1 | Тесты tenant-фильтра вакуумны (`MagicMock`, listener не вызывается) | частично закрыто реальными ORM-тестами F-AM; старый тест переписан commit: `—` |
+| F-AT1 | **P0** | Prod-профиль Temporal молча деградирует на `PgRunner` при отсутствии SDK | **FIXED** — 5 точек `return`+`warning` → `error`+`raise`; 7 новых тестов, 2 мутации пойманы commit: `2a073bac7` |
+| F-AT2 | **P0** | `workflow_use_temporal` по умолчанию `False` — worker выключен во всех профилях | **частично закрыт** — дефолт `False` сохранён (проверено на HEAD `2d9f4323b`); при включённом флаге отказ теперь фатальный. Решение о дефолте — за владельцем |
+| F-AT3 | P1 | `_build_temporal_activities()` → `[]`; REQUIRED-операция worker'а вакуумна | **FIXED** — проверка `activities` до сетевого dial; пустой список = `RuntimeError` commit: `2a073bac7` |
 | F-AT4 | P1 | `except ImportError` не ловит `RuntimeError` — заявленный fallback `dev_light` мёртв | открыт |
 | F-AT5 | P1 | `temporal_replay_gate.py` не подключён ни к одному make/CI-таргету | открыт |
 | F-AT6 | P1 | Redis-lock fail-open → дублирование cron на всех инстансах | открыт |
-| F-AP1 | **CRITICAL** | SSRF: 11 точек `page.goto` без валидации URL; 9/9 payload'ов достигают браузера | открыт (латентный: пул не подключён, F-AP6) |
-| F-AP2 | HIGH | `check_waf_coverage.py` слеп к `page.goto` → «0 violations» при реальной дыре | открыт |
-| F-AP3 | HIGH | `playwright`/`patchright` не установлены → все browser-пункты DoD ENV_BLOCKED | ENV_BLOCKED |
+| F-AP1 | **CRITICAL** | SSRF: 10 точек `page.goto` без валидации URL; 9/9 payload'ов достигают браузера | **код закрыт в ветке `fix/ssrf-url-guard`, не слит**: `core/net/url_guard.py` + 3 защищённых входа, 145 тестов, 3 мутации пойманы, WAF-гейт EXIT=0. Master остаётся уязвимым (латентный: пул не подключён, F-AP6) |
+| F-AP2 | HIGH | `check_waf_coverage.py` слеп к `page.goto` → «0 violations» при реальной дыре | **FIXED** — детекция браузерной навигации; allowlist из 3 записей с owner/target/reason, тест «exemption не вслепую» commit: `2d9f4323b` |
+| F-AP3 | HIGH | `playwright`/`patchright` не установлены → все browser-пункты DoD ENV_BLOCKED | **ENV-проблема снята** — пакеты установлены, BROWSER DoD выполнен реально: 6 PASS / 0 FAIL, `browser_artifacts/trace.zip` |
 | F-AP4 | HIGH | Утечка driver-процесса при падении `launch()` | открыт |
 | F-AQ2 | HIGH | Output-санитайзер PII fail-open (асимметрия с input) | открыт |
 | F-AQ3 | HIGH | `RagInvalidationBus.subscribe()` не вызывается — кэш не инвалидируется после ingest | открыт |
+| F-AU | P1 | Прогон `-m unit` OOM-убивается ядром в **обеих** топологиях: xdist на 99% (воркер 5.2 ГБ), последовательно на 97% (процесс 6.9 ГБ); `make unit-tests`/`make ci` не дают вердикта | **открыт, но фикс проверен**: разбиение по каталогам даёт вердикт — 36 чанков, `42 failed, 20 134 passed`, 27 EXIT=0, 0 OOM (§9f-uni) |
 | F-AO | P1 | Repo-wide `ruff check .` → 34 ошибки (18 `tools`, 13 `extensions`, 3 `ops`); `ruff format --check .` → 292 файла. Пре-существующие, среди них 0 файлов этой сессии | открыт — уточнение к F-AC (агент оценивал в 295) |
 | F-AR | P1 | YAML-шаг `feature_flag:` → `TypeError: FeatureMixin.feature_flag() got an unexpected keyword argument 'flag'`; `composition_demo` не грузится | открыт |
 | F-AQ10 | P1 | OpenFeature: 0 импортов при 117 текстовых упоминаниях; 1265 LOC самописной замены | REJECT (замена функциональнее SDK в tenant-scope) |
 | F-AQ11 | P1 | `api-fuzz.yml:43` — `uv sync --extra dev`, но `dev` — dependency-group → `UV_EXIT=2` | открыт, чинится одной строкой |
 | F-AQ12 | P2 | 1566 LOC параллельного брокерного слоя в обход faststream (nats-py, aiokafka) | DEFER — нужен бенчмарк |
-| F-AP10 | P1 | `api_fuzz_runner.py:145` — `--exitfirst` не существует в schemathesis 4.x → ни одного fuzz-кейса, отчёт не пишется | открыт, чинится одной строкой |
-| F-AP11 | P1 | playwright/patchright отсутствуют; бинарники Chromium есть; единственный browser-тест исключён `--ignore` в `pyproject.toml:1190` | ENV_BLOCKED (см. `browser_results.md`) |
-| F-AT11 | P2 | `pyproject.toml:484` утверждает «temporalio уже в base deps» — он в extras; 37 импортов и 7 тестов мертвы и в CI | открыт |
-| F-AN3 | P1 | 11 order-зависимых падений; поллитер — `test_feature_flag_scope.py` (подменяет синглтон `feature_flags`), жертва — `test_authorization_gateway*`; шлюз читает флаг через `get_feature_flag_service()`, тест патчит объект из import-time | открыт — autouse-сброс синглтонов |
-| F-AN2 | P1 | 18 падений `Unknown action(s) in pipeline` — **ложные**: файл проходит 29/29 в одиночку. `_validate_action_names` недетерминирована: при пустом реестре молчит, при частичном — блокирует легитимные роуты | открыт — требует изоляции глобального реестра |
+| F-AP10 | P1 | `api_fuzz_runner.py:145` — `--exitfirst` не существует в schemathesis 4.x → ни одного fuzz-кейса, отчёт не пишется | **доказано исполнением** на schemathesis 4.26.1: `Error: No such option: --exitfirst`, EXIT=2 (было только чтением кода) |
+| F-AP11 | P1 | playwright/patchright отсутствуют; бинарники Chromium есть; единственный browser-тест исключён `--ignore` в `pyproject.toml:1190` | **частично снято**: пакеты установлены, браузер запускается на имеющейся сборке Chromium; но `--ignore` теста в `pyproject.toml:1190` **остаётся** — browser-тест по-прежнему не участвует в прогонах |
+| F-AT11 | P2 | `pyproject.toml:484` утверждает «temporalio уже в base deps» — он в extras; 37 импортов и 7 тестов мертвы и в CI | **подтверждено разбором pyproject**: `temporalio` отсутствует в `project.dependencies` и присутствует в extras `workflow`/`test-workflow`/`test-all`/`testkit`. В venv пакет **установлен** (ENV изменился), поэтому тесты живые локально, но в CI без extras — нет |
+| F-AN3 | P1 | 11 order-зависимых падений; поллитер — `test_feature_flag_scope.py` (подменяет синглтон `feature_flags`), жертва — `test_authorization_gateway*`; шлюз читает флаг через `get_feature_flag_service()`, тест патчит объект из import-time | открыт — autouse-сброс синглтонов. **Масштаб оценён на `2d9f4323b`:** ложных падений **93** из 135 (§9f-uni) |
+| F-AN2 | P1 | 18 падений `Unknown action(s) in pipeline` — **ложные**: файл проходит 29/29 в одиночку. `_validate_action_names` недетерминирована: при пустом реестре молчит, при частичном — блокирует легитимные роуты | открыт. **Количественно подтверждено на `2d9f4323b`:** чанковый прогон по каталогам даёт **42 падения** против **135** в монолитном — **93 теста** ложны (§9f-uni) |
 | F-AS15 | P2 | `test_mcp_tool_authz` ожидает `not_in_allowlist_or_public_ns`, код отдаёт `capability_denied:…` | расхождение контрактов, не подтверждённый дефект |
-| N-1 | **HIGH → FIXED** | Мой P0-фикс был неполон: `_verify_api_key` не кладёт `metadata['tenant_id']`, поэтому успешная аутентификация без tenant уходила в fail-open ветку и доверяла `X-Tenant-ID`. Реальный API-key + чужой заголовок → HTTP 200 | **ИСПРАВЛЕНО** — `_auth_present()` + fail-closed ветка; 12 тестов, мутация поймана |
+| N-1 | **HIGH → FIXED** | Мой P0-фикс был неполон: `_verify_api_key` не кладёт `metadata['tenant_id']`, поэтому успешная аутентификация без tenant уходила в fail-open ветку и доверяла `X-Tenant-ID`. Реальный API-key + чужой заголовок → HTTP 200 | **ИСПРАВЛЕНО** — `_auth_present()` + fail-closed ветка; 12 тестов, мутация поймана commit: `7806bdf76` |
 | N-2 | MEDIUM | `UNION` и `select-from-CTE` обходят ORM-фильтр (`_tenant_aware_entities` → `[]`) — cross-tenant чтение | **открыт** (тест фиксирует текущую картину) |
-| N-3 | **MEDIUM → FIXED** | Тот же баг, что закрыт для `pre_llm`, остался в `validate_command:172` и `validate_file_modification:242` — чистый путь возвращал allow без вызова `pre_tool`-хуков | **ИСПРАВЛЕНО**, мутация поймана |
-| N-4 | **MEDIUM → FIXED** | Операция, упавшая после частичного старта (в т.ч. по таймауту), не откатывалась: `_started` пополнялся только после успеха | **ИСПРАВЛЕНО** — трек `_attempted`; побочно lifecycle-падения в кластере 10 → 7 |
+| N-3 | **MEDIUM → FIXED** | Тот же баг, что закрыт для `pre_llm`, остался в `validate_command:172` и `validate_file_modification:242` — чистый путь возвращал allow без вызова `pre_tool`-хуков | **ИСПРАВЛЕНО**, мутация поймана commit: `57906b34e` |
+| N-4 | **MEDIUM → FIXED** | Операция, упавшая после частичного старта (в т.ч. по таймауту), не откатывалась: `_started` пополнялся только после успеха | **ИСПРАВЛЕНО** — трек `_attempted`; побочно lifecycle-падения в кластере 10 → 7 commit: `0335d3923` |
 | N-5 | MEDIUM | 7 из 11 продовых операций без `stop` → не откатываются никогда | открыт |
 | N-6 | LOW | возврат `rollback()` игнорируется, ошибки `stop` теряются | открыт |
 | N-7 | LOW | `start_all()` не идемпотентен — повторный вызов дублирует `_started` | открыт |
 | N-8 | LOW | hardlink внутри репо читается; не эксплуатируемо без write-доступа в корень | принято |
 | N-9 | INFO | триггер `post_llm` из контракта `SecurityHook` недостижим (0 вхождений) | открыт |
-| F-AN4 | P1 | Локально `UNIT_TEST_JOBS=2`, в CI `-n auto` — топологии расходятся; CI использует конфигурацию, документированную в `Makefile:43-48` как OOM-зависание | открыт |
+| F-AN4 | P1 | Локально `UNIT_TEST_JOBS=2`, в CI `-n auto` — топологии расходятся; CI использует конфигурацию, документированную в `Makefile:43-48` как OOM-зависание | открыт commit: `—` |
 | F-AS1 | **CRITICAL** | `core.tenancy._current` никогда не заполняется: ORM-фильтр и PG RLS читают пустой tenant | открыт (корень F-AS7/9) |
 | F-AS4 | HIGH | `api_key` выполняется внутри `tenant` и хардкодит `tenant_id="default"` | открыт |
 | F-AS5 | HIGH | `TenantResourceIsolationMiddleware` — production no-op (0 checker'ов) | открыт |
@@ -1787,34 +2536,54 @@ fail-closed, но означает, что транзиентный сбой API
 | F-AF | P2 | `x-request-id` дублируется: `asgi_correlation_id` по умолчанию пишет тот же заголовок | открыт |
 | F-AG | P2 | `Referrer-Policy` отсутствует | открыт |
 | F-AI | P3 | `record_outcome` для незарегистрированного feature возвращает HEALTHY (implicit success) | сознательно не менялось — контракт закреплён тестом |
-| F-AJ | P1 | README: «109 actions» против фактических 132; 167 строк исторических readiness-аудитов | **FIXED** — генератор из кода + CI-гейт, мутация поймана |
+| F-AJ | P1 | README: «109 actions» против фактических 132; 167 строк исторических readiness-аудитов | **FIXED** — генератор из кода + CI-гейт, мутация поймана commit: `7479ab572` |
 | F-AK | P2 | Таблица «Протоколы» в README: 13 строк против 17 фактических пакетов | открыт — требует продуктового решения по каждому протоколу |
 
 ---
 
-## 10. NOT_VERIFIED / NOT_RUN (честно)
+## 10. NOT_VERIFIED / NOT_RUN (честно, переписано на `2d9f4323b`)
 
-**Не выполнено в этой волне:**
-- BROWSER (Playwright) — `playwright` **отсутствует в venv**, статус **ENV_BLOCKED**,
-  не PASS. `trace.zip`/screenshots не получены.
-- cURL-прогон выполнен (§9b), но **выборочный**: 27 сценариев из 414 путей схемы.
-  `NOT_RUN` внутри него: REST CRUD на изолированном tenant, DSL dispatch с API-key,
-  feature-flag OFF→503, rate-limit, timeout, unavailable-dependency,
-  authenticated SOAP/GraphQL мутация, tenant-кросс через HTTP для ролей,
-  idempotency-повтор (первый запрос упирается в 403 без кредов).
-- Рой неполный: не запущены агенты по workflow/Temporal/scheduler, RPA,
-  AI/RAG/MCP, services/repositories, protocols/contracts, docs/README.
-- Независимый финальный reviewer — не проведён.
-- `make ci`, `make chaos`, `make deps-check`, `make secrets-check`,
-  `make check-waf-coverage`, mypy-бюджет — не прогонялись.
+Предыдущая редакция этой секции **устарела**: она утверждала, что Playwright и
+`temporalio` отсутствуют, BROWSER — ENV_BLOCKED, swarm неполный, независимый
+reviewer не проводился, интеграционный набор не прогонялся. Всё это изменилось,
+поэтому секция переписана, а не дополнена.
 
-**Ограничения доказательств:**
-- `temporalio`, `playwright`, `openfeature` отсутствуют в venv → вердикты
-  `PARTIAL` по Temporal/Playwright означают «код написан, но в этом окружении
-  деградирует молча», а не «сломано в проде». Окончательный вердикт требует
-  CI-окружения.
-- Живые S3/Qdrant/LangMem недоступны.
-- Полный интеграционный набор целиком не прогонялся.
+**Выполнено и подтверждено на текущем HEAD:**
+
+| Пункт | Результат |
+|---|---|
+| Порядок middleware | 37/37, три LIFO-соотношения, §1 |
+| Tenant spoofing | 403 `tenant_mismatch`, живой HTTP, детерминированно, §9f-bis |
+| cURL-батарея | 16 PASS / 0 FAIL, §9f-bis |
+| BROWSER (Playwright) | **6 PASS / 0 FAIL** (было ENV_BLOCKED), `trace.zip` 128 файлов, §9f-ter |
+| `-m e2e` | 8 passed, EXIT=0 |
+| `-m integration` | 9 failed / 244 passed / 1 error, EXIT=1, §9f-int |
+| `-m unit` чанками | 42 failed / 20 134 passed, 27 из 36 чанков EXIT=0, §9f-uni |
+| Независимый ре-аудит | проведён: опроверг 3 из 6 моих FIXED-выводов, §9k |
+| Рой | 11 специализированных агентов + независимый reviewer |
+
+**Действительно NOT_RUN / ENV_BLOCKED на текущем HEAD:**
+
+| Пункт | Статус | Причина |
+|---|---|---|
+| Streamlit-портал (браузер) | `NOT_RUN` | отдельное приложение не поднималось |
+| login flow | `NOT_RUN` | нужен интерактивный ввод и работающее хранилище пользователей |
+| RPA local test page | `ENV_BLOCKED` | RPA-пул в приложение не подключён (F-AP6) |
+| PG RLS end-to-end | `ENV_BLOCKED` | нет PostgreSQL в окружении |
+| Testcontainers smoke | `ENV_BLOCKED` | testcontainers не может поднять контейнер |
+| Redis Streams интеграция | `ENV_BLOCKED` | нет Redis |
+| Живые S3 / Qdrant / LangMem | `NOT_VERIFIED` | внешние сервисы недоступны |
+| `make chaos`, `make deps-check`, `make secrets-check`, mypy-бюджет | `NOT_RUN` | не входили в DoD-перечень этой волны |
+| cURL: REST CRUD на изолированном tenant, DSL dispatch с API-key, feature-flag OFF→503, rate-limit, timeout, unavailable-dependency, повтор idempotency | `NOT_RUN` | часть сценариев §9b на старом HEAD; в новой батарее 16 сценариев, этих среди них нет |
+| Монолитный `pytest -m unit` | **недостижим** | OOM в обеих топологиях, F-AU |
+
+**Ограничения доказательств (обновлено):**
+- `temporalio`, `playwright`, `openfeature`, `schemathesis`, `testcontainers`
+  **установлены** — прежние оговорки про «деградацию молча» к ним больше не
+  применимы. Отсутствуют `moto`, `aiomcache`.
+- Вердикты по Temporal теперь получены на реальном SDK (F-AT1/F-AT3), а не на
+  предположении об отсутствии пакета.
+- Полный интеграционный набор **прогнан**, но 5 из 10 не-успехов — среда, а не код.
 
 ---
 
@@ -1834,7 +2603,8 @@ fail-closed, но означает, что транзиентный сбой API
 
 ## 12. Статус коммитов
 
-**Ничего не закоммичено.** 10 волн правок, разложенных по независимым зонам:
+**Всё закоммичено.** 15 атомарных коммитов в master (HEAD `2037f9d59`), слиты
+fast-forward из `audit/reaudit-2026-10-01`. Ниже — волны правок и их SHA:
 
 | Волна | Файлы | Фикс |
 |---|---|---|
@@ -1847,13 +2617,43 @@ fail-closed, но означает, что транзиентный сбой API
 | 7 | `README.md`, `make/docs.mk`, `tools/generate_current_metrics.py`, `docs/audit/README_PRODUCTION_READINESS_HISTORY.md` | F-AJ |
 | 8 | `.github/workflows/release-gate.yml`, `make/quality.mk`, `make/pipelines.mk`, `tools/checks/check_release_gate.py` | F-Z |
 | 9 | `core/ai/fs_facade.py`, `core/ai/errors.py`, `core/config/config_loader.py`, `mcp/mcp_server/tools_document.py`, `plugins/composition/ai_safety_setup.py` | F-AL |
-| 10 | `core/tenancy/sqlalchemy_filter.py`, `tests/unit/infrastructure/database/test_tenant_filter.py` | F-AM |
+| 10 | `core/tenancy/sqlalchemy_filter.py`, `tests/unit/infrastructure/database/test_tenant_filter.py` | F-AM `9572f902b` |
+| 11 | `tests/unit/core/security/test_reaudit_n1_n3_n4.py` | регресс-тесты N-1/N-3/N-4 `ff65a6a11` |
+| 12 | `artifacts/current_audit/*` (9 файлов) | доказательная база аудита `2a6ecc467` |
+| 13 | `core/privacy/delete_data_subject/_redis.py`, 2 теста | CRITICAL: GDPR-erasure стирал чужих tenant'ов `30380c831` |
+| 14 | `core/auth/api_key_backend.py`, `facade_core_mixin.py`, тест | Argon2id не блокирует event loop `ddac8db5f` |
+| 15 | `tests/unit/services/ai/test_pii_recognizers.py` | F-W-регрессия: приватный хелпер из пакета `2037f9d59` |
+| 16 | `infrastructure/workflow/temporal_worker_runtime.py`, `plugins/composition/setup_infra/lifecycle.py`, тест | F-AT1/F-AT3: Temporal worker fail-closed при включённом флаге `2a073bac7` |
+| 17 | `tools/check_waf_coverage.py`, `tools/check_waf_coverage_allowlist.txt`, тест | F-AP2: WAF-гейт видит браузерную навигацию `2d9f4323b` |
 
-Коммит — только по явной команде владельца. Откат каждой волны —
-`git checkout -- <файлы волны>`; `git diff` самодостаточен. Патчи последних
-волн сохранены в `/tmp/*.FIXED*` как safety-net.
+Волны 1-10 несли SHA в реестре findings; 11-15 добавлены после перепроверки на
+новом HEAD; 16-17 — слитая ветка `fix/temporal-fail-closed-at`, проверенная в
+отдельном worktree (две мутации) и влитая fast-forward (§0-bis). Ветка после
+мержа удалена. Волна 15 — **регрессия моего же коммита волны 2** (см. §9l): приватный
+хелпер брался из пакета-реэкспорта, в gd_reaudit это маскировалось skip'ом по CUDA.
+
+Откат каждой волны: `git revert <SHA>` (все коммиты атомарны).
 
 ## 13. Следующий шаг (ровно один)
+
+**F-AP1 (SSRF в RPA, CRITICAL)** — единственная находка уровня CRITICAL, которая
+не является потомком F-AS1 и которую не закрывает ни один из слитых коммитов.
+
+**Состояние на момент этой правки отчёта:** код фикса **написан и проверен** в
+ветке `fix/ssrf-url-guard` (worktree `/home/user/dev/gd_ssrf`, база `2d9f4323b`),
+но **не закоммичен и не слит**, поэтому на master дыра всё ещё открыта. Коммит и
+слияние требуют явной команды владельца. Что сделано: общий
+`core/net/url_guard.py` (fail-closed, разбор decimal/hex/octal/короткой формы
+`127.1`/IPv4-mapped IPv6), 10 unguarded callsite'ов свёрнуты в 3 защищённых
+входа, WAF-гейт переведён с allowlist-долга на проверку защиты (0 записей по
+`src/backend`, EXIT=0), 145 тестов, 3 мутации пойманы. Подробный блок с полями —
+выше. Остаточный риск фикса — DNS-rebinding, он зафиксирован, а не замаскирован.
+
+Пока пул RPA не подключён, код недостижим — это делает находку срочной по
+факту wire-up, а не по факту эксплуатации.
+
+Контекст (почему не F-AS1): F-AS1 остаётся корнем трёх GDPR/HITL-находок, но
+F-AP1 — единственный CRITICAL с прямым путём из тела запроса в браузер.
 
 F-AS1 (split-brain ContextVar) — единственный корень, из которого растут
 F-AS7 (fail-open HITL) и F-AS9 (GDPR-адаптеры, стирающие данные всех tenant'ов
@@ -1866,3 +2666,25 @@ fail-open **по построению**, а не из-за отдельного 
 `core.tenancy._current` (читают 9 потребителей). Объединение в обратном
 направлении затрагивает больше модулей, но не меняет публичный контракт
 middleware.
+
+## 14. DEFINITION OF DONE — сводка по 8 пунктам
+
+HEAD `2d9f4323b`. Статусы честные: `ENV_BLOCKED` и `NOT_RUN` **не** считаются PASS.
+
+| # | Пункт DoD | Статус | Доказательство |
+|---|---|---|---|
+| 1 | Доказан фактический middleware order | **PASS** | `artifacts/current_audit/middleware_actual_order.json`, воспроизводим генератором `probe_middleware_order.py`: registration=37, `user_middleware`=37, фактический request=37, response=37. Три соотношения выполняются точно: `registration == reversed(user_middleware)`, `request == user_middleware`, `response == reversed(request)`. 7/8 стадий, стадия `authorization` **отсутствует**, 5 инверсий порядка |
+| 2 | Tenant header не может переопределить authenticated tenant | **PASS** | Живой HTTP на `2d9f4323b`: `X-API-Key` + `X-Tenant-ID: tenant-b` → **403 `tenant_mismatch`**, детерминированно 403/403/403. Тесты: 8 (`test_tenant_auth_precedence_security.py`) + 12 (`test_reaudit_n1_n3_n4.py`). Коммиты `7806bdf76`, `ff65a6a11` |
+| 3 | Required security hooks fail closed | **PASS** | F-I/F-AH: 9 тестов, 3 мутации, `57906b34e`. F-AT1/F-AT3 (Temporal): 5 точек `return`+`warning` → `error`+`raise`, 7 тестов, 2 мутации пойманы при откате к `master`, `2a073bac7`. F-L: `UNBOUND`+`bound=False`+`error_rate: null`, 7 тестов, `7c16edef1` |
+| 4 | Lifecycle имеет criticality, timeout и rollback | **PARTIAL** | Тип `LifecycleOperation` с criticality/timeout/dependencies + topological start + reverse-order rollback + идемпотентный shutdown — `0335d3923`, 20 тестов. **Но** 7 из 11 production-операций **без `stop`** → не откатываются никогда (N-5, открыт); `_attempted` (`N-4`) чинит только частично упавшие операции |
+| 5 | Clean Python 3.14 verification воспроизводим | **PARTIAL** | Проходят воспроизводимо: `compileall` EXIT=0; `check_layers` 0 новых; `pytest --collect-only` 20961 EXIT=0; **`-m e2e` 8 passed EXIT=0**; метрики `--check` EXIT=0; ruff 34 ошибки — **все пре-существующие**, 0 файлов этой сессии. **Не проходит:** `ruff check .` exit 1 (F-AO); `-m property`/`-m security` exit 5 (F-X); `check_docstrings` exit 1 (F-T); монолитный `pytest -m unit` **не даёт вердикта ни в одной топологии** — xdist OOM на 99%, последовательно OOM на 97% (F-AU). **Обход найден и проверен:** разбиение по каталогам даёт вердикт — `42 failed, 20 134 passed`, 27 из 36 чанков EXIT=0 (§9f-uni). Ограничение — память машины (15 ГБ, swap исчерпан, 4 проектных контейнера), а не дефект кода |
+| 6 | Нет новых layer violations | **PASS** | `tools/check_layers.py` → «Нарушений: 0 новых (файлов: 2549; baseline: 22 legacy)» на `2d9f4323b` |
+| 7 | README не содержит stale current metrics | **PASS** | Блок перегенерирован: `tools/generate_current_metrics.py --write` → «132 actions, 20961 тестов»; `--check` → «Метрики README актуальны», **EXIT=0**. Гейт воспроизводим и проверяем |
+| 8 | Нет заявлений FIXED/PASS/PRODUCTION READY без evidence | **PASS** | Автопроверка отчёта: содержательных вхождений `PRODUCTION READY` / `production ready` / `READY FOR PRODUCTION` — **0**; содержательных плейсхолдеров (`не закоммичено`, `TBD`, `TODO`, `FIXME`) — **0** (единственные grep-совпадения — сама строка этой автопроверки, где они перечислены как искомые шаблоны); **25 из 25** строк реестра со статусом FIXED содержат commit SHA; **20 из 20** findings с собственным DoD-блоком содержат все 9 обязательных полей (пересчитано скриптом после добавления блока F-AP1; ранее стояло «11 из 11» — устарело) |
+
+**Итог: 6 PASS, 2 PARTIAL, 0 FAIL.** Два PARTIAL — это не «почти PASS», а
+конкретные незакрытые находки (N-5 и F-AU/F-AO/F-X) с доказательствами выше.
+
+**Что осталось честно непроверенным:** Streamlit-портал (`NOT_RUN`), RPA
+local test page (`ENV_BLOCKED` — пул не подключён, F-AP6), login flow
+(`NOT_RUN`), живые S3/Qdrant/LangMem, PG RLS end-to-end.
