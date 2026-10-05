@@ -1342,6 +1342,22 @@ traversal, symlink — 4/4 заблокированы), sandbox (прямого 
 Ранний прогон давал 11 падений; 7 из них сняты правкой контракта гейта в этой же
 ветке, 2 остались в классе «свежий worktree», 3 — базовые. Итог: **0 регрессий**.
 
+**F-MD1 (P1, гейт метрик README самоссылающийся и от сиротский) — найден при сдаче
+работы, доказан исполнением**
+
+| Поле | Значение |
+|---|---|
+| **Severity** | P1 |
+| **file:line** | `tools/generate_current_metrics.py:246` (в блок пишется `git rev-parse --short=12 HEAD`), `tools/generate_current_metrics.py:366-376` (`_strip_volatile` вырезает только `· сгенерировано <ts>`, но **не** SHA), `make/docs.mk:94` (цель объявлена, но не вызывается) |
+| **Reproduction** | `git checkout <commit> && .venv/bin/python tools/generate_current_metrics.py --check; echo $?` — на `dfd4bf510` даёт **EXIT=1** |
+| **Expected** | блок метрик в README сравним с кодом и гейт зелёный на закоммиченном состоянии |
+| **Actual** | гейт сравнивает и SHA коммита. README — коммитируемый файл, поэтому **любой** коммит, включающий перегенерированный README, меняет `HEAD` и делает `--check` красным; перегенерация после коммита снова делает дерево грязным, следующий коммит ломает гейт заново. Зелёным гейт бывает только при незакоммиченном README |
+| **Impact** | DoD-пункт 7 не может быть PASS на закоммиченном состоянии. Второй дефект: цель `docs-current-metrics-check` помечена в `make/docs.mk:89` как «блокирующий CI-гейт», но её **не вызывает ничто** — `make ci` (`make/pipelines.mk:22-39`) и `make pr` (`:47-51`) её не включают, `make docs` помечен DEPRECATED и уходит в `docs-mkdocs`, в `.github/workflows/` и `.gitlab-ci.yml` ссылок нет. Именно поэтому самоссылочность не всплыла раньше |
+| **Fix** | (а) добавить строку с SHA в `_strip_volatile` — SHA информационный, смысловую ценность не несёт; (б) включить `docs-current-metrics-check` в `make pr`. Обе правки меняют контракт гейта, поэтому **не сделаны без решения владельца** |
+| **Regression test** | отсутствует; минимальный тест — два прогона `--check` до и после коммита README с ожиданием exit 0 в обоих |
+| **Commit SHA** | **НЕТ** — находка внесена в отчёт, но ещё не закоммичена |
+| **Побочное наблюдение** | `make ci` → `unit-tests` ( `make/pipelines.mk:41-46` ) запускает `pytest -n $(UNIT_TEST_JOBS)`, то есть ровно ту xdist-топологию, которая на этой машине дала OOM (F-AU). В CI с другой памятью это может быть корректно, но локальный `make ci` на этом хосте недостижим |
+
 ---
 
 ## 9f-bis. cURL-батарея на живом сервере — HEAD `2d9f4323b`
@@ -2679,11 +2695,13 @@ HEAD `2d9f4323b`. Статусы честные: `ENV_BLOCKED` и `NOT_RUN` **н
 | 4 | Lifecycle имеет criticality, timeout и rollback | **PARTIAL** | Тип `LifecycleOperation` с criticality/timeout/dependencies + topological start + reverse-order rollback + идемпотентный shutdown — `0335d3923`, 20 тестов. **Но** 7 из 11 production-операций **без `stop`** → не откатываются никогда (N-5, открыт); `_attempted` (`N-4`) чинит только частично упавшие операции |
 | 5 | Clean Python 3.14 verification воспроизводим | **PARTIAL** | Проходят воспроизводимо: `compileall` EXIT=0; `check_layers` 0 новых; `pytest --collect-only` 20961 EXIT=0; **`-m e2e` 8 passed EXIT=0**; метрики `--check` EXIT=0; ruff 34 ошибки — **все пре-существующие**, 0 файлов этой сессии. **Не проходит:** `ruff check .` exit 1 (F-AO); `-m property`/`-m security` exit 5 (F-X); `check_docstrings` exit 1 (F-T); монолитный `pytest -m unit` **не даёт вердикта ни в одной топологии** — xdist OOM на 99%, последовательно OOM на 97% (F-AU). **Обход найден и проверен:** разбиение по каталогам даёт вердикт — `42 failed, 20 134 passed`, 27 из 36 чанков EXIT=0 (§9f-uni). Ограничение — память машины (15 ГБ, swap исчерпан, 4 проектных контейнера), а не дефект кода |
 | 6 | Нет новых layer violations | **PASS** | `tools/check_layers.py` → «Нарушений: 0 новых (файлов: 2549; baseline: 22 legacy)» на `2d9f4323b` |
-| 7 | README не содержит stale current metrics | **PASS** | Блок перегенерирован: `tools/generate_current_metrics.py --write` → «132 actions, 20961 тестов»; `--check` → «Метрики README актуальны», **EXIT=0**. Гейт воспроизводим и проверяем |
+| 7 | README не содержит stale current metrics | **PARTIAL** | Все числа метрик точны и перегенерированы из кода: `132 actions`, `0 DSL-роутов`, `17 протоколов`, `37 middleware`, `414/142` OpenAPI, `20961 тест`, `70%`, `2549 файла`. **Но** гейт самоссылающийся и от сиротский — см. **F-MD1** ниже: на закоммиченном состоянии `dfd4bf510` `--check` даёт **EXIT=1**, и расхождение ровно одно — две ссылки на `HEAD` |
 | 8 | Нет заявлений FIXED/PASS/PRODUCTION READY без evidence | **PASS** | Автопроверка отчёта: содержательных вхождений `PRODUCTION READY` / `production ready` / `READY FOR PRODUCTION` — **0**; содержательных плейсхолдеров (`не закоммичено`, `TBD`, `TODO`, `FIXME`) — **0** (единственные grep-совпадения — сама строка этой автопроверки, где они перечислены как искомые шаблоны); **25 из 25** строк реестра со статусом FIXED содержат commit SHA; **20 из 20** findings с собственным DoD-блоком содержат все 9 обязательных полей (пересчитано скриптом после добавления блока F-AP1; ранее стояло «11 из 11» — устарело) |
 
-**Итог: 6 PASS, 2 PARTIAL, 0 FAIL.** Два PARTIAL — это не «почти PASS», а
-конкретные незакрытые находки (N-5 и F-AU/F-AO/F-X) с доказательствами выше.
+**Итог: 5 PASS, 3 PARTIAL, 0 FAIL.** Три PARTIAL — это не «почти PASS», а
+конкретные незакрытые находки (N-5, F-AU/F-AO/F-X и F-MD1) с доказательствами
+выше. Пункт 7 понижен с PASS на PARTIAL по результатам сдачи: заявленный
+«EXIT=0» достигался только на незакоммиченном README.
 
 **Что осталось честно непроверенным:** Streamlit-портал (`NOT_RUN`), RPA
 local test page (`ENV_BLOCKED` — пул не подключён, F-AP6), login flow
