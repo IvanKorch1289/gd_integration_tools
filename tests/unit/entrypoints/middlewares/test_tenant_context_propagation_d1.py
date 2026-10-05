@@ -258,3 +258,104 @@ class TestOrmFilterSeesTenant:
             f"Запрос: {select_sql!r}. Значит get_tenant_id() вернул пустую "
             "строку и изоляция на уровне ORM отсутствует."
         )
+
+
+class TestPrincipalWithoutTenantInMetadata:
+    """Второй класс, который adversarial review выделил отдельно.
+
+    ``bind_tenant_from_metadata`` возвращает ``None``, если в metadata нет
+    ``tenant_id`` — а у API-key principal'ов там только ``key_id`` и
+    ``admin_roles``. Значит привязки не было, ORM-фильтр видел пустую
+    строку и не накладывал НИ ОДНОГО условия, хотя ``TenantMiddleware``
+    к этому моменту уже проставил ``state['tenant_id'] = "default"``.
+
+    Привязка поэтому делается и в самом TenantMiddleware: к его позиции
+    (26) tenant для JWT-пути уже разрешён окончательно.
+    """
+
+    @pytest.mark.asyncio
+    async def test_api_key_principal_without_tenant_metadata_is_bound(self) -> None:
+        """Platform API-key получает tenant из default, а не пустую строку."""
+        from src.backend.core.auth import AuthContext, AuthMethod
+
+        no_tenant = AuthContext(
+            method=AuthMethod.API_KEY,
+            principal="api_key_consumer",
+            metadata={"key_id": "k1", "admin_roles": ["admin"]},  # без tenant_id
+        )
+        observed: dict[str, Any] = {}
+
+        async def inner(scope: dict[str, Any], receive: Any, send: Any) -> None:
+            observed["get_tenant_id"] = get_tenant_id()
+            observed["state_tenant_id"] = scope.get("state", {}).get("tenant_id")
+            await send({"type": "http.response.start", "status": 200, "headers": []})
+            await send({"type": "http.response.body", "body": b"{}"})
+
+        class _Stub(AuthRequiredMiddleware):
+            async def _authenticate(self, scope: Any, receive: Any) -> Any:
+                return no_tenant
+
+        app = _Stub(TenantMiddleware(inner), public_prefixes=())
+        await _call(app, _scope())
+
+        assert observed["state_tenant_id"] == "default"
+        assert observed["get_tenant_id"] == "default", (
+            "CRITICAL F-D1: principal без tenant_id в metadata остался без "
+            f"привязки — get_tenant_id() вернул {observed['get_tenant_id']!r}, "
+            "ORM-фильтр и RLS-listener выходят по return и не накладывают "
+            "условий. TenantMiddleware уже разрешил state['tenant_id'], значит "
+            "привязка обязана быть и здесь."
+        )
+
+    @pytest.mark.asyncio
+    async def test_orm_filter_narrows_for_platform_api_key(self) -> None:
+        """Тот же случай на уровне SQL: WHERE по tenant_id появляется."""
+        import sqlalchemy as sa
+        from sqlalchemy.orm import mapped_column
+
+        from src.backend.core.auth import AuthContext, AuthMethod
+        from src.backend.core.tenancy import sqlalchemy_filter as tf
+
+        class _B(sa.orm.DeclarativeBase):
+            pass
+
+        class _Row(_B):
+            __tablename__ = "d1_rows"
+            id: Mapped[int] = mapped_column(primary_key=True)
+            tenant_id: Mapped[str] = mapped_column(sa.String(64))
+
+        engine = sa.create_engine("sqlite://")
+        tf.apply_tenant_filter()
+        _B.metadata.create_all(engine)
+        seen: list[str] = []
+
+        @sa.event.listens_for(engine, "before_cursor_execute")
+        def _cap(conn: Any, cur: Any, statement: str, *a: Any) -> None:
+            seen.append(statement)
+
+        no_tenant = AuthContext(
+            method=AuthMethod.API_KEY,
+            principal="api_key_consumer",
+            metadata={"key_id": "k1"},
+        )
+
+        async def inner(scope: dict[str, Any], receive: Any, send: Any) -> None:
+            with sa.orm.Session(engine) as session:
+                session.execute(sa.select(_Row)).all()
+            await send({"type": "http.response.start", "status": 200, "headers": []})
+            await send({"type": "http.response.body", "body": b"{}"})
+
+        class _Stub(AuthRequiredMiddleware):
+            async def _authenticate(self, scope: Any, receive: Any) -> Any:
+                return no_tenant
+
+        await _call(_Stub(TenantMiddleware(inner), public_prefixes=()), _scope())
+
+        sql = next((q for q in seen if "d1_rows" in q), "")
+        where = re.split(r"\bWHERE\b", sql, maxsplit=1)
+        assert len(where) > 1 and re.search(
+            r"tenant_id\s*=", where[1], re.IGNORECASE
+        ), (
+            f"CRITICAL F-D1: для platform API-key SQL-фильтр не сузил выборку. "
+            f"Запрос: {sql!r}"
+        )
