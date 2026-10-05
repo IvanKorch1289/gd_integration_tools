@@ -85,6 +85,11 @@ class OutboxEvent(BaseModel):
     status: OutboxEventStatus = OutboxEventStatus.PENDING
     tenant_id: str | None = None
     correlation_id: str | None = None
+    # F-1: id строки outbox. Раньше он кодировался в correlation_id как
+    # ``outbox_msg_id:<N>``, но реальный correlation_id вытеснял маркер,
+    # и mark_sent не вызывался никогда -> строка навсегда оставалась
+    # в processing и доставлялась бесконечно.
+    outbox_msg_id: int | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
