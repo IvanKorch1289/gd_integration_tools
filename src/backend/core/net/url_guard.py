@@ -39,6 +39,9 @@ ALLOWED_URL_SCHEMES = frozenset({"http", "https"})
 
 #: Хосты облачных метаданных и локальные псевдонимы. Проверяются и по
 #: имени, и по IP — имя может резолвиться куда угодно.
+# Shared address space (RFC 6598) — внутренний диапазон в cloud/k8s.
+_CGNAT_NETWORK = ipaddress.ip_network("100.64.0.0/10")
+
 _BLOCKED_HOSTS = frozenset(
     {
         "localhost",
@@ -236,6 +239,19 @@ def _is_forbidden_address(
     for label, matched in checks:
         if matched:
             return label
+
+    # B-4 (adversarial review): shared address space 100.64.0.0/10.
+    # В Python 3.14 для него is_private == False и is_reserved == False,
+    # поэтому CGNAT-адреса проходили guard, хотя в cloud/k8s это штатный
+    # внутренний диапазон. Ловим явно, а не через is_private.
+    if isinstance(address, ipaddress.IPv4Address) and address in _CGNAT_NETWORK:
+        return "shared/CGNAT"
+
+    # Fail-closed хвост: адрес, который не является глобально маршрутизируемым,
+    # не должен достигать браузера. Это покрывает и будущие нестандартные
+    # диапазоны, которые stdlib может не считать reserved.
+    if not address.is_global:
+        return "not-globally-routable"
     return None
 
 

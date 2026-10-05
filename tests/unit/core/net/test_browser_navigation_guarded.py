@@ -182,3 +182,154 @@ class TestPayloadsRejectedBeforeBrowser:
 
         with pytest.raises(UrlNotAllowedError):
             assert_safe_url(url)
+
+
+class TestRedirectIsGuarded:
+    """B-3 (adversarial review): редиректы не должны обходить guard.
+
+    ``page.goto`` следует за редиректами внутри браузера, поэтому проверки
+    только начального URL недостаточно: публичный URL с ``302 ->
+    http://169.254.169.254/`` уходил бы во внутреннюю сеть. Поэтому на
+    страницу вешается route-handler, перепроверяющий каждый запрос.
+    """
+
+    @staticmethod
+    def _client() -> object:
+        """Собрать минимальный экземпляр BrowserClient без запуска браузера.
+
+        Returns:
+            Экземпляр с одним нужным полем ``_allow_private``.
+
+        """
+        from src.backend.infrastructure.clients.transport.browser import BrowserClient
+
+        client = BrowserClient.__new__(BrowserClient)
+        client._allow_private = False  # noqa: SLF001
+        return client
+
+    @staticmethod
+    def _fake_page() -> object:
+        """Фейковая страница: накапливает route-handler и вызовы goto.
+
+        Returns:
+            Объект с ``route``/``goto`` и журналом вызовов.
+
+        """
+
+        class _Route:
+            def __init__(self) -> None:
+                self.aborted = False
+                self.continued = False
+
+            async def abort(self) -> None:
+                self.aborted = True
+
+            async def continue_(self) -> None:
+                self.continued = True
+
+        class _Request:
+            def __init__(self, url: str) -> None:
+                self.url = url
+
+        class _Page:
+            def __init__(self) -> None:
+                self.handlers: list[object] = []
+                self.routes: list[object] = []
+                self.goto_calls: list[str] = []
+                self.goto_result = "response"
+
+            async def route(self, pattern: str, handler: object) -> None:
+                self.routes.append(pattern)
+                self.handlers.append(handler)
+
+            async def goto(self, url: str, **kwargs: object) -> str:
+                self.goto_calls.append(url)
+                return self.goto_result
+
+        return _Page()
+
+    @pytest.mark.asyncio
+    async def test_route_handler_installed_once(self) -> None:
+        """Handler ставится на страницу один раз, до ухода в сеть."""
+        import inspect
+
+        from src.backend.core.net.url_guard import UrlNotAllowedError
+
+        page = self._fake_page()
+        client = self._client()
+        with pytest.raises(UrlNotAllowedError):
+            await client._safe_goto(page, "http://169.254.169.254/")  # noqa: SLF001
+        assert page.routes == [], "unsafe URL must be rejected BEFORE any route is set"
+        assert page.goto_calls == []
+
+        await client._safe_goto(page, "https://example.com/")  # noqa: SLF001
+        assert page.routes == ["**/*"]
+        await client._safe_goto(page, "https://example.com/2")  # noqa: SLF001
+        assert len(page.handlers) == 1, "handler must not be registered twice"
+        assert inspect.iscoroutinefunction(page.handlers[0])
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "hop",
+        [
+            "http://169.254.169.254/latest/meta-data/",
+            "http://127.0.0.1:5432/",
+            "http://10.0.0.5/admin",
+            "http://localhost./",
+            "http://0x7f.0.0.1/",
+            "http://100.64.1.1/",
+            "file:///etc/passwd",
+        ],
+    )
+    async def test_unsafe_redirect_hop_is_aborted(self, hop: str) -> None:
+        """Каждый хоп редиректа перепроверяется; небезопасный — abort."""
+        page = self._fake_page()
+        client = self._client()
+        await client._safe_goto(page, "https://example.com/")  # noqa: SLF001
+        handler = page.handlers[0]
+
+        class _Route:
+            def __init__(self) -> None:
+                self.aborted = False
+                self.continued = False
+
+            async def abort(self) -> None:
+                self.aborted = True
+
+            async def continue_(self) -> None:
+                self.continued = True
+
+        class _Request:
+            def __init__(self, url: str) -> None:
+                self.url = url
+
+        route = _Route()
+        await handler(route, _Request(hop))
+        assert route.aborted and not route.continued, f"{hop} должен быть прерван"
+
+    @pytest.mark.asyncio
+    async def test_public_redirect_hop_is_continued(self) -> None:
+        """Публичный хоп редиректа пропускается — guard не ломает CDN-редиректы."""
+        page = self._fake_page()
+        client = self._client()
+        await client._safe_goto(page, "https://example.com/")  # noqa: SLF001
+        handler = page.handlers[0]
+
+        class _Route:
+            def __init__(self) -> None:
+                self.aborted = False
+                self.continued = False
+
+            async def abort(self) -> None:
+                self.aborted = True
+
+            async def continue_(self) -> None:
+                self.continued = True
+
+        class _Request:
+            def __init__(self, url: str) -> None:
+                self.url = url
+
+        route = _Route()
+        await handler(route, _Request("https://cdn.example.org/asset.js"))
+        assert route.continued and not route.aborted

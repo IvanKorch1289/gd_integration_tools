@@ -128,6 +128,12 @@ class BrowserClient:
         поэтому ``file:///etc/passwd``, ``data:`` и ``169.254.169.254``
         доходили до Playwright (9 из 9 payload'ов в репро).
 
+        B-3 (adversarial review): проверки только начального URL мало —
+        ``page.goto`` сам следует за редиректами, поэтому публичный URL с
+        ``302 → http://169.254.169.254/`` обходил guard целиком. Поэтому
+        на страницу вешается route-handler, который перепроверяет КАЖДЫЙ
+        запрос, включая хопы редиректа, и обрывает небезопасный.
+
         Args:
             page: Страница Playwright.
             url: Запрашиваемый URL.
@@ -137,9 +143,7 @@ class BrowserClient:
             Ответ ``page.goto``.
 
         Raises:
-            UrlNotAllowedError: URL не проходит SSRF-политику. Наружу не
-                выходит наружу — вызывающий прерывает операцию, а не
-                продолжает с небезопасным адресом.
+            UrlNotAllowedError: URL не проходит SSRF-политику.
 
         """
         from src.backend.core.net.url_guard import UrlNotAllowedError, assert_safe_url
@@ -149,6 +153,26 @@ class BrowserClient:
         except UrlNotAllowedError:
             _logger.warning("browser.ssrf_blocked", extra={"url": url[:200]})
             raise
+
+        # Fail-closed на редиректы: handler ставится один раз на страницу.
+        if not getattr(page, "_gd_ssrf_guarded", False):
+            allow_private = self._allow_private
+
+            async def _guard_route(route: Any, request: Any) -> None:
+                try:
+                    assert_safe_url(request.url, allow_private=allow_private)
+                except UrlNotAllowedError:
+                    _logger.warning(
+                        "browser.ssrf_blocked_redirect",
+                        extra={"url": request.url[:200]},
+                    )
+                    await route.abort()
+                    return
+                await route.continue_()
+
+            await page.route("**/*", _guard_route)
+            page._gd_ssrf_guarded = True
+
         return await page.goto(safe_url, **kwargs)
 
     async def _human_delay(self, min_ms: int = 100, max_ms: int = 500) -> None:

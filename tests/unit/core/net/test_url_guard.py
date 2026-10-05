@@ -259,3 +259,55 @@ class TestDottedMixedRadixBypass:
     def test_public_hosts_still_allowed(self, url: str) -> None:
         """Нормализация не должна сломать легитимные публичные адреса."""
         assert assert_safe_url(url) is not None
+
+
+class TestCgnatAndRoutability:
+    """B-4 (adversarial review): shared address space 100.64.0.0/10.
+
+    В Python 3.14 для CGNAT ``is_private`` == False и ``is_reserved`` ==
+    False, поэтому адреса проходили guard, хотя в cloud/k8s это штатный
+    внутренний диапазон. Ловится явно, а не через ``is_private``.
+    """
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://100.64.0.1/",
+            "http://100.64.1.1/",
+            "http://100.127.255.255/",
+            "https://100.100.100.100/",
+        ],
+    )
+    def test_cgnat_is_blocked(self, url: str) -> None:
+        """Shared address space не должен достигать браузера."""
+        with pytest.raises(UrlNotAllowedError):
+            assert_safe_url(url)
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://100.63.255.255/",  # до границы /10
+            "http://100.128.0.1/",  # после границы /10
+            "http://8.8.8.8/",
+        ],
+    )
+    def test_neighbours_of_cgnat_still_allowed(self, url: str) -> None:
+        """Границы диапазона не должны блокироваться сверх необходимого."""
+        assert assert_safe_url(url) is not None
+
+
+class TestNotGloballyRoutable:
+    """Fail-closed хвост: не-глобально-маршрутизируемое не пропускаем."""
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://192.0.2.1/",  # TEST-NET-1
+            "http://198.51.100.1/",  # TEST-NET-2
+            "http://203.0.113.1/",  # TEST-NET-3
+        ],
+    )
+    def test_documentation_ranges_blocked(self, url: str) -> None:
+        """Документационные диапазоны не маршрутизируются в интернет."""
+        with pytest.raises(UrlNotAllowedError):
+            assert_safe_url(url)
