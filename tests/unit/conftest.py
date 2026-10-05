@@ -211,6 +211,32 @@ def _restore_di_overrides():
             ov.update(snapshot[id(ov)])
 
 
+# ── Tenant ContextVar: сброс после каждого теста (P1 test isolation) ──
+# core.tenancy._current — общепроцессный ContextVar. Многие тесты вызывают
+# set_tenant() напрямую и не отвязывают контекст, из-за чего tenant предыдущего
+# теста протекает в следующий. Воспроизведено детектором:
+#   tests/unit/core/security/test_reaudit_n1_n3_n4.py оставляет tenant='tenant-a',
+#   и любой следующий тест в том же процессе видит чужой tenant.
+# Особенно опасно для security-модулей: подмена tenant'а меняет исход проверки.
+@_pytest.fixture(autouse=True)
+def _reset_tenant_context():
+    """Сбрасывает tenant-контекст до и после каждого теста.
+
+    Yields:
+        None: фикстура только управляет состоянием.
+
+    """
+    from src.backend.core import tenancy as _tenancy
+
+    # ContextVar объявлен в пакете tenancy, а не в модуле sqlalchemy_filter.
+    # Сбрасываем напрямую: set(None) + reset(token) эквивалентен очистке, но
+    # сохраняет корректную семантику ContextVar (reset обязан идёт тем же var).
+    _tenancy._current.set(None)
+    yield
+    _tenancy._current.set(None)
+    assert _tenancy.get_tenant_id() == "", "фикстура сброса tenant не сработала"
+
+
 # ── Workflow registry: cleanup после каждого теста (fix test pollution) ──
 # test_emitter/test_registry мутируют singleton workflow_registry._classes,
 # что утекает в последующие suite'ы (emitter → Temporal interceptor → privacy).
