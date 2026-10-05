@@ -16,10 +16,13 @@ __all__ = (
     "SLOEvaluation",
     "TenantContext",
     "TenantSLO",
+    "bind_tenant",
+    "bind_tenant_from_metadata",
     "current_tenant",
     "get_tenant_id",
     "set_tenant",
     "tenant_scope",
+    "unbind_tenant",
 )
 
 
@@ -94,6 +97,58 @@ class tenant_scope:
     def __exit__(self, *args: object) -> None:
         if self._token is not None:
             _current.reset(self._token)
+
+
+def bind_tenant(ctx: TenantContext) -> object:
+    """Установить tenant на время ASGI-запроса и вернуть токен для сброса.
+
+    ``set_tenant`` намеренно не возвращает токен: он рассчитан на
+    использование внутри ``tenant_scope``. Async-middleware не может
+    использовать синхронный context manager, поэтому нужен явный
+    bind/unbind — иначе tenant предыдущего запроса утекает в следующий,
+    что хуже отсутствия изоляции: доступ получает не свой principal,
+    а чужой.
+
+    Args:
+        ctx: снимок тенанта, который должен быть виден вниз по стеку.
+
+    Returns:
+        Токен, который нужно передать в :func:`unbind_tenant` в ``finally``.
+
+    """
+    return _current.set(ctx)
+
+
+def unbind_tenant(token: object) -> None:
+    """Снять tenant, установленный через :func:`bind_tenant`.
+
+    Args:
+        token: токен, полученный от :func:`bind_tenant`.
+
+    """
+    _current.reset(token)  # type: ignore[arg-type]
+
+
+def bind_tenant_from_metadata(metadata: object) -> object | None:
+    """Связать tenant с аутентифицированным principal'ом, если он заявлен.
+
+    Единственный доверенный источник tenant — ``AuthContext.metadata``
+    (SECURITY-P0-002). Заголовок ``X-Tenant-ID`` сюда не попадает намеренно.
+
+    Args:
+        metadata: ``AuthContext.metadata`` либо ``None``.
+
+    Returns:
+        Токен для :func:`unbind_tenant` либо ``None``, если tenant не
+        заявлен и привязывать нечего (анонимный principal).
+
+    """
+    if not isinstance(metadata, dict):
+        return None
+    tenant_id = metadata.get("tenant_id")
+    if not isinstance(tenant_id, str) or not tenant_id:
+        return None
+    return bind_tenant(TenantContext(tenant_id=tenant_id))
 
 
 # Re-exports после определения symbols (порядок важен для избежания циклов).

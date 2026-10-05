@@ -40,6 +40,7 @@ from starlette.requests import Request
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.auth import AuthContext, AuthMethod
+from src.backend.core.tenancy import bind_tenant_from_metadata, unbind_tenant
 
 __all__ = ("DEFAULT_PUBLIC_PATH_PREFIXES", "AuthRequiredMiddleware", "is_path_public")
 
@@ -183,8 +184,22 @@ class AuthRequiredMiddleware:
             scope["state"] = {}
         scope["state"]["auth"] = ctx
 
+        # F-D1 (CRITICAL): связать tenant с principal'ом в ContextVar,
+        # который читает ORM-фильтр (``core/tenancy/sqlalchemy_filter.py``)
+        # и PostgreSQL RLS (``infrastructure/database/rls_listener.py``).
+        # Раньше ContextVar не заполнялся НИГДЕ в request-path, поэтому
+        # оба слоя выходили по ``return`` и не накладывали НИ ОДНОГО
+        # условия — кросс-tenant чтение было возможно при включённом
+        # ``rls_postgres_enforce=True``.
+        # Токен обязателен: без сброса tenant утёк бы в следующий запрос.
+        tenant_token = bind_tenant_from_metadata(ctx.metadata)
+
         # Auth OK → пробрасываем downstream.
-        await self.app(scope, receive, send)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            if tenant_token is not None:
+                unbind_tenant(tenant_token)
 
     async def _authenticate(self, scope: Scope, receive: Receive) -> AuthContext | None:
         """Вызывает verify_request для auth (cycle 43 helper).
