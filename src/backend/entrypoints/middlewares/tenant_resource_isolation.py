@@ -23,10 +23,19 @@ Registered checkers:
 это позволяет wire'ить его глобально сразу, а checker'ы подключать
 постепенно (per resource_type) без изменения middleware-стека.
 
-Tenant identity резолвится с тем же приоритетом, что и в
-:class:`~src.backend.entrypoints.middlewares.tenant.TenantMiddleware`
-(header ``X-Tenant-ID`` → ``scope.state['tenant_id']``); пустой tenant →
-403 (fail-closed: нельзя верифицировать ownership без идентичности).
+Tenant identity берётся **только** из аутентифицированного контекста:
+``AuthContext.metadata['tenant_id']`` → ``scope.state['tenant_id']``.
+Заголовок ``X-Tenant-ID`` недоверенный: он обязан совпадать с
+аутентифицированным tenant'ом, иначе 403 ``tenant_mismatch``. Пустой
+заголовок тоже считается нарушением. Отсутствие tenant-идентичности → 403
+(fail-closed: нельзя верифицировать ownership без идентичности).
+
+**D-4 (аудит 2026-10-05).** Долгое время приоритет был ``header → state``,
+и middleware был pass-through в production (``register_ownership_checker``
+не вызывается ни одним production-сайтом). Вместе это означало, что
+object-авторизация не выполнялась никогда, а её включение в текущем виде
+открыло бы IDOR через подмену заголовка. Резолв переведён на аутентифицированный
+контекст; заголовочная проверка сохранена как анти-спуфинговая.
 
 Usage::
 
@@ -55,6 +64,7 @@ from dataclasses import dataclass
 import orjson as json
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from src.backend.core.auth import extract_tenant_id
 from src.backend.core.errors import BaseError
 
 logger = logging.getLogger(__name__)
@@ -160,42 +170,64 @@ class TenantResourceIsolationMiddleware:
         return None
 
     @staticmethod
-    def _resolve_tenant_id(scope: Scope) -> str:
-        """Резолвит tenant_id: header ``X-Tenant-ID`` → ``state['tenant_id']``.
+    def _authenticated_tenant_id(scope: Scope) -> str:
+        """Резолвит tenant_id из АУТЕНТИФИЦИРОВАННОГО контекста.
 
-        Пустая строка = идентичности нет (fail-closed в ``__call__``).
+        Источник истины — ``AuthContext.metadata['tenant_id']``, затем
+        ``scope['state']['tenant_id']`` (его кладёт ``TenantMiddleware`` уже
+        из аутентифицированного контекста). Заголовок ``X-Tenant-ID`` здесь
+        **не** участвует: он недоверенный ввод и проверяется отдельно в
+        :meth:`__call__`.
 
-        SECURITY-P0-002 (аудит 2026-10-01) — зафиксированное расхождение,
-        НЕ исправленное здесь намеренно:
+        SECURITY-P0-002 / D-4 (аудит 2026-10-05). До этого фикса приоритет был
+        ``header → state``, из-за чего заголовок подменял аутентифицированного
+        tenant'а: state говорил ``tenant-a``, заголовок — ``tenant-b``, и
+        ownership checker получал ``tenant-b``. Это прямой путь к IDOR, и он
+        тем опаснее, что сам middleware в production вызывался как
+        pass-through: зафиксировать дефект было нечем.
 
-        * после фикса ``TenantMiddleware`` аутентифицированный tenant
-          (``AuthContext.metadata['tenant_id']``) авторитетен, а расхождение
-          с заголовком даёт 403 tenant_mismatch;
-        * здесь приоритет остаётся ``header → state``, потому что пустой
-          заголовок обязан давать fail-closed 403, а не тихо подставляться
-          значением из state (иначе теряется deny-путь). Проверено мутацией:
-          при ``state → header`` порядке тест
-          ``test_empty_tenant_header_deny_fail_closed`` падает, то есть
-          такой «выравнивающий» диф ослабляет защиту;
-        * безопасность держится на том, что этот middleware в production
-          является pass-through: ``register_ownership_checker`` не вызывается
-          ни одним production-сайтом (0 совпадений в src/ extensions/ routes/).
-          Как только checker'ы будут подключены, этот резолв ОБЯЗАН быть
-          переведён на ``AuthContext.metadata['tenant_id']`` — отдельная
-          задача, привязанная к подключению checker'ов, а не к этому аудиту.
+        Args:
+            scope: ASGI scope текущего запроса.
+
+        Returns:
+            Аутентифицированный tenant_id либо ``""`` если идентичности нет.
+
+        """
+        state = scope.get("state")
+        if not isinstance(state, dict):
+            return ""
+
+        auth = state.get("auth")
+        tenant_from_auth = extract_tenant_id(auth)
+        if tenant_from_auth:
+            return tenant_from_auth
+
+        state_tenant = state.get("tenant_id")
+        if isinstance(state_tenant, str) and state_tenant:
+            return state_tenant
+        return ""
+
+    @staticmethod
+    def _header_tenant_id(scope: Scope) -> str | None:
+        """Достаёт сырое значение заголовка ``X-Tenant-ID``.
+
+        ``None`` означает «заголовка нет». Пустая строка — заголовок присутствует,
+        но пуст; это тоже попытка спуфинга и обрабатывается как нарушение.
+
+        Args:
+            scope: ASGI scope текущего запроса.
+
+        Returns:
+            Значение заголовка либо ``None`` если заголовок отсутствует.
+
         """
         for header_name, header_value in scope.get("headers", []):
             if header_name == _TENANT_HEADER_BYTES:
                 try:
                     return header_value.decode("latin-1")
                 except UnicodeDecodeError:
-                    break
-        state = scope.get("state", {})
-        if isinstance(state, dict):
-            state_tenant = state.get("tenant_id")
-            if isinstance(state_tenant, str) and state_tenant:
-                return state_tenant
-        return ""
+                    return ""
+        return None
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Process ASGI request."""
@@ -223,7 +255,34 @@ class TenantResourceIsolationMiddleware:
             await self.app(scope, receive, send)
             return
 
-        tenant_id = self._resolve_tenant_id(scope)
+        tenant_id = self._authenticated_tenant_id(scope)
+
+        # Заголовок недоверенный: он обязан СОВПАДАТЬ с аутентифицированным
+        # tenant'ом. Пустой заголовок тоже считается нарушением — иначе
+        # «X-Tenant-ID: » был бы способом обойти проверку.
+        header_tenant = self._header_tenant_id(scope)
+        if header_tenant is not None and header_tenant != tenant_id:
+            logger.warning(
+                "tenant_isolation DENY path=%s resource=%s/%s reason=tenant_mismatch "
+                "authenticated=%s header=%r",
+                path,
+                resource_type,
+                resource_id,
+                tenant_id,
+                header_tenant,
+            )
+            await self._send_json(
+                send,
+                status=403,
+                body={
+                    "message": "tenant mismatch: X-Tenant-ID does not match authenticated tenant",
+                    "status_code": 403,
+                    "hasErrors": True,
+                    "error_type": "TenantIsolationDenied",
+                },
+            )
+            return
+
         if not tenant_id:
             # Fail-closed: без tenant-идентичности ownership неверифицируем.
             logger.warning(

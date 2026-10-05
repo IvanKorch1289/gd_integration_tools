@@ -38,11 +38,14 @@
 реальной поверхности. Часть (б) — главный regression-guard: он не даст
 кому-либо «подключить checker'ы» и решить, что защита появилась.
 
-ВАЖНО про приоритет tenant: ``_resolve_tenant_id`` читает заголовок
-``X-Tenant-ID`` ПЕРЕД ``scope['state']['tenant_id']``. То есть подключение
-checker'ов без смены приоритета на ``AuthContext.metadata`` открыло бы
-IDOR через подделку заголовка. Это зафиксировано тестом
-``test_header_would_win_over_authenticated_state`` как явное предупреждение.
+Фикс резолва tenant (в этом же коммите): приоритет переведён с
+``header → state`` на ``AuthContext.metadata['tenant_id']`` →
+``state['tenant_id']``. Заголовок ``X-Tenant-ID`` недоверенный и обязан
+совпадать с аутентифицированным tenant'ом, иначе 403 ``tenant_mismatch``.
+Без этого подключение checker'ов открывало бы IDOR через подмену
+заголовка. До фикса спуфинг был закреплён тестом
+``test_tenant_header_priority_over_state``; тест переименован в
+``test_tenant_header_mismatch_deny_403`` и теперь закрепляет защиту.
 """
 
 from __future__ import annotations
@@ -59,7 +62,10 @@ from src.backend.entrypoints.middlewares.tenant_resource_isolation import (
 
 
 async def _call(
-    app: Any, path: str, state: dict[str, Any], headers: list[tuple[bytes, bytes]] | None = None
+    app: Any,
+    path: str,
+    state: dict[str, Any],
+    headers: list[tuple[bytes, bytes]] | None = None,
 ) -> tuple[int, bytes]:
     """Выполнить один ASGI-вызов и вернуть ``(status, body)``.
 
@@ -176,31 +182,28 @@ class TestDefensiveBranchesExistWhenCheckerRegistered:
         assert calls == [("999", "tenant-a")]
 
     @pytest.mark.asyncio
-    async def test_header_would_win_over_authenticated_state(self) -> None:
-        """ЯВНОЕ ПРЕДУПРЕЖДЕНИЕ: заголовок приоритетнее аутентифицированного state.
+    async def test_header_can_no_longer_override_authenticated_tenant(self) -> None:
+        """D-4 fix: заголовок БОЛЬШЕ НЕ подменяет аутентифицированного tenant'а.
 
-        Пока ``_resolve_tenant_id`` читает ``X-Tenant-ID`` первым, подключение
-        checker'ов без отдельной правки откроет IDOR через подделку заголовка:
-        state говорит ``tenant-a``, заголовок — ``tenant-b``, и checker
-        получает ``tenant-b``. Тест фиксирует это поведение, чтобы смена
-        приоритета на ``AuthContext.metadata`` была осознанным изменением
-        с обновлением ожидания, а не тихим.
+        До фикса приоритет был ``header → state``, и этот тест фиксировал
+        уязвимое поведение. Теперь источник истины —
+        ``AuthContext.metadata['tenant_id']``, а несовпадение заголовка даёт 403
+        и checker не вызывается вовсе.
         """
         checker, calls = _recording_checker(True)
         mw = TenantResourceIsolationMiddleware(_passthrough())
         mw.register_ownership_checker("order", checker)
 
-        await _call(
+        status, body = await _call(
             mw,
             "/api/v1/orders/999",
             {"tenant_id": "tenant-a"},
             headers=[(b"x-tenant-id", b"tenant-b")],
         )
 
-        assert calls == [("999", "tenant-b")], (
-            "заголовок X-Tenant-ID победил аутентифицированный state — "
-            "это SECURITY-P0-002. Подключать checker'ы в таком виде нельзя."
-        )
+        assert status == 403
+        assert b"tenant mismatch" in body
+        assert calls == [], "checker не должен вызываться при подмене tenant'а"
 
 
 class TestWithoutCheckerEverythingPasses:
@@ -218,7 +221,9 @@ class TestWithoutCheckerEverythingPasses:
             ("/api/v1/documents/999", "document"),
         ],
     )
-    async def test_no_checker_passes_through(self, path: str, resource_type: str) -> None:
+    async def test_no_checker_passes_through(
+        self, path: str, resource_type: str
+    ) -> None:
         """Без checker'а запрос проходит без 403 — для всех 6 типов ресурсов.
 
         Пути заданы явно, а не склеены суффиксом: прежний вариант давал
@@ -267,7 +272,9 @@ class TestPatternsNeverMatchRealSurface:
         app = create_app()
         openapi_paths = list(app.openapi().get("paths", {}))
 
-        assert openapi_paths, "OpenAPI пуст — тест неинформативен, проверь сборку приложения"
+        assert openapi_paths, (
+            "OpenAPI пуст — тест неинформативен, проверь сборку приложения"
+        )
 
         # D-4: ожидаемое (желаемое) состояние — защитный слой работает,
         # то есть КАЖДЫЙ паттерн находит хотя бы один живой путь.
@@ -302,4 +309,6 @@ class TestPatternsNeverMatchRealSurface:
 
         # Ни один auto-путь не содержит path-параметра идентификатора ресурса.
         id_params = [p for p in auto_paths if re.search(r"/\{[^}]+\}", p)]
-        assert not id_params, f"неожиданные path-параметры в auto-поверхности: {id_params[:5]}"
+        assert not id_params, (
+            f"неожиданные path-параметры в auto-поверхности: {id_params[:5]}"
+        )
