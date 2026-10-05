@@ -209,3 +209,53 @@ class TestExoticIpEncodings:
         with pytest.raises(UrlNotAllowedError) as exc:
             assert_safe_url("http://2130706433/")
         assert "127.0.0.1" in str(exc.value)
+
+
+class TestDottedMixedRadixBypass:
+    """Регрессия: пунктирные hex/octal-формы и FQDN с корневой точкой.
+
+    Adversarial review нашёл три обхода, которые guard пропускал, хотя
+    каждая резолвится в 127.0.0.1 системным резолвером и в Chromium:
+    ``0x7f.0.0.1``, ``0177.0.0.1`` и ``localhost.``. Прежний разбор
+    понимал только ЦЕЛОЧИСЛЕННЫЕ формы того же адреса, а хост сравнивался
+    с _BLOCKED_HOSTS без нормализации на точку.
+    """
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://0x7f.0.0.1/",
+            "http://0177.0.0.1/",
+            "http://0x7f.1/",
+            "http://0177.1/",
+            "http://0x7f000001/",
+            "http://017700000001/",
+            "http://127.1/",
+            "http://127.0.1/",
+        ],
+    )
+    def test_dotted_mixed_radix_loopback_is_blocked(self, url: str) -> None:
+        """Пунктирные dec/octal/hex записи 127.0.0.1 должны блокироваться."""
+        with pytest.raises(UrlNotAllowedError):
+            assert_safe_url(url)
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://localhost./",
+            "http://LOCALHOST./",
+            "http://localhost..",
+            "http://ip6-localhost./",
+        ],
+    )
+    def test_trailing_dot_localhost_is_blocked(self, url: str) -> None:
+        """«localhost.» — тот же loopback; корневая точка не обходит политику."""
+        with pytest.raises(UrlNotAllowedError):
+            assert_safe_url(url)
+
+    @pytest.mark.parametrize(
+        "url", ["http://example.com/", "https://sub.example.org/p"]
+    )
+    def test_public_hosts_still_allowed(self, url: str) -> None:
+        """Нормализация не должна сломать легитимные публичные адреса."""
+        assert assert_safe_url(url) is not None

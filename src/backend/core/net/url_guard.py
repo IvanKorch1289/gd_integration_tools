@@ -76,6 +76,52 @@ def _strip_brackets(host: str) -> str:
     return host
 
 
+def _dotted_numeric_ip(host: str) -> ipaddress.IPv4Address | None:
+    """Разобрать пунктирный IPv4, где каждая часть может быть dec/octal/hex.
+
+    Браузеры (и POSIX-резолверы) трактуют каждую часть отдельно: ``0x7f``
+    читается как hex 127, ``0177`` — как octal 127. Поэтому
+    ``http://0x7f.0.0.1/`` и ``http://0177.0.0.1/`` ведут в loopback,
+    хотя ``ipaddress.ip_address`` такие формы отвергает.
+
+    Args:
+        host: Проверяемый хост в нижнем регистре.
+
+    Returns:
+        Адрес, если хост распознан как пунктирный IPv4, иначе ``None``.
+
+    """
+    parts = host.split(".")
+    if not 1 <= len(parts) <= 4:
+        return None
+    octets: list[int] = []
+    for part in parts:
+        try:
+            if part.startswith("0x"):
+                value = int(part, 16)
+            elif len(part) > 1 and part.startswith("0"):
+                value = int(part, 8)
+            else:
+                value = int(part, 10)
+        except ValueError:
+            return None
+        octets.append(value)
+    # Семантика inet_aton: все части, кроме последней, занимают по одному
+    # байту; последняя добирает оставшиеся.
+    #   1 часть -> [32]   2 -> [8,24]   3 -> [8,8,16]   4 -> [8,8,8,8]
+    count = len(octets)
+    value = 0
+    for index, octet in enumerate(octets):
+        if index < count - 1:
+            width = 8
+        else:
+            width = 8 * (5 - count)
+        if octet >= 1 << width:
+            return None
+        value = (value << width) | octet
+    return ipaddress.IPv4Address(value)
+
+
 def _numeric_ip(host: str) -> ipaddress.IPv4Address | ipaddress.IPv6Address | None:
     """Разобрать нестандартные числовые записи IP-адреса.
 
@@ -98,6 +144,14 @@ def _numeric_ip(host: str) -> ipaddress.IPv4Address | ipaddress.IPv6Address | No
         pass
 
     stripped = host.lower()
+
+    # Пунктирная запись, где каждая часть может быть dec/octal/hex:
+    # ``0x7f.0.0.1`` и ``0177.0.0.1`` Chromium резолвит в 127.0.0.1, хотя
+    # целочисленные формы того же адреса разбираются ниже. Без этой ветки
+    # guard отвечал ALLOWED на оба варианта.
+    dotted = _dotted_numeric_ip(stripped)
+    if dotted is not None:
+        return dotted
 
     # Шестнадцатеричная: 0x7f000001
     if stripped.startswith("0x"):
@@ -228,6 +282,11 @@ def assert_safe_url(
         )
 
     host = _strip_brackets((parts.hostname or "").lower())
+    # Нормализация FQDN: «localhost.» и «LOCALHOST.» резолвятся в loopback
+    # так же, как «localhost», а точное сравнение с _BLOCKED_HOSTS их
+    # пропускало. Хост используется только для проверок — сам URL candidate
+    # не меняется, поэтому внешний вид адреса сохраняется.
+    host = host.rstrip(".")
     if not host:
         raise UrlNotAllowedError(f"У URL нет хоста: {url!r}")
 
