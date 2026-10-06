@@ -3,21 +3,48 @@
 Позволяет вызывать ``run_hub_notebook`` из YAML без прямого импорта::
 
     - call_function:
-        ref: services.jupyter.hub_run_adapter:run
-        kwargs_from: body
+        ref: src.backend.services.jupyter.hub_run_adapter:run
+        payload_from: body
         result_property: hub_result
 
-Поддерживает все источники notebook через kwargs::
+Поддерживает все источники notebook через именованные аргументы::
 
-    - call_function:
-        ref: services.jupyter.hub_run_adapter:run
-        kwargs:
-          notebook_name: credit_scoring
-          parameters: {customer_id: 42}
-          # OR
-          notebook_path: notebooks/ad_hoc.ipynb
-          # OR
-          notebook_content_b64: <base64 .ipynb>
+    run(notebook_name="credit_scoring", parameters={"customer_id": 42})
+    run(notebook_path="notebooks/ad_hoc.ipynb")
+    run(notebook_content_b64="<base64 .ipynb>")
+
+.. warning:: **Расхождение calling-convention (аудит 2026-10-06).**
+
+    :class:`~src.backend.dsl.engine.processors.function_call.CallFunctionProcessor`
+    вызывает цель как ``fn(payload)`` — ОДИН позиционный аргумент, где
+    ``payload`` это значение ``payload_from`` (обычно ``exchange.in_message.body``,
+    то есть ``dict``). У ``run()`` первый параметр — ``notebook_name: str | None``.
+
+    Поэтому при вызове из YAML тело запроса целиком попадает в
+    ``notebook_name``, а не в ``parameters``::
+
+        # так реально вызовется из DSL:
+        run({"notebook_name": "credit_scoring", "parameters": {...}})
+        # → notebook_name = {"notebook_name": ..., "parameters": {...}}  ← dict в поле str
+
+    Развернуть dict в kwargs невозможно: у процессора параметр
+    ``payload_from`` — это ``str``-путь (``"body"`` / ``"body.<field>"`` /
+    ``"properties.<name>"``), а не отображение имён.
+
+    **Следствие:** из YAML этот адаптер сейчас непригоден независимо от
+    прочих настроек. Маршрут ``routes/jupyter_hub_run/`` поэтому держится
+    выключенным (``jupyter_hub_enabled`` default=False).
+
+    **Требуемое решение (ADR, изменение публичной сигнатуры — нужно
+    согласование):** принять payload-dict первым позиционным параметром::
+
+        async def run(payload: dict[str, Any] | None = None, **_: Any)
+
+    и разложить его на ``notebook_name`` / ``parameters`` / ``notebook_path``
+    / ``notebook_content_b64`` / ``output_path`` / ``user_name``.
+    Существующий тест ``tests/unit/services/jupyter/test_hub_run_orchestrator.py::
+    TestHubRunAdapter::test_adapter_returns_dict`` вызывает ``run("x", {"a": 1})``
+    и обновляется вместе с сигнатурой.
 """
 
 from __future__ import annotations

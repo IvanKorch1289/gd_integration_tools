@@ -144,7 +144,9 @@ async def bootstrap_v11_route_loader(app: FastAPI) -> None:
             к ``pipeline.transport_config`` для outbound httpx clients +
             TimeoutMiddleware (S18 W6).
             """
-            pipeline = load_pipeline_from_file(pipeline_path)
+            pipeline = load_pipeline_from_file(
+                pipeline_path, default_route_id=route_name
+            )
             if bool(getattr(manifest, "tenant_aware", False)):
                 pipeline.tenant_aware = True
             # K3 S19 W3: пробрасываем [security] requires_permission из

@@ -2732,6 +2732,7 @@ dependencies = [
     { name = "hvac", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "jmespath", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "joserfc", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "jsonschema", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "lxml", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "markitdown", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "msgpack", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -2784,6 +2785,7 @@ dependencies = [
     { name = "whoosh-reloaded", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "xmltodict", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "zeep", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "zstandard", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
 
 [package.optional-dependencies]
@@ -3134,6 +3136,7 @@ requires-dist = [
     { name = "jmespath", specifier = ">=1.0.1,<2.0.0" },
     { name = "joserfc", specifier = ">=1.6.8,<2.0.0" },
     { name = "jsonpath-ng", marker = "extra == 'dsl-extras'", specifier = ">=1.6.0,<2.0.0" },
+    { name = "jsonschema", specifier = ">=4.23.0,<5.0.0" },
     { name = "jupyter-client", marker = "extra == 'jupyter'", specifier = ">=8.0.0" },
     { name = "langchain-postgres", marker = "extra == 'ai-memory'", specifier = ">=0.0.10,<1.0.0" },
     { name = "langfuse", marker = "extra == 'ai'", specifier = ">=2.0.0" },
@@ -3276,6 +3279,7 @@ requires-dist = [
     { name = "xlsxwriter", marker = "extra == 'doc-templates'", specifier = ">=3.2.0,<4.0.0" },
     { name = "xmltodict", specifier = ">=0.14.0,<2.0.0" },
     { name = "zeep", specifier = ">=4.3.3,<5.0.0" },
+    { name = "zstandard", specifier = ">=0.22.0,<1.0.0" },
 ]
 provides-extras = ["ai", "security", "db-drivers", "ai-safety", "redteam", "ai-eval", "auth-saml", "mcp", "rpa", "jupyter", "rpa-ocr", "rpa-windows", "http3", "dsl-extras", "analytics", "rag", "ai-2026", "ai-model-registry", "workflow", "test-core", "test-api", "test-scheduler", "test-workflow", "test-messaging", "test-ai", "test-frontend", "test-rpa", "test-all", "dev-light", "sources-cdc", "sources-mq-nats", "lsp", "perf", "testkit", "docs", "docs-ru", "dsl-extras-2", "dsl-extras-3", "result-monad", "search-providers", "compression", "frontend", "doc-templates", "ai-memory", "multimodal-rag", "feature-flags", "caching"]
 

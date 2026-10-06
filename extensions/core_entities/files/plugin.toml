@@ -5,7 +5,7 @@
 
 name = "core_entities_files"
 version = "1.0.0"
-requires_core = ">=0.2,<0.3"
+requires_core = ">=0.20,<0.21"
 entry_class = "extensions.core_entities.files.plugin.FilesPlugin"
 tenant_aware = false
 description = "File CRUD plugin (migrated from src/backend/services/io/files.py per R-V15-16)"

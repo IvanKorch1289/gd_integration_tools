@@ -27,8 +27,13 @@ SPRINT19_DX_FIELD_NAMES = (
     "vscode_extension_published",
     "lsp_server_strict",
     "testkit_public_api",
+    # +1 (2026-10-06): routes_v11_1a_discovery — регистрация reference-роутов
+    # routes/<name>/. Флаг был объявлен в route.toml, но не имел определения
+    # в реестре, а резолвер читал только ENV — из-за этого роут с таким
+    # feature_flag не мог подняться ни при каком состоянии реестра.
+    "routes_v11_1a_discovery",
 )
-EXPECTED_SPRINT19_DX_FIELD_COUNT = 12
+EXPECTED_SPRINT19_DX_FIELD_COUNT = 13
 
 
 class TestSprint19DXFlagsClass:

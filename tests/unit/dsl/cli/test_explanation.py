@@ -47,11 +47,11 @@ def test_explain_route_extracts_capabilities(hello_route_dir: Path) -> None:
     """Capabilities required + declared + missing computed из manifest + steps."""
     explanation = explain_route(hello_route_dir)
     # Hello route: feature_flag + policy + llm_call + http_call + audit + to
-    assert "ai.llm" in explanation.capabilities_required
+    assert "ai.invoke" in explanation.capabilities_required
     assert "net.outbound" in explanation.capabilities_required
     assert "audit.write" in explanation.capabilities_required
     # Declared в route.toml
-    assert "ai.llm" in explanation.capabilities_declared
+    assert "ai.invoke" in explanation.capabilities_declared
     assert "net.outbound" in explanation.capabilities_declared
     # No missing — all declared.
     assert explanation.capabilities_missing == ()
@@ -143,7 +143,7 @@ def test_explain_cli_human_output(
     assert "Route: hello_route" in result.stdout
     assert "Steps (" in result.stdout
     assert "Capabilities:" in result.stdout
-    assert "ai.llm" in result.stdout
+    assert "ai.invoke" in result.stdout
 
 
 def test_explain_cli_json_output(

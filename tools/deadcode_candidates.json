@@ -1,0 +1,27 @@
+[
+  {
+    "path": "src/backend/entrypoints/api/v1/endpoints/admin_plugins.py",
+    "loc": 556,
+    "note": "ТЕНЬ: рядом лежит пакет admin_plugins/ — CPython всегда резолвит имя в пакет. Файл из 20 383 байт недостижим, хотя импорты в routers.py и endpoints.py есть и уходят в пакет."
+  },
+  {
+    "path": "tools/generate_api_client.py",
+    "loc": 421,
+    "note": "0 импортёров и 0 вызывающих; не упомянут ни в Makefile, ни в CI, ни в pre-commit."
+  },
+  {
+    "path": "tools/classify_object_authorization.py",
+    "loc": 351,
+    "note": "0 импортёров и 0 вызывающих; одноразовый анализатор из волны аудита."
+  },
+  {
+    "path": "tools/deadcode_verify.py",
+    "loc": 0,
+    "note": "ЖИВОЙ: сам этот инструмент. Оставлен как пример «проверяй, а не верь списку» — предыдущий реестр содержал 7 несуществующих путей."
+  },
+  {
+    "path": "src/backend/core/rate_limiter/limiter.py",
+    "loc": 204,
+    "note": "ЖИВОЙ: реэкспортируется из core/rate_limiter/__init__.py. Предыдущий аудит назвал его мёртвым — неверно."
+  }
+]

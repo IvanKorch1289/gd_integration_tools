@@ -2,11 +2,28 @@
 name = "osint_agent"
 version = "0.1.0"
 requires_core = ">=0.20,<0.21"
-capabilities = ["net.outbound", "ai.llm"]
+pipelines = ["osint.dsl.yaml"]
+# scope обязателен: плагин osint_agent объявляет ai.invoke(*), а capability-гит
+# считает «запрошено без scope» и «объявлено со scope» несравнимыми
+# (gate/__init__.py::_is_covered). Поэтому роут запрашивает тот же scope.
+capabilities = ["net.outbound", "ai.invoke:*"]
 tenant_aware = true
 feature_flag = { enabled = true, gate = "osint_agent_enabled" }
 slo = { p95_ms = 5000, timeout_ms = 30000 }
 schedule = "never"
+
+# ai.invoke покрывается плагином osint_agent: он объявляет ai.invoke(*)
+# и net.outbound(*.perplexity.ai) в своём plugin.toml. Capability-гит требует
+# route.capabilities ⊆ union(requires_plugins.capabilities) ∪ public, поэтому
+# без requires_plugins маршрут отклонялся.
+#
+# ВНИМАНИЕ (TOML): эта таблица объявлена ПОСЛЕ всех bare-ключей намеренно.
+# В TOML ключи после «[table]» относятся к этой таблице, поэтому
+# requires_plugins выше capabilities приводил к тому, что capabilities,
+# tenant_aware, feature_flag и slo попадали внутрь requires_plugins
+# (4 ошибки валидации: «Input should be a valid string»).
+[requires_plugins]
+osint_agent = ">=0.1,<1.0"
 
 [transport]
 default_timeout_s = 30.0

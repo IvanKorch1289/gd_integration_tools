@@ -22,13 +22,11 @@ steps:
   - audit:
       action: "route.composition_demo.complete"
 
-to:
-  response:
-    code: 200
-    body:
-      status: composed
-      route_id: ${route_id}
-      processed_by: ${body.processed_by}
-      has_base: ${body.base_route}
-      has_included_meta: ${body._meta.composition}
-      demo_active: ${properties.demo_active}
+# Блок ``to: {response: {...}}`` удалён 2026-10-06. Response-binding в DSL
+# НЕ реализован: у ``Pipeline`` нет такого поля, у ``RouteBuilder`` нет
+# метода, а ``_build_pipeline()`` ключ ``to`` просто не читает — он молча
+# игнорировался, и блок обещал контракт ответа, которого не существует.
+# Пробел зафиксирован в аудите как GAP (ADR на response-binding).
+#
+# Из-за этого роут возвращает тело, прошедшее через шаги, а не задуманный
+# ``{status: composed, ...}``.

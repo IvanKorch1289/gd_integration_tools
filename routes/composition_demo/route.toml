@@ -2,15 +2,21 @@
 name = "composition_demo"
 version = "0.1.0"
 description = "Reference route demonstrating include:/extends: composition (S19 K3 W2)"
-requires_core = ">=15.0,<16.0"
+requires_core = ">=0.20,<0.21"
 tenant_aware = false
 
 pipelines = ["main.dsl.yaml"]
 
-capabilities = [
-  "net.inbound.http:/api/v1/composition/demo",
-  "net.outbound.http://localhost:9000:internal",
-]
+# ADR-044: capability объявляется таблицей name+scope (компактная строка
+# "name:scope" не подходит — сегменты схемы/пути дают имя из 3 сегментов,
+# что нарушает грамматику <resource>.<verb>).
+[[route.capabilities]]
+name = "net.inbound"
+scope = "http:/api/v1/composition/demo"
+
+[[route.capabilities]]
+name = "net.outbound"
+scope = "http://localhost:9000:internal"
 
 [route.slo]
 p95_ms = 30

@@ -86,6 +86,13 @@ def register_app_state(app: FastAPI) -> None:
     from src.backend.infrastructure.database.pool_monitor import PoolMonitor
     from src.backend.infrastructure.security.api_key_manager import APIKeyManager
 
+    # Маркер «composition root отработал». Стартап-фазы используют его,
+    # чтобы проверять свои постусловия только для приложений, собранных
+    # реальным composition root. Приложение, созданное в обход него
+    # (например, минимальный FastAPI() в юнит-тестах), не должно
+    # наследовать инварианты composition root.
+    app.state._composition_root_ready = True
+
     app.state.api_key_manager = APIKeyManager()
     app.state.tracer = ExecutionTracer()
     app.state.plugin_registry = ProcessorPluginRegistry()
@@ -93,15 +100,11 @@ def register_app_state(app: FastAPI) -> None:
     app.state.slo_tracker = SLOTracker()
     app.state.pool_monitor = PoolMonitor()
     app.state.langfuse_client = LangFuseClient()
-    # Sprint 1.3: AIGateway singleton с обязательными DI (S177 M2 guard).
-    from src.backend.core.di.providers.ai import get_ai_gateway_provider
-
-    app.state.ai_gateway = get_ai_gateway_provider()
-
     # Sprint 1.3: единый security-wired AIGateway singleton (L5 Security Chain).
     # Регистрация в composition root гарантирует, что production
     # AIGatewayProductionWiringError (S177 M2) никогда не сработает
     # на composition-root singleton. См. SPRINT_PLAN_9_10.md Sprint 1.3.
+    # Дубликат этого блока (он выполнялся дважды подряд) удалён.
     from src.backend.core.di.providers.ai import get_ai_gateway_provider
 
     app.state.ai_gateway = get_ai_gateway_provider()

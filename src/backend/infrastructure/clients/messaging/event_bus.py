@@ -141,9 +141,31 @@ class EventBus:
         logger.info("EventBus started (FastStream Redis)")
 
     async def stop(self) -> None:
-        """Останавливает broker."""
-        if self._broker:
-            await self._broker.close()
+        """Останавливает broker.
+
+        FastStream-брокеры не имеют ``close()``: контракт остановки —
+        ``stop()`` (см. ``faststream.redis.RedisBroker``). Прежний вызов
+        ``close()`` поднимал ``AttributeError`` на каждом shutdown, который
+        перехватывался fail-open в ``lifecycle/shutdown.py``, из-за чего
+        брокер никогда не останавливался штатно.
+
+        Args:
+            None.
+
+        Returns:
+            None. При отсутствии брокера — no-op.
+
+        Raises:
+            Не пробрасывает исключения остановки: ошибка логируется, а
+            ``_started`` всё равно сбрасывается, чтобы shutdown не падал.
+        """
+        if not self._broker:
+            return
+        try:
+            await self._broker.stop()
+        except Exception as exc:  # noqa: BLE001 — shutdown не должен валить процесс
+            logger.warning("EventBus broker stop failed: %s", exc)
+        finally:
             self._started = False
             logger.info("EventBus stopped")
 

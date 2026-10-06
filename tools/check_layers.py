@@ -56,6 +56,16 @@ LAYERS = (
 PLUGINS_LAYER = "plugins"
 FRONTEND_LAYER = "frontend"
 EXTENSIONS_LAYER = "extensions"  # S103 W1: extensions scanned by linter
+ROUTES_LAYER = "routes"
+TESTKIT_LAYER = "testkit"
+
+#: Корни импорта первого уровня, лежащие рядом с ``src/``.
+#: Раньше они не были представлены в :data:`LAYERS`, поэтому импорты
+#: вида ``extensions.*`` / ``routes.*`` / ``testkit.*`` считались
+#: third-party и пропускались (см. :func:`_layer_of`).
+FIRST_PARTY_ROOTS: frozenset[str] = frozenset(
+    {EXTENSIONS_LAYER, ROUTES_LAYER, TESTKIT_LAYER, PLUGINS_LAYER}
+)
 
 ALLOWED: dict[str, set[str]] = {
     "core": set(),
@@ -91,6 +101,15 @@ ALLOWED: dict[str, set[str]] = {
     # ldap3). Facade pattern в core/ не уменьшает coupling, но создаёт
     # лишний indirection. См. ADR-0196 (Sprint 110 closure).
     "extensions": {"core"},
+    # ``routes/`` — декларативные манифесты + DSL-шаги; на уровне Python
+    # импортируют только ядро DSL.
+    "routes": {"core", "dsl"},
+    # ``testkit/`` — публичный контракт для юнит-тестов плагинов; по
+    # спецификации (R-V15-1) может импортировать только ``core.*`` плюс
+    # сам testkit. Инфраструктура/DSL допускаются как переходная мера.
+    "testkit": {"core", "schemas", "infrastructure", "dsl"},
+    # ``plugins/`` — legacy Wave-4.4 дистрибуция in-tree плагинов.
+    "plugins": {"core", "schemas", "infrastructure", "dsl"},
 }
 # S110 W4: точечные исключения для framework base classes.
 # Применяется после основного ALLOWED check, только для extensions.
@@ -160,11 +179,26 @@ def _layer_of(module: str) -> str | None:
 
     * ``src.backend.<layer>.X`` / ``app.backend.<layer>.X`` (R3.10+);
     * ``src.frontend.X`` / ``app.frontend.X`` → ``frontend``;
-    * legacy ``src.<layer>.X`` / ``app.<layer>.X`` (до R3.10).
+    * legacy ``src.<layer>.X`` / ``app.<layer>.X`` (до R3.10);
+    * top-level roots ``extensions.*`` / ``routes.*`` / ``testkit.*``.
+
+    Последняя форма добавлена, потому что корни импорта ``extensions/``,
+    ``routes/`` и ``testkit/`` не были представлены ни в ``LAYERS``, ни в
+    ``PLUGINS_LAYER``. Из-за этого ``_layer_of`` возвращал ``None`` для
+    first-party импортов, и проверка на строке
+    ``if target is None or ...: continue`` пропускала их наравне со
+    сторонними библиотеками. Независимый AST-анализ показывал 41 нарушение
+    в ``extensions/``, которых гейт не видел вовсе.
+
+    Returns:
+        Имя слоя для first-party модуля; ``None`` для third-party (библиотек),
+        которые проверять не нужно.
     """
     parts = module.split(".")
     if not parts:
         return None
+    if parts[0] in FIRST_PARTY_ROOTS:
+        return parts[0]
     if parts[0] in {"src", "app"}:
         if len(parts) > 1 and parts[1] == "frontend":
             return FRONTEND_LAYER

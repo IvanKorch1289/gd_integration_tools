@@ -5,7 +5,7 @@
 
 name = "core_entities_users"
 version = "1.0.0"
-requires_core = ">=0.2,<0.3"
+requires_core = ">=0.20,<0.21"
 entry_class = "extensions.core_entities.users.plugin.UsersPlugin"
 tenant_aware = false
 description = "User CRUD plugin (migrated from src/backend/services/core/users.py per R-V15-16)"

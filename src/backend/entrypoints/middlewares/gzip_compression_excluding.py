@@ -88,11 +88,22 @@ class GZipCompressionExcludingMiddleware:
                 # PERF-6.6 P9: skip gzip если response уже compressed (brotli)
                 # или имеет cache-control no-transform. Avoids double-compression
                 # cost (gzip re-compressing brotli stream) + potential issues.
+                #
+                # P0 (аудит 2026-10-06): раньше здесь ставился только флаг
+                # ``started = True``, а сам ``http.response.start`` НЕ
+                # отправлялся. Тело при этом пробрасывалось как есть. Результат
+                # — ответ без start-сообщения: нарушение ASGI-контракта
+                # (сервер обязан слать start до body), из-за которого uvicorn
+                # рвал соединение без ответа. Ветка достигалась, когда ниже по
+                # цепочке ответ уже был закодирован (например, включён brotli).
+                # Теперь original start уходит немедленно, а флаг означает
+                # «сжатие не применяем».
                 _has_encoding = any(
                     h[0].lower() == b"content-encoding"
                     for h in message.get("headers", [])
                 )
                 if _has_encoding:
+                    await send(message)  # Pass start through untouched
                     started = True  # Skip compression path entirely
             elif message["type"] == "http.response.body":
                 if not started:

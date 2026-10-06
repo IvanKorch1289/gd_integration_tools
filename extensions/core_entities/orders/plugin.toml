@@ -5,7 +5,7 @@
 
 name = "core_entities_orders"
 version = "1.0.0"
-requires_core = ">=0.2,<0.3"
+requires_core = ">=0.20,<0.21"
 entry_class = "extensions.core_entities.orders.plugin.OrdersPlugin"
 tenant_aware = false
 description = "Order CRUD plugin (migrated from src/backend/services/core/orders.py per R-V15-16)"

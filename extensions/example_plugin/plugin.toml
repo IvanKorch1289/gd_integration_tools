@@ -4,7 +4,7 @@
 
 name = "example_plugin"
 version = "1.0.0"
-requires_core = ">=0.2,<0.3"
+requires_core = ">=0.20,<0.21"
 entry_class = "extensions.example_plugin.plugin.ExamplePlugin"
 tenant_aware = false
 description = "Reference V11 plugin (Wave R1.fin demo)"

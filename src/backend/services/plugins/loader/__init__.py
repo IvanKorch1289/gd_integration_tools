@@ -153,10 +153,13 @@ class PluginLoader(DiscoveryMixin, ValidationMixin, LoadingMixin):  # type: igno
         manifest_paths: list[Path] = []
         parsed_manifests: list[PluginManifest] = []
         parse_failures: list[tuple[Path, str]] = []
-        for child in sorted(self._extensions_dir.iterdir()):
-            manifest_path = child / "plugin.toml"
-            if not manifest_path.is_file():
-                continue
+        # Поиск манифестов рекурсивный: scan шёл только по прямым потомкам
+        # extensions/, из-за чего плагины, вложенные на уровень глубже
+        # (extensions/core_entities/<name>/plugin.toml — orders, users,
+        # files, orderkinds), НИКОГДА не обнаруживались, хотя их манифесты
+        # и entry-классы полностью валидны. На диске было 11 plugin.toml,
+        # а кандидатов к загрузке — 7.
+        for manifest_path in sorted(self._extensions_dir.rglob("plugin.toml")):
             manifest_paths.append(manifest_path)
             try:
                 manifest = load_plugin_manifest(manifest_path)

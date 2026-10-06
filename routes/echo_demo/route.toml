@@ -2,12 +2,17 @@
 name = "echo_demo"
 version = "0.1.0"
 description = "Reference route #2 — echo с трансформацией body для validation демо"
-requires_core = ">=15.0,<16.0"
+requires_core = ">=0.20,<0.21"
 tenant_aware = false
 
-capabilities = [
-  "net.inbound.http:/api/v1/demo/echo"
-]
+pipelines = ["echo.dsl.yaml"]
+
+# ADR-044: capability объявляется таблицей name+scope (компактная строка
+# "name:scope" не подходит — сегменты схемы/пути дают имя из 3 сегментов,
+# что нарушает грамматику <resource>.<verb>).
+[[route.capabilities]]
+name = "net.inbound"
+scope = "http:/api/v1/demo/echo"
 
 [route.slo]
 p95_ms = 30

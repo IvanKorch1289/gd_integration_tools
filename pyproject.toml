@@ -10,6 +10,14 @@ authors = [
 dependencies = [
     "fastapi>=0.116.0,<1.0.0",
     "sqlalchemy>=2.0.41,<3.0.0",
+    # Аудит 2026-10-06: jsonschema и zstandard импортируются в рантайме
+    # (dsl/engine/processors/generic.py, messaging/event_bus.py,
+    # dsl/engine/processors/enrichment/compression.py и др.), были объявлены
+    # ТОЛЬКО в mypy.overrides.ignore_missing_imports, то есть как необязательные.
+    # Это баг манифеста: изменение графа зависимостей могло сломать прод
+    # молча. Ничего нового не устанавливается — обе библиотеки уже в venv.
+    "jsonschema>=4.23.0,<5.0.0",
+    "zstandard>=0.22.0,<1.0.0",
     "uvicorn[standard]>=0.32.0,<1.0.0",
     "pydantic[email]>=2.10.3,<3.0.0",
     "pydantic-settings>=2.14.2,<3.0.0",

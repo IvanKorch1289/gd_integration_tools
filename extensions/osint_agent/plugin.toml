@@ -1,7 +1,7 @@
 # V11 plugin manifest — extensions/osint_agent
 name = "osint_agent"
 version = "0.1.0"
-requires_core = ">=0.2,<0.3"
+requires_core = ">=0.20,<0.21"
 entry_class = "extensions.osint_agent.plugin.OsintAgentPlugin"
 tenant_aware = true
 description = "OSINT agent: web-search + LLM report generation by INN"
@@ -11,8 +11,12 @@ trust_tier = "B"
 name = "net.outbound"
 scope = "*.perplexity.ai"
 
+# ai.llm отсутствовал в capability-vocabulary (ADR-044) — плагин падал при
+# загрузке с CapabilityNotFoundError. Каноническое имя для вызова LLM через
+# AIGateway — `ai.invoke`, scope = workflow_id pattern или `*`.
 [[capabilities]]
-name = "ai.llm"
+name = "ai.invoke"
+scope = "*"
 
 [provides]
 actions = [

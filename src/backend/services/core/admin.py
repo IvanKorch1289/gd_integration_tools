@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import HTTPException, Request
 
 from src.backend.core.config.settings import settings
-from src.backend.core.di.app_state import app_state_singleton
+from src.backend.core.di.app_state import app_state_singleton, get_app_ref
 from src.backend.core.di.providers import (
     get_admin_cache_storage_provider,
     get_slo_tracker_provider,
@@ -209,7 +209,23 @@ class AdminService:
         return {"actions": list(registry.list_actions())}
 
     async def list_routes(self) -> dict[str, Any]:
-        """Возвращает все DSL-маршруты с их статусом."""
+        """Возвращает все DSL-маршруты с их статусом.
+
+        Кроме реестра (``total``/``routes``) отдаёт секцию ``loader`` с
+        результатом V11 RouteLoader — включая **причины отказов**.
+
+        Зачем: ``route_registry`` пополняется только успешно
+        зарегистрированными pipeline'ами, поэтому маршрут, отклонённый на
+        любой стадии, был полностью не виден — ``GET /admin/routes``
+        возвращал ``{"total": 0, "routes": []}`` без объяснений, и понять
+        причину можно было только по логам. На практике это стоило часов
+        поиска: реальная причина ``dsl_routes = 0`` оказалась не в
+        capability, а в ``V11_ROUTE_LOADER_ENABLED=false``, а после её
+        устранения — в отсутствии ``route_id`` в pipeline-YAML.
+
+        Ключи ``total`` и ``routes`` сохранены без изменений, поэтому
+        существующие потребители не ломаются.
+        """
         registry = _lazy("route_registry")
         all_routes = registry.list_routes()
         enabled = set(registry.list_enabled_routes())
@@ -220,6 +236,66 @@ class AdminService:
                 {"route_id": r, "enabled": r in enabled, "feature_flag": flags.get(r)}
                 for r in all_routes
             ],
+            "loader": self._route_loader_diagnostics(),
+        }
+
+    @staticmethod
+    def _route_loader_diagnostics() -> dict[str, Any]:
+        """Состояние V11 RouteLoader: что обнаружено, что отклонено и почему."""
+        try:
+            app = get_app_ref()
+            loader = getattr(getattr(app, "state", None), "route_loader", None)
+        except Exception:  # noqa: BLE001 — диагностика не должна ронять endpoint
+            loader = None
+
+        if loader is None:
+            # Загрузчик не поднимался: либо выключен флагом
+            # V11_ROUTE_LOADER_ENABLED, либо bootstrap не дошёл до этой фазы.
+            # Проверяем флаг напрямую, чтобы отличить «выключен» от «упал».
+            from src.backend.core.config.settings import settings
+
+            flag_on = bool(getattr(settings.v11, "route_loader_enabled", False))
+            return {
+                "state": "disabled" if not flag_on else "not_started",
+                "reason": (
+                    "V11_ROUTE_LOADER_ENABLED=false — routes/<name>/route.toml "
+                    "не сканируются. Включите флаг, чтобы DSL-маршруты "
+                    "регистрировались."
+                    if not flag_on
+                    else "RouteLoader не стартовал (bootstrap не дошёл до фазы)."
+                ),
+                "discovered": 0,
+                "active": 0,
+                "failed": 0,
+                "routes": [],
+            }
+
+        loaded = tuple(getattr(loader, "loaded", ()))
+        by_status: dict[str, list[dict[str, Any]]] = {}
+        for route in loaded:
+            entry = route.to_dict() if hasattr(route, "to_dict") else dict(route)
+            by_status.setdefault(str(entry.get("status", "unknown")), []).append(entry)
+
+        return {
+            "state": "started",
+            "discovered": len(loaded),
+            "active": len(by_status.get("enabled", ())),
+            "disabled": len(by_status.get("disabled", ())),
+            "failed": len(by_status.get("failed", ())),
+            "skipped": len(
+                [
+                    r
+                    for r in loaded
+                    if str(getattr(r, "status", ""))
+                    not in {"enabled", "disabled", "failed"}
+                ]
+            ),
+            "rejected": [
+                {"name": r["name"], "status": r["status"], "reason": r["reason"]}
+                for status in ("failed", "disabled")
+                for r in by_status.get(status, ())
+            ],
+            "routes": list(by_status.get("enabled", ())),
         }
 
     async def list_feature_flags(self) -> dict[str, Any]:
