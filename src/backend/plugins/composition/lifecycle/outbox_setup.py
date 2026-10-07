@@ -20,9 +20,43 @@ from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     from fastapi import FastAPI
 
+    from src.backend.core.messaging.outbox import OutboxEvent
+
 _logger = get_logger("application.startup")
 
 __all__ = ("register_outbox_dispatcher",)
+
+
+# Legacy-маркер id внутри correlation_id (см. docstring helper'а).
+_ACK_MARKER_PREFIX = "outbox_msg_id:"
+
+
+def _resolve_outbox_msg_id(event: OutboxEvent) -> int | None:
+    """Определить id строки outbox для ack.
+
+    F-1: id приходит в выделенном поле ``outbox_msg_id``. Раньше он был
+    закодирован в ``correlation_id`` (``outbox_msg_id:<N>``), но реальный
+    correlation_id — обычный случай — маркер вытеснял, ``mark_sent`` не
+    вызывался, и строка навсегда оставалась в ``processing`` с истекающим
+    lease: sweeper возвращал её в pending, и событие доставлялось
+    бесконечно.
+
+    Args:
+        event: Событие, полученное от ``claim_pending``.
+
+    Returns:
+        id строки outbox либо ``None``, если определить нельзя.
+
+    """
+    if event.outbox_msg_id is not None:
+        return event.outbox_msg_id
+    cid = event.correlation_id or ""
+    if cid.startswith(_ACK_MARKER_PREFIX):
+        try:
+            return int(cid.removeprefix(_ACK_MARKER_PREFIX))
+        except ValueError, TypeError:
+            return None
+    return None
 
 
 def _get_outbox_dlq_session_factory() -> Any:
@@ -126,7 +160,7 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
                     # Prefer original correlation_id from headers;
                     # else use the outbox_msg_id marker (для ack).
                     original_cid = (m.headers or {}).get("correlation_id")
-                    cid = original_cid or f"outbox_msg_id:{m.id}"
+                    cid = original_cid or f"{_ACK_MARKER_PREFIX}{m.id}"
                     result.append(
                         OutboxEvent(
                             event_id=uuid4().hex,
@@ -134,24 +168,26 @@ async def register_outbox_dispatcher(app: FastAPI) -> None:
                             action=m.topic,
                             payload=m.payload,
                             correlation_id=cid,
+                            outbox_msg_id=m.id,
                         )
                     )
                 return result
 
             async def _ack(event: OutboxEvent) -> None:
-                """Adapter: OutboxEvent → mark_sent (по ``correlation_id``).
+                """Adapter: OutboxEvent → mark_sent.
 
-                Приоритет: если ``correlation_id`` начинается с
-                ``outbox_msg_id:`` — это marker, ack по msg.id.
-                Иначе (original CID) — нет msg.id, skip ack (safety).
+                F-1: id берётся из выделенного поля ``outbox_msg_id``.
+                Раньше он был закодирован в ``correlation_id``, но реальный
+                correlation_id (обычный случай) его вытеснял, ветка
+                ``startswith`` не срабатывала, ``mark_sent`` не вызывался —
+                и строка навсегда оставалась в ``processing``: lease
+                истекал, sweeper возвращал её в pending, событие
+                доставлялось бесконечно. Префикс оставлен как fallback для
+                событий, созданных до этой правки.
                 """
-                cid = event.correlation_id or ""
-                if cid.startswith("outbox_msg_id:"):
-                    raw_id = cid.removeprefix("outbox_msg_id:")
-                    try:
-                        await outbox_repo.mark_sent(int(raw_id))
-                    except ValueError, TypeError:
-                        return
+                row_id = _resolve_outbox_msg_id(event)
+                if row_id is not None:
+                    await outbox_repo.mark_sent(row_id)
 
             async def _deliverer(event: OutboxEvent) -> None:
                 """Adapter: reuse legacy ``_publish`` (K8/F2 Wave 2)."""
