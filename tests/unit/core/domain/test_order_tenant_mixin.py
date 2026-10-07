@@ -14,9 +14,12 @@ S168 W14: orders.py moved to extensions.core_entities.orders.domain.models
 
 from __future__ import annotations
 
-from src.backend.core.domain.models import (
-    Order,  # S168 W14: was src.backend.core.domain.models.orders
-)
+# 2026-10-06 (R-V15-16): модель Order объявлена в расширении
+# ``extensions/core_entities/orders/domain/models.py``. Core не реэкспортирует
+# её — инверсия зависимостей (см. core/domain/models/__init__.py). Импорт
+# здесь нужен, чтобы модель зарегистрировалась на ``Base.metadata``
+# (DeclarativeBase side-effect), и TenantMixin виден в ``Order.__mro__``.
+from extensions.core_entities.orders.domain.models import Order
 from src.backend.infrastructure.database.tenant_filter import (
     TenantMixin,
     _is_tenant_aware,

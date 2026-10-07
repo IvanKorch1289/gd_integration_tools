@@ -114,3 +114,67 @@ class TestCapabilityCheck:
         ctx = _ctx(capability_gate=_FakeGate(), plugin="example_plugin")
         CallFunctionProcessor._check_capability("extensions.x.fns", ctx)
         assert calls == [("example_plugin", "function.call.extensions.x.fns", None)]
+
+
+class TestActiveWhitelist:
+    """Sprint 226 (2026-10-06): process-global whitelist от PluginLoader.
+
+    Контракт:
+        * ``register_active_whitelist(modules)`` доливает в общий set;
+        * ``get_active_whitelist()`` возвращает snapshot (frozenset);
+        * _validate_module_whitelist принимает модуль, попавший в whitelist,
+          даже если ``context.properties`` пуст;
+        * модуль, не попавший в whitelist, отклоняется в strict-режиме.
+    """
+
+    def setup_method(self) -> None:
+        # Каждый тест начинает с пустого process-state.
+        CallFunctionProcessor._active_whitelist.clear()
+
+    def teardown_method(self) -> None:
+        CallFunctionProcessor._active_whitelist.clear()
+
+    def test_register_is_idempotent_and_accumulates(self) -> None:
+        CallFunctionProcessor.register_active_whitelist(["mod.a", "mod.b"])
+        CallFunctionProcessor.register_active_whitelist(["mod.b", "mod.c"])
+        assert CallFunctionProcessor.get_active_whitelist() == frozenset(
+            {"mod.a", "mod.b", "mod.c"}
+        )
+
+    def test_get_active_whitelist_is_snapshot(self) -> None:
+        CallFunctionProcessor.register_active_whitelist(["mod.a"])
+        snap_before = CallFunctionProcessor.get_active_whitelist()
+        CallFunctionProcessor.register_active_whitelist(["mod.b"])
+        snap_after = CallFunctionProcessor.get_active_whitelist()
+        # Старый snapshot не подхватил новый модуль (immutable frozenset).
+        assert snap_before == frozenset({"mod.a"})
+        assert snap_after == frozenset({"mod.a", "mod.b"})
+
+    def test_validate_uses_active_whitelist_when_context_empty(self) -> None:
+        CallFunctionProcessor.register_active_whitelist(["extensions.foo.bar"])
+        ctx = _ctx()
+        # Не должно быть PermissionError — модуль в whitelist.
+        CallFunctionProcessor._validate_module_whitelist("extensions.foo.bar", ctx)
+
+    def test_validate_denies_unknown_module_in_strict(self) -> None:
+        """Подать whitelist, но запросить не-listed модуль: deny."""
+        CallFunctionProcessor.register_active_whitelist(["extensions.foo.bar"])
+        # Включаем strict-режим для теста.
+        original = feature_flags.call_function_whitelist_strict
+        feature_flags.call_function_whitelist_strict = True
+        try:
+            ctx = _ctx()
+            with pytest.raises(PermissionError, match="not in whitelist"):
+                CallFunctionProcessor._validate_module_whitelist(
+                    "extensions.unknown", ctx
+                )
+        finally:
+            feature_flags.call_function_whitelist_strict = original
+
+    def test_validate_union_with_context_properties(self) -> None:
+        """Whitelist объединяет active + context.properties."""
+        CallFunctionProcessor.register_active_whitelist(["mod.from_global"])
+        ctx = _ctx(call_function_modules=["mod.from_ctx"])
+        # Оба источника покрывают каждый свой модуль.
+        CallFunctionProcessor._validate_module_whitelist("mod.from_global", ctx)
+        CallFunctionProcessor._validate_module_whitelist("mod.from_ctx", ctx)

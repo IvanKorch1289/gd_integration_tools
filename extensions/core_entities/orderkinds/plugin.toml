@@ -26,3 +26,6 @@ scope = "orderkinds"
 [provides]
 repositories = ["orderkinds"]
 schemas = ["OrderKindSchemaIn", "OrderKindSchemaOut", "OrderKindVersionSchemaOut"]
+
+# SQLAlchemy ORM-модуль для auto-discovery при миграциях (cycle-15).
+models_module = ["extensions.core_entities.orderkinds.domain.models"]

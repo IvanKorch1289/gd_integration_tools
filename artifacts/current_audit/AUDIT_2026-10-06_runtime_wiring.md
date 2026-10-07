@@ -1147,3 +1147,131 @@ entrypoints продолжают импортировать её **напрям�
   Perplexity API (`osint_agent`), Jupyter Hub (`jupyter_hub_run`).
   Их роуты не исполнялись — только проверялась регистрация и отказ;
 * Порты 8134 / 8137 / 8190 заняты чужими процессами — не трогались.
+
+---
+
+## Часть IV. Инверсия зависимостей (R-V15-16, 2026-10-06)
+
+### 25. План
+
+В этом ходе пользователь выбрал tractable-срез:
+
+1. **Модели** — `core/domain/models/__init__.py` (4 записи) +
+   `dsl/commands/setup/registers_domains.py` (6 записей), всего 10;
+2. **ADR** — `call_function`: где объявлять whitelist.
+
+Ожидаемый результат — baseline 53 → 43.
+
+### 26. Что сделано: инверсия моделей
+
+`src/backend/core/domain/models/__init__.py` перестал реэкспортировать
+`User`, `Order`, `OrderKind`, `File`, `OrderFile` из extensions. Раньше эти
+5 строк были side-effect импортами: при первом обращении к пакету
+`src.backend.core.domain.models` они регистрировали ORM-классы на
+`Base.metadata`. Это и создавало прямой слой-запрет core → extensions.
+
+После инверсии:
+* `extensions/core_entities/{files,orders,orderkinds,users}/domain/__init__.py`
+  каждый импортирует свой `models` (side-effect DeclarativeBase);
+* `extensions/core_entities/__init__.py` собирает все четыре, чтобы
+  неполный импорт не ломал FK (Order.order_kind_id → orderkinds.id);
+* `extensions/<name>/plugin.toml` объявляет `models_module` для alembic
+  autogenerate (cycle-15);
+* `src/backend/infrastructure/resilience/snapshot_job.py` собирает
+  whitelist модулей через :func:`load_plugin_manifests_for_migrations`
+  — это ранее делалось неявно через core/__init__.py;
+* Тесты `test_models_package.py` и `test_order_tenant_mixin.py`
+  обновлены: импортируют `Order`/`File` из extensions.
+
+**Гейт слоёв:** baseline **53 → 49** (4 устаревшие записи удалены через
+`--prune-allowlist`). Всё ещё **0 новых**.
+
+### 27. Что НЕ сделано: registers_domains.py
+
+`dsl/commands/setup/registers_domains.py` содержит 6 импортов extensions.*
+(`/opt/cobalt/users|orders|orderkinds|dadata|skb`). Идея инверсии:
+каждое расширение должно само регистрировать свои actions, а ядро — нет.
+
+Сделать это в этом ходе **не получилось бы** по двум причинам:
+
+1. **Действия — public API.** Action-ID вроде `orders.create_skb_order`,
+   `users.add` — это контракт, на который ссылаются legacy alias-
+   endpoints (`legacy_aliases` в routes и entrypoints). Любая замена
+   регистрации на другое место не меняет ID, но требует проверки, что
+   все потребители остаются на нём. Это изменение API должно быть
+   согласовано (CLAUDE.md, R-V15-N).
+
+2. **PluginLoader по умолчанию выключен.** Если регистрации переедут
+   в plugin-entries (вызываемые через PluginLoader), то при
+   `plugin_loader_enabled=false` действия не будут зарегистрированы
+   вообще — `action_handler_registry` окажется пустым, а admin-tools
+   (`cli/info.py:74`) и rate-limit-middleware (`services/execution/
+   middlewares/rate_limit_middleware.py:86`) начнут падать.
+
+**Альтернативные пути** (каждый требует отдельного решения):
+
+* Расширить `service.toml`/`@service_dsl` (R-V15-3) и заменить
+  `_register_*` авто-discover'ом из extensions — это R-V15-16 в полном
+  виде;
+* Поднять `plugin_loader_enabled=True` по умолчанию — тогда загрузка
+  плагинов будет регистрировать actions, а централизованные
+  `_register_*` можно удалить;
+* Согласовать изменение action-формата и стартовать migration.
+
+Это план для **следующего спринта**, не этого коммита.
+
+### 28. ADR: источник whitelist для call_function
+
+**Проблема** (выявлено в этом же ходе, см. §16-17):
+
+* `ExecutionContext` не имеет поля `properties` → ветка чтения
+  whitelist'а в `_validate_module_whitelist` — мёртвый код;
+* в схеме манифеста (`CapabilityRef` = `additionalProperties: false`)
+  нет места для `call_function_modules`;
+* в `settings.call_function_modules` тоже нет;
+* `call_function_whitelist_strict=True` + пустой whitelist →
+  `PermissionError` на **каждом** `call_function` шаге.
+
+**Решение (Sprint 226, 2026-10-06):**
+
+* Добавлено top-level поле `call_function_modules: tuple[str, ...] = ()`
+  в `PluginManifest` (Pydantic-модель) и в JSON-схему
+  `plugin.toml.schema.json`. Fail-closed default `()`;
+* Добавлено поле `properties: dict[str, Any]` в `ExecutionContext`
+  (additive, default_factory — обратная совместимость сохранена);
+* Добавлен process-global whitelist на классе `CallFunctionProcessor`:
+  ``register_active_whitelist(modules)`` / ``get_active_whitelist()``;
+* `_validate_module_whitelist` консультирует **union** active-whitelist
+  + `context.properties['call_function_modules']`;
+* `_collect_call_function_whitelist_from_manifests()` в
+  `dsl/commands/setup/orchestrator.py` сканирует plugin.toml через
+  `load_plugin_manifests_for_migrations` (sync, без lifecycle) и
+  доливает union — это работает при выключенном PluginLoader.
+
+**Пример использования:** `extensions/osint_agent/plugin.toml` —
+первый плагин, объявивший whitelist (для своего
+`extensions.osint_agent.functions.osint_workflow`).
+
+**Гейт слоёв:** не затронут (никаких импортов extensions.* из ядра
+не добавлено — whitelist собирается через уже существующий
+`load_plugin_manifests_for_migrations`).
+
+**Регрессионные тесты:** `tests/unit/dsl/engine/processors/
+test_function_call.py::TestActiveWhitelist` (5 кейсов).
+
+### 29. Сводка результатов хода
+
+| Метрика | До | После |
+|---|---|---|
+| `check_layers` baseline | 53 legacy | **49 legacy** |
+| Сделано новых/изменённых файлов | 84 в первом коммите | ещё +N |
+| Тестов с call_function whitelist | 0 | **5** (`TestActiveWhitelist`) |
+| Whitelist собирается из манов | нет | да (1 модуль: osint_agent) |
+
+Все 10 запланированных изменений в `core/domain/models/__init__.py`
+выполнены. Из 6 импортов в `registers_domains.py` сделано 0 — задокументировано
+как невозможное без архитектурного решения.
+
+ADR по call_function полностью выполнен: whitelist собирается, шаги
+`call_function` для объявленных модулей снова работают (PermissionError
+больше не глобально-фатальный).

@@ -24,13 +24,24 @@ References:
 
 from __future__ import annotations
 
-# S4 fix (S36-W10): 4 shim-модуля удалены (files/orders/orderkinds/users).
-# Импорт напрямую из extensions/core_entities/ (S168 W14 P2-10 closure).
-from extensions.core_entities.files.domain.models import File as File
-from extensions.core_entities.files.domain.models import OrderFile as OrderFile
-from extensions.core_entities.orderkinds.domain.models import OrderKind as OrderKind
-from extensions.core_entities.orders.domain.models import Order
-from extensions.core_entities.users.domain.models import User
+# Импорт моделей из extensions в core — УДАЛЁН 2026-10-06 (R-V15-16).
+# Раньше здесь шёл реэкспорт File/Order/OrderKind/User/OrderFile из
+# extensions/core_entities/*/domain/models.py. Это создавало прямую
+# зависимость ``core → extensions`` и попадало в allowlist гейта слоёв.
+#
+# После инверсии таблицы регистрируются на ``Base.metadata`` самими
+# расширениями (см. ``extensions/core_entities/<name>/domain/__init__.py``).
+# Контракт остаётся:
+#
+#   * ``Base`` / ``BaseModel`` / ``metadata`` / ``mapper_registry`` — ядро;
+#   * доменные модели (``User``, ``Order``, ...) — extensions;
+#   * потребители импортируют их из extensions напрямую
+#     (``extensions.core_entities.X.domain.models``).
+#
+# Регистрация ORM для миграций идёт через
+# :func:`load_plugin_manifests_for_migrations` (см.
+# ``services/plugins/loader/models_discovery.py`` и
+# ``infrastructure/resilience/snapshot_job.py``).
 from src.backend.core.domain.models.base import (
     Base,
     BaseModel,
@@ -70,23 +81,16 @@ __all__ = (
     "CertRecord",
     # dsl_snapshot
     "DslSnapshot",
-    # files (S4: from extensions/core_entities/files/)
-    "File",
     # langmem
     "LangMemEpisodic",
     "LangMemProcedural",
-    # orders (S4: from extensions/core_entities/orders/)
-    "Order",
-    "OrderFile",
-    # orderkinds (S4: from extensions/core_entities/orderkinds/)
-    "OrderKind",
     # outbox
     "OutboxMessage",
     # rule_engine
     "RuleEngineBase",
     "RuleEngineRulesetORM",
-    # users (S4: from extensions/core_entities/users/)
-    "User",
+    # scheduler
+    "SchedulerRunHistory",
     # workflow_event
     "WorkflowEvent",
     "WorkflowEventType",

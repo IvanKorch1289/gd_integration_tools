@@ -17,7 +17,7 @@ from __future__ import annotations
 import importlib
 import logging
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable
 
 from src.backend.core.security.module_whitelist import validate_module_whitelist
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -136,26 +136,51 @@ class CallFunctionProcessor(BaseProcessor):
             )
             return False
 
-    @staticmethod
+    # Active whitelist (process-global, populated by PluginLoader from
+    # manifests). See :func:`register_active_whitelist` /
+    # :func:`get_active_whitelist`. ADR-замена для пустого разрешителя:
+    # раньше whitelist всегда был пуст, а strict=True по умолчанию
+    # → PermissionError на каждом call_function (отчёт 2026-10-06).
+    _active_whitelist: set[str] = set()
+
+    @classmethod
+    def register_active_whitelist(cls, modules: Iterable[str]) -> None:
+        """Пополнить process-global whitelist ``call_function`` модулями.
+
+        Sprint 226 (D-AUDIT-call_function_whitelist, 2026-10-06).
+        PluginLoader вызывает на старте для каждого загруженного плагина
+        с его ``manifest.call_function_modules``. Также используется
+        миграционным авто-импортом (чтобы whitelist собирался даже при
+        выключенном PluginLoader).
+        """
+        cls._active_whitelist |= set(modules)
+
+    @classmethod
+    def get_active_whitelist(cls) -> frozenset[str]:
+        """Snapshot текущего whitelist (для диагностики и admin-tools)."""
+        return frozenset(cls._active_whitelist)
+
     def _validate_module_whitelist(module_name: str, context: ExecutionContext) -> None:
         """V21 + K-ARCH-5 (S17): проверяет module в whitelist.
 
-        Whitelist:
-            * ``context.properties.call_function_modules`` (список или set),
-              устанавливается loader'ом плагина из ``plugin.toml``;
-            * либо global default из ``settings.call_function_modules``
-              (если задан) — для core/admin процессоров.
+        Источники whitelist (в порядке приоритета, объединяются):
+            1. ``context.properties.call_function_modules`` — route-scoped
+               whitelist от loader'а маршрута (из ``requires_plugins``
+               каждого плагина);
+            2. :data:`PROCESS_WHITELIST` — собрано при bootstrap из
+               ``plugin.toml::call_function_modules`` всех загруженных
+               плагинов через :meth:`register_active_whitelist`.
 
         Если whitelist пуст:
             * production / strict-mode → PermissionError (K-ARCH-5);
             * dev (default-OFF) → fallback на ``True``.
         """
-        whitelist: set[str] = set()
+        whitelist: set[str] = set(CallFunctionProcessor._active_whitelist)
         candidates = getattr(context, "properties", None)
         if isinstance(candidates, dict):
             raw = candidates.get("call_function_modules")
             if raw:
-                whitelist |= set(raw)
+                whitelist |= {str(m) for m in raw}
         if not whitelist:
             try:
                 from src.backend.core.config.settings import settings as app_settings

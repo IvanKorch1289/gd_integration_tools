@@ -50,6 +50,24 @@ class ExecutionContext:
     state: dict[str, Any] = field(default_factory=dict)
     principal: str = ""  # K3 S19 W3
     permissions: tuple[str, ...] = ()  # K3 S19 W3
+    properties: dict[str, Any] = field(default_factory=dict)
+    """Sprint 226 (D-AUDIT-call_function_whitelist, 2026-10-06).
+
+    Контрактный словарь для runtime-параметров маршрута. Используется
+    процессорами, которым нужен per-route контекст, не попадающий в payload
+    сообщения. Ключи:
+
+    * ``call_function_modules`` — tuple[str, ...] whitelist модулей,
+      разрешённых для DSL-шага ``call_function`` в этом маршруте.
+      Заполняется loader'ом маршрута (R-V15-16 inversion: каждый
+      extension объявляет ``call_function_modules`` в ``plugin.toml``,
+      RouteLoader собирает union от ``requires_plugins``).
+
+    Поле добавлено как backward-compatible default; шейм-сигнатура
+    не менялась, потому что Pydantic-стиля dataclass с default_factory
+    принимает kwargs.
+
+    """
 
     @classmethod
     def from_auth(

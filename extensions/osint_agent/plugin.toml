@@ -7,6 +7,15 @@ tenant_aware = true
 description = "OSINT agent: web-search + LLM report generation by INN"
 trust_tier = "B"
 
+# Whitelist модулей для DSL-шага call_function (Sprint 226, 2026-10-06).
+# Этот плагин — провайдер единственного модуля, который использует
+# ``call_function`` в routes/osint_agent/osint.dsl.yaml. Без этой
+# декларации шаг упадёт с PermissionError в strict-режиме
+# (call_function_whitelist_strict=True — дефолт).
+call_function_modules = [
+    "extensions.osint_agent.functions.osint_workflow",
+]
+
 [[capabilities]]
 name = "net.outbound"
 scope = "*.perplexity.ai"

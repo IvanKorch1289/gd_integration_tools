@@ -35,3 +35,7 @@ scope = "s3://*"
 [provides]
 repositories = ["files"]
 schemas = ["FileSchemaIn", "FileSchemaOut", "FileVersionSchemaOut"]
+
+# SQLAlchemy ORM-модули для auto-discovery при миграциях (cycle-15).
+# ``File`` и ``OrderFile`` объявлены в ``domain/models.py``.
+models_module = ["extensions.core_entities.files.domain.models"]

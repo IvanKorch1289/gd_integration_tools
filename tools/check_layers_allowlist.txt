@@ -8,10 +8,6 @@ src/backend/core/ai/gateway_pipeline_mixin/output_mixin.py	core	src.backend.serv
 src/backend/core/ai/llm_gateway.py	core	src.backend.services.ai.gateway.client
 src/backend/core/ai/multi_agent.py	core	src.backend.services.ai.multi_agent.supervisor
 src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.services.ai.guardrails.lakera_client
-src/backend/core/domain/models/__init__.py	core	extensions.core_entities.files.domain.models
-src/backend/core/domain/models/__init__.py	core	extensions.core_entities.orderkinds.domain.models
-src/backend/core/domain/models/__init__.py	core	extensions.core_entities.orders.domain.models
-src/backend/core/domain/models/__init__.py	core	extensions.core_entities.users.domain.models
 src/backend/core/security/connector_auth.py	core	src.backend.services.authorization.facade
 src/backend/dsl/commands/setup/registers_domains.py	dsl	extensions.core_entities.orderkinds.services.orderkinds
 src/backend/dsl/commands/setup/registers_domains.py	dsl	extensions.core_entities.orders.schemas.route

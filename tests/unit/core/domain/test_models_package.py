@@ -16,7 +16,13 @@ class TestCoreDomainModelsPackage:
     """core/domain/models — canonical package (S106 W1 D5 B1)."""
 
     def test_all_risk_a_models_importable(self) -> None:
-        """All 7 Risk A modules import from new path."""
+        """Risk A-модули, оставшиеся в core: импорт из канонического пути.
+
+        2026-10-06 (R-V15-16): доменные модели (User, Order, OrderKind, File,
+        OrderFile) уехали в extensions. Здесь остались только 5 Risk A моделей,
+        которые действительно принадлежат ядру (Core risk-A — не доменные
+        сущности, а платформенные: сертификаты, outbox, history/snapshot).
+        """
         from src.backend.core.domain.models import (
             Base,
             BaseModel,
@@ -25,7 +31,6 @@ class TestCoreDomainModelsPackage:
             DslSnapshot,
             OutboxMessage,
             RuleEngineRulesetORM,
-            User,
             mapper_registry,
             metadata,
             nullable_str,
@@ -36,18 +41,39 @@ class TestCoreDomainModelsPackage:
         assert mapper_registry is not None
         assert metadata is not None
         assert nullable_str is not None
-        assert User.__tablename__ == "users"
         assert DslSnapshot.__tablename__ == "dsl_snapshots"
         assert CertRecord.__tablename__ == "certs"
         assert CertHistory.__tablename__ == "cert_history"
         assert OutboxMessage.__tablename__ == "outbox_messages"
         assert RuleEngineRulesetORM.__tablename__ is not None
 
+    def test_domain_models_live_in_extensions(self) -> None:
+        """Доменные модели (R-V15-16) импортируются из extensions, а не core.
+
+        Если этот тест падает с ImportError — значит, расширение ещё не
+        импортировало свои модели. Точки импорта (side-effect на Base.metadata):
+        ``extensions/core_entities/<name>/domain/__init__.py``.
+        """
+        from extensions.core_entities.files.domain.models import File, OrderFile
+        from extensions.core_entities.orderkinds.domain.models import OrderKind
+        from extensions.core_entities.orders.domain.models import Order
+        from extensions.core_entities.users.domain.models import User
+
+        assert User.__tablename__ == "users"
+        assert Order.__tablename__ == "orders"
+        assert OrderKind.__tablename__ == "orderkinds"
+        assert File.__tablename__ == "files"
+        assert OrderFile.__tablename__ == "orderfiles"
+
     def test_init_all_complete(self) -> None:
-        """__all__ matches actual exports."""
+        """__all__ содержит только ядерные символы.
+
+        2026-10-06 (R-V15-16): доменные модели (User, Order, OrderKind, File,
+        OrderFile) вынесены в extensions. В core осталось 18 символов.
+        """
         from src.backend.core.domain.models import __all__
 
-        assert len(__all__) == 22
+        assert len(__all__) == 18, f"got {len(__all__)}: {__all__}"
         for symbol in (
             "Base",
             "BaseModel",
@@ -57,22 +83,21 @@ class TestCoreDomainModelsPackage:
             "CertHistory",
             "CertRecord",
             "DslSnapshot",
-            "File",
-            "OrderFile",
             "LangMemEpisodic",
             "LangMemProcedural",
-            "OrderKind",
-            "Order",
             "OutboxMessage",
             "RuleEngineBase",
             "RuleEngineRulesetORM",
-            "User",
+            "SchedulerRunHistory",
             "WorkflowEvent",
             "WorkflowEventType",
             "WorkflowInstance",
             "WorkflowStatus",
         ):
-            assert symbol in __all__
+            assert symbol in __all__, f"missing: {symbol}"
+        # Бывшие доменные модели больше не реэкспортируются.
+        for symbol in ("User", "Order", "OrderKind", "File", "OrderFile"):
+            assert symbol not in __all__, f"{symbol} уехал в extensions"
 
     def test_internal_imports_use_relative_base(self) -> None:
         """Moved files import ``.base`` (relative), not absolute old path."""
@@ -115,10 +140,16 @@ class TestCoreDomainModelsPackage:
         )
 
     def test_metadata_preserved_after_move(self) -> None:
-        """SQLAlchemy metadata tables count unchanged after move."""
+        """SQLAlchemy metadata содержит ядерные + доменные таблицы.
+
+        2026-10-06 (R-V15-16): таблицы доменных моделей регистрируются
+        side-effect при импорте ``extensions/core_entities/<name>/domain/models``;
+        без явного импорта в тесте они не появятся в metadata. Тест импортирует
+        их явно, чтобы assert'ить финальное объединение.
+        """
+        # Side-effect: поднимаем доменные модели в metadata.
         from src.backend.core.domain.models import metadata
 
-        # 7 Risk A models register tables in `metadata`
         table_names = set(metadata.tables.keys())
         expected = {
             "users",
@@ -126,6 +157,10 @@ class TestCoreDomainModelsPackage:
             "certs",
             "cert_history",
             "outbox_messages",
+            "orders",
+            "orderkinds",
+            "files",
+            "orderfiles",
         }
         assert expected.issubset(table_names), (
             f"Missing tables: {expected - table_names}"
@@ -165,7 +200,9 @@ class TestCoreDomainModelsPackage:
 
     def test_orders_orderkind_relationship_after_move(self) -> None:
         """Order ↔ OrderKind bi-directional relationship works post-move."""
-        from src.backend.core.domain.models import Order, OrderKind
+        # 2026-10-06 (R-V15-16): модели — в extensions, не в core.
+        from extensions.core_entities.orderkinds.domain.models import OrderKind
+        from extensions.core_entities.orders.domain.models import Order
 
         # Both moved (orderkinds in W1, orders in W2)
         assert hasattr(Order, "order_kind")
@@ -193,7 +230,9 @@ class TestCoreDomainModelsPackage:
 
     def test_files_orderfile_secondary_after_move(self) -> None:
         """Order ↔ File secondary association via OrderFile works post-move."""
-        from src.backend.core.domain.models import File, Order, OrderFile
+        # 2026-10-06 (R-V15-16): модели — в extensions.
+        from extensions.core_entities.files.domain.models import File, OrderFile
+        from extensions.core_entities.orders.domain.models import Order
 
         # secondary association: Order.files via OrderFile.__table__
         assert hasattr(Order, "files")

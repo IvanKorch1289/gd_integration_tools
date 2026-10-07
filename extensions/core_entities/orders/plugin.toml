@@ -35,3 +35,9 @@ scope = "orders"
 [provides]
 repositories = ["orders"]
 schemas = ["OrderSchemaIn", "OrderSchemaOut", "OrderVersionSchemaOut"]
+
+# SQLAlchemy ORM-модуль для auto-discovery при миграциях (cycle-15).
+# ``Order`` объявлен в ``domain/models.py`` и наследует ``BaseModel`` из
+# ``src.backend.core.domain.models.base``. Регистрация таблицы на
+# ``Base.metadata`` происходит side-effect при импорте этого модуля.
+models_module = ["extensions.core_entities.orders.domain.models"]
