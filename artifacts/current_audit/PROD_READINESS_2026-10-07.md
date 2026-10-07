@@ -81,7 +81,7 @@ Net effect: **6 CRITICAL/HIGH security-блокеров** закрыты и до
 | К1 | DSL response-binding (`to: {response: ...}`) | Не реализовано в YAML и Python — GAP, fixed в `routes/*/main.dsl.yaml` удалены | Реализовать `Pipeline.to_response` + маршрутизация; иначе демо-роуты обещают контракт ответа, который не существует |
 | К2 | `hub_run_adapter.run()` calling-convention | Первый параметр `notebook_name: str`, а процессор зовёт `fn(payload)` — из YAML тело попадает в `notebook_name` | ADR по смене публичной сигнатуры адаптера; требуется согласование (CLAUDE.md) |
 | К3 | call_function whitelist: plugins объявляют в plugin.toml, но `load_plugin_manifests_for_migrations` сейчас сканирует только при `register_action_handlers()` (cold path) | Работает для osint_agent, но не покрыто тестом — добавить regression на orchestrator-driven сборку | Добавить `test_orchestrator_collects_whitelist` |
-| К4 | Order-pollution test_cert_model | Тесты падают в больших прогонах (35 failed + 33 errors), но не воспроизводятся изолированно | Развязать глобальный SQLAlchemy `metadata` state; в худшем случае — добавить conftest.py с явной загрузкой extensions |
+| К4 | ~~Order-pollution test_cert_model~~ | **ОТКРЫТИЕ 2026-10-07:** ошибочная гипотеза — `test_cert_model` проходит 12/12 в любом порядке и в комбинациях. 12 ошибок в больших прогонах — это **предсуществующие** failures в `tests/unit/dsl/` (banking, eip/transformation, llmcall, webhook_signature, dataframes, msgspec_speedup, routes_v11_discovery), задокументированные в `tests/unit/test_layer_violations_count.py` и summary сессии | — |
 
 ### 4.3 Операционные требования (P2)
 
