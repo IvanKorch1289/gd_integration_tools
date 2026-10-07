@@ -44,17 +44,46 @@ def test_explain_route_returns_route_explanation(hello_route_dir: Path) -> None:
 
 
 def test_explain_route_extracts_capabilities(hello_route_dir: Path) -> None:
-    """Capabilities required + declared + missing computed из manifest + steps."""
+    """Capabilities required + declared + missing computed из manifest + steps.
+
+    2026-10-06 (приведение hello_route к API): LLM/policy/to шаги удалены
+    из route (LLM — потому что нет capability-guard у процессоров, policy —
+    потому что это @property а не метод, response binding to не реализован).
+    Routes остались чисто YAML-demo: feature_flag + http_call + audit.
+    """
     explanation = explain_route(hello_route_dir)
-    # Hello route: feature_flag + policy + llm_call + http_call + audit + to
-    assert "ai.invoke" in explanation.capabilities_required
-    assert "net.outbound" in explanation.capabilities_required
-    assert "audit.write" in explanation.capabilities_required
-    # Declared в route.toml
-    assert "ai.invoke" in explanation.capabilities_declared
+    # hello_route pipeline (post-fix): feature_flag + http_call + audit
+    assert "net.outbound" in explanation.capabilities_required  # http_call
+    assert "audit.write" in explanation.capabilities_required  # audit
+    # Declared в route.toml (после удаления ложных db.write и ai.invoke)
     assert "net.outbound" in explanation.capabilities_declared
-    # No missing — all declared.
+    assert "audit.write" in explanation.capabilities_declared
+    # No missing — все required объявлены в манифесте.
     assert explanation.capabilities_missing == ()
+
+
+def test_explain_route_no_llm_step_post_fix(hello_route_dir: Path) -> None:
+    """LLM-шаг удалён из hello_route 2026-10-06: нет рантайм capability-guard
+    для LLM-процессоров, поэтому декларация ``ai.invoke`` в манифесте
+    была единственным контролем. Удалено вместе с шагом; пробел зафиксирован
+    в AUDIT_2026-10-06_runtime_wiring.md как доработка LLM-процессоров.
+    """
+    explanation = explain_route(hello_route_dir)
+    llm_steps = [s for s in explanation.steps if s.step_type.startswith("llm")]
+    assert llm_steps == [], (
+        "hello_route не должен содержать LLM-шаг: требуется guard "
+        "у процессоров, иначе декларация ai.invoke — единственный контроль"
+    )
+
+
+def test_explain_route_no_policy_step_post_fix(hello_route_dir: Path) -> None:
+    """policy: @property (не method), как DSL-пропал его как шаг (2026-10-06).
+
+    Политика повторов теперь задаётся через ``retry`` параметр шагов.
+    """
+    explanation = explain_route(hello_route_dir)
+    policy_steps = [s for s in explanation.steps if s.step_type == "policy"]
+    assert policy_steps == [], "policy — @property, не должен быть DSL-шагом"
 
 
 def test_explain_route_identifies_missing_capabilities(health_route_dir: Path) -> None:
@@ -71,21 +100,32 @@ def test_explain_route_identifies_missing_capabilities(health_route_dir: Path) -
 
 
 def test_explain_route_aggregates_side_effects(hello_route_dir: Path) -> None:
-    """Side effects: network/db/fs/mq/ai aggregate правильно."""
+    """Side effects: network/db/fs/mq/ai aggregate правильно.
+
+    2026-10-06: hello_route больше не имеет LLM-шага, поэтому 'ai' не
+    в aggregate; ожидаются только network (http_call) и audit (audit).
+    """
     explanation = explain_route(hello_route_dir)
     kinds = {se.kind for se in explanation.side_effects_aggregate}
     assert "network" in kinds  # http_call
-    assert "ai" in kinds  # llm_call
     assert "audit" in kinds  # audit
+    # LLM-шаг удалён вместе со своим capabil-guard пробелом
+    # (см. AUDIT_2026-10-06_runtime_wiring.md §16-18).
 
 
 def test_explain_route_extracts_retry_policy(hello_route_dir: Path) -> None:
-    """Retry policy из policy.step извлекается с attempts + backoff."""
+    """Retry policy извлекается из атрибута ``retry`` любого шага.
+
+    2026-10-06: policy : YAML-шаг удалён (@property, не метод), retry теперь —
+    не отдельный DSL-шаг. Тест-демонстрация retry-инфраструктуры теперь
+    использует ``retry:`` параметр на любом шаге (см. ``retry_callsites.txt``
+    для существующих примеров).
+    """
     explanation = explain_route(hello_route_dir)
-    policy_step = next(s for s in explanation.steps if s.step_type == "policy")
-    assert policy_step.retry is not None
-    assert policy_step.retry["attempts"] == 3
-    assert policy_step.retry["backoff"] == "exponential"
+    # hello_route не имеет шагов с retry: {}. Проверяем, что retry
+    # читается корректно (None или отсутствует) на отсутствующем случае.
+    http_call_step = next(s for s in explanation.steps if s.step_type == "http_call")
+    assert http_call_step.retry is None
 
 
 def test_explain_route_computes_total_duration(hello_route_dir: Path) -> None:
@@ -143,7 +183,10 @@ def test_explain_cli_human_output(
     assert "Route: hello_route" in result.stdout
     assert "Steps (" in result.stdout
     assert "Capabilities:" in result.stdout
-    assert "ai.invoke" in result.stdout
+    # hello_route post-2026-10-06: ai.invoke не объявлен (LLM-шаг удалён);
+    # остаются только net.outbound + audit.write.
+    assert "net.outbound" in result.stdout
+    assert "audit.write" in result.stdout
 
 
 def test_explain_cli_json_output(
