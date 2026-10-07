@@ -43,6 +43,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.backend.core.auth.auth_context_helpers import extract_tenant_id
 from src.backend.core.di.providers import get_correlation_context_setter_provider
+from src.backend.core.tenancy import TenantContext, bind_tenant, unbind_tenant
 
 __all__ = ("TenantMiddleware",)
 
@@ -271,7 +272,19 @@ class TenantMiddleware:
         # Wrap send — response-резолв (header > state [уже с auth] >
         # default) + X-Tenant-ID в response headers.
         send_wrapper = _make_send_wrapper(send, scope, self._default)
-        await self.app(scope, receive, send_wrapper)
+        # F-D1 (CRITICAL, продолжение): привязка ЗДЕСЬ, а не только в
+        # auth-middleware. К этому моменту state['tenant_id'] уже разрешён
+        # окончательно для JWT-пути (AuthRequired идёт на позиции 15, то
+        # есть выше нас), поэтому ORM-фильтр и RLS-listener видят tenant
+        # и для principal'ов БЕЗ tenant_id в metadata — включая
+        # API-key, где раньше не bind'илось ничего. Для API-key пути
+        # APIKeyMiddleware (позиция 30, вложен в нас) перепривяжет своё
+        # значение; порядок bind/unbid остаётся LIFO: A -> T -> K.
+        tenant_token = bind_tenant(TenantContext(tenant_id=state["tenant_id"]))
+        try:
+            await self.app(scope, receive, send_wrapper)
+        finally:
+            unbind_tenant(tenant_token)
 
     @staticmethod
     def _resolve_tenant_id(scope: Scope, default_tenant: str) -> str:

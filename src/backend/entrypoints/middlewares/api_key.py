@@ -29,6 +29,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.config.settings import settings
+from src.backend.core.tenancy import bind_tenant_from_metadata, unbind_tenant
 from src.backend.core.utils.converters import convert_pattern
 
 __all__ = ("APIKeyMiddleware",)
@@ -129,7 +130,18 @@ class APIKeyMiddleware:
         )
 
         # API-ключ валиден → пробрасываем downstream.
-        await self.app(scope, receive, send)
+        # F-D1 (CRITICAL): APIKeyMiddleware — последний middleware в стеке,
+        # который узнаёт principal'а (позиция 30, тогда как AuthRequired —
+        # 15, а TenantMiddleware — 26 и стоит ВНЕ обоих). Поэтому tenant
+        # для API-key-запросов может быть связан только здесь: к моменту
+        # TenantMiddleware аутентификация ещё не завершена. Без этой
+        # привязки ORM-фильтр и RLS-listener читали пустой ContextVar.
+        tenant_token = bind_tenant_from_metadata(auth_ctx.metadata)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            if tenant_token is not None:
+                unbind_tenant(tenant_token)
 
     @staticmethod
     async def _send_401(send: Send, *, detail: str) -> None:
