@@ -27,6 +27,7 @@ __all__ = ("ApiProxyProcessor", "PaginateProcessor", "ScrapeProcessor")
 
 _scrape_logger = get_logger("dsl.scraping")
 
+
 def _validate_url(url: str) -> None:
     """Проверить URL по канонической SSRF-политике.
 

@@ -152,11 +152,14 @@ class TestRealRepoState:
 
     def test_allowlist_no_longer_carries_browser_entries(self) -> None:
         """Долг снят: браузерных записей в allowlist больше нет."""
-        text = Path("tools/check_waf_coverage_allowlist.txt").read_text(encoding="utf-8")
+        text = Path("tools/check_waf_coverage_allowlist.txt").read_text(
+            encoding="utf-8"
+        )
         entries = [
             line
             for line in text.splitlines()
-            if line.strip().startswith("src/backend/") and not line.strip().startswith("#")
+            if line.strip().startswith("src/backend/")
+            and not line.strip().startswith("#")
         ]
         assert not entries, f"в allowlist остались записи: {entries}"
 
@@ -167,4 +170,3 @@ class TestRealRepoState:
         text = path.read_text(encoding="utf-8")
         assert "def assert_safe_url" in text
         assert "def is_safe_url" in text
-

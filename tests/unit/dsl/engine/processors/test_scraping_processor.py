@@ -165,7 +165,9 @@ def test_validate_url_blocks(url: str, reason_fragment: str) -> None:
         ("javascript:alert(1)", "схема"),
     ],
 )
-def test_validate_url_blocks_non_http_and_malformed(url: str, reason_fragment: str) -> None:
+def test_validate_url_blocks_non_http_and_malformed(
+    url: str, reason_fragment: str
+) -> None:
     """Не-HTTP схемы и мусор блокируются (F-AP1).
 
     Args:
