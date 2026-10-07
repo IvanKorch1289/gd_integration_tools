@@ -140,30 +140,48 @@ class DataMaskingMiddleware:
         # D-AUDIT-17201 fix: should_mask flag для non-JSON pass-through.
         # JSON → suppress start, collect body, re-send masked.
         # Non-JSON → pass through both start + body immediately.
+        #
+        # P0 (аудит 2026-10-06): флаг расширен ещё одним случаем pass-through —
+        # ответ с уже выставленным Content-Encoding. Раньше проверки не было
+        # вовсе, и если этот middleware оказывался ВНЕШНЕЙ компрессии, он
+        # получал сжатые байты, падал на raw.decode("utf-8") (0x8b — второй
+        # байт gzip-магии) и подменял ответ fail-closed заглушкой
+        # ``response_masking_failed`` с исходным заголовком Content-Encoding —
+        # клиент получал HTTP 200 с несжатым JSON под меткой gzip.
+        # Аналогичная защита уже была в PIIMaskingResponseMiddleware
+        # (D-AUDIT-16601, cycle 166) — здесь её не хватало.
         should_mask: bool = True
 
         async def send_wrapper(message) -> None:  # type: ignore[no-untyped-def]
+            nonlocal should_mask
             if message["type"] == "http.response.start":
                 response_status["status"] = message.get("status", 200)
-                # Capture content-type + headers.
+                # Capture content-type + content-encoding.
+                content_encoding = ""
                 for k, v in message.get("headers", []):
                     original_headers.append((k, v))
                     if k.lower() == b"content-type":
                         content_type["value"] = v.decode("latin-1", errors="replace")
+                    elif k.lower() == b"content-encoding":
+                        content_encoding = v.decode("latin-1", errors="replace")
                 # D-AUDIT-17201 fix (cycle 172, retry): for non-JSON
                 # responses, pass through original start immediately
                 # (BEFORE body) instead of suppressing. Suppressing
                 # without re-sending caused ASGI protocol error →
                 # 500 'Internal server error' на /docs, /redoc, etc.
-                if "application/json" not in content_type["value"]:
+                #
+                # P0 (2026-10-06): то же для уже закодированных ответов —
+                # тело сжато, разбирать его как JSON нельзя.
+                if content_encoding or "application/json" not in content_type["value"]:
+                    should_mask = False
                     await send(message)
                 # else: Suppress original (JSON, will re-send with masked body)
             elif message["type"] == "http.response.body":
-                if "application/json" in content_type["value"]:
+                if should_mask:
                     # JSON: collect body для masking.
                     body_chunks.append(message.get("body", b""))
                 else:
-                    # Non-JSON: pass through unchanged (no-need to mask).
+                    # Не маскируем — пробрасываем original.
                     await send(message)
             else:
                 await send(message)
@@ -171,12 +189,11 @@ class DataMaskingMiddleware:
         # Пробрасываем downstream (collect body через send_wrapper).
         await self.app(scope, receive, send_wrapper)
 
-        # Skip non-JSON content type (уже пробрасывали в send_wrapper).
-        # D-AUDIT-17201 fix (cycle 172): non-JSON responses передают
-        # original start + body через send_wrapper (line 95-100). Здесь
-        # ничего не делаем.
+        # D-AUDIT-17201 fix (cycle 172) + P0 (2026-10-06): non-JSON и
+        # уже закодированные ответы передают original start + body через
+        # send_wrapper выше. Здесь ничего не делаем.
         if not should_mask:
-            # Non-JSON: original start + body уже отправлены в
+            # Non-JSON / pre-encoded: original start + body уже отправлены в
             # send_wrapper. Ничего не делаем.
             return
 

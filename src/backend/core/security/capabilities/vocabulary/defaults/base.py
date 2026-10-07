@@ -48,6 +48,52 @@ def register(vocab: CapabilityVocabulary) -> None:
     )
     vocab.register(
         CapabilityDef(
+            name="audit.write",
+            matcher=dot_glob,
+            description=(
+                "Запись audit-event в audit-sink (infrastructure/audit, "
+                "admin_audit, correlation-логи). Добавлена 2026-10-06: "
+                "capability реально используется роутами с шагом `audit:`, "
+                "но в vocabulary отсутствовала, из-за чего они не могли "
+                "объявить её ни публично, ни через плагин. scope = tenant-id, "
+                "audit-sink или '*'."
+            ),
+            # public с 2026-10-06 — по существу, а не по чьему-то решению:
+            # audit-sink пишет append-only лог и не даёт доступа к данным;
+            # плагина-владельца у него нет; шаг `audit:` нужен практически
+            # каждому маршруту. Публичность снимает ТОЛЬКО declaration-time
+            # проверку манифеста — рантайм-контроль (CapabilityGate.check
+            # через audit-фасад) public не читает.
+            # Проверка через audit-фасад не читает public, поэтому это НЕ
+            # ослабление рантайм-контроля. Доменные capability (db.read /
+            # db.write) публичными намеренно НЕ сделаны — доступ к данным
+            # остаётся под ответственностью плагина.
+            public=True,
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="jupyter.hub",
+            matcher=dot_glob,
+            description=(
+                "Выполнение ноутбуков на Jupyter Hub через NotebookFacade. "
+                "Добавлена 2026-10-06: capability отсутствовала в vocabulary, "
+                "из-за чего routes/jupyter_hub_run/ не мог объявить её. "
+                "Имя двухсегментное (<resource>.<verb>), поэтому scope "
+                "обязателен: роут объявляет 'jupyter.hub:run'."
+            ),
+            # НЕ public — в отличие от audit.write. Запуск ноутбука на
+            # удалённом Jupyter Hub = выполнение произвольного
+            # пользовательского кода с сервисной учёткой, то есть это
+            # привилегированная операция, и публичность отдала бы её любому
+            # маршруту без провайдера. Плагина-провайдера (jupyter/notebook)
+            # в проекте нет, поэтому jupyter_hub_run честно остаётся
+            # незагруженным, пока такой плагин не появится и не покроет
+            # capability через requires_plugins.
+        )
+    )
+    vocab.register(
+        CapabilityDef(
             name="secrets.read",
             matcher=uri,
             description="Чтение секрета через SecretsFacade (vault:// / env:// / kms://).",
@@ -58,6 +104,19 @@ def register(vocab: CapabilityVocabulary) -> None:
             name="net.outbound",
             matcher=dot_glob,
             description="Исходящие HTTP/gRPC через {HTTP,GRPC}Facade.",
+            # Решение владельца 2026-10-06: net.inbound + net.outbound —
+            # минимальный public-набор, разблокирующий 3 из 7 DSL-роутов
+            # (composition_demo, echo_demo, health_proxy_demo).
+            #
+            # Что именно снимает public: проверку «назван ли плагин,
+            # который декларирует эту capability» в check_capabilities_subset.
+            # Что НЕ снимает: рантайм-контроль. Исходящий вызов идёт через
+            # OutboundHttpClient._capability_check → CapabilityGate.check,
+            # который public НЕ читает и по-прежнему сверяет scope
+            # (host:port) и требует декларации в самом плагине. То есть
+            # public не выдаёт доступ — он лишь допускает манифест роута
+            # без явного requires_plugins.
+            public=True,
         )
     )
     vocab.register(
@@ -65,6 +124,11 @@ def register(vocab: CapabilityVocabulary) -> None:
             name="net.inbound",
             matcher=dot_glob,
             description="Регистрация webhook/SSE-эндпоинтов через WebhookFacade.",
+            # См. комментарий к net.outbound: тот же public-набор, тот же
+            # смысл (снимается только declaration-time проверка манифеста).
+            # Входящий трафик в любом случае проходит auth / WAF /
+            # idempotency-middleware — они не обходятся публичностью.
+            public=True,
         )
     )
     vocab.register(

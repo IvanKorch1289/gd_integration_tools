@@ -107,19 +107,51 @@ def diagnose(
         pass
 
     # Routes count
+    #
+    # Раньше здесь был код вида ``from src.backend.dsl.route.loader import
+    # RouteLoader`` + ``RouteLoader.load_all()``. Оба обращения неверны:
+    # модуля ``src.backend.dsl.route`` в проекте нет (реальный путь —
+    # ``src.backend.services.routes.loader``), а у ``RouteLoader`` есть только
+    # ``discover_and_load()`` — async-метод с побочными эффектами (декларация
+    # capability, регистрация pipeline). Всё это было завёрнуто в
+    # ``except Exception: pass``, поэтому ``diagnostics["routes_count"]``
+    # НИКОГДА не заполнялся — диагностика молча врала.
+    #
+    # Диагностика не должна мутировать состояние, поэтому здесь только
+    # разбор манифестов с диска, без регистрации.
     try:
-        from src.backend.dsl.route.loader import (  # type: ignore[import-not-found,attr-defined]
-            RouteLoader,  # type: ignore[import-not-found]
+        from src.backend.core.config.config_loader import repo_root
+        from src.backend.services.routes.manifest_toml import (
+            RouteManifestError,
+            load_route_manifest,
         )
 
-        routes = RouteLoader.load_all()
-        diagnostics["routes_count"] = len(routes)
+        routes_dir = repo_root() / "routes"
+        manifests = sorted(routes_dir.glob("*/route.toml"))
+        diagnostics["routes_dir"] = str(routes_dir)
+        diagnostics["routes_count"] = len(manifests)
+        parsed: list[dict[str, str]] = []
+        invalid: list[str] = []
+        for manifest_path in manifests:
+            try:
+                manifest = load_route_manifest(manifest_path)
+            except RouteManifestError as exc:
+                invalid.append(f"{manifest_path.parent.name}: {exc}")
+                continue
+            parsed.append(
+                {
+                    "name": manifest.name,
+                    "version": manifest.version,
+                    "pipelines": ",".join(manifest.pipelines),
+                }
+            )
+        diagnostics["routes_valid"] = len(parsed)
+        if invalid:
+            diagnostics["routes_invalid"] = invalid
         if verbose:
-            diagnostics["routes"] = [
-                {"name": r.name, "source": r.source} for r in routes
-            ]
-    except Exception:  # noqa: S110  # silent fallback (best-effort cleanup, non-critical)
-        pass
+            diagnostics["routes"] = parsed
+    except Exception as exc:  # noqa: BLE001 — best-effort, но причина видна
+        diagnostics["routes_error"] = f"{type(exc).__name__}: {exc}"
 
     # Actions count
     try:

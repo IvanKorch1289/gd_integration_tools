@@ -2,16 +2,24 @@
 name = "health_proxy_demo"
 version = "0.1.0"
 description = "Reference route #1 — простой прокси на /health для smoke-теста discovery V11.1a"
-requires_core = ">=15.0,<16.0"
+requires_core = ">=0.20,<0.21"
 tenant_aware = false
 
-capabilities = [
-  "net.inbound.http:/api/v1/demo/health",
-  "net.outbound.https://localhost:9000:internal"
-]
+pipelines = ["health.dsl.yaml"]
 
-[route.schedule]
-# routes могут не иметь schedule — это on-demand
+# ADR-044: capability объявляется таблицей name+scope (компактная строка
+# "name:scope" не подходит — сегменты схемы/пути дают имя из 3 сегментов,
+# что нарушает грамматику <resource>.<verb>).
+[[route.capabilities]]
+name = "net.inbound"
+scope = "http:/api/v1/demo/health"
+
+[[route.capabilities]]
+name = "net.outbound"
+scope = "https://localhost:9000:internal"
+
+# routes могут не иметь schedule — это on-demand (пустая секция [route.schedule]
+# заменена комментарием: schedule — строка, пустой TOML-table невалиден).
 
 [route.slo]
 p95_ms = 50

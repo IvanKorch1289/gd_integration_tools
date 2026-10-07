@@ -2,7 +2,13 @@
 name = "hello_route"
 version = "0.1.0"
 requires_core = ">=0.20,<0.21"
-capabilities = ["net.outbound", "db.write", "audit.write", "ai.llm"]
+pipelines = ["main.dsl.yaml"]
+# db.write удалён 2026-10-06 (least privilege): в пайплайне нет ни одного
+# шага записи в БД (crud_*/db_query*/db_persist*/db_call_procedure).
+# ai.invoke удалён вместе с неработавшим LLM-шагом (см. main.dsl.yaml):
+# у LLM-процессоров нет рантайм capability-guard, поэтому объявлять её
+# публичной значило бы снять контроль, не добавив взамен ничего.
+capabilities = ["net.outbound", "audit.write"]
 tenant_aware = true
 feature_flag = { enabled = true, gate = "hello_route_enabled" }
 slo = { p95_ms = 500, timeout_ms = 5000 }

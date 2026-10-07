@@ -99,6 +99,7 @@ class BrotliCompressionMiddleware:
         response_started: list[bool] = [False]
         captured_status: list[int] = [200]
         captured_headers: list[list[tuple[bytes, bytes]]] = [[]]
+        passthrough: list[bool] = [False]
 
         async def _send(message: dict[str, Any]) -> None:
             msg_type = message.get("type")
@@ -106,9 +107,25 @@ class BrotliCompressionMiddleware:
                 captured_status[0] = int(message.get("status", 200))
                 captured_headers[0] = list(message.get("headers", []))
                 response_started[0] = True
+                # P0 (аудит 2026-10-06): если ответ уже закодирован ниже по
+                # цепочке (gzip/br), повторное сжатие недопустимо — сжатые
+                # байты были бы сжаты ещё раз, а заголовок content-encoding
+                # перезаписан на br, и клиент декодировал бы поток, который
+                # этим алгоритмом не сжимался. Пробрасываем start как есть.
+                already_encoded = any(
+                    n.lower() == b"content-encoding" for n, _ in captured_headers[0]
+                )
+                if already_encoded:
+                    await send(message)
+                    response_started[0] = False  # start уже отправлен
+                    passthrough[0] = True
                 return
 
             if msg_type == "http.response.body":
+                if passthrough[0]:
+                    # Ответ уже закодирован ниже — не трогаем тело.
+                    await send(message)
+                    return
                 buffer.append(bytes(message.get("body", b"")))
                 if message.get("more_body"):
                     return

@@ -21,6 +21,34 @@ from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = ("PluginLoaderSettings", "plugin_loader_settings")
 
+#: Дистрибутив, версию которого считаем «версией ядра» для ``requires_core``.
+_CORE_DISTRIBUTION = "gd_advanced_tools"
+
+#: Fallback, если метаданные недоступны (например, запуск из исходников
+#: без установки). Держим в синхроне с ``version`` в ``pyproject.toml``.
+_FALLBACK_CORE_VERSION = "0.20.0"
+
+
+def _current_core_version() -> str:
+    """Версия ядра для сверки с ``requires_core`` в манифестах плагинов.
+
+    Берётся из метаданных установленного дистрибутива, чтобы значение не
+    расходилось с ``pyproject.toml``: раньше здесь был литерал ``0.2.0``,
+    и плагин с ``requires_core = ">=0.20,<0.21"`` молча помечался как
+    skipped, потому что semver сравнивает ``0.2.0`` и ``0.20.0`` как разные
+    версии.
+
+    Returns:
+        Строка версии в semver-формате. При недоступности метаданных —
+        ``_FALLBACK_CORE_VERSION``.
+    """
+    try:
+        from importlib.metadata import version
+
+        return version(_CORE_DISTRIBUTION)
+    except Exception:  # noqa: BLE001 — метаданные могут отсутствовать
+        return _FALLBACK_CORE_VERSION
+
 
 class PluginLoaderSettings(BaseSettingsWithLoader):
     """Конфигурация V11-loader'ов (R1.fin-Wave).
@@ -34,7 +62,8 @@ class PluginLoaderSettings(BaseSettingsWithLoader):
         plugin_loader_enabled: Включает :class:`PluginLoader` для
             ``extensions/<name>/plugin.toml``. По умолчанию ``False``.
         route_loader_enabled: Включает :class:`RouteLoader` для
-            ``routes/<name>/route.toml``. По умолчанию ``False``.
+            ``routes/<name>/route.toml``. По умолчанию ``True``
+            (изменено 2026-10-06).
         extensions_dir: Каталог с in-tree V11-плагинами.
         routes_dir: Каталог с V11-маршрутами (отдельно от
             ``DSLSettings.routes_dir`` — это плоский legacy-формат).
@@ -62,12 +91,15 @@ class PluginLoaderSettings(BaseSettingsWithLoader):
         ),
     )
     route_loader_enabled: bool = Field(
-        default=False,
+        default=True,
         title="Включить RouteLoader (V11 routes/<name>/)",
         description=(
             "Если True — на startup сканируется routes/<name>/route.toml. "
-            "По умолчанию выключено (продолжает работать legacy-формат "
-            "dsl_routes/*.yaml)."
+            "Включено по умолчанию с 2026-10-06: подсистема V11-роутов была "
+            "выключена, из-за чего её reference-роуты молча устаревали "
+            "(шаги ссылались на переименованные процессоры и параметры) — "
+            "дефекты накапливались незамеченными, потому что ни один роут "
+            "никогда не проходил регистрацию."
         ),
     )
     extensions_dir: Path = Field(
@@ -75,7 +107,15 @@ class PluginLoaderSettings(BaseSettingsWithLoader):
     )
     routes_dir: Path = Field(default=Path("routes"), title="Каталог V11-маршрутов")
     core_version: str = Field(
-        default="0.2.0", title="Текущая версия ядра (для requires_core)"
+        default_factory=_current_core_version,
+        title="Текущая версия ядра (для requires_core)",
+        description=(
+            "Версия, с которой сверяется `requires_core` в plugin.toml. "
+            "По умолчанию берётся из метаданных установленного дистрибутива "
+            "(gd_advanced_tools), иначе расхождение с реальной версией "
+            "молча помечает плагины как skipped (например, 0.2.0 против "
+            "требуемых >=0.20)."
+        ),
     )
     hot_reload_enabled: bool = Field(default=False)
     hot_reload_debounce_ms: int = Field(

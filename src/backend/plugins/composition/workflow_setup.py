@@ -50,11 +50,37 @@ workflow_compiler_registry: WorkflowCompilerRegistry = WorkflowCompilerRegistry(
 """Глобальный реестр скомпилированных workflow-деклараций."""
 
 
+def _resolve_extensions_dir() -> Path:
+    """Определить каталог с workflow-декларациями.
+
+    Порядок разрешения:
+
+    1. env ``EXTENSIONS_DIR`` — явный override (Docker/k8s задают ``/app/extensions``);
+    2. ``<repo_root>/extensions`` — корректный путь для локального запуска.
+
+    Раньше дефолтом был жёстко зашитый ``/app/extensions``: при локальном
+    запуске вне контейнера каталог не находился, функция молча возвращала
+    ``0`` и ни одна workflow-декларация не регистрировалась.
+
+    Returns:
+        Путь к каталогу расширений (существование не проверяется).
+    """
+    from src.backend.core.config.config_loader import repo_root
+
+    configured = os.environ.get("EXTENSIONS_DIR")
+    if configured:
+        return Path(configured)
+    return Path(repo_root()) / "extensions"
+
+
 def _register_workflow_declarations_from_filesystem() -> int:
     """S124 W1: auto-load ``*.workflow.yaml`` из EXTENSIONS_DIR.
 
-    Идемпотентно: повторный вызов пере-записывает существующие entries
-    (``workflow_registry.register`` идемпотентен по ``name``).
+    Идемпотентно: повторный вызов не падает на уже зарегистрированной
+    декларации, а считает её успешно зарегистрированной. Раньше docstring
+    обещал идемпотентность, но ``workflow_registry.register`` бросал
+    ``ValueError`` при повторе — при каждом старте ловилась серия
+    ``workflow.auto_register FAIL`` на уже валидных workflow.
 
     Returns:
         Кол-во успешно зарегистрированных workflow-деклараций.
@@ -62,7 +88,7 @@ def _register_workflow_declarations_from_filesystem() -> int:
     from src.backend.services.dsl_portal import load_workflow_from_yaml
     from src.backend.services.workflow import workflow_registry
 
-    extensions_dir = Path(os.environ.get("EXTENSIONS_DIR", "/app/extensions"))
+    extensions_dir = _resolve_extensions_dir()
     if not extensions_dir.exists():
         _logger.warning("EXTENSIONS_DIR not found: %s", extensions_dir)
         return 0
@@ -76,7 +102,16 @@ def _register_workflow_declarations_from_filesystem() -> int:
             rel = workflow_yaml.relative_to(extensions_dir)
             parts = rel.parts  # ('plugin', 'workflows', 'name.workflow.yaml')
             route_id = f"routes/{parts[0]}/{workflow_yaml.stem}"
-            workflow_registry.register(wf, route_id=route_id)  # type: ignore[arg-type]  # R2.MYPY: WorkflowDeclaration vs WorkflowDescriptor
+            try:
+                workflow_registry.register(wf, route_id=route_id)  # type: ignore[arg-type]  # R2.MYPY: WorkflowDeclaration vs WorkflowDescriptor
+            except ValueError as dup_exc:
+                # Повторная регистрация (fallback при import + startup phase) —
+                # декларация уже в реестре, считаем успехом.
+                _logger.debug(
+                    "workflow.auto_register already registered: %s (%s)",
+                    wf.name,
+                    str(dup_exc)[:120],
+                )
             # P0-NEW-3 (cycle 242): test_workflow_setup_calls_register_spec
             # regression — register_spec required after register per
             # workflow/registry.py:103 docstring.

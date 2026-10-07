@@ -17,13 +17,57 @@ from src.backend.dsl.yaml_loader.control_flow import _materialize_control_flow_p
 _MISSING = object()
 
 
-def _build_pipeline(spec: dict[str, Any]) -> Pipeline:
-    """Строит Pipeline из распарсенного spec."""
-    route_id = spec.get("route_id")
+def _iter_steps(specs: list[Any]) -> list[Any]:
+    """Отбрасывает пустые (comment-only) элементы списка шагов.
+
+    Элемент YAML-списка, состоящий только из комментариев, разбирается в
+    ``None``. Такая запись семантически пуста, но до 2026-10-06 доходила до
+    :func:`_apply_processor` и роняла загрузку с
+    ``ValueError: Invalid processor spec: None``.
+
+    На живых данных это ломало ``routes/hello_route/main.dsl.yaml`` (3 таких
+    элемента) и ``routes/test_route_w1/main.dsl.yaml`` (2). Отбрасывание
+    пустых узлов ничего не ослабляет: настоящие шаги (dict/str) по-прежнему
+    проходят ту же валидацию.
+    """
+    return [spec for spec in specs if spec is not None]
+
+
+def _build_pipeline(
+    spec: dict[str, Any], *, default_route_id: str | None = None
+) -> Pipeline:
+    """Строит Pipeline из распарсенного spec.
+
+    Args:
+        spec: распарсенный YAML.
+        default_route_id: ``route_id``, используемый, если в spec его нет.
+            Нужен V11-пути ``RouteLoader``: имя маршрута уже объявлено в
+            ``route.toml`` (``[route] name``), и требовать его дублирование
+            в pipeline-YAML — источник рассинхронизации. Для автономной
+            загрузки YAML (без манифеста) параметр не передаётся, и
+            ``route_id`` остаётся обязательным.
+    """
+    route_id = spec.get("route_id") or default_route_id
     if not route_id:
         raise ValueError("Missing required field: route_id")
 
     source = spec.get("source", f"yaml:{route_id}")
+    # Dual-mode (CLAUDE.md, «DSL Dual-Mode Principle»): YAML-форма объявляет
+    # транспорт блоком ``from:``, Python-форма — аргументом ``source=``.
+    # До 2026-10-06 ключ ``from:`` не читался НИГДЕ, то есть блок транспорта
+    # молча игнорировался, а маршрут получал source по умолчанию
+    # ``yaml:{route_id}`` — без привязки к HTTP-пути.
+    #
+    # Здесь ``from:`` принимается как алиас ``source``. Явный ``source:``
+    # имеет приоритет: если объявлены оба, ``from:`` — лишний, и молча
+    # выбирать одно было бы молчанием, поэтому источник фиксируется явно.
+    if "from" in spec:
+        if "source" in spec:
+            raise ValueError(
+                "YAML declares both 'from' and 'source'; they are aliases for "
+                "the same transport binding — keep exactly one"
+            )
+        source = spec["from"]
     description = spec.get("description")
 
     builder = RouteBuilder.from_(route_id, source=source, description=description)
@@ -33,7 +77,7 @@ def _build_pipeline(spec: dict[str, Any]) -> Pipeline:
     if not isinstance(processors_spec, list):
         raise ValueError("'processors' must be a list")
 
-    for proc_spec in processors_spec:
+    for proc_spec in _iter_steps(processors_spec):
         _apply_processor(builder, proc_spec)
 
     return builder.build()
@@ -88,7 +132,7 @@ def _build_sub(parent: RouteBuilder, specs: list[Any]) -> list[Any]:
         f"{parent.route_id}.__sub__",  # type: ignore[attr-defined]
         source=parent.source or "",  # type: ignore[attr-defined]
     )
-    for s in specs:
+    for s in _iter_steps(specs):
         _apply_processor(sub_builder, s)
     return list(sub_builder._processors)  # type: ignore[attr-defined]
 

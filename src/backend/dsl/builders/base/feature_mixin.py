@@ -43,9 +43,67 @@ class FeatureMixin(_RouteBuilderProtocol):
 
     __slots__ = ()
 
-    def feature_flag(self, name: str) -> Self:
-        """Привязывает маршрут к feature flag (можно отключить без рестарта)."""
-        self._feature_flag = name
+    def feature_flag(
+        self,
+        name: str | None = None,
+        *,
+        flag: str | None = None,
+        default: bool = True,
+        stop_on_disabled: bool = False,
+        output_field: str = "_flag_enabled",
+    ) -> Self:
+        """Привязывает маршрут к feature flag (можно отключить без рестарта).
+
+        Поддерживаются обе формы вызова, которые используются в проекте:
+
+        * позиционная — ``.feature_flag("my_flag")``;
+        * именованная — ``.feature_flag(flag="my_flag", default=True,
+          stop_on_disabled=False, output_field="demo_active")``, как в
+          YAML-шаге ``routes/*/*.dsl.yaml`` и в примере
+          ``FeatureFlagCheckProcessor``.
+
+        Раньше принимался только позиционный ``name``, из-за чего YAML-шаг
+        падал с ``TypeError: feature_flag() got an unexpected keyword
+        argument 'flag'`` — то есть любой route с этим шагом не загружался.
+
+        **Семантика и известное расхождение.** Здесь флаг — это
+        **route-level гейт**: ``Pipeline.feature_flag`` проверяется в
+        ``execution_engine._check_feature_flag()``, и выключенный флаг
+        останавливает весь pipeline целиком. Параметры ``default``,
+        ``stop_on_disabled`` и ``output_field`` относятся к другой фиче —
+        пошаговой проверке ``FeatureFlagCheckProcessor``, которая пишет
+        результат в ``exchange.properties[output_field]`` и не обязана
+        останавливать pipeline. Здесь они принимаются и сохраняются как
+        декларация, чтобы YAML компилировался, но процессор не создаётся:
+        иначе флаг проверялся бы дважды, и ``stop_on_disabled`` из YAML
+        молчал бы расходиться с поведением route-level гейта.
+
+        Args:
+            name: Имя feature-флага (позиционная форма).
+            flag: Имя feature-флага (именованная форма). Дублирует ``name``.
+            default: Значение флага, если он не найден в registry.
+            stop_on_disabled: Останавливать ли pipeline при выключенном флаге.
+            output_field: Имя поля результата пошаговой проверки.
+
+        Returns:
+            ``self`` — для fluent-цепочки.
+
+        Raises:
+            ValueError: Если не передан ни ``name``, ни ``flag``, либо
+                переданы оба с разными значениями.
+
+        """
+        resolved = name if name is not None else flag
+        if resolved is None:
+            raise ValueError("feature_flag требует имя флага: name= или flag=")
+        if name is not None and flag is not None and name != flag:
+            raise ValueError(
+                f"feature_flag получил разные имена: name={name!r}, flag={flag!r}"
+            )
+        self._feature_flag = resolved
+        self._feature_flag_default = default
+        self._feature_flag_stop_on_disabled = stop_on_disabled
+        self._feature_flag_output_field = output_field
         return self
 
     def shadow_mode(self, processors: list[BaseProcessor]) -> Self:

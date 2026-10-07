@@ -160,6 +160,9 @@ class RouteBuilder(  # type: ignore[misc]
     __slots__ = (
         "_description",
         "_feature_flag",
+        "_feature_flag_default",
+        "_feature_flag_stop_on_disabled",
+        "_feature_flag_output_field",
         "_middlewares",
         "_processors",
         "_protocol",
@@ -195,6 +198,9 @@ class RouteBuilder(  # type: ignore[misc]
         object.__setattr__(self, "_protocol", None)
         object.__setattr__(self, "_transport_config", None)
         object.__setattr__(self, "_feature_flag", None)
+        object.__setattr__(self, "_feature_flag_default", True)
+        object.__setattr__(self, "_feature_flag_stop_on_disabled", False)
+        object.__setattr__(self, "_feature_flag_output_field", "_flag_enabled")
         object.__setattr__(self, "_route_overrides", {})  # S163 W14
 
     # D-AUDIT-20402 (cycle 204 Tier 3): ``__getattr__`` fallback для missing

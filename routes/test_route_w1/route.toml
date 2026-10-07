@@ -2,7 +2,11 @@
 name = "test_route_w1"
 version = "0.1.0"
 requires_core = ">=0.20,<0.21"
-capabilities = ["net.outbound", "db.write", "audit.write"]
+pipelines = ["main.dsl.yaml"]
+# db.write удалён 2026-10-06 (least privilege): в пайплайне нет ни одного
+# шага записи в БД (crud_*/db_query*/db_persist*/db_call_procedure) —
+# capability была объявлена, но не использовалась.
+capabilities = ["net.outbound", "audit.write"]
 tenant_aware = true
 feature_flag = { enabled = true, gate = "test_route_w1_enabled" }
 slo = { p95_ms = 500, timeout_ms = 5000 }

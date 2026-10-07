@@ -1,0 +1,25 @@
+{
+  "base_url": "http://127.0.0.1:8199",
+  "results": [
+    {
+      "name": "browser:version",
+      "status": "PASS",
+      "detail": "Chromium 153.0.8010.12, страница http://127.0.0.1:8199/health"
+    },
+    {
+      "name": "browser:/api/v1/admin/actions",
+      "status": "PASS",
+      "detail": "status=200 encoding=gzip len=2562 keys=['actions']"
+    },
+    {
+      "name": "browser:/ready",
+      "status": "PASS",
+      "detail": "status=503 encoding=gzip len=3334 keys=['status', 'timestamp', 'mode', 'components']"
+    },
+    {
+      "name": "browser:/openapi.json",
+      "status": "PASS",
+      "detail": "status=200 encoding=gzip len=447337 keys=['openapi', 'info', 'paths', 'components']"
+    }
+  ]
+}

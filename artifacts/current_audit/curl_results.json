@@ -1,23 +1,133 @@
 {
-  "head": "2d9f4323ba7398c3de67f0a3cea044c557b2eb6f",
-  "generated_at": "2026-10-05T09:55:11+03:00",
-  "port": 8137,
-  "checks": [
-    {"name": "liveness", "method": "GET", "path": "/health", "expected": 200, "actual": "200", "verdict": "PASS"},
-    {"name": "metrics", "method": "GET", "path": "/metrics", "expected": 200, "actual": "200", "verdict": "PASS"},
-    {"name": "openapi", "method": "GET", "path": "/openapi.json", "expected": 200, "actual": "200", "verdict": "PASS"},
-    {"name": "swagger-ui", "method": "GET", "path": "/docs", "expected": 200, "actual": "200", "verdict": "PASS"},
-    {"name": "redoc", "method": "GET", "path": "/redoc", "expected": 200, "actual": "200", "verdict": "PASS"},
-    {"name": "readiness-no-auth", "method": "GET", "path": "/readiness", "expected": 401, "actual": "401", "verdict": "PASS"},
-    {"name": "health-ready-no-auth", "method": "GET", "path": "/health/ready", "expected": 503, "actual": "503", "verdict": "PASS"},
-    {"name": "auth-absent", "method": "GET", "path": "/api/v1/actions/inventory", "expected": 401, "actual": "401", "verdict": "PASS"},
-    {"name": "auth-invalid", "method": "GET", "path": "/api/v1/actions/inventory", "expected": 401, "actual": "401", "verdict": "PASS"},
-    {"name": "tenant-mismatch", "method": "GET", "path": "/api/v1/actions/inventory", "expected": 403, "actual": "403", "verdict": "PASS"},
-    {"name": "tenant-header-default", "method": "GET", "path": "/api/v1/actions/inventory", "expected": 500, "actual": "500", "verdict": "PASS"},
-    {"name": "not-found-no-auth", "method": "GET", "path": "/api/v1/definitely-not-a-route", "expected": 401, "actual": "401", "verdict": "PASS"},
-    {"name": "not-found-authed", "method": "GET", "path": "/api/v1/definitely-not-a-route", "expected": 404, "actual": "404", "verdict": "PASS"},
-    {"name": "graphql-introspect", "method": "POST", "path": "/api/v1/graphql", "expected": 200, "actual": "200", "verdict": "PASS"},
-    {"name": "soap-wsdl", "method": "GET", "path": "/soap/wsdl", "expected": 200, "actual": "200", "verdict": "PASS"},
-    {"name": "inventory-authed", "method": "GET", "path": "/api/v1/actions/inventory", "expected": 500, "actual": "500", "verdict": "PASS"}
+  "base_url": "http://127.0.0.1:8199",
+  "results": [
+    {
+      "name": "public:/health",
+      "status": "PASS",
+      "detail": "ожидаем 200, факт 200",
+      "path": "/health"
+    },
+    {
+      "name": "public:/metrics",
+      "status": "PASS",
+      "detail": "ожидаем 200, факт 200",
+      "path": "/metrics"
+    },
+    {
+      "name": "public:/openapi.json",
+      "status": "PASS",
+      "detail": "ожидаем 200, факт 200",
+      "path": "/openapi.json"
+    },
+    {
+      "name": "public:/docs",
+      "status": "PASS",
+      "detail": "ожидаем 200, факт 200",
+      "path": "/docs"
+    },
+    {
+      "name": "public:/redoc",
+      "status": "PASS",
+      "detail": "ожидаем 200, факт 200",
+      "path": "/redoc"
+    },
+    {
+      "name": "no-auth:/api/v1/actions/inventory",
+      "status": "PASS",
+      "detail": "ожидаем 401, факт 401",
+      "path": "/api/v1/actions/inventory"
+    },
+    {
+      "name": "no-auth:/api/v1/admin/actions",
+      "status": "PASS",
+      "detail": "ожидаем 401, факт 401",
+      "path": "/api/v1/admin/actions"
+    },
+    {
+      "name": "authed:/api/v1/actions/inventory",
+      "status": "SKIP",
+      "detail": "500 — вероятно, внешняя БД недоступна (в этом окружении БД нет)",
+      "db_required": true
+    },
+    {
+      "name": "authed:/api/v1/admin/actions",
+      "status": "PASS",
+      "detail": "200"
+    },
+    {
+      "name": "gzip:/api/v1/admin/actions",
+      "status": "PASS",
+      "detail": "gzip корректен: 861 байт на проводе → 2562 распаковано, заглушки нет"
+    },
+    {
+      "name": "gzip:/ready",
+      "status": "PASS",
+      "detail": "gzip корректен: 608 байт на проводе → 3333 распаковано, заглушки нет"
+    },
+    {
+      "name": "gzip:/openapi.json",
+      "status": "PASS",
+      "detail": "gzip корректен: 58150 байт на проводе → 494406 распаковано, заглушки нет"
+    },
+    {
+      "name": "tenant:default-when-absent",
+      "status": "PASS",
+      "detail": "X-Tenant-ID=default (ожидаем 'default')"
+    },
+    {
+      "name": "tenant:echo-when-unauthenticated",
+      "status": "PASS",
+      "detail": "X-Tenant-ID=tenant-a (ожидаем 'tenant-a')"
+    },
+    {
+      "name": "tenant:spoof-denied",
+      "status": "PASS",
+      "detail": "403 tenant_mismatch — подделка отклонена"
+    },
+    {
+      "name": "dsl:loader-diagnostics",
+      "status": "PASS",
+      "detail": "state=started, обнаружено=7, активно=3, отказов=2; первый отказ: jupyter_hub_run — capability_superset: Route 'jupyter_hub_run' reque"
+    },
+    {
+      "name": "header:x-content-type-options",
+      "status": "PASS",
+      "detail": "x-content-type-options='nosniff' (ожидаем 'nosniff')"
+    },
+    {
+      "name": "header:x-frame-options",
+      "status": "PASS",
+      "detail": "x-frame-options='DENY' (ожидаем 'DENY')"
+    },
+    {
+      "name": "header:strict-transport-security",
+      "status": "PASS",
+      "detail": "strict-transport-security='max-age=63072000; includeSubDomains'"
+    },
+    {
+      "name": "header:content-security-policy",
+      "status": "PASS",
+      "detail": "content-security-policy=\"default-src 'self'\""
+    },
+    {
+      "name": "header:permissions-policy",
+      "status": "PASS",
+      "detail": "permissions-policy='geolocation=(), microphone=()'"
+    },
+    {
+      "name": "trace-header:x-request-id",
+      "status": "PASS",
+      "detail": "x-request-id=есть"
+    },
+    {
+      "name": "trace-header:x-correlation-id",
+      "status": "PASS",
+      "detail": "x-correlation-id=есть"
+    },
+    {
+      "name": "error-envelope",
+      "status": "SKIP",
+      "detail": "401 без ключа — конверт не проверяем"
+    }
   ]
 }

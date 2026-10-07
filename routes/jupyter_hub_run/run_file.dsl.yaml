@@ -1,0 +1,30 @@
+# Pipeline jupyter_hub_run_file.
+# Выделен из общего main.dsl.yaml 2026-10-06: файл содержал три
+# pipeline-документа (jupyter_hub_run, _file, _inline) через '---',
+# а yaml.safe_load читает только ПЕРВЫЙ документ — два молча
+# терялись, и загрузка падала с 'expected a single document in the
+# stream'. Один pipeline = один файл; перечень в route.toml::pipelines.
+
+# Правки API 2026-10-06 (сверка с сигнатурами RouteBuilder):
+# * `log` принимает только `level` — произвольный `message` удалён;
+# * `policy` — @property, а не метод: как шаг давал «Processor 'policy' не
+#   является вызываемым методом»;
+# * `call_function.kwargs`/`kwargs_from` → `payload_from` (актуальное имя);
+# * `audit.details` → `metadata_from`;
+# * шаг `to:` удалён — response-binding в DSL не реализован.
+
+route_id: jupyter_hub_run_file
+source:
+  http:
+    method: POST
+    path: /api/v1/jupyter/run-file
+steps:
+- log:
+    level: info
+- call_function:
+    ref: src.backend.services.jupyter.hub_run_adapter:run
+    payload_from: body
+    result_property: hub_result
+- audit:
+    action: jupyter.hub_run.completed.file
+    metadata_from: hub_result

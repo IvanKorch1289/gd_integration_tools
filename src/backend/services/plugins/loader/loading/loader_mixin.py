@@ -286,11 +286,38 @@ class LoaderMixin(_LoadingProtocol):
         )
 
     def _instantiate(self, manifest: PluginManifest) -> BasePlugin:
-        """Импортирует ``entry_class`` и возвращает экземпляр плагина."""
-        module_path, _, class_name = manifest.entry_class.rpartition(".")
-        if not module_path or not class_name:
+        """Импортирует ``entry_class`` и возвращает экземпляр плагина.
+
+        Поддерживаются оба синтаксиса ссылки на класс:
+
+        * ``pkg.module:ClassName`` — форма ADR-0343, используется манифестами
+          ``core_admin`` / ``dadata`` / ``skb``;
+        * ``pkg.module.ClassName`` — точечная форма, используется остальными
+          манифестами.
+
+        Раньше разбор шёл только по последней точке, из-за чего форма с
+        двоеточием превращалась в ``getattr(pkg.module, "submod:ClassName")``
+        и всегда падала с ``AttributeError``.
+
+        Args:
+            manifest: Разобранный манифест плагина.
+
+        Returns:
+            Экземпляр ``BasePlugin`` (или результат factory-функции).
+
+        Raises:
+            ValueError: Если ``entry_class`` не разбирается ни в один формат.
+            AttributeError: Если класс не найден в модуле.
+            TypeError: Если объект не является ``BasePlugin``.
+        """
+        raw = str(manifest.entry_class).strip()
+        # Приоритет у двоеточия: 'pkg.mod:Class' однозначнее точки,
+        # т.к. имя класса не может содержать ':'.
+        separator = ":" if ":" in raw else "."
+        module_path, _, class_name = raw.rpartition(separator)
+        if not module_path or not class_name or not class_name.isidentifier():
             raise ValueError(
-                f"entry_class must be dotted path 'module.Class', "
+                f"entry_class must be 'module:Class' or 'module.Class', "
                 f"got {manifest.entry_class!r}"
             )
         module = importlib.import_module(module_path)

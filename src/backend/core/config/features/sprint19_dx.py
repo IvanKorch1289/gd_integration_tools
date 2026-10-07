@@ -55,6 +55,21 @@ class Sprint19DXFlags(BaseSettings):
         ),
     )
 
+    routes_v11_1a_discovery: bool = Field(
+        default=True,
+        title="K3 S19: регистрация reference-роутов routes/<name>/ (V11.1a)",
+        description=(
+            "При True reference-роуты (echo_demo, health_proxy_demo) проходят "
+            "проверку feature_flag в RouteLoader. Флаг был объявлен только в "
+            "route.toml и не имел определения в реестре фич; резолвер читал "
+            "исключительно ENV, поэтому маршруты с этим флагом не могли "
+            "подняться ни при каком состоянии реестра. Регистрация здесь "
+            "делает объявления в манифестах работоспособными. "
+            "ENV FEATURE_ROUTES_V11_1A_DISCOVERY / routes_v11_1a_discovery "
+            "имеет приоритет над этим default."
+        ),
+    )
+
     route_composition_include: bool = Field(
         default=True,
         title="K3 S19 W2: route composition via include:/extends: с cycle detection",

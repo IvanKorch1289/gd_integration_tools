@@ -76,9 +76,34 @@ FeatureFlagResolver = Callable[[str], bool]
 
 
 def default_env_feature_flag_resolver(flag: str) -> bool:
-    """Резолвит строку как ENV-переменную (truthy: ``1``/``true``/``yes``)."""
-    raw = os.environ.get(flag, "")
-    return raw.strip().lower() in {"1", "true", "yes", "on"}
+    """Резолвит флаг роута: ENV имеет приоритет, иначе реестр фич.
+
+    Порядок (2026-10-06):
+    1. **ENV** ``<flag>`` — явное решение оператора
+       (truthy: ``1``/``true``/``yes``/``on``, falsey: ``0``/``false``/``no``/``off``);
+    2. **реестр фич** :data:`src.backend.core.config.features.feature_flags` —
+       если флаг там объявлен, берётся его default;
+    3. иначе ``False`` — флаг неизвестен, роут считается выключенным
+       (fail-closed: незаявленный флаг не должен молча включать маршрут).
+
+    Раньше проверялся только ENV, из-за чего объявленные в реестре фичи
+    вроде ``route_composition_include`` (default=True) для маршрутов всегда
+    читались как ``False`` — маршрут с таким флагом не мог подняться ни при
+    каком состоянии реестра. Это второй по счёту барьер поднятия V11-роутов.
+    """
+    raw = os.environ.get(flag)
+    if raw is not None and raw.strip():
+        return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+    try:
+        from src.backend.core.config.features import feature_flags
+
+        value = getattr(feature_flags, flag, None)
+    except ImportError, AttributeError, RuntimeError:
+        return False
+    if value is None:
+        return False
+    return bool(value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -178,11 +203,68 @@ class RouteLoader:
             return ()
 
         for child in sorted(self._routes_dir.iterdir()):
-            manifest_path = child / "route.toml"
+            manifest_path = child / "plugin.toml"
+            if not manifest_path.is_file():
+                manifest_path = child / "route.toml"
             if not manifest_path.is_file():
                 continue
             self._load_one(manifest_path)
+        self._log_outcome()
         return self.loaded
+
+    def _log_outcome(self) -> None:
+        """Отчитаться по результату discovery — почему маршрутов столько.
+
+        Раньше причина пропуска каждого маршрута записывалась только в
+        ``LoadedRoute.reason`` и нигде не логировалась. В итоге разработчик,
+        включивший ``V11_ROUTE_LOADER_ENABLED``, видел одну строку
+        «N маршрут(ов) активно» и не понимал, что именно не так — тот же
+        fail-open класс, что был в startup-фазах.
+
+        Args:
+            None.
+
+        Returns:
+            None.
+        """
+        loaded = self.loaded
+        enabled = [r for r in loaded if r.status == "enabled"]
+        disabled = [r for r in loaded if r.status == "disabled"]
+        failed = [r for r in loaded if r.status == "failed"]
+        skipped = [
+            r for r in loaded if r.status not in {"enabled", "disabled", "failed"}
+        ]
+        _logger.info(
+            "RouteLoader: обнаружено %d, активно %d, отключено %d, "
+            "не загружено %d, пропущено %d",
+            len(loaded),
+            len(enabled),
+            len(disabled),
+            len(failed),
+            len(skipped),
+        )
+        for route in failed:
+            _logger.error(
+                "RouteLoader: маршрут %s НЕ загружен — %s",
+                route.name,
+                route.reason or "причина не указана",
+            )
+        for route in skipped:
+            _logger.warning(
+                "RouteLoader: маршрут %s пропущен — %s",
+                route.name,
+                route.reason or "причина не указана",
+            )
+        if not enabled and failed:
+            _logger.error(
+                "RouteLoader: ни один маршрут не активен, при этом %d из %d "
+                "отклонены проверками. Список причин — выше в ERROR-логах; "
+                "проверьте capability-vocabulary (build_default_vocabulary "
+                "должна возвращать непустой public_capabilities()) и "
+                "компиляцию *.dsl.yaml.",
+                len(failed),
+                len(loaded),
+            )
 
     async def unload_all(self) -> None:
         """Снять все capability-декларации и зачистить состояние."""

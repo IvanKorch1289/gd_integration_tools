@@ -41,11 +41,19 @@
 ## Что читать сначала
 
 1. `ARCHITECTURE.md` — карта архитектуры;
-2. `graphify-out/GRAPH_REPORT.md` (если есть);
-3. `graphify-out/GRAPH_REPORT.md` (графовый отчёт, генерируется `graphify update .`);
-4. `ARCHITECTURE.md`;
-5. `.claude/CONTEXT.md` — краткая оперативная сводка;
-6. Точечные документы и исходники по задаче.
+2. `graphify-out/GRAPH_REPORT.md` (если есть; генерируется `graphify update .`) — графовый отчёт;
+3. `docs/architecture/canonical-module-map.md` — каноническая карта модулей;
+4. `artifacts/current_audit/AUDIT_2026-10-06_runtime_wiring.md` — аудит рантайм-связывания
+   (что было сломано и что исправлено; актуальнее любых «известных проблем» ниже);
+5. Точечные документы и исходники по задаче.
+
+> **Важно про корень импорта.** Реальный корень импорта — `src.backend.*`,
+> а **не** `gd_integration_tools.*`, как указано в разделе «Ограничения слоёв»
+> ниже и в других документах. Проверено: `import gd_integration_tools` →
+> `ModuleNotFoundError`, тогда как `from src.backend.core import protocols`
+> работает. Импортируйте через `src.backend.*`. Расхождение задокументировано
+> как долг: переименование — это переписывание ~9 100 мест импорта, а не
+> рефакторинг; исправлению подлежит спецификация.
 
 Связи через `graphify query/path/explain`. **Не читать весь репозиторий целиком без необходимости.**
 
@@ -61,7 +69,7 @@
 6. `.claude/DECISIONS.md`;
 6.5. `.claude/DECISIONS.md` → `docs/rationale/` (YAGNI-обоснования);
 7. `.claude/KNOWN_ISSUES.md`;
-8. `.claude/CONTEXT.md`.
+8. `artifacts/current_audit/AUDIT_2026-10-06_runtime_wiring.md` (аудит рантайм-связывания).
 
 ---
 
@@ -207,32 +215,98 @@ V15 Security Constraints
 DSL Dual-Mode Principle
 
 DSL поддерживается двумя способами одновременно и равноправно.
+> **Актуально на 2026-10-06 (проверено на живом коде).** Раньше этот раздел
+> описывал *проект* API. Сейчас расхождения устранены частично; ниже — что
+> работает, а что нет.
+>
+> **Что починено:**
+>
+> * **`from:` работает.** В YAML это алиас `source`
+>   (`dsl/yaml_loader/build.py::_build_pipeline`). Если заданы оба ключа —
+>   явная ошибка, а не молчаливый выбор;
+> * **`route_id` необязателен для `routes/<name>/*.dsl.yaml`.** RouteLoader
+>   передаёт `default_route_id` из имени манифеста
+>   (`services/routes/loader.py` → `plugins/composition/lifecycle/plugin_loader.py`).
+>   Автономная загрузка YAML без loader'а осталась строгой: `route_id`
+>   обязателен;
+> * **YAML-шаг `feature_flag:` — это НЕ процессор.** Он выставляет
+>   `Pipeline.feature_flag`, который проверяется как route-level гейт в
+>   `execution_engine._check_feature_flag()` и останавливает pipeline целиком.
+>   Поля `default` / `stop_on_disabled` / `output_field` принимаются и
+>   сохраняются как декларация, но процессор не создаётся
+>   (`dsl/builders/base/feature_mixin.py`).
+>
+> **Что НЕ работает (пробелы):**
+>
+> * **`to: {response: {...}}` в YAML не реализован.** У `Pipeline` нет такого
+>   поля, `_build_pipeline()` ключ `to` просто не читает — он **молча**
+>   игнорировался. Во всех `routes/*/*.dsl.yaml` блок удалён;
+> * **`RouteBuilder.to(...)` — это алиас `process(processor)`**
+>   (`dsl/builders/base/fluent_mixin.py:49`), т.е. принимает объект
+>   процессора, а НЕ `(sink, code, body)`. Метода `.to_response()` не
+>   существует. Поэтому response-binding отсутствует в обеих модах;
+> * **`policy` — `@property`, а не метод**, поэтому как YAML-шаг не
+>   вызывается. Политика повторов задаётся через `retry`;
+> * **`call_function` сейчас неисполним в strict-режиме.** Whitelist
+>   недостижим: `ExecutionContext` не имеет поля `properties` (есть только у
+>   `Exchange`), поэтому ветка чтения `context.properties.call_function_modules`
+>   — мёртвый код; в манифестах нет поля `call_function_modules`
+>   (`CapabilityRef` = `additionalProperties: false`), а
+>   `settings.call_function_modules` в конфиге отсутствует. При
+>   `call_function_whitelist_strict=True` (дефолт) любой такой шаг даёт
+>   `PermissionError`. Требуется ADR на источник whitelist.
+>
+> **Точные имена шагов** (сверка с сигнатурами `RouteBuilder`):
+>
+> | В шагах было | Правильно |
+> |---|---|
+> | `validate_request:` | `schema_validate:` |
+> | `transform.set:` (map-форма) | `transform.expression:` (JMESPath) |
+> | `audit.event:` | `audit.action:` |
+> | `audit.details:` | `audit.metadata_from:` |
+> | `call_function.kwargs:` / `kwargs_from:` | `call_function.payload_from:` |
+> | `log:` + произвольный `message` | `log:` принимает только `level` |
+> | `llm_call:` | метода нет; есть `call_llm` / `llm_structured` / `ai_invoke` |
+>
+> `proxy.src` требует вида `<protocol>:<address>` (например `http:/path`);
+> `proxy.dst` — реальный HTTP-вызов, поэтому у demo-роутов указывает на
+> внешнюю цель, которую разворачивает окружение.
+
 Python (Camel-style fluent)
 
-RouteBuilder("credit_check_v2") \
-    .from_("http:POST /api/v1/credit/check") \
+```python
+RouteBuilder.from_(
+    "credit_check_v2",
+    source="http:POST /api/v1/credit/check",
+) \
     .policy.idempotency(key="header.X-Idempotency-Key") \
     .get_setting("skb.api_url", to="body.api_url") \
-    .proxy(src="/legacy", dst="http://legacy:8080") \
+    .proxy(src="http:/legacy", dst="http://legacy:8080") \
     .call_function("extensions.credit.normalizer:apply_rules") \
     .crud_create("orders", body=Ref("body.order")) \
     .validate_response(schema="CreditDecision", on_error="dlq") \
     .dispatch_action("credit.score.calculate", mode="sync") \
-    .invoke_workflow("credit_assessment_ai", mode="async-api") \
-    .to("response", code=202, body=Ref("body.invocation_id"))
+    .invoke_workflow("credit_assessment_ai", mode="async-api")
+# `.to("response", code=..., body=...)` НЕ добавляйте: to() — это process().
+```
 
 YAML (route.toml + *.dsl.yaml)
 
-from: { http: { method: POST, path: /api/v1/credit/check } }
+```yaml
+# `from:` — алиас `source:`; можно писать любой. Оба сразу — ошибка.
+from: "http:POST /api/v1/credit/check"
+route_id: credit_check_v2   # для routes/<name>/*.dsl.yaml необязателен:
+                            # loader подставляет имя из route.toml
 steps:
   - get_setting: { path: "skb.api_url", to: body.api_url }
-  - proxy: { src: /legacy, dst: http://legacy:8080 }
+  - proxy: { src: "http:/legacy", dst: "http://legacy:8080" }
   - call_function: { ref: extensions.credit.normalizer:apply_rules }
   - crud_create: { entity: orders, body: ${body.order} }
   - validate_response: { schema: CreditDecision, on_error: dlq }
   - dispatch_action: { name: credit.score.calculate, mode: sync }
   - invoke_workflow: { name: credit_assessment_ai, mode: async-api }
-to: { response: { code: 202, body: { invocation_id: ${body.invocation_id} } } }
+# Блока `to:` нет и быть не должно: response-binding не реализован (GAP).
+```
 
 Принципы:
 
@@ -391,10 +465,19 @@ V15-специфичные gates
 Документация и docstring policy
 Pre-push docstring gate (Sprint 0)
 
-    tools/checks/check_docstrings.py --strict через .pre-commit-config.yaml (stages: pre-push).
+    tools/check_docstrings.py через .pre-commit-config.yaml (stages: pre-push).
     GitHub Action docs-required.yml блокирует merge без docstring на новых def/class.
     GitLab CI mirror.
-    Amnesty-baseline tools/checks/check_docstrings_allowlist.txt.
+    Amnesty-baseline tools/check_docstrings_allowlist.txt.
+
+    > **Исправлено 2026-10-06.** Ранее здесь было указано
+    > `tools/checks/check_docstrings.py --strict`. Такого пути нет
+    > (каталога `tools/checks/` не существует), а опции `--strict` нет —
+    > запуск падал с `No such option: --strict`, то есть предписанный
+    > гейт не запускался как задокументировано. Проверено:
+    > `tools/check_docstrings.py --strict` → `No such option`.
+    > Текущее состояние гейта: 1 отсутствующий docstring —
+    > `src/backend/entrypoints/graphql/graphql_guards.py:27`.
 
 Sphinx auto-gen API reference (Sprint 9)
 
@@ -458,7 +541,7 @@ python tools/checks/check_layers.py
 
     docs/architecture/canonical-module-map.md — каноническая карта модулей
     ARCHITECTURE.md — карта архитектуры (требует обновления после Wave 12)
-    .claude/CONTEXT.md — оперативная сводка
+    .claude/CONTEXT.md — оперативная сводка (**ФАЙЛА НЕТ** — см. аудит)
     .claude/DECISIONS.md — устойчивые решения
     .claude/KNOWN_ISSUES.md — открытый техдолг
     vault/session-*-summary.md — архив сессий

@@ -39,6 +39,45 @@ from src.backend.dsl.commands.setup.registers_workflow import (
     _register_webhook_relay,  # S66 W2: orchestrator cross-import
     _register_webhook_scheduler,  # S66 W2: orchestrator cross-import
 )
+from src.backend.services.plugins.loader import load_plugin_manifests_for_migrations
+
+
+def _collect_call_function_whitelist_from_manifests() -> None:
+    """Собрать whitelist ``call_function`` модулей из plugin.toml.
+
+    Sprint 226 (2026-10-06): источник whitelist'а для
+    :class:`CallFunctionProcessor`. Каждый extension декларирует
+    ``call_function_modules = [...]`` в ``plugin.toml``; orchestrator
+    склеивает union всех плагинов и регистрирует его в процессоре.
+
+    Поведение:
+        * работает независимо от ``v11.plugin_loader_enabled`` (sync
+          scan, не вызывает lifecycle);
+        * идемпотентно (повторный запуск доливает тот же union);
+        * безопасный fallback: при сбое scan-прохода whitelist остаётся
+          пустым, а процессор выдаст ``PermissionError`` в strict-режиме.
+    """
+    from src.backend.core.config.settings import settings as app_settings
+    from src.backend.dsl.engine.processors.function_call import CallFunctionProcessor
+
+    try:
+        extensions_dir = getattr(
+            getattr(app_settings, "v11", app_settings), "extensions_dir", None
+        )
+        if extensions_dir is None:
+            return
+        for mwp in load_plugin_manifests_for_migrations(extensions_dir):
+            CallFunctionProcessor.register_active_whitelist(
+                mwp.manifest.call_function_modules
+            )
+    except (ImportError, AttributeError, TypeError) as exc:
+        # settings/v11 не инициализированы или manifest битый — не блокируем
+        # bootstrap, whitelist останется пустым (fail-closed на стороне процессора).
+        import logging
+
+        logging.getLogger(__name__).debug(
+            "call_function_whitelist_scan_failed", extra={"error": str(exc)}
+        )
 
 
 def register_action_handlers() -> None:
@@ -47,7 +86,15 @@ def register_action_handlers() -> None:
     Функция идемпотентна — вызывается на startup приложения.
     Per-service registration делегировано в ``_register_xxx()`` helpers (S53 W3 extraction).
     Каждый helper делает свои own lazy imports (preserve original pattern).
+
+    Sprint 226: дополнительно собирает ``call_function`` whitelist из
+    ``extensions/<name>/plugin.toml`` через
+    :func:`load_plugin_manifests_for_migrations` (sync, без лицензионного
+    импорта ``entry_class``). Это работает при выключенном PluginLoader
+    (``v11.plugin_loader_enabled=false``), чтобы whitelist не зависел от
+    того, грузятся ли плагины на этом запуске.
     """
+    _collect_call_function_whitelist_from_manifests()
     _register_orders()
     _register_files()
     _register_users()  # ITER 15: DSL-2 fix

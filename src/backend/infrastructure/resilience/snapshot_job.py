@@ -31,6 +31,7 @@ Health-check: ``is_snapshot_fresh(threshold)`` — для интеграции �
 
 from __future__ import annotations
 
+import importlib
 import time
 from pathlib import Path
 from typing import Any
@@ -199,12 +200,30 @@ def sync_pg_to_sqlite(
         инкрементировать ``snapshot_sync_errors_total``.
 
     """
-    # Импорт моделей для side-effect: они регистрируются в metadata.tables.
-    # Без этого metadata.create_all вернёт пустую структуру.
-    # S163 W12 fix: путь был сломан со S113 refactor (TD-001 CLOSED —
-    # models переехали в core/domain/models/, infrastructure.database.models
-    # никогда не существовало в git history).
+    # Поднять ORM-модули плагинов для регистрации таблиц в metadata.tables.
+    # Без этого ``metadata.create_all`` создаст пустую структуру.
+    #
+    # Cycle-15 (D-AUDIT-1502): вместо неявных side-effect импортов через
+    # ``core/domain/models/__init__.py`` (которые и создавали слой
+    # core→extensions в гейте) теперь идём через
+    # :func:`load_plugin_manifests_for_migrations`, читая ``models_module``
+    # из каждого ``extensions/<name>/plugin.toml``. Этот же путь использует
+    # ``src/backend/infrastructure/database/migrations/env.py`` для
+    # alembic autogenerate.
     from src.backend.core.domain.models.base import metadata
+    from src.backend.services.plugins.loader import load_plugin_manifests_for_migrations
+
+    try:
+        for _mwp in load_plugin_manifests_for_migrations(
+            Path(__file__).resolve().parents[5] / "extensions"
+        ):
+            for _module_path in _mwp.manifest.models_module:
+                try:
+                    importlib.import_module(_module_path)
+                except ImportError:
+                    logger.debug("snapshot: models_module %s недоступен", _module_path)
+    except ImportError:
+        logger.debug("snapshot: models_discovery недоступен — пропуск регистрации")
 
     target_tables = _select_tables(metadata.tables, tables)
     if not target_tables:

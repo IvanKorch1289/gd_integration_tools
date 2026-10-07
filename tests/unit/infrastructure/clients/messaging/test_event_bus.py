@@ -27,6 +27,10 @@ def fake_redis_broker_module(monkeypatch: pytest.MonkeyPatch) -> Any:
     class _FakeBroker:
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
             self.start = AsyncMock()
+            # FastStream-брокеры имеют stop(), а не close(). Оба метода
+            # оставлены в фейке намеренно: тест ниже падал бы, если бы код
+            # снова начал вызывать close() — так регрессия не вернётся молча.
+            self.stop = AsyncMock()
             self.close = AsyncMock()
             self.publish = AsyncMock()
             self.subscriber = MagicMock(return_value=lambda handler: handler)
@@ -91,11 +95,29 @@ class TestEventBusLifecycle:
 
     @pytest.mark.asyncio
     async def test_stop_closes_broker(self, fake_redis_broker_module: Any) -> None:
+        """Остановка вызывает ``stop()`` — именно этот метод есть у FastStream-брокеров.
+
+        Раньше здесь проверялся ``close()``, которого у ``faststream.redis.RedisBroker``
+        нет: на живом shutdown это давало ``AttributeError``, который проглатывался
+        fail-open в ``lifecycle/shutdown.py``.
+        """
         bus = EventBus()
         await bus.start()
         await bus.stop()
         assert bus._started is False
-        bus._broker.close.assert_awaited_once()  # type: ignore[attr-defined]
+        bus._broker.stop.assert_awaited_once()  # type: ignore[attr-defined]
+        bus._broker.close.assert_not_awaited()  # type: ignore[attr-defined]
+
+    @pytest.mark.asyncio
+    async def test_stop_survives_broker_error(
+        self, fake_redis_broker_module: Any
+    ) -> None:
+        """Ошибка остановки брокера не должна валить shutdown."""
+        bus = EventBus()
+        await bus.start()
+        bus._broker.stop.side_effect = RuntimeError("broker down")  # type: ignore[attr-defined]
+        await bus.stop()  # does not raise
+        assert bus._started is False
 
     @pytest.mark.asyncio
     async def test_stop_without_broker_is_noop(self) -> None:

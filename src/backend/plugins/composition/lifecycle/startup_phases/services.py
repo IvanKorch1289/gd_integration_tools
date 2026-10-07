@@ -39,6 +39,26 @@ if TYPE_CHECKING:
 _logger = get_logger("application.startup.services")
 
 
+def _built_by_composition_root(app: FastAPI) -> bool:
+    """Собрано ли приложение реальным composition root'ом.
+
+    ``composition.di.register_app_state()`` выставляет маркер
+    ``app.state._composition_root_ready``. Если его нет — приложение создано
+    в обход composition root (минимальный ``FastAPI()`` в юнит-тестах,
+    скрипты, инструменты). На такое приложение не распространяются
+    инварианты composition root: иначе юнит-тесты, намеренно изолирующие
+    внешние зависимости, падали бы на проверке, которая к их сценарию
+    отношения не имеет.
+
+    Args:
+        app: Приложение FastAPI.
+
+    Returns:
+        ``True``, если composition root отработал; иначе ``False``.
+    """
+    return bool(getattr(app.state, "_composition_root_ready", False))
+
+
 async def phase_service_registration(app: FastAPI) -> None:  # noqa: ARG001
     """register_all_services — registers all composition-root services."""
 
@@ -48,45 +68,100 @@ async def phase_service_registration(app: FastAPI) -> None:  # noqa: ARG001
 
 
 async def phase_ai_gateway_singleton(app: FastAPI) -> None:
-    """AIGateway composition singleton (Sprint 1.5 L5 Security Chain).
+    """Проверяет наличие composition-singleton AIGateway (Sprint 1.5 L5).
 
+    Раньше фаза импортировала ``register_ai_gateway_singleton`` из
+    ``composition.workflow_setup`` — такой функции там нет (модуль
+    экспортирует только ``_register_workflow_declarations_from_filesystem``,
+    ``register_workflow_declarations`` и ``start_workflow_runtime``).
+    Импорт падал, а ``except Exception`` превращал это в warning на каждом
+    старте: фаза была no-op и ничего не проверяла.
 
+    Теперь фаза **сообщает фактическое состояние** вместо фантомного
+    импорта: singleton создаётся в ``composition.di.register_app_state()``,
+    который вызывается из ``create_app()`` до lifespan-фаз.
 
-    Регистрирует canonical AIGateway (app.state.ai_gateway + svcs_registry).
+    Фаза намеренно **не fail-closed**. Проверено: ``app.state.ai_gateway``
+    не читается ни одним production-модулем (только упоминания в docstring'ах
+    ``services/ai/gateway_adapter.py``). Значит его отсутствие — не
+    рабочая ошибка, а состояние приложения, которое собиралось мимо
+    composition root (например, минимальный ``FastAPI()`` в тестах).
+    Поднимать по этому поводу ``RuntimeError`` означало бы запретить
+    конструирование приложения без AI-gateway — это выход за рамки задачи
+    и ломает валидные сценарии. Поэтому здесь честный WARNING.
+
+    Fail-closed оставлен в :func:`phase_dsl_commands`: action-handler'ы
+    реально читает ``_action_bridge`` при каждом запросе, поэтому их
+    отсутствие — реальная поломка, а не декоративное состояние.
+
+    Args:
+        app: Приложение FastAPI с заполненным ``app.state``.
+
+    Returns:
+        None.
 
     """
-
-    try:
-        from src.backend.plugins.composition.workflow_setup import (  # type: ignore[attr-defined]
-            register_ai_gateway_singleton,  # ponytail: deliberate placeholder; see inline comment
+    if not _built_by_composition_root(app):
+        _logger.debug(
+            "AIGateway composition singleton: приложение собрано в обход "
+            "composition root — проверка пропущена."
         )
-
-        await register_ai_gateway_singleton(app)
-
-    except Exception as aigw_exc:
+        return
+    gateway = getattr(app.state, "ai_gateway", None)
+    if gateway is None:
         _logger.warning(
-            "AIGateway composition singleton skipped: %s "
-            "(production-wiring guard в AIGateway ловит bare instantiation)",
-            aigw_exc,
+            "AIGateway composition singleton отсутствует: register_app_state() "
+            "не создал app.state.ai_gateway. Приложение продолжит работу "
+            "(singleton нигде не читается), но composition root, вероятно, "
+            "не был вызван."
         )
+        return
+    _logger.info("AIGateway composition singleton verified: %s", type(gateway).__name__)
 
 
 async def phase_dsl_commands(app: FastAPI) -> None:  # noqa: ARG001
-    """DSL commands/routes — registers action handlers + routes."""
+    """Проверяет регистрацию DSL action-handler'ов.
 
-    try:
-        from src.backend.plugins.composition.bootstrap import (  # type: ignore[import-not-found,import-untyped]  # optional
-            register_dsl_commands,  # type: ignore[import-not-found]  # optional
+    Раньше фаза импортировала ``register_dsl_commands`` из
+    ``composition.bootstrap`` — такого модуля в проекте нет, поэтому фаза
+    всегда падала в ``except Exception`` и была no-op.
+
+    Фактическая регистрация выполняется в ``app_factory`` через
+    ``register_action_handlers()``, до lifespan-фаз. Фаза проверяет
+    постусловие и падает fail-closed, если реестр пуст.
+
+    Args:
+        app: Приложение FastAPI.
+
+    Returns:
+        None.
+
+    Raises:
+        RuntimeError: Если в action-reестре нет ни одного handler'а.
+
+    """
+    if not _built_by_composition_root(app):
+        _logger.debug(
+            "DSL action-handler'ы: приложение собрано в обход composition "
+            "root — проверка пропущена."
         )
+        return
+    from src.backend.dsl.commands.action_registry import action_handler_registry
 
-        register_dsl_commands()
-
-    except Exception as dsl_exc:
-        _logger.warning(
-            "DSL commands bootstrap skipped: %s "
-            "(routes будут зарегистрированы позже через PluginLoader)",
-            dsl_exc,
+    # ``_handlers`` — плоский dict[str, ActionHandlerSpec], поэтому считаем
+    # записи, а не вложенные dict'ы.
+    handlers = getattr(action_handler_registry, "_handlers", None)
+    if not isinstance(handlers, dict):
+        handlers = getattr(action_handler_registry, "handlers", None)
+    count = len(handlers) if isinstance(handlers, dict) else 0
+    if count == 0:
+        msg = (
+            "DSL action-handler'ы не зарегистрированы: action_handler_registry пуст. "
+            "register_action_handlers() в app_factory не отработал."
         )
+        _logger.error(msg)
+        raise RuntimeError(msg)
+    _logger.info("DSL commands verified: %d action-handler(s)", count)
 
 
 async def phase_watchers(app: FastAPI) -> None:

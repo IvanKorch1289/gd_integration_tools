@@ -15,7 +15,8 @@ steps:
   - call_function:
       ref: extensions.osint_agent.functions.osint_workflow:run_osint
       result_property: osint_report
-to:
-  response:
-    code: 200
-    body: ${osint_report}
+# Блок `to:` удалён 2026-10-06. Response-binding в DSL НЕ реализован:
+# у Pipeline нет такого поля, у RouteBuilder нет метода, и _build_pipeline()
+# ключ `to` просто не читает — он молча игнорировался. Оставлять его значило
+# бы показывать в манифесте контракт, которого нет. Пробел зафиксирован в
+# artifacts/current_audit/ как доработка (ADR на response-binding).

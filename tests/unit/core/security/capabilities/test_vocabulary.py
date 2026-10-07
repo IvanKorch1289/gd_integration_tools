@@ -70,11 +70,51 @@ class TestCapabilityVocabulary:
             "workflow.start",
             "workflow.signal",
             "llm.invoke",
+            # Добавлены 2026-10-06 по решению владельца: роуты
+            # hello_route / test_route_w1 / jupyter_hub_run объявляли эти
+            # capability, но определений в vocabulary не было — из-за чего
+            # их нельзя было ни сделать публичными, ни покрыть плагином.
+            "audit.write",
+            "jupyter.hub",
         ):
             assert v.has(name), f"missing {name}"
-        assert (
-            len(v.all()) == 49
-        )  # Cycle 61 L10: 5 capabilities added since S153 W4c (44 → 49)
+        assert len(v.all()) == 51  # 2026-10-06: +audit.write, +jupyter.hub (было 49)
+
+    def test_net_capabilities_are_public(self) -> None:
+        """Публичный набор: net.inbound, net.outbound + audit.write.
+
+        Публичность снимает только declaration-time проверку манифеста роута.
+        Рантайм-контроль (CapabilityGate.check через OutboundHttpClient и
+        external_database_facade) public НЕ читает и scope по-прежнему
+        сверяет — здесь это зафиксировано, чтобы регрессия была видна.
+
+        ``audit.write`` сделан публичным 2026-10-06: audit-sink пишет
+        append-only лог, не даёт доступа к данным, плагина-владельца не
+        имеет, а шаг ``audit:`` нужен почти каждому маршруту.
+        """
+        v = build_default_vocabulary()
+        public_names = {d.name for d in v.public_capabilities()}
+        assert public_names == {"net.inbound", "net.outbound", "audit.write"}
+        # Доменные и привилегированные capability остаются непубличными —
+        # расширять набор молча нельзя.
+        for name in ("db.read", "db.write", "ai.invoke", "secrets.read"):
+            assert name not in public_names, f"{name} не должен быть публичным"
+
+    def test_privileged_capabilities_are_not_public(self) -> None:
+        """jupyter.hub НЕ публична: это удалённое выполнение кода.
+
+        Отличие от audit.write принципиальное: запуск ноутбука на Jupyter Hub
+        исполняет произвольный пользовательский код с сервисной учёткой.
+        Публичность отдала бы эту операцию любому маршруту без провайдера,
+        поэтому capability остаётся непубличной и покрывается только
+        плагином через requires_plugins.
+        """
+        v = build_default_vocabulary()
+        public_names = {d.name for d in v.public_capabilities()}
+        assert v.has("jupyter.hub")
+        assert "jupyter.hub" not in public_names, (
+            "jupyter.hub — привилегированная capability, публичность запрещена"
+        )
 
     def test_fs_create_new_registered(self) -> None:
         """V15 R-V15-4: capability fs.create_new обязательна для AIFsFacade."""

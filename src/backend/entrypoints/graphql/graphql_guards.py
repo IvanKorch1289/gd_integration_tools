@@ -25,6 +25,16 @@ class NoIntrospectionRule(ValidationRule):
     """Запрещает интроспекцию (__schema/__type) вне development."""
 
     def enter_field(self, node: Any, *_args: Any) -> Any:
+        """Отклоняет интроспекцию (``__schema``/``__type``) вне development.
+
+        Args:
+            node: AST-узел GraphQL-поля, посещаемый валидатором.
+            *_args: Прочие позиционные аргументы visitor'а (unused).
+
+        Returns:
+            Результат :meth:`enter_field` базового visitor'а.
+
+        """
         name = node.name.value
         if name in ("__schema", "__type"):
             self.report_error(

@@ -101,6 +101,9 @@ __all__ = [
     # === P1-6 (cycle 241): Promoted base classes for extension use ===
     # Centralised entry point for 38+ extension imports.
     "BasePlugin",  # from core.interfaces.plugin (22 imports)
+    "ActionRegistryProtocol",  # from core.interfaces.plugin (plugin hook signature)
+    "RepositoryRegistryProtocol",  # from core.interfaces.plugin (plugin hook signature)
+    "PluginContext",  # from core.interfaces.plugin (on_load signature)
     "BaseModel",  # from core.domain.models.base (8 imports)
     "nullable_str",  # from core.domain.models.base (P2-1 fix for same import line)
     "BaseSchema",  # from schemas.base
@@ -251,6 +254,21 @@ def __getattr__(name: str) -> Any:
         from src.backend.core.interfaces.plugin import BasePlugin
 
         return BasePlugin
+    # Plugin-контракт целиком: плагины импортируют хуки lifecycle и типы
+    # реестров из одного фасада. Без этих символов `extensions/*/plugin.py`
+    # падали с ImportError (так ломался example_plugin).
+    if name == "ActionRegistryProtocol":
+        from src.backend.core.interfaces.plugin import ActionRegistryProtocol
+
+        return ActionRegistryProtocol
+    if name == "RepositoryRegistryProtocol":
+        from src.backend.core.interfaces.plugin import RepositoryRegistryProtocol
+
+        return RepositoryRegistryProtocol
+    if name == "PluginContext":
+        from src.backend.core.interfaces.plugin import PluginContext
+
+        return PluginContext
     if name == "BaseModel":
         from src.backend.core.domain.models.base import BaseModel
 
@@ -331,6 +349,9 @@ def __dir__() -> list[str]:
             "feature_flags",
             # P1-6 (cycle 241): promoted base classes
             "BasePlugin",
+            "ActionRegistryProtocol",
+            "RepositoryRegistryProtocol",
+            "PluginContext",
             "BaseModel",
             "nullable_str",
             "BaseSchema",

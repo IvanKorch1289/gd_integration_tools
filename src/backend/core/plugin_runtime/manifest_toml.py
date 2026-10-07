@@ -301,6 +301,30 @@ class PluginManifest(BaseModel):
     выполняется ТОЛЬКО :func:`load_plugin_manifests_for_migrations`
     в :mod:`migrations.env` при Alembic-командах.
     """
+    call_function_modules: tuple[str, ...] = ()
+    """Sprint 226 (D-AUDIT-call_function_whitelist, 2026-10-06).
+
+    Dotted-path модулей, функции которых плагин разрешает вызывать из
+    DSL-шага ``call_function`` (``module:fn``). Используется процессором
+    :class:`CallFunctionProcessor` для заполнения whitelist'а.
+
+    Default — ``[]``: плагин, не объявивший whitelist, считается
+    "не провайдером call_function", и любая ссылка на него в DSL
+    упадёт с ``PermissionError`` в strict-режиме (fail-closed).
+
+    Семантика:
+
+    * whitelist собирается из всех загруженных плагинов в глобальный
+      process-state (``CallFunctionProcessor.ACTIVE_WHITELIST``),
+      также через ``context.properties['call_function_modules']``
+      (loader'ом маршрута для route-scoped фильтрации);
+    * поле — top-level манифеста, а не внутри ``[[capabilities]]``:
+      capabilities описывают ресурс, к которому нужен доступ
+      (per ADR-044); whitelist модулей — другой слой прав;
+    * совместимо с ADR-042: поле явно объявлено в ``PluginManifest``.
+
+    Связанные ADR: V21 (исходная идея), K-ARCH-5 (strict-режим).
+    """
     tenants: tuple[PluginTenantDecl, ...] = ()
     """V15 GAP Gap 4 (Sprint 36) — декларативные tenant-aware capabilities.
 

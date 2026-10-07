@@ -51,9 +51,35 @@ __all__ = (
 class FeatureDisabledError(RuntimeError):
     """Выбрасывается при попытке использовать API под выключенным flag-ом.
 
-    Используется ``from_yaml()`` для default-OFF контракта
-    ``feature_flags.workflow_yaml_round_trip``.
+    Используется :func:`_require_round_trip` для default-OFF контракта
+    ``feature_flags.workflow_yaml_round_trip``: под флагом остаётся
+    только round-trip API (``to_yaml``/``diff``), а чтение деклараций
+    (:func:`from_yaml` и load-обёртки) работает всегда.
     """
+
+
+def _require_round_trip() -> None:
+    """Проверить feature-flag ``workflow_yaml_round_trip``.
+
+    Флаг активирует round-trip API — сериализацию и diff. Чтение YAML
+    (:func:`from_yaml`) под флагом НЕ гейтится: иначе default-OFF блокирует
+    загрузку workflow из ``extensions/*/workflows/*.workflow.yaml`` и всю
+    auto-регистрацию деклараций на старте приложения.
+
+    Returns:
+        None.
+
+    Raises:
+        FeatureDisabledError: Если ``workflow_yaml_round_trip`` выключен.
+
+    """
+    from src.backend.core.config.features import feature_flags
+
+    if not feature_flags.workflow_yaml_round_trip:
+        raise FeatureDisabledError(
+            "Feature workflow_yaml_round_trip disabled. "
+            "Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации."
+        )
 
 
 def _make_yaml() -> YAML:
@@ -97,6 +123,13 @@ def to_yaml(decl: WorkflowDeclaration) -> str:
     презентации (Pydantic discriminator резолвится в строки), затем
     dump через ruamel.yaml round-trip parser.
 
+    Lazy-проверяет feature-flag ``workflow_yaml_round_trip``: флаг
+    активирует именно round-trip API (``to_yaml``/``from_yaml``/``diff``).
+    Раньше гейт стоял на :func:`from_yaml`, из-за чего выключенный флаг
+    блокировал не только сериализацию, но и **загрузку** любого workflow
+    через ``load_workflow_from_file`` — то есть всю auto-регистрацию
+    ``extensions/*/workflows/*.workflow.yaml``.
+
     Args:
         decl: Декларация workflow для сериализации.
 
@@ -104,7 +137,11 @@ def to_yaml(decl: WorkflowDeclaration) -> str:
         YAML-строка с UTF-8 контентом, готовая к записи в
         ``workflows/<name>.workflow.yaml``.
 
+    Raises:
+        FeatureDisabledError: Если ``workflow_yaml_round_trip`` выключен.
+
     """
+    _require_round_trip()
     payload = decl.model_dump(mode="json")
     yaml = _make_yaml()
     buffer = io.StringIO()
@@ -115,9 +152,14 @@ def to_yaml(decl: WorkflowDeclaration) -> str:
 def from_yaml(yaml_text: str) -> WorkflowDeclaration:
     """Десериализовать YAML-текст в :class:`WorkflowDeclaration`.
 
-    Lazy-проверяет feature-flag ``workflow_yaml_round_trip``: при выключенном
-    флаге выбрасывает :class:`FeatureDisabledError` без чтения YAML — это
-    защищает от случайной обвязки на disabled-API в проде.
+    Чтение деклараций намеренно **не** гейтится feature-флагом
+    ``workflow_yaml_round_trip``: под флагом остаётся только round-trip
+    API (:func:`to_yaml` / :func:`diff`). Прежний гейт на этом пути
+    блокировал загрузку любого workflow-файла, а значит и всю
+    auto-регистрацию ``extensions/*/workflows/*.workflow.yaml`` на старте.
+
+    Парсинг выполняется safe-режимом (:func:`_make_safe_yaml`), который
+    отказывает в десериализации произвольных Python-объектов.
 
     Args:
         yaml_text: YAML-строка с декларацией workflow.
@@ -126,19 +168,10 @@ def from_yaml(yaml_text: str) -> WorkflowDeclaration:
         Валидированная :class:`WorkflowDeclaration`.
 
     Raises:
-        FeatureDisabledError: Если ``workflow_yaml_round_trip`` выключен.
         pydantic.ValidationError: Если YAML не соответствует схеме
             декларации (неизвестный ``type``, пустой ``steps`` и т. п.).
 
     """
-    from src.backend.core.config.features import feature_flags
-
-    if not feature_flags.workflow_yaml_round_trip:
-        raise FeatureDisabledError(
-            "Feature workflow_yaml_round_trip disabled. "
-            "Установите FEATURE_WORKFLOW_YAML_ROUND_TRIP=true для активации."
-        )
-
     loader = _make_safe_yaml()
     data: Any = loader.load(yaml_text)
     return WorkflowDeclaration.model_validate(data)
@@ -266,8 +299,9 @@ def load_workflow_from_yaml(yaml_text: str) -> WorkflowDeclaration:
     """Парсит YAML-строку в :class:`WorkflowDeclaration` (S8 fix).
 
     Thin wrapper над :func:`from_yaml` для consistency с
-    :func:`load_pipeline_from_yaml` API. Respects feature-flag
-    ``workflow_yaml_round_trip``.
+    :func:`load_pipeline_from_yaml` API. Загрузка деклараций не зависит от
+    feature-флага ``workflow_yaml_round_trip`` (флаг гейтит только
+    сериализацию/diff).
 
     Args:
         yaml_text: YAML-строка.
@@ -276,7 +310,6 @@ def load_workflow_from_yaml(yaml_text: str) -> WorkflowDeclaration:
         Валидированная :class:`WorkflowDeclaration`.
 
     Raises:
-        FeatureDisabledError: Если feature flag выключен.
         pydantic.ValidationError: Если YAML не соответствует схеме.
 
     """
@@ -294,7 +327,6 @@ def load_workflow_from_file(path: str | Path) -> WorkflowDeclaration:
 
     Raises:
         FileNotFoundError: Если файла нет.
-        FeatureDisabledError: Если feature flag выключен.
         pydantic.ValidationError: Если YAML невалиден.
 
     """

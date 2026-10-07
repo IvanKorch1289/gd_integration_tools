@@ -139,34 +139,41 @@ def _mount_mcp_http(app: FastAPI) -> None:
 
     Ponytail: 1 функция, 1 mount point. Skip если ``mcp_settings.http_enabled=False``.
     """
-    # D-AUDIT-20810 (cycle 217): print() to bypass logging config issue.
-    # granian workers могут filter'ить get_logger calls (D-AUDIT-20808
-    # entry log не появился даже с info level). print() гарантированно
-    # попадает в stdout → docker logs.
-    print("D-AUDIT-20810 _mount_mcp_http ENTRY", flush=True)
+    # Логирование структурированное, а не print() — print() запрещён
+    # правилами проекта и загрязнял stdout при каждом импорте.
+    #
+    # Почему раньше стоял print (D-AUDIT-20810, cycle 217): казалось, что
+    # granian-воркеры фильтруют вызовы get_logger. Проверено пробой:
+    # ``get_logger(...).warning(...)`` в этой точке ДОХОДИТ до stdout,
+    # а ``.info(...)`` — нет (на момент вызова create_app уровень логирования
+    # ещё не сконфигурирован, эффективный уровень WARNING). То есть
+    # проблема была не в фильтрации, а в уровне. Поэтому:
+    #   - отказ ветки → WARNING (видно всегда, это и требовалось);
+    #   - штатные ветки → INFO/DEBUG (видны после конфигурации логирования).
+    log = get_logger("app_factory")
+    log.debug("MCP HTTP mount: вход в _mount_mcp_http")
     try:
         from src.backend.core.config.ai_stack import mcp_settings
     except ImportError as exc:
-        print(f"D-AUDIT-20810 mcp_settings import failed: {exc}", flush=True)
+        log.warning("MCP HTTP mount: не удалось импортировать mcp_settings: %s", exc)
         return
-    print(
-        f"D-AUDIT-20810 mcp_settings: http_enabled={mcp_settings.http_enabled}, "
-        f"bind_path={mcp_settings.bind_path}",
-        flush=True,
+    log.debug(
+        "MCP HTTP mount: http_enabled=%s, bind_path=%s",
+        mcp_settings.http_enabled,
+        mcp_settings.bind_path,
     )
     if not mcp_settings.http_enabled:
-        print("D-AUDIT-20810 mount skipped: http_enabled=False", flush=True)
+        log.info("MCP HTTP mount пропущен: http_enabled=False")
         return
     try:
         from src.backend.entrypoints.mcp.http_server import create_mcp_http_app
 
         mcp_asgi, _mcp_inner_lifespan = create_mcp_http_app()
-        print(
-            f"D-AUDIT-20810 create_mcp_http_app() returned: {type(mcp_asgi).__name__}",
-            flush=True,
+        log.debug(
+            "MCP HTTP mount: create_mcp_http_app() вернул %s", type(mcp_asgi).__name__
         )
         app.mount(mcp_settings.bind_path, mcp_asgi)
-        print(f"D-AUDIT-20810 app.mount done at {mcp_settings.bind_path}", flush=True)
+        log.info("MCP HTTP transport смонтирован на %s", mcp_settings.bind_path)
         # D-AUDIT-20804 (cycle 210): disable redirect_slashes (см. main.py history).
         app.router.redirect_slashes = False
 
@@ -177,13 +184,13 @@ def _mount_mcp_http(app: FastAPI) -> None:
         # integration (session_manager.run() НЕ вызывается, но ASGI
         # работает чисто без warnings).
 
-        print(
-            f"D-AUDIT-20810 MCP HTTP transport mounted at {mcp_settings.bind_path} "
-            "(redirect_slashes=False, lifespan=NOT combined — deferred)",
-            flush=True,
+        log.info(
+            "MCP HTTP transport смонтирован на %s (redirect_slashes=False, "
+            "lifespan=NOT combined — отложено)",
+            mcp_settings.bind_path,
         )
     except Exception as exc:
-        print(f"D-AUDIT-20810 MCP HTTP transport mount skipped: {exc}", flush=True)
+        log.warning("MCP HTTP transport не смонтирован: %s", exc)
 
 
 def _configure_business_routers(app: FastAPI) -> None:

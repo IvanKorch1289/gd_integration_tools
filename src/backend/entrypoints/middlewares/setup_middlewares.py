@@ -201,34 +201,6 @@ def build_default_registry() -> MiddlewareRegistry:
     registry.register_builtin(
         "response_cache", ResponseCacheMiddleware, {"max_age": 60}, order=520
     )
-    if settings.app.compression_brotli:
-        # S10 K2 W2 (PERF-6.6): Brotli compression — действует выше GZIP.
-        registry.register_builtin(
-            "brotli",
-            BrotliCompressionMiddleware,
-            {
-                "minimum_size": settings.app.brotli_minimum_size,
-                "quality": settings.app.brotli_quality,
-            },
-            order=540,
-        )
-    # D-AUDIT-17601 fix (cycle 176): use custom GZipCompressionExcluding
-    # middleware (pure ASGI + path exclusion) instead of FastAPI's
-    # default GZipMiddleware (BaseHTTPMiddleware — incompatible с
-    # project's pure ASGI chain на /docs, /redoc, /metrics).
-    from src.backend.entrypoints.middlewares.gzip_compression_excluding import (
-        GZipCompressionExcludingMiddleware,
-    )
-
-    registry.register_builtin(
-        "gzip",
-        GZipCompressionExcludingMiddleware,
-        {
-            "minimum_size": settings.app.gzip_minimum_size,
-            "compresslevel": settings.app.gzip_compresslevel,
-        },
-        order=560,
-    )
     registry.register_builtin("data_masking", DataMaskingMiddleware, order=580)
     # Wave 8.1: маркер успешной аутентификации в response.
     registry.register_builtin(
@@ -357,6 +329,59 @@ def build_default_registry() -> MiddlewareRegistry:
         GracefulShutdownMiddleware,
         {"drain_timeout": drain_timeout},
         order=880,
+    )
+
+    # ── Сжатие ответа: ПОСЛЕДНЯЯ стадия конвейера (900/920) ────────────── #
+    #
+    # P0 (аудит 2026-10-06, воспроизведено на живом сервере): сжатие стояло
+    # ВНУТРИ body-rewriting middleware — brotli=540, gzip=560 против
+    # data_masking=580 и pii_masking_response=700. Из-за LIFO-семантики
+    # add_middleware (высокий order = внешний) маскеры оказывались СНАРУЖИ
+    # компрессии и получали уже сжатые байты.
+    #
+    # Симптом: любой JSON-ответ ≥ gzip_minimum_size (500), отданный клиенту
+    # с Accept-Encoding: gzip, превращался в
+    #   HTTP 200 + Content-Encoding: gzip
+    #   + {"error":"response_masking_failed", ...}   (plain JSON, 104 байта)
+    # Лог сервера: UnicodeDecodeError: 'utf-8' codec can't decode byte 0x8b
+    # в position 1 (0x8b — второй байт gzip-магии 1f 8b) на
+    # data_masking.py::_mask_bytes. То есть настоящий ответ терялся целиком,
+    # а клиент получал заглушку с кодом 200. httpx падал с DecodingError,
+    # curl — молча отдавал мусор, поэтому cURL-батарея это не ловила.
+    # Затронуты /api/v1/admin/actions и /ready (всё, что крупнее 500 байт);
+    # /openapi.json и /metrics уцелели только потому, что исключены из
+    # маскирования и из сжатия соответственно.
+    #
+    # Инвариант: компрессия — последнее преобразование тела ответа, поэтому
+    # она обязана быть ВНЕШНЕЙ всех middleware, переписывающих body
+    # (маскеры, error-envelope, кэш). Иначе они получают нечитаемые байты.
+    if settings.app.compression_brotli:
+        # S10 K2 W2 (PERF-6.6): Brotli. Выше GZIP (920 > 900 → внешний).
+        registry.register_builtin(
+            "brotli",
+            BrotliCompressionMiddleware,
+            {
+                "minimum_size": settings.app.brotli_minimum_size,
+                "quality": settings.app.brotli_quality,
+            },
+            order=920,
+        )
+    # D-AUDIT-17601 fix (cycle 176): use custom GZipCompressionExcluding
+    # middleware (pure ASGI + path exclusion) instead of FastAPI's
+    # default GZipMiddleware (BaseHTTPMiddleware — incompatible с
+    # project's pure ASGI chain на /docs, /redoc, /metrics).
+    from src.backend.entrypoints.middlewares.gzip_compression_excluding import (
+        GZipCompressionExcludingMiddleware,
+    )
+
+    registry.register_builtin(
+        "gzip",
+        GZipCompressionExcludingMiddleware,
+        {
+            "minimum_size": settings.app.gzip_minimum_size,
+            "compresslevel": settings.app.gzip_compresslevel,
+        },
+        order=900,
     )
 
     return registry

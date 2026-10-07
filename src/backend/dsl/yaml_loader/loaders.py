@@ -20,7 +20,9 @@ logger = get_logger(__name__)
 _MISSING = object()
 
 
-def load_pipeline_from_yaml(yaml_str: str, base_path: Path | None = None) -> Pipeline:
+def load_pipeline_from_yaml(
+    yaml_str: str, base_path: Path | None = None, *, default_route_id: str | None = None
+) -> Pipeline:
     """Парсит YAML-строку в Pipeline.
 
     Если в spec'е указан ``apiVersion`` отличный от текущего (W25.3
@@ -65,10 +67,12 @@ def load_pipeline_from_yaml(yaml_str: str, base_path: Path | None = None) -> Pip
     if data.get("apiVersion") != CURRENT_VERSION:
         data = apply_migrations(data, target_version=CURRENT_VERSION)
 
-    return _build_pipeline(data)
+    return _build_pipeline(data, default_route_id=default_route_id)
 
 
-def load_pipeline_from_file(path: str | Path) -> Pipeline:
+def load_pipeline_from_file(
+    path: str | Path, *, default_route_id: str | None = None
+) -> Pipeline:
     """Загружает Pipeline из YAML-файла.
 
     Args:
@@ -80,7 +84,9 @@ def load_pipeline_from_file(path: str | Path) -> Pipeline:
     """
     file_path = Path(path)
     yaml_str = file_path.read_text(encoding="utf-8")
-    return load_pipeline_from_yaml(yaml_str, base_path=file_path.parent)
+    return load_pipeline_from_yaml(
+        yaml_str, base_path=file_path.parent, default_route_id=default_route_id
+    )
 
 
 def load_all_from_directory(directory: str | Path) -> list[Pipeline]:

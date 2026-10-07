@@ -2,9 +2,29 @@
 name = "jupyter_hub_run"
 version = "0.1.0"
 requires_core = ">=0.20,<0.21"
+# Три pipeline (2026-10-06): раньше все три лежали в одном main.dsl.yaml,
+# разделённые '---'; yaml.safe_load читает только ПЕРВЫЙ документ, поэтому
+# run-file и run-inline молча терялись, а загрузка падала с
+# "expected a single document in the stream". Разделено: один pipeline —
+# один файл.
+pipelines = [
+    "run.dsl.yaml",
+    "run_file.dsl.yaml",
+    "run_inline.dsl.yaml",
+]
 
 # Capability gate: выполнение ноутбуков на Jupyter Hub.
-capabilities = ["net.outbound", "jupyter.hub.run", "audit.write"]
+# ADR-044 grammar — ровно 2 сегмента <resource>.<verb>, поэтому исходное
+# "jupyter.hub.run" объявляется как resource "jupyter.hub" + scope "run".
+#
+# 2026-10-06: jupyter.hub намеренно НЕ публична (запуск ноутбука = удалённое
+# выполнение произвольного кода с сервисной учёткой), а плагина-провайдера
+# jupyter/notebook в проекте нет. Поэтому этот роут честно остаётся
+# незагруженным по capability-гиту, пока такой плагин не появится и не
+# покроет capability через [requires_plugins]. Публичность capability не
+# выглядела бы разумной заменой: она отдала бы удалённое выполнение кода
+# любому маршруту без провайдера.
+capabilities = ["net.outbound", "jupyter.hub:run", "audit.write"]
 
 tenant_aware = true
 feature_flag = { enabled = true, gate = "jupyter_hub_enabled" }

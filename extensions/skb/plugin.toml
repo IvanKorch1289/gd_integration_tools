@@ -7,5 +7,5 @@ name = "skb"
 version = "1.0.0"
 description = "СКБ-Техно integration schemas (S168 W17 P2-10 migration)"
 entry_class = "extensions.skb.schemas_only:SchemasOnlyEntry"
-requires_core = ">=0.2.0"
+requires_core = ">=0.20,<0.21"
 # No declarative dependencies.

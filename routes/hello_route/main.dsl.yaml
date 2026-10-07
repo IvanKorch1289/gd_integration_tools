@@ -4,31 +4,30 @@ source:
     method: POST
     path: /api/v1/CHANGEME
 steps:
-- # P2-D8 (audit 2026-08-18): feature flag gate на LLM-вызов.
-- # Если ``ai_chat_enabled`` выключен — pipeline stop со статусом ``skipped``.
+- # P2-D8 (audit 2026-08-18): feature flag gate для demo-route.
+- # Если ``demo_routes_enabled`` выключен — pipeline stop со статусом ``skipped``.
 - feature_flag:
-    flag: ai_chat_enabled
+    flag: demo_routes_enabled
     default: false
     stop_on_disabled: true
-- # D-AUDIT-B-102 fix (cycle 1): broken call_function step удалён (модуль
-  # не существует — route — pure YAML demo).
-- policy:
-    retry:
-      attempts: 3
-      backoff: exponential
-      max_delay_ms: 5000
-- llm_call:
-    provider: claude
-    model: claude-3-5-sonnet-20241022
-    prompt_from: body.context
-    result_property: ai_response
-    dry_run_provider: mock-llm
+# D-AUDIT-B-102 fix (cycle 1): broken call_function step удалён (модуль
+# не существует — route — pure YAML demo).
+#
+# Правки 2026-10-06 (приведение к фактическому API RouteBuilder):
+# * шаг LLM-вызова удалён. Изначально это был `llm_call` — метода с таким
+#   именем в RouteBuilder не существует (есть call_llm / llm_structured /
+#   ai_invoke), поэтому маршрут никогда не мог загрузиться. Замена на
+#   llm_structured потребовала бы capability `ai.invoke`, но у LLM-процессоров
+#   НЕТ рантайм-проверки capability (в отличие от agent_dsl: там
+#   required_capability проверяется в _base.py:189). Объявлять ai.invoke
+#   публичной значило бы снять единственный контроль — декларацию в манифесте,
+#   не добавив взамен ничего. Поэтому шаг убран, а пробел зафиксирован в
+#   аудите как доработка: добавить capability-guard LLM-процессорам.
+# * шаг `policy:` удалён — это @property, а не метод (см. jupyter-роуты).
+# * шаг `to:` удалён — response-binding (`to: {response: {...}}`) в DSL не
+#   реализован: у Pipeline нет такого поля, у RouteBuilder нет метода.
 - http_call:
     url: https://api.test/sink
     method: POST
 - audit:
     action: hello_route.processed
-- to:
-    response:
-      code: 200
-      body: ${body}

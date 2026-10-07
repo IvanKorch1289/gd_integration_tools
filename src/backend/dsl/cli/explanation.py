@@ -47,7 +47,16 @@ _PROCESSOR_SIDE_EFFECTS: dict[str, tuple[str, str, str]] = {
     "file_read": ("fs.read", "fs", r"[\w./-]+"),
     "file_write": ("fs.write", "fs", r"[\w./-]+"),
     "call_com": ("net.outbound", "network", r"https?://[\w.-]+:\d+(/.*)?$"),
-    "llm_call": ("ai.llm", "ai", r"[\w.-]+://[\w./-]+"),  # provider
+    # ``ai.invoke`` — каноническое имя capability вызова LLM через AIGateway
+    # (ADR-NEW-19). Раньше здесь стояло ``ai.llm``, которого нет в
+    # capability-vocabulary: инструмент ``explain`` требовал от манифеста
+    # capability, несуществующую в словаре, и ``explain --strict`` падал на
+    # собственных же выводах.
+    "llm_call": ("ai.invoke", "ai", r"[\w.-]+://[\w./-]+"),  # provider
+    # TODO(ADR): общего capability для записи audit-событий в vocabulary
+    # нет (есть только ``pii.audit`` для PII-событий). Пока шаг ``audit``
+    # мапится на несуществующее имя — см. ADR-предложение
+    # artifacts/current_audit/ADR_PROPOSAL_public_capabilities.md.
     "audit": ("audit.write", "audit", ""),  # no external host
     "policy": ("", "", ""),  # no side effect
     "feature_flag": ("", "", ""),  # no side effect

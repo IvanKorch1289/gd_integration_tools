@@ -11,13 +11,24 @@ steps:
       stop_on_disabled: false
       output_field: proxy_active
   - proxy:
-      src: /api/v1/demo/health
+      # ExposeProxyProcessor.src ждёт "<protocol>:<address>" — без префикса
+      # протокола валидация падала: "ExposeProxyProcessor.src должен быть
+      # вида '<protocol>:<address>'". Путь тот же, что и в блоке from: выше.
+      src: http:/api/v1/demo/health
       dst: http://localhost:9000/health
+  # Правка 2026-10-06: ``event`` → ``action``. WorkflowOpsMixin.audit()
+  # принимает action/action_from/actor/outcome/..., поля ``event`` у него нет;
+  # маршрут падал с "got an unexpected keyword argument 'event'".
   - audit:
-      event: "route.health_proxy_demo.call"
-to:
-  response:
-    code: 200
-    body:
-      status: ok
-      proxy_active: ${properties.proxy_active}
+      action: "route.health_proxy_demo.call"
+# Блок ``to: {response: {...}}`` удалён 2026-10-06 — см. комментарий в
+# routes/composition_demo/main.dsl.yaml: response-binding в DSL не
+# реализован, ключ ``to`` молча игнорировался. Пробел зафиксирован в
+# аудите как GAP.
+#
+# Практическое следствие для этого роута: ``dst`` указывает на
+# ``http://localhost:9000/health`` — внешняя цель, которую разворачивает
+# окружение, а не само приложение. Шаг proxy штатно отрабатывает только
+# при включённом ``external_health_proxy_enabled``; при выключенном флаге
+# route-level гейт останавливает pipeline ДО proxy-шага, поэтому dispatch
+# возвращает пустой результат (out_message=None), а не таймаут.

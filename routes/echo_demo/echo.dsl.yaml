@@ -3,25 +3,32 @@ from:
     method: POST
     path: /api/v1/demo/echo
 steps:
-  # P2-D8 (audit 2026-08-18): feature flag gate для demo-route.
+  # П2-D8 (audit 2026-08-18): feature flag gate для demo-route.
   # Если ``demo_routes_enabled`` выключен — skip silently (200 с skipped status).
   - feature_flag:
       flag: demo_routes_enabled
       default: true
       stop_on_disabled: false
       output_field: demo_routes_active
-  - validate_request:
+  # Правки 2026-10-06 (приведение к фактическому API RouteBuilder):
+  # * ``validate_request:`` → ``schema_validate:`` — метода validate_request
+  #   в RouteBuilder не существует; schema_validate принимает JSON-схему
+  #   словарём, что и требуется шагу.
+  # * ``transform.set:`` → ``transform.expression:`` — transform(expr: str)
+  #   применяет JMESPath-выражение к body; мультиселект-хеш ниже даёт тот же
+  #   результат, что и прежняя map-форма.
+  - schema_validate:
       schema:
         type: object
         properties:
           message: { type: string }
         required: [message]
   - transform:
-      set: { body.echoed: "${body.message}", body.length: "${len(body.message)}" }
-to:
-  response:
-    code: 200
-    body:
-      echoed: ${body.echoed}
-      length: ${body.length}
-      flag_active: ${properties.demo_routes_active}
+      expression: "{echoed: message, length: length(message)}"
+# Раньше файл заканчивался блоком ``to: {response: {...}}``. Он удалён
+# 2026-10-06: response-binding в DSL не реализован (у Pipeline нет такого
+# поля, у RouteBuilder нет метода, а _build_pipeline() ключ ``to`` просто
+# не читает — молча игнорировал). Пробел зафиксирован в аудите как GAP.
+#
+# Этот файл заодно служит живым доказательством алиаса ``from:`` → ``source``,
+# добавленного 2026-10-06 (см. dsl/yaml_loader/build.py::_build_pipeline).
