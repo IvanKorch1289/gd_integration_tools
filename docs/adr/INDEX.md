@@ -141,8 +141,7 @@
 | [ADR-0343](0343-pluginmanifest-schema-evolution-core-admin-dadata-skb.md) | PluginManifest schema migration: core_admin / dadata / skb | Unknown |
 | [ADR-0344](0344-sagalra-convergence-plan.md) | SagaLRA convergence plan (per v4 §9) | Unknown |
 | [ADR-0345](0345-p0-object-ownership-policy-options.md) | Object-Level Authorization: ownership policy (P0 audit response) | Unknown |
-| [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности (продолжение ADR-0345; UNION/CTE обходят ORM-фильтр) | **Proposed** |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 
-**Total:** 138 ADRs.
+**Total:** 137 ADRs.
 
