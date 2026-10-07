@@ -47,6 +47,7 @@ unit-tests: ## К1 V15 — реальный прогогогон tests/unit (н�
 pr: ## К1 V15 — composite PR gate (ci + docs)
 	@$(MAKE) ci
 	@$(MAKE) docs
+	@$(MAKE) docs-current-metrics-check
 	@$(SUCCESS) "PR gate passed"
 
 test-collection-check: ## Sanity gate — verify all tests collect without ImportError
