@@ -122,25 +122,49 @@ class TestExemptionIsNotBlanket:
 
 
 class TestRealRepoState:
-    """Реальный код репозитория должен быть виден гейту."""
+    """Реальный код репозитория: контракт изменился с F-AP1.
 
-    def test_navigation_present_in_repo_is_flagged(self, waf: object) -> None:
-        """browser.py действительно содержит callsite'ы, которые гейт теперь видит."""
+    До фикса браузерная навигация была **объявлена** в allowlist как долг.
+    Теперь url-guard написан (``core/net/url_guard.py``), навигация идёт
+    через guard, а гейт научен распознавать защищённый callsite. Поэтому
+    прежние утверждения «навигация flagged» и «файлы в allowlist» больше
+    не верны — и были бы прямой ложью, если бы их оставили.
+    """
+
+    def test_navigation_is_no_longer_flagged_because_it_is_guarded(
+        self, waf: object
+    ) -> None:
+        """Защищённая навигация не нарушение — гейт проверяет guard."""
         path = Path("src/backend/infrastructure/clients/transport/browser.py")
-        violations = waf._scan_file(path)
-        assert violations, "browser.py содержит page.goto, но гейт их не нашёл"
-        assert any("goto" in snippet for _line, snippet in violations)
-
-    def test_allowlist_documents_rpa_navigation(self) -> None:
-        """Долг зафиксирован в allowlist с обоснованием, а не спрятан."""
-        text = Path("tools/check_waf_coverage_allowlist.txt").read_text(
-            encoding="utf-8"
+        assert not waf._scan_file(path), (
+            "browser.py под url_guard не должен давать нарушений"
         )
-        assert "F-AP2" in text
-        assert "url_guard" in text
+
+    def test_browser_modules_reference_the_url_guard(self) -> None:
+        """Все три точки входа в браузер зовут канонический guard."""
         for rel in (
             "src/backend/dsl/engine/processors/rpa_browser.py",
             "src/backend/infrastructure/clients/transport/browser.py",
             "src/backend/core/dsl_browser/dsl.py",
         ):
-            assert rel in text, f"{rel} должен быть в allowlist с обоснованием"
+            text = Path(rel).read_text(encoding="utf-8")
+            assert "assert_safe_url" in text, f"{rel} не вызывает url_guard"
+
+    def test_allowlist_no_longer_carries_browser_entries(self) -> None:
+        """Долг снят: браузерных записей в allowlist больше нет."""
+        text = Path("tools/check_waf_coverage_allowlist.txt").read_text(encoding="utf-8")
+        entries = [
+            line
+            for line in text.splitlines()
+            if line.strip().startswith("src/backend/") and not line.strip().startswith("#")
+        ]
+        assert not entries, f"в allowlist остались записи: {entries}"
+
+    def test_url_guard_module_exists(self) -> None:
+        """Канонический guard лежит в core/net и является единственным."""
+        path = Path("src/backend/core/net/url_guard.py")
+        assert path.exists(), "core/net/url_guard.py обязателен (F-AP1)"
+        text = path.read_text(encoding="utf-8")
+        assert "def assert_safe_url" in text
+        assert "def is_safe_url" in text
+

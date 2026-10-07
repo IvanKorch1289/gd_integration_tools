@@ -27,46 +27,27 @@ __all__ = ("ApiProxyProcessor", "PaginateProcessor", "ScrapeProcessor")
 
 _scrape_logger = get_logger("dsl.scraping")
 
-_BLOCKED_IP_PREFIXES = (
-    "127.",
-    "10.",
-    "0.",
-    "192.168.",
-    "169.254.",
-    "::1",
-    "fc00:",
-    "fe80:",
-)
-_BLOCKED_HOSTS = {"localhost", "metadata.google.internal", "metadata.aws"}
-
-
-def _is_blocked_host(host: str) -> None:
-    """Raise ValueError if *host* is a blocked hostname or private IP."""
-    import ipaddress
-
-    if host in _BLOCKED_HOSTS:
-        raise ValueError(f"Blocked host: {host}")
-
-    for prefix in _BLOCKED_IP_PREFIXES:
-        if host.startswith(prefix):
-            raise ValueError(f"Blocked private IP: {host}")
-
-    try:
-        addr = ipaddress.ip_address(host)
-    except ValueError:
-        pass
-    else:
-        if addr.is_private or addr.is_loopback or addr.is_link_local:
-            raise ValueError(f"Blocked private/loopback IP: {host}")
-
-
 def _validate_url(url: str) -> None:
-    """Block requests to private networks, localhost, and cloud metadata endpoints."""
-    from urllib.parse import urlparse
+    """Проверить URL по канонической SSRF-политике.
 
-    parsed = urlparse(url)
-    host = (parsed.hostname or "").lower()
-    _is_blocked_host(host)
+    F-AP1: раньше здесь жил приватный валидатор, который проверял только
+    хост. Он пропускал ``file://`` и ``data:`` (hostname пустой) и
+    нестандартные записи IP (``http://2130706433/``). Теперь источник
+    истины один — :mod:`src.backend.core.net.url_guard`, тем же пользуется
+    браузерная навигация. Исключение остаётся ``ValueError``
+    (:class:`UrlNotAllowedError` — его подкласс), поэтому вызывающий код
+    с ``except ValueError`` продолжает работать.
+
+    Args:
+        url: Проверяемый URL.
+
+    Raises:
+        UrlNotAllowedError: URL отклонён политикой.
+
+    """
+    from src.backend.core.net.url_guard import assert_safe_url
+
+    assert_safe_url(url)
 
 
 # ── Anti-bot stealth helpers ──

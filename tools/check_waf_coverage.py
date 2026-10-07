@@ -195,6 +195,83 @@ def _is_browser_navigation_violation(node: ast.AST) -> bool:
     return _browser_receiver_names(func)
 
 
+#: Функции, чьё наличие означает, что рядом стоит SSRF-guard.
+_URL_GUARD_CALLS: frozenset[str] = frozenset({"assert_safe_url", "is_safe_url"})
+
+
+def _guarded_enclosing_functions(tree: ast.AST) -> set[int]:
+    """lineno функций, внутри которых вызывается url-guard.
+
+    F-AP1: браузерная навигация легитимна тогда и только тогда, когда
+    URL проверен ``core.net.url_guard``. Раньше гейт этого не умел и
+    требовал вечный allowlist — то есть защита была не проверяема, а
+    объявлена. Теперь навигация внутри функции, вызывающей
+    ``assert_safe_url``, считается закрытой, а любая навигация рядом
+    с таким вызовом (то есть вне защиты) — по-прежнему нарушение.
+
+    Args:
+        tree: Разобранное дерево модуля.
+
+    Returns:
+        Множество ``lineno`` функций-обёрток.
+
+    """
+    guarded: set[int] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        for inner in ast.walk(node):
+            if not isinstance(inner, ast.Call):
+                continue
+            func = inner.func
+            name = getattr(func, "id", None) or getattr(func, "attr", None)
+            if name in _URL_GUARD_CALLS:
+                guarded.add(node.lineno)
+                break
+    return guarded
+
+
+def _inside_guarded_function(
+    node: ast.Call, guarded_linenos: set[int], enclosing: list[ast.AST]
+) -> bool:
+    """Находится ли вызов внутри функции с url-guard.
+
+    Args:
+        node: Проверяемый вызов навигации.
+        guarded_linenos: lineno функций-обёрток.
+        enclosing: Цепочка родительских узлов (родитель → ребёнок).
+
+    Returns:
+        ``True``, если вызов лежит внутри функции-обёртки.
+
+    """
+    return any(
+        isinstance(parent, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and parent.lineno in guarded_linenos
+        for parent in enclosing
+    )
+
+
+def _directly_guarded(node: ast.Call) -> bool:
+    """Проверяется ли аргумент навигации напрямую.
+
+    Args:
+        node: Вызов ``page.goto(...)``.
+
+    Returns:
+        ``True``, если первый позиционный аргумент — вызов url-guard.
+
+    """
+    if not node.args:
+        return False
+    first = node.args[0]
+    if not isinstance(first, ast.Call):
+        return False
+    func = first.func
+    name = getattr(func, "id", None) or getattr(func, "attr", None)
+    return name in _URL_GUARD_CALLS
+
+
 def _scan_file(path: Path) -> list[tuple[int, str]]:
     """Возвращает список ``(line, snippet)`` нарушений в файле."""
     try:
@@ -207,11 +284,29 @@ def _scan_file(path: Path) -> list[tuple[int, str]]:
         return []
 
     aliased = _collect_aliased_names(tree)
+    guarded_linenos = _guarded_enclosing_functions(tree)
+    parents: dict[int, ast.AST] = {}
+    for parent in ast.walk(tree):
+        for child in ast.iter_child_nodes(parent):
+            parents[id(child)] = parent
+
     violations: list[tuple[int, str]] = []
     for node in ast.walk(tree):
         is_hit = _is_httpx_violation(node, aliased) or _is_browser_navigation_violation(
             node
         )
+        if is_hit and _is_browser_navigation_violation(node):
+            # F-AP1: навигация под url-guard — не нарушение.
+            chain: list[ast.AST] = []
+            cursor: ast.AST | None = node
+            while cursor is not None:
+                cursor = parents.get(id(cursor))
+                if cursor is not None:
+                    chain.append(cursor)
+            if _directly_guarded(node) or _inside_guarded_function(
+                node, guarded_linenos, chain
+            ):
+                is_hit = False
         if is_hit:
             assert isinstance(node, ast.Call)  # noqa: S101 — narrowing
             try:

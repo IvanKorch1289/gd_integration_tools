@@ -36,6 +36,9 @@ _USER_AGENTS = [
 ]
 
 
+_logger = get_logger("transport.browser")
+
+
 class BrowserClient:
     """Async browser automation через Playwright.
 
@@ -50,12 +53,16 @@ class BrowserClient:
         proxy: str | None = None,
         default_timeout: int = 30000,
         human_like_delays: bool = True,
+        allow_private: bool = False,
     ) -> None:
         self._headless = headless
         self._stealth = stealth
         self._proxy = proxy
         self._timeout = default_timeout
         self._human_delays = human_like_delays
+        # F-AP1: приватные адреса запрещены по умолчанию. Явный opt-in
+        # нужен только для осознанного локального обхода браузера.
+        self._allow_private = allow_private
         self._playwright: Any = None
         self._browser: Any = None
         # S163 W5: per-instance Circuit Breaker (canonical pattern из smtp.py).
@@ -113,6 +120,61 @@ class BrowserClient:
             ctx_kwargs["timezone_id"] = "Europe/Moscow"
         return await self._browser.new_context(**ctx_kwargs)
 
+    async def _safe_goto(self, page: Any, url: str, **kwargs: Any) -> Any:
+        """Navigate with SSRF validation applied first (F-AP1, CRITICAL).
+
+        Единственная точка навигации в классе: все семь вызовов
+        ``page.goto`` идут через неё. Раньше URL уходил в браузер как есть,
+        поэтому ``file:///etc/passwd``, ``data:`` и ``169.254.169.254``
+        доходили до Playwright (9 из 9 payload'ов в репро).
+
+        B-3 (adversarial review): проверки только начального URL мало —
+        ``page.goto`` сам следует за редиректами, поэтому публичный URL с
+        ``302 → http://169.254.169.254/`` обходил guard целиком. Поэтому
+        на страницу вешается route-handler, который перепроверяет КАЖДЫЙ
+        запрос, включая хопы редиректа, и обрывает небезопасный.
+
+        Args:
+            page: Страница Playwright.
+            url: Запрашиваемый URL.
+            **kwargs: Аргументы, пробрасываемые в ``page.goto``.
+
+        Returns:
+            Ответ ``page.goto``.
+
+        Raises:
+            UrlNotAllowedError: URL не проходит SSRF-политику.
+
+        """
+        from src.backend.core.net.url_guard import UrlNotAllowedError, assert_safe_url
+
+        try:
+            safe_url = assert_safe_url(url, allow_private=self._allow_private)
+        except UrlNotAllowedError:
+            _logger.warning("browser.ssrf_blocked", extra={"url": url[:200]})
+            raise
+
+        # Fail-closed на редиректы: handler ставится один раз на страницу.
+        if not getattr(page, "_gd_ssrf_guarded", False):
+            allow_private = self._allow_private
+
+            async def _guard_route(route: Any, request: Any) -> None:
+                try:
+                    assert_safe_url(request.url, allow_private=allow_private)
+                except UrlNotAllowedError:
+                    _logger.warning(
+                        "browser.ssrf_blocked_redirect",
+                        extra={"url": request.url[:200]},
+                    )
+                    await route.abort()
+                    return
+                await route.continue_()
+
+            await page.route("**/*", _guard_route)
+            page._gd_ssrf_guarded = True
+
+        return await page.goto(safe_url, **kwargs)
+
     async def _human_delay(self, min_ms: int = 100, max_ms: int = 500) -> None:
         """Add human-like delay between actions.
 
@@ -144,8 +206,8 @@ class BrowserClient:
             ctx = await self._new_context()
             page = await ctx.new_page()
             try:
-                response = await page.goto(
-                    url, wait_until=wait_until, timeout=self._timeout
+                response = await self._safe_goto(
+                    page, url, wait_until=wait_until, timeout=self._timeout
                 )
                 await self._human_delay()
                 return {
@@ -171,8 +233,8 @@ class BrowserClient:
             ctx = await self._new_context()
             page = await ctx.new_page()
             try:
-                await page.goto(
-                    url, wait_until="domcontentloaded", timeout=self._timeout
+                await self._safe_goto(
+                    page, url, wait_until="domcontentloaded", timeout=self._timeout
                 )
                 await self._human_delay()
                 elements = await page.query_selector_all(selector)
@@ -195,8 +257,8 @@ class BrowserClient:
             ctx = await self._new_context()
             page = await ctx.new_page()
             try:
-                await page.goto(
-                    url, wait_until="domcontentloaded", timeout=self._timeout
+                await self._safe_goto(
+                    page, url, wait_until="domcontentloaded", timeout=self._timeout
                 )
                 await self._human_delay()
                 return await page.evaluate(f"""
@@ -231,8 +293,8 @@ class BrowserClient:
             ctx = await self._new_context()
             page = await ctx.new_page()
             try:
-                await page.goto(
-                    url, wait_until="domcontentloaded", timeout=self._timeout
+                await self._safe_goto(
+                    page, url, wait_until="domcontentloaded", timeout=self._timeout
                 )
                 for selector, value in fields.items():
                     await self._human_delay(50, 200)
@@ -260,8 +322,8 @@ class BrowserClient:
             ctx = await self._new_context()
             page = await ctx.new_page()
             try:
-                await page.goto(
-                    url, wait_until="domcontentloaded", timeout=self._timeout
+                await self._safe_goto(
+                    page, url, wait_until="domcontentloaded", timeout=self._timeout
                 )
                 await self._human_delay()
                 await page.click(selector)
@@ -285,8 +347,8 @@ class BrowserClient:
             ctx = await self._new_context()
             page = await ctx.new_page()
             try:
-                await page.goto(
-                    url, wait_until="domcontentloaded", timeout=self._timeout
+                await self._safe_goto(
+                    page, url, wait_until="domcontentloaded", timeout=self._timeout
                 )
                 await self._human_delay()
                 return await page.screenshot(full_page=full_page)
@@ -306,7 +368,8 @@ class BrowserClient:
                     await self._human_delay()
 
                     if action == "navigate":
-                        resp = await page.goto(
+                        resp = await self._safe_goto(
+                            page,
                             step["url"],
                             wait_until="domcontentloaded",
                             timeout=self._timeout,

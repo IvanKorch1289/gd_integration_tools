@@ -25,27 +25,18 @@
 # Sprint 36 (2026-06-23): SSE source мигрирован на OutboundHttpClient
 # через новый .stream() метод (добавлен в core/net/outbound_http.py).
 # Allowlist остаётся пустым — 0 нарушителей.
-
 #
 # ---------------------------------------------------------------------------
-# Re-audit 2026-10-01 (HEAD 2037f9d59), F-AP2. Браузерная навигация.
+# Re-audit 2026-10-05 (HEAD 2d9f4323b), F-AP1/F-AP2 — долг ЗАКРЫТ.
 # ---------------------------------------------------------------------------
+# Три браузерных callsite-файла были внесены в allowlist как явный долг
+# с обязательством снять запись до wire-up пула и провести URL через
+# url-guard. url-guard написан: src/backend/core/net/url_guard.py
+# (схемы http/https, запрет loopback/private/link-local, разбор
+# нестандартных записей IP). Навигация во всех трёх файлах идёт через
+# guard: BrowserClient._safe_goto, rpa_browser._guarded_goto,
+# dsl_browser.BrowserDSL._guarded_goto.
 #
-# Гейт расширен детекцией ``page.goto`` / ``context.goto`` / ``*.reload()``
-# (Playwright уходит в сеть мимо OutboundHttpClient, то есть мимо WAF).
-# До расширения гейт рапортовал «0 violations» при 10 таких callsite'ах.
-#
-# Записи ниже — НЕ «одобрено», а явная фиксация долга. Обоснование
-# у всех одно: RPA-пул нигде не подключён, поэтому код физически
-# недостижим — это подтверждено эмпирически (ExecutionContext без поля
-# browser_pool → PlaywrightBrowserPool «не зарегистрирован» → exchange.fail;
-# BrowserClient.start() не вызывается нигде).
-#
-# Обязательство при wire-up пула: снять запись из allowlist и провести
-# URL через url-guard (схема http/https, запрет file:/data:/javascript:,
-# reject loopback/private/link-local, host-allowlist) ДО первого
-# продакшн-запуска. Пока запись на месте — гейт не даст забыть.
+# Записи удалены — allowlist снова пуст. Регрессия на новый callsite
+# ловится гейтом немедленно, а не «когда-нибудь при wire-up».
 
-src/backend/dsl/engine/processors/rpa_browser.py  # owner=Dev3 | target=Sprint-RPA-SSRF | reason=F-AP2 unreachable: rpa.browser.launch pool не подключён; требуется url_guard до wire-up
-src/backend/infrastructure/clients/transport/browser.py  # owner=Dev3 | target=Sprint-RPA-SSRF | reason=F-AP2 unreachable: BrowserClient.start() никем не вызывается; требуется url_guard до wire-up
-src/backend/core/dsl_browser/dsl.py  # owner=Dev3 | target=Sprint-RPA-SSRF | reason=F-AP2 мёртвый код: 0 production-импортёров; требуется url_guard до wire-up

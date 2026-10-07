@@ -50,6 +50,28 @@ __all__ = (
 )
 
 
+def _guarded_goto(page: Any, url: str) -> Any:
+    """Навигация с обязательной SSRF-проверкой (F-AP1, CRITICAL).
+
+    До фикса ``self._url`` уходил в ``page.goto`` как есть: ``file://``,
+    ``data:`` и ``169.254.169.254`` доходили до браузера (9/9 payload'ов).
+
+    Args:
+        page: Страница Playwright.
+        url: Запрашиваемый URL.
+
+    Returns:
+        Ответ ``page.goto``.
+
+    Raises:
+        UrlNotAllowedError: URL отклонён политикой.
+
+    """
+    from src.backend.core.net.url_guard import assert_safe_url
+
+    return page.goto(assert_safe_url(url))
+
+
 def _extract_domain(url: str) -> str:
     """Извлекает domain из URL для cookie key."""
     if not url:
@@ -159,7 +181,7 @@ class BrowserLaunchProcessor(BaseProcessor):
             # (domain ещё неизвестен в момент browser_launch)
 
             if self._url:
-                await page.goto(self._url)
+                await _guarded_goto(page, self._url)
         except Exception as exc:
             exchange.fail(f"browser_launch failed: {exc}")
 
@@ -214,7 +236,7 @@ class NavigateProcessor(BaseProcessor):
                     if cookies:
                         await ctx.add_cookies(cookies)
 
-            await page.goto(self._url)
+            await _guarded_goto(page, self._url)
 
             # Сохраняем cookies после навигации
             if (
