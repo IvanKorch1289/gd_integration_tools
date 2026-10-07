@@ -311,3 +311,79 @@ class TestNotGloballyRoutable:
         """Документационные диапазоны не маршрутизируются в интернет."""
         with pytest.raises(UrlNotAllowedError):
             assert_safe_url(url)
+
+
+class TestIpv6NotGloballyRoutable:
+    """Fail-closed для IPv6: шестьtov4 (6to4) и не-reject-to-globally-routable.
+
+    B-4 follow-up (adversarial review): IPv6-обходные пути (``ipv4_mapped``,
+    ``sixtofour``) требовали явной рекурсивной проверки; ``is_global`` False
+    должен срабатывать как fail-closed хвост для будущих диапазонов.
+    """
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            # 6to4: 2002::/16 → IPv4 в нижних 32 битах
+            "http://[2002:7f00:0001::]/",
+            "http://[2002:0a00:0001::]/",
+            # IPv4-mapped IPv6 — guard должен рекурсивно отклонить
+            "http://[::ffff:127.0.0.1]/",
+            "http://[::ffff:10.0.0.1]/",
+            # Link-local IPv6
+            "http://[fe80::1]/",
+            # Multicast IPv6
+            "http://[ff02::1]/",
+        ],
+    )
+    def test_ipv6_forbidden(self, url: str) -> None:
+        """Любой непрямой IPv6-адрес обязан проходить _is_forbidden_address."""
+        with pytest.raises(UrlNotAllowedError):
+            assert_safe_url(url)
+
+
+class TestMixedRadixDottedIp:
+    """B-4 (follow-up): dotted IPv4 с разными системами счисления.
+
+    Chromium читает ``0x7f.0.0.1`` как ``127.0.0.1``. ``ipaddress.IPv4Address``
+    не разбирает такие формы; guard делает это вручную и должен их
+    отклонить, если результат приватный.
+    """
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://0x7f.0.0.1/",  # hex first octet
+            "http://127.0.0x0.1/",  # hex middle octet
+            "http://0177.0.0.1/",  # octal first octet
+            "http://127.0.0177.1/",  # octal in dotted — Chromium resolves
+            "http://0xff.0.0.1/",  # hex > 0x7f → not loopback, but is_private
+        ],
+    )
+    def test_dotted_mixed_radix_blocked(self, url: str) -> None:
+        """Смешанные системы счисления в пунктирной IPv4-форме блокируются."""
+        with pytest.raises(UrlNotAllowedError):
+            assert_safe_url(url)
+
+
+class TestNonGloballyRoutableTail:
+    """``is_global=False`` — fail-closed хвост для неизвестных/reserved
+    диапазонов, которые stdlib может не считать reserved явно.
+    """
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            # TEST-NET-1/2/3 (RFC 5737) — is_global=False в Python 3.14
+            "http://192.0.2.1/",
+            "http://198.51.100.1/",
+            "http://203.0.113.1/",
+            # Reserved/future use
+            "http://240.0.0.1/",
+            "http://255.255.255.255/",
+        ],
+    )
+    def test_non_globally_routable_blocked(self, url: str) -> None:
+        """is_global=False должен попадать в fail-closed хвост."""
+        with pytest.raises(UrlNotAllowedError):
+            assert_safe_url(url)
