@@ -12,6 +12,10 @@ description = "OrderKind CRUD plugin (migrated from src/backend/services/core/or
 # S18 W12 (ADR-NEW-6): core entities (internal trusted) → Tier-A.
 trust_tier = "A"
 
+# SQLAlchemy ORM-модуль для auto-discovery при миграциях (cycle-15).
+# Top-level поле ``PluginManifest.models_module``.
+models_module = ["extensions.core_entities.orderkinds.domain.models"]
+
 # ─── Runtime capabilities (capability-gate) ───────────────────────
 # db.read/db.write — ExactAliasMatcher, scope = имя ресурса (см. ADR-044).
 [[capabilities]]
@@ -26,6 +30,3 @@ scope = "orderkinds"
 [provides]
 repositories = ["orderkinds"]
 schemas = ["OrderKindSchemaIn", "OrderKindSchemaOut", "OrderKindVersionSchemaOut"]
-
-# SQLAlchemy ORM-модуль для auto-discovery при миграциях (cycle-15).
-models_module = ["extensions.core_entities.orderkinds.domain.models"]

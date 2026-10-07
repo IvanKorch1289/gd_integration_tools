@@ -12,6 +12,13 @@ description = "Order CRUD plugin (migrated from src/backend/services/core/orders
 # S18 W12 (ADR-NEW-6): core entities (internal trusted) → Tier-A.
 trust_tier = "A"
 
+# SQLAlchemy ORM-модуль для auto-discovery при миграциях (cycle-15).
+# Top-level поле ``PluginManifest.models_module``. ``Order`` объявлен в
+# ``domain/models.py`` и наследует ``BaseModel`` из
+# ``src.backend.core.domain.models.base``. Регистрация таблицы на
+# ``Base.metadata`` происходит side-effect при импорте этого модуля.
+models_module = ["extensions.core_entities.orders.domain.models"]
+
 # ─── Runtime capabilities (capability-gate) ───────────────────────
 # Cycle-17 (D-AUDIT-1701): ранее здесь было два ``db.read`` (scope='orders' +
 # scope='orderkinds'). CapabilityGate.declare использует ``ref.name`` (без scope)
@@ -35,9 +42,3 @@ scope = "orders"
 [provides]
 repositories = ["orders"]
 schemas = ["OrderSchemaIn", "OrderSchemaOut", "OrderVersionSchemaOut"]
-
-# SQLAlchemy ORM-модуль для auto-discovery при миграциях (cycle-15).
-# ``Order`` объявлен в ``domain/models.py`` и наследует ``BaseModel`` из
-# ``src.backend.core.domain.models.base``. Регистрация таблицы на
-# ``Base.metadata`` происходит side-effect при импорте этого модуля.
-models_module = ["extensions.core_entities.orders.domain.models"]

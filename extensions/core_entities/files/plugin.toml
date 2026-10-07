@@ -12,6 +12,11 @@ description = "File CRUD plugin (migrated from src/backend/services/io/files.py 
 # S18 W12 (ADR-NEW-6): core entities (internal trusted) → Tier-A.
 trust_tier = "A"
 
+# SQLAlchemy ORM-модули для auto-discovery при миграциях (cycle-15).
+# Top-level поле ``PluginManifest.models_module``. ``File`` и ``OrderFile``
+# объявлены в ``domain/models.py``.
+models_module = ["extensions.core_entities.files.domain.models"]
+
 # ─── Runtime capabilities (capability-gate) ───────────────────────
 # db.read/db.write — ExactAliasMatcher (см. ADR-044): scope = имя ресурса.
 [[capabilities]]
@@ -35,7 +40,3 @@ scope = "s3://*"
 [provides]
 repositories = ["files"]
 schemas = ["FileSchemaIn", "FileSchemaOut", "FileVersionSchemaOut"]
-
-# SQLAlchemy ORM-модули для auto-discovery при миграциях (cycle-15).
-# ``File`` и ``OrderFile`` объявлены в ``domain/models.py``.
-models_module = ["extensions.core_entities.files.domain.models"]

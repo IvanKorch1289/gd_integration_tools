@@ -12,6 +12,13 @@ description = "User CRUD plugin (migrated from src/backend/services/core/users.p
 # S18 W12 (ADR-NEW-6): core entities (internal trusted) → Tier-A.
 trust_tier = "A"
 
+# SQLAlchemy ORM-модуль для auto-discovery при миграциях (cycle-15).
+# Top-level поле ``PluginManifest.models_module``. ``User`` объявлен в
+# ``domain/models.py`` и наследует ``BaseModel`` из
+# ``src.backend.core.domain.models.base``. Регистрация таблицы на
+# ``Base.metadata`` происходит side-effect при импорте этого модуля.
+models_module = ["extensions.core_entities.users.domain.models"]
+
 # ─── Runtime capabilities (capability-gate) ───────────────────────
 [[capabilities]]
 name = "db.read"
@@ -25,12 +32,3 @@ scope = "users"
 [provides]
 repositories = ["users"]
 schemas = ["UserSchemaIn", "UserSchemaOut", "UserVersionSchemaOut"]
-
-# SQLAlchemy ORM-модуль для auto-discovery при миграциях (cycle-15).
-# ``User`` объявлен в ``domain/models.py`` и наследует ``BaseModel`` из
-# ``src.backend.core.domain.models.base``. Регистрация таблицы на
-# ``Base.metadata`` происходит side-effect при импорте этого модуля —
-# а его импорт происходит через :func:`load_plugin_manifests_for_migrations`
-# (см. ``services/plugins/loader/models_discovery.py``) и
-# ``src/backend/infrastructure/resilience/snapshot_job.py``.
-models_module = ["extensions.core_entities.users.domain.models"]
