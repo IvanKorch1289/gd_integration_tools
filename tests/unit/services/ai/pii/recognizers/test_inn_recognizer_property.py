@@ -18,6 +18,8 @@ from tests.unit.services.ai.pii.recognizers._presidio_guard import (
     skip_if_presidio_unavailable,
 )
 
+pytestmark = pytest.mark.property
+
 # F-W (аудит 2026-10-01): см. комментарий в test_inn_recognizer.py.
 _inn_checksum_valid = skip_if_presidio_unavailable(
     "src.backend.services.ai.pii.recognizers.inn_recognizer"

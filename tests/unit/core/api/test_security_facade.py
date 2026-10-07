@@ -20,6 +20,8 @@ from src.backend.core.api.security import (
     signatures,
 )
 
+pytestmark = pytest.mark.security
+
 
 @pytest.mark.unit
 class TestSecurityFacadeAllExports:

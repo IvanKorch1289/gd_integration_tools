@@ -16,6 +16,8 @@ from hypothesis import strategies as st
 
 from src.backend.core.resilience.adaptive_timeout import _percentile
 
+pytestmark = pytest.mark.property
+
 # Strategy: finite floats (no NaN/Inf, can't compare them)
 st_floats = st.floats(
     min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False

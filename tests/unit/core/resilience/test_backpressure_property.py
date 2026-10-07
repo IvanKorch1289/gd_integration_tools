@@ -14,6 +14,8 @@ from src.backend.core.resilience.backpressure import (
     StreamingBackpressureController,
 )
 
+pytestmark = pytest.mark.property
+
 # ── BackpressureState.utilization: pure property ─────────────────────
 
 

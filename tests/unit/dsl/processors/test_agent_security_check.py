@@ -12,6 +12,8 @@ from src.backend.dsl.engine.processors.agent_dsl.agent_security_check import (
     AgentSecurityCheckProcessor,
 )
 
+pytestmark = pytest.mark.security
+
 
 class TestAgentSecurityCheckProcessor:
     """Тесты AgentSecurityCheckProcessor (DSL)."""

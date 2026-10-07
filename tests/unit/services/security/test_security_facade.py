@@ -8,6 +8,8 @@ import pytest
 
 from src.backend.services.security.facade import SecurityFacade, get_security_facade
 
+pytestmark = pytest.mark.security
+
 
 class TestSecurityFacadeJWTBlacklist:
     """Тесты JWT blacklist.

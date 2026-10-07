@@ -34,6 +34,8 @@ from src.backend.core.ai.security.agent_security_types import (
     ThreatLevel,
 )
 
+pytestmark = pytest.mark.security
+
 
 def _raising_hook(name: str = "banking_transaction") -> SecurityHook:
     """SecurityHook, который всегда бросает исключение."""
