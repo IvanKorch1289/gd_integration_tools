@@ -152,20 +152,33 @@ def build_default_registry() -> MiddlewareRegistry:
     # S17 ADR-NEW-3: unified RequestContext snapshot (после tenant).
     registry.register_builtin("request_context", RequestContextMiddleware, order=320)
     # Sprint 5 (audit 2026-09-22 P0): framework-level ownership check.
-    # Без зарегистрированных checker'ов — pass-through (zero-cost).
+    # Без зарегистрированных checker'ов запрос проходит дальше без
+    # object-level проверки; эта ветка логируется на уровне warning.
     #
     # ВАЖНО (аудит 2026-10-01, runtime-замер middleware_actual_order.json):
     # из-за LIFO-семантики add_middleware ВЫСОКИЙ order = ВНЕШНИЙ, поэтому
-    # при order=330 этот middleware выполняется РАНЬше tenant (order=300),
+    # при order=330 этот middleware выполняется РАНЬШЕ tenant (order=300),
     # а не «после него». Прежний комментарий «Порядок: после tenant (300) —
     # tenant-идентичность уже в scope/state» описывал порядок РЕГИСТРАЦИИ,
     # а не порядок ВЫПОЛНЕНИЯ, и был противоречив фактическому поведению.
-    # Поэтому tenant-идентичность берётся напрямую из
-    # AuthContext.metadata['tenant_id'] (SECURITY-P0-002), а не из state.
     #
-    # Статус: checker'ы не регистрируются НИ ОДНИМ production-вызовом
-    # (0 совпадений register_ownership_checker в src/extensions/routes),
-    # то есть в production этот middleware — pass-through.
+    # Источник tenant (D-4, исправлено 2026-10-05): AuthContext.metadata
+    # ['tenant_id'] -> scope.state['tenant_id']. Заголовок X-Tenant-ID НЕ
+    # является источником: он обязан совпадать с аутентифицированным
+    # tenant'ом, иначе 403 tenant_mismatch (SECURITY-P0-002). До этого
+    # приоритет был header -> state, то есть недоверенный заголовок подменял
+    # аутентифицированного tenant'а.
+    #
+    # Статус (D-4, 2026-10-05): object-level авторизация на этой поверхности
+    # НЕ ВЫПОЛНЯЕТСЯ, и это не «нулевая стоимость»:
+    #   * register_ownership_checker не вызывается ни одним production-сайтом
+    #     (0 совпадений в src/ extensions/ routes/ plugins/ testkit/);
+    #   * даже с зарегистрированным checker'ом ветка проверки недостижима —
+    #     0 из 6 DEFAULT_PATTERNS совпадают с живыми путями: реальная
+    #     CRUD-поверхность /api/v1/auto/<entity>.<action> передаёт id в теле,
+    #     а паттерны описывают несуществующую раскладку /api/v1/<entity>/{id}.
+    # Реальная граница владения — ORM tenant-фильтр; остающийся обход через
+    # UNION/CTE закрывается PostgreSQL RLS (ADR на D-4C).
     registry.register_builtin(
         "tenant_resource_isolation", TenantResourceIsolationMiddleware, order=330
     )

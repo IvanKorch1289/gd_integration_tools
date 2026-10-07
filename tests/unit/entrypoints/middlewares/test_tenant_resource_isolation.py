@@ -20,15 +20,43 @@ from src.backend.entrypoints.middlewares.tenant_resource_isolation import (
 )
 
 
+class _AuthStub:
+    """Минимальный duck-type аналога ``AuthContext`` с ``metadata``."""
+
+    def __init__(self, tenant_id: str) -> None:
+        """Инициализировать metadata с tenant_id.
+
+        Args:
+            tenant_id: аутентифицированный идентификатор tenant'а.
+
+        """
+        self.metadata = {"tenant_id": tenant_id}
+
+
 def _make_scope(
     path: str = "/api/v1/orders/42",
     method: str = "GET",
     *,
     tenant_header: str | None = None,
     state_tenant: str | None = None,
+    auth_tenant: str | None = None,
     scope_type: str = "http",
 ) -> dict[str, Any]:
-    """Собирает ASGI scope для теста."""
+    """Собирает ASGI scope для теста.
+
+    Args:
+        path: путь запроса.
+        method: HTTP-метод.
+        tenant_header: значение заголовка ``X-Tenant-ID`` (недоверенный ввод).
+        state_tenant: значение ``state['tenant_id']`` (аутентифицированный).
+        auth_tenant: значение ``AuthContext.metadata['tenant_id']`` —
+            приоритетный аутентифицированный источник (D-4).
+        scope_type: тип scope.
+
+    Returns:
+        Готовый ASGI scope.
+
+    """
     headers: list[tuple[bytes, bytes]] = []
     if tenant_header is not None:
         headers.append((b"x-tenant-id", tenant_header.encode("latin-1")))
@@ -41,6 +69,8 @@ def _make_scope(
     }
     if state_tenant is not None:
         scope["state"]["tenant_id"] = state_tenant
+    if auth_tenant is not None:
+        scope["state"]["auth"] = _AuthStub(tenant_id=auth_tenant)
     return scope
 
 
@@ -176,7 +206,7 @@ async def test_not_owned_deny_403() -> None:
     calls: list[tuple[str, str]] = []
     mw.register_ownership_checker("order", _owned_checker(False, calls))
     collector = _ResponseCollector()
-    await mw(_make_scope(tenant_header="t1"), _noop_receive(), collector)
+    await mw(_make_scope(auth_tenant="t1"), _noop_receive(), collector)
     assert not downstream.called
     assert calls == [("42", "t1")]
     assert collector.status == 403
@@ -189,7 +219,7 @@ async def test_owned_pass_through() -> None:
     downstream = _Downstream()
     mw = TenantResourceIsolationMiddleware(downstream)
     mw.register_ownership_checker("order", _owned_checker(True))
-    await mw(_make_scope(tenant_header="t1"), _noop_receive(), _noop_send)
+    await mw(_make_scope(auth_tenant="t1"), _noop_receive(), _noop_send)
     assert downstream.called
 
 
@@ -205,7 +235,7 @@ async def test_checker_raises_not_found_canonical_404() -> None:
     mw = TenantResourceIsolationMiddleware(downstream)
     mw.register_ownership_checker("order", _missing)
     collector = _ResponseCollector()
-    await mw(_make_scope(tenant_header="t1"), _noop_receive(), collector)
+    await mw(_make_scope(auth_tenant="t1"), _noop_receive(), collector)
     assert not downstream.called
     assert collector.status == 404
     payload = collector.payload
@@ -232,19 +262,73 @@ async def test_tenant_from_state_fallback() -> None:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_tenant_header_priority_over_state() -> None:
-    """Header X-Tenant-ID имеет приоритет над state (семантика TenantMiddleware)."""
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_tenant_header_mismatch_deny_403() -> None:
+    """D-4: заголовок, не совпадающий с аутентифицированным tenant → 403.
+
+    **КОНТРАКТ ИЗМЕНЁН намеренно (D-4, аудит 2026-10-05).** Прежде те назывался
+    ``test_tenant_header_priority_over_state`` и закреплял ``header → state``:
+    state говорил ``t-state``, заголовок ``t-header``, и checker получал
+    ``t-header`` — то есть недоверенный заголовок подменял аутентифицированного
+    tenant'а. Это прямой IDOR, который к тому же не фиксировался ни одним
+    production-тестом, поскольку ``register_ownership_checker`` не вызывается
+    ни одним production-сайтом.
+
+    Теперь источник истины — ``AuthContext.metadata['tenant_id']``, а заголовок
+    обязан с ним совпадать.
+    """
     downstream = _Downstream()
     mw = TenantResourceIsolationMiddleware(downstream)
     calls: list[tuple[str, str]] = []
     mw.register_ownership_checker("order", _owned_checker(True, calls))
+    collector = _ResponseCollector()
+
     await mw(
         _make_scope(tenant_header="t-header", state_tenant="t-state"),
         _noop_receive(),
+        collector,
+    )
+
+    assert not downstream.called
+    assert calls == [], "checker не должен вызываться при подмене tenant'а"
+    assert collector.status == 403
+    assert b"tenant mismatch" in collector.body
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_tenant_header_matching_authenticated_allowed() -> None:
+    """Заголовок, совпадающий с аутентифицированным tenant, не мешает."""
+    downstream = _Downstream()
+    mw = TenantResourceIsolationMiddleware(downstream)
+    calls: list[tuple[str, str]] = []
+    mw.register_ownership_checker("order", _owned_checker(True, calls))
+
+    await mw(
+        _make_scope(tenant_header="t1", auth_tenant="t1"), _noop_receive(), _noop_send
+    )
+
+    assert downstream.called
+    assert calls == [("42", "t1")]
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_auth_tenant_wins_over_state_tenant() -> None:
+    """``AuthContext.metadata`` приоритетнее ``state['tenant_id']``."""
+    downstream = _Downstream()
+    mw = TenantResourceIsolationMiddleware(downstream)
+    calls: list[tuple[str, str]] = []
+    mw.register_ownership_checker("order", _owned_checker(True, calls))
+
+    await mw(
+        _make_scope(state_tenant="t-state", auth_tenant="t-auth"),
+        _noop_receive(),
         _noop_send,
     )
-    assert downstream.called
-    assert calls == [("42", "t-header")]
+
+    assert calls == [("42", "t-auth")]
 
 
 @pytest.mark.unit

@@ -11,7 +11,7 @@
 - СНИЛС → [SNILS_1], ...
 - Паспорт → [PASSPORT_1], ...
 - Номер карты → [CARD_1], ...
-- API-ключи/токены → [REDACTED]
+- API-ключи/токены → [REDACTED_<n>] (уникальный плейсхолдер на каждое совпадение)
 """
 
 import re
@@ -140,12 +140,15 @@ class AIDataSanitizer:
                 if original in mapping.values():
                     continue
 
-                if label == "REDACTED":
-                    placeholder = "[REDACTED]"
-                else:
-                    counters.setdefault(label, 0)
-                    counters[label] += 1
-                    placeholder = f"[{label}_{counters[label]}]"
+                # Каждому совпадению — уникальный плейсхолдер, включая
+                # REDACTED. Раньше для API-ключей использовалась константа
+                # ``[REDACTED]``, из-за чего ``mapping[placeholder] = original``
+                # перезаписывал предыдущее значение: в одном сообщении
+                # маскировался ТОЛЬКО последний секрет, а все предыдущие уходили
+                # в LLM в открытом виде (воспроизведено: 3 ключа → 2 утёкших).
+                counters.setdefault(label, 0)
+                counters[label] += 1
+                placeholder = f"[{label}_{counters[label]}]"
 
                 mapping[placeholder] = original
 
