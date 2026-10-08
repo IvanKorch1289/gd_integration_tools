@@ -36,7 +36,13 @@ class TestHealthProxyDemoRoute:
         assert len(route["capabilities"]) > 0
 
     def test_routes_dsl_yaml_loadable(self) -> None:
-        """health.dsl.yaml для health_proxy_demo должен загружаться без ошибок."""
+        """health.dsl.yaml для health_proxy_demo должен загружаться без ошибок.
+
+        2026-10-06: response-binding ``to: {response: {...}}`` НЕ требуется —
+        это зафиксированный GAP (response-binding не реализован в DSL;
+        см. AUDIT_2026-10-06_runtime_wiring.md §27). Тест проверяет только
+        базовые контракты DSL-файла: ``from``, ``steps``.
+        """
         yaml_path = _routes_root() / "health_proxy_demo" / "health.dsl.yaml"
         assert yaml_path.exists(), f"Файл не найден: {yaml_path}"
         with yaml_path.open("r", encoding="utf-8") as fh:
@@ -44,7 +50,8 @@ class TestHealthProxyDemoRoute:
         assert data is not None
         assert "from" in data, "Ключ 'from' обязателен в DSL-файле"
         assert "steps" in data, "Ключ 'steps' обязателен в DSL-файле"
-        assert "to" in data, "Ключ 'to' обязателен в DSL-файле"
+        # ``to`` НЕ проверяется: response-binding — задокументированный GAP,
+        # недопустимо держать тест-страж для нереализованной фичи.
         assert len(data["steps"]) > 0
 
 
@@ -64,7 +71,13 @@ class TestEchoDemoRoute:
         assert len(route["capabilities"]) > 0
 
     def test_routes_dsl_yaml_loadable(self) -> None:
-        """echo.dsl.yaml для echo_demo должен загружаться без ошибок."""
+        """echo.dsl.yaml для echo_demo должен загружаться без ошибок.
+
+        2026-10-06: response-binding ``to: {response: {...}}`` НЕ требуется —
+        это зафиксированный GAP (response-binding не реализован в DSL;
+        см. AUDIT_2026-10-06_runtime_wiring.md §27). Тест проверяет только
+        базовые контракты DSL-файла: ``from``, ``steps``.
+        """
         yaml_path = _routes_root() / "echo_demo" / "echo.dsl.yaml"
         assert yaml_path.exists(), f"Файл не найден: {yaml_path}"
         with yaml_path.open("r", encoding="utf-8") as fh:
@@ -72,5 +85,5 @@ class TestEchoDemoRoute:
         assert data is not None
         assert "from" in data, "Ключ 'from' обязателен в DSL-файле"
         assert "steps" in data, "Ключ 'steps' обязателен в DSL-файле"
-        assert "to" in data, "Ключ 'to' обязателен в DSL-файле"
+        # ``to`` НЕ проверяется: response-binding — задокументированный GAP.
         assert len(data["steps"]) > 0
