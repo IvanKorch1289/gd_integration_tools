@@ -95,10 +95,18 @@ async def test_populate_from_actions_with_specs() -> None:
 
 @pytest.mark.asyncio
 async def test_populate_from_actions_registry_unavailable() -> None:
+    """``extensions.action_handler_registry`` отсутствует → populator возвращает 0.
+
+    D-WALKNESS-003 fix: ``create=True`` нужен, потому что
+    ``src.backend.core.api`` использует ``__getattr__`` (lazy) — атрибут
+    ``extensions`` физически не существует в __init__. Без ``create=True``
+    ``patch`` падает с AttributeError: "does not have the attribute 'extensions'".
+    """
     reg = ServiceSchemaRegistry()
     with patch(
         "src.backend.core.api.extensions",
         SimpleNamespace(),  # нет action_handler_registry
+        create=True,
     ):
         assert populator.populate_from_actions(reg) == 0
 
