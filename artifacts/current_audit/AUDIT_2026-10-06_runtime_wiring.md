@@ -1275,3 +1275,100 @@ test_function_call.py::TestActiveWhitelist` (5 кейсов).
 ADR по call_function полностью выполнен: whitelist собирается, шаги
 `call_function` для объявленных модулей снова работают (PermissionError
 больше не глобально-фатальный).
+
+---
+
+## Часть V. Сводка по ходам после первичного хода (2026-10-06 — 2026-10-08)
+
+Эти дополнения записаны ретроспективно, по итогам последующих 10+ коммитов
+на master. Каждое утверждение имеет свежее доказательство в виде commit'а,
+артефакта или живого grep.
+
+### 30. Слитые security-фиксы в master
+
+В этом продолжении было слито 8 фикс-веток + 1 feat-ветка:
+- `fix/marker-coverage` — F-X: маркеры property/security выбирали 0 тестов.
+- `fix/metrics-gate-selfref` — F-MD1: гейт метрик самоссылочный и от сиротский.
+- `fix/outbox-ack-redelivery` — **CRITICAL** F-1: подтверждённое событие outbox доставлялось бесконечно.
+- `fix/ssrf-url-guard` — **CRITICAL** F-AP1 + 2 follow-up: SSRF в RPA/browser (page.goto) + редиректы + CGNAT.
+- `fix/ownership-deny-by-default` — **CRITICAL** D-4 + F-PII: tenant из AuthContext, маскирование всех N секретов.
+- `fix/tenant-context-split-brain` — **CRITICAL** F-D1 + ADR-0347: tenant не доходил до ORM/RLS, principal без tenant_id.
+- `feat/routes-enable-and-dsl-conformance` — включение V11-роутов, dual-mode DSL, инверсия core/domain/models, ADR по call_function whitelist.
+
+Net effect: **6 CRITICAL/HIGH security-блокеров** закрыты и дошли до master.
+Все 7 worktrees + 8 веток удалены; master — единственная ветка.
+
+### 31. Independent gate checks (HEAD `231612035`)
+
+```
+$ bandit -r src/backend -lll -c pyproject.toml
+Total lines of code: 286823
+Total issues (by severity): Undefined 0 / Low 92 / Medium 49 / **High 0**
+Files skipped (0)
+```
+
+```
+$ tools/check_layers.py
+Нарушений: 0 новых (baseline: 49 legacy)
+```
+
+```
+$ tools/check_docstrings.py src/backend
+Total: 0 missing docstrings in 0 files (2396 files scanned)
+```
+
+```
+$ tools/route_execution_check.py
+Загружено роутов: 3
+echo_demo — OK: transform применился (echoed='привет')
+composition.demo — OK: пайплайн исполнился и вернул body
+health_proxy_demo — OK: pipeline остановлен route-level feature_flag
+ВСЕ КЕЙСЫ ПРОШЛИ: 3
+```
+
+```
+$ tools/route_blockers_report.py
+всего проблем: 0
+```
+
+### 32. Тестовые наборы, добавленные или исправленные в ходах
+
+| Тест | Что фиксирует |
+|---|---|
+| `tests/unit/dsl/yaml_loader/test_pipeline_loader_regressions.py` (10) | default_route_id, from-алиас, None-шаги |
+| `tests/unit/dsl/engine/processors/test_function_call.py::TestActiveWhitelist` (5) | call_function whitelist — идемпотентность, snapshot, валидация, union |
+| `tests/unit/core/net/test_url_guard.py` (+16) | IPv6 forbidden (6to4/ipv4_mapped), mixed-radix dotted, non-globally-routable tail; +1 п.п. coverage 70→71% |
+| `tests/unit/dsl/cli/test_explanation.py` (обновлён) | post-fix hello_route pipeline; 2 новых регресс-стража (no_llm_step, no_policy_step) |
+
+Все 113 regression-тестов проходят за 1.55с.
+
+### 33. Гипотезы, отозванные после проверки
+
+* **§17 К4 «Order-pollution test_cert_model»** — ошибочная гипотеза. `test_cert_model` проходит 12/12 в любом порядке и комбинациях. 12 ошибок в больших прогонах — это **предсуществующие** failures в `tests/unit/dsl/` (banking, eip/transformation, llmcall, webhook_signature, dataframes, msgspec_speedup, routes_v11_discovery), задокументированные в `tests/unit/test_layer_violations_count.py` и в summary предыдущих сессий. Запись К4 из §4.2 удалена в commit `3a7e3d18b`.
+
+### 34. Регрессии от моих предыдущих commit'ов, исправленные позже
+
+* **plugin-toml `models_module` внутри `[provides]`** — коммит `9e132d6f8` (inversion core/domain/models) добавил `models_module = [...]` в секцию `[provides]`. `PluginProvides` не имеет такого поля (`extra='forbid'`) → `ValidationError` на `load_plugin_manifest`. Исправлено в commit `231612035`: поле перенесено в top-level во всех 4 `plugin.toml`. 12/12 test_core_entities_capability passed.
+
+### 35. Связанные артефакты
+
+* `artifacts/current_audit/PROD_READINESS_2026-10-07.md` — повторный prod-readiness анализ, 4 категории (P0–P3). bandit-strict closed; coverage 60%→70% — единственный измеримый остающийся gap.
+* `artifacts/current_audit/DEAD_CODE_2026-10-07.md` — верификация 5 кандидатов из `tools/deadcode_candidates.json`. **1 реально мёртв: `src/backend/entrypoints/api/v1/endpoints/admin_plugins.py` (556 LOC, тень одноимённого пакета)**; 2 ложных CLI/CI-инструмента; 2 живых.
+* `tools/route_execution_check.py` — end-to-end прогон через штатный lifespan → DslService.dispatch.
+* `tools/route_blockers_report.py` — детектор блокеров загрузки роутов (0 проблем).
+
+### 36. Что остаётся открытым
+
+| Открыто | Где зафиксировано |
+|---|---|
+| Coverage 60% → 70% (нужен full-suite; OOM в этой среде) | `PROD_READINESS_2026-10-07.md` §4.1 Б2 |
+| Layer baseline 49 (выход через ADR-0249 или удаление shim'ов) | `PROD_READINESS_2026-10-07.md` §4.1 Б3, К5 |
+| Response-binding (`to:` в YAML) | `PROD_READINESS_2026-10-07.md` §4.2 К1 |
+| `hub_run_adapter` calling-convention (требует ADR) | §4.2 К2 |
+| PluginLoader по умолчанию + R-V15-16 полная инверсия 6 imports в `registers_domains.py` | §4.4 Ф1, Ф2 |
+| Jupyter Hub provider-плагин | §4.4 Ф3 |
+| Удаление `admin_plugins.py` / `bootstrap_admin.py` / `services/io/files.py` / `services/integrations/skb.py` | `DEAD_CODE_2026-10-07.md`, `PROD_READINESS_2026-10-07.md` §4.2 К5 |
+
+Все эти пункты требуют явного подтверждения на удаление файлов
+(по CLAUDE.md: «запрещено удалять файлы без явного подтверждения»)
+или architecture-решения (R-V15-16 полная инверсия, ADR для public API).
