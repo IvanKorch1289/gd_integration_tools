@@ -192,7 +192,13 @@ class TestGoto:
         page = MockPage(fail_until_attempt=99)
         cfg = BrowserConfig(retries=1, retry_delay_ms=0, screenshot_dir=str(tmp_path))
         dsl = BrowserDSL(page, cfg)
-        result = await dsl.goto("https://broken")
+        # D-WALKNESS-006 fix: используем example.com вместо "broken" — после
+        # F-AP1 SSRF fix'ов URL guard отклоняет невалидные host'ы
+        # (UrlNotAllowedError) ещё до попытки навигации. Тест проверял
+        # RuntimeError от MockPage (page._goto raises), а не URL-guard.
+        # example.com проходит URL guard, MockPage кидает RuntimeError —
+        # тот же сценарий, что был до введения URL guard.
+        result = await dsl.goto("https://example.com")
         assert result.success is False
         assert result.error is not None
         assert "RuntimeError" in result.error
