@@ -7,6 +7,15 @@ import pytest
 from src.backend.core.config.mongo import MongoConnectionSettings
 
 
+@pytest.fixture(autouse=True)
+def _clean_mongo_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Убрать MONGO_ENABLED из тестового env, чтобы default-логика не зависела
+    от глобального окружения (например, MONGO_ENABLED=false в shell,
+    что раньше приводило к False даже при default=True в Field).
+    """
+    monkeypatch.delenv("MONGO_ENABLED", raising=False)
+
+
 class TestMongoConnectionSettings:
     def test_defaults(self) -> None:
         s = MongoConnectionSettings(
