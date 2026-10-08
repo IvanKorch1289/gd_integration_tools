@@ -17,11 +17,24 @@
 
 from __future__ import annotations
 
+#: Default env для offline-окружений (нет MongoDB / Vault). Раньше требовалось
+#: передавать ``MONGO_ENABLED=false`` через env явно; теперь скрипт
+#: self-documents the requirement by setting it itself if not provided.
+#: Production invocation по-прежнему через env (например ``make``-target).
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
+
+#: Best-effort: если оператор не передал env, установить безопасный
+#: offline-профиль. Это меняет только ENV-окружение **нашего скрипта**,
+#: но не приложения вне lifespan'а (вне ``create_app`` scope, но он
+#: всё равно единственный), и не отменяет явный ``MONGO_ENABLED=true``
+#: если пользователь выставил его сам.
+os.environ.setdefault("SEC_API_KEY", "test-functional-key-1234567890")
+os.environ.setdefault("MONGO_ENABLED", "false")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
