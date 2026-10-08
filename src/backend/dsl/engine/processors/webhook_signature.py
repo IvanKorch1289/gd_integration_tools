@@ -190,8 +190,8 @@ class WebhookSignatureProcessor(BaseProcessor):
         try:
             from standardwebhooks import Webhook  # type: ignore[import-not-found]
 
-            wh = Webhook(self._secret)
             try:
+                wh = Webhook(self._secret)
                 wh.verify(
                     body_bytes,
                     {
@@ -207,6 +207,17 @@ class WebhookSignatureProcessor(BaseProcessor):
                 # standardwebhooks raises WebhookVerificationError —
                 # broader Exception narrow всё равно (callback в
                 # library context).
+                #
+                # ``Webhook(secret)`` is constructed *inside* this guard on
+                # purpose: standardwebhooks parses the ``whsec_<b64>`` secret
+                # eagerly and raises binascii.Error / ValueError for a secret
+                # that is not base64. Previously the construction sat in the
+                # outer ``except ImportError`` block, so a malformed secret
+                # escaped ``process()`` entirely and bypassed the configured
+                # on_error policy (fail / dlq / warn). Construction failure is
+                # now treated as verification failure — fail-closed, and no
+                # manual-HMAC fallback, which would skip the library's replay
+                # window check.
                 logger.debug(
                     "webhook_signature: wh.verify failed (exc_type=%s "
                     "exc_msg=%s) — verified=False, falling back to manual",
