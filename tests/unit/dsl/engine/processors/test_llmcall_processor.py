@@ -44,6 +44,74 @@ def _mock_flags(enforce: bool = False) -> MagicMock:
     return flags
 
 
+#: Target of the litellm-price probe. Tests patch it so the cost contract is
+#: deterministic regardless of whether ``litellm`` (and its pricing data) is
+#: installed in the running environment.
+_LITELLM_PROBE = (
+    "src.backend.dsl.engine.processors.ai.llmcall_processor._try_litellm_cost"
+)
+
+
+class TestCostComputation:
+    """Cost contract: litellm pricing wins, local table is the fallback."""
+
+    def test_litellm_price_takes_priority(self) -> None:
+        """When litellm knows the model, its price is used verbatim."""
+        proc = LLMCallProcessor(model="gpt-4")
+        with patch(_LITELLM_PROBE, return_value=0.123456) as probe:
+            assert proc._compute_cost("gpt-4-0613", 50, 50) == 0.123456
+        probe.assert_called_once_with("gpt-4-0613", 50, 50)
+
+    @pytest.mark.parametrize(
+        ("model", "rate"),
+        [("gpt-4-0613", 0.00002), ("gpt-4", 0.00003), ("unknown", 0.00002)],
+    )
+    def test_fallback_table_when_litellm_unavailable(self, model: str, rate: float):
+        """Without litellm, the local per-token table drives the estimate."""
+        proc = LLMCallProcessor(model="gpt-4")
+        with patch(_LITELLM_PROBE, return_value=None):
+            assert proc._compute_cost(model, 50, 50) == rate * 100
+
+    def test_litellm_errors_are_swallowed(self) -> None:
+        """:func:`_try_litellm_cost` swallows litellm errors and returns None.
+
+        The narrow-exception guard lives inside the probe itself, so it is
+        exercised through a stub ``litellm`` module rather than by patching
+        the probe (which would bypass the guard under test).
+        """
+        import sys
+        import types
+
+        from src.backend.dsl.engine.processors.ai.llmcall_processor import (
+            _try_litellm_cost,
+        )
+
+        stub = types.ModuleType("litellm")
+
+        def _boom(**kwargs: Any) -> float:
+            raise ValueError("unknown model")
+
+        stub.completion_cost = _boom  # type: ignore[attr-defined]
+
+        with patch.dict(sys.modules, {"litellm": stub}):
+            assert _try_litellm_cost("custom/model", 10, 10) is None
+
+    def test_litellm_missing_returns_none(self) -> None:
+        """Absent litellm degrades to ``None`` so the local table applies."""
+        import sys
+        import types
+
+        from src.backend.dsl.engine.processors.ai.llmcall_processor import (
+            _try_litellm_cost,
+        )
+
+        # A module without ``completion_cost`` makes the function-local
+        # ``from litellm import completion_cost`` raise ImportError.
+        stub = types.ModuleType("litellm")
+        with patch.dict(sys.modules, {"litellm": stub}):
+            assert _try_litellm_cost("gpt-4-0613", 10, 10) is None
+
+
 class TestLLMCallProcessor:
     """Tests for :class:`LLMCallProcessor`."""
 
@@ -76,6 +144,7 @@ class TestLLMCallProcessor:
                 "src.backend.services.ai.ai_agent.get_ai_agent_service",
                 return_value=mock_agent,
             ),
+            patch(_LITELLM_PROBE, return_value=None),
         ):
             await proc.process(exchange, _Context())
 
@@ -216,6 +285,7 @@ class TestLLMCallProcessor:
                 _mock_flags(enforce=True),
             ),
             patch("src.backend.core.ai.gateway.AIGateway") as MockGW,
+            patch(_LITELLM_PROBE, return_value=None),
         ):
             MockGW.return_value.invoke = AsyncMock(return_value=mock_response)
             await proc.process(exchange, _Context())

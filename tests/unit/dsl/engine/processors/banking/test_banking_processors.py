@@ -355,9 +355,7 @@ async def test_banking_ics_calendar_payment_schedule(
     # integration_core/utils_mixin.py:388). Тест test'ировал фичу,
     # которой нет в коде. Skip'аем через importorskip — тест остаётся
     # как regression-block на будущее.
-    pytest.importorskip(
-        "src.backend.dsl.engine.processors.ics_calendar"
-    )
+    pytest.importorskip("src.backend.dsl.engine.processors.ics_calendar")
     from src.backend.core.config.features import feature_flags
     from src.backend.dsl.engine.processors.ics_calendar import IcsCalendarProcessor
 
@@ -409,7 +407,8 @@ async def test_banking_webdav_processor_constructs_valid_spec(
         mode="upload",
         remote_path="/documents/credit-decision-001.docx",
         source="body.doc_bytes",
-        auth=("user", "secret"),
+        username="user",
+        password="secret",
     )
 
     assert proc is not None
@@ -443,6 +442,6 @@ async def test_banking_geo_distance_between_offices(
 
     await proc.process(exchange, context=AsyncMock())
 
-    km = exchange.in_message.body["km"]
+    km = exchange.in_message.body["km"]["km"]
     # Москва-СПб ≈ 635 км по geodesic.
     assert 600 < km < 700

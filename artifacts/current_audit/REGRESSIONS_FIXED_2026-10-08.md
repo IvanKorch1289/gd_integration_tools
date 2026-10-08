@@ -64,3 +64,59 @@ SEC_API_KEY=test-functional-key-1234567890 MONGO_ENABLED=false \\
     .venv/bin/python tools/route_execution_check.py
 ```
 Без `MONGO_ENABLED=false` lifespan пытается подключиться к MongoDB и валится в offline env. В предыдущих ходах с правильным env мой прогон показывал 3/3 passed.
+
+---
+
+# Раунд 2 — разбор оставшихся падений (HEAD `101498cc89`)
+
+Ниже — падения, перечисленные в секции «Что не починено», разобраны по
+root-cause. Все четыре оказались **рассинхронизацией тестов с реальным
+API**, а не дефектом рантайма. Публичные сигнатуры не менялись.
+
+| # | Тест | Root cause | Решение |
+|---|---|---|---|
+| A | `banking::test_banking_webdav_processor_constructs_valid_spec` | `WebDavProcessor.__init__` принимает `username`/`password` (`src/backend/dsl/engine/processors/webdav_io.py:81`), тест передавал `auth=("user","secret")`. Канон подтверждён в `mutants/tests/unit/dsl/engine/processors/test_webdav_io.py` — docstring процессора устарел | Тест приведён к `username=`/`password=` |
+| B | `banking::test_banking_geo_distance_between_offices` | `GeoProcessor` в режиме `distance` кладёт **dict** `{"km","meters","miles"}` (`geo.py:130`), тест сравнивал сам dict со скаляром → `TypeError: '<' not supported between int and dict` | Тест читает `body["km"]["km"]`; канон подтверждён `mutants/.../test_geo.py:39` |
+| C | `test_llmcall_processor` (2 теста) | `_compute_cost()` сначала пробует `litellm.completion_cost`; `litellm` установлен → возвращает реальную цену (0.00063). Тест ожидал hardcoded fallback (0.002) | Тест детерминирован: `litellm`-проба пропатчена в `None`; добавлен `TestCostComputation` — приоритет litellm, fallback-таблица, подавление ошибок, ImportError-путь |
+| D | `entrypoints/test_mypy_contract_regressions.py::test_authenticate_jwt_awaits_async_decode` | **Order-зависимое** падение. `WSAuthenticator.authenticate_jwt` берёт бэкенд через `get_jwt_backend_provider()` (`ws_auth.py:223`), который мемоизирует singleton в `_overrides` (`di/providers/auth.py:60`). Тест патчил класс `JwtBackend` — после того как любой ранний тест прогрел кэш, патч не действовал и настоящий бэкенд пытался декодировать фейковый токен | Тест патчит сам провайдер: `src.backend.core.di.providers.auth.get_jwt_backend_provider` |
+
+## Результаты
+
+```
+$ pytest tests/unit/dsl/engine/processors/banking -q -p no:randomly
+11 passed, 1 skipped
+
+$ pytest tests/unit/dsl/engine/processors/test_llmcall_processor.py -q -p no:randomly
+14 passed
+
+$ pytest tests/unit/entrypoints -q -p no:randomly        # ранее: 1 failed
+1530 passed, 27 skipped, 7 xfailed, 3 xpassed
+
+$ ruff check <3 изменённых файла>          → All checks passed!
+$ ruff format --check <3 изменённых файла> → 3 files already formatted
+```
+
+## Гейты (актуальный прогон)
+
+```
+tools/check_layers.py        → Нарушений: 0 новых (файлов: 2549; baseline: 49 legacy)
+tools/check_docstrings.py    → Total: 0 missing docstrings in 0 files (2395 scanned)
+bandit -r src/backend -lll   → High: 0 | Medium: 49 | Low: 92 (286404 LOC)
+tools/route_execution_check.py → ВСЕ КЕЙСЫ ПРОШЛИ: 3
+tools/route_blockers_report.py → всего проблем: 0
+```
+
+Расхождение со старыми отчётами bandit (MEDIUM/LOW) закрыто: приведённые
+выше числа получены одним воспроизводимым прогоном на HEAD `101498cc89`.
+
+## Методика: обход OOM (exit 137)
+
+Монолитный `pytest tests/unit` (20 633 теста) на этой машине (15 ГБ RAM,
+swap заполнен) стабильно падает с exit 137. Решение — шардирование:
+
+- тесты разбиты по директориям на 9 групп по ~2600 тестов
+  (`tests/unit/core` и `tests/unit/dsl` дополнительно разбиты на подкаталоги);
+- каждая группа запускается последовательно: `pytest -q -p no:randomly -n 2 --dist loadfile`;
+- пик RAM держится в пределах ~4 ГБ вместо OOM.
+
+Скрипт: `/tmp/mvs_unit_shards/run_groups.sh` (временный артефакт, вне репозитория).

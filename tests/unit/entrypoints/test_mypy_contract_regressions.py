@@ -55,7 +55,15 @@ async def test_authenticate_jwt_awaits_async_decode() -> None:
     )
     backend = SimpleNamespace(decode=decode)
 
-    with patch("src.backend.core.auth.jwt_backend.JwtBackend", return_value=backend):
+    # Patch the DI provider, not ``JwtBackend`` itself:
+    # ``get_jwt_backend_provider()`` memoises a singleton in ``_overrides``,
+    # so once any earlier test has primed that cache, patching the class has
+    # no effect and the real backend decodes the fake token. Order-dependent
+    # failure — see artifacts/current_audit/REGRESSIONS_FIXED_2026-10-08.md.
+    with patch(
+        "src.backend.core.di.providers.auth.get_jwt_backend_provider",
+        return_value=backend,
+    ):
         session = await WSAuthenticator().authenticate_jwt("header.payload.signature")
 
     decode.assert_awaited_once_with("header.payload.signature")
