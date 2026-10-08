@@ -17,6 +17,21 @@ from src.backend.core.auth.saml_backend import (
 )
 
 
+def _python3_saml_available() -> bool:
+    """Best-effort probe: импортируется ли ``onelogin.saml2``.
+
+    Используется для skipif'а теста, который зависит от ОТСУТСТВИЯ
+    этой зависимости. В venv, где ``uv sync --extra auth-saml`` была
+    выполнена, тест skip'ается — основной контракт SamlBackend покрыт
+    другими 9 тестами.
+    """
+    try:
+        import onelogin.saml2  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
 def _config() -> SamlConfig:
     return SamlConfig(
         sp_entity_id="https://sp.example.com/metadata",
@@ -130,8 +145,18 @@ def test_logout_url_composition() -> None:
     assert "NameID=alice%40example.com" in url or "NameID=alice@example.com" in url
 
 
+@pytest.mark.skipif(
+    _python3_saml_available(),
+    reason="python3-saml установлен — этот тест проверяет fallback на отсутствие deps",
+)
 def test_is_available_no_dependency() -> None:
-    """``is_available`` возвращает False когда python3-saml не установлен."""
+    """``is_available`` возвращает False когда python3-saml не установлен.
+
+    Проверяет opt-in-природу :class:`SamlBackend` (см. docstring): без
+    ``python3-saml`` ядро должно оставаться работоспособным, а is_available
+    возвращает False. Если ``python3-saml`` установлен в env (CI/devbox с
+    ``uv sync --extra auth-saml``), тест skip'ается: основные контракты
+    SamlBackend покрываются остальными 9 тестами этого файла.
+    """
     backend = _backend()
-    # В тестовом окружении xmlsec/python3-saml не установлены.
     assert backend.is_available() is False
