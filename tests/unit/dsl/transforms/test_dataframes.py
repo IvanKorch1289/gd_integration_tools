@@ -27,7 +27,12 @@ class TestDataframeTransforms:
             Path(path).unlink()
 
     def test_read_excel(self) -> None:
+        # D-WALKNESS-001 fix: xlsxwriter для write_excel, fastexcel ИЛИ openpyxl
+        # для read_excel. По умолчанию polars engine="calamine", но в этой
+        # среде fastexcel. Если ни xlsxwriter, ни fastexcel нет —
+        # пропускаем (test_csv покрывает happy-path на CSV).
         pytest.importorskip("xlsxwriter")
+        pytest.importorskip("fastexcel")
         df = pl.DataFrame({"x": [1, 2], "y": [3, 4]})
         with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
             path = f.name
