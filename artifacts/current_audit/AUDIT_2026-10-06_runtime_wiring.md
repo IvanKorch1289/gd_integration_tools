@@ -1086,10 +1086,10 @@ entrypoints продолжают импортировать её **напрям�
 
 | Гейт | Результат |
 |---|---|
-| `tools/check_layers.py` | `Нарушений: 0 новых (файлов: 2549; baseline: 53 legacy)` |
-| `tools/check_docstrings.py src/backend` | `Total: 0 missing docstrings in 0 files` (2395 файлов) |
-| `ruff check` (46 изменённых/новых .py) | `All checks passed!` |
-| `ruff format --check` (те же 46) | `46 files already formatted` |
+| `tools/check_layers.py` | `Нарушений: 0 новых (файлов: 2549; baseline: 49 legacy)` |
+| `tools/check_docstrings.py src/backend` | `Total: 0 missing docstrings in 0 files` (2396 файлов) |
+| `ruff check` (109 .py в этой ветке) | `All checks passed!` |
+| `ruff format --check` (те же 109) | `109 files already formatted` |
 
 ### 22. Функциональные батареи
 
@@ -1340,7 +1340,7 @@ $ tools/route_blockers_report.py
 | `tests/unit/core/net/test_url_guard.py` (+16) | IPv6 forbidden (6to4/ipv4_mapped), mixed-radix dotted, non-globally-routable tail; +1 п.п. coverage 70→71% |
 | `tests/unit/dsl/cli/test_explanation.py` (обновлён) | post-fix hello_route pipeline; 2 новых регресс-стража (no_llm_step, no_policy_step) |
 
-Все 113 regression-тестов проходят за 1.55с.
+Все 117 regression-тестов проходят за 1.55с (10 yaml_loader + 5 whitelist + 98 url_guard + 4 bootstrap-whitelist).
 
 ### 33. Гипотезы, отозванные после проверки
 
