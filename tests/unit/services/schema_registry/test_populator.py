@@ -94,21 +94,31 @@ async def test_populate_from_actions_with_specs() -> None:
 
 
 @pytest.mark.asyncio
-async def test_populate_from_actions_registry_unavailable() -> None:
+async def test_populate_from_actions_registry_unavailable(monkeypatch) -> None:
     """``extensions.action_handler_registry`` отсутствует → populator возвращает 0.
 
-    D-WALKNESS-003 fix: ``create=True`` нужен, потому что
-    ``src.backend.core.api`` использует ``__getattr__`` (lazy) — атрибут
-    ``extensions`` физически не существует в __init__. Без ``create=True``
-    ``patch`` падает с AttributeError: "does not have the attribute 'extensions'".
+    D-WALKNESS-003 fix: используем ``monkeypatch.setitem(sys.modules, ...)``
+    вместо ``patch("...extensions", ..., create=True)``.
+
+    Раньше тест был чувствителен к order-зависимой pollution: ``patch``
+    создавал атрибут ``extensions`` на лету через ``create=True``, но
+    зависел от состояния модуля ``src.backend.core.api`` — между тестами
+    ``__getattr__`` lazy-resolution мог давать разные результаты (зависит
+    от того, был ли ``extensions`` уже resolved в этом pytest-сеансе).
+
+    ``monkeypatch.setitem(sys.modules, ...)`` устанавливает чистый
+    ``SimpleNamespace()`` в ``sys.modules`` перед импортом — populator
+    находит его по ``importlib`` пути, идемпотентно. ``__getattr__``
+    не вызывается вообще. Тот же результат (AttributeError при
+    ``action_handler_registry``), но детерминированно.
     """
+    import sys
+
     reg = ServiceSchemaRegistry()
-    with patch(
-        "src.backend.core.api.extensions",
-        SimpleNamespace(),  # нет action_handler_registry
-        create=True,
-    ):
-        assert populator.populate_from_actions(reg) == 0
+    monkeypatch.setitem(
+        sys.modules, "src.backend.core.api.extensions", SimpleNamespace()
+    )
+    assert populator.populate_from_actions(reg) == 0
 
 
 @pytest.mark.asyncio
