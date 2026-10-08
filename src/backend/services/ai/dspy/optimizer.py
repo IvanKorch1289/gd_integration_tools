@@ -245,11 +245,14 @@ def _default_bootstrap(
     dspy_module = _wrap_pipeline_to_dspy(pipeline)
 
     # BootstrapFewShot config
+    # D-WALKNESS-002 fix: убран ``patience=1`` — параметр удалён в DSPy 2.6+.
+    # Вместо этого ``max_rounds=1`` ограничивает количество раундов
+    # оптимизации (эквивалентный контроль: bootstrap останавливается после
+    # первого неулучшения).
     teleprompter = BootstrapFewShot(
         metric=_dspy_metric_adapter(pipeline),
         max_bootstrapped_demos=min(8, len(train)),
         max_rounds=1,
-        patience=1,
     )
 
     try:
