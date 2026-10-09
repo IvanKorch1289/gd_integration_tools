@@ -18,7 +18,7 @@ core_mixin.py:163-204`). Однако production код использует **�
 Critical Finding (cycle 152 recon):
 
 * `src/backend/dsl/engine/processors/saga_lra.py`: **0 deadline references**.
-* `src/backend/dsl/processors/saga_lra_processor/core_mixin.py`: 8 deadline
+* `src/backend/dsl/engine/processors/saga_lra_processor/core_mixin.py`: 8 deadline
   references (уже интегрирован).
 * 5 external импортёров current `saga_lra.py`.
 * 19 external импортёров legacy `saga_lra_processor/`.

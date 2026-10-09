@@ -13,13 +13,30 @@ from __future__ import annotations
 
 import pytest
 
+from src.backend.core.tenancy import TenantContext, set_tenant
 from src.backend.services.notebooks.repository import InMemoryNotebookRepository
 from src.backend.services.notebooks.service import NotebookService
+
+#: ADR-0345 made tenant-less reads fail closed: ``NotebookService.get``
+#: resolves the tenant via ``get_tenant_id()`` and returns None when it is
+#: empty, instead of serving a cross-tenant read. Tests that exercise get /
+#: delete must therefore run inside a tenant context.
+TENANT = "t-a"
+
+
+@pytest.fixture(autouse=True)
+def _tenant() -> None:
+    """Run every test inside a tenant context (ADR-0345 fail-closed reads)."""
+    set_tenant(TenantContext(tenant_id=TENANT, plan="pro", region="ru"))
 
 
 @pytest.fixture
 def service() -> NotebookService:
-    """Фикстура — свежий сервис с пустым in-memory репозиторием."""
+    """Фикстура — свежий сервис с пустым in-memory репозиторием.
+
+    Базовый сервис без tenant-id: чтения по умолчанию fail-closed, поэтому
+    тесты, которым нужен доступ, передают ``tenant_id=TENANT`` явно.
+    """
     return NotebookService(InMemoryNotebookRepository())
 
 
@@ -60,7 +77,9 @@ async def test_create_with_tags_and_metadata(service: NotebookService) -> None:
 
 async def test_get_returns_notebook_copy(service: NotebookService) -> None:
     """``get`` возвращает существующий notebook."""
-    created = await service.create(title="t", content="c", created_by="u")
+    created = await service.create(
+        title="t", content="c", created_by="u", metadata={"tenant_id": TENANT}
+    )
     fetched = await service.get(created.id)
     assert fetched is not None
     assert fetched.id == created.id
@@ -215,7 +234,9 @@ async def test_list_all_pagination(service: NotebookService) -> None:
 
 async def test_delete_marks_soft_deleted(service: NotebookService) -> None:
     """``delete`` ставит is_deleted=True, но запись остаётся в хранилище."""
-    nb = await service.create(title="t", content="", created_by="u")
+    nb = await service.create(
+        title="t", content="", created_by="u", metadata={"tenant_id": TENANT}
+    )
     ok = await service.delete(nb.id)
     assert ok is True
 

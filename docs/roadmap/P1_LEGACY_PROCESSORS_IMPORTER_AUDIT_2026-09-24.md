@@ -39,7 +39,7 @@ Importer count = `grep -rln "from src.backend.{py_mod}\|import src.backend.{py_m
 | 21 | `dsl/processors/idp_pipeline_processor/state.py` | 0 | — | (in-tree shim) | ⚠️ candidate after migration |
 | 22 | `dsl/processors/saga_lra_processor/__init__.py` | 0 | — | (re-export shim — keep) | ❌ KEEP (SagaLRA convergence pending) |
 | 23 | `dsl/processors/saga_lra_processor/_protocol.py` | 0 | — | (SagaLRA-specific) | ❌ KEEP (per addendum v2) |
-| 24 | `dsl/processors/saga_lra_processor/core_mixin.py` | 1 | 1 test | (SagaLRA-specific) | ❌ KEEP (per addendum v2) |
+| 24 | `dsl/engine/processors/saga_lra_processor/core_mixin.py` | 1 | 1 test | (SagaLRA-specific) | ❌ KEEP (per addendum v2) |
 | 25 | `dsl/processors/saga_lra_processor/execution_mixin.py` | 0 | — | (SagaLRA-specific) | ❌ KEEP (per addendum v2) |
 | 26 | `dsl/processors/saga_lra_processor/lifecycle_mixin.py` | 0 | — | (SagaLRA-specific) | ❌ KEEP (per addendum v2) |
 | 27 | `dsl/processors/saga_lra_processor/serialization_mixin.py` | 0 | — | (SagaLRA-specific) | ❌ KEEP (per addendum v2) |

@@ -3851,7 +3851,7 @@ rg -l '__getattr__' src/backend -g '!__pycache__/*' | wc -l              → 65 
 ## W2 prerequisite: SagaLRA deadline integration re-apply (2026-09-23, Sprint 12 cycle 152)
 
 MINIMAX W2 P0-3 (слияние процессоров) был blocked: cycle 135 work применил
-ADR-0305 deadline narrowing к LEGACY `src/backend/dsl/processors/saga_lra_processor/core_mixin.py`,
+ADR-0305 deadline narrowing к LEGACY `src/backend/dsl/engine/processors/saga_lra_processor/core_mixin.py`,
 но production код использует CURRENT `src/backend/dsl/engine/processors/saga_lra.py`
 (17.2 KB, 437 строк, 5 импортёров). Critical Finding.
 
