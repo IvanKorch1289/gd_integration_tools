@@ -17,7 +17,14 @@ from src.backend.infrastructure.observability.pii_filter import mask_pii
 
 @pytest.fixture()
 def configured_structlog() -> Any:
-    """Минимальная structlog-конфигурация с ``mask_pii`` в pipeline."""
+    """Минимальная structlog-конфигурация с ``mask_pii`` в pipeline.
+
+    Конфигурация процесса восстанавливается, а не сбрасывается в дефолты
+    structlog: ``reset_defaults()`` возвращает ``PrintLogger`` (пишет в
+    stdout напрямую), из-за чего pytest ``caplog`` в последующих тестах
+    этого же процесса перестаёт видеть записи — вплоть до «Expected 1
+    ERROR, got: []». See artifacts/current_audit/REGRESSIONS_FIXED_2026-10-08.md.
+    """
     structlog = pytest.importorskip("structlog")
     captured: list[dict[str, Any]] = []
 
@@ -25,13 +32,14 @@ def configured_structlog() -> Any:
         captured.append(event_dict)
         return ""
 
+    saved = structlog.get_config()
     structlog.configure(
         processors=[structlog.processors.add_log_level, mask_pii, _capture],
         wrapper_class=structlog.BoundLogger,
         cache_logger_on_first_use=False,
     )
     yield structlog, captured
-    structlog.reset_defaults()
+    structlog.configure(**saved)
 
 
 def test_email_masked_in_pipeline(configured_structlog: Any) -> None:

@@ -7,7 +7,13 @@ ProcessorRegistry и попадает в Schema Registry через
 
 from __future__ import annotations
 
-# Принудительно импортируем модуль — auto-registry @processor.
+# Принудительно импортируем модуль процессора — его @processor-декоратор
+# регистрирует ``core:mask_pii`` в ProcessorRegistry. Без этого импорта
+# тест падал с «assert 'core:mask_pii' in {...}» при автономном запуске:
+# комментарий ниже утверждал импорт, но импортировал только schema_registry.
+from src.backend.dsl.engine.processors import (
+    mask_pii as _mask_pii_processor,  # noqa: F401
+)
 from src.backend.services.schema_registry import (
     SchemaKind,
     ServiceSchemaRegistry,

@@ -97,8 +97,8 @@ class TestOnnxInferenceProcess:
         fake_ort.InferenceSession.side_effect = RuntimeError("corrupted model")
 
         with (
-            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
             patch("numpy.array", return_value=MagicMock()),
+            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
         ):
             await proc.process(exchange, _Context())
 
@@ -120,8 +120,8 @@ class TestOnnxInferenceProcess:
         fake_ort.InferenceSession.return_value = mock_session
 
         with (
-            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
             patch("numpy.array", return_value=MagicMock()),
+            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
         ):
             await proc.process(exchange, _Context())
 
@@ -144,8 +144,8 @@ class TestOnnxInferenceProcess:
         fake_ort.InferenceSession.return_value = mock_session
 
         with (
-            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
             patch("numpy.array", return_value=MagicMock()),
+            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
         ):
             await proc.process(exchange, _Context())
 
@@ -167,8 +167,8 @@ class TestOnnxInferenceProcess:
         fake_ort.InferenceSession.return_value = mock_session
 
         with (
-            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
             patch("numpy.array", return_value=MagicMock()),
+            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
         ):
             await proc.process(exchange, _Context())
 
@@ -188,8 +188,8 @@ class TestOnnxInferenceProcess:
         fake_ort.InferenceSession.return_value = mock_session
 
         with (
-            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
             patch("numpy.array", return_value=MagicMock()),
+            patch.dict(sys.modules, {"onnxruntime": fake_ort}),
         ):
             # загружаем модель
             await proc.process(exchange, _Context())
@@ -213,8 +213,8 @@ class TestOnnxInferenceProcess:
         fake_ort2.InferenceSession.return_value = mock_session2
 
         with (
-            patch.dict(sys.modules, {"onnxruntime": fake_ort2}),
             patch("numpy.array", return_value=MagicMock()),
+            patch.dict(sys.modules, {"onnxruntime": fake_ort2}),
         ):
             await proc2.process(exchange2, _Context())
 
