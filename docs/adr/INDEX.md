@@ -142,9 +142,10 @@
 | [ADR-0344](0344-sagalra-convergence-plan.md) | SagaLRA convergence plan (per v4 §9) | Unknown |
 | [ADR-0345](0345-p0-object-ownership-policy-options.md) | Object-Level Authorization: ownership policy (P0 audit response) | Unknown |
 | [ADR-0348](0348-services-to-dsl-dependency.md) | Разрешение зависимости `services → dsl` | Draft |
+| [ADR-0349](0349-dsl-response-binding-to.md) | Response-binding (`to:`) в DSL-роутах | Draft |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 140 ADRs.
+**Total:** 141 ADRs.
 
