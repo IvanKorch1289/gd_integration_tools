@@ -2150,23 +2150,16 @@ bare-`async_sessionmaker` в обход фабрики.
 Фикс: `configure_mappers()` в фикстуре `test_rule_engine_repository.py`.
 Проверено минимальным скриптом: без шага — `AttributeError`, с шагом — flush OK.
 
-### 2. Циклический импорт `dsl.builders` (предсуществующий)
+### 2. ~~Циклический импорт `dsl.builders`~~ РЕШЕНО
 
-`src/backend/dsl/builders/transport/__init__.py` импортирует
-`base._protocol` → выполняется `base/__init__.py` → он импортирует
-`integration` → тот импортирует `transport` (частично инициализирован) →
-`ImportError: cannot import name 'TransportMixin'`.
+Диагноз: `transport/__init__.py` → `builders.base._protocol` (выполняется
+`base/__init__.py`) → `builders.integration` → `builders.transport` (частично
+инициализирован) → `ImportError`. Обе стороны цикла из `5a113404c`.
 
-Ломает прямой импорт подмодулей:
-`from src.backend.dsl.builders.transport.persistence import PersistenceMixin`
-(`test_db_crud.py`, `test_file_watcher.py`). `RouteBuilder` при этом
-импортируется штатно — цикл срабатывает только на «подмодуль первым».
-Обе стороны цикла внесены коммитом `5a113404c` (не в этой сессии).
-
-**Решение требует ADR**: `TransportMixin` — реальная база `RouteBuilder`
-в MRO, `IntegrationMixin` тоже. Разрыв цикла означает перенос `_protocol.py`
-из пакета `base` (45 импортеров) либо изменение MRO `RouteBuilder` —
-и то, и другое меняет публичный API.
+Фикс (`6498eb1e3`): `_protocol.py` вынесен из пакета `base` на уровень
+`builders`; на старом месте оставлен shim-реэкспорт, так что публичный API
+не изменён. Переключены 2 импорта, замыкавшие цикл (`transport/__init__.py`,
+`transport/sources.py`).
 
 ### 3. Устаревшие ratchet-полы (исправлено)
 
