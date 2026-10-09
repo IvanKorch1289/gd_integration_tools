@@ -323,10 +323,22 @@ class TestRealInventory:
         # which contradicts W7 ("Legacy allowlist можно только уменьшать").
         # The meaningful regression guards are the ceiling (no re-growth) plus
         # test_real_inventory_postfix_no_orphan_files (0 REMOVABLE).
-        assert 15 <= len(rows) <= 30
+        #
+        # Re-baselined 2026-10-09: 18 → 12 files. Legacy saga_lra_processor
+        # удалён целиком (1ccbaa957, ~810 LOC), поэтому прежние «5 saga-файлов
+        # SEMANTIC_KEEP» больше нечего защищать — вместо этого фиксируется
+        # завершённость дедупликации.
+        assert 12 <= len(rows) <= 30
         saga_files = [r for r in rows if "saga_lra" in r.file]
-        assert all(r.status == "SEMANTIC_KEEP" for r in saga_files)
-        assert len(saga_files) >= 5
+        assert saga_files == [], (
+            f"legacy saga_lra-шим не должен возвращаться, найдено: {saga_files}"
+        )
+        # Канон на месте — дедупликация перенесла его, а не удалила.
+        canonical = (
+            Path(__file__).resolve().parents[3]
+            / "src/backend/dsl/engine/processors/saga_lra_processor"
+        )
+        assert canonical.is_dir(), f"canonical saga_lra-пакет отсутствует: {canonical}"
 
     def test_real_inventory_classifications_consistent(
         self, real_inventory: list
@@ -341,11 +353,15 @@ class TestRealInventory:
     def test_real_inventory_total_loc(self, real_inventory: list) -> None:
         rows = real_inventory
         total_loc = sum(r.loc for r in rows)
-        # v4 baseline: 28 files / 2496 LOC. Current: 18 files / 961 LOC.
+        # v4 baseline: 28 files / 2496 LOC. 2026-09-28: 18 files / 961 LOC.
         # Floor re-baselined 2026-09-28 together with the dead-code deletion
         # (was 1500 against an actual 1463 — already stale/failing at HEAD).
-        # Deletion ratchet: the ceiling stays at 3000 to catch re-growth.
-        assert 800 <= total_loc <= 3000
+        # Re-baselined 2026-10-09: 961 → 155 LOC после удаления legacy
+        # saga_lra_processor (~810 LOC, 1ccbaa957). Все оставшиеся 12 файлов —
+        # тонкие SHIMMED-шимы по 3-30 LOC; пол 800 держался на мёртвых остатках
+        # и блокировал их удаление, что противоречит W7.
+        # Deletion ratchet: ceiling 3000 сохранён — ловит обратный рост.
+        assert 150 <= total_loc <= 3000
 
     def test_real_inventory_postfix_no_orphan_files(self, real_inventory: list) -> None:
         """Post-W2 P1-2 bug fix: 0 truely-orphan files в реальном inventory.
