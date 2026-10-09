@@ -2121,3 +2121,64 @@ tests/unit/entrypoints (1176+ passed / 26 failed). Весь остаток — �
   standalone — зелёные), repro: `pytest tests/unit/dsl/engine/processors/ai
   tests/unit/entrypoints/grpc/test_grpc_subclass_methods_patch.py`.
   Владелец: infra/grpc волна.
+
+## Дополнение (2026-10-09, полный прогон unit-suite)
+
+Прогон выполнен шардами по ~700 тестов (`pytest -n 2 --dist loadfile`):
+монолитный запуск 20 633 тестов OOM-kill'ится на этой машине (15 ГБ RAM),
+kernel: `Out of memory: Killed process [pytest-xdist r], anon-rss 7.2 GB`.
+
+### 1. sqlalchemy-continuum 1.7.0 несовместим с SQLAlchemy 2.0.52
+
+`tests/unit/infrastructure/repositories/test_rule_engine_repository.py::test_upsert_creates_new_record`
+падает и **вне тестов** — воспроизводится минимальным скриптом, который
+создаёт таблицу по `RuleEngineBase.metadata` и делает `session.add()` +
+`commit()`:
+
+```
+sqlalchemy_continuum/builder.py:200, in enable_active_history
+    impl = getattr(cls, prop.key).impl
+    impl.active_history = True
+AttributeError: 'NoneType' object has no attribute 'active_history'
+```
+
+Механизм: `make_versioned()` (`src/backend/core/domain/models/base.py:28`)
+регистрирует глобальный listener. При flush любой ORM-объект continuum
+разбирает весь свой `version_class_map`, включая «pending»-классы. У
+неинструментированной копии класса `property.impl` равен `None` →
+`enable_active_history` падает.
+
+Почему прод не падает: в бою все модели импортированы и сконфигурированы
+до первого flush, поэтому `pending_classes_copies` пуст. Падение возникает,
+когда ORM-класс определяется **после** `make_versioned()` в общем процессе.
+
+**Решение требует ADR**: варианты — пин/даунгрейд `sqlalchemy-continuum`
+(сейчас `>=1.5.2,<2.0.0`, установлен 1.7.0, последний релиз 2019 г. под
+SQLAlchemy 1.3/1.4), либо патч/обход continuum, либо вынос моделей в
+отдельный процесс. Публичные API и supply-chain не трогаются без
+согласования.
+
+### 2. Циклический импорт `dsl.builders` (предсуществующий)
+
+`src/backend/dsl/builders/transport/__init__.py` импортирует
+`base._protocol` → выполняется `base/__init__.py` → он импортирует
+`integration` → тот импортирует `transport` (частично инициализирован) →
+`ImportError: cannot import name 'TransportMixin'`.
+
+Ломает прямой импорт подмодулей:
+`from src.backend.dsl.builders.transport.persistence import PersistenceMixin`
+(`test_db_crud.py`, `test_file_watcher.py`). `RouteBuilder` при этом
+импортируется штатно — цикл срабатывает только на «подмодуль первым».
+Обе стороны цикла внесены коммитом `5a113404c` (не в этой сессии).
+
+**Решение требует ADR**: `TransportMixin` — реальная база `RouteBuilder`
+в MRO, `IntegrationMixin` тоже. Разрыв цикла означает перенос `_protocol.py`
+из пакета `base` (45 импортеров) либо изменение MRO `RouteBuilder` —
+и то, и другое меняет публичный API.
+
+### 3. Устаревшие ratchet-полы (исправлено)
+
+`test_w11_p3_2_audit_legacy_processors` — инвентарь сократился до
+12 файлов / 155 LOC / 0 saga (после `1ccbaa957`), а полы остались на
+15 / 800 и «5 saga-файлов». Полы блокировали уже сделанное удаление, что
+противоречит W7; потолки (30 / 3000) сохранены.
