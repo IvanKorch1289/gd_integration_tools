@@ -3,6 +3,8 @@
 # Цель — постепенно сокращать.
 # S110 W2: --update-allowlist MERGES (was REPLACE).
 # S112 W1: --prune-allowlist removes stale entries (complement to MERGE).
+# ВНИМАНИЕ: осознанные контракты вынесены в check_layers_contract.txt
+# (ADR-0348, вариант C). Здесь остаётся только реальный долг.
 src/backend/core/ai/gateway_pipeline_mixin/llm_mixin.py	core	src.backend.services.ai.prompt_registry
 src/backend/core/ai/gateway_pipeline_mixin/output_mixin.py	core	src.backend.services.ai.gateway
 src/backend/core/ai/llm_gateway.py	core	src.backend.services.ai.gateway.client
@@ -38,17 +40,5 @@ src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.b
 src/backend/infrastructure/workflow/worker.py	workflows	src.backend.dsl.commands.setup.orchestrator
 src/backend/infrastructure/workflow/worker.py	workflows	src.backend.dsl.routes
 src/backend/services/auth/bootstrap_admin.py	services	extensions.core_entities.users.domain.models
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.dry_run
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.execution_engine
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.pipeline
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.tracer
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.registry
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.spec
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.versioning
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.yaml_loader.loaders
-src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/integrations/skb.py	services	extensions.skb.services.waf_route
 src/backend/services/io/files.py	services	extensions.core_entities.files.services.files
-src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
-src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
-src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors

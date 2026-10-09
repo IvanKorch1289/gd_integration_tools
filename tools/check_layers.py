@@ -171,6 +171,12 @@ FRONTEND_ALLOWED_PREFIXES: tuple[str, ...] = (
 
 ALLOWLIST_PATH = Path(__file__).parent / "check_layers_allowlist.txt"
 
+#: ADR-0348 (вариант C): осознанные архитектурные контракты вынесены из
+#: долга в отдельный файл. Гейт не падает ни на одном из них, но метрика
+#: разделяется: «0 новых» при 12 контрактах и при 0 контрактах — разные
+#: состояния, и раньше это было неразличимо.
+CONTRACT_PATH = Path(__file__).parent / "check_layers_contract.txt"
+
 
 def _layer_of(module: str) -> str | None:
     """Определяет слой по dotted import-path.
@@ -476,6 +482,27 @@ def _load_allowlist() -> set[str]:
     }
 
 
+def _load_contract() -> set[str]:
+    """ADR-0348 (C): осознанные контракты — отдельный baseline.
+
+    Ни по долгу, ни по контракту гейт не падает; раздельный учёт нужен
+    лишь для честной метрики. Отсутствие файла — не ошибка: контрактов
+    может не быть вовсе.
+    """
+    if not CONTRACT_PATH.exists():
+        return set()
+    return {
+        line.strip()
+        for line in CONTRACT_PATH.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.startswith("#")
+    }
+
+
+def _load_baselines() -> tuple[set[str], set[str]]:
+    """Вернуть ``(debt, contract)`` — два независимых baseline."""
+    return _load_allowlist(), _load_contract()
+
+
 def _save_allowlist(keys: Iterable[str]) -> None:
     """S110 W2: MERGE new violations with existing allowlist (was REPLACE).
 
@@ -595,15 +622,24 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     # R3.10d: --strict игнорирует allowlist (CI/release-gate).
-    allowlist: set[str] = set() if strict else _load_allowlist()
-    new_violations = sorted(keys - allowlist)
+    # ADR-0348 (C): долг и контракты — два независимых baseline. Гейт не падает
+    # ни на одном, но считаются они раздельно: иначе прогресс по контрактам был
+    # бы неотличим от стагнации.
+    if strict:
+        allowlist: set[str] = set()
+        contract: set[str] = set()
+    else:
+        allowlist, contract = _load_baselines()
+    baseline = allowlist | contract
+    new_violations = sorted(keys - baseline)
     # S112 W1: стейл-проверка должна покрывать FULL repo (src/ + extensions/),
     # а не только текущий root — иначе src/ entries выглядят "стейл" при
     # ``--root extensions`` (false positive).
     if not strict:
-        all_violations = _collect_all_violations()
-        stale = sorted(allowlist - all_violations)
+        current = _collect_all_violations()
+        stale = sorted(baseline - current)
     else:
+        current = set()
         stale = []
 
     if _fail_on_parse_failures():
@@ -611,7 +647,10 @@ def main(argv: list[str] | None = None) -> int:
 
     total_files = sum(1 for _ in root.rglob("*.py"))
     if not new_violations and not stale:
-        mode = "strict" if strict else f"baseline: {len(allowlist)} legacy"
+        if strict:
+            mode = "strict"
+        else:
+            mode = f"debt: {len(allowlist)} legacy; contract: {len(contract)}"
         print(f"Нарушений: 0 новых  (файлов: {total_files}; {mode})")
         return 0
 
@@ -622,6 +661,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {rel}  {layer}/  →  {imported}")
     if stale:
         print(f"\nСТЕЙЛ записи в allowlist: {len(stale)} (исправлены — обновите)")
+        if not strict:
+            # current уже посчитан выше — второй скан репозитория стоил бы
+            # нескольких секунд впустую.
+            print(
+                f"  из них долг: {len(allowlist - current)}, "
+                f"контракты: {len(contract - current)}"
+            )
         for key in stale[:10]:
             rel, layer, imported = key.split("\t")
             print(f"  {rel}  {layer}/  →  {imported}")
