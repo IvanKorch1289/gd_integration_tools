@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Self
 if TYPE_CHECKING:
     pass
 
-from src.backend.dsl.builders.base._protocol import _RouteBuilderProtocol
+from src.backend.dsl.builders._protocol import _RouteBuilderProtocol
 
 
 class SourcesMixin(_RouteBuilderProtocol):

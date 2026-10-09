@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Self as Self
 
-from src.backend.dsl.builders.base._protocol import (
+from src.backend.dsl.builders._protocol import (
     _RouteBuilderProtocol as _RouteBuilderProtocol,
 )
 from src.backend.dsl.builders.transport.external import ExternalMixin as ExternalMixin
