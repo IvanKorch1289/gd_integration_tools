@@ -1248,15 +1248,30 @@ branch = true
 parallel = true
 concurrency = ["thread", "multiprocessing"]
 sigterm = true
+# Gate-тесты создают транзиентные файлы прямо в src/ (например
+# src/backend/_test_dsl_proc_gate_violation.py в
+# tests/unit/tools/test_dsl_processors_imports_gate.py) и удаляют их в finally.
+# Coverage успевает измерить такой файл, но к моменту отчёта его на диске уже
+# нет → «No source for code» и падение coverage report. Это не код проекта,
+# поэтому исключаем по префиксу.
+omit = ["src/**/_test_*.py"]
 
 [tool.coverage.report]
 # [wave:s19/k2-w4-coverage-ratchet-75] Sprint 16 DoD-10 (V22): coverage gate ≥75% (раскат 50→83% per PLAN.md).
 # S19 K2 W4 ratchet: 70% → 75%.
 # S34 W4: 75% → 60% как реалистичная промежуточная цель. Достижение 90% требует
 # ~26000 дополнительных covered statements и нереально за один спринт.
+# Фактически измерено 2026-10-09: 74% (branch) / 76.5% (line, XML) —
+# см. artifacts/current_audit/COVERAGE_2026-10-09.md. Гейт 70% проходится.
 # Текущий baseline пересчитывается через `pytest --cov=src --cov-report=xml`
 # + `python tools/coverage/breakdown_by_layer.py coverage.xml` (per-layer split).
+# ВНИМАНИЕ: монолитный `pytest tests/unit --cov` OOM-kill'ится на 15 ГБ;
+# измерение выполняется шардами с `--cov-append` (см. аудит от 2026-10-09).
 fail_under = 70
+# Дублирует omit из [tool.coverage.run]: filtering применяется и на этапе
+# отчёта, иначе уже собранный .coverage продолжает содержать запись об
+# удалённом транзиентном файле и `coverage report` падает с exit 1.
+omit = ["src/**/_test_*.py"]
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",
