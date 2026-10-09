@@ -2128,35 +2128,27 @@ tests/unit/entrypoints (1176+ passed / 26 failed). Весь остаток — �
 монолитный запуск 20 633 тестов OOM-kill'ится на этой машине (15 ГБ RAM),
 kernel: `Out of memory: Killed process [pytest-xdist r], anon-rss 7.2 GB`.
 
-### 1. sqlalchemy-continuum 1.7.0 несовместим с SQLAlchemy 2.0.52
+### 1. ~~sqlalchemy-continuum 1.7.0 несовместим с SQLAlchemy 2.0.52~~ РЕШЕНО
 
-`tests/unit/infrastructure/repositories/test_rule_engine_repository.py::test_upsert_creates_new_record`
-падает и **вне тестов** — воспроизводится минимальным скриптом, который
-создаёт таблицу по `RuleEngineBase.metadata` и делает `session.add()` +
-`commit()`:
+Изначально записано как несовместимость библиотек, требующая ADR.
+Фактическая причина установлена точечной инструментацией
+`Builder.enable_active_history` — это **пробел фикстуры, не дефект рантайма**.
 
-```
-sqlalchemy_continuum/builder.py:200, in enable_active_history
-    impl = getattr(cls, prop.key).impl
-    impl.active_history = True
-AttributeError: 'NoneType' object has no attribute 'active_history'
-```
+Цепочка: SQLAlchemy-Continuum 1.7.0 в `enable_active_history()` безусловно
+обращается к `InstrumentedAttribute.impl`. В SQLAlchemy 2.x этот атрибут
+заполняется только при конфигурации маппера: у неконфигурированного
+`DslSnapshot`/`WorkflowEvent` (`sa.inspect(cls).configured == False`)
+`impl` равен `None` для **каждого** свойства → `AttributeError` на любом
+`session.commit()`.
 
-Механизм: `make_versioned()` (`src/backend/core/domain/models/base.py:28`)
-регистрирует глобальный listener. При flush любой ORM-объект continuum
-разбирает весь свой `version_class_map`, включая «pending»-классы. У
-неинструментированной копии класса `property.impl` равен `None` →
-`enable_active_history` падает.
+Боевой код сессий из `infrastructure/database/session_manager.py` не имеет,
+где мапперы конфигурированы заранее; контракт зафиксирован в
+`dsl/audit_versioning.py`: «все методы предполагают что session уже открыт и
+continuum `configure_mappers()` уже выполнен». Тест же собирает
+bare-`async_sessionmaker` в обход фабрики.
 
-Почему прод не падает: в бою все модели импортированы и сконфигурированы
-до первого flush, поэтому `pending_classes_copies` пуст. Падение возникает,
-когда ORM-класс определяется **после** `make_versioned()` в общем процессе.
-
-**Решение требует ADR**: варианты — пин/даунгрейд `sqlalchemy-continuum`
-(сейчас `>=1.5.2,<2.0.0`, установлен 1.7.0, последний релиз 2019 г. под
-SQLAlchemy 1.3/1.4), либо патч/обход continuum, либо вынос моделей в
-отдельный процесс. Публичные API и supply-chain не трогаются без
-согласования.
+Фикс: `configure_mappers()` в фикстуре `test_rule_engine_repository.py`.
+Проверено минимальным скриптом: без шага — `AttributeError`, с шагом — flush OK.
 
 ### 2. Циклический импорт `dsl.builders` (предсуществующий)
 

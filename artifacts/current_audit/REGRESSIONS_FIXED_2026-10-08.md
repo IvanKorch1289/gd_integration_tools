@@ -142,16 +142,22 @@ swap заполнен) стабильно падает с exit 137. Решени
 | `test_archiveprocessor_async` | 1 | Абсолютный порог `1.7 * SLEEP_S` давал ложные падения под нагрузкой | Порог считается от замера `asyncio.sleep` в том же прогоне; детерминированная проверка «не в main thread» сохранена |
 | `test_w11_p3_2_audit_legacy_processors` | 2 | Инвентарь честно сократился до 12 файлов / 155 LOC / 0 saga, полы остались на 15 / 800 и «5 saga-файлов» | Полы перебазированы по факту, потолки (30 / 3000) сохранены |
 
-## Не устранено — требуют ADR (3 из 17)
+## Не устранено — требуют ADR (1 из 17; второй пункт ниже решён)
 
 1. **Циклический импорт `dsl.builders`** (2 теста: `test_db_crud.py`,
    `test_file_watcher.py`). Обе стороны цикла внесены коммитом `5a113404c`.
    `TransportMixin` и `IntegrationMixin` — реальные базы `RouteBuilder` в MRO;
    разрыв цикла = перенос `_protocol.py` (45 импортеров) или изменение MRO.
-2. **sqlalchemy-continuum 1.7.0 + SQLAlchemy 2.0.52** (1 тест). Падает и вне
-   тестов: `enable_active_history` получает `property.impl is None` у
-   неинструментированной копии класса. Любое решение меняет supply-chain
-   (пин/даунгрейд continuum) или требует обхода библиотеки.
+2. ~~**sqlalchemy-continuum 1.7.0 + SQLAlchemy 2.0.52** (1 тест).~~
+   **РЕШЕНО после уточнённого анализа.** Первоначально диагностировано как
+   несовместимость библиотек, требующая ADR. Инструментация
+   `Builder.enable_active_history` показала: continuum обращается к
+   `InstrumentedAttribute.impl`, который в SQLAlchemy 2.x заполняется только
+   при конфигурации маппера, а у `DslSnapshot`/`WorkflowEvent`
+   `sa.inspect(cls).configured == False`. Боевой код берёт сессии из
+   `session_manager.py`, который конфигурирует мапперы; тест собирал
+   bare-`async_sessionmaker` в обход фабрики. Фикс — `configure_mappers()`
+   в фикстуре. Supply-chain не затронут.
 
 Подробности — `.claude/KNOWN_ISSUES.md`, раздел «Дополнение (2026-10-09)».
 

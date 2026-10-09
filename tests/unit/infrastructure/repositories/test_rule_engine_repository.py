@@ -25,9 +25,31 @@ from src.backend.infrastructure.repositories.rule_engine_repository import (
 pytestmark = pytest.mark.asyncio
 
 
+def _configure_mappers() -> None:
+    """Сконфигурировать ORM-мапперы до первой сессии.
+
+    SQLAlchemy-Continuum 1.7.0 в ``enable_active_history()`` безусловно
+    обращается к ``InstrumentedAttribute.impl``, который в SQLAlchemy 2.x
+    заполняется только при конфигурации маппера. Пока мапперы не собраны,
+    ``impl`` равен ``None`` и любой ``session.commit()`` падает с
+    ``AttributeError: 'NoneType' object has no attribute 'active_history'``.
+
+    Это не дефект рантайма: боевой код получает сессии только через
+    ``infrastructure/database/session_manager.py``, который конфигурирует
+    мапперы (контракт зафиксирован в ``dsl/audit_versioning.py``: «все методы
+    предполагают что session уже открыт и continuum configure_mappers() уже
+    выполнен»). Тест же собирает bare-``async_sessionmaker`` в обход фабрики,
+    поэтому шаг нужно воспроизвести явно.
+    """
+    from sqlalchemy.orm import configure_mappers
+
+    configure_mappers()
+
+
 @pytest_asyncio.fixture
 async def session() -> AsyncIterator[AsyncSession]:
     """SQLite in-memory сессия с накатанной таблицей."""
+    _configure_mappers()
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
         await conn.run_sync(RuleEngineBase.metadata.create_all)
