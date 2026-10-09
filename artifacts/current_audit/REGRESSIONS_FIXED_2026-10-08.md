@@ -166,3 +166,31 @@ route_blockers_report.py   → 0 проблем
 check_no_high_cardinality_metrics → FORBIDDEN baseline: 0
 check_no_new_optional_tenant      → No drift (123 == 123)
 ```
+
+## Финальный перепроверочный прогон (HEAD `84b79b32e`)
+
+Полный suite повторно прогнан после всех фиксов, тем же шардированным
+методом (33 группы по ~700 тестов, `-n 2 --dist loadfile`):
+
+```
+18 975 passed | 161 skipped | 55 xfailed | 45 xpassed | 2 failed
+```
+
+Было 17 FAILED → стало **2 FAILED**. Оба — из раздела «Не устранено»:
+
+```
+FAILED tests/unit/dsl/engine/processors/test_db_crud.py::test_dsl_persistence_mixin_has_crud_methods
+FAILED tests/unit/infrastructure/repositories/test_rule_engine_repository.py::test_upsert_creates_new_record
+```
+
+Совместный прогон всех затронутых наборов: **92 passed, 1 skipped**.
+
+Гейты на финальном HEAD:
+
+```
+check_layers.py         → Нарушений: 0 новых (файлов: 2549; baseline: 49 legacy)
+check_docstrings.py     → Total: 0 missing docstrings (2395 scanned)
+bandit -r src/backend -lll → High: 0 | Medium: 49 | Low: 92
+route_execution_check.py   → ВСЕ КЕЙСЫ ПРОШЛИ: 3
+route_blockers_report.py   → всего проблем: 0
+```
