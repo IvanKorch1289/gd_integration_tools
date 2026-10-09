@@ -1,0 +1,84 @@
+"""Узкий публичный фасад DSL-портала для frontend (R3.10d → 0 violations; ADR-0348: канон переехал в dsl/portal).
+
+Wave ``[wave:s6/layer-violations-facade]``. Streamlit developer-portal
+ранее напрямую импортировал DSL engine, registry, tracer, yaml_loader,
+entrypoints middleware — это нарушение слойного контракта (frontend →
+backend-services-only, см. ``tools/check_layers.py`` R3.10d).
+
+Этот модуль агрегирует ровно то, что нужно UI:
+
+* загрузка/инспекция Pipeline (engine + yaml_loader);
+* список зарегистрированных маршрутов (route_registry);
+* запуск с трассировкой (ExecutionEngine + tracer);
+* список audit-records (audit_replay middleware).
+
+Из frontend нужно импортировать **только** этот модуль:
+
+    from src.backend.dsl.portal import (
+        Pipeline, load_pipeline_from_yaml,
+        list_route_ids, get_route_pipeline,
+        execute_route, list_audit_records,
+    )
+
+Импорт DSL/entrypoints напрямую из frontend остаётся запрещённым
+``check_layers.py``. Старый путь ``src.backend.services.dsl_portal``
+сохранён как backward-compat shim (см. ``services/dsl_portal/__init__.py``).
+"""
+
+from __future__ import annotations
+
+from .builder_facade import (
+    Pipeline,
+    WorkflowDeclaration,
+    compute_step_diff,
+    dry_run_route,
+    execute_route,
+    get_ai_cost_snapshot,
+    get_default_stuck_monitor,
+    get_dsl_builder_service,
+    get_global_registry,
+    get_import_service,
+    get_route_pipeline,
+    get_saga_history,
+    get_saga_stats,
+    get_whoosh_index,
+    list_audit_records,
+    list_route_ids,
+    list_workflow_templates,
+    load_all_workflows_from_directory,
+    load_pipeline_from_yaml,
+    load_workflow_from_file,
+    load_workflow_from_yaml,
+    search_workflow_templates,
+    to_graphviz,
+    to_mermaid,
+    waterfall_lines,
+)
+
+__all__ = (
+    "Pipeline",
+    "WorkflowDeclaration",
+    "compute_step_diff",
+    "dry_run_route",
+    "execute_route",
+    "get_ai_cost_snapshot",
+    "get_default_stuck_monitor",
+    "get_dsl_builder_service",
+    "get_global_registry",
+    "get_import_service",
+    "get_route_pipeline",
+    "get_saga_history",
+    "get_saga_stats",
+    "get_whoosh_index",
+    "list_audit_records",
+    "list_route_ids",
+    "list_workflow_templates",
+    "load_all_workflows_from_directory",
+    "load_pipeline_from_yaml",
+    "load_workflow_from_file",
+    "load_workflow_from_yaml",
+    "search_workflow_templates",
+    "to_graphviz",
+    "to_mermaid",
+    "waterfall_lines",
+)

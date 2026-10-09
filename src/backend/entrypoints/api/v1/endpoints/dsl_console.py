@@ -230,7 +230,7 @@ class _DSLConsoleFacade:
         body = body or {}
         try:
             from src.backend.core.api.extensions import ExecutionEngine
-            from src.backend.services.dsl_portal.builder_facade import (
+            from src.backend.dsl.portal.builder_facade import (
                 get_route_pipeline,
             )
 

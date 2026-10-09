@@ -35,7 +35,7 @@ from src.backend.core.registry_explorer import (
     RouteEntry,
     get_registry_explorer,
 )
-from src.backend.services.dsl_portal import (
+from src.backend.dsl.portal import (
     Pipeline,
     WorkflowDeclaration,
     compute_step_diff,

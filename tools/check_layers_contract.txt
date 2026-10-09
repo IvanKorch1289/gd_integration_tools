@@ -14,14 +14,6 @@
 #
 # ADR-0348 рекомендует B: перенос services/dsl_portal/ в dsl/portal/, что
 # убирает этот класс целиком (dsl -> dsl не нарушение).
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.dry_run
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.execution_engine
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.pipeline
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.engine.tracer
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.registry
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.spec
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.workflow.versioning
-src/backend/services/dsl_portal/builder_facade.py	services	src.backend.dsl.yaml_loader.loaders
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry

@@ -85,7 +85,7 @@ def _register_workflow_declarations_from_filesystem() -> int:
     Returns:
         Кол-во успешно зарегистрированных workflow-деклараций.
     """
-    from src.backend.services.dsl_portal import load_workflow_from_yaml
+    from src.backend.dsl.portal import load_workflow_from_yaml
     from src.backend.services.workflow import workflow_registry
 
     extensions_dir = _resolve_extensions_dir()
