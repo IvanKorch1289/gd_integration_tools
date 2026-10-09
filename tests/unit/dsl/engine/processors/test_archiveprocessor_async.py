@@ -26,7 +26,20 @@ from src.backend.dsl.engine.processors.rpa.operations.archiveprocessor import (
 )
 
 SLEEP_S = 0.10
-MAX_PARALLEL_TOTAL_S = SLEEP_S * 1.7
+
+
+async def _sleep_baseline() -> float:
+    """Измерить, сколько реально занимает ``asyncio.sleep(SLEEP_S)`` сейчас.
+
+    Wall-clock-проверки ниже сравнивают не с константой, а с этим замером:
+    на загруженной машине и константа, и фактическое время растут
+    пропорционально, поэтому относительная оценка («процессор добавил
+    заметно больше, чем голый sleep») остаётся корректной. Абсолютный
+    порог 1.7 * SLEEP_S давал ложные падения под нагрузкой (xdist, OOM-neighbour).
+    """
+    start = time.monotonic()
+    await asyncio.sleep(SLEEP_S)
+    return time.monotonic() - start
 
 
 def _make_exchange(body: Any = None) -> Exchange[Any]:
@@ -90,12 +103,14 @@ class TestArchiveProcessorNonBlockingZip:
         proc = ArchiveProcessor(mode="extract", format="zip")
         ex = _make_exchange(body=zip_bytes)
 
+        baseline = await _sleep_baseline()
         start = time.monotonic()
         await asyncio.gather(proc.process(ex, AsyncMock()), asyncio.sleep(SLEEP_S))
         elapsed = time.monotonic() - start
 
-        assert elapsed < MAX_PARALLEL_TOTAL_S, (
-            f"zip extract заблокировал event loop: elapsed={elapsed:.3f}s"
+        assert elapsed < baseline * 1.7, (
+            f"zip extract заблокировал event loop: elapsed={elapsed:.3f}s "
+            f"(baseline={baseline:.3f}s)"
         )
         # Дополнительно: zipfile.ZipFile вызван в НЕ-main thread.
         assert thread_holder[0] != main_thread, (
@@ -127,12 +142,14 @@ class TestArchiveProcessorNonBlockingZip:
         proc = ArchiveProcessor(mode="create", format="zip")
         ex = _make_exchange(body=items)
 
+        baseline = await _sleep_baseline()
         start = time.monotonic()
         await asyncio.gather(proc.process(ex, AsyncMock()), asyncio.sleep(SLEEP_S))
         elapsed = time.monotonic() - start
 
-        assert elapsed < MAX_PARALLEL_TOTAL_S, (
-            f"zip create заблокировал event loop: elapsed={elapsed:.3f}s"
+        assert elapsed < baseline * 1.7, (
+            f"zip create заблокировал event loop: elapsed={elapsed:.3f}s "
+            f"(baseline={baseline:.3f}s)"
         )
         assert thread_holder[0] != main_thread
 
@@ -161,12 +178,14 @@ class TestArchiveProcessorNonBlockingTar:
         proc = ArchiveProcessor(mode="extract", format="tar")
         ex = _make_exchange(body=tar_bytes)
 
+        baseline = await _sleep_baseline()
         start = time.monotonic()
         await asyncio.gather(proc.process(ex, AsyncMock()), asyncio.sleep(SLEEP_S))
         elapsed = time.monotonic() - start
 
-        assert elapsed < MAX_PARALLEL_TOTAL_S, (
-            f"tar extract заблокировал event loop: elapsed={elapsed:.3f}s"
+        assert elapsed < baseline * 1.7, (
+            f"tar extract заблокировал event loop: elapsed={elapsed:.3f}s "
+            f"(baseline={baseline:.3f}s)"
         )
         assert thread_holder[0] != main_thread
 
@@ -194,12 +213,14 @@ class TestArchiveProcessorNonBlockingTar:
         proc = ArchiveProcessor(mode="create", format="tar")
         ex = _make_exchange(body=items)
 
+        baseline = await _sleep_baseline()
         start = time.monotonic()
         await asyncio.gather(proc.process(ex, AsyncMock()), asyncio.sleep(SLEEP_S))
         elapsed = time.monotonic() - start
 
-        assert elapsed < MAX_PARALLEL_TOTAL_S, (
-            f"tar create заблокировал event loop: elapsed={elapsed:.3f}s"
+        assert elapsed < baseline * 1.7, (
+            f"tar create заблокировал event loop: elapsed={elapsed:.3f}s "
+            f"(baseline={baseline:.3f}s)"
         )
         assert thread_holder[0] != main_thread
 
