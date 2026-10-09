@@ -1,7 +1,7 @@
-# ADR-0346: Run-history store для backfill/catchup scheduler-триггеров
+# ADR-0346 — Run-history store для backfill/catchup scheduler-триггеров
 
-- **Статус**: ACCEPTED (2026-09-24, архитектура согласована пользователем)
-- **Дата**: 2026-09-24
+* Статус: ACCEPTED (2026-09-24, архитектура согласована пользователем)
+* Дата: 2026-09-24
 - **Контекст**: V5 §4 P3-13 (backfill/catchup для scheduler-триггеров).
   Текущий `SchedulerFacade` (services/scheduler/facade.py, 74 LOC) — тонкая
   обёртка над APScheduler (`add_job/remove_job`, триггеры cron/interval/date)

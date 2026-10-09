@@ -255,14 +255,14 @@
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/core/messaging/outbox.py",
-    "line": 111,
+    "line": 116,
     "qualified_name": "OutboxBackend.list_dlq"
   },
   {
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/core/messaging/outbox.py",
-    "line": 199,
+    "line": 204,
     "qualified_name": "FakeOutbox.list_dlq"
   },
   {
