@@ -1,0 +1,5 @@
+{"name": "openapi-json", "path": "/openapi.json", "status": 200, "time_s": 0.8406, "title": "", "console_msgs": 0, "screenshot": "openapi-json.png", "body_preview": "{\"openapi\":\"3.1.0\",\"info\":{\"title\":\"FastAPI\",\"version\":\"0.1.0\"},\"paths\":{\"/api/admin/{path}\":{\"get\":{\"summary\":\" Admin R", "ok": true}
+{"name": "swagger-ui", "path": "/docs", "status": 0, "ok": false, "error": "TimeoutError('Page.goto: Timeout 15000ms exceeded.\\nCall log:\\n  - navigating to \"http://127.0.0.1:18007/docs\", waiting until \"domcontentloaded\"\\n')", "console_msgs": 0}
+{"name": "redoc", "path": "/redoc", "status": 200, "time_s": 1.0048, "title": "FastAPI - ReDoc", "console_msgs": 0, "screenshot": "redoc.png", "body_preview": "Loading ...", "ok": true}
+{"name": "graphql-ui", "path": "/graphql", "status": 401, "time_s": 0.0328, "title": "", "console_msgs": 1, "screenshot": "graphql-ui.png", "body_preview": "{\"detail\":\"Authentication required\"}", "ok": true}
+{"name": "home", "path": "/", "status": 401, "time_s": 0.0135, "title": "", "console_msgs": 1, "screenshot": "home.png", "body_preview": "{\"detail\":\"Authentication required\"}", "ok": true}
