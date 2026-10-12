@@ -137,7 +137,9 @@ class LangGraphPostgresSaverWrapper:
         if self._saver is not None:
             return self._saver
         try:
-            from langchain_postgres import AsyncPostgresSaver  # type: ignore[attr-defined]
+            from langchain_postgres import (
+                AsyncPostgresSaver,  # type: ignore[attr-defined]
+            )
         except ImportError as exc:
             raise LangGraphPostgresSaverUnavailable(
                 "Пакет langchain_postgres не установлен — добавьте extra ai-memory"
