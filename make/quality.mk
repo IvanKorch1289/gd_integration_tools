@@ -62,14 +62,17 @@ plugin-dev: check-env ## Sprint 10 K5 W4: infra-only docker + hot-reload + tests
 		$(if $(AUTO_TEST),--auto-test,) \
 		$(if $(NO_COMPOSE),--no-compose-up,)
 
-type-check-strict: check-env ## Run strict mypy type check (tolerates internal mypy bugs)
+type-check-strict: check-env ## Run strict mypy type check (fail-stop; mypy crash is NOT a pass)
 	@$(INFO) "Running strict mypy type check..."
 	@MYPY_USE_MYPYC=0 $(UV_RUN) python -X faulthandler -m mypy \
 		--cache-dir=/dev/null -p src || ( \
 		RET=$$?; \
 		if [ $$RET -eq 2 ]; then \
-			$(WARN) "Mypy crashed with INTERNAL ERROR (bug in Mypy v1.20.1). Bypassing..."; \
-			exit 0; \
+			$(ERROR) "Mypy INTERNAL ERROR (crash) — проверка типов НЕ выполнена."; \
+			$(WARN) "Это баг mypy, а не пропуск гейта: ранее здесь был `exit 0`,"; \
+			$(WARN) "и `make ci` рапортовал успех при нуле выполненных проверках."; \
+			$(WARN) "Обходной путь для разработки: `make type-check` (явно non-blocking)."; \
+			exit 2; \
 		else \
 			exit $$RET; \
 		fi )
@@ -87,7 +90,9 @@ type-check-strict-profile: check-env ## Strict-профиль ADR-0295 (9 код
 		-p src; \
 	RET=$$?; \
 	if [ $$RET -eq 2 ]; then \
-		$(WARN) "Mypy crashed with INTERNAL ERROR. Bypassing..."; exit 0; \
+		$(ERROR) "Mypy INTERNAL ERROR (crash) — strict-профиль НЕ выполнен."; \
+		$(WARN) "Раньше здесь был `exit 0`: падение mypy выглядело как успех."; \
+		exit 2; \
 	fi; \
 	exit $$RET
 
