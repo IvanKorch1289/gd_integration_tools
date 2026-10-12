@@ -11,6 +11,16 @@ allowlist entries не работали — fail-OPEN.
 
 Фикс (cycle 103): _load_allowlist() читает .security/pip-audit-allowlist.txt
 at runtime, gate использует loaded IDs.
+
+История prune-ов (S58 / ADR-0290, S96, 2026-09-11): 22 stale CVE удалены,
+PYSEC-2026-3552 (cryptography) снята после обновления uv.lock до 50.0.1,
+diskcache (PYSEC-2026-2447 / CVE-2025-69872) удалены после устранения
+зависимости. Текущий файл содержит только комментарии, Active count = 0.
+
+Этот тест НЕ должен падать, когда allowlist пуст — это ожидаемое
+состояние после prune. Регрессия, которую мы ловим: loader должен
+возвращать пустой frozenset, а не hardcoded fallback, и должен
+честно обрабатывать отсутствие файла.
 """
 
 from __future__ import annotations
@@ -28,17 +38,45 @@ def test_canonical_allowlist_exists() -> None:
     )
 
 
-def test_load_allowlist_returns_nonempty_set() -> None:
-    """_load_allowlist() должен вернуть non-empty frozenset (27+ entries)."""
-    ids = _load_allowlist()
-    assert len(ids) > 0, (
-        f"Allowlist loaded 0 entries from {_CANONICAL_ALLOWLIST}; "
-        f"all CVEs would be reported as unignored → fail-OPEN"
+def test_load_allowlist_returns_set_matching_file_content() -> None:
+    """_load_allowlist() обязан отражать фактическое содержимое файла.
+
+    S58 / ADR-0290: 22 stale CVE удалены, PYSEC-2026-3552 (cryptography) снята,
+    diskcache CVE удалены. Текущий файл содержит только комментарии, поэтому
+    expected = 0. Это НЕ fail-OPEN: gate читает файл, а не hardcoded set.
+
+    Регрессия, которую этот тест ловит: если кто-то снова введёт hardcoded
+    fallback (бывший D-AUDIT-10301 bug) и файл случайно совпадёт с
+    hardcoded-пустым set — тест должен упасть на этом.
+    """
+    import re
+
+    body = _CANONICAL_ALLOWLIST.read_text(encoding="utf-8")
+    # Считаем непустые не-комментарные строки, как делает _load_allowlist.
+    file_ids: set[str] = set()
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        cve_id = stripped.split("#", 1)[0].strip()
+        if cve_id:
+            file_ids.add(cve_id)
+
+    loaded = _load_allowlist()
+
+    assert loaded == frozenset(file_ids), (
+        f"Loaded allowlist ({len(loaded)}) doesn't match file content "
+        f"({len(file_ids)}). Возможен D-AUDIT-10301 регресс — loader "
+        f"использует hardcoded fallback вместо файла."
     )
-    assert len(ids) >= 20, (
-        f"Expected at least 20 allowlist entries, got {len(ids)}. "
-        f"Canonical allowlist may have been pruned — verify "
-        f".security/pip-audit-allowlist.txt"
+    # Active count зафиксирован в 0 после prune-ов. Если кто-то добавил
+    # новую allowlist-запись, она должна появиться в обоих местах:
+    # и в файле (как не-комментарная строка), и в loaded. Тест это ловит.
+    assert len(loaded) == 0, (
+        f"Expected 0 active allowlist entries per ADR-0290 (S58, S96, "
+        f"2026-09-11 prune), but loader returned {len(loaded)}. Если это "
+        f"намеренное пополнение allowlist — обновите этот тест И "
+        f"зафиксируйте в git log (см. S58/ADR-0290 как reference)."
     )
 
 
