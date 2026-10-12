@@ -149,8 +149,10 @@ def check_taskiq_zero(report: DoctorReport) -> None:
 
 
 def _run_tool(cmd: list[str]) -> tuple[bool, str]:
+    # 180s — mypy с 2 ошибками на ~6.8k файлов занимает ~135s; tools/checks
+    # не должны искусственно занижать таймаут ниже реального времени работы.
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180)  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
         return proc.returncode == 0, proc.stdout.splitlines()[-1] if proc.stdout else ""
     except subprocess.TimeoutExpired:
         return False, "TIMEOUT"
