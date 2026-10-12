@@ -115,6 +115,7 @@ sbom-baseline-accept: ## OP-3: принять текущий SBOM как baselin
 audit-deps: ## D-AUDIT-11-4 fix (cycle 1): pip-audit с allowlist, пишет JSON в dist/pip-audit.json для CI gate
 	@$(INFO) "Running pip-audit (dist/pip-audit.json)..."
 	@mkdir -p dist
+	@rm -f dist/pip-audit.json
 	@$(UV_RUN) uv pip freeze --exclude-editable > dist/audit-requirements.txt 2>/dev/null || \
 	  $(UV_RUN) uv export --no-dev --format requirements-txt > dist/audit-requirements.txt
 	@ALLOW=""; \
@@ -123,8 +124,15 @@ audit-deps: ## D-AUDIT-11-4 fix (cycle 1): pip-audit с allowlist, пишет JS
 			ALLOW="$$ALLOW --ignore-vuln $$v"; \
 		done; \
 	fi; \
-	$(UV_RUN) pip-audit --strict --format json --output dist/pip-audit.json -r dist/audit-requirements.txt $$ALLOW || true
-	@$(SUCCESS) "pip-audit clean (dist/pip-audit.json)"
+	$(UV_RUN) pip-audit --strict --format json --output dist/pip-audit.json -r dist/audit-requirements.txt $$ALLOW
+	@test -s dist/pip-audit.json || { $(ERROR) "pip-audit не создал dist/pip-audit.json"; exit 2; }
+	@$(SUCCESS) "pip-audit report generated (dist/pip-audit.json)"
+
+cve-gate: ## Audit 2026-10-09 (DEPENDENCIES-P0-002) — fail-stop CVE-гейт для make ci
+	@$(INFO) "Running CVE gate (pip-audit + tools/pip_audit_gate.py)..."
+	@$(MAKE) audit-deps
+	@$(UV_RUN) python tools/pip_audit_gate.py --report dist/pip-audit.json
+	@$(SUCCESS) "CVE gate passed (0 unignored vulnerabilities)"
 
 cosign-sign: ## K1 S3 W3: cosign artifact signing (требует ARTIFACT= и KEY= env)
 	@test -n "$(ARTIFACT)" || { echo "[ERROR] Usage: make cosign-sign ARTIFACT=<path> KEY=<key>"; exit 1; }

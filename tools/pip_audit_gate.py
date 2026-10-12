@@ -91,12 +91,27 @@ def main() -> None:
 
     D-AUDIT-10301 fix (cycle 103, DEPENDENCIES-P0-001): allowlist loaded
     from canonical source (.security/pip-audit-allowlist.txt) at startup.
+
+    Audit 2026-10-09 (DEPENDENCIES-P0-002): добавлен необязательный
+    ``--report PATH``. Раньше путь жёстко зашит как ``pip-audit.json`` в cwd,
+    из-за чего make-цель `audit-deps` (пишет ``dist/pip-audit.json``) не могла
+    использовать этот гейт — `make ci` не проверял CVE вовсе. Значение по
+    умолчанию сохранено, поэтому .github/workflows/security.yml работает
+    без изменений.
     """
     # D-AUDIT-10301: load canonical allowlist вместо hardcoded IGNORED_VULNS.
     ignored = _load_allowlist()
     print(f"Allowlist loaded: {len(ignored)} entries from {_CANONICAL_ALLOWLIST}")
 
-    json_path = Path("pip-audit.json")
+    report_path = Path("pip-audit.json")
+    if "--report" in sys.argv:
+        idx = sys.argv.index("--report")
+        if idx + 1 >= len(sys.argv):
+            print("ERROR: --report requires a PATH argument", file=sys.stderr)
+            sys.exit(2)
+        report_path = Path(sys.argv[idx + 1])
+
+    json_path = report_path
     if not json_path.exists():
         print("ERROR: pip-audit.json not found", file=sys.stderr)
         sys.exit(1)

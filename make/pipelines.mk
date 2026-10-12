@@ -25,6 +25,7 @@ ci: ## К1 V15 — composite CI gate (lint + type + tests + security + WAF stric
 	@$(MAKE) type-check-strict
 	@$(MAKE) deps-check-strict
 	@$(MAKE) secrets-check
+	@$(MAKE) cve-gate
 	@$(MAKE) check-waf-coverage-strict
 	@$(MAKE) check-ai-safety
 	@$(MAKE) check-python3-syntax
