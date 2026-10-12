@@ -160,6 +160,7 @@ class CallFunctionProcessor(BaseProcessor):
         """Snapshot текущего whitelist (для диагностики и admin-tools)."""
         return frozenset(cls._active_whitelist)
 
+    @staticmethod
     def _validate_module_whitelist(module_name: str, context: ExecutionContext) -> None:
         """V21 + K-ARCH-5 (S17): проверяет module в whitelist.
 
