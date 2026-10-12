@@ -200,9 +200,9 @@ class PlaywrightBrowserPool:
                     "установите: uv sync --extra rpa"
                 )
         try:
-            from playwright import async_api
+            from playwright import async_api as playwright_async_api
 
-            return async_api
+            return playwright_async_api
         except ImportError as exc:
             raise RuntimeError(
                 "Ни patchright, ни playwright не установлены; "

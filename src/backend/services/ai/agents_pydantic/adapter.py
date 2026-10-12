@@ -17,20 +17,19 @@ from contextlib import asynccontextmanager
 
 try:
     from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
-    from pydantic_ai.models import Model, ModelRequestParameters
-    from pydantic_ai.result import StreamedResponse
+    from pydantic_ai.models import Model, ModelRequestParameters, StreamedResponse
     from pydantic_ai.settings import ModelSettings
 
     HAS_PYDANTIC_AI = True
 except ImportError:
     HAS_PYDANTIC_AI = False
-    Model = object
-    ModelMessage = Any
-    ModelResponse = Any
-    TextPart = None
-    ModelSettings = Any
-    ModelRequestParameters = Any
-    StreamedResponse = Any
+    Model = object  # type: ignore[assignment,misc]
+    ModelMessage = Any  # type: ignore[assignment,misc]
+    ModelResponse = Any  # type: ignore[assignment,misc]
+    TextPart = None  # type: ignore[assignment,misc]
+    ModelSettings = Any  # type: ignore[assignment,misc]
+    ModelRequestParameters = Any  # type: ignore[assignment,misc]
+    StreamedResponse = Any  # type: ignore[assignment,misc]
 
 
 class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):  # type: ignore[misc]

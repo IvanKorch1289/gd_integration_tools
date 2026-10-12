@@ -36,6 +36,7 @@ __all__ = ("LiteLLMModelAdapter", "_SimpleStreamedResponse")
 
 if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
     from collections.abc import AsyncGenerator
+    from datetime import UTC, datetime
     from typing import Any as _Any
 
     from pydantic_ai.messages import ModelMessage as _ModelMessage
@@ -165,7 +166,11 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             return self._provider
 
     class _SimpleStreamedResponse(_StreamedResponse):  # type: ignore[misc]
-        """Minimal StreamedResponse для не-streaming LiteLLM adapters."""
+        """Minimal StreamedResponse для не-streaming LiteLLM adapters.
+
+        Реализует абстрактные атрибуты ``provider_name`` / ``provider_url`` /
+        ``timestamp`` (pydantic_ai 0.5+ требует их от любого StreamedResponse).
+        """
 
         def __init__(self, text: str) -> None:
             self._text = text
@@ -179,9 +184,24 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
             return ""
 
         @property
-        def provider(self) -> str:
+        def provider_name(self) -> str:
             """Имя провайдера ('openai', 'anthropic', 'ollama', etc.)."""
             return "litellm"
+
+        @property
+        def provider_url(self) -> str:
+            """URL провайдера (не применимо для LiteLLM-routing)."""
+            return ""
+
+        @property
+        def timestamp(self) -> datetime:
+            """Момент получения финального ответа (UTC)."""
+            return datetime.now(UTC)
+
+        @property
+        def provider(self) -> str:
+            """Алиас для обратной совместимости (deprecated)."""
+            return self.provider_name
 
         @property
         def usage(self) -> _RequestUsage:
