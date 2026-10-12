@@ -163,7 +163,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
         @property
         def provider(self) -> str:
             """Имя провайдера ('openai', 'anthropic', 'ollama', etc.)."""
-            return self._provider
+            return self._provider  # type: ignore[return-value]
 
     class _SimpleStreamedResponse(_StreamedResponse):  # type: ignore[misc]
         """Minimal StreamedResponse для не-streaming LiteLLM adapters.
