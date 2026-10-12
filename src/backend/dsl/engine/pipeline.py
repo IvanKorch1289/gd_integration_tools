@@ -7,7 +7,36 @@ from typing import Any
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
-__all__ = ("CompiledPipeline", "Pipeline", "PipelineCompiler")
+__all__ = ("CompiledPipeline", "Pipeline", "PipelineCompiler", "ResponseBinding")
+
+
+@dataclass(slots=True)
+class ResponseBinding:
+    """Контракт response-билдинга для DSL-маршрута (ADR-0349).
+
+    Если задано, после выполнения pipeline ``ExecutionEngine`` запишет
+    в ``exchange.out_message`` результат рендеринга:
+    * ``body`` — literal mapping; строковые значения вида ``${expr}``
+      подставляются через :func:`_resolve_binding_value` (использует
+      ``_resolve``-helper, как остальные референсы в DSL);
+    * ``headers`` — плоский ``dict[str, str]``, подставляются в
+      ``out_message.headers`` буквально.
+
+    Сейчас status-код намеренно НЕ входит в контракт: его добавление —
+    отдельное решение (см. ADR-0349, раздел «Варианты»). Поддерживающие
+    поверхности (первый срез: builder_facade, dsl_console,
+    route_execution_check) читают ``out_message`` и формируют ответ из
+    ``body`` и ``headers``.
+
+    Attrs:
+        body: Literal mapping для тела ответа. Строки вида ``${expr}``
+            резолвятся против exchange (body.X, properties.X, result.X,
+            header.X — те же неймспейсы, что в :func:`_resolve`).
+        headers: Плоский ``dict[str, str]`` для HTTP-заголовков ответа.
+    """
+
+    body: dict[str, Any]
+    headers: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -63,6 +92,9 @@ class Pipeline:
     route_overrides: dict[str, Any] = field(default_factory=dict)  # S163 W15
     security: tuple[str, ...] | None = (
         None  # K3 S19 W3: requires_permission enforcement
+    )
+    response: ResponseBinding | None = (
+        None  # ADR-0349: response-binding. См. :class:`ResponseBinding`.
     )
 
     def add_processor(self, processor: BaseProcessor) -> Pipeline:

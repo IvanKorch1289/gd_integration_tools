@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Any as Any
+from typing import Self as Self
 
 if TYPE_CHECKING:
     pass
@@ -85,6 +86,7 @@ from src.backend.dsl.builders.template_engine_mixin import (
 )
 from src.backend.dsl.builders.variable_mixin import VariableMixin as VariableMixin
 from src.backend.dsl.engine.pipeline import Pipeline as Pipeline
+from src.backend.dsl.engine.pipeline import ResponseBinding as ResponseBinding
 from src.backend.dsl.engine.processors import BaseProcessor as BaseProcessor
 from src.backend.dsl.engine.processors.plan_execute_processor import (
     PlanExecuteMixin as PlanExecuteMixin,
@@ -167,6 +169,7 @@ class RouteBuilder(  # type: ignore[misc]
         "_processors",
         "_protocol",
         "_route_overrides",  # S163 W14: dict for route-level overrides
+        "_response",  # ADR-0349: ResponseBinding для финального out_message
         "_transport_config",
         "description",
         "route_id",
@@ -202,6 +205,7 @@ class RouteBuilder(  # type: ignore[misc]
         object.__setattr__(self, "_feature_flag_stop_on_disabled", False)
         object.__setattr__(self, "_feature_flag_output_field", "_flag_enabled")
         object.__setattr__(self, "_route_overrides", {})  # S163 W14
+        object.__setattr__(self, "_response", None)  # ADR-0349
 
     # D-AUDIT-20402 (cycle 204 Tier 3): ``__getattr__`` fallback для missing
     # attributes. Python invokes ``__getattr__`` только если normal lookup
@@ -325,12 +329,34 @@ class RouteBuilder(  # type: ignore[misc]
         """Добавляет произвольный процессор в pipeline."""
         return self._add(processor)
 
+    def to_response(self, binding: ResponseBinding) -> Self:
+        """Привязать к маршруту response-binding (ADR-0349).
+
+        ``ExecutionEngine`` при финализации рендерит ``binding.body`` (с
+        резолвом ``${expr}`` через ``_resolve``) и ``binding.headers``
+        в ``exchange.out_message``. Поддерживающие поверхности
+        (builder_facade / dsl_console / route_execution_check) читают
+        ``out_message`` и формируют ответ из этих полей.
+
+        Args:
+            binding: Готовый :class:`ResponseBinding` (с ``body`` и
+                опциональными ``headers``).
+
+        Returns:
+            Self: builder для fluent-chain.
+        """
+        object.__setattr__(self, "_response", binding)
+        return self
+
     def build(self, *, validate_actions: bool = True) -> Pipeline:
         """Собирает Pipeline из накопленных процессоров.
         Финальный вызов в fluent-chain.
 
         S163 W15: копирует ``self._route_overrides`` в Pipeline для handlers
         (ws_handler/grpc_server/graphql) — per-route override settings.
+
+        ADR-0349: пробрасывает ``self._response`` в Pipeline, если
+        :meth:`to_response` был вызван.
 
         Args:
             validate_actions: Если True (default), проверяет что все
@@ -350,6 +376,7 @@ class RouteBuilder(  # type: ignore[misc]
             feature_flag=self._feature_flag,
             middlewares=list(self._middlewares),
             route_overrides=dict(self._route_overrides),  # S163 W15
+            response=self._response,  # ADR-0349
         )
 
 

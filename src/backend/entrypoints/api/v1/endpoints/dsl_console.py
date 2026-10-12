@@ -230,9 +230,7 @@ class _DSLConsoleFacade:
         body = body or {}
         try:
             from src.backend.core.api.extensions import ExecutionEngine
-            from src.backend.dsl.portal.builder_facade import (
-                get_route_pipeline,
-            )
+            from src.backend.dsl.portal.builder_facade import get_route_pipeline
 
             pipeline = get_route_pipeline(route_id)
             if pipeline is None:

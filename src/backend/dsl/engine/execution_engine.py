@@ -1,5 +1,5 @@
 import time
-from typing import Any, cast
+from typing import Any, Callable, cast
 
 from src.backend.core.errors import RouteDisabledError, TenantContextRequiredError
 from src.backend.core.logging import get_logger
@@ -213,8 +213,52 @@ class ExecutionEngine:
         }
 
     @staticmethod
+    def _render_binding_value(
+        node: Any,
+        resolve: Callable[[Exchange[Any], str | None], Any],
+        exchange: Exchange[Any],
+    ) -> Any:
+        """Рендерит literal-значение ``ResponseBinding.body``.
+
+        Строки вида ``${expr}`` заменяются результатом ``resolve(exchange, expr)``.
+        Вложенные dict/list обходятся рекурсивно. Прочие значения передаются
+        как есть — это разрешает смешивать литералы и ссылки на одном уровне.
+        """
+        if isinstance(node, str) and node.startswith("${") and node.endswith("}"):
+            return resolve(exchange, node[2:-1])
+        if isinstance(node, dict):
+            return {
+                key: ExecutionEngine._render_binding_value(val, resolve, exchange)
+                for key, val in node.items()
+            }
+        if isinstance(node, list):
+            return [
+                ExecutionEngine._render_binding_value(item, resolve, exchange)
+                for item in node
+            ]
+        return node
+
+    @staticmethod
     def _finalize(exchange: Exchange[Any], pipeline: Pipeline, total_ms: float) -> None:
         """Set final exchange status and record SLO metrics."""
+        # ADR-0349: response-binding — это ФИНАЛЬНАЯ декларация маршрута.
+        # Если она задана, она переопределяет любой промежуточный
+        # ``out_message``, выставленный процессорами: автор роута явно
+        # указал, каким должен быть ответ, и этот контракт важнее
+        # внутренней логики шагов. Проверка на ``status != failed`` оставлена
+        # — если процессор явно провалил exchange, binding не подменяет
+        # ошибку успешным ответом.
+        if exchange.status != ExchangeStatus.failed and pipeline.response is not None:
+            from src.backend.dsl.engine.processors.entity._resolve_helper import (
+                _resolve,
+            )
+
+            exchange.out_message = Message(
+                body=ExecutionEngine._render_binding_value(
+                    pipeline.response.body, _resolve, exchange
+                ),
+                headers=dict(pipeline.response.headers),
+            )
         if exchange.status != ExchangeStatus.failed:
             if exchange.out_message is None:
                 exchange.complete(

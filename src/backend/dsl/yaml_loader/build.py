@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from src.backend.dsl.builder import RouteBuilder
-from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.engine.pipeline import Pipeline, ResponseBinding
 from src.backend.dsl.yaml_loader.control_flow import _materialize_control_flow_params
 
 # Sentinel for "not set" to distinguish from None
@@ -79,6 +79,33 @@ def _build_pipeline(
 
     for proc_spec in _iter_steps(processors_spec):
         _apply_processor(builder, proc_spec)
+
+    # ADR-0349: опциональный response-binding (sibling ``from:`` / ``steps:``).
+    # Формат YAML::
+    #
+    #     to:
+    #       body:
+    #         status: ok
+    #         user_id: "${body.user_id}"
+    #       headers:
+    #         X-Frame-Options: DENY
+    #
+    # Внутри строк в ``body`` ``${expr}`` резолвится ``_resolve``-helper'ом
+    # (неймспейсы body./properties./result./header.). Все остальные значения
+    # проходят как литералы — это позволяет смешивать ссылки и значения.
+    to_spec = spec.get("to")
+    if to_spec is not None:
+        if not isinstance(to_spec, dict):
+            raise ValueError("'to' must be a mapping with 'body' and/or 'headers'")
+        if "body" not in to_spec and "headers" not in to_spec:
+            raise ValueError("'to' must declare at least one of 'body' or 'headers'")
+        body = to_spec.get("body", {})
+        headers = to_spec.get("headers", {})
+        if not isinstance(body, dict):
+            raise ValueError("'to.body' must be a mapping")
+        if not isinstance(headers, dict):
+            raise ValueError("'to.headers' must be a mapping")
+        builder.to_response(ResponseBinding(body=body, headers=dict(headers)))
 
     return builder.build()
 

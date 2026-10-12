@@ -12,6 +12,7 @@
 уровне этого файла воссоздаст ту самую ``services → dsl``-зависимость,
 от которой мы уходим.
 """
+
 from __future__ import annotations
 
 import importlib as _importlib
