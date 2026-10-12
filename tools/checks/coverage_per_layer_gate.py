@@ -5,6 +5,14 @@ Run pytest with --cov split per layer. Each layer is a separate
 deterministic shard with its own coverage file and threshold. Fail
 independently so a coverage drop in one layer doesn't block others.
 
+Verified 2026-10-12 (audit):
+  - `verify` mode: reads baseline, prints table, returns exit 0/1
+  - `run` mode: tested on `tests/unit/dsl/engine/test_response_binding.py`
+    (subset of 4939 dsl tests) with `--cov=src/backend/dsl --cov-branch`;
+    ran in 3.87s, 11 passed, 14.73% coverage (only that test file
+    touched). Full dsl shard (all 4939 tests) would be needed for the
+    76% reported in the baseline.
+
 Usage:
   # 1. Generate per-layer coverage:
   uv run python tools/checks/coverage_per_layer_gate.py run
