@@ -17,7 +17,7 @@ Usage:
   APP_PROFILE=dev_light uv run python -m uvicorn src.backend.main:app \
       --port 18000 &
   python artifacts/current_audit/phase6/chromium_battery.py \
-      http://127.0.0.1:18000
+      http://127.0.0.1:18008
 """
 from __future__ import annotations
 
@@ -53,7 +53,15 @@ def main() -> int:
             page.on("console", lambda msg: console.append(f"{msg.type}: {msg.text}"))
             try:
                 t0 = time.time()
-                resp = page.goto(HOST + path, wait_until="domcontentloaded", timeout=15_000)
+                # /docs и /redoc подгружают ~1-3MB CDN-скриптов (jsdelivr, redoc.ly,
+                # fonts.googleapis.com). На холодном кэше 5-15s.
+                # domcontentloaded наступает после networkidle, поэтому
+                # ждём либо domcontentloaded (быстро для /api/*), либо
+                # поднимаем timeout для /docs, /redoc до 45s.
+                if path in ("/docs", "/redoc"):
+                    resp = page.goto(HOST + path, wait_until="domcontentloaded", timeout=45_000)
+                else:
+                    resp = page.goto(HOST + path, wait_until="domcontentloaded", timeout=15_000)
                 elapsed = time.time() - t0
                 status = resp.status if resp else 0
                 # screenshot
