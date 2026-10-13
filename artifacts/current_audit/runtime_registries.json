@@ -1,587 +1,2483 @@
 {
-  "provenance": {
-    "head": "13d22e4e221ae3bb1f23799a4f59eacd2e92de19",
-    "branch": "master",
-    "python": "3.14.0",
-    "generated_at": "2026-10-05T15:28:18Z",
-    "method": "реестры читаются ПОСЛЕ create_app(), из модульных синглтонов; создание собственного экземпляра ActionHandlerRegistry даёт ложный 0"
-  },
-  "app": {
-    "title": "FastAPI",
-    "user_middleware": 37
-  },
-  "actions": [
-    "admin.get_cache_value",
-    "admin.get_config",
-    "admin.invalidate_cache",
-    "admin.invalidate_cache_by_pattern",
-    "admin.invalidate_cache_by_tag",
-    "admin.invalidate_table",
-    "admin.list_cache_keys",
-    "agent_memory.add_message",
-    "agent_memory.clear",
-    "agent_memory.get_conversation",
-    "agent_memory.get_facts",
-    "agent_memory.load",
-    "agent_memory.save",
-    "agent_memory.set_fact",
-    "ai.chat",
-    "ai.parse_webpage",
-    "ai.run_agent",
-    "ai.search_web",
-    "analytics.aggregate",
-    "analytics.count",
-    "analytics.insert_batch",
-    "analytics.insert_event",
-    "analytics.query",
-    "anomaly.list_metrics",
-    "anomaly.observe",
-    "anomaly.stats",
-    "connector.import",
-    "connector.list_imported",
-    "dadata.get_geolocate",
-    "dq.check",
-    "dq.schema_infer",
-    "dq.stats",
-    "export.to_csv",
-    "export.to_excel",
-    "export.to_pdf",
-    "files.add",
-    "files.create",
-    "files.create_many",
-    "files.delete",
-    "files.get",
-    "files.list",
-    "files.update",
-    "notebooks.create",
-    "notebooks.delete",
-    "notebooks.get",
-    "notebooks.list",
-    "notebooks.restore_version",
-    "notebooks.update_content",
-    "notify.broadcast",
-    "notify.email",
-    "notify.express",
-    "notify.express_broadcast",
-    "notify.express_create_chat",
-    "notify.express_event",
-    "notify.send",
-    "notify.telegram",
-    "notify.webhook",
-    "orderkinds.add",
-    "orderkinds.create",
-    "orderkinds.create_many",
-    "orderkinds.delete",
-    "orderkinds.get",
-    "orderkinds.list",
-    "orderkinds.update",
-    "orders.add",
-    "orders.create",
-    "orders.create_many",
-    "orders.create_skb_order",
-    "orders.delete",
-    "orders.get",
-    "orders.get_file_and_json",
-    "orders.get_file_base64",
-    "orders.get_file_from_storage",
-    "orders.get_file_link",
-    "orders.get_result",
-    "orders.list",
-    "orders.send_order_data",
-    "orders.update",
-    "rag.augment_prompt",
-    "rag.count",
-    "rag.delete",
-    "rag.ingest",
-    "rag.search",
-    "replay.bulk",
-    "replay.list",
-    "replay.one",
-    "replay.stats",
-    "reports.history",
-    "reports.list",
-    "reports.run_now",
-    "reports.schedule",
-    "search.aggregate",
-    "search.bulk_index",
-    "search.delete_document",
-    "search.index_document",
-    "search.query",
-    "skb.add_request",
-    "skb.get_objects_by_address",
-    "skb.get_orders_list",
-    "skb.get_request_kinds",
-    "skb.get_response_by_order",
-    "tech.check_all_services",
-    "tech.check_database",
-    "tech.check_redis",
-    "tech.check_s3",
-    "tech.send_email",
-    "users.add",
-    "users.create",
-    "users.create_many",
-    "users.delete",
-    "users.get",
-    "users.list",
-    "users.update",
-    "web.click",
-    "web.extract_table",
-    "web.extract_text",
-    "web.fill_form",
-    "web.monitor_changes",
-    "web.navigate",
-    "web.parse_page",
-    "web.run_scenario",
-    "web.screenshot",
-    "web_search.deep_research",
-    "web_search.query",
-    "webhook.cancel",
-    "webhook.dlq_list",
-    "webhook.dlq_retry",
-    "webhook.execute",
-    "webhook.list_scheduled",
-    "webhook.relay",
-    "webhook.schedule",
-    "webhook.transform"
+  "ProcessorRegistry": [
+    {
+      "file": "extensions/__init__.py",
+      "line": 51,
+      "snippet": "ProcessorRegistryProtocol,"
+    },
+    {
+      "file": "extensions/__init__.py",
+      "line": 72,
+      "snippet": "\"ProcessorRegistryProtocol\","
+    },
+    {
+      "file": "extensions/credit_pipeline/plugin.py",
+      "line": 32,
+      "snippet": "ProcessorRegistryProtocol,"
+    },
+    {
+      "file": "extensions/credit_pipeline/plugin.py",
+      "line": 126,
+      "snippet": "async def on_register_processors(self, registry: ProcessorRegistryProtocol) -> None:"
+    },
+    {
+      "file": "extensions/credit_pipeline/tests/test_scaffold_load.py",
+      "line": 95,
+      "snippet": "\"\"\"Mock RepositoryRegistryProtocol / ProcessorRegistryProtocol (defer S77+).\"\"\""
+    },
+    {
+      "file": "extensions/osint_agent/plugin.py",
+      "line": 39,
+      "snippet": "ProcessorRegistryProtocol,"
+    },
+    {
+      "file": "extensions/osint_agent/plugin.py",
+      "line": 84,
+      "snippet": "async def on_register_processors(self, registry: ProcessorRegistryProtocol) -> None:"
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 48,
+      "snippet": "from src.backend.dsl.registry.processor import ProcessorRegistry, get_processor_registry"
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 48,
+      "snippet": "from src.backend.dsl.registry.processor import ProcessorRegistry, get_processor_registry"
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 93,
+      "snippet": "\"ProcessorRegistry\","
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 94,
+      "snippet": "\"get_processor_registry\","
+    },
+    {
+      "file": "src/backend/core/config/features/__init__.py",
+      "line": 199,
+      "snippet": "# dsl_processor_registry_strict, dsl_route_hot_reload, lsp_server_published,"
+    },
+    {
+      "file": "src/backend/core/config/features/dsl.py",
+      "line": 6,
+      "snippet": "- dsl_processor_registry_strict (K5 W3)"
+    },
+    {
+      "file": "src/backend/core/config/features/dsl.py",
+      "line": 65,
+      "snippet": "dsl_processor_registry_strict: bool = Field("
+    },
+    {
+      "file": "src/backend/core/config/features/dsl.py",
+      "line": 67,
+      "snippet": "title=\"DSL: ProcessorRegistry strict mode (отказ при missing schema)\","
+    },
+    {
+      "file": "src/backend/core/config/features/dsl.py",
+      "line": 70,
+      "snippet": "\"Активирует строгий режим ProcessorRegistry: процессоры без \""
+    },
+    {
+      "file": "src/backend/core/config/features/infrastructure.py",
+      "line": 392,
+      "snippet": "\"Активирует lazy-import процессоров через ProcessorRegistry (только \""
+    },
+    {
+      "file": "src/backend/core/config/features/sprint5_dsl.py",
+      "line": 59,
+      "snippet": "\"Активирует регистрацию HtmlTemplateProcessor в ProcessorRegistry.\""
+    },
+    {
+      "file": "src/backend/core/config/validator/_helpers.py",
+      "line": 41,
+      "snippet": "\"dsl_processor_registry_strict\","
+    },
+    {
+      "file": "src/backend/core/interfaces/plugin.py",
+      "line": 34,
+      "snippet": "\"ProcessorRegistryProtocol\","
+    },
+    {
+      "file": "src/backend/core/interfaces/plugin.py",
+      "line": 86,
+      "snippet": "class ProcessorRegistryProtocol(Protocol):"
+    },
+    {
+      "file": "src/backend/core/interfaces/plugin.py",
+      "line": 118,
+      "snippet": "processors: ProcessorRegistryProtocol,"
+    },
+    {
+      "file": "src/backend/core/interfaces/plugin.py",
+      "line": 212,
+      "snippet": "async def on_register_processors(self, registry: ProcessorRegistryProtocol) -> None:"
+    },
+    {
+      "file": "src/backend/dsl/blueprint_loader.py",
+      "line": 5,
+      "snippet": ":class:`ServiceDSLRegistry` или :class:`ProcessorRegistry`."
+    },
+    {
+      "file": "src/backend/dsl/builders/eip/routing.py",
+      "line": 119,
+      "snippet": "ProcessorRegistry,"
+    },
+    {
+      "file": "src/backend/dsl/builders/eip/routing.py",
+      "line": 122,
+      "snippet": "from src.backend.dsl.registry.processor import get_processor_registry"
+    },
+    {
+      "file": "src/backend/dsl/builders/eip/routing.py",
+      "line": 149,
+      "snippet": "registry: ProcessorRegistry = get_processor_registry()  # type: ignore[assignment]"
+    },
+    {
+      "file": "src/backend/dsl/builders/eip/routing.py",
+      "line": 149,
+      "snippet": "registry: ProcessorRegistry = get_processor_registry()  # type: ignore[assignment]"
+    },
+    {
+      "file": "src/backend/dsl/cli/linter.py",
+      "line": 16,
+      "snippet": "``ProcessorRegistry``."
+    },
+    {
+      "file": "src/backend/dsl/engine/dry_run.py",
+      "line": 14,
+      "snippet": "ProcessorRegistry и Exchange, что доступно только в server-mode."
+    },
+    {
+      "file": "src/backend/dsl/engine/plugin_registry.py",
+      "line": 4,
+      "snippet": "во новый :class:`src.backend.dsl.registry.ProcessorRegistry`. При каждом"
+    },
+    {
+      "file": "src/backend/dsl/engine/plugin_registry.py",
+      "line": 9,
+      "snippet": "from src.backend.dsl.registry import processor, get_processor_registry"
+    },
+    {
+      "file": "src/backend/dsl/engine/plugin_registry.py",
+      "line": 31,
+      "snippet": "get_processor_registry,"
+    },
+    {
+      "file": "src/backend/dsl/engine/plugin_registry.py",
+      "line": 42,
+      "snippet": "\"src.backend.dsl.registry.get_processor_registry().\""
+    },
+    {
+      "file": "src/backend/dsl/engine/plugin_registry.py",
+      "line": 47,
+      "snippet": "\"\"\"Устаревший фасад поверх нового :class:`ProcessorRegistry`."
+    },
+    {
+      "file": "src/backend/dsl/engine/plugin_registry.py",
+      "line": 49,
+      "snippet": "Все операции делегируют в global-singleton :class:`ProcessorRegistry`."
+    },
+    {
+      "file": "src/backend/dsl/engine/plugin_registry.py",
+      "line": 55,
+      "snippet": "self._registry = get_processor_registry()"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/__init__.py",
+      "line": 89,
+      "snippet": "ProcessorRegistry,"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/__init__.py",
+      "line": 155,
+      "snippet": "\"ProcessorRegistry\","
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing_slip.py",
+      "line": 18,
+      "snippet": "registry=processor_registry,  # map name → processor instance"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing_slip.py",
+      "line": 23,
+      "snippet": ".routing_slip(header=\"routing_slip\", registry=processor_registry)"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing_slip.py",
+      "line": 42,
+      "snippet": "__all__ = (\"ProcessorRegistry\", \"RoutingSlipProcessor\", \"SimpleRegistry\")"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing_slip.py",
+      "line": 47,
+      "snippet": "class ProcessorRegistry(Protocol):"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing_slip.py",
+      "line": 129,
+      "snippet": "registry: ProcessorRegistry для lookup по имени."
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing_slip.py",
+      "line": 140,
+      "snippet": "registry: ProcessorRegistry,"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/notify/apprise_notify.py",
+      "line": 3,
+      "snippet": "Регистрируется в ProcessorRegistry как ``notify_apprise`` (namespace ``notification``)."
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/notify/apprise_notify.py",
+      "line": 65,
+      "snippet": "Зарегистрирован в ProcessorRegistry как ``notify_apprise``"
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 5,
+      "snippet": "* :class:`ProcessorRegistry` — реестр процессоров."
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 7,
+      "snippet": "* :func:`get_processor_registry` — global singleton."
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 22,
+      "snippet": "ProcessorRegistryError,"
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 28,
+      "snippet": "ProcessorRegistry,"
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 30,
+      "snippet": "get_processor_registry,"
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 38,
+      "snippet": "\"ProcessorRegistry\","
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 39,
+      "snippet": "\"ProcessorRegistryError\","
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 43,
+      "snippet": "\"get_processor_registry\","
+    },
+    {
+      "file": "src/backend/dsl/registry/errors.py",
+      "line": 1,
+      "snippet": "\"\"\"Исключения для ProcessorRegistry (Stage 3, V15 Sprint 1)."
+    },
+    {
+      "file": "src/backend/dsl/registry/errors.py",
+      "line": 10,
+      "snippet": "class ProcessorRegistryError(Exception):"
+    },
+    {
+      "file": "src/backend/dsl/registry/errors.py",
+      "line": 14,
+      "snippet": "class ProcessorConflictError(ProcessorRegistryError):"
+    },
+    {
+      "file": "src/backend/dsl/registry/errors.py",
+      "line": 23,
+      "snippet": "class CapabilityDeniedError(ProcessorRegistryError):"
+    },
+    {
+      "file": "src/backend/dsl/registry/errors.py",
+      "line": 34,
+      "snippet": "class ProcessorNotFoundError(ProcessorRegistryError, KeyError):"
+    },
+    {
+      "file": "src/backend/dsl/registry/json_schema_exporter.py",
+      "line": 29,
+      "snippet": "from src.backend.dsl.registry.processor import ProcessorSpec, get_processor_registry"
+    },
+    {
+      "file": "src/backend/dsl/registry/json_schema_exporter.py",
+      "line": 58,
+      "snippet": "1. Читает глобальный :func:`get_processor_registry` singleton."
+    },
+    {
+      "file": "src/backend/dsl/registry/json_schema_exporter.py",
+      "line": 60,
+      "snippet": ":meth:`ProcessorRegistry.export_schemas` (Pydantic reflection или"
+    },
+    {
+      "file": "src/backend/dsl/registry/json_schema_exporter.py",
+      "line": 75,
+      "snippet": "registry = get_processor_registry()"
+    },
+    {
+      "file": "src/backend/dsl/registry/lazy_processor.py",
+      "line": 4,
+      "snippet": "Базовый :class:`ProcessorRegistry` требует, чтобы класс был импортирован"
+    },
+    {
+      "file": "src/backend/dsl/registry/lazy_processor.py",
+      "line": 6,
+      "snippet": "и :class:`LazyProcessorRegistry`, который оборачивает базовый реестр и"
+    },
+    {
+      "file": "src/backend/dsl/registry/lazy_processor.py",
+      "line": 13,
+      "snippet": "lazy = LazyProcessorRegistry(base=get_processor_registry())"
+    },
+    {
+      "file": "src/backend/dsl/registry/lazy_processor.py",
+      "line": 13,
+      "snippet": "lazy = LazyProcessorRegistry(base=get_processor_registry())"
+    },
+    {
+      "file": "src/backend/dsl/registry/lazy_processor.py",
+      "line": 34,
+      "snippet": "__all__ = (\"LazyProcessorRef\", \"LazyProcessorRegistry\", \"load_processor_class\")"
+    },
+    {
+      "file": "src/backend/dsl/registry/lazy_processor.py",
+      "line": 81,
+      "snippet": "class LazyProcessorRegistry:"
+    },
+    {
+      "file": "src/backend/dsl/registry/lazy_processor.py",
+      "line": 82,
+      "snippet": "\"\"\"Wraps :class:`ProcessorRegistry` с lazy module loading."
+    },
+    {
+      "file": "src/backend/dsl/registry/lazy_processor.py",
+      "line": 85,
+      "snippet": "base: реальный :class:`ProcessorRegistry` (для backward-compat)."
+    },
+    {
+      "file": "src/backend/dsl/registry/processor.py",
+      "line": 4,
+      "snippet": ":class:`ProcessorRegistry` с namespacing (``core:`` / ``<plugin>:``),"
+    },
+    {
+      "file": "src/backend/dsl/registry/processor.py",
+      "line": 59,
+      "snippet": "__all__ = (\"ProcessorRegistry\", \"ProcessorSpec\", \"get_processor_registry\", \"processor\")"
+    },
+    {
+      "file": "src/backend/dsl/registry/processor.py",
+      "line": 59,
+      "snippet": "__all__ = (\"ProcessorRegistry\", \"ProcessorSpec\", \"get_processor_registry\", \"processor\")"
+    },
+    {
+      "file": "src/backend/dsl/registry/processor.py",
+      "line": 76,
+      "snippet": "JSON-Schema export через :meth:`ProcessorRegistry.export_schemas`)."
+    },
+    {
+      "file": "src/backend/dsl/registry/processor.py",
+      "line": 101,
+      "snippet": "class ProcessorRegistry:"
+    },
+    {
+      "file": "src/backend/dsl/registry/processor.py",
+      "line": 285,
+      "snippet": "_REGISTRY: ProcessorRegistry = ProcessorRegistry()"
+    },
+    {
+      "file": "src/backend/dsl/registry/processor.py",
+      "line": 285,
+      "snippet": "_REGISTRY: ProcessorRegistry = ProcessorRegistry()"
+    },
+    {
+      "file": "src/backend/dsl/registry/processor.py",
+      "line": 288,
+      "snippet": "def get_processor_registry() -> ProcessorRegistry:"
+    }
   ],
-  "dsl_routes": [],
-  "openapi": {
-    "paths": 414,
-    "schemas": 142,
-    "path_list": [
-      "/",
-      "/api/admin/{path}",
-      "/api/v1/actions/inventory",
-      "/api/v1/admin/actions",
-      "/api/v1/admin/actions/invoke",
-      "/api/v1/admin/actions/list",
-      "/api/v1/admin/actions/{name}/spec",
-      "/api/v1/admin/admin/langgraph/checkpoints",
-      "/api/v1/admin/admin/langgraph/checkpoints/{session_id}",
-      "/api/v1/admin/admin/langgraph/checkpoints/{session_id}/restore",
-      "/api/v1/admin/ai-costs",
-      "/api/v1/admin/ai-costs/alerts",
-      "/api/v1/admin/ai-costs/link",
-      "/api/v1/admin/cache/invalidate",
-      "/api/v1/admin/cache/invalidate/pattern",
-      "/api/v1/admin/cache/invalidate/table",
-      "/api/v1/admin/cache/invalidate/tags",
-      "/api/v1/admin/cache/keys",
-      "/api/v1/admin/cache/stats",
-      "/api/v1/admin/cache/{key}",
-      "/api/v1/admin/capabilities",
-      "/api/v1/admin/capabilities/audit-events",
-      "/api/v1/admin/capabilities/graph",
-      "/api/v1/admin/certs/expiring",
-      "/api/v1/admin/config",
-      "/api/v1/admin/config/reload",
-      "/api/v1/admin/connectors",
-      "/api/v1/admin/connectors/{name}/config",
-      "/api/v1/admin/connectors/{name}/reload",
-      "/api/v1/admin/cron/dashboard",
-      "/api/v1/admin/cron/list",
-      "/api/v1/admin/cron/schedule",
-      "/api/v1/admin/cron/validate",
-      "/api/v1/admin/cron/{job_id}",
-      "/api/v1/admin/cron/{job_id}/pause",
-      "/api/v1/admin/cron/{job_id}/resume",
-      "/api/v1/admin/cron/{job_id}/run-now",
-      "/api/v1/admin/dsl-routes",
-      "/api/v1/admin/dsl-routes/validate",
-      "/api/v1/admin/dsl-routes/{route_id}",
-      "/api/v1/admin/dsl-routes/{route_id}/diff",
-      "/api/v1/admin/dsl-routes/{route_id}/python",
-      "/api/v1/admin/dsl-routes/{route_id}/traces",
-      "/api/v1/admin/feature-flags",
-      "/api/v1/admin/feature-flags/backend-status",
-      "/api/v1/admin/feature-flags/toggle",
-      "/api/v1/admin/feature-flags/{flag}",
-      "/api/v1/admin/feedback/labeled-count",
-      "/api/v1/admin/feedback/training-runs",
-      "/api/v1/admin/ip-restriction",
-      "/api/v1/admin/ip-restriction/reload",
-      "/api/v1/admin/ip-restriction/routes/{path_pattern}",
-      "/api/v1/admin/langmem/consolidate",
-      "/api/v1/admin/langmem/stats",
-      "/api/v1/admin/model-registry/models",
-      "/api/v1/admin/model-registry/models/{name}",
-      "/api/v1/admin/model-registry/models/{name}/use-in-route",
-      "/api/v1/admin/plugins/admin/plugins",
-      "/api/v1/admin/plugins/admin/plugins/dependency-graph",
-      "/api/v1/admin/plugins/admin/plugins/scaffold",
-      "/api/v1/admin/plugins/admin/plugins/{name}/diff",
-      "/api/v1/admin/plugins/admin/plugins/{name}/manifest",
-      "/api/v1/admin/plugins/admin/plugins/{name}/rollback",
-      "/api/v1/admin/plugins/admin/plugins/{name}/toggle",
-      "/api/v1/admin/plugins/admin/plugins/{name}/versions",
-      "/api/v1/admin/rag-cache/events",
-      "/api/v1/admin/rag-cache/flush",
-      "/api/v1/admin/rag-cache/stats",
-      "/api/v1/admin/rag/strategy-stats",
-      "/api/v1/admin/resilience-profiles",
-      "/api/v1/admin/resilience-profiles/{name}",
-      "/api/v1/admin/routes",
-      "/api/v1/admin/routes/toggle",
-      "/api/v1/admin/routes/{name}/parallelism-report",
-      "/api/v1/admin/scheduler/dlq",
-      "/api/v1/admin/scheduler/dlq/{entry_id}",
-      "/api/v1/admin/scheduler/dlq/{entry_id}/retry",
-      "/api/v1/admin/schemas",
-      "/api/v1/admin/schemas/{kind}",
-      "/api/v1/admin/schemas/{kind}/{name}",
-      "/api/v1/admin/services",
-      "/api/v1/admin/slo-report",
-      "/api/v1/admin/system-info",
-      "/api/v1/admin/tenants",
-      "/api/v1/admin/tenants/{tenant_id}",
-      "/api/v1/admin/workflow-audit/events",
-      "/api/v1/admin/workflow-audit/inventory",
-      "/api/v1/admin/workflow-cost/estimate",
-      "/api/v1/admin/workflow-cost/history/{workflow_id}",
-      "/api/v1/admin/workflow-templates/",
-      "/api/v1/admin/workflow-templates/search",
-      "/api/v1/admin/workflow-templates/{name}",
-      "/api/v1/admin/workflow-templates/{name}/deploy",
-      "/api/v1/admin/workflow-versioning",
-      "/api/v1/admin/workflow-versioning/{workflow_id}/history",
-      "/api/v1/admin/workflow-versioning/{workflow_id}/pin",
-      "/api/v1/admin/workflow-versioning/{workflow_id}/rollback",
-      "/api/v1/admin/workflow-versioning/{workflow_id}/running-count",
-      "/api/v1/admin/workflows",
-      "/api/v1/admin/workflows/trigger/{workflow_name}",
-      "/api/v1/admin/workflows/{instance_id}",
-      "/api/v1/admin/workflows/{instance_id}/cancel",
-      "/api/v1/admin/workflows/{instance_id}/events",
-      "/api/v1/admin/workflows/{instance_id}/resume",
-      "/api/v1/admin/workflows/{instance_id}/retry",
-      "/api/v1/admin/workflows/{workflow_id}/saga-history",
-      "/api/v1/agent_memory/sessions/{session_id}/facts",
-      "/api/v1/agent_memory/sessions/{session_id}/facts/{fact_key}",
-      "/api/v1/agent_memory/sessions/{session_id}/messages",
-      "/api/v1/agent_memory/sessions/{session_id}/scratchpad",
-      "/api/v1/ai/agents/{name}/invoke",
-      "/api/v1/ai/agents/{name}/tools",
-      "/api/v1/ai/feedback/index-to-rag",
-      "/api/v1/ai/feedback/labeled",
-      "/api/v1/ai/feedback/pending",
-      "/api/v1/ai/feedback/stats",
-      "/api/v1/ai/feedback/{doc_id}",
-      "/api/v1/ai/feedback/{doc_id}/label",
-      "/api/v1/ai/llm/stream",
-      "/api/v1/ai/tools",
-      "/api/v1/ai/tools/{tool_id}",
-      "/api/v1/asyncapi.json",
-      "/api/v1/asyncapi.yaml",
-      "/api/v1/audit/capability",
-      "/api/v1/auth/introspect",
-      "/api/v1/auth/login",
-      "/api/v1/auth/methods",
-      "/api/v1/auth/saml/acs",
-      "/api/v1/auth/saml/login",
-      "/api/v1/auth/saml/sls",
-      "/api/v1/auth/step-up-request",
-      "/api/v1/auto/admin.get_cache_value",
-      "/api/v1/auto/admin.get_config",
-      "/api/v1/auto/admin.invalidate_cache",
-      "/api/v1/auto/admin.invalidate_cache_by_pattern",
-      "/api/v1/auto/admin.invalidate_cache_by_tag",
-      "/api/v1/auto/admin.invalidate_table",
-      "/api/v1/auto/admin.list_cache_keys",
-      "/api/v1/auto/agent_memory.add_message",
-      "/api/v1/auto/agent_memory.clear",
-      "/api/v1/auto/agent_memory.get_conversation",
-      "/api/v1/auto/agent_memory.get_facts",
-      "/api/v1/auto/agent_memory.load",
-      "/api/v1/auto/agent_memory.save",
-      "/api/v1/auto/agent_memory.set_fact",
-      "/api/v1/auto/ai.chat",
-      "/api/v1/auto/ai.parse_webpage",
-      "/api/v1/auto/ai.run_agent",
-      "/api/v1/auto/ai.search_web",
-      "/api/v1/auto/analytics.aggregate",
-      "/api/v1/auto/analytics.count",
-      "/api/v1/auto/analytics.insert_batch",
-      "/api/v1/auto/analytics.insert_event",
-      "/api/v1/auto/analytics.query",
-      "/api/v1/auto/anomaly.list_metrics",
-      "/api/v1/auto/anomaly.observe",
-      "/api/v1/auto/anomaly.stats",
-      "/api/v1/auto/connector.import",
-      "/api/v1/auto/connector.list_imported",
-      "/api/v1/auto/dadata.get_geolocate",
-      "/api/v1/auto/dq.check",
-      "/api/v1/auto/dq.schema_infer",
-      "/api/v1/auto/dq.stats",
-      "/api/v1/auto/export.to_csv",
-      "/api/v1/auto/export.to_excel",
-      "/api/v1/auto/export.to_pdf",
-      "/api/v1/auto/files.add",
-      "/api/v1/auto/files.create",
-      "/api/v1/auto/files.create_many",
-      "/api/v1/auto/files.delete",
-      "/api/v1/auto/files.get",
-      "/api/v1/auto/files.list",
-      "/api/v1/auto/files.update",
-      "/api/v1/auto/notebooks.create",
-      "/api/v1/auto/notebooks.delete",
-      "/api/v1/auto/notebooks.get",
-      "/api/v1/auto/notebooks.list",
-      "/api/v1/auto/notebooks.restore_version",
-      "/api/v1/auto/notebooks.update_content",
-      "/api/v1/auto/notify.broadcast",
-      "/api/v1/auto/notify.email",
-      "/api/v1/auto/notify.express",
-      "/api/v1/auto/notify.express_broadcast",
-      "/api/v1/auto/notify.express_create_chat",
-      "/api/v1/auto/notify.express_event",
-      "/api/v1/auto/notify.send",
-      "/api/v1/auto/notify.telegram",
-      "/api/v1/auto/notify.webhook",
-      "/api/v1/auto/orderkinds.add",
-      "/api/v1/auto/orderkinds.create",
-      "/api/v1/auto/orderkinds.create_many",
-      "/api/v1/auto/orderkinds.delete",
-      "/api/v1/auto/orderkinds.get",
-      "/api/v1/auto/orderkinds.list",
-      "/api/v1/auto/orderkinds.update",
-      "/api/v1/auto/orders.add",
-      "/api/v1/auto/orders.create",
-      "/api/v1/auto/orders.create_many",
-      "/api/v1/auto/orders.create_skb_order",
-      "/api/v1/auto/orders.delete",
-      "/api/v1/auto/orders.get",
-      "/api/v1/auto/orders.get_file_and_json",
-      "/api/v1/auto/orders.get_file_base64",
-      "/api/v1/auto/orders.get_file_from_storage",
-      "/api/v1/auto/orders.get_file_link",
-      "/api/v1/auto/orders.get_result",
-      "/api/v1/auto/orders.list",
-      "/api/v1/auto/orders.send_order_data",
-      "/api/v1/auto/orders.update",
-      "/api/v1/auto/rag.augment_prompt",
-      "/api/v1/auto/rag.count",
-      "/api/v1/auto/rag.delete",
-      "/api/v1/auto/rag.ingest",
-      "/api/v1/auto/rag.search",
-      "/api/v1/auto/replay.bulk",
-      "/api/v1/auto/replay.list",
-      "/api/v1/auto/replay.one",
-      "/api/v1/auto/replay.stats",
-      "/api/v1/auto/reports.history",
-      "/api/v1/auto/reports.list",
-      "/api/v1/auto/reports.run_now",
-      "/api/v1/auto/reports.schedule",
-      "/api/v1/auto/search.aggregate",
-      "/api/v1/auto/search.bulk_index",
-      "/api/v1/auto/search.delete_document",
-      "/api/v1/auto/search.index_document",
-      "/api/v1/auto/search.query",
-      "/api/v1/auto/skb.add_request",
-      "/api/v1/auto/skb.get_objects_by_address",
-      "/api/v1/auto/skb.get_orders_list",
-      "/api/v1/auto/skb.get_request_kinds",
-      "/api/v1/auto/skb.get_response_by_order",
-      "/api/v1/auto/tech.check_all_services",
-      "/api/v1/auto/tech.check_database",
-      "/api/v1/auto/tech.check_redis",
-      "/api/v1/auto/tech.check_s3",
-      "/api/v1/auto/tech.send_email",
-      "/api/v1/auto/users.add",
-      "/api/v1/auto/users.create",
-      "/api/v1/auto/users.create_many",
-      "/api/v1/auto/users.delete",
-      "/api/v1/auto/users.get",
-      "/api/v1/auto/users.list",
-      "/api/v1/auto/users.update",
-      "/api/v1/auto/web.click",
-      "/api/v1/auto/web.extract_table",
-      "/api/v1/auto/web.extract_text",
-      "/api/v1/auto/web.fill_form",
-      "/api/v1/auto/web.monitor_changes",
-      "/api/v1/auto/web.navigate",
-      "/api/v1/auto/web.parse_page",
-      "/api/v1/auto/web.run_scenario",
-      "/api/v1/auto/web.screenshot",
-      "/api/v1/auto/web_search.deep_research",
-      "/api/v1/auto/web_search.query",
-      "/api/v1/auto/webhook.cancel",
-      "/api/v1/auto/webhook.dlq_list",
-      "/api/v1/auto/webhook.dlq_retry",
-      "/api/v1/auto/webhook.execute",
-      "/api/v1/auto/webhook.list_scheduled",
-      "/api/v1/auto/webhook.relay",
-      "/api/v1/auto/webhook.schedule",
-      "/api/v1/auto/webhook.transform",
-      "/api/v1/cdc/subscriptions",
-      "/api/v1/cdc/subscriptions/{subscription_id}",
-      "/api/v1/dadata/get-geolocate",
-      "/api/v1/dsl/dry-run",
-      "/api/v1/dsl/execute-inline",
-      "/api/v1/dsl/execute-registered",
-      "/api/v1/dsl/processors/catalog",
-      "/api/v1/dsl/processors/search",
-      "/api/v1/dsl/processors/{name}",
-      "/api/v1/file/all/",
-      "/api/v1/file/all_versions/{object_id}",
-      "/api/v1/file/changes/{object_id}",
-      "/api/v1/file/create/",
-      "/api/v1/file/create_many/",
-      "/api/v1/file/delete/{object_id}",
-      "/api/v1/file/filter/",
-      "/api/v1/file/first-or-last/",
-      "/api/v1/file/id/{object_id}",
-      "/api/v1/file/latest_version/{object_id}",
-      "/api/v1/file/restore_to_version/{object_id}",
-      "/api/v1/file/update/{object_id}",
-      "/api/v1/graphql",
-      "/api/v1/health/components",
-      "/api/v1/health/liveness",
-      "/api/v1/health/readiness",
-      "/api/v1/health/startup",
-      "/api/v1/hitl/history",
-      "/api/v1/hitl/pending",
-      "/api/v1/hitl/{signal_id}",
-      "/api/v1/hitl/{signal_id}/resolve",
-      "/api/v1/import/bulk-objects",
-      "/api/v1/import/openapi",
-      "/api/v1/import/postman",
-      "/api/v1/import/process-schema",
-      "/api/v1/invocations",
-      "/api/v1/invocations/{invocation_id}",
-      "/api/v1/kind/all/",
-      "/api/v1/kind/all_versions/{object_id}",
-      "/api/v1/kind/changes/{object_id}",
-      "/api/v1/kind/create/",
-      "/api/v1/kind/create_many/",
-      "/api/v1/kind/create_or_update_from_skb/",
-      "/api/v1/kind/delete/{object_id}",
-      "/api/v1/kind/filter/",
-      "/api/v1/kind/first-or-last/",
-      "/api/v1/kind/id/{object_id}",
-      "/api/v1/kind/latest_version/{object_id}",
-      "/api/v1/kind/restore_to_version/{object_id}",
-      "/api/v1/kind/update/{object_id}",
-      "/api/v1/notebooks",
-      "/api/v1/notebooks/{notebook_id}",
-      "/api/v1/notebooks/{notebook_id}/restore/{version}",
-      "/api/v1/notebooks/{notebook_id}/versions",
-      "/api/v1/notebooks/{notebook_id}/versions/{version}",
-      "/api/v1/order/all/",
-      "/api/v1/order/all_versions/{object_id}",
-      "/api/v1/order/changes/{object_id}",
-      "/api/v1/order/create/",
-      "/api/v1/order/create_many/",
-      "/api/v1/order/delete/{object_id}",
-      "/api/v1/order/filter/",
-      "/api/v1/order/first-or-last/",
-      "/api/v1/order/id/{object_id}",
-      "/api/v1/order/latest_version/{object_id}",
-      "/api/v1/order/restore_to_version/{object_id}",
-      "/api/v1/order/update/{object_id}",
-      "/api/v1/order/{order_id}/create-skb-order",
-      "/api/v1/order/{order_id}/fetch-result",
-      "/api/v1/order/{order_id}/file",
-      "/api/v1/order/{order_id}/file-base64",
-      "/api/v1/order/{order_id}/file-link",
-      "/api/v1/order/{order_id}/payload-with-base64",
-      "/api/v1/order/{order_id}/payload-with-links",
-      "/api/v1/order/{order_id}/send-result",
-      "/api/v1/plugins/inventory",
-      "/api/v1/rag/augment",
-      "/api/v1/rag/bulk-ingest",
-      "/api/v1/rag/collections/{name}",
-      "/api/v1/rag/ingest",
-      "/api/v1/rag/ingest/recent",
-      "/api/v1/rag/ingest/start",
-      "/api/v1/rag/ingest/status/{task_id}",
-      "/api/v1/rag/search",
-      "/api/v1/rag/stats",
-      "/api/v1/rag/upload",
-      "/api/v1/rag/{doc_id}",
-      "/api/v1/routes/inventory",
-      "/api/v1/search/aggregations",
-      "/api/v1/search/facets/{index}",
-      "/api/v1/search/logs",
-      "/api/v1/search/notebooks",
-      "/api/v1/search/orders",
-      "/api/v1/skb/create-request",
-      "/api/v1/skb/get-kinds",
-      "/api/v1/skb/get-objects-by-address",
-      "/api/v1/skb/get-orders-list",
-      "/api/v1/skb/get-result",
-      "/api/v1/storage/delete_file/",
-      "/api/v1/storage/download_file/{file_uuid}",
-      "/api/v1/storage/get_download_link_file/{file_uuid}",
-      "/api/v1/storage/get_file_base64/{file_uuid}",
-      "/api/v1/storage/scan_file/{file_uuid}",
-      "/api/v1/storage/upload-stream",
-      "/api/v1/storage/upload_file",
-      "/api/v1/tech/degradation/snapshot",
-      "/api/v1/tech/file-storage",
-      "/api/v1/tech/get-all-custom-tables",
-      "/api/v1/tech/healthcheck-all-services",
-      "/api/v1/tech/healthcheck-database",
-      "/api/v1/tech/healthcheck-graylog",
-      "/api/v1/tech/healthcheck-rabbitmq",
-      "/api/v1/tech/healthcheck-redis",
-      "/api/v1/tech/healthcheck-s3",
-      "/api/v1/tech/healthcheck-s3-bucket",
-      "/api/v1/tech/healthcheck-smtp",
-      "/api/v1/tech/langfuse",
-      "/api/v1/tech/langgraph",
-      "/api/v1/tech/log-storage",
-      "/api/v1/tech/queue-monitor",
-      "/api/v1/tech/send-email",
-      "/api/v1/tech/upload-excel-for-mass-create",
-      "/api/v1/user/all/",
-      "/api/v1/user/all_versions/{object_id}",
-      "/api/v1/user/changes/{object_id}",
-      "/api/v1/user/create/",
-      "/api/v1/user/create_many/",
-      "/api/v1/user/delete/{object_id}",
-      "/api/v1/user/filter/",
-      "/api/v1/user/first-or-last/",
-      "/api/v1/user/id/{object_id}",
-      "/api/v1/user/latest_version/{object_id}",
-      "/api/v1/user/restore_to_version/{object_id}",
-      "/api/v1/user/update/{object_id}",
-      "/api/v1/watchers/",
-      "/api/v1/watchers/{watcher_id}",
-      "/events/invoke",
-      "/events/stream",
-      "/express/callback",
-      "/express/command",
-      "/express/health",
-      "/grpc/schema",
-      "/grpc/schema/json",
-      "/health",
-      "/ready",
-      "/soap/",
-      "/soap/invoke",
-      "/soap/wsdl",
-      "/webhooks/inbound/{event_type}",
-      "/webhooks/sources/{source_id}",
-      "/webhooks/subscriptions",
-      "/webhooks/subscriptions/{sub_id}"
-    ]
-  },
-  "entrypoint_packages": [
-    "api",
-    "asyncapi",
-    "cdc",
-    "email",
-    "express",
-    "filewatcher",
-    "graphql",
-    "grpc",
-    "http3",
-    "mcp",
-    "mqtt",
-    "scheduler",
-    "soap",
-    "sse",
-    "stream",
-    "webhook",
-    "websocket"
+  "PluginLoader": [
+    {
+      "file": "extensions/core_admin/schemas_only.py",
+      "line": 4,
+      "snippet": "``BasePlugin``, поэтому ``PluginLoader._instantiate()`` отклонял его проверкой"
+    },
+    {
+      "file": "extensions/core_entities/files/plugin.py",
+      "line": 48,
+      "snippet": "PluginLoader lifecycle hook."
+    },
+    {
+      "file": "extensions/core_entities/orderkinds/plugin.py",
+      "line": 48,
+      "snippet": "PluginLoader lifecycle hook."
+    },
+    {
+      "file": "extensions/core_entities/orders/plugin.py",
+      "line": 48,
+      "snippet": "PluginLoader lifecycle hook."
+    },
+    {
+      "file": "extensions/core_entities/users/plugin.py",
+      "line": 48,
+      "snippet": "PluginLoader lifecycle hook."
+    },
+    {
+      "file": "extensions/credit_pipeline/tests/test_actions_registration.py",
+      "line": 163,
+      "snippet": "либо raise. Фиксирует контракт для PluginLoaderV11 hot-reload."
+    },
+    {
+      "file": "extensions/dadata/schemas_only.py",
+      "line": 4,
+      "snippet": "``PluginLoader._instantiate()`` отклонял его проверкой"
+    },
+    {
+      "file": "extensions/example_plugin/plugin.py",
+      "line": 6,
+      "snippet": "для smoke-тестов :class:`PluginLoaderV11`."
+    },
+    {
+      "file": "extensions/skb/schemas_only.py",
+      "line": 4,
+      "snippet": "``PluginLoader._instantiate()`` отклонял его проверкой"
+    },
+    {
+      "file": "plugins/__init__.py",
+      "line": 4,
+      "snippet": "``PluginLoader.load_from_path(\"plugins/<name>\")`` (см. Wave 4)."
+    },
+    {
+      "file": "plugins/example_plugin/plugin.py",
+      "line": 52,
+      "snippet": "регистрируются `PluginLoader._apply_decorators` после возврата"
+    },
+    {
+      "file": "src/backend/cli/plugin.py",
+      "line": 60,
+      "snippet": "# PluginLoaderV11 живёт в app.state — поднимаем минимальное"
+    },
+    {
+      "file": "src/backend/cli/plugin.py",
+      "line": 62,
+      "snippet": "# В Sprint 7 — stub: ищем app.state.plugin_loader_v11, если"
+    },
+    {
+      "file": "src/backend/cli/plugin.py",
+      "line": 69,
+      "snippet": "loader = getattr(fastapi_app.state, \"plugin_loader_v11\", None)"
+    },
+    {
+      "file": "src/backend/cli/plugin.py",
+      "line": 75,
+      "snippet": "\"ERR: PluginLoader не инициализирован (app.state.plugin_loader_v11). \""
+    },
+    {
+      "file": "src/backend/cli/plugin.py",
+      "line": 75,
+      "snippet": "\"ERR: PluginLoader не инициализирован (app.state.plugin_loader_v11). \""
+    },
+    {
+      "file": "src/backend/core/config/features/dsl.py",
+      "line": 106,
+      "snippet": "\"default-OFF до staging-smoke и интеграции с ActionHandlerRegistry + PluginLoader.\""
+    },
+    {
+      "file": "src/backend/core/config/features/experimental.py",
+      "line": 62,
+      "snippet": "\"default-OFF до интеграции с PluginLoader runtime-контекстом.\""
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 3,
+      "snippet": "Управляет включением V11-loader'ов (PluginLoader / RouteLoader) и"
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 5,
+      "snippet": "продолжает работать на Wave 4.4 PluginLoader (entry_points / plugin.yaml)"
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 22,
+      "snippet": "__all__ = (\"PluginLoaderSettings\", \"plugin_loader_settings\")"
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 22,
+      "snippet": "__all__ = (\"PluginLoaderSettings\", \"plugin_loader_settings\")"
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 53,
+      "snippet": "class PluginLoaderSettings(BaseSettingsWithLoader):"
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 56,
+      "snippet": "Все флаги — независимые: PluginLoader можно включить без"
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 62,
+      "snippet": "plugin_loader_enabled: Включает :class:`PluginLoader` для"
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 62,
+      "snippet": "plugin_loader_enabled: Включает :class:`PluginLoader` для"
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 85,
+      "snippet": "plugin_loader_enabled: bool = Field("
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 87,
+      "snippet": "title=\"Включить PluginLoader\","
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 90,
+      "snippet": "\"По умолчанию выключено (продолжает работать Wave 4.4 PluginLoader).\""
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 126,
+      "snippet": "plugin_loader_settings: PluginLoaderSettings = PluginLoaderSettings()"
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 126,
+      "snippet": "plugin_loader_settings: PluginLoaderSettings = PluginLoaderSettings()"
+    },
+    {
+      "file": "src/backend/core/config/plugin_loader.py",
+      "line": 126,
+      "snippet": "plugin_loader_settings: PluginLoaderSettings = PluginLoaderSettings()"
+    },
+    {
+      "file": "src/backend/core/config/settings.py",
+      "line": 52,
+      "snippet": "from src.backend.core.config.plugin_loader import ("
+    },
+    {
+      "file": "src/backend/core/config/settings.py",
+      "line": 53,
+      "snippet": "PluginLoaderSettings,"
+    },
+    {
+      "file": "src/backend/core/config/settings.py",
+      "line": 54,
+      "snippet": "plugin_loader_settings,"
+    },
+    {
+      "file": "src/backend/core/config/settings.py",
+      "line": 162,
+      "snippet": "# V11 R1.fin (ADR-042/043/044): PluginLoader + RouteLoader feature-flags."
+    },
+    {
+      "file": "src/backend/core/config/settings.py",
+      "line": 163,
+      "snippet": "v11: PluginLoaderSettings = plugin_loader_settings"
+    },
+    {
+      "file": "src/backend/core/config/settings.py",
+      "line": 163,
+      "snippet": "v11: PluginLoaderSettings = plugin_loader_settings"
+    },
+    {
+      "file": "src/backend/core/config/workflow.py",
+      "line": 8,
+      "snippet": "Плагины подключают свои workflow декларации через PluginLoader,"
+    },
+    {
+      "file": "src/backend/core/interfaces/plugin.py",
+      "line": 165,
+      "snippet": "Жизненный цикл (порядок вызова `PluginLoader`):"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/__init__.py",
+      "line": 9,
+      "snippet": "PluginLoaderProtocol — минимальный контракт loader для hot_swap."
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/__init__.py",
+      "line": 23,
+      "snippet": "PluginLoaderProtocol,"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/__init__.py",
+      "line": 37,
+      "snippet": "\"PluginLoaderProtocol\","
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/compat_checker.py",
+      "line": 6,
+      "snippet": "Вызывается :class:`PluginLoader` после parse всех ``plugin.toml``,"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 13,
+      "snippet": "4. ``PluginLoader`` перечитывает ``plugin.toml`` и заново"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 50,
+      "snippet": "__all__ = (\"HotSwapError\", \"HotSwapResult\", \"PluginLoaderProtocol\", \"hot_swap\")"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 108,
+      "snippet": "class PluginLoaderProtocol(Protocol):"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 109,
+      "snippet": "\"\"\"Минимальный контракт PluginLoader для hot_swap."
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 111,
+      "snippet": "Совместим с :class:`PluginLoader` из ``services/plugins/loader/`` (S168 W15-17: пакет),"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 140,
+      "snippet": "def _find_loaded_entry(loader: PluginLoaderProtocol, plugin_name: str) -> Any | None:"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 171,
+      "snippet": "loader: PluginLoaderProtocol,"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 196,
+      "snippet": "loader: Экземпляр :class:`PluginLoader` (или совместимый)."
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 231,
+      "snippet": "# ``shutdown_one`` (legacy PluginLoader / test-double)."
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 242,
+      "snippet": "\"PluginLoader %r lacks shutdown_one; falling back to \""
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 256,
+      "snippet": "# Полная переподпись плагинов (PluginLoader.discover_and_load"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/hot_swap.py",
+      "line": 260,
+      "snippet": "# через атрибут (контракт PluginLoader)."
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/manifest_toml.py",
+      "line": 8,
+      "snippet": "Этот модуль **не подключается** к :class:`PluginLoader` в текущей"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/manifest_toml.py",
+      "line": 49,
+      "snippet": "`PluginLoader` для проверки коллизий **до** активации плагина."
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/manifest_toml.py",
+      "line": 204,
+      "snippet": "Используется :class:`PluginLoader` для вызова"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/manifest_toml.py",
+      "line": 299,
+      "snippet": "Безопасно: пути не импортируются lifecycle'ом PluginLoader'а"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/manifest_toml.py",
+      "line": 332,
+      "snippet": "регистрирует для конкретного tenant'а. :class:`PluginLoader`"
+    },
+    {
+      "file": "src/backend/core/plugin_runtime/manifest_toml.py",
+      "line": 340,
+      "snippet": "(см. :meth:`PluginLoader._load_one`)."
+    },
+    {
+      "file": "src/backend/core/security/capabilities/gate/declaration_mixin.py",
+      "line": 51,
+      "snippet": "Вызывается :class:`PluginLoader` / :class:`RouteLoader` после"
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/orchestrator.py",
+      "line": 54,
+      "snippet": "* работает независимо от ``v11.plugin_loader_enabled`` (sync"
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/orchestrator.py",
+      "line": 93,
+      "snippet": "импорта ``entry_class``). Это работает при выключенном PluginLoader"
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/orchestrator.py",
+      "line": 94,
+      "snippet": "(``v11.plugin_loader_enabled=false``), чтобы whitelist не зависел от"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/function_call.py",
+      "line": 139,
+      "snippet": "# Active whitelist (process-global, populated by PluginLoader from"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/function_call.py",
+      "line": 151,
+      "snippet": "PluginLoader вызывает на старте для каждого загруженного плагина"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/function_call.py",
+      "line": 154,
+      "snippet": "выключенном PluginLoader)."
+    },
+    {
+      "file": "src/backend/dsl/registry/processor.py",
+      "line": 319,
+      "snippet": "делается на уровне PluginLoader, не здесь."
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_plugins/endpoints.py",
+      "line": 204,
+      "snippet": "detail=\"PluginVersionService недоступен (PluginLoader не запущен)\","
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_plugins/helpers.py",
+      "line": 42,
+      "snippet": "\"\"\"Возвращает PluginRegistry/PluginLoader, если доступен."
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_plugins/helpers.py",
+      "line": 51,
+      "snippet": "from src.backend.services.plugins.loader import PluginLoader"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_plugins/helpers.py",
+      "line": 53,
+      "snippet": "get_instance = getattr(PluginLoader, \"get_instance\", None)"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_plugins/helpers.py",
+      "line": 58,
+      "snippet": "logger.warning(\"PluginLoader недоступен — используется mock\")"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_plugins/helpers.py",
+      "line": 116,
+      "snippet": "loader = getattr(fastapi_app.state, \"plugin_loader_v1\", None)"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/plugin_inventory.py",
+      "line": 38,
+      "snippet": "loader = getattr(request.app.state, \"plugin_loader_v1\", None)"
+    },
+    {
+      "file": "src/backend/main.py",
+      "line": 29,
+      "snippet": "\"\"\"2026-08-14: FALLBACK auto-load workflow YAML если PluginLoader не bootstrap'нут."
+    },
+    {
+      "file": "src/backend/main.py",
+      "line": 32,
+      "snippet": "PluginLoader.discover_and_load() → register_workflow_declarations()."
+    },
+    {
+      "file": "src/backend/main.py",
+      "line": 33,
+      "snippet": "Если PluginLoader не инициализирован (bootstrap skipped) —"
+    }
+  ],
+  "TaskRegistry": [
+    {
+      "file": "extensions/core_entities/orders/services/orders.py",
+      "line": 120,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "extensions/core_entities/orders/services/orders.py",
+      "line": 120,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "extensions/core_entities/orders/services/orders.py",
+      "line": 122,
+      "snippet": "get_task_registry().create_task("
+    },
+    {
+      "file": "src/backend/core/ai/__init__.py",
+      "line": 10,
+      "snippet": "* TTL=7 дней + per-tenant quota; cleanup-loop через ``TaskRegistry``."
+    },
+    {
+      "file": "src/backend/core/ai/policy/enforcer/handle_mixin.py",
+      "line": 40,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/ai/policy/enforcer/handle_mixin.py",
+      "line": 40,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/ai/policy/enforcer/handle_mixin.py",
+      "line": 42,
+      "snippet": "get_task_registry().create_task("
+    },
+    {
+      "file": "src/backend/core/ai/workspace_cleaner.py",
+      "line": 111,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/ai/workspace_cleaner.py",
+      "line": 111,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/ai/workspace_cleaner.py",
+      "line": 113,
+      "snippet": "self._task = get_task_registry().create_task("
+    },
+    {
+      "file": "src/backend/core/ai/workspace_manager.py",
+      "line": 11,
+      "snippet": "* cleanup-loop через :class:`TaskRegistry` (см. R-V15-11);"
+    },
+    {
+      "file": "src/backend/core/ai/workspace_manager.py",
+      "line": 210,
+      "snippet": "\"\"\"Запустить периодический cleanup через TaskRegistry."
+    },
+    {
+      "file": "src/backend/core/ai/workspace_manager.py",
+      "line": 215,
+      "snippet": "используется singleton :class:`TaskRegistry`"
+    },
+    {
+      "file": "src/backend/core/ai/workspace_manager.py",
+      "line": 234,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/ai/workspace_manager.py",
+      "line": 234,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/ai/workspace_manager.py",
+      "line": 236,
+      "snippet": "self._cleanup_task = get_task_registry().create_task("
+    },
+    {
+      "file": "src/backend/core/ai/workspace_manager.py",
+      "line": 243,
+      "snippet": "\"\"\"Остановить cleanup-loop (TaskRegistry-aware).\"\"\""
+    },
+    {
+      "file": "src/backend/core/config/features/ai_rag.py",
+      "line": 211,
+      "snippet": "\"Vault PKI; cert rotation TaskRegistry TTL 23h. default-OFF до \""
+    },
+    {
+      "file": "src/backend/core/config/features/sprints_15_17.py",
+      "line": 14,
+      "snippet": "- task_registry_strict (Sprint 17 K2 W3, D13a)"
+    },
+    {
+      "file": "src/backend/core/config/features/sprints_15_17.py",
+      "line": 57,
+      "snippet": "\"TaskRegistry. Снимает F-2 carryover (overhead 137% → <5%). \""
+    },
+    {
+      "file": "src/backend/core/config/features/sprints_15_17.py",
+      "line": 138,
+      "snippet": "task_registry_strict: bool = Field("
+    },
+    {
+      "file": "src/backend/core/config/features/sprints_15_17.py",
+      "line": 140,
+      "snippet": "title=\"K2 S17 W3: TaskRegistry obligatory (CI gate fail-on-orphans)\","
+    },
+    {
+      "file": "src/backend/core/config/features/sprints_15_17.py",
+      "line": 143,
+      "snippet": "\"Активирует strict-режим TaskRegistry: все asyncio.create_task через \""
+    },
+    {
+      "file": "src/backend/core/config/features/sprints_15_17.py",
+      "line": 145,
+      "snippet": "\"tools/checks/check_task_registry.py --fail-on-orphans. \""
+    },
+    {
+      "file": "src/backend/core/config/features/sprints_18_21.py",
+      "line": 288,
+      "snippet": "\"handle, TTL 30 min через TaskRegistry. При False — DesktopRpaClient \""
+    },
+    {
+      "file": "src/backend/core/config/hot_reload.py",
+      "line": 25,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/config/hot_reload.py",
+      "line": 25,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/config/hot_reload.py",
+      "line": 103,
+      "snippet": "self._task = get_task_registry().create_task("
+    },
+    {
+      "file": "src/backend/core/config/services/dlq.py",
+      "line": 9,
+      "snippet": "его в background asyncio-задачу через :class:`TaskRegistry`."
+    },
+    {
+      "file": "src/backend/core/config/validator/_helpers.py",
+      "line": 49,
+      "snippet": "\"task_registry_strict\","
+    },
+    {
+      "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+      "line": 8,
+      "snippet": ":class:`TaskRegistry` (R-V15-11) и применяет полученные events к local"
+    },
+    {
+      "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+      "line": 116,
+      "snippet": "* ``start()`` — запускает subscriber loop через TaskRegistry."
+    },
+    {
+      "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+      "line": 170,
+      "snippet": "\"\"\"Запустить subscriber loop через TaskRegistry."
+    },
+    {
+      "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+      "line": 174,
+      "snippet": "используется ``get_task_registry().create_task``."
+    },
+    {
+      "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+      "line": 191,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+      "line": 191,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+      "line": 193,
+      "snippet": "task_factory = get_task_registry().create_task"
+    },
+    {
+      "file": "src/backend/core/interfaces/__init__.py",
+      "line": 362,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/interfaces/__init__.py",
+      "line": 362,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/interfaces/__init__.py",
+      "line": 365,
+      "snippet": "self._task = get_task_registry().create_task("
+    },
+    {
+      "file": "src/backend/core/net/outbound_http.py",
+      "line": 317,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/net/outbound_http.py",
+      "line": 317,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/net/outbound_http.py",
+      "line": 326,
+      "snippet": "get_task_registry().create_task("
+    },
+    {
+      "file": "src/backend/core/resilience/backpressure/controller.py",
+      "line": 127,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/resilience/backpressure/controller.py",
+      "line": 127,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/resilience/backpressure/controller.py",
+      "line": 129,
+      "snippet": "self._task = get_task_registry().create_task("
+    },
+    {
+      "file": "src/backend/core/scaling/auto_scaler.py",
+      "line": 25,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/scaling/auto_scaler.py",
+      "line": 25,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/scaling/auto_scaler.py",
+      "line": 66,
+      "snippet": "self._task = get_task_registry().create_task("
+    },
+    {
+      "file": "src/backend/core/security/activity_capability_guard.py",
+      "line": 47,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/security/activity_capability_guard.py",
+      "line": 47,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/core/security/activity_capability_guard.py",
+      "line": 174,
+      "snippet": "get_task_registry().create_task("
+    },
+    {
+      "file": "src/backend/core/security/secret_rotation.py",
+      "line": 16,
+      "snippet": "3. Integration с TaskRegistry — фоновая ротация через зарегистрированную"
+    },
+    {
+      "file": "src/backend/core/utils/__init__.py",
+      "line": 12,
+      "snippet": "- ``task_registry`` — централизованный реестр фоновых ``asyncio.Task``"
+    },
+    {
+      "file": "src/backend/core/utils/__init__.py",
+      "line": 36,
+      "snippet": "from src.backend.core.utils.task_registry import ("
+    },
+    {
+      "file": "src/backend/core/utils/__init__.py",
+      "line": 37,
+      "snippet": "TaskRegistry,"
+    },
+    {
+      "file": "src/backend/core/utils/__init__.py",
+      "line": 38,
+      "snippet": "get_task_registry,"
+    },
+    {
+      "file": "src/backend/core/utils/__init__.py",
+      "line": 39,
+      "snippet": "reset_task_registry,"
+    },
+    {
+      "file": "src/backend/core/utils/__init__.py",
+      "line": 50,
+      "snippet": "\"TaskRegistry\","
+    },
+    {
+      "file": "src/backend/core/utils/__init__.py",
+      "line": 57,
+      "snippet": "\"get_task_registry\","
+    },
+    {
+      "file": "src/backend/core/utils/__init__.py",
+      "line": 62,
+      "snippet": "\"reset_task_registry\","
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 1,
+      "snippet": "\"\"\"TaskRegistry — central control над фоновыми ``asyncio.Task`` (V15 R-V15-11)."
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 14,
+      "snippet": "registry = get_task_registry()"
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 34,
+      "snippet": "__all__ = (\"TaskRegistry\", \"get_task_registry\", \"reset_task_registry\")"
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 34,
+      "snippet": "__all__ = (\"TaskRegistry\", \"get_task_registry\", \"reset_task_registry\")"
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 34,
+      "snippet": "__all__ = (\"TaskRegistry\", \"get_task_registry\", \"reset_task_registry\")"
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 40,
+      "snippet": "class TaskRegistry:"
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 78,
+      "snippet": "\"TaskRegistry уже закрыт — нельзя создавать новые задачи\""
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 93,
+      "snippet": "# Сам TaskRegistry — это и есть санкционированная точка"
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 129,
+      "snippet": "\"task_registry.task_failed\","
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 161,
+      "snippet": "\"task_registry.shutdown_timeout\","
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 176,
+      "snippet": "_registry: TaskRegistry | None = None"
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 179,
+      "snippet": "def get_task_registry() -> TaskRegistry:"
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 179,
+      "snippet": "def get_task_registry() -> TaskRegistry:"
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 183,
+      "snippet": "_registry = TaskRegistry()"
+    },
+    {
+      "file": "src/backend/core/utils/task_registry.py",
+      "line": 187,
+      "snippet": "def reset_task_registry() -> None:"
+    },
+    {
+      "file": "src/backend/dsl/builders/eip/sources.py",
+      "line": 20,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/dsl/builders/eip/sources.py",
+      "line": 20,
+      "snippet": "from src.backend.core.utils.task_registry import get_task_registry"
+    },
+    {
+      "file": "src/backend/dsl/builders/eip/sources.py",
+      "line": 57,
+      "snippet": "return get_task_registry().create_task(coro_factory(), name=name)"
+    },
+    {
+      "file": "src/backend/dsl/builders/eip/sources.py",
+      "line": 69,
+      "snippet": "self._task = get_task_registry().create_task(coro_factory(), name=name)"
+    }
+  ],
+  "ActionHandlerRegistry": [
+    {
+      "file": "extensions/credit_pipeline/tests/test_actions_registration.py",
+      "line": 167,
+      "snippet": "ActionHandlerRegistry (mock не enforce'ит коллизии). Smoke-проверка:"
+    },
+    {
+      "file": "src/backend/cli/_bootstrap.py",
+      "line": 29,
+      "snippet": "- ``register_action_handlers()`` — action_handler_registry."
+    },
+    {
+      "file": "src/backend/cli/diagnose.py",
+      "line": 159,
+      "snippet": "ActionHandlerRegistry,  # type: ignore[attr-defined]"
+    },
+    {
+      "file": "src/backend/cli/diagnose.py",
+      "line": 162,
+      "snippet": "diagnostics[\"actions_count\"] = len(ActionHandlerRegistry.get_all_actions())"
+    },
+    {
+      "file": "src/backend/cli/info.py",
+      "line": 74,
+      "snippet": "from src.backend.dsl.commands.registry import action_handler_registry"
+    },
+    {
+      "file": "src/backend/cli/info.py",
+      "line": 77,
+      "snippet": "action_list = sorted(action_handler_registry.list_actions())"
+    },
+    {
+      "file": "src/backend/core/actions/spec_to_metadata.py",
+      "line": 109,
+      "snippet": "# под другим именем в action_handler_registry."
+    },
+    {
+      "file": "src/backend/core/ai/agent_spec.py",
+      "line": 137,
+      "snippet": "(из :class:`ActionHandlerRegistry`)."
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 25,
+      "snippet": "ActionHandlerRegistry,"
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 27,
+      "snippet": "action_handler_registry,"
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 85,
+      "snippet": "\"ActionHandlerRegistry\","
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 87,
+      "snippet": "\"action_handler_registry\","
+    },
+    {
+      "file": "src/backend/core/config/features/dsl.py",
+      "line": 106,
+      "snippet": "\"default-OFF до staging-smoke и интеграции с ActionHandlerRegistry + PluginLoader.\""
+    },
+    {
+      "file": "src/backend/core/interfaces/plugin.py",
+      "line": 43,
+      "snippet": "Полная реализация — `services/actions/registry.py::ActionHandlerRegistry`."
+    },
+    {
+      "file": "src/backend/dsl/builders/base/__init__.py",
+      "line": 363,
+      "snippet": "dispatch_action имена зарегистрированы в ActionHandlerRegistry."
+    },
+    {
+      "file": "src/backend/dsl/builders/base/validation_mixin.py",
+      "line": 67,
+      "snippet": "from src.backend.dsl.commands.registry import action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/builders/base/validation_mixin.py",
+      "line": 69,
+      "snippet": "available = set(action_handler_registry.list_actions())"
+    },
+    {
+      "file": "src/backend/dsl/builders/integration_core/core_mixin.py",
+      "line": 36,
+      "snippet": "в ActionHandlerRegistry по имени (e.g., \"orders.add\")."
+    },
+    {
+      "file": "src/backend/dsl/commands/action_registry.py",
+      "line": 38,
+      "snippet": "__all__ = (\"ActionHandlerRegistry\", \"ActionHandlerSpec\", \"action_handler_registry\")"
+    },
+    {
+      "file": "src/backend/dsl/commands/action_registry.py",
+      "line": 38,
+      "snippet": "__all__ = (\"ActionHandlerRegistry\", \"ActionHandlerSpec\", \"action_handler_registry\")"
+    },
+    {
+      "file": "src/backend/dsl/commands/action_registry.py",
+      "line": 61,
+      "snippet": "class ActionHandlerRegistry:"
+    },
+    {
+      "file": "src/backend/dsl/commands/action_registry.py",
+      "line": 358,
+      "snippet": "action_handler_registry = ActionHandlerRegistry()"
+    },
+    {
+      "file": "src/backend/dsl/commands/action_registry.py",
+      "line": 358,
+      "snippet": "action_handler_registry = ActionHandlerRegistry()"
+    },
+    {
+      "file": "src/backend/dsl/commands/registry.py",
+      "line": 7,
+      "snippet": "ActionHandlerRegistry,"
+    },
+    {
+      "file": "src/backend/dsl/commands/registry.py",
+      "line": 9,
+      "snippet": "action_handler_registry,"
+    },
+    {
+      "file": "src/backend/dsl/commands/registry.py",
+      "line": 16,
+      "snippet": "\"ActionHandlerRegistry\","
+    },
+    {
+      "file": "src/backend/dsl/commands/registry.py",
+      "line": 19,
+      "snippet": "\"action_handler_registry\","
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/helpers.py",
+      "line": 12,
+      "snippet": "from src.backend.dsl.commands.registry import action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/helpers.py",
+      "line": 19,
+      "snippet": "action_handler_registry.register("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_domains.py",
+      "line": 10,
+      "snippet": "from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_domains.py",
+      "line": 22,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_domains.py",
+      "line": 84,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_domains.py",
+      "line": 123,
+      "snippet": "action_handler_registry.register("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_domains.py",
+      "line": 135,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_domains.py",
+      "line": 170,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_integrations.py",
+      "line": 10,
+      "snippet": "from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_integrations.py",
+      "line": 16,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_integrations.py",
+      "line": 46,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_integrations.py",
+      "line": 81,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_integrations.py",
+      "line": 116,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_integrations.py",
+      "line": 156,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_integrations.py",
+      "line": 191,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_integrations.py",
+      "line": 238,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_integrations.py",
+      "line": 258,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_workflow.py",
+      "line": 10,
+      "snippet": "from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_workflow.py",
+      "line": 17,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_workflow.py",
+      "line": 47,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_workflow.py",
+      "line": 102,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_workflow.py",
+      "line": 127,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_workflow.py",
+      "line": 182,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_workflow.py",
+      "line": 219,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_workflow.py",
+      "line": 249,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_workflow.py",
+      "line": 270,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_workflow.py",
+      "line": 290,
+      "snippet": "action_handler_registry.register_many("
+    },
+    {
+      "file": "src/backend/dsl/engine/context.py",
+      "line": 8,
+      "snippet": "ActionHandlerRegistry,"
+    },
+    {
+      "file": "src/backend/dsl/engine/context.py",
+      "line": 9,
+      "snippet": "action_handler_registry,"
+    },
+    {
+      "file": "src/backend/dsl/engine/context.py",
+      "line": 47,
+      "snippet": "action_registry: ActionHandlerRegistry = action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/engine/context.py",
+      "line": 47,
+      "snippet": "action_registry: ActionHandlerRegistry = action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/engine/linter.py",
+      "line": 5,
+      "snippet": "- Несуществующие actions (нет в ActionHandlerRegistry)"
+    },
+    {
+      "file": "src/backend/dsl/engine/linter.py",
+      "line": 106,
+      "snippet": "from src.backend.dsl.commands.registry import action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/engine/linter.py",
+      "line": 108,
+      "snippet": "known_actions = set(action_handler_registry.list_actions())"
+    },
+    {
+      "file": "src/backend/dsl/engine/linter.py",
+      "line": 115,
+      "snippet": "\"E002 check: action_handler_registry import failed \""
+    },
+    {
+      "file": "src/backend/dsl/engine/linter.py",
+      "line": 133,
+      "snippet": "message=f\"Action '{action}' не зарегистрирован в action_handler_registry\","
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/core.py",
+      "line": 84,
+      "snippet": "Находит action в ActionHandlerRegistry, валидирует payload"
+    },
+    {
+      "file": "src/backend/dsl/routes.py",
+      "line": 4,
+      "snippet": "action из ActionHandlerRegistry. После регистрации все actions"
+    },
+    {
+      "file": "src/backend/dsl/routes.py",
+      "line": 10,
+      "snippet": "from src.backend.dsl.commands.registry import action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/routes.py",
+      "line": 44,
+      "snippet": "\"\"\"Регистрирует DSL-маршруты для всех actions из ActionHandlerRegistry.\"\"\""
+    },
+    {
+      "file": "src/backend/dsl/routes.py",
+      "line": 45,
+      "snippet": "for action in action_handler_registry.list_actions():"
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 4,
+      "snippet": "- ActionHandlerRegistry entries (→ REST/GraphQL/gRPC/SOAP/WS/SSE/MCP)"
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 88,
+      "snippet": "from src.backend.dsl.commands.registry import action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 94,
+      "snippet": "action_handler_registry.register("
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 102,
+      "snippet": "action_handler_registry.register("
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 227,
+      "snippet": "from src.backend.dsl.commands.registry import action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 244,
+      "snippet": "if action_handler_registry.is_registered(meta[\"action\"]):"
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 260,
+      "snippet": "action_handler_registry.register("
+    },
+    {
+      "file": "src/backend/dsl/workflow/compiler/activity_bridge.py",
+      "line": 32,
+      "snippet": "from src.backend.dsl.commands.action_registry import action_handler_registry"
+    },
+    {
+      "file": "src/backend/dsl/workflow/compiler/activity_bridge.py",
+      "line": 180,
+      "snippet": "* лениво вызывает ``action_handler_registry.dispatch`` —"
+    },
+    {
+      "file": "src/backend/dsl/workflow/compiler/activity_bridge.py",
+      "line": 211,
+      "snippet": "return await action_handler_registry.dispatch(command)"
+    },
+    {
+      "file": "src/backend/entrypoints/_action_bridge.py",
+      "line": 15,
+      "snippet": "* action не зарегистрирован в ``action_handler_registry`` → DSL без падения."
+    },
+    {
+      "file": "src/backend/entrypoints/_action_bridge.py",
+      "line": 95,
+      "snippet": "action_id: Имя action в ``action_handler_registry`` (Tier 1/2)."
+    }
+  ],
+  "RouteRegistry": [
+    {
+      "file": "manage.py",
+      "line": 653,
+      "snippet": "from src.backend.dsl.commands.registry import route_registry"
+    },
+    {
+      "file": "manage.py",
+      "line": 661,
+      "snippet": "routes_dir=app_settings.dsl.routes_dir, route_registry=route_registry"
+    },
+    {
+      "file": "manage.py",
+      "line": 661,
+      "snippet": "routes_dir=app_settings.dsl.routes_dir, route_registry=route_registry"
+    },
+    {
+      "file": "manage.py",
+      "line": 672,
+      "snippet": "route_registry.register(pipeline)"
+    },
+    {
+      "file": "manage.py",
+      "line": 738,
+      "snippet": "\"\"\"W25.2 — write-back: Pipeline из RouteRegistry → YAML на диск."
+    },
+    {
+      "file": "manage.py",
+      "line": 858,
+      "snippet": "from src.backend.dsl.commands.registry import route_registry"
+    },
+    {
+      "file": "manage.py",
+      "line": 861,
+      "snippet": "pipeline = route_registry.get(route_id)"
+    },
+    {
+      "file": "src/backend/cli/_bootstrap.py",
+      "line": 30,
+      "snippet": "- ``register_dsl_routes()`` — DSL route_registry."
+    },
+    {
+      "file": "src/backend/cli/info.py",
+      "line": 37,
+      "snippet": "from src.backend.dsl.commands.registry import route_registry"
+    },
+    {
+      "file": "src/backend/cli/info.py",
+      "line": 39,
+      "snippet": "route_ids = route_registry.list_routes()"
+    },
+    {
+      "file": "src/backend/cli/info.py",
+      "line": 41,
+      "snippet": "pipeline = route_registry.get(route_id)"
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 31,
+      "snippet": "# Commands registry — RouteRegistry canonical (14 violations → 0)"
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 32,
+      "snippet": "from src.backend.dsl.commands.registry import RouteRegistry, route_registry"
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 32,
+      "snippet": "from src.backend.dsl.commands.registry import RouteRegistry, route_registry"
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 90,
+      "snippet": "\"RouteRegistry\","
+    },
+    {
+      "file": "src/backend/core/api/extensions.py",
+      "line": 91,
+      "snippet": "\"route_registry\","
+    },
+    {
+      "file": "src/backend/core/domain/models/workflow_instance.py",
+      "line": 66,
+      "snippet": "route_id: DSL ``route_id`` из :class:`RouteRegistry` — определяет"
+    },
+    {
+      "file": "src/backend/dsl/builders/eip/routing.py",
+      "line": 267,
+      "snippet": "route_ids: Список route_id из RouteRegistry."
+    },
+    {
+      "file": "src/backend/dsl/commands/registry.py",
+      "line": 18,
+      "snippet": "\"RouteRegistry\","
+    },
+    {
+      "file": "src/backend/dsl/commands/registry.py",
+      "line": 20,
+      "snippet": "\"route_registry\","
+    },
+    {
+      "file": "src/backend/dsl/commands/registry.py",
+      "line": 24,
+      "snippet": "class RouteRegistry:"
+    },
+    {
+      "file": "src/backend/dsl/commands/registry.py",
+      "line": 221,
+      "snippet": "route_registry = RouteRegistry()"
+    },
+    {
+      "file": "src/backend/dsl/commands/registry.py",
+      "line": 221,
+      "snippet": "route_registry = RouteRegistry()"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/base.py",
+      "line": 185,
+      "snippet": "from src.backend.dsl.commands.registry import route_registry"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/base.py",
+      "line": 188,
+      "snippet": "pipeline = route_registry.get(route_id)"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing/dynamic.py",
+      "line": 66,
+      "snippet": "from src.backend.dsl.commands.registry import route_registry"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing/dynamic.py",
+      "line": 70,
+      "snippet": "if not route_registry.is_registered(target_route_id):"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing/multicast.py",
+      "line": 152,
+      "snippet": "MulticastRoutesProcessor обращается к ``RouteRegistry`` и выполняет"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing/multicast.py",
+      "line": 197,
+      "snippet": "from src.backend.dsl.commands.registry import route_registry"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing/multicast.py",
+      "line": 206,
+      "snippet": "# cycle-1/B-04 fix: убран несуществующий `route_registry` kwarg из"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/routing/multicast.py",
+      "line": 239,
+      "snippet": "pipeline = route_registry.get_optional(route_id)"
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/eip/windowed_dedup.py",
+      "line": 26,
+      "snippet": "Fan-out на зарегистрированные route_id из RouteRegistry."
+    },
+    {
+      "file": "src/backend/dsl/engine/processors/proxy/expose.py",
+      "line": 11,
+      "snippet": "``RouteRegistry``. Задача процессора — зафиксировать source-spec"
+    },
+    {
+      "file": "src/backend/dsl/portal/__init__.py",
+      "line": 11,
+      "snippet": "* список зарегистрированных маршрутов (route_registry);"
+    },
+    {
+      "file": "src/backend/dsl/portal/builder_facade.py",
+      "line": 28,
+      "snippet": "from src.backend.core.api.extensions import get_global_registry, route_registry"
+    },
+    {
+      "file": "src/backend/dsl/portal/builder_facade.py",
+      "line": 66,
+      "snippet": "\"route_registry\": (\"src.backend.dsl.registry\", \"route_registry\"),"
+    },
+    {
+      "file": "src/backend/dsl/portal/builder_facade.py",
+      "line": 66,
+      "snippet": "\"route_registry\": (\"src.backend.dsl.registry\", \"route_registry\"),"
+    },
+    {
+      "file": "src/backend/dsl/portal/builder_facade.py",
+      "line": 121,
+      "snippet": "from src.backend.dsl.registry import route_registry as route_registry  # noqa: E402"
+    },
+    {
+      "file": "src/backend/dsl/portal/builder_facade.py",
+      "line": 121,
+      "snippet": "from src.backend.dsl.registry import route_registry as route_registry  # noqa: E402"
+    },
+    {
+      "file": "src/backend/dsl/portal/builder_facade.py",
+      "line": 238,
+      "snippet": "return list(route_registry._routes.keys())"
+    },
+    {
+      "file": "src/backend/dsl/portal/builder_facade.py",
+      "line": 244,
+      "snippet": "return route_registry.get(route_id)"
+    },
+    {
+      "file": "src/backend/dsl/portal/builder_facade.py",
+      "line": 249,
+      "snippet": "# route_registry.get может raise:"
+    },
+    {
+      "file": "src/backend/dsl/portal/builder_facade.py",
+      "line": 256,
+      "snippet": "\"get_route_pipeline: route_registry.get failed \""
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 8,
+      "snippet": "* :class:`RouteRegistry`, :data:`route_registry` — реестр DSL-маршрутов"
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 8,
+      "snippet": "* :class:`RouteRegistry`, :data:`route_registry` — реестр DSL-маршрутов"
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 16,
+      "snippet": "from src.backend.dsl.commands.registry import RouteRegistry as RouteRegistry"
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 16,
+      "snippet": "from src.backend.dsl.commands.registry import RouteRegistry as RouteRegistry"
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 17,
+      "snippet": "from src.backend.dsl.commands.registry import route_registry as route_registry"
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 17,
+      "snippet": "from src.backend.dsl.commands.registry import route_registry as route_registry"
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 41,
+      "snippet": "\"RouteRegistry\","
+    },
+    {
+      "file": "src/backend/dsl/registry/__init__.py",
+      "line": 45,
+      "snippet": "\"route_registry\","
+    },
+    {
+      "file": "src/backend/dsl/routes.py",
+      "line": 12,
+      "snippet": "from src.backend.dsl.registry import route_registry"
+    },
+    {
+      "file": "src/backend/dsl/routes.py",
+      "line": 40,
+      "snippet": "route_registry.register(route)"
+    },
+    {
+      "file": "src/backend/dsl/service/facade.py",
+      "line": 8,
+      "snippet": "from src.backend.dsl.registry import route_registry"
+    },
+    {
+      "file": "src/backend/dsl/service/facade.py",
+      "line": 14,
+      "snippet": "\"\"\"Facade над RouteRegistry + ExecutionEngine."
+    },
+    {
+      "file": "src/backend/dsl/service/facade.py",
+      "line": 54,
+      "snippet": "pipeline = route_registry.get(route_id)"
+    },
+    {
+      "file": "src/backend/dsl/service/facade.py",
+      "line": 107,
+      "snippet": "return route_registry.list_routes()"
+    },
+    {
+      "file": "src/backend/dsl/service/facade.py",
+      "line": 112,
+      "snippet": "return route_registry.list_enabled_routes()"
+    },
+    {
+      "file": "src/backend/dsl/service/facade.py",
+      "line": 117,
+      "snippet": "return route_registry.list_disabled_routes()"
+    },
+    {
+      "file": "src/backend/dsl/service/facade.py",
+      "line": 122,
+      "snippet": "return route_registry.get_route_feature_flags()"
+    },
+    {
+      "file": "src/backend/dsl/service/facade.py",
+      "line": 138,
+      "snippet": "return route_registry.get_route_overrides(route_id)"
+    },
+    {
+      "file": "src/backend/dsl/service/facade.py",
+      "line": 150,
+      "snippet": "route_registry.toggle_feature_flag(flag_name, enable=enable)"
+    },
+    {
+      "file": "src/backend/dsl/versioning/migrations.py",
+      "line": 15,
+      "snippet": "в CLI (без bootstrap'а ``RouteRegistry``) и в alembic-скриптах."
+    },
+    {
+      "file": "src/backend/dsl/yaml_watcher.py",
+      "line": 13,
+      "snippet": "через :meth:`RouteRegistry.unregister`."
+    },
+    {
+      "file": "src/backend/dsl/yaml_watcher.py",
+      "line": 40,
+      "snippet": "from src.backend.dsl.commands.registry import RouteRegistry"
+    },
+    {
+      "file": "src/backend/dsl/yaml_watcher.py",
+      "line": 73,
+      "snippet": "route_registry: Реестр маршрутов для регистрации/обновления."
+    },
+    {
+      "file": "src/backend/dsl/yaml_watcher.py",
+      "line": 84,
+      "snippet": "route_registry: RouteRegistry,"
+    },
+    {
+      "file": "src/backend/dsl/yaml_watcher.py",
+      "line": 84,
+      "snippet": "route_registry: RouteRegistry,"
+    },
+    {
+      "file": "src/backend/dsl/yaml_watcher.py",
+      "line": 90,
+      "snippet": "self._registry = route_registry"
+    },
+    {
+      "file": "src/backend/entrypoints/_action_bridge.py",
+      "line": 96,
+      "snippet": "dsl_route_id: ID DSL-маршрута для Tier 3 fallback (``route_registry``)."
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py",
+      "line": 48,
+      "snippet": "# runtime всегда падал в ImportError → route_registry=None →"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py",
+      "line": 49,
+      "snippet": "# steps=[]. Реальный route_registry singleton: canonical"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py",
+      "line": 52,
+      "snippet": "from src.backend.core.api.extensions import route_registry"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py",
+      "line": 54,
+      "snippet": "route_registry = None  # type: ignore[assignment]"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py",
+      "line": 57,
+      "snippet": "if route_registry is not None:"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/admin_parallelism.py",
+      "line": 59,
+      "snippet": "route = route_registry.get(name)"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/health.py",
+      "line": 170,
+      "snippet": "from src.backend.core.api.extensions import action_handler_registry, route_registry"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/health.py",
+      "line": 175,
+      "snippet": "\"routes\": len(route_registry.list_routes()),"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/imports.py",
+      "line": 319,
+      "snippet": "# src.backend.dsl.registry — re-exports route_registry singleton"
+    },
+    {
+      "file": "src/backend/entrypoints/api/v1/endpoints/imports.py",
+      "line": 321,
+      "snippet": "# существует). get_pipeline_registry() → route_registry singleton"
+    }
+  ],
+  "MCPServerRegistry": [
+    {
+      "file": "src/backend/core/config/features/ai.py",
+      "line": 6,
+      "snippet": "- mcp_tools_input_schema_strict"
+    },
+    {
+      "file": "src/backend/core/config/features/ai.py",
+      "line": 61,
+      "snippet": "mcp_tools_input_schema_strict: bool = Field("
+    },
+    {
+      "file": "src/backend/core/config/validator/_helpers.py",
+      "line": 53,
+      "snippet": "\"mcp_tools_input_schema_strict\","
+    },
+    {
+      "file": "src/backend/dsl/agents/fastmcp_server.py",
+      "line": 29,
+      "snippet": "# mcp 2.x удалил mcp.server.fastmcp (FastMCP → MCPServer); каноничный"
+    },
+    {
+      "file": "src/backend/entrypoints/mcp/input_schema_resolver.py",
+      "line": 12,
+      "snippet": "- strict mode управляется через feature_flags.mcp_tools_input_schema_strict."
+    },
+    {
+      "file": "src/backend/entrypoints/mcp/input_schema_resolver.py",
+      "line": 150,
+      "snippet": "Режим strict управляется через feature_flags.mcp_tools_input_schema_strict"
+    },
+    {
+      "file": "src/backend/entrypoints/mcp/input_schema_resolver.py",
+      "line": 159,
+      "snippet": "При None — читает feature_flags.mcp_tools_input_schema_strict."
+    },
+    {
+      "file": "src/backend/entrypoints/mcp/input_schema_resolver.py",
+      "line": 181,
+      "snippet": "strict = feature_flags.mcp_tools_input_schema_strict"
+    },
+    {
+      "file": "src/backend/entrypoints/mcp/mcp_server/__init__.py",
+      "line": 12,
+      "snippet": "Public API: ``create_mcp_server()``, ``register_mcp_tools()``."
+    },
+    {
+      "file": "src/backend/entrypoints/mcp/mcp_server/__init__.py",
+      "line": 60,
+      "snippet": "\"register_mcp_tools\","
+    },
+    {
+      "file": "src/backend/entrypoints/mcp/mcp_server/__init__.py",
+      "line": 83,
+      "snippet": "register_mcp_tools(mcp)"
+    },
+    {
+      "file": "src/backend/entrypoints/mcp/mcp_server/__init__.py",
+      "line": 112,
+      "snippet": "def register_mcp_tools(mcp: Any) -> None:"
+    },
+    {
+      "file": "src/backend/entrypoints/mcp/workflow_tools.py",
+      "line": 24,
+      "snippet": "``register_mcp_tools()``. Регистрация идемпотентна — повторный вызов"
+    },
+    {
+      "file": "tests/unit/core/config/test_features_ai.py",
+      "line": 21,
+      "snippet": "\"mcp_tools_input_schema_strict\","
+    },
+    {
+      "file": "tests/unit/core/config/test_features_ai.py",
+      "line": 57,
+      "snippet": "\"mcp_tools_input_schema_strict\","
+    },
+    {
+      "file": "tests/unit/entrypoints/mcp/test_mcp_server.py",
+      "line": 56,
+      "snippet": "assert hasattr(mcp_mod, \"register_mcp_tools\")"
+    },
+    {
+      "file": "tests/unit/mcp/test_namespaces_aggregator.py",
+      "line": 116,
+      "snippet": "from src.backend.infrastructure.clients.external.mcp_registry import ("
+    },
+    {
+      "file": "tests/unit/mcp/test_namespaces_aggregator.py",
+      "line": 129,
+      "snippet": "from src.backend.infrastructure.clients.external.mcp_registry import ("
+    },
+    {
+      "file": "tests/unit/mcp/test_namespaces_aggregator.py",
+      "line": 152,
+      "snippet": "from src.backend.infrastructure.clients.external.mcp_registry import ("
+    },
+    {
+      "file": "tests/unit/mcp/test_namespaces_aggregator.py",
+      "line": 167,
+      "snippet": "from src.backend.infrastructure.clients.external.mcp_registry import ("
+    },
+    {
+      "file": "tests/unit/mcp/test_namespaces_aggregator.py",
+      "line": 186,
+      "snippet": "from src.backend.infrastructure.clients.external.mcp_registry import ("
+    },
+    {
+      "file": "tests/unit/mcp/test_namespaces_aggregator.py",
+      "line": 199,
+      "snippet": "from src.backend.infrastructure.clients.external.mcp_registry import ("
+    },
+    {
+      "file": "tests/unit/tools/test_contract_diff_gate_focused.py",
+      "line": 17,
+      "snippet": "_diff_mcp_tools,"
+    },
+    {
+      "file": "tests/unit/tools/test_contract_diff_gate_focused.py",
+      "line": 522,
+      "snippet": "breaking = _diff_mcp_tools({\"tools\": [\"t1\"]}, {\"tools\": [\"t1\", \"t2\"]})"
+    },
+    {
+      "file": "tools/check_mcp_export.py",
+      "line": 7,
+      "snippet": "через ``mcp_server.register_mcp_tools()`` без падения;"
+    },
+    {
+      "file": "tools/check_mcp_export.py",
+      "line": 63,
+      "snippet": "from src.backend.entrypoints.mcp.mcp_server import register_mcp_tools"
+    },
+    {
+      "file": "tools/check_mcp_export.py",
+      "line": 66,
+      "snippet": "register_mcp_tools(mcp)"
+    },
+    {
+      "file": "tools/check_mcp_export.py",
+      "line": 74,
+      "snippet": "f\"OK mcp_export: actions={actions_total} mcp_tools={len(mcp.tools)} \""
+    },
+    {
+      "file": "tools/check_protocol_sync.py",
+      "line": 15,
+      "snippet": "- ``mcp_server.register_mcp_tools()`` (MCP, Wave 8.6)"
+    },
+    {
+      "file": "tools/check_protocol_sync.py",
+      "line": 27,
+      "snippet": "- MCP: scan mcp_server.register_mcp_tools output"
+    },
+    {
+      "file": "tools/check_protocol_sync.py",
+      "line": 184,
+      "snippet": "def _scan_mcp_tools() -> set[str]:"
+    },
+    {
+      "file": "tools/check_protocol_sync.py",
+      "line": 185,
+      "snippet": "\"\"\"Lightweight-режим: scan mcp_server для ``register_mcp_tools`` decorator.\"\"\""
+    },
+    {
+      "file": "tools/check_protocol_sync.py",
+      "line": 209,
+      "snippet": "mcp = _scan_mcp_tools()"
+    },
+    {
+      "file": "tools/checks/contract_diff_gate.py",
+      "line": 387,
+      "snippet": "def _diff_mcp_tools("
+    },
+    {
+      "file": "tools/checks/contract_diff_gate.py",
+      "line": 439,
+      "snippet": "matrix_breaking.extend(_diff_mcp_tools("
+    }
+  ],
+  "ServiceDSLRegistry": [
+    {
+      "file": "src/backend/core/config/features/dsl.py",
+      "line": 136,
+      "snippet": "title=\"K3: service.toml loader + ServiceDSLRegistry\","
+    },
+    {
+      "file": "src/backend/core/config/features/dsl.py",
+      "line": 140,
+      "snippet": "\"и регистрацию ServiceSpec в ServiceDSLRegistry singleton. \""
+    },
+    {
+      "file": "src/backend/dsl/blueprint_loader.py",
+      "line": 5,
+      "snippet": ":class:`ServiceDSLRegistry` или :class:`ProcessorRegistry`."
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_domains.py",
+      "line": 215,
+      "snippet": "service_dsl_registry,"
+    },
+    {
+      "file": "src/backend/dsl/commands/setup/registers_domains.py",
+      "line": 218,
+      "snippet": "service_dsl_registry.register_all_actions()"
+    },
+    {
+      "file": "src/backend/dsl/service/__init__.py",
+      "line": 4,
+      "snippet": "facade) с пакетом ``dsl/service/`` (ServiceDSLRegistry). Раньше Python"
+    },
+    {
+      "file": "src/backend/dsl/service/__init__.py",
+      "line": 9,
+      "snippet": "from src.backend.dsl.service.registry import ServiceDSLRegistry, get_service_registry"
+    },
+    {
+      "file": "src/backend/dsl/service/__init__.py",
+      "line": 18,
+      "snippet": "\"ServiceDSLRegistry\","
+    },
+    {
+      "file": "src/backend/dsl/service/registry.py",
+      "line": 1,
+      "snippet": "\"\"\"ServiceDSLRegistry — singleton-реестр сервисов из service.toml."
+    },
+    {
+      "file": "src/backend/dsl/service/registry.py",
+      "line": 18,
+      "snippet": "__all__ = (\"ServiceDSLRegistry\", \"get_service_registry\")"
+    },
+    {
+      "file": "src/backend/dsl/service/registry.py",
+      "line": 21,
+      "snippet": "class ServiceDSLRegistry:"
+    },
+    {
+      "file": "src/backend/dsl/service/registry.py",
+      "line": 55,
+      "snippet": "_registry: ServiceDSLRegistry | None = None"
+    },
+    {
+      "file": "src/backend/dsl/service/registry.py",
+      "line": 58,
+      "snippet": "def get_service_registry() -> ServiceDSLRegistry:"
+    },
+    {
+      "file": "src/backend/dsl/service/registry.py",
+      "line": 59,
+      "snippet": "\"\"\"Возвращает singleton ServiceDSLRegistry.\"\"\""
+    },
+    {
+      "file": "src/backend/dsl/service/registry.py",
+      "line": 62,
+      "snippet": "_registry = ServiceDSLRegistry()"
+    },
+    {
+      "file": "src/backend/dsl/service/toml_loader.py",
+      "line": 6,
+      "snippet": "в :class:`ServiceDSLRegistry`."
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 38,
+      "snippet": "\"ServiceDSLRegistry\","
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 62,
+      "snippet": "class ServiceDSLRegistry:"
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 109,
+      "snippet": "service_dsl_registry = ServiceDSLRegistry()"
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 109,
+      "snippet": "service_dsl_registry = ServiceDSLRegistry()"
+    },
+    {
+      "file": "src/backend/dsl/service_dsl.py",
+      "line": 163,
+      "snippet": "service_dsl_registry.register(meta)"
+    },
+    {
+      "file": "tests/unit/dsl/service/test_toml_loader.py",
+      "line": 1,
+      "snippet": "\"\"\"Unit-тесты service.toml loader + ServiceDSLRegistry (K3 W5 S3).\"\"\""
+    },
+    {
+      "file": "tests/unit/dsl/service/test_toml_loader.py",
+      "line": 9,
+      "snippet": "from src.backend.dsl.service.registry import ServiceDSLRegistry, get_service_registry"
+    },
+    {
+      "file": "tests/unit/dsl/service/test_toml_loader.py",
+      "line": 92,
+      "snippet": "reg = ServiceDSLRegistry()"
+    },
+    {
+      "file": "tests/unit/dsl/service/test_toml_loader.py",
+      "line": 104,
+      "snippet": "assert isinstance(r1, ServiceDSLRegistry)"
+    },
+    {
+      "file": "tests/unit/dsl/test_service_dsl.py",
+      "line": 1,
+      "snippet": "\"\"\"Unit tests for ServiceDSLRegistry and decorators.\"\"\""
+    },
+    {
+      "file": "tests/unit/dsl/test_service_dsl.py",
+      "line": 12,
+      "snippet": "ServiceDSLRegistry,"
+    },
+    {
+      "file": "tests/unit/dsl/test_service_dsl.py",
+      "line": 30,
+      "snippet": "class TestServiceDSLRegistry:"
+    },
+    {
+      "file": "tests/unit/dsl/test_service_dsl.py",
+      "line": 32,
+      "snippet": "def registry(self) -> ServiceDSLRegistry:"
+    },
+    {
+      "file": "tests/unit/dsl/test_service_dsl.py",
+      "line": 33,
+      "snippet": "return ServiceDSLRegistry()"
+    },
+    {
+      "file": "tests/unit/dsl/test_service_dsl.py",
+      "line": 35,
+      "snippet": "def test_register_and_get(self, registry: ServiceDSLRegistry) -> None:"
+    },
+    {
+      "file": "tests/unit/dsl/test_service_dsl.py",
+      "line": 42,
+      "snippet": "def test_list_services(self, registry: ServiceDSLRegistry) -> None:"
+    },
+    {
+      "file": "tests/unit/dsl/test_service_dsl.py",
+      "line": 53,
+      "snippet": "def test_register_all_actions(self, registry: ServiceDSLRegistry) -> None:"
+    }
+  ],
+  "WebhookRegistry": [
+    {
+      "file": "src/backend/entrypoints/webhook/handler.py",
+      "line": 26,
+      "snippet": "webhook_registry,"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/handler.py",
+      "line": 100,
+      "snippet": "created = webhook_registry.add(sub)"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/handler.py",
+      "line": 116,
+      "snippet": "webhook_registry.remove(sub_id)"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/handler.py",
+      "line": 127,
+      "snippet": "return webhook_registry.list_all()"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/handler.py",
+      "line": 158,
+      "snippet": "s for s in webhook_registry.list_all() if s.get(\"event_type\") == event_type"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/handler.py",
+      "line": 226,
+      "snippet": "subscriptions = webhook_registry.get_by_event(event_type)"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/redis_registry.py",
+      "line": 19,
+      "snippet": "__all__ = (\"RedisWebhookRegistry\", \"WebhookSubscription\", \"redis_webhook_registry\")"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/redis_registry.py",
+      "line": 19,
+      "snippet": "__all__ = (\"RedisWebhookRegistry\", \"WebhookSubscription\", \"redis_webhook_registry\")"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/redis_registry.py",
+      "line": 33,
+      "snippet": "class RedisWebhookRegistry:"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/redis_registry.py",
+      "line": 94,
+      "snippet": "redis_webhook_registry = RedisWebhookRegistry()"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/redis_registry.py",
+      "line": 94,
+      "snippet": "redis_webhook_registry = RedisWebhookRegistry()"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/registry.py",
+      "line": 13,
+      "snippet": "__all__ = (\"WebhookRegistry\", \"WebhookSubscription\", \"webhook_registry\")"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/registry.py",
+      "line": 13,
+      "snippet": "__all__ = (\"WebhookRegistry\", \"WebhookSubscription\", \"webhook_registry\")"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/registry.py",
+      "line": 37,
+      "snippet": "class WebhookRegistry:"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/registry.py",
+      "line": 103,
+      "snippet": "webhook_registry = WebhookRegistry()"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/registry.py",
+      "line": 103,
+      "snippet": "webhook_registry = WebhookRegistry()"
+    },
+    {
+      "file": "src/backend/entrypoints/webhook/sources_router.py",
+      "line": 11,
+      "snippet": "``webhook_registry``. Новый router работает только с W23-Source-Registry."
+    },
+    {
+      "file": "tests/unit/entrypoints/webhook/test_handler.py",
+      "line": 68,
+      "snippet": "\"src.backend.entrypoints.webhook.handler.webhook_registry\""
+    },
+    {
+      "file": "tests/unit/entrypoints/webhook/test_handler.py",
+      "line": 107,
+      "snippet": "\"src.backend.entrypoints.webhook.handler.webhook_registry\""
+    },
+    {
+      "file": "tests/unit/entrypoints/webhook/test_handler.py",
+      "line": 122,
+      "snippet": "\"src.backend.entrypoints.webhook.handler.webhook_registry\""
+    },
+    {
+      "file": "tests/unit/entrypoints/webhook/test_handler.py",
+      "line": 140,
+      "snippet": "\"src.backend.entrypoints.webhook.handler.webhook_registry\""
+    },
+    {
+      "file": "tests/unit/entrypoints/webhook/test_handler.py",
+      "line": 157,
+      "snippet": "\"src.backend.entrypoints.webhook.handler.webhook_registry\""
+    },
+    {
+      "file": "tests/unit/entrypoints/webhook/test_handler.py",
+      "line": 193,
+      "snippet": "\"src.backend.entrypoints.webhook.handler.webhook_registry\""
+    },
+    {
+      "file": "tests/unit/entrypoints/webhook/test_handler.py",
+      "line": 206,
+      "snippet": "\"src.backend.entrypoints.webhook.handler.webhook_registry\""
+    },
+    {
+      "file": "tests/unit/entrypoints/webhook/test_handler.py",
+      "line": 220,
+      "snippet": "\"src.backend.entrypoints.webhook.handler.webhook_registry\""
+    }
   ]
 }

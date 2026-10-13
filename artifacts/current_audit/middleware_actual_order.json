@@ -1,336 +1,375 @@
 {
-  "probe": {
-    "method": "патч Starlette.add_middleware + обёртка __call__ каждого middleware-класса из app.user_middleware (enter/exit) + реальный HTTP-запрос через httpx.ASGITransport",
-    "index_semantics": "app.user_middleware[0] = внешний middleware (LIFO-семантика add_middleware)",
-    "request": "GET /health",
-    "status_code": 200
-  },
-  "registration_order": [
-    "ExceptionHandlerMiddleware",
-    "GlobalRateLimitMiddleware",
-    "CORSMiddleware",
-    "TrustedHostMiddleware",
-    "BlockedRoutesMiddleware",
-    "IPRestrictionMiddleware",
-    "APIKeyMiddleware",
-    "CircuitBreakerMiddleware",
-    "RequestIDMiddleware",
-    "CorrelationIdMiddleware",
-    "TenantMiddleware",
-    "RequestContextMiddleware",
-    "TenantResourceIsolationMiddleware",
-    "IdempotencyHeaderMiddleware",
-    "DegradationMiddleware",
-    "RequestBodyCacheMiddleware",
-    "TimeoutMiddleware",
-    "ResponseCacheMiddleware",
-    "GZipCompressionExcludingMiddleware",
-    "DataMaskingMiddleware",
-    "AuthMethodHeaderMiddleware",
-    "AuthRequiredMiddleware",
-    "AIToolWhitelistMiddleware",
-    "LoginStepUpMiddleware",
-    "WebSocketRateLimitMiddleware",
-    "WebhookSignatureMiddleware",
-    "PIIMaskingResponseMiddleware",
-    "RpaPolicyMiddleware",
-    "CSRFMiddleware",
-    "AuditLogMiddleware",
-    "AuditReplayMiddleware",
-    "InnerRequestLoggingMiddleware",
-    "OtelMiddleware",
-    "PrometheusMiddleware",
-    "SecurityHeadersMiddleware",
-    "GracefulShutdownMiddleware",
-    "PrometheusMiddleware"
-  ],
-  "app_user_middleware": [
-    "PrometheusMiddleware",
-    "GracefulShutdownMiddleware",
-    "SecurityHeadersMiddleware",
-    "PrometheusMiddleware",
-    "OtelMiddleware",
-    "InnerRequestLoggingMiddleware",
-    "AuditReplayMiddleware",
-    "AuditLogMiddleware",
-    "CSRFMiddleware",
-    "RpaPolicyMiddleware",
-    "PIIMaskingResponseMiddleware",
-    "WebhookSignatureMiddleware",
-    "WebSocketRateLimitMiddleware",
-    "LoginStepUpMiddleware",
-    "AIToolWhitelistMiddleware",
-    "AuthRequiredMiddleware",
-    "AuthMethodHeaderMiddleware",
-    "DataMaskingMiddleware",
-    "GZipCompressionExcludingMiddleware",
-    "ResponseCacheMiddleware",
-    "TimeoutMiddleware",
-    "RequestBodyCacheMiddleware",
-    "DegradationMiddleware",
-    "IdempotencyHeaderMiddleware",
-    "TenantResourceIsolationMiddleware",
-    "RequestContextMiddleware",
-    "TenantMiddleware",
-    "CorrelationIdMiddleware",
-    "RequestIDMiddleware",
-    "CircuitBreakerMiddleware",
-    "APIKeyMiddleware",
-    "IPRestrictionMiddleware",
-    "BlockedRoutesMiddleware",
-    "TrustedHostMiddleware",
-    "CORSMiddleware",
-    "GlobalRateLimitMiddleware",
-    "ExceptionHandlerMiddleware"
-  ],
-  "actual_request_order": [
-    "PrometheusMiddleware",
-    "GracefulShutdownMiddleware",
-    "SecurityHeadersMiddleware",
-    "PrometheusMiddleware",
-    "OtelMiddleware",
-    "InnerRequestLoggingMiddleware",
-    "AuditReplayMiddleware",
-    "AuditLogMiddleware",
-    "CSRFMiddleware",
-    "RpaPolicyMiddleware",
-    "PIIMaskingResponseMiddleware",
-    "WebhookSignatureMiddleware",
-    "WebSocketRateLimitMiddleware",
-    "LoginStepUpMiddleware",
-    "AIToolWhitelistMiddleware",
-    "AuthRequiredMiddleware",
-    "AuthMethodHeaderMiddleware",
-    "DataMaskingMiddleware",
-    "GZipCompressionExcludingMiddleware",
-    "ResponseCacheMiddleware",
-    "TimeoutMiddleware",
-    "RequestBodyCacheMiddleware",
-    "DegradationMiddleware",
-    "IdempotencyHeaderMiddleware",
-    "TenantResourceIsolationMiddleware",
-    "RequestContextMiddleware",
-    "TenantMiddleware",
-    "CorrelationIdMiddleware",
-    "RequestIDMiddleware",
-    "CircuitBreakerMiddleware",
-    "APIKeyMiddleware",
-    "IPRestrictionMiddleware",
-    "BlockedRoutesMiddleware",
-    "TrustedHostMiddleware",
-    "CORSMiddleware",
-    "GlobalRateLimitMiddleware",
-    "ExceptionHandlerMiddleware"
-  ],
-  "actual_response_order": [
-    "ExceptionHandlerMiddleware",
-    "GlobalRateLimitMiddleware",
-    "CORSMiddleware",
-    "TrustedHostMiddleware",
-    "BlockedRoutesMiddleware",
-    "IPRestrictionMiddleware",
-    "APIKeyMiddleware",
-    "CircuitBreakerMiddleware",
-    "RequestIDMiddleware",
-    "CorrelationIdMiddleware",
-    "TenantMiddleware",
-    "RequestContextMiddleware",
-    "TenantResourceIsolationMiddleware",
-    "IdempotencyHeaderMiddleware",
-    "DegradationMiddleware",
-    "RequestBodyCacheMiddleware",
-    "TimeoutMiddleware",
-    "ResponseCacheMiddleware",
-    "GZipCompressionExcludingMiddleware",
-    "DataMaskingMiddleware",
-    "AuthMethodHeaderMiddleware",
-    "AuthRequiredMiddleware",
-    "AIToolWhitelistMiddleware",
-    "LoginStepUpMiddleware",
-    "WebSocketRateLimitMiddleware",
-    "WebhookSignatureMiddleware",
-    "PIIMaskingResponseMiddleware",
-    "RpaPolicyMiddleware",
-    "CSRFMiddleware",
-    "AuditLogMiddleware",
-    "AuditReplayMiddleware",
-    "InnerRequestLoggingMiddleware",
-    "OtelMiddleware",
-    "PrometheusMiddleware",
-    "SecurityHeadersMiddleware",
-    "GracefulShutdownMiddleware",
-    "PrometheusMiddleware"
-  ],
-  "raw_events": [
-    "enter:PrometheusMiddleware",
-    "enter:GracefulShutdownMiddleware",
-    "enter:SecurityHeadersMiddleware",
-    "enter:PrometheusMiddleware",
-    "enter:OtelMiddleware",
-    "enter:InnerRequestLoggingMiddleware",
-    "enter:AuditReplayMiddleware",
-    "enter:AuditLogMiddleware",
-    "enter:CSRFMiddleware",
-    "enter:RpaPolicyMiddleware",
-    "enter:PIIMaskingResponseMiddleware",
-    "enter:WebhookSignatureMiddleware",
-    "enter:WebSocketRateLimitMiddleware",
-    "enter:LoginStepUpMiddleware",
-    "enter:AIToolWhitelistMiddleware",
-    "enter:AuthRequiredMiddleware",
-    "enter:AuthMethodHeaderMiddleware",
-    "enter:DataMaskingMiddleware",
-    "enter:GZipCompressionExcludingMiddleware",
-    "enter:ResponseCacheMiddleware",
-    "enter:TimeoutMiddleware",
-    "enter:RequestBodyCacheMiddleware",
-    "enter:DegradationMiddleware",
-    "enter:IdempotencyHeaderMiddleware",
-    "enter:TenantResourceIsolationMiddleware",
-    "enter:RequestContextMiddleware",
-    "enter:TenantMiddleware",
-    "enter:CorrelationIdMiddleware",
-    "enter:RequestIDMiddleware",
-    "enter:CircuitBreakerMiddleware",
-    "enter:APIKeyMiddleware",
-    "enter:IPRestrictionMiddleware",
-    "enter:BlockedRoutesMiddleware",
-    "enter:TrustedHostMiddleware",
-    "enter:CORSMiddleware",
-    "enter:GlobalRateLimitMiddleware",
-    "enter:ExceptionHandlerMiddleware",
-    "exit:ExceptionHandlerMiddleware",
-    "exit:GlobalRateLimitMiddleware",
-    "exit:CORSMiddleware",
-    "exit:TrustedHostMiddleware",
-    "exit:BlockedRoutesMiddleware",
-    "exit:IPRestrictionMiddleware",
-    "exit:APIKeyMiddleware",
-    "exit:CircuitBreakerMiddleware",
-    "exit:RequestIDMiddleware",
-    "exit:CorrelationIdMiddleware",
-    "exit:TenantMiddleware",
-    "exit:RequestContextMiddleware",
-    "exit:TenantResourceIsolationMiddleware",
-    "exit:IdempotencyHeaderMiddleware",
-    "exit:DegradationMiddleware",
-    "exit:RequestBodyCacheMiddleware",
-    "exit:TimeoutMiddleware",
-    "exit:ResponseCacheMiddleware",
-    "exit:GZipCompressionExcludingMiddleware",
-    "exit:DataMaskingMiddleware",
-    "exit:AuthMethodHeaderMiddleware",
-    "exit:AuthRequiredMiddleware",
-    "exit:AIToolWhitelistMiddleware",
-    "exit:LoginStepUpMiddleware",
-    "exit:WebSocketRateLimitMiddleware",
-    "exit:WebhookSignatureMiddleware",
-    "exit:PIIMaskingResponseMiddleware",
-    "exit:RpaPolicyMiddleware",
-    "exit:CSRFMiddleware",
-    "exit:AuditLogMiddleware",
-    "exit:AuditReplayMiddleware",
-    "exit:InnerRequestLoggingMiddleware",
-    "exit:OtelMiddleware",
-    "exit:PrometheusMiddleware",
-    "exit:SecurityHeadersMiddleware",
-    "exit:GracefulShutdownMiddleware",
-    "exit:PrometheusMiddleware"
-  ],
-  "expected_security_chain": [
-    "authentication",
-    "tenant resolution",
-    "tenant resource isolation",
-    "authorization",
-    "idempotency",
-    "request body cache",
-    "response cache",
-    "logging"
-  ],
-  "chain_positions": {
-    "authentication": {
-      "indexes": [
-        15,
-        16,
-        30
-      ],
-      "classes": [
-        "AuthRequiredMiddleware",
-        "AuthMethodHeaderMiddleware",
-        "APIKeyMiddleware"
-      ],
-      "matched": true
+  "add_middleware_calls": [
+    {
+      "file": "src/backend/core/interfaces/action_dispatcher.py",
+      "line": 225,
+      "snippet": "class ActionMiddleware(Protocol):"
     },
-    "tenant resolution": {
-      "indexes": [
-        26
-      ],
-      "classes": [
-        "TenantMiddleware"
-      ],
-      "matched": true
+    {
+      "file": "src/backend/core/interfaces/middleware.py",
+      "line": 24,
+      "snippet": "class ProcessorMiddleware(Protocol):"
     },
-    "tenant resource isolation": {
-      "indexes": [
-        24
-      ],
-      "classes": [
-        "TenantResourceIsolationMiddleware"
-      ],
-      "matched": true
+    {
+      "file": "src/backend/entrypoints/api/versioning.py",
+      "line": 21,
+      "snippet": "from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint"
     },
-    "authorization": {
-      "indexes": [],
-      "classes": [],
-      "matched": false
+    {
+      "file": "src/backend/entrypoints/api/versioning.py",
+      "line": 69,
+      "snippet": "class DeprecationMiddleware(BaseHTTPMiddleware):"
     },
-    "idempotency": {
-      "indexes": [
-        23
-      ],
-      "classes": [
-        "IdempotencyHeaderMiddleware"
-      ],
-      "matched": true
+    {
+      "file": "src/backend/entrypoints/api/versioning.py",
+      "line": 69,
+      "snippet": "class DeprecationMiddleware(BaseHTTPMiddleware):"
     },
-    "request body cache": {
-      "indexes": [
-        21
-      ],
-      "classes": [
-        "RequestBodyCacheMiddleware"
-      ],
-      "matched": true
+    {
+      "file": "src/backend/entrypoints/mcp/http_server.py",
+      "line": 40,
+      "snippet": "# RequestBodyLimitMiddleware(self._handle_request) держит"
     },
-    "response cache": {
-      "indexes": [
-        19
-      ],
-      "classes": [
-        "ResponseCacheMiddleware"
-      ],
-      "matched": true
+    {
+      "file": "src/backend/entrypoints/mcp/http_server.py",
+      "line": 121,
+      "snippet": "wrapped_app = McpAuthMiddleware(inner_app)"
     },
-    "logging": {
-      "indexes": [
-        5,
-        7
-      ],
-      "classes": [
-        "InnerRequestLoggingMiddleware",
-        "AuditLogMiddleware"
-      ],
-      "matched": true
+    {
+      "file": "src/backend/entrypoints/middlewares/admin_audit.py",
+      "line": 16,
+      "snippet": "Cycle 49: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/admin_ip.py",
+      "line": 8,
+      "snippet": "Cycle 41: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/ai_tool_whitelist.py",
+      "line": 15,
+      "snippet": "app.add_middleware(AIToolWhitelistMiddleware, enabled=True)"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/ai_tool_whitelist.py",
+      "line": 17,
+      "snippet": "Cycle 46: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/api_key.py",
+      "line": 10,
+      "snippet": "Cycle 47: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/api_key.py",
+      "line": 17,
+      "snippet": "В BaseHTTPMiddleware версии state.auth читался в dispatch. В pure"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/audit_log.py",
+      "line": 15,
+      "snippet": "Cycle 48: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/audit_replay.py",
+      "line": 15,
+      "snippet": "Cycle 45: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/audit_replay.py",
+      "line": 24,
+      "snippet": "В BaseHTTPMiddleware body уже buffered. В pure ASGI:"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/auth_method_header.py",
+      "line": 10,
+      "snippet": "Cycle 37: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/auth_required.py",
+      "line": 15,
+      "snippet": "Cycle 43: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/auth_required.py",
+      "line": 179,
+      "snippet": "# В BaseHTTPMiddleware версии было request.state.auth — в pure"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/blocked_routes.py",
+      "line": 8,
+      "snippet": "Cycle 39: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/blocked_routes.py",
+      "line": 11,
+      "snippet": "Cycle 39 retrospective: в BaseHTTPMiddleware middleware"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/blocked_routes.py",
+      "line": 34,
+      "snippet": "Pure ASGI: в отличие от BaseHTTPMiddleware, мы НЕ можем полагаться"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/brotli_compression.py",
+      "line": 15,
+      "snippet": "``br`` — отвечаем тем же GZipMiddleware ниже в pipeline)."
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/circuit_breaker.py",
+      "line": 158,
+      "snippet": "app.add_middleware("
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/csrf.py",
+      "line": 21,
+      "snippet": "Cycle 57: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/data_masking.py",
+      "line": 7,
+      "snippet": "Cycle 58: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/data_masking.py",
+      "line": 19,
+      "snippet": "В BaseHTTPMiddleware версии middleware использовал"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/degradation.py",
+      "line": 13,
+      "snippet": "Cycle 42: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/degradation.py",
+      "line": 89,
+      "snippet": "Public API сохранён: ``DegradationMiddleware(app, retry_after=30)``."
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/exception_handler.py",
+      "line": 7,
+      "snippet": "Cycle 51: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/exception_handler.py",
+      "line": 12,
+      "snippet": "1. Поймать exception в try/except (аналог BaseHTTPMiddleware)."
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/global_ratelimit.py",
+      "line": 342,
+      "snippet": "app.add_middleware("
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/graceful_shutdown.py",
+      "line": 3,
+      "snippet": "S91 создал BaseHTTPMiddleware-версию с тремя дефектами:"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/graceful_shutdown.py",
+      "line": 10,
+      "snippet": "W1: pure-ASGI реализация (BaseHTTPMiddleware несовместим с проектным"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/gzip_compression_excluding.py",
+      "line": 3,
+      "snippet": "D-AUDIT-17601 fix (cycle 176): FastAPI's default GZipMiddleware"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/gzip_compression_excluding.py",
+      "line": 4,
+      "snippet": "(BaseHTTPMiddleware pattern) incompatible с проектом's pure"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/gzip_compression_excluding.py",
+      "line": 9,
+      "snippet": "Fix: pure ASGI GZipMiddleware с path exclusion. Paths /docs,"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/gzip_compression_excluding.py",
+      "line": 23,
+      "snippet": "# cause: GZipMiddleware BaseHTTPMiddleware incompatibility with"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/gzip_compression_excluding.py",
+      "line": 23,
+      "snippet": "# cause: GZipMiddleware BaseHTTPMiddleware incompatibility with"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/gzip_compression_excluding.py",
+      "line": 35,
+      "snippet": "2. Pure ASGI pattern (не BaseHTTPMiddleware) — pass start"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/observability.py",
+      "line": 19,
+      "snippet": "app.add_middleware("
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/observability.py",
+      "line": 37,
+      "snippet": "from starlette.middleware.base import BaseHTTPMiddleware"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/observability.py",
+      "line": 161,
+      "snippet": "class ObservabilityMiddleware(BaseHTTPMiddleware):"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/observability.py",
+      "line": 161,
+      "snippet": "class ObservabilityMiddleware(BaseHTTPMiddleware):"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/otel_middleware.py",
+      "line": 20,
+      "snippet": "Cycle 56: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/pii_masking_response.py",
+      "line": 18,
+      "snippet": "Cycle 54: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/pii_masking_response.py",
+      "line": 135,
+      "snippet": "# 2. Gzip-compressed responses (GZipMiddleware compresses"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/registry.py",
+      "line": 6,
+      "snippet": ":func:`setup_middlewares.setup_middlewares`: ``app.add_middleware(...)``"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/registry.py",
+      "line": 30,
+      "snippet": "использует LIFO-семантику: ``app.add_middleware(cls)`` делает"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/registry.py",
+      "line": 287,
+      "snippet": "app.add_middleware(spec.middleware_cls, **options)"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/registry.py",
+      "line": 298,
+      "snippet": "[001] cors                 (builtin) src=fastapi.middleware.cors:CORSMiddleware"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/request_id.py",
+      "line": 12,
+      "snippet": "Cycle 36 fix: переписано с ``BaseHTTPMiddleware`` на pure ASGI."
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/request_id.py",
+      "line": 17,
+      "snippet": "headers клиенту (BaseHTTPMiddleware известен этим багом)."
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/request_id.py",
+      "line": 21,
+      "snippet": "Public API сохранён: ``RequestIDMiddleware(app)`` — drop-in"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/request_log.py",
+      "line": 7,
+      "snippet": "Cycle 53: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/response_cache.py",
+      "line": 7,
+      "snippet": "Cycle 55: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/response_cache.py",
+      "line": 13,
+      "snippet": "В BaseHTTPMiddleware версии middleware использовал"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/rpa_policy.py",
+      "line": 15,
+      "snippet": "Cycle 40: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/rpa_policy.py",
+      "line": 51,
+      "snippet": ">>> mw = RpaPolicyMiddleware(app, rpa_path_prefix=\"/api/v1/rpa\")"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/security_headers.py",
+      "line": 4,
+      "snippet": ":class:`starlette.middleware.base.BaseHTTPMiddleware`, который запускает"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/security_headers.py",
+      "line": 23,
+      "snippet": "Public API сохранён: ``SecurityHeadersMiddleware(app)`` и"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/setup_middlewares.py",
+      "line": 36,
+      "snippet": "from fastapi.middleware.cors import CORSMiddleware"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/setup_middlewares.py",
+      "line": 37,
+      "snippet": "from fastapi.middleware.trustedhost import TrustedHostMiddleware"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/setup_middlewares.py",
+      "line": 110,
+      "snippet": "CORSMiddleware,"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/setup_middlewares.py",
+      "line": 123,
+      "snippet": "TrustedHostMiddleware,"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/setup_middlewares.py",
+      "line": 306,
+      "snippet": "# LIFO: высокий order = первый на request). Pure-ASGI — BaseHTTPMiddleware"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/setup_middlewares.py",
+      "line": 371,
+      "snippet": "# default GZipMiddleware (BaseHTTPMiddleware — incompatible с"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/setup_middlewares.py",
+      "line": 371,
+      "snippet": "# default GZipMiddleware (BaseHTTPMiddleware — incompatible с"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/tenant.py",
+      "line": 7,
+      "snippet": "Cycle 38: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/tenant_resource_isolation.py",
+      "line": 47,
+      "snippet": "app.add_middleware(TenantResourceIsolationMiddleware)"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/timeout.py",
+      "line": 15,
+      "snippet": "Cycle 50: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/timeout.py",
+      "line": 19,
+      "snippet": "В BaseHTTPMiddleware версии тот же pattern (wait_for на dispatch)."
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/webhook_signature.py",
+      "line": 15,
+      "snippet": "Cycle 44: переписано с ``BaseHTTPMiddleware`` на pure ASGI для"
+    },
+    {
+      "file": "src/backend/entrypoints/middlewares/webhook_signature.py",
+      "line": 20,
+      "snippet": "BaseHTTPMiddleware body уже buffered. В pure ASGI body приходит"
     }
-  },
-  "chain_violations": [
-    "tenant resolution(idx=26) не раньше tenant resource isolation(idx=24) — порядок инвертирован",
-    "tenant resource isolation(idx=24) не раньше idempotency(idx=23) — порядок инвертирован",
-    "idempotency(idx=23) не раньше request body cache(idx=21) — порядок инвертирован",
-    "request body cache(idx=21) не раньше response cache(idx=19) — порядок инвертирован",
-    "response cache(idx=19) не раньше logging(idx=5) — порядок инвертирован",
-    "стадия 'authorization' ОТСУТСТВУЕТ в стеке"
   ],
-  "matched_stages": 7,
-  "total_stages": 8
+  "count": 74
 }

@@ -366,6 +366,20 @@
   {
     "annotation": "str | None",
     "arg": "tenant_id",
+    "file": "src/backend/dsl/portal/builder_facade.py",
+    "line": 154,
+    "qualified_name": "get_ai_cost_snapshot"
+  },
+  {
+    "annotation": "str | None",
+    "arg": "tenant_id",
+    "file": "src/backend/dsl/portal/builder_facade.py",
+    "line": 207,
+    "qualified_name": "get_saga_stats"
+  },
+  {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/dsl/builders/agent_dsl/infra.py",
     "line": 534,
     "qualified_name": "InfraMixin.optimize_prompt"
@@ -467,20 +481,6 @@
     "file": "src/backend/infrastructure/workflow/pg_runner_internals/instance_store.py",
     "line": 92,
     "qualified_name": "WorkflowInstanceStore.list_pending"
-  },
-  {
-    "annotation": "str | None",
-    "arg": "tenant_id",
-    "file": "src/backend/services/dsl_portal/builder_facade.py",
-    "line": 154,
-    "qualified_name": "get_ai_cost_snapshot"
-  },
-  {
-    "annotation": "str | None",
-    "arg": "tenant_id",
-    "file": "src/backend/services/dsl_portal/builder_facade.py",
-    "line": 207,
-    "qualified_name": "get_saga_stats"
   },
   {
     "annotation": "str | None",

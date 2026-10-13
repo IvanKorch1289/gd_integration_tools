@@ -1,300 +1,1177 @@
-{
-  "source": "src/backend/plugins/composition/setup_infra/lifecycle.py",
-  "_provenance": {
-    "head": "2d9f4323ba7398c3de67f0a3cea044c557b2eb6f",
-    "generator": "artifacts/current_audit/generate_lifecycle_graph.py",
-    "method": "ast.parse по composition-слою; значения — ast.literal_eval",
-    "note": "Перегенерировано после fast-forward-слива fix/temporal-fail-closed-at. Количество операций не изменилось (11), но start_temporal_worker_runtime стал fail-closed: пустой activities/недоступный SDK/кластер теперь дают RuntimeError, а не тихий return."
+[
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/ai/policy/hotreload.py",
+    "line": 13
   },
-  "operation_structures": {
-    "total": 11,
-    "required": 10,
-    "optional": 1,
-    "with_stop": 4,
-    "without_stop": 7
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/ai/policy/hotreload.py",
+    "line": 91
   },
-  "operations": [
-    {
-      "name": "register_default_degradation_features",
-      "phase": "infrastructure",
-      "criticality": "Criticality.REQUIRED",
-      "timeout": null,
-      "enabled": null,
-      "dependencies": null,
-      "has_start": true,
-      "has_stop": false,
-      "lineno": 495
-    },
-    {
-      "name": "register_health_checks",
-      "phase": "infrastructure",
-      "criticality": "Criticality.REQUIRED",
-      "timeout": null,
-      "enabled": null,
-      "dependencies": null,
-      "has_start": true,
-      "has_stop": false,
-      "lineno": 500
-    },
-    {
-      "name": "register_pools_in_unified_manager",
-      "phase": "infrastructure",
-      "criticality": "Criticality.REQUIRED",
-      "timeout": null,
-      "enabled": null,
-      "dependencies": null,
-      "has_start": true,
-      "has_stop": false,
-      "lineno": 505
-    },
-    {
-      "name": "start_mongo_client",
-      "phase": "infrastructure",
-      "criticality": "Criticality.REQUIRED",
-      "timeout": null,
-      "enabled": null,
-      "dependencies": null,
-      "has_start": true,
-      "has_stop": false,
-      "lineno": 510
-    },
-    {
-      "name": "warmup_connection_pools",
-      "phase": "infrastructure",
-      "criticality": "Criticality.REQUIRED",
-      "timeout": null,
-      "enabled": null,
-      "dependencies": [
-        "start_mongo_client"
-      ],
-      "has_start": true,
-      "has_stop": false,
-      "lineno": 516
-    },
-    {
-      "name": "start_pool_monitors",
-      "phase": "infrastructure",
-      "criticality": "Criticality.REQUIRED",
-      "timeout": null,
-      "enabled": null,
-      "dependencies": [
-        "register_pools_in_unified_manager"
-      ],
-      "has_start": true,
-      "has_stop": false,
-      "lineno": 522
-    },
-    {
-      "name": "register_agent_security_workflow_hooks",
-      "phase": "infrastructure",
-      "criticality": "Criticality.REQUIRED",
-      "timeout": 15.0,
-      "enabled": null,
-      "dependencies": null,
-      "has_start": true,
-      "has_stop": false,
-      "lineno": 529
-    },
-    {
-      "name": "start_config_hot_reload",
-      "phase": "infrastructure",
-      "criticality": "Criticality.REQUIRED",
-      "timeout": null,
-      "enabled": null,
-      "dependencies": null,
-      "has_start": true,
-      "has_stop": true,
-      "lineno": 538
-    },
-    {
-      "name": "init_workflow_audit_sink",
-      "phase": "infrastructure",
-      "criticality": "Criticality.OPTIONAL",
-      "timeout": null,
-      "enabled": null,
-      "dependencies": null,
-      "has_start": true,
-      "has_stop": true,
-      "lineno": 545
-    },
-    {
-      "name": "start_temporal_worker_runtime",
-      "phase": "infrastructure",
-      "criticality": "Criticality.REQUIRED",
-      "timeout": 60.0,
-      "enabled": null,
-      "dependencies": null,
-      "has_start": true,
-      "has_stop": true,
-      "lineno": 554
-    },
-    {
-      "name": "start_scheduler_with_leader_election",
-      "phase": "infrastructure",
-      "criticality": "Criticality.REQUIRED",
-      "timeout": null,
-      "enabled": null,
-      "dependencies": [
-        "register_pools_in_unified_manager"
-      ],
-      "has_start": true,
-      "has_stop": true,
-      "lineno": 564
-    }
-  ],
-  "startup_phases": [
-    {
-      "index": 0,
-      "phase": "observability.phase_otel_traces",
-      "lineno": 30
-    },
-    {
-      "index": 1,
-      "phase": "observability.phase_otel_metrics",
-      "lineno": 30
-    },
-    {
-      "index": 2,
-      "phase": "observability.phase_config_validator",
-      "lineno": 30
-    },
-    {
-      "index": 3,
-      "phase": "observability.phase_sentry_init",
-      "lineno": 30
-    },
-    {
-      "index": 4,
-      "phase": "observability.phase_logsink_router",
-      "lineno": 30
-    },
-    {
-      "index": 5,
-      "phase": "observability.phase_audit_hmac_verify",
-      "lineno": 30
-    },
-    {
-      "index": 6,
-      "phase": "infrastructure.phase_redis_cluster",
-      "lineno": 30
-    },
-    {
-      "index": 7,
-      "phase": "infrastructure.phase_setup_infra",
-      "lineno": 30
-    },
-    {
-      "index": 8,
-      "phase": "infrastructure.phase_eventbus_startup",
-      "lineno": 30
-    },
-    {
-      "index": 9,
-      "phase": "services.phase_service_registration",
-      "lineno": 30
-    },
-    {
-      "index": 10,
-      "phase": "services.phase_ai_gateway_singleton",
-      "lineno": 30
-    },
-    {
-      "index": 11,
-      "phase": "services.phase_dsl_commands",
-      "lineno": 30
-    },
-    {
-      "index": 12,
-      "phase": "services.phase_watchers",
-      "lineno": 30
-    },
-    {
-      "index": 13,
-      "phase": "services.phase_plugin_loader",
-      "lineno": 30
-    },
-    {
-      "index": 14,
-      "phase": "services.phase_v11_loaders",
-      "lineno": 30
-    },
-    {
-      "index": 15,
-      "phase": "services.phase_outbox_dispatcher",
-      "lineno": 30
-    },
-    {
-      "index": 16,
-      "phase": "services.phase_workflow_runtime",
-      "lineno": 30
-    },
-    {
-      "index": 17,
-      "phase": "services.phase_schema_registry",
-      "lineno": 30
-    },
-    {
-      "index": 18,
-      "phase": "services.phase_feature_flag_broadcaster",
-      "lineno": 30
-    }
-  ],
-  "startup_phase_total": 19,
-  "readiness_endpoints": [
-    {
-      "path": "/health",
-      "file": "src/backend/plugins/composition/app_factory.py",
-      "lineno": 444,
-      "requires_auth": false
-    },
-    {
-      "path": "/health/live",
-      "file": "src/backend/plugins/composition/app_factory.py",
-      "lineno": 449,
-      "requires_auth": false
-    },
-    {
-      "path": "/ready",
-      "file": "src/backend/plugins/composition/app_factory.py",
-      "lineno": 454,
-      "requires_auth": false
-    },
-    {
-      "path": "/health/ready",
-      "file": "src/backend/plugins/composition/app_factory.py",
-      "lineno": 473,
-      "requires_auth": false
-    },
-    {
-      "path": "/livez",
-      "file": "src/backend/plugins/composition/app_factory.py",
-      "lineno": 484,
-      "requires_auth": false
-    },
-    {
-      "path": "/healthz",
-      "file": "src/backend/plugins/composition/app_factory.py",
-      "lineno": 489,
-      "requires_auth": false
-    },
-    {
-      "path": "/readyz",
-      "file": "src/backend/plugins/composition/app_factory.py",
-      "lineno": 494,
-      "requires_auth": false
-    }
-  ],
-  "operations_without_stop": {
-    "names": [
-      "register_default_degradation_features",
-      "register_health_checks",
-      "register_pools_in_unified_manager",
-      "start_mongo_client",
-      "warmup_connection_pools",
-      "start_pool_monitors",
-      "register_agent_security_workflow_hooks"
-    ],
-    "count": 7,
-    "impact": "операции не откатываются при частичном старте (F-N5)"
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/ai/security/workflow_hooks.py",
+    "line": 72
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/ai/security/workflow_hooks.py",
+    "line": 144
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/ai/workspace_manager.py",
+    "line": 242
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/audit/facade/audit_service.py",
+    "line": 26
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/auth/auth_selector.py",
+    "line": 84
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/auth/auth_selector.py",
+    "line": 90
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/auth/auth_selector.py",
+    "line": 90
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/auth/auth_selector.py",
+    "line": 321
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/auth/auth_selector.py",
+    "line": 327
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/config/base/app_base.py",
+    "line": 117
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/config_loader.py",
+    "line": 83
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/constants.py",
+    "line": 9
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/constants.py",
+    "line": 9
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/constants.py",
+    "line": 113
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/constants.py",
+    "line": 113
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/database.py",
+    "line": 128
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/dsl.py",
+    "line": 53
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/features/ai.py",
+    "line": 129
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/features/infrastructure.py",
+    "line": 231
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/features/infrastructure.py",
+    "line": 423
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/features/infrastructure.py",
+    "line": 432
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/features/sprints_15_17.py",
+    "line": 115
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/features/sprints_15_17.py",
+    "line": 118
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/features/sprints_15_17.py",
+    "line": 121
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/features/sprints_15_17.py",
+    "line": 201
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/features/sprints_15_17.py",
+    "line": 206
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/features/sprints_15_17.py",
+    "line": 206
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/features/sprints_18_21.py",
+    "line": 212
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/hot_reload.py",
+    "line": 12
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/hot_reload.py",
+    "line": 12
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/plugin_loader.py",
+    "line": 89
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/plugin_loader.py",
+    "line": 97
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/config/services/outbox.py",
+    "line": 40
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/config/services/outbox.py",
+    "line": 106
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/config/services/queue.py",
+    "line": 63
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/config/services/queue.py",
+    "line": 87
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/services/snapshot.py",
+    "line": 43
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/services/snapshot.py",
+    "line": 44
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/services/snapshot.py",
+    "line": 93
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/services/snapshot.py",
+    "line": 93
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/validator/__init__.py",
+    "line": 113
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/validator/_helpers.py",
+    "line": 20
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/config/validator/_helpers.py",
+    "line": 93
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/validator/_helpers.py",
+    "line": 94
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/validator/infrastructure_checks.py",
+    "line": 173
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/config/validator/infrastructure_checks.py",
+    "line": 178
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/decorators/caching.py",
+    "line": 58
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/di/providers/auth.py",
+    "line": 205
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/di/providers/infrastructure_locator.py",
+    "line": 13
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/dsl/variables.py",
+    "line": 166
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/feature_flags/flagsmith_provider.py",
+    "line": 212
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/feature_flags/flagsmith_provider.py",
+    "line": 213
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/feature_flags/flagsmith_provider.py",
+    "line": 226
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/feature_flags/openfeature_provider.py",
+    "line": 350
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/feature_flags/openfeature_provider.py",
+    "line": 354
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/feature_flags/openfeature_provider.py",
+    "line": 354
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/feature_flags/openfeature_provider.py",
+    "line": 355
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/feature_flags/openfeature_provider.py",
+    "line": 357
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/feature_flags/openfeature_provider.py",
+    "line": 359
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+    "line": 7
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+    "line": 7
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+    "line": 20
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+    "line": 97
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/feature_flags/redis_broadcaster.py",
+    "line": 203
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/feature_flags/runtime_overrides.py",
+    "line": 229
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/incident_analyst/analyst.py",
+    "line": 220
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/interfaces/__init__.py",
+    "line": 222
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/interfaces/__init__.py",
+    "line": 239
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/interfaces/plugin.py",
+    "line": 11
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/interfaces/plugin.py",
+    "line": 11
+  },
+  {
+    "hook": "on_shutdown",
+    "file": "src/backend/core/interfaces/plugin.py",
+    "line": 172
+  },
+  {
+    "hook": "on_shutdown",
+    "file": "src/backend/core/interfaces/plugin.py",
+    "line": 190
+  },
+  {
+    "hook": "on_shutdown",
+    "file": "src/backend/core/interfaces/plugin.py",
+    "line": 215
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/interfaces/plugin.py",
+    "line": 216
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/messaging/eventbus/facade.py",
+    "line": 45
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/messaging/eventbus/facade.py",
+    "line": 125
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/plugin_runtime/hot_swap.py",
+    "line": 6
+  },
+  {
+    "hook": "on_shutdown",
+    "file": "src/backend/core/plugin_runtime/hot_swap.py",
+    "line": 7
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/plugin_runtime/hot_swap.py",
+    "line": 122
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/plugin_runtime/hot_swap.py",
+    "line": 126
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/plugin_runtime/hot_swap.py",
+    "line": 181
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/plugin_runtime/hot_swap.py",
+    "line": 229
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/resilience/_pyrate_compat.py",
+    "line": 46
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/resilience/rpa_policy.py",
+    "line": 13
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/core/resilience/rpa_policy.py",
+    "line": 301
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/resilience/rpa_policy.py",
+    "line": 311
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/scaling/auto_scaler.py",
+    "line": 74
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/scaling/granian_tuning.py",
+    "line": 234
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/scaling/granian_tuning.py",
+    "line": 235
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/scaling/local_process_scaler.py",
+    "line": 5
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/security/capabilities/gate/declaration_mixin.py",
+    "line": 73
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/tenancy/feature_flag_scope.py",
+    "line": 46
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/utils/task_registry.py",
+    "line": 6
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/utils/task_registry.py",
+    "line": 6
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/utils/task_registry.py",
+    "line": 41
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/utils/task_registry.py",
+    "line": 73
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/core/utils/task_registry.py",
+    "line": 146
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/core/utils/task_registry.py",
+    "line": 188
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/api/generator/setup.py",
+    "line": 20
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/api/generator/setup.py",
+    "line": 69
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/api/v1/endpoints/admin_feature_flags.py",
+    "line": 51
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/api/v1/endpoints/admin_feature_flags.py",
+    "line": 51
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/api/v1/endpoints/admin_model_registry.py",
+    "line": 41
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/api/v1/endpoints/admin_nats.py",
+    "line": 41
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/api/v1/endpoints/admin_nats.py",
+    "line": 53
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/api/v1/endpoints/admin_scheduler_dlq.py",
+    "line": 43
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/api/v1/endpoints/auth_saml.py",
+    "line": 36
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/api/v1/endpoints/health.py",
+    "line": 3
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/api/v1/endpoints/health.py",
+    "line": 17
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/api/v1/endpoints/health.py",
+    "line": 71
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/api/v1/endpoints/health.py",
+    "line": 146
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/api/v1/endpoints/health.py",
+    "line": 147
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/api/v1/endpoints/health.py",
+    "line": 150
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/api/v1/endpoints/health.py",
+    "line": 150
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/api/v1/endpoints/health.py",
+    "line": 156
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/api/v1/endpoints/health.py",
+    "line": 162
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/grpc/auto_servicer.py",
+    "line": 371
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/grpc/grpc_server/server.py",
+    "line": 157
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/http3/cli.py",
+    "line": 36
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/mcp/http_server.py",
+    "line": 39
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/mcp/http_server.py",
+    "line": 78
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/mcp/http_server.py",
+    "line": 81
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/mcp/http_server.py",
+    "line": 81
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/mcp/http_server.py",
+    "line": 82
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/mcp/http_server.py",
+    "line": 103
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/mcp/http_server.py",
+    "line": 105
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/mcp/http_server.py",
+    "line": 107
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/mcp/http_server.py",
+    "line": 107
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/middlewares/__init__.py",
+    "line": 11
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/middlewares/_registry.py",
+    "line": 3
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/admin_ip.py",
+    "line": 64
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/api_key.py",
+    "line": 65
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/auth_method_header.py",
+    "line": 63
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/auth_required.py",
+    "line": 140
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/blocked_routes.py",
+    "line": 66
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/middlewares/degradation.py",
+    "line": 37
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/middlewares/degradation.py",
+    "line": 47
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/exception_handler.py",
+    "line": 64
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/middlewares/graceful_shutdown.py",
+    "line": 1
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/middlewares/graceful_shutdown.py",
+    "line": 7
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/middlewares/graceful_shutdown.py",
+    "line": 14
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/graceful_shutdown.py",
+    "line": 47
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/middlewares/graceful_shutdown.py",
+    "line": 83
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/middlewares/graceful_shutdown.py",
+    "line": 86
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/middlewares/graceful_shutdown.py",
+    "line": 104
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/middlewares/idempotency.py",
+    "line": 183
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/login_step_up.py",
+    "line": 24
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/entrypoints/middlewares/registry.py",
+    "line": 114
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/registry.py",
+    "line": 114
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/request_body_cache.py",
+    "line": 100
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/request_id.py",
+    "line": 56
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/rpa_policy.py",
+    "line": 77
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/security_headers.py",
+    "line": 20
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/security_headers.py",
+    "line": 115
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/security_headers.py",
+    "line": 131
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/middlewares/setup_middlewares.py",
+    "line": 305
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/middlewares/setup_middlewares.py",
+    "line": 308
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/middlewares/setup_middlewares.py",
+    "line": 315
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/tenant.py",
+    "line": 186
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/timeout.py",
+    "line": 10
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/timeout.py",
+    "line": 68
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/entrypoints/middlewares/webhook_signature.py",
+    "line": 138
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/entrypoints/websocket/ws_handler.py",
+    "line": 303
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/agent_security/facade.py",
+    "line": 86
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/ai/agent_memory.py",
+    "line": 17
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/ai/agent_sandbox/_e2b.py",
+    "line": 205
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/ai/agent_sandbox/_in_process.py",
+    "line": 132
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/ai/agent_sandbox/_process_pool.py",
+    "line": 98
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/ai/agent_sandbox/_process_pool.py",
+    "line": 106
+  },
+  {
+    "hook": "enter_async_context",
+    "file": "src/backend/services/ai/agents/langgraph_postgres_saver.py",
+    "line": 153
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/ai/ai_providers/helpers.py",
+    "line": 19
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/ai/feedback/feedback_service.py",
+    "line": 288
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/ai/feedback/repository.py",
+    "line": 9
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/ai/gateway_adapter.py",
+    "line": 35
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/ai/guardrails/nemo_client.py",
+    "line": 4
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/ai/guardrails/nemo_client.py",
+    "line": 219
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/ai/guardrails/nemo_client.py",
+    "line": 266
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/ai/rag/multimodal/embedders.py",
+    "line": 35
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/ai/rag_query_stats.py",
+    "line": 6
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/ai/semantic_cache/l3_cache.py",
+    "line": 224
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/ai/tools/registry.py",
+    "line": 246
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/ai/tools/registry.py",
+    "line": 246
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/ai/workflow_activities.py",
+    "line": 95
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/ai/workflow_activities.py",
+    "line": 104
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/audit/workflow_audit_sink.py",
+    "line": 35
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/audit/workflow_audit_sink.py",
+    "line": 63
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/audit/workflow_audit_sink.py",
+    "line": 79
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/audit/workflow_audit_sink.py",
+    "line": 85
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/audit/workflow_audit_sink.py",
+    "line": 203
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/jupyter/execution_service/jupyter_mixin.py",
+    "line": 169
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/jupyter/execution_service/jupyter_mixin.py",
+    "line": 185
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/ops/health/_checks.py",
+    "line": 6
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/ops/notification_adapters.py",
+    "line": 7
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 212
+  },
+  {
+    "hook": "on_shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 217
+  },
+  {
+    "hook": "on_shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 219
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 224
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 228
+  },
+  {
+    "hook": "on_shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 233
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 243
+  },
+  {
+    "hook": "on_shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 257
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 267
+  },
+  {
+    "hook": "on_shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 270
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 280
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 299
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 336
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 338
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/plugins/loader/__init__.py",
+    "line": 349
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/routes/loader.py",
+    "line": 222
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/routes/manifest_toml.py",
+    "line": 9
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/rpa/browser_pool.py",
+    "line": 8
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/rpa/browser_pool.py",
+    "line": 8
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/rpa/browser_pool.py",
+    "line": 11
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/rpa/browser_pool.py",
+    "line": 105
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/rpa/browser_pool.py",
+    "line": 133
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/rpa/browser_pool.py",
+    "line": 157
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/rpa/browser_pool.py",
+    "line": 166
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/rpa/desktop_session_pool.py",
+    "line": 15
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/rpa/desktop_session_pool.py",
+    "line": 301
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/rpa/desktop_session_pool.py",
+    "line": 312
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/rpa/desktop_session_pool.py",
+    "line": 332
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/schema_registry/event_schemas.py",
+    "line": 3
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/schema_registry/populator.py",
+    "line": 9
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/schema_registry/populator.py",
+    "line": 9
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/schema_registry/registry.py",
+    "line": 10
+  },
+  {
+    "hook": "startup",
+    "file": "src/backend/services/schema_registry/registry.py",
+    "line": 10
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/schema_registry/registry.py",
+    "line": 15
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/schema_registry/registry.py",
+    "line": 369
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/sources/lifecycle.py",
+    "line": 3
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/sources/lifecycle.py",
+    "line": 12
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/sources/lifecycle.py",
+    "line": 117
+  },
+  {
+    "hook": "shutdown",
+    "file": "src/backend/services/workflows/sla_alerting.py",
+    "line": 271
+  },
+  {
+    "hook": "lifespan",
+    "file": "src/backend/services/workflows/sla_alerting.py",
+    "line": 271
   }
-}
+]
