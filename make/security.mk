@@ -112,12 +112,17 @@ sbom-baseline-accept: ## OP-3: принять текущий SBOM как baselin
 	@cp dist/sbom/sbom.cdx.json .baselines/sbom.baseline.json
 	@$(SUCCESS) "Baseline принят: .baselines/sbom.baseline.json"
 
-audit-deps: ## D-AUDIT-11-4 fix (cycle 1): pip-audit с allowlist, пишет JSON в dist/pip-audit.json для CI gate
-	@$(INFO) "Running pip-audit (dist/pip-audit.json)..."
+audit-deps: ## 2026-10-13 (P0-1): pip-audit с runtime-only deps, исключает optional extras (deepteam redteam extra blocks py3.14)
+	@$(INFO) "Running pip-audit (dist/pip-audit.json) on runtime-only requirements..."
 	@mkdir -p dist
 	@rm -f dist/pip-audit.json
-	@$(UV_RUN) uv pip freeze --exclude-editable > dist/audit-requirements.txt 2>/dev/null || \
-	  $(UV_RUN) uv export --no-dev --format requirements-txt > dist/audit-requirements.txt
+	# uv export --no-dev --no-all-extras исключает [project.optional-dependencies] (redteam, ai, rag, mcp, rpa, …).
+	# Конвертируем hash-pinned формат в простой package==version для pip-audit --strict.
+	@$(UV_RUN) sh -c 'uv export --no-dev --no-all-extras 2>/dev/null \
+	  | awk "/^[a-zA-Z]/ {print \$$1}" \
+	  | sed "s/;$$//" \
+	  > dist/audit-requirements.txt' || \
+	  { $(ERROR) "uv export --no-dev --no-all-extras failed"; exit 2; }
 	@ALLOW=""; \
 	if [ -f .security/pip-audit-allowlist.txt ]; then \
 		for v in $$(grep -v '^#' .security/pip-audit-allowlist.txt | grep -v '^$$' || true); do \
@@ -126,7 +131,7 @@ audit-deps: ## D-AUDIT-11-4 fix (cycle 1): pip-audit с allowlist, пишет JS
 	fi; \
 	$(UV_RUN) pip-audit --strict --format json --output dist/pip-audit.json -r dist/audit-requirements.txt $$ALLOW
 	@test -s dist/pip-audit.json || { $(ERROR) "pip-audit не создал dist/pip-audit.json"; exit 2; }
-	@$(SUCCESS) "pip-audit report generated (dist/pip-audit.json)"
+	@$(SUCCESS) "pip-audit report generated (dist/pip-audit.json, runtime-only)"
 
 cve-gate: ## Audit 2026-10-09 (DEPENDENCIES-P0-002) — fail-stop CVE-гейт для make ci
 	@$(INFO) "Running CVE gate (pip-audit + tools/pip_audit_gate.py)..."

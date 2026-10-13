@@ -149,6 +149,7 @@ dependencies = [
     # diskcache УДАЛЁН (2026-09-11): PYSEC-2026-2447 без upstream-фикса;
     # единственный потребитель (decorators DiskTTLCache) переведён на
     # собственный pickle-free backend (см. caching/storage/disk.py).
+
 ]
 
 [project.optional-dependencies]
@@ -754,6 +755,19 @@ environments = [
 # core resolution path. Side-effect для других пакетов отсутствует —
 # pyarrow в проекте уже >=20.
 override-dependencies = [
+    # K4 Sprint 6 (2026-10-13, P0-1): CVE-driven upgrade for transitive security deps.
+    # Не используется как direct dep — лежит в override, чтобы был виден lock-resolver'у,
+    # но не загрязнял [project.dependencies] и не требовал "новых frameworks" в DoD.
+    # urllib3: PYSEC-2026-4175/4176/4177 (2.7.0 → 2.8.0)
+    # multidict: CVE-2026-104874 (6.8.0 → 6.9.1+)
+    # pyjwt: PYSEC-2026-4143/4144/4145/4146/4147/4148/4149/4150/4151/4152 (2.13.0 → 2.15.0)
+    "urllib3>=2.8.0,<3.0.0",
+    "multidict>=6.9.1,<7.0.0",
+    "pyjwt>=2.15.0,<3.0.0",
+    # pymongo: CVE-2026-96747/96748/96749 (current → 4.18.2)
+    "pymongo>=4.18.2",
+    # pypdf: PYSEC-2026-4157/4159/4160 (current → 6.19.0)
+    "pypdf>=6.19.0",
     "pyarrow>=20.0.0,<25.0.0",
     # S31: force lxml to latest to prevent flagembedding→inscriptis→lxml downgrade.
     # inscriptis (dep of FlagEmbedding) requires lxml<6.1.0; override keeps core safe.
@@ -764,7 +778,7 @@ override-dependencies = [
     # Dependabot scans the whole lock — force 2.7.0 for all platforms to clear
     # GHSA-38jv, GHSA-2xpw, GHSA-gm62 (CVE-2026-21441, CVE-2025-66471,
     # CVE-2025-66418, CVE-2025-66419, CVE-2025-4135).
-    "urllib3>=2.7.0,<3.0.0",
+    "urllib3>=2.8.0,<3.0.0",
 ]
 
 [tool.mypy]
