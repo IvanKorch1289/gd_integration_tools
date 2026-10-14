@@ -222,16 +222,11 @@ ai-safety = [
     # (Cycle 31 P0.3: de-duplicate pins.)
     "spacy>=3.8.13,<4.0.0",
 ]
-# S172: deepteam — OWASP Top 10 for LLMs 2025 + OWASP Top 10 for Agents 2026.
-# Red-team CI. Lazy-import в services/ai/redteam/.
-# Изолирован от .ai из-за upstream-блокера: deepteam==1.0.4 metadata
-# requires_python<3.14, а проект требует ">=3.14,<3.15" → pip resolver
-# отвергает на 3.14. Сам пакет pure-Python (py3-none-any wheel) — runtime
-# работает на 3.14. Workaround: `pip install deepteam --ignore-requires-python`.
-# Этот extra безопасно ставится на 3.12/3.13; на 3.14 — через override.
-redteam = [
-    "deepteam>=1.0.4,<2.0.0",
-]
+# S172: deepteam был вынесен в redteam extra, но при audit-stabilization
+# цикле 2026-10-14 (commit cd26f78b0) Proposal 1 согласован: deepteam
+# полностью удалён, так как НИГДЕ не импортируется в src/ или tests/
+# (verified `grep -rn "import deepteam\|from deepteam" src/ tests/` → 0).
+# Сценарий "red-team CI на 3.14" так и не реализован; оставлен как future-work.
 # deepeval вынесен сюда из core deps — pin tenacity<8.5 конфликтует с core tenacity>=9.0.
 # deepeval>=2.0.0 требует tenacity>=8.0,<10.0 — совместимо с core tenacity>=9.0.
 # Использовать `pip install 'gd-advanced-tools[ai-eval]'` для включения eval-метрик.
