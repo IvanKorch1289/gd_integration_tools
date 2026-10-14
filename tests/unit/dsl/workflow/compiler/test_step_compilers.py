@@ -465,11 +465,9 @@ async def test_agent_invoke_step_durable_falls_back_to_stateless(
     monkeypatch.setitem(sys.modules, "temporalio.common", _make_fake_common())
 
     # Checkpointer недоступен → fallback на stateless activity.
-    monkeypatch.setattr(
-        "src.backend.services.ai.agents.langgraph_postgres_saver.get_langgraph_postgres_saver",
-        lambda: None,
-    )
-
+    # Note (2026-10-14 audit Proposal 3): langgraph_postgres_saver удалён;
+    # saver всегда None (graceful degradation). Нет мock'а — новый код
+    # в step_compilers.py сам обрабатывает saver=None path.
     from src.backend.dsl.workflow.compiler.step_compilers import (
         compile_agent_invoke_step,
     )

@@ -90,21 +90,15 @@ async def _langgraph_checkpoint_get_activity(thread_id: str) -> dict[str, Any] |
         "первый запуск, нет prior state".
 
     """
-    from src.backend.services.ai.agents.langgraph_postgres_saver import (
-        get_langgraph_postgres_saver,
-    )
-
+    # Note (2026-10-14 audit Proposal 3): langgraph_postgres_saver удалён
+    # (класс AsyncPostgresSaver отсутствует в langchain_postgres==0.0.17).
+    # Возвращаем None — caller ОБРАБАТЫВАЕТ это как "первый запуск, нет prior state".
     try:
-        saver = await get_langgraph_postgres_saver()
-        if saver is None:
-            return None
         config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
-        chk = await saver.aget(config)
-        if chk is None:
-            return None
-        # AsyncPostgresSaver возвращает TypedDict-подобный объект; нормализуем
-        # в plain dict для безопасной передачи через Temporal payload.
-        return dict(chk) if hasattr(chk, "__iter__") else {"raw": chk}
+        # Заглушка вместо saver.aget() — saver был удалён.
+        # Восстановить через git history, если checkpoint-функционал
+        # понадобится (см. commit 00cba5a71).
+        return None
     except Exception as exc:
         _logger.debug(
             "LangGraph checkpoint get(thread_id=%s) failed: %s", thread_id, exc
@@ -128,27 +122,15 @@ async def _langgraph_checkpoint_put_activity(state: dict[str, Any]) -> bool:
         ``True`` если checkpoint успешно записан, ``False`` иначе.
 
     """
-    from src.backend.services.ai.agents.langgraph_postgres_saver import (
-        get_langgraph_postgres_saver,
-    )
-
+    # Note (2026-10-14 audit Proposal 3): langgraph_postgres_saver удалён
+    # (класс AsyncPostgresSaver отсутствует в langchain_postgres==0.0.17).
     thread_id = state.get("thread_id") if isinstance(state, dict) else None
     if not thread_id:
         _logger.debug("LangGraph checkpoint put skipped: no thread_id in state")
         return False
-    try:
-        saver = await get_langgraph_postgres_saver()
-        if saver is None:
-            return False
-        config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
-        # AsyncPostgresSaver.aput signature: (config, values, metadata)
-        await saver.aput(config, state, {})
-        return True
-    except Exception as exc:
-        _logger.debug(
-            "LangGraph checkpoint put(thread_id=%s) failed: %s", thread_id, exc
-        )
-        return False
+    # saver удалён — checkpoint нельзя сохранить, возвращаем False
+    # (best-effort: durable mode degraded до stateless).
+    return False
 
 
 def register_langgraph_checkpoint_activities(bridge: ActivityBridge) -> None:

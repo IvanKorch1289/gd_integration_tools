@@ -38,12 +38,10 @@ def _guard_enabled() -> None:
 
 async def _inspector() -> Any:
     from src.backend.services.ai.agents.checkpoint_inspector import CheckpointInspector
-    from src.backend.services.ai.agents.langgraph_postgres_saver import (
-        get_langgraph_postgres_saver,
-    )
-
-    saver = await get_langgraph_postgres_saver()
-    return CheckpointInspector(saver_wrapper=saver)
+    # Note (2026-10-14 audit Proposal 3): langgraph_postgres_saver
+    # удалён. CheckpointInspector теперь получает None как wrapper —
+    # gracefully degraded behaviour (фронтенд показывает "no checkpoint").
+    return CheckpointInspector(saver_wrapper=None)
 
 
 @router.get(
