@@ -11,8 +11,15 @@ Wraps LangGraph as a first-class DSL processor. Two execution modes:
    Delegates to :func:`build_and_run_agent <services.ai.ai_graph.build_and_run_agent>`.
 
 Checkpointing:
-- Uses :func:`get_langgraph_postgres_saver` (feature-flag
-  ``langgraph_postgres_checkpoint``, default-OFF).
+- **P0 fix (2026-10-14)**: persistent checkpoint backend удалён (см.
+  ``langgraph_postgres_saver.py`` removed в audit-stabilization Proposal 3,
+  commit ``00cba5a71``). Использование ``durable=True`` поднимает
+  :class:`CheckpointBackendUnavailable <services.ai.agents.langgraph_checkpoint_exceptions.CheckpointBackendUnavailable>`
+  если ``feature_flags.langgraph_postgres_checkpoint`` выключен или
+  saver-модуль недоступен. **Не silent fallback** — caller получает
+  явную ошибку. Для non-durable agent используется ``MemorySaver``.
+  Восстановить persistent backend можно только через официально
+  поддерживаемую библиотеку с реальным use case.
 - ``thread_id`` = ``exchange.meta.correlation_id`` for traceable resumes.
 
 YAML contract::

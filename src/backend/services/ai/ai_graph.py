@@ -214,12 +214,29 @@ async def build_and_run_agent(
 
         checkpointer: Any | None = None
         if durable:
-            # Note (2026-10-14 audit-stabilization Proposal 3):
-            # langgraph_postgres_saver удалён (langchain_postgres==0.0.17
-            # не имеет класса AsyncPostgresSaver). Восстановить через
-            # git history, если checkpoint-функционал понадобится.
-            logger.debug(
-                "LangGraph Checkpointer: not configured (saver removed in Proposal 3)"
+            # P0 fix (2026-10-14): durable=True поднимает typed exception
+            # когда checkpoint backend недоступен. Не silent fallback.
+            # `langgraph_postgres_saver` удалён (audit-stabilization Proposal 3,
+            # commit 00cba5a71) — нет configured backend, нет fallback.
+            from src.backend.core.config.features import feature_flags
+            from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
+                CheckpointBackendUnavailable,
+            )
+
+            if not feature_flags.langgraph_postgres_checkpoint:
+                raise CheckpointBackendUnavailable(
+                    backend="langgraph_postgres",
+                    thread_id=session_id or None,
+                    context={"reason": "feature_flag_disabled"},
+                )
+            # feature_flag=True, но saver удалён → explicit fail-loud
+            raise CheckpointBackendUnavailable(
+                backend="langgraph_postgres",
+                thread_id=session_id or None,
+                context={
+                    "reason": "saver_module_removed",
+                    "fix": "git checkout 00cba5a71~1 to restore langgraph_postgres_saver.py",
+                },
             )
         else:
             logger.debug(

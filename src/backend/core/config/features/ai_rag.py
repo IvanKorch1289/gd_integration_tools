@@ -122,13 +122,15 @@ class AIRAGFlags(BaseSettings):
     )
 
     langgraph_checkpoint_ui: bool = Field(
-        default=True,
+        default=False,
         title="K4 S11 W4: LangGraph checkpoint UI (time-travel restore)",
         description=(
             "K4 Sprint 11 Wave 4 (wave:s11/k4-w4-langgraph-checkpoint-ui). "
-            "Owner: K4 AI/Data. Активирует /admin/langgraph/checkpoints REST + "
-            "Streamlit-вкладку для list/inspect/restore. Требует "
-            "LangGraphPostgresSaverWrapper. default-OFF до E2E проверки."
+            "P0 fix (2026-10-14): default=False — UI endpoint /admin/langgraph/checkpoints "
+            "вернёт 404 (документированное поведение при выключенном feature). "
+            "Checkpoint UI требует LangGraphPostgresSaverWrapper, который удалён "
+            "(Proposal 3, commit 00cba5a71). Не меняй default=True без полного "
+            "восстановления persistent checkpoint backend."
         ),
     )
 

@@ -91,11 +91,15 @@ class InfrastructureFlags(BaseSettings):
     )
 
     langgraph_postgres_checkpoint: bool = Field(
-        default=True,
+        default=False,
         title="K4 S5 W2: LangGraph Postgres checkpoints (AsyncPostgresSaver)",
         description=(
-            "K4 Sprint 5 Wave 2. Owner: K4 AI/RAG. ETA: S5-W2. "
-            "Активирует AsyncPostgresSaver для LangGraph state persistence."
+            "P0 fix (2026-10-14): AsyncPostgresSaver удалён (Proposal 3, commit 00cba5a71). "
+            "Flag default=False — checkpoint functionality недоступен. "
+            "При durable=True без configured backend build_and_run_agent поднимает "
+            "CheckpointBackendUnavailable. Не меняй default=True без полного "
+            "восстановления persistent checkpoint backend (требует официально "
+            "поддерживаемой библиотеки и реального use case)."
         ),
     )
 
