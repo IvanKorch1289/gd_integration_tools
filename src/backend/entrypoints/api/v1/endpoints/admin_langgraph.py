@@ -38,6 +38,7 @@ def _guard_enabled() -> None:
 
 async def _inspector() -> Any:
     from src.backend.services.ai.agents.checkpoint_inspector import CheckpointInspector
+
     # Note (2026-10-14 audit Proposal 3): langgraph_postgres_saver
     # удалён. CheckpointInspector теперь получает None как wrapper —
     # gracefully degraded behaviour (фронтенд показывает "no checkpoint").

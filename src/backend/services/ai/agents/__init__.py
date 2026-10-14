@@ -21,9 +21,4 @@ from src.backend.services.ai.agents.analytics_agent import (
 )
 from src.backend.services.ai.agents.search_agent import SearchAgent, get_search_agent
 
-__all__ = (
-    "AnalyticsAgent",
-    "SearchAgent",
-    "get_analytics_agent",
-    "get_search_agent",
-)
+__all__ = ("AnalyticsAgent", "SearchAgent", "get_analytics_agent", "get_search_agent")

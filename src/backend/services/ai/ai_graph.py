@@ -219,14 +219,14 @@ async def build_and_run_agent(
             # не имеет класса AsyncPostgresSaver). Восстановить через
             # git history, если checkpoint-функционал понадобится.
             logger.debug("LangGraph Checkpointer: not configured (saver removed in Proposal 3)")
-            else:
-                logger.debug(
-                    "LangGraph Checkpointer: PostgresSaver unavailable, "
-                    "using MemorySaver"
-                )
-                from langgraph.checkpoint.memory import MemorySaver
+        else:
+            logger.debug(
+                "LangGraph Checkpointer: PostgresSaver unavailable, "
+                "using MemorySaver"
+            )
+            from langgraph.checkpoint.memory import MemorySaver
 
-                checkpointer = MemorySaver()
+            checkpointer = MemorySaver()
 
         agent = create_react_agent(
             llm, tools, checkpointer=checkpointer, max_iterations=10
