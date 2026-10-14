@@ -169,7 +169,7 @@ ai = [
     # Lazy-import внутри services/ai/eval/ и services/ai/dspy/;
     # отсутствие пакетов не ломает CLI (skip-режим).
     "inspect-ai>=0.3",
-    "dspy-ai>=2.5",
+    "dspy-ai>=2.5,<3.0.0",
     # S172: presidio-ru-recognizers — checksum-validated ИНН/СНИЛС/ОГРН drop-ins
     # для уже-используемого Presidio. Custom recognizers в services/ai/pii/recognizers/
     # остаются как fallback; не удалять до явного перехода.
