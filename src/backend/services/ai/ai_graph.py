@@ -218,11 +218,12 @@ async def build_and_run_agent(
             # langgraph_postgres_saver удалён (langchain_postgres==0.0.17
             # не имеет класса AsyncPostgresSaver). Восстановить через
             # git history, если checkpoint-функционал понадобится.
-            logger.debug("LangGraph Checkpointer: not configured (saver removed in Proposal 3)")
+            logger.debug(
+                "LangGraph Checkpointer: not configured (saver removed in Proposal 3)"
+            )
         else:
             logger.debug(
-                "LangGraph Checkpointer: PostgresSaver unavailable, "
-                "using MemorySaver"
+                "LangGraph Checkpointer: PostgresSaver unavailable, using MemorySaver"
             )
             from langgraph.checkpoint.memory import MemorySaver
 

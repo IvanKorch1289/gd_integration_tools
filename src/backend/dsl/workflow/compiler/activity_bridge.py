@@ -93,17 +93,7 @@ async def _langgraph_checkpoint_get_activity(thread_id: str) -> dict[str, Any] |
     # Note (2026-10-14 audit Proposal 3): langgraph_postgres_saver удалён
     # (класс AsyncPostgresSaver отсутствует в langchain_postgres==0.0.17).
     # Возвращаем None — caller ОБРАБАТЫВАЕТ это как "первый запуск, нет prior state".
-    try:
-        config: dict[str, Any] = {"configurable": {"thread_id": thread_id}}
-        # Заглушка вместо saver.aget() — saver был удалён.
-        # Восстановить через git history, если checkpoint-функционал
-        # понадобится (см. commit 00cba5a71).
-        return None
-    except Exception as exc:
-        _logger.debug(
-            "LangGraph checkpoint get(thread_id=%s) failed: %s", thread_id, exc
-        )
-        return None
+    return None
 
 
 async def _langgraph_checkpoint_put_activity(state: dict[str, Any]) -> bool:
