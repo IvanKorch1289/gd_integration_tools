@@ -12,8 +12,8 @@
     * agent_specs — описание агентов (name + description + invoke callable);
     * router — детерминированный fallback (используется когда LangGraph
       недоступен или feature-flag выключен);
-    * checkpointer — опциональный saver для persistence (см.
-      :mod:`services.ai.agents.langgraph_postgres_saver`).
+    * checkpointer — опциональный saver для persistence
+      (см. git history: удалён в 2026-10-14 audit Proposal 3).
 
 Reference implementation для credit-pipeline::
 

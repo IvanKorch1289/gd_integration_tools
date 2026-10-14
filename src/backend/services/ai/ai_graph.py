@@ -214,14 +214,11 @@ async def build_and_run_agent(
 
         checkpointer: Any | None = None
         if durable:
-            from src.backend.services.ai.agents.langgraph_postgres_saver import (
-                get_langgraph_postgres_saver,
-            )
-
-            saver = await get_langgraph_postgres_saver()
-            if saver is not None:
-                checkpointer = saver
-                logger.debug("LangGraph Checkpointer: using PostgresSaver")
+            # Note (2026-10-14 audit-stabilization Proposal 3):
+            # langgraph_postgres_saver удалён (langchain_postgres==0.0.17
+            # не имеет класса AsyncPostgresSaver). Восстановить через
+            # git history, если checkpoint-функционал понадобится.
+            logger.debug("LangGraph Checkpointer: not configured (saver removed in Proposal 3)")
             else:
                 logger.debug(
                     "LangGraph Checkpointer: PostgresSaver unavailable, "

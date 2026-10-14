@@ -6,6 +6,11 @@
 * :class:`SearchAgent` — RAG + AgentMemory.
 
 Все агенты экспозятся через REST ``POST /api/v1/ai/agents/{name}/invoke``.
+
+Note (2026-10-14 audit-stabilization Proposal 3): ``langgraph_postgres_saver``
+был удалён, так как ``langchain_postgres.AsyncPostgresSaver`` не существует
+в ``langchain_postgres==0.0.17``. Если checkpoint-функционал потребуется
+в будущем, см. git history для восстановления.
 """
 
 from __future__ import annotations
@@ -14,19 +19,11 @@ from src.backend.services.ai.agents.analytics_agent import (
     AnalyticsAgent,
     get_analytics_agent,
 )
-from src.backend.services.ai.agents.langgraph_postgres_saver import (
-    LangGraphPostgresSaverUnavailable,
-    LangGraphPostgresSaverWrapper,
-    get_langgraph_postgres_saver,
-)
 from src.backend.services.ai.agents.search_agent import SearchAgent, get_search_agent
 
 __all__ = (
     "AnalyticsAgent",
-    "LangGraphPostgresSaverUnavailable",
-    "LangGraphPostgresSaverWrapper",
     "SearchAgent",
     "get_analytics_agent",
-    "get_langgraph_postgres_saver",
     "get_search_agent",
 )
