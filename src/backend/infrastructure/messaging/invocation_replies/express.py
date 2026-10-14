@@ -108,11 +108,12 @@ class ExpressReplyChannel(InvocationReplyChannel):
                     ),
                 },
             )
-        except Exception as _:
+        except Exception as exc:
             logger.exception(
-                "ExpressReplyChannel.send failed (invocation_id=%s, chat_id=%s)",
+                "ExpressReplyChannel.send failed (invocation_id=%s, chat_id=%s, exc_type=%s)",
                 response.invocation_id,
                 recipient,
+                type(exc).__name__,
             )
 
     async def fetch(self, invocation_id: str) -> InvocationResponse | None:
@@ -134,7 +135,8 @@ class ExpressReplyChannel(InvocationReplyChannel):
             )
 
             return ExpressAdapter(default_bot=self._default_bot)
-        except Exception as _:
+        except Exception as exc:
+            logger.debug("ExpressAdapter unavailable: %s", type(exc).__name__)
             return None
 
 
