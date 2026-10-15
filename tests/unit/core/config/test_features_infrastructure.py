@@ -22,7 +22,6 @@ class TestInfrastructureFlagsClass:
             "rag_cache_l3_retrieval_invalidation",
             "multipart_rag_ingest",
             "multimodal_rag_docling",
-            "langgraph_postgres_checkpoint",
             "dsl_expose_mcp",
             "rlm_hierarchical_memory",
             "unmask_pii_enabled",
@@ -46,7 +45,16 @@ class TestInfrastructureFlagsClass:
             "clickhouse_bulk_writer_enabled",
         ]
         for f in expected:
-            assert getattr(flags, f) is True, f"{f} default не False"
+            assert getattr(flags, f) is True, f"{f} default не True"
+
+    def test_langgraph_postgres_checkpoint_default_off(self) -> None:
+        """Контракт P0 fix 2026-10-14 (commit 55489eef0).
+
+        AsyncPostgresSaver удалён (Proposal 3, commit 00cba5a71) — durable
+        checkpointing недоступен, флаг остаётся default-OFF до появления
+        реального use case и официально поддерживаемой библиотеки.
+        """
+        assert InfrastructureFlags().langgraph_postgres_checkpoint is False
 
     def test_infrastructure_env_vars(self) -> None:
         os.environ["FEATURE_HTTP3_ENABLED"] = "true"

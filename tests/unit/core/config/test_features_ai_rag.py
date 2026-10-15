@@ -61,6 +61,11 @@ AIRAG_DEFAULT_TRUE = frozenset(
     }
 )
 AIRAG_INT_FIELDS = frozenset({"embedding_v2_traffic"})
+# P0 fix 2026-10-14 (commit 55489eef0): LangGraph checkpoint UI выключен
+# по умолчанию — LangGraphPostgresSaverWrapper удалён (Proposal 3, commit
+# 00cba5a71), эндпоинт /admin/langgraph/checkpoints отдаёт 404. Флаг
+# default-OFF до восстановления persistent checkpoint backend.
+AIRAG_DEFAULT_FALSE = frozenset({"langgraph_checkpoint_ui"})
 EXPECTED_AIRAG_FIELD_COUNT = 28
 
 
@@ -75,8 +80,14 @@ class TestAIRAGFlagsClass:
                 assert getattr(flags, f) == 0, f"{f} default не 0"
             elif f in AIRAG_DEFAULT_TRUE:
                 assert getattr(flags, f) is True, f"{f} default не True"
+            elif f in AIRAG_DEFAULT_FALSE:
+                assert getattr(flags, f) is False, f"{f} default не False"
             else:
-                assert getattr(flags, f) is True, f"{f} default не False"
+                assert getattr(flags, f) is True, f"{f} default не True"
+
+    def test_langgraph_checkpoint_ui_default_off(self) -> None:
+        """Контракт P0 fix 2026-10-14: checkpoint UI остаётся выключенным."""
+        assert AIRAGFlags().langgraph_checkpoint_ui is False
 
     def test_ai_rag_env_vars(self) -> None:
         os.environ["FEATURE_RAG_PII_RETRIEVAL_MASK"] = "true"
