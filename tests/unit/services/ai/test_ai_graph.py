@@ -4,7 +4,9 @@
 * :func:`build_chat_model` берёт конфигурацию из gateway (model, fallback);
 * :func:`build_chat_model` поднимает ImportError если ChatLiteLLM недоступен;
 * :func:`build_and_run_agent` корректно деградирует при отсутствии deps;
-* gateway-параметры пробрасываются в ChatLiteLLM.
+* gateway-параметры пробрасываются в ChatLiteLLM;
+* :func:`build_and_run_agent` поднимает :class:`CheckpointBackendUnavailable`
+  при ``durable=True`` без configured backend (P0 fix 2026-10-15).
 """
 
 from __future__ import annotations
@@ -167,7 +169,11 @@ async def test_build_and_run_agent_invokes_react(
     fake_litellm_gateway: Any,
     fake_chat_litellm_module: dict[str, Any],
 ) -> None:
-    """build_and_run_agent создаёт ReAct-агента и возвращает финальный ответ."""
+    """build_and_run_agent создаёт ReAct-агента и возвращает финальный ответ.
+
+    После P0 fix (2026-10-14) durable=False идёт через MemorySaver — мокаем
+    ``langgraph.checkpoint.memory``, чтобы eager import не упал.
+    """
     captured_invoke: dict[str, Any] = {}
 
     class _FakeAgent:
@@ -191,8 +197,21 @@ async def test_build_and_run_agent_invokes_react(
     fake_lp.create_react_agent = _fake_create_react_agent  # type: ignore[attr-defined]
     fake_lg = ModuleType("langgraph")
     fake_lg.prebuilt = fake_lp  # type: ignore[attr-defined]
+    fake_lcm = ModuleType("langgraph.checkpoint")
+    fake_lcm_m = ModuleType("langgraph.checkpoint.memory")
+    captured_memory_saver: dict[str, Any] = {}
+
+    class _FakeMemorySaver:
+        def __init__(self) -> None:
+            captured_memory_saver["called"] = True
+
+    fake_lcm_m.MemorySaver = _FakeMemorySaver  # type: ignore[attr-defined]
+    fake_lg.checkpoint = fake_lcm  # type: ignore[attr-defined]
+    fake_lcm.memory = fake_lcm_m  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "langgraph", fake_lg)
     monkeypatch.setitem(sys.modules, "langgraph.prebuilt", fake_lp)
+    monkeypatch.setitem(sys.modules, "langgraph.checkpoint", fake_lcm)
+    monkeypatch.setitem(sys.modules, "langgraph.checkpoint.memory", fake_lcm_m)
 
     from src.backend.services.ai.ai_graph import build_and_run_agent
 
@@ -209,3 +228,163 @@ async def test_build_and_run_agent_invokes_react(
     assert "thread_id" in (captured_invoke["config"].get("configurable") or {})
     # Проверяем что ChatLiteLLM был сконструирован с параметрами из gateway.
     assert fake_chat_litellm_module["model"] == "openai/gpt-4o-mini"
+    # durable=False → MemorySaver path (P0 fix, 2026-10-14).
+    assert captured_memory_saver.get("called") is True
+    assert captured_invoke["checkpointer"] is not None
+
+
+# === P0 fix (2026-10-15): regression tests for CheckpointBackendUnavailable =====
+
+
+def _mock_langgraph_with_memory_saver(
+    monkeypatch: pytest.MonkeyPatch, captured_invoke: dict[str, Any] | None = None
+) -> None:
+    """Устанавливает полный langgraph mock: prebuilt + checkpoint.memory.
+
+    captured_invoke (опц.): если задан, будет заполнен аргументами
+    ``create_react_agent`` — для теста durable=False.
+    """
+    def _default_create_react_agent(
+        llm: Any, tools: list[Any], **kwargs: Any
+    ) -> Any:
+        if captured_invoke is not None:
+            captured_invoke["llm_present"] = llm is not None
+            captured_invoke["tools_count"] = len(tools)
+            captured_invoke["checkpointer"] = kwargs.get("checkpointer")
+            captured_invoke["max_iterations"] = kwargs.get("max_iterations")
+
+        class _Agent:
+            async def ainvoke(
+                self, payload: dict[str, Any], config: dict[str, Any] | None = None
+            ) -> dict[str, Any]:
+                if captured_invoke is not None:
+                    captured_invoke["payload"] = payload
+                    captured_invoke["config"] = config
+                return {"messages": [SimpleNamespace(content="ok")]}
+
+        return _Agent()
+
+    fake_lp = ModuleType("langgraph.prebuilt")
+    fake_lp.create_react_agent = _default_create_react_agent  # type: ignore[attr-defined]
+    fake_lcm = ModuleType("langgraph.checkpoint")
+    fake_lcm_m = ModuleType("langgraph.checkpoint.memory")
+
+    class _MemorySaver:
+        def __init__(self) -> None:
+            pass
+
+    fake_lcm_m.MemorySaver = _MemorySaver  # type: ignore[attr-defined]
+    fake_lg = ModuleType("langgraph")
+    fake_lg.prebuilt = fake_lp  # type: ignore[attr-defined]
+    fake_lg.checkpoint = fake_lcm  # type: ignore[attr-defined]
+    fake_lcm.memory = fake_lcm_m  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "langgraph", fake_lg)
+    monkeypatch.setitem(sys.modules, "langgraph.prebuilt", fake_lp)
+    monkeypatch.setitem(sys.modules, "langgraph.checkpoint", fake_lcm)
+    monkeypatch.setitem(sys.modules, "langgraph.checkpoint.memory", fake_lcm_m)
+
+
+@pytest.mark.asyncio
+async def test_checkpoint_backend_unavailable_raised_when_durable_no_backend(
+    monkeypatch: pytest.MonkeyPatch,
+    fake_chat_litellm_module: dict[str, Any],
+) -> None:
+    """P0 fix (2026-10-15): durable=True без configured backend поднимает
+    :class:`CheckpointBackendUnavailable` (НЕ silent fallback).
+
+    Без этого теста silent inversion (durable=True был слабее durable=False)
+    может вернуться. Также проверяет, что broad ``except Exception``
+    в ``build_and_run_agent`` НЕ проглатывает typed exception.
+    """
+    from src.backend.core.config.features import feature_flags as ff_mod
+
+    monkeypatch.setattr(ff_mod, "langgraph_postgres_checkpoint", False)
+    _mock_langgraph_with_memory_saver(monkeypatch)
+
+    from src.backend.services.ai.ai_graph import build_and_run_agent
+    from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
+        CheckpointBackendUnavailable,
+    )
+
+    with pytest.raises(CheckpointBackendUnavailable) as exc_info:
+        await build_and_run_agent("hello", tool_actions=[], durable=True)
+    assert exc_info.value.backend == "langgraph_postgres"
+    assert exc_info.value.thread_id is None  # без явного thread_id
+    assert exc_info.value.context.get("reason") == "feature_flag_disabled"
+
+
+@pytest.mark.asyncio
+async def test_checkpoint_backend_unavailable_with_thread_id(
+    monkeypatch: pytest.MonkeyPatch,
+    fake_chat_litellm_module: dict[str, Any],
+) -> None:
+    """P0 fix: ``thread_id`` попадает в exception context."""
+    from src.backend.core.config.features import feature_flags as ff_mod
+
+    monkeypatch.setattr(ff_mod, "langgraph_postgres_checkpoint", False)
+    _mock_langgraph_with_memory_saver(monkeypatch)
+
+    from src.backend.services.ai.ai_graph import build_and_run_agent
+    from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
+        CheckpointBackendUnavailable,
+    )
+
+    with pytest.raises(CheckpointBackendUnavailable) as exc_info:
+        await build_and_run_agent(
+            "hello", tool_actions=[], durable=True, session_id="test-thread-1"
+        )
+    assert exc_info.value.thread_id == "test-thread-1"
+
+
+@pytest.mark.asyncio
+async def test_durable_false_uses_memory_saver(
+    monkeypatch: pytest.MonkeyPatch,
+    fake_litellm_gateway: Any,
+    fake_chat_litellm_module: dict[str, Any],
+) -> None:
+    """P0 fix: durable=False идёт через MemorySaver (НЕ silent None checkpointer).
+
+    Проверяет, что inversion не возвращается: ``durable=False`` создаёт
+    реальный MemorySaver, который попадает в ``create_react_agent``.
+    """
+    captured: dict[str, Any] = {}
+    _mock_langgraph_with_memory_saver(monkeypatch, captured_invoke=captured)
+
+    from src.backend.services.ai.ai_graph import build_and_run_agent
+
+    result = await build_and_run_agent(
+        "prompt-durable-false", tool_actions=[], durable=False,
+        gateway=fake_litellm_gateway,
+    )
+    assert "error" not in result
+    assert result["prompt"] == "prompt-durable-false"
+    # checkpointer не None (это инстанс MemorySaver, не None)
+    assert captured["checkpointer"] is not None
+
+
+@pytest.mark.asyncio
+async def test_checkpoint_backend_unavailable_propagates_through_generic_handler(
+    monkeypatch: pytest.MonkeyPatch,
+    fake_chat_litellm_module: dict[str, Any],
+) -> None:
+    """P0 fix: broad ``except Exception`` НЕ конвертирует CheckpointBackend
+    в ``{"error": str(exc)}`` dict.
+
+    До этого теста broad except глотал typed exception, и caller получал
+    dict вместо exception. Без propagation контракт «503 / CHECKPOINT_BACKEND
+    _UNAVAILABLE» невозможен.
+    """
+    from src.backend.core.config.features import feature_flags as ff_mod
+
+    monkeypatch.setattr(ff_mod, "langgraph_postgres_checkpoint", False)
+    _mock_langgraph_with_memory_saver(monkeypatch)
+
+    from src.backend.services.ai.ai_graph import build_and_run_agent
+    from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
+        CheckpointBackendUnavailable,
+    )
+
+    # Если exception проглатывается, мы получим dict и ``pytest.raises``
+    # провалится. Это и есть regression protection.
+    with pytest.raises(CheckpointBackendUnavailable):
+        await build_and_run_agent("hello", tool_actions=[], durable=True)

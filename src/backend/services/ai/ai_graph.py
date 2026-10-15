@@ -184,30 +184,30 @@ async def build_and_run_agent(
         ``response``, ``message_count`` либо ``error``.
 
     """
+    # P0 fix (2026-10-15): typed contract errors (CheckpointBackendUnavailable,
+    # AIGatewayEnforcementRequiredError) must propagate to caller. Broad
+    # `except Exception` ниже конвертировал их в dict `{"error": str(exc)}`,
+    # а caller ожидал typed exception. Теперь они летят наружу.
+    from src.backend.core.config.features import feature_flags
+    from src.backend.services.ai.gateway_adapter import get_ai_gateway
+    from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
+        CheckpointBackendUnavailable,
+    )
+
+    # S85 W2: pre-flight enforcement check.
+    if not feature_flags.ai_gateway_enforce:
+        from src.backend.core.ai.errors import AIGatewayEnforcementRequiredError
+
+        raise AIGatewayEnforcementRequiredError(
+            "ai_graph.build_and_run_agent requires ai_gateway_enforce=True "
+            "(S85 W2: bypass via LiteLLMGateway is no longer supported)"
+        )
+    ai_gateway = (  # noqa: F841  # enforce instance для downstream hooks
+        get_ai_gateway()
+    )
+
     try:
         from langgraph.prebuilt import create_react_agent
-
-        # S85 W2 (V2 P0 #1): enforcement check через AIGateway
-        # перед LiteLLM call. Если enforcement не пройден —
-        # возврат с error без silent pass-through.
-        from src.backend.core.config.features import feature_flags
-        from src.backend.services.ai.gateway_adapter import get_ai_gateway
-
-        # S85 W2: pre-flight enforcement check.
-        # AIGateway._enforced_invoke внутри вызывает _resolve_policy и
-        # _check_capability. Здесь мы делаем минимальный pre-flight —
-        # если ai_gateway_enforce=False, бросаем сразу (silent pass-through
-        # запрещён, см. S85 W1).
-        if not feature_flags.ai_gateway_enforce:
-            from src.backend.core.ai.errors import AIGatewayEnforcementRequiredError
-
-            raise AIGatewayEnforcementRequiredError(
-                "ai_graph.build_and_run_agent requires ai_gateway_enforce=True "
-                "(S85 W2: bypass via LiteLLMGateway is no longer supported)"
-            )
-        ai_gateway = (  # noqa: F841  # enforce instance для downstream hooks
-            get_ai_gateway()
-        )
 
         tools = [_make_action_tool(action) for action in tool_actions]
         llm = build_chat_model(gateway=gateway, model=model, temperature=temperature)
@@ -218,11 +218,6 @@ async def build_and_run_agent(
             # когда checkpoint backend недоступен. Не silent fallback.
             # `langgraph_postgres_saver` удалён (audit-stabilization Proposal 3,
             # commit 00cba5a71) — нет configured backend, нет fallback.
-            from src.backend.core.config.features import feature_flags
-            from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
-                CheckpointBackendUnavailable,
-            )
-
             if not feature_flags.langgraph_postgres_checkpoint:
                 raise CheckpointBackendUnavailable(
                     backend="langgraph_postgres",
@@ -238,13 +233,13 @@ async def build_and_run_agent(
                     "fix": "git checkout 00cba5a71~1 to restore langgraph_postgres_saver.py",
                 },
             )
-        else:
-            logger.debug(
-                "LangGraph Checkpointer: PostgresSaver unavailable, using MemorySaver"
-            )
-            from langgraph.checkpoint.memory import MemorySaver
 
-            checkpointer = MemorySaver()
+        logger.debug(
+            "LangGraph Checkpointer: PostgresSaver unavailable, using MemorySaver"
+        )
+        from langgraph.checkpoint.memory import MemorySaver
+
+        checkpointer = MemorySaver()
 
         agent = create_react_agent(
             llm, tools, checkpointer=checkpointer, max_iterations=10
@@ -272,6 +267,11 @@ async def build_and_run_agent(
     except ImportError as exc:
         logger.warning("LangGraph/LiteLLM не доступен: %s", exc)
         return {"error": f"Зависимости не установлены: {exc}"}
+    except CheckpointBackendUnavailable:
+        # P0 fix (2026-10-15): typed contract error MUST propagate.
+        # Re-raise so caller (REST/GraphQL/MCP) получает 503 / typed code,
+        # а не silent dict `{"error": str(exc)}`.
+        raise
     except Exception as exc:
         logger.error("Agent execution error: %s", exc, exc_info=True)
         return {"error": str(exc)}
