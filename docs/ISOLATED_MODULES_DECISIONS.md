@@ -50,7 +50,7 @@ production usage.
 | 24 | `core.migration_safety` | WIRE | Migration safety checks. |
 | 25 | `core.observability_v2` | WIRE | New observability API. |
 | 26 | `core.outbox_verify` | PENDING | Outbox transaction verification. |
-| 27 | `core.rate_limiter` | **DELETE** (см. `core/rate_limiter/DEPRECATED.md`) | Duplicate of `core/resilience/rate_limiter.py`. |
+| 27 | `core.rate_limiter` | **DELETE** (см. **ADR-0350**) | Duplicate: `time.sleep()` в async-пути + заменён на `entrypoints/dependencies/rate_limit.py` (`SafeRateLimiter`, Redis) и `infrastructure/resilience/unified_rate_limiter.py`. **Draft ADR готов** (2026-10-15). |
 | 28 | `core.retention_policy` | PENDING | Data retention policies. |
 | 29 | `core.rls_verifier` | WIRE | RLS policy verifier. |
 | 30 | `core.route_contract` | EXPERIMENTAL | Route contract testing. |
@@ -84,8 +84,12 @@ production usage.
    - MEDIUM: `canary_deploy`, `file_safety`, `observability_v2`, `rls_verifier`
    - LOW: `migration_safety`
 3. **DELETE** (2): `core/rate_limiter`, `core/streaming_parser`
-   - `core/rate_limiter` — DEPRECATED.md готов, git rm pending approval
+   - `core/rate_limiter` — **ADR-0350 подготовлен (Draft, 2026-10-15)**:
+     доказательная база (0 static + 0 dynamic importers), замена
+     существует, `time.sleep()` в async-пути. Ожидает owner approval.
    - `core/streaming_parser` — needs new DEPRECATED.md
+   - **Дополнительно найдено 2026-10-15**: `core/utils/cache_keys.py`
+     (48 LOC, 0 importers) — включён в ADR-0350 как кандидат на удаление.
 4. **EXPERIMENTAL** (14): перенести в `extensions/experimental/` если возможно,
    или закрыть за feature flag.
 

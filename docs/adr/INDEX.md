@@ -146,6 +146,7 @@
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
+| [ADR-0350](0350-remove-dead-code-rate-limiter-cache-keys.md) | Удаление мёртвого кода: `core/rate_limiter/` + `core/utils/cache_keys.py` | Draft |
 
-**Total:** 141 ADRs.
+**Total:** 142 ADRs.
 
