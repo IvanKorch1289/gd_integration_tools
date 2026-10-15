@@ -325,3 +325,99 @@ tools/generate_current_metrics.py --write → README: 132 actions, 21311 тес�
 тест-модулями (DI-контейнер, feature_flags, регистры), существующее независимо
 от этого цикла. Устранение требует отдельной задачи на изоляцию фикстур — не
 входило в скоуп аудита и не должно чиниться массовой правкой.
+
+---
+
+# Третий проход: YAML-маршруты, feature flags, SSE (2026-10-15, вечер)
+
+Закрывались отложенные out-of-scope пункты: исполнение YAML route, feature
+flag ON/OFF, SSE success path. Часть закрыта, часть вскрыла новые находки.
+
+## Что подтверждено рабочим
+
+**YAML DSL-маршрут исполняется.** `routes/echo_demo/echo.dsl.yaml` загружается
+(`RouteLoader: 3 маршрут(ов) активно`) и выполняется движком:
+
+```bash
+dispatch_action_or_dsl(dsl_route_id="echo_demo", payload={"message": "hello"})
+  → success=True  via=dsl
+dispatch_action_or_dsl(dsl_route_id="echo_demo", payload={"wrong": "field"})
+  → success=False via=dsl  error="'message' is a required property"
+```
+
+То есть `schema_validate` реально отклоняет невалидный payload, а `from:`
+алиасится в `source` — оба «починённых» в 2026-10-06 пункта работают на живом
+коде.
+
+**Feature flag `stop_on_disabled: false` ведёт себя по декларации.** При
+`FEATURE_DEMO_ROUTES_ENABLED=false` маршрут `echo_demo` продолжает исполняться
+(200/skip, а не stop) — это ровно то, что описано в его YAML-комментарии и в
+CLAUDE.md («процессор не создаётся, поле сохраняется как декларация»).
+
+**Route-level feature flag действительно гейтит загрузку.** `hello_route`
+(в `route.toml` — `feature_flag = { enabled = true, gate = "hello_route_enabled" }`)
+не попадает в registry: грузятся только `composition.demo`, `echo_demo`,
+`health_proxy_demo`.
+
+## Находка 1: у YAML-маршрута нет HTTP-источника (GAP)
+
+`routes/echo_demo/echo.dsl.yaml` объявляет
+```yaml
+from:
+  http:
+    method: POST
+    path: /api/v1/demo/echo
+```
+а `route.toml` — capability `net.inbound` со scope `http:/api/v1/demo/echo`.
+Но `POST /api/v1/demo/echo` отдаёт **404 Not Found**: ни один компонент не
+материализует декларацию `from:` в HTTP-эндпоинт.
+
+Фактически DSL-маршрут достижим только через Tier 3 fallback
+`dispatch_action_or_dsl(dsl_route_id=...)`, а `dsl_route_id` передают ровно
+четыре транспорта: **WS, webhook, express, SSE**. Ни REST, ни
+`/api/v1/invocations` его не достигают.
+
+Впечатление для читателя конфигурации обманчиво: capability объявлен, путь
+указан, а запрос не работает. Это **GAP, а не регрессия этого цикла** —
+исправление требует новой фичи (binding HTTP-источника), а по правилам
+проекта новые DSL-расширения требуют отдельного согласования и ADR. Не
+реализовывалось.
+
+## Находка 2: `POST /events/invoke` зависает (не диагностировано до конца)
+
+SSE success path **не закрыт** — эндпоинт не отдаёт ни одного байта.
+
+| Сценарий | Результат |
+|---|---|
+| `POST /events/invoke` без credentials | **403 `csrf_token_missing`** — быстро, маршрут существует |
+| `GET /api/v1/dsl-routes` с `X-API-Key` | **404** — быстро, тот же auth-механизм работает |
+| `POST /events/invoke` с `X-API-Key` | **зависает**: не приходят даже заголовки ответа, `event: start` не отдаётся |
+
+Локализация: auth не является причиной (другой endpoint с тем же `require_auth`
+отвечает мгновенно), зависание происходит внутри SSE-handler/StreamingResponse
+пути. Воспроизведено дважды, с клиентским таймаутом 20–25s.
+
+Генератор `sse_invoke` отдаёт `event: start` первой же строкой, поэтому
+ожидаемым поведением был бы немедленный первый chunk. **Корневая причина в этом
+цикле не установлена** — фиксирую как открытую находку, а не как исправление.
+Требует отдельного расследования (вероятные направления: порядок middleware
+для streaming-ответов, буферизация StreamingResponse под TestClient, либо
+блокирующее ожидание в зависимостях до входа в endpoint).
+
+Отдельно: `/api/v1/dsl-routes` отдаёт 404 при X-API-Key — эндпоинты инспекции
+YAML-маршрутов, вероятно, смонтированы под другим префиксом; требует
+отдельной проверки.
+
+## Сводка по out-of-scope пунктам
+
+| Пункт | Статус |
+|---|---|
+| Штатный login/token fixture + HTTP authorized path | ✅ закрыто (`/api/v1/invocations` + `X-API-Key`, dispatch OK) |
+| YAML route execution | ✅ закрыто (через Tier 3 dispatch) |
+| Feature flag ON/OFF | ✅ закрыто (route-level и step-level) |
+| SSE success path | ❌ **зависание эндпоинта**, находка открыта |
+| WebSocket success path | ⏳ не проверялся в этом цикле |
+| Локальный HTTP test server для RPA | ⏳ не проверялся |
+| Screenshot/trace/HAR artifacts | ⏳ не проверялись |
+| URL allowlist / WAF | ⏳ не проверялся |
+| Real Temporal / idempotency / audit agent path | ⏳ не проверялся (нужны внешние сервисы) |
