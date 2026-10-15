@@ -143,10 +143,10 @@
 | [ADR-0345](0345-p0-object-ownership-policy-options.md) | Object-Level Authorization: ownership policy (P0 audit response) | Unknown |
 | [ADR-0348](0348-services-to-dsl-dependency.md) | Разрешение зависимости `services → dsl` | Draft |
 | [ADR-0349](0349-dsl-response-binding-to.md) | Response-binding (`to:`) в DSL-роутах | Draft |
+| [ADR-0350](0350-remove-dead-code-rate-limiter-cache-keys.md) | Удаление мёртвого кода: `core/rate_limiter/` и `core/utils/cache_keys.py` | Draft |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
-| [ADR-0350](0350-remove-dead-code-rate-limiter-cache-keys.md) | Удаление мёртвого кода: `core/rate_limiter/` + `core/utils/cache_keys.py` | Draft |
 
 **Total:** 142 ADRs.
 
