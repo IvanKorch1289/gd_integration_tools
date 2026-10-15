@@ -190,10 +190,10 @@ async def build_and_run_agent(
     # `except Exception` ниже конвертировал их в dict `{"error": str(exc)}`,
     # а caller ожидал typed exception. Теперь они летят наружу.
     from src.backend.core.config.features import feature_flags
-    from src.backend.services.ai.gateway_adapter import get_ai_gateway
     from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
         CheckpointBackendUnavailable,
     )
+    from src.backend.services.ai.gateway_adapter import get_ai_gateway
 
     # S85 W2: pre-flight enforcement check.
     if not feature_flags.ai_gateway_enforce:

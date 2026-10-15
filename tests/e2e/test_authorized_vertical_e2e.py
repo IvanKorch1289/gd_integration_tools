@@ -37,16 +37,13 @@ from typing import Any
 
 import pytest
 
-from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.types.invocation_command import ActionCommandMetaSchema
 from src.backend.dsl.commands.action_registry import (
-    ActionHandlerRegistry,
     ActionHandlerSpec,
     action_handler_registry,
 )
 from src.backend.entrypoints.base import dispatch_action
 from src.backend.schemas.invocation import ActionCommandSchema
-
 
 # ─────────────────────────── pilot action ───────────────────────────
 

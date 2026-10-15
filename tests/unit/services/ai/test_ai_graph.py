@@ -301,10 +301,10 @@ async def test_checkpoint_backend_unavailable_raised_when_durable_no_backend(
     monkeypatch.setattr(ff_mod, "langgraph_postgres_checkpoint", False)
     _mock_langgraph_with_memory_saver(monkeypatch)
 
-    from src.backend.services.ai.ai_graph import build_and_run_agent
     from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
         CheckpointBackendUnavailable,
     )
+    from src.backend.services.ai.ai_graph import build_and_run_agent
 
     with pytest.raises(CheckpointBackendUnavailable) as exc_info:
         await build_and_run_agent("hello", tool_actions=[], durable=True)
@@ -324,10 +324,10 @@ async def test_checkpoint_backend_unavailable_with_thread_id(
     monkeypatch.setattr(ff_mod, "langgraph_postgres_checkpoint", False)
     _mock_langgraph_with_memory_saver(monkeypatch)
 
-    from src.backend.services.ai.ai_graph import build_and_run_agent
     from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
         CheckpointBackendUnavailable,
     )
+    from src.backend.services.ai.ai_graph import build_and_run_agent
 
     with pytest.raises(CheckpointBackendUnavailable) as exc_info:
         await build_and_run_agent(
@@ -379,10 +379,10 @@ async def test_checkpoint_backend_unavailable_propagates_through_generic_handler
     monkeypatch.setattr(ff_mod, "langgraph_postgres_checkpoint", False)
     _mock_langgraph_with_memory_saver(monkeypatch)
 
-    from src.backend.services.ai.ai_graph import build_and_run_agent
     from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
         CheckpointBackendUnavailable,
     )
+    from src.backend.services.ai.ai_graph import build_and_run_agent
 
     # Если exception проглатывается, мы получим dict и ``pytest.raises``
     # провалится. Это и есть regression protection.

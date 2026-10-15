@@ -47,7 +47,6 @@ from typing import Any
 
 import pytest
 
-
 # ─────────────────────────── fixtures ───────────────────────────
 
 

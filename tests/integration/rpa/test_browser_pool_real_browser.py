@@ -32,7 +32,6 @@ from typing import Any
 
 import pytest
 
-
 # Skip entire module if playwright или chromium недоступен
 try:
     from playwright.async_api import async_playwright  # noqa: F401

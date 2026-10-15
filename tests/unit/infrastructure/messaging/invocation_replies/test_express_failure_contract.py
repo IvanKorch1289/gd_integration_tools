@@ -34,14 +34,10 @@ from typing import Any
 
 import pytest
 
-from src.backend.core.interfaces.invoker import (
-    InvocationResponse,
-    InvocationStatus,
-)
+from src.backend.core.interfaces.invoker import InvocationResponse, InvocationStatus
 from src.backend.infrastructure.messaging.invocation_replies.express import (
     ExpressReplyChannel,
 )
-
 
 # ─────────────────────────── helpers ───────────────────────────
 
