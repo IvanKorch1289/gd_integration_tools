@@ -22,6 +22,7 @@ Lazy-import:
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from typing import TYPE_CHECKING, Any
 
@@ -271,6 +272,14 @@ async def build_and_run_agent(
         # P0 fix (2026-10-15): typed contract error MUST propagate.
         # Re-raise so caller (REST/GraphQL/MCP) получает 503 / typed code,
         # а не silent dict `{"error": str(exc)}`.
+        raise
+    except (KeyError, ValueError, asyncio.CancelledError):
+        # P2 fix (2026-10-15): agent tool execution boundary.
+        # Typed exceptions (KeyError — missing tool/action,
+        # ValueError — malformed LLM response, CancelledError —
+        # timeout/cancellation) ПРОБРАСЫВАЮТСЯ caller'у. Broad
+        # except ниже конвертировал их в dict, теряя тип и
+        # делая retry/DLQ logic невозможной.
         raise
     except Exception as exc:
         logger.error("Agent execution error: %s", exc, exc_info=True)
