@@ -77,55 +77,59 @@ def get_{name}_service() -> {class_name}:
 
 @scaffold_app.command("processor")
 def scaffold_processor(name: str) -> None:
-    """Генерация DSL processor."""
-    class_name = "".join(w.capitalize() for w in name.split("_")) + "Processor"
+    """Генерация DSL processor.
+
+    2026-10-15: шаблон берётся из :func:`tools.scaffold.processor_template` —
+    единый источник истины. Раньше CLI держал собственную копию с
+    ``# TODO: implement processor logic``, то есть генерировал no-op процессор
+    (тот же дефект был починен в tools/scaffold.py коммитом a053f722e).
+    """
+    from tools.scaffold import processor_template
+
+    class_name = "".join(w.capitalize() for w in name.split("_"))
     file_path = Path("src/backend/dsl/engine/processors") / f"{name}.py"
     if file_path.exists():
         typer.echo(f"Processor {name} already exists!", err=True)
         raise typer.Exit(1)
 
-    content = f'''"""Custom processor: {name}."""
-
-from typing import Any
-
-from src.backend.dsl.engine.context import ExecutionContext
-from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import BaseProcessor
-
-__all__ = ("{class_name}",)
-
-
-class {class_name}(BaseProcessor):
-    def __init__(self, name: str | None = None) -> None:
-        super().__init__(name)
-
-    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        body = exchange.in_message.body
-        # TODO: implement processor logic
-        exchange.in_message.set_body(body)
-'''
-    file_path.write_text(content)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_text(processor_template(class_name), encoding="utf-8")
     typer.echo(f"Created: {file_path}")
     typer.echo("Next: add to processors/__init__.py and builder.py")
 
 
 @scaffold_app.command("route")
 def scaffold_route(name: str, source: str = "internal") -> None:
-    """Генерация DSL route YAML."""
-    file_path = Path("dsl_routes") / f"{name}.dsl.yaml"
-    file_path.parent.mkdir(exist_ok=True)
+    """Генерация DSL route YAML.
 
-    content = f"""route_id: {name}
-source: "{source}:{name}"
+    2026-10-15: путь изменён с legacy ``dsl_routes/`` на ``routes/<name>/``
+    (R-V15-2 — DSL-routes являются «лёгкими плагинами» с манифестом
+    ``route.toml``). Формат шага приведён к актуальному контракту
+    ``steps:[]`` (V15 universal route formula).
+    """
+    route_dir = Path("routes") / name
+    file_path = route_dir / f"{name}.dsl.yaml"
+    if file_path.exists():
+        typer.echo(f"Route {name} already exists!", err=True)
+        raise typer.Exit(1)
+
+    content = f"""# Маршрут {name} — сгенерирован manage.py scaffold.
+# Manifest: routes/{name}/route.toml (name, version, capabilities).
+# route_id можно опустить — RouteLoader подставит имя из манифеста.
+route_id: {name}
+from: "{source}:{name}"
 description: "Auto-generated route for {name}"
-processors:
-  - type: log
-    level: info
-  - type: dispatch_action
-    action: "{name}.get"
+steps:
+  - log: {{ level: info }}
+  - transform:
+      expression: "body"
+      to: "body"
+  # TODO: добавьте шаги: proxy / call_function / dispatch_action / ...
 """
-    file_path.write_text(content)
+    route_dir.mkdir(parents=True, exist_ok=True)
+    file_path.write_text(content, encoding="utf-8")
     typer.echo(f"Created: {file_path}")
+    typer.echo(f"Next: create routes/{name}/route.toml (manifest + capabilities)")
 
 
 @scaffold_app.command("codegen-service")
