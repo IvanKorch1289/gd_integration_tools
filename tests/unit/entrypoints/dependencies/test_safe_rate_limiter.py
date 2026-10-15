@@ -110,17 +110,16 @@ class TestSafeRateLimiter:
         и acquire'ит permit (rate-key непустой)."""
         from src.backend.entrypoints.dependencies.rate_limit import SafeRateLimiter
 
-        route = _FakeAPIRoute(
-            path="/api/v1/invocations",
-            methods={"POST"},
-        )
+        route = _FakeAPIRoute(path="/api/v1/invocations", methods={"POST"})
         request = MagicMock()
         request.app.routes = [route]
         request.scope = {"path": "/api/v1/invocations", "method": "POST"}
         request.method = "POST"
+
         # identifier callback
         async def _ident(_r: Any) -> str:
             return "user-1"
+
         limiter_obj = SafeRateLimiter(
             limiter=fake_limiter,
             identifier=_ident,
@@ -145,10 +144,7 @@ class TestSafeRateLimiter:
         """
         from src.backend.entrypoints.dependencies.rate_limit import SafeRateLimiter
 
-        leaf = _FakeAPIRoute(
-            path="/api/v1/invocations",
-            methods={"POST"},
-        )
+        leaf = _FakeAPIRoute(path="/api/v1/invocations", methods={"POST"})
         sub = _FakeIncludedRouter(prefix="/api/v1/invocations", routes=[leaf])
         request = MagicMock()
         # app.routes: сначала sub-router, потом leaf
@@ -158,6 +154,7 @@ class TestSafeRateLimiter:
 
         async def _ident(_r: Any) -> str:
             return "user-2"
+
         limiter_obj = SafeRateLimiter(
             limiter=fake_limiter,
             identifier=_ident,
@@ -187,7 +184,7 @@ class TestSafeRateLimiter:
         from src.backend.entrypoints.dependencies.rate_limit import SafeRateLimiter
 
         no_methods_route = SimpleNamespace(
-            path="/some/lifespan",
+            path="/some/lifespan"
             # no .methods at all
         )
         real_route = _FakeAPIRoute(path="/api/v1/health", methods={"GET"})
@@ -198,6 +195,7 @@ class TestSafeRateLimiter:
 
         async def _ident(_r: Any) -> str:
             return "user-3"
+
         limiter_obj = SafeRateLimiter(
             limiter=fake_limiter,
             identifier=_ident,
@@ -222,11 +220,7 @@ class TestSafeRateLimiter:
             pass
 
         _endpoint._skip_limiter = True  # type: ignore[attr-defined]
-        route = _FakeAPIRoute(
-            path="/health",
-            methods={"GET"},
-            endpoint=_endpoint,
-        )
+        route = _FakeAPIRoute(path="/health", methods={"GET"}, endpoint=_endpoint)
         request = MagicMock()
         request.app.routes = [route]
         request.scope = {"path": "/health", "method": "GET"}
@@ -234,6 +228,7 @@ class TestSafeRateLimiter:
 
         async def _ident(_r: Any) -> str:
             return "user-4"
+
         limiter_obj = SafeRateLimiter(
             limiter=fake_limiter,
             identifier=_ident,
@@ -279,9 +274,9 @@ class TestSafeRateLimiter:
         with pytest.raises(AttributeError) as exc_info:
             await upstream(request, response)
         # Подтверждаем что ошибка именно в строке 'route.path' (upstream bug)
-        assert "path" in str(exc_info.value).lower() or "'path'" in str(exc_info.value), (
-            f"Upstream должен падать с AttributeError на .path; got: {exc_info.value!r}"
-        )
+        assert "path" in str(exc_info.value).lower() or "'path'" in str(
+            exc_info.value
+        ), f"Upstream должен падать с AttributeError на .path; got: {exc_info.value!r}"
 
     @pytest.mark.asyncio
     async def test_get_default_rate_limiter_returns_safe_subclass(
@@ -318,3 +313,66 @@ class TestSafeRateLimiter:
         # Очищаем cache для следующих тестов
         rate_limit.get_default_rate_limiter.cache_clear()
         rate_limit.get_default_limiter.cache_clear()
+
+
+class TestSafeRateLimiterOpenAPI:
+    """Regression 2026-10-15: зависимость не должна ломать HTTP-контракт.
+
+    ``SafeRateLimiter.__call__`` — override с аннотациями ``Any`` вместо
+    starlette ``Request``/``Response``. FastAPI не распознаёт ``Any`` как
+    special-типы и объявляет оба параметра как **required query params**.
+    В следствие этого OpenAPI для ``POST /api/v1/invocations`` публикует
+    фиктивные ``?request=&response=``, и реальный HTTP-вызов падает с 422
+    ещё до попадания в handler.
+    """
+
+    def test_call_annotations_are_special_request_response(self) -> None:
+        """``__call__`` аннотирован настоящими Request/Response, не Any."""
+        import inspect
+
+        from starlette.requests import Request as StarletteRequest
+        from starlette.responses import Response as StarletteResponse
+
+        from src.backend.entrypoints.dependencies.rate_limit import SafeRateLimiter
+
+        hints = inspect.get_annotations(SafeRateLimiter.__call__, eval_str=True)
+        assert hints["request"] is StarletteRequest, (
+            f"request должен быть starlette Request, получено {hints['request']}"
+        )
+        assert hints["response"] is StarletteResponse, (
+            f"response должен быть starlette Response, получено {hints['response']}"
+        )
+
+    def test_dependency_does_not_add_query_params_to_openapi(self) -> None:
+        """Depends(SafeRateLimiter) не добавляет параметров в схему."""
+        from fastapi import Depends, FastAPI
+        from fastapi.testclient import TestClient
+
+        from src.backend.entrypoints.dependencies.rate_limit import (
+            get_default_rate_limiter,
+        )
+
+        app = FastAPI()
+        limiter = get_default_rate_limiter()
+        limiter.limiter = MagicMock()  # type: ignore[assignment]
+        limiter.limiter.try_acquire_async = AsyncMock(return_value=True)
+
+        async def _ident(_r: Any) -> str:
+            return "user"
+
+        limiter.identifier = _ident
+
+        @app.post("/probe")
+        async def _probe(
+            payload: dict[str, Any], _rl: None = Depends(limiter)
+        ) -> dict[str, Any]:
+            return payload
+
+        schema = app.openapi()["paths"]["/probe"]["post"]
+        names = {p["name"] for p in schema.get("parameters", [])}
+        assert names == set(), f"Неожиданные query-параметры в контракте: {names}"
+
+        client = TestClient(app)
+        resp = client.post("/probe", json={"hello": "world"})
+        assert resp.status_code == 200, resp.text
+        assert resp.json() == {"hello": "world"}

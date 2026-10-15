@@ -27,11 +27,12 @@ fail-open при недоступности Redis (как в ``webhook/handler.p
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any
 
 from fastapi_limiter.depends import RateLimiter as RateLimitDependency
 from fastapi_limiter.depends import RateLimiter as _UpstreamRateLimiter
 from fastapi_limiter.depends import WebSocketRateLimiter
+from starlette.requests import Request
+from starlette.responses import Response
 
 from src.backend.core.config.security import secure_settings
 from src.backend.core.decorators.limiting_callbacks import (
@@ -141,16 +142,23 @@ class SafeRateLimiter(_UpstreamRateLimiter):
     """
 
     async def __call__(  # type: ignore[override]
-        self, request: Any, response: Any
+        self, request: Request, response: Response
     ) -> None:
+        """Rate-limit gate для одного запроса.
+
+        2026-10-15 fix (regression): аннотации обязаны быть именно
+        ``starlette`` ``Request``/``Response`` — как в upstream. FastAPI
+        special-cases эти типы (параметры не попадают в HTTP-контракт),
+        а ``Any`` превращал их в **required query params** ``?request=&response=``
+        в OpenAPI и в 422 на реальном вызове (например, POST
+        ``/api/v1/invocations``). Не менять на ``Any``.
+        """
         route_index = 0
         dep_index = 0
         for i, route in enumerate(request.app.routes):
             # Safe path resolution: APIRoute имеет .path, _IncludedRouter имеет .prefix.
             # None для роутов без path/prefix (lifespan, mounts) — пропускаем.
-            route_path = getattr(route, "path", None) or getattr(
-                route, "prefix", None
-            )
+            route_path = getattr(route, "path", None) or getattr(route, "prefix", None)
             if route_path is None:
                 continue
             # Совпадение path OR prefix (sub-router match: /api/v1/invocations
