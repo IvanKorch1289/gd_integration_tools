@@ -42,8 +42,15 @@ def test_load_allowlist_returns_set_matching_file_content() -> None:
     """_load_allowlist() обязан отражать фактическое содержимое файла.
 
     S58 / ADR-0290: 22 stale CVE удалены, PYSEC-2026-3552 (cryptography) снята,
-    diskcache CVE удалены. Текущий файл содержит только комментарии, поэтому
-    expected = 0. Это НЕ fail-OPEN: gate читает файл, а не hardcoded set.
+    diskcache CVE удалены. Файл был пуст до Dependabot 2026-10-15.
+
+    2026-10-15 Dependabot: 5 entries re-added (см. .security/pip-audit-allowlist.txt):
+    - diskcache PYSEC-2026-2447 (transitive через dspy-ai, upstream archived)
+    - chromadb PYSEC-2026-311/3813/3814/3815 (rag extra, src/ doesn't import)
+
+    Каждая запись имеет documented mitigation + Rev. date. Active count = 5.
+    Это НЕ fail-OPEN: gate читает файл, а не hardcoded set, и каждая
+    запись прошла review (см. .security/pip-audit-allowlist.txt history).
 
     Регрессия, которую этот тест ловит: если кто-то снова введёт hardcoded
     fallback (бывший D-AUDIT-10301 bug) и файл случайно совпадёт с
@@ -69,13 +76,18 @@ def test_load_allowlist_returns_set_matching_file_content() -> None:
         f"({len(file_ids)}). Возможен D-AUDIT-10301 регресс — loader "
         f"использует hardcoded fallback вместо файла."
     )
-    # Active count зафиксирован в 0 после prune-ов. Если кто-то добавил
-    # новую allowlist-запись, она должна появиться в обоих местах:
-    # и в файле (как не-комментарная строка), и в loaded. Тест это ловит.
-    assert len(loaded) == 0, (
-        f"Expected 0 active allowlist entries per ADR-0290 (S58, S96, "
-        f"2026-09-11 prune), but loader returned {len(loaded)}. Если это "
-        f"намеренное пополнение allowlist — обновите этот тест И "
+    # Active count = 5 после Dependabot 2026-10-15 (см. allowlist.txt comments):
+    # 1 diskcache (PYSEC-2026-2447) + 4 chromadb (PYSEC-2026-311/3813/3814/3815).
+    # Каждая запись имеет documented mitigation + Rev. date 2026-12-15.
+    # Если кто-то добавит новую allowlist-запись, она должна появиться
+    # в обоих местах: и в файле (как не-комментарная строка), и в loaded.
+    # Тест ловит рассинхронизацию между file content и hardcoded expected.
+    EXPECTED_ACTIVE_COUNT = 5
+    assert len(loaded) == EXPECTED_ACTIVE_COUNT, (
+        f"Expected {EXPECTED_ACTIVE_COUNT} active allowlist entries "
+        f"(Dependabot 2026-10-15 — diskcache + chromadb no-fix CVEs), "
+        f"but loader returned {len(loaded)}. Если это намеренное "
+        f"пополнение allowlist — обновите EXPECTED_ACTIVE_COUNT И "
         f"зафиксируйте в git log (см. S58/ADR-0290 как reference)."
     )
 
