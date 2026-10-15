@@ -8,9 +8,22 @@ __all__ = ("default_callback", "default_identifier")
 
 
 async def default_identifier(request: Request) -> str:
-    """Идентификатор клиента для rate-limit (user-id → IP+path)."""
-    user = getattr(request, "user", None)
-    if user and getattr(user, "id", None):
+    """Идентификатор клиента для rate-limit (user-id → IP+path).
+
+    2026-10-15 fix (regression, найден реальным E2E): ``request.user`` — не
+    простой атрибут, а property Starlette, которая бросает ``AssertionError``,
+    если AuthenticationMiddleware не положил ``scope["user"]``.
+    ``getattr(request, "user", None)`` это НЕ гасит — default в getattr
+    срабатывает только на ``AttributeError``. В итоге rate-limit dependency
+    роняла 500 (``internal_error``) на каждом запросе без установленного
+    auth-middleware, включая ``POST /api/v1/invocations``.
+
+    Читаем ``request.scope`` напрямую: это обычный ASGI-scope dict без
+    property-ловушек. Тот же контракт, что и у AuthenticationMiddleware:
+    он кладёт объект пользователя именно в ``scope["user"]``.
+    """
+    user = request.scope.get("user")
+    if user is not None and getattr(user, "id", None):
         return f"user:{user.id}"
 
     forwarded_for = request.headers.get("x-forwarded-for")
