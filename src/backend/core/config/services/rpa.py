@@ -87,6 +87,28 @@ class RPASettings(BaseSettingsWithLoader):
     browser_viewport_height: int = Field(
         default=720, gt=0, description="Browser viewport height (pixels)."
     )
+    browser_launch_max_retries: int = Field(
+        default=2,
+        ge=0,
+        le=5,
+        description=(
+            "2026-10-15: число ПОВТОРОВ (не попыток) browser launch при "
+            "transient-crash (OOM killer, нехватка shm, segfault). "
+            "0 = fail-fast (1 попытка); 2 (default) = 3 попытки. "
+            "Реализация — core.resilience.retry.retry_async (tenacity, R-V15-8); "
+            "при исчерпании частично созданные ресурсы освобождаются (R-V15-11)."
+        ),
+    )
+    browser_launch_retry_base_seconds: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=10.0,
+        description=(
+            "2026-10-15: базовая задержка exponential backoff для "
+            "browser launch retry. 0.5s → 0.5s, 1.0s, 2.0s… "
+            "Применяется только при browser_launch_max_retries > 0."
+        ),
+    )
 
     # ── OCR backend (feature-flag gated) ─────────────────────────────
 
