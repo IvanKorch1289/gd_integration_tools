@@ -332,7 +332,11 @@ rag = [
 # instructor — structured-output fallback. Default-OFF в settings.
 ai-2026 = [
     "litellm>=1.0.0,<2.0.0",  # S30: lowered to >=1.0.0 — CVE-2026-42208 fix available from 1.0.0
-    "pydantic-ai>=1.99.0,<2.0.0",  # S31: >=1.99.0 fixes GHSA-cqp8-fcvh-x7r3 (CVE-2026-46678, SSRF via IPv4-mapped IPv6). 1.94.0 was in vulnerable range >=1.56.0,<1.99.0. adapter.py LiteLLMModel shim needs rewrite for 1.x Model ABC — default-OFF until S32 W2.
+    # 2026-10-15 Dependabot: pydantic-ai 1.107.5 → 1.107.7+ fixes 4 CVEs
+    # (CVE-2026-107287/107289/107290/107291 — local web-fetch tool SSRF/DoS,
+    # OpenTelemetry instrumentation RCE). Pin widened to <2.0.0 to allow
+    # 1.107.x fixes (S31 already established ≥1.99.0 floor).
+    "pydantic-ai>=1.107.7,<2.0.0",
     # REMOVED langmem: zero imports, custom memory consolidation (UnifiedMemoryGateway)
     # is better suited for self-hosted. Long-term memory via LangMem requires managed
     # cloud — not compatible with self-hosted-first constraint.
@@ -507,7 +511,9 @@ testkit = [
     # vcrpy — запись/replay HTTP-трафика; pure-Python, cp314-совместим.
     # Lazy-import внутри testkit.cassette. Обёртка @cassette() поверх
     # существующего testkit/recorder.py (HAR-style → VCR API).
-    "vcrpy>=6.0.0,<7.0.0",
+    # 2026-10-15 Dependabot: GHSA-rpj2-4hq8-938g (YAML deserialization RCE in
+    # cassette files) — fixed in 8.2.1. Widened to <9.0.0 to allow 8.x.
+    "vcrpy>=8.2.1,<9.0.0",
 ]
 # B2 (M10.2): mkdocs canonical — sphinx/sphinx-multiversion удалены.
 # mkdocs-material + mike для версионирования (master + теги v*).
@@ -520,7 +526,7 @@ docs = [
     "mkdocstrings>=0.25.0,<2.0.0",  # S44 W12b: widened <1.0.0 -> <2.0.0 to allow mkdocstrings 1.0.x (dependabot #125)
     "mkdocstrings-python>=1.10.0,<2.0.0",
     "mike>=2.0.0,<3.0.0",
-    "pymdown-extensions>=10.7.0,<11.0.0",
+    "pymdown-extensions>=11.0.1,<12.0.0",  # 2026-10-15 Dependabot: PYSEC-2026-3609 (b64 image injection) and PYSEC-2026-3654 (ReDoS in 4 inline processors) — fixed in 11.0.0/11.0.1
 ]
 # K5 Sprint 8 [wave:s8/k5-ru-proofreader]: optional ru-language proofreader.
 # language-tool-python тянет ~500MB JVM + словари; в core не нужен,
@@ -604,7 +610,10 @@ ai-memory = [
 # Pillow — обязателен для ImageIngester (EXIF + sniff).
 # sentence-transformers уже в core deps (см. строку выше).
 multimodal-rag = [
-    "docling>=2.0.0,<3.0.0",
+    # 2026-10-15 Dependabot: 8 CVEs in docling (PYSEC-2026-4189-4195 + CVE-2026-105748,
+    # related to unsafe deserialization in DoclingDocument JSON input) — fixed in
+    # 2.131.0 and 2.132.0. Allow >=2.132.0 to pick up latest fixes.
+    "docling>=2.132.0,<3.0.0",
     "paddleocr>=2.8.0,<4.0.0",
     "pypdfium2>=4.30.0,<5.0.0",
     "Pillow>=10.0.0,<13.0.0",  # S30: upped to <13.0.0 — Pillow 12.x officially supports Python 3.14
@@ -768,6 +777,18 @@ override-dependencies = [
     # inscriptis (dep of FlagEmbedding) requires lxml<6.1.0; override keeps core safe.
     # AI-2026 extra: install in isolated ML environments per NOTE above.
     "lxml>=6.1.1,<7.0.0",
+    # 2026-10-15 Dependabot: transitive CVE-driven upgrades.
+    # Не используется как direct dep — лежит в override, чтобы был виден lock-resolver'у,
+    # но не загрязнял [project.dependencies].
+    # tornado: GHSA-chx6-46f5-w4vp / GHSA-c2m8-h5v5-343r / GHSA-3hv7-mjh2-fv65 (6.5.8 → 6.5.9)
+    "tornado>=6.5.9,<7.0.0",
+    # werkzeug: CVE-2026-102598 (safe_join Windows device names, 3.1.8 → 3.1.9)
+    "werkzeug>=3.1.9,<4.0.0",
+    # virtualenv: PYSEC-2026-4011/4012/4013/4014 (8 CVEs, 21.7.9 → 21.7.13)
+    "virtualenv>=21.7.13,<22.0.0",
+    # oauthlib: PYSEC-2026-4114 (PKCE timing side-channel, 3.x → 4.0.0). Brought
+    # in by kubernetes→requests-oauthlib; upgrade is major but no API break for our use.
+    "oauthlib>=4.0.0,<5.0.0",
     # S31: urllib3 1.26.20 entries in lock are PyPy-only markers (platform markers
     # restrict them to PyPy; CPython 3.14 correctly uses urllib3 2.7.0).
     # Dependabot scans the whole lock — force 2.7.0 for all platforms to clear

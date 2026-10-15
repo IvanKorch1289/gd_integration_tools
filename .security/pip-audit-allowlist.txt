@@ -16,9 +16,30 @@
 # их stale («Removed from active list»), ID оставались по ошибке и
 # маскировали потенциальные находки.
 #
-# 2026-09-11: diskcache (PYSEC-2026-2447 / CVE-2025-69872) УДАЛЁН из
-# зависимостей — upstream-фикса нет (OSV: last_affected 5.6.3 = последняя
-# версия, проект неактивен). Единственный потребитель (decorators
-# DiskTTLCache) переведён на собственный pickle-free backend
-# (caching/storage/disk.py). pip-audit: 0 findings. Обе записи удалены.
-# Active count: 0 entries.
+# 2026-10-15 Dependabot: diskcache (PYSEC-2026-2447) re-added — обнаружено,
+# что diskcache возвращается как TRANSITIVE dep через dspy-ai (rebrand)
+# → dspy 3.x → diskcache 5.6.3. Хотя DiskTTLCache наш собственный и
+# pickle-free (caching/storage/disk.py), сам dspy использует diskcache
+# внутри для BootstrapFewShot optimizer cache.
+# Upstream fix: нет (project archived, last_affected=5.6.3 = последняя).
+# Mitigation: project НЕ пишет в diskcache напрямую; dspy imports — lazy
+# (services/ai/dspy/feedback_trainer.py, optimizer.py, eval/dspy_dataset_builder.py),
+# и эти пути не принимают user-controlled data. Network exposure:
+# /api/v1/ai/* доступен только за auth, dspy вызывается через action dispatcher.
+# Rev. date: 2026-12-15 (если dspy upstream выпустит форк или upstream
+# исправление — удалить allowlist запись).
+PYSEC-2026-2447
+# 2026-10-15 Dependabot: chromadb (5 CVEs) — NO FIX upstream. ChromaDB
+# transitive deps в RAG extra, но src/backend НЕ импортирует chromadb
+# (проверено grep "import chromadb\|from chromadb" src/ → 0). RAG extra
+# объявлен для будущей интеграции; текущая кодовая база использует
+# in-memory VectorIndex (services/rag/) без chromadb runtime.
+# Mitigation: rag extra explicit opt-in; CI install без rag → chromadb
+# отсутствует в lock → CVE не применяется к production-стеку. Если
+# chromadb потребуется runtime — требуется upstream patch или fork.
+# Rev. date: 2026-12-15.
+PYSEC-2026-311
+PYSEC-2026-3813
+PYSEC-2026-3814
+PYSEC-2026-3815
+# Active count: 5 entries.
