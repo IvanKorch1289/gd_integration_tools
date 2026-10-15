@@ -112,11 +112,15 @@ sbom-baseline-accept: ## OP-3: принять текущий SBOM как baselin
 	@cp dist/sbom/sbom.cdx.json .baselines/sbom.baseline.json
 	@$(SUCCESS) "Baseline принят: .baselines/sbom.baseline.json"
 
-audit-deps: ## 2026-10-13 (P0-1): pip-audit с runtime-only deps, исключает optional extras (deepteam redteam extra blocks py3.14)
+audit-deps: ## 2026-10-13 (P0-1): pip-audit с runtime-only deps, исключает optional extras (rpa/ai/rag/mcp тянут pin-conflicts в lockfile)
 	@$(INFO) "Running pip-audit (dist/pip-audit.json) on runtime-only requirements..."
 	@mkdir -p dist
 	@rm -f dist/pip-audit.json
-	# uv export --no-dev --no-all-extras исключает [project.optional-dependencies] (redteam, ai, rag, mcp, rpa, …).
+	# uv export --no-dev --no-all-extras исключает ВСЕ [project.optional-dependencies].
+	# Раньше примером был deepteam (удалён Proposal 1, commit 7b6c9772f);
+	# теперь актуальные pin-conflict источники — rpa, ai-eval, rag, mcp (каждый
+	# тянет pinned версии, конфликтующие с core deps на py3.14).
+	# Конвертируем hash-pinned формат в простой package==version для pip-audit --strict.
 	# Конвертируем hash-pinned формат в простой package==version для pip-audit --strict.
 	@$(UV_RUN) sh -c 'uv export --no-dev --no-all-extras 2>/dev/null \
 	  | awk "/^[a-zA-Z]/ {print \$$1}" \

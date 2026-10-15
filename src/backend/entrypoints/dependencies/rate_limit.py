@@ -11,6 +11,14 @@ Ponytail minimum: ``RedisLimiterAdapter`` реализует только ``try_
 для совместимости с ``fastapi_limiter.depends.RateLimiter``. ``get_rate_limiter``
 fail-open при недоступности Redis (как в ``webhook/handler.py``).
 
+2026-10-15 fix (re-audit): ``fastapi_limiter==0.2.0`` upstream имеет bug —
+``RateLimiter.__call__`` обращается к ``route.path`` без проверки типа,
+что падает с ``AttributeError`` для ``_IncludedRouter`` (sub-routers,
+используемые для nested APIRouter). В этом проекте это сломало
+``/api/v1/invocations`` (5xx internal error). Workaround: subclass
+:class:`SafeRateLimiter` который использует ``getattr(route, 'path', ...)``
+и работает и для APIRoute, и для _IncludedRouter.
+
 Расположение в ``entrypoints/dependencies/`` отражает суть API:
 это ``Depends``-объект, не ASGI-middleware. Sprint 1 V16 cleanup
 перенёс файл из ``entrypoints/middlewares/``.
@@ -19,8 +27,10 @@ fail-open при недоступности Redis (как в ``webhook/handler.p
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Any
 
 from fastapi_limiter.depends import RateLimiter as RateLimitDependency
+from fastapi_limiter.depends import RateLimiter as _UpstreamRateLimiter
 from fastapi_limiter.depends import WebSocketRateLimiter
 
 from src.backend.core.config.security import secure_settings
@@ -37,6 +47,7 @@ from src.backend.services.resilience.rate_limiter import (
 __all__ = (
     "RateLimitDependency",
     "RedisLimiterAdapter",
+    "SafeRateLimiter",
     "WebSocketRateLimiter",
     "get_default_limiter",
     "get_default_rate_limiter",
@@ -97,6 +108,79 @@ class RedisLimiterAdapter:
         return self._window_seconds
 
 
+class SafeRateLimiter(_UpstreamRateLimiter):
+    """Subclass upstream ``fastapi_limiter.depends.RateLimiter`` с fix для
+    ``_IncludedRouter.path`` AttributeError.
+
+    2026-10-15 fix: upstream ``RateLimiter.__call__`` (lines 30-34) делает::
+
+        for i, route in enumerate(request.app.routes):
+            if (
+                route.path == request.scope["path"]  # <-- bug: _IncludedRouter has no .path
+                and hasattr(route, "methods")
+                and request.method in route.methods
+            ):
+
+    В FastAPI>=0.100 ``request.app.routes`` содержит как ``APIRoute`` (имеет
+    ``.path``), так и ``_IncludedRouter`` (sub-router, ``.prefix`` + ``.routes``,
+    БЕЗ ``.path``). При первой итерации по sub-router'у upstream
+    роняет ``AttributeError`` → 500 internal error.
+
+    Fix: используем ``getattr(route, "path", ...)`` для APIRoute,
+    и ``getattr(route, "prefix", "")`` для _IncludedRouter. Это
+    совместимо с upstream контрактом (rate limit key остаётся
+    route_index-based, не path-based — dependency-isolation
+    через ``self is dependency.dependency`` сохраняется).
+
+    Дополнительно: добавлен ``getattr(route, "methods", None)``
+    чтобы не падать на роутах без HTTP methods (например, lifespan
+    routes, mount-точки).
+
+    Минимально-совместимое исправление, не форкаем библиотеку
+    полностью — только ``__call__`` override.
+    """
+
+    async def __call__(  # type: ignore[override]
+        self, request: Any, response: Any
+    ) -> None:
+        route_index = 0
+        dep_index = 0
+        for i, route in enumerate(request.app.routes):
+            # Safe path resolution: APIRoute имеет .path, _IncludedRouter имеет .prefix.
+            # None для роутов без path/prefix (lifespan, mounts) — пропускаем.
+            route_path = getattr(route, "path", None) or getattr(
+                route, "prefix", None
+            )
+            if route_path is None:
+                continue
+            # Совпадение path OR prefix (sub-router match: /api/v1/invocations
+            # начинается с /api/v1/invocations — точное равенство для leaf).
+            if not (
+                request.scope["path"] == route_path
+                or request.scope["path"].startswith(route_path.rstrip("/") + "/")
+            ):
+                continue
+            route_methods = getattr(route, "methods", None)
+            if route_methods is None or request.method not in route_methods:
+                continue
+            route_index = i
+            # Check if the route endpoint has _skip_limiter attribute
+            if hasattr(route, "endpoint") and getattr(
+                route.endpoint, "_skip_limiter", False
+            ):
+                return
+            for j, dependency in enumerate(route.dependencies):
+                if self is dependency.dependency:
+                    dep_index = j
+                    break
+
+        rate_key = await self.identifier(request)
+        key = f"{rate_key}:{route_index}:{dep_index}"
+        success = await self.limiter.try_acquire_async(key, blocking=self.blocking)
+        if not success:
+            return await self.callback(request, response)
+
+
 @lru_cache(maxsize=1)
 def get_default_limiter() -> RedisLimiterAdapter:
     """Singleton ``RedisLimiterAdapter`` по конфигу ``secure_settings``.
@@ -120,8 +204,15 @@ def get_default_rate_limiter() -> RateLimitDependency:
 
     ``blocking=False`` — превышение лимита моментально возвращает 429
     через ``default_callback``, в отличие от блокирующего ожидания.
+
+    2026-10-15: используем :class:`SafeRateLimiter` (subclass) вместо
+    upstream :class:`RateLimitDependency` — fix для _IncludedRouter.path
+    AttributeError на вложенных роутерах (например,
+    ``/api/v1/invocations``). Upstream ``RateLimitDependency`` алиасится
+    на :class:`SafeRateLimiter` через эту функцию; прямые импорты
+    :class:`RateLimitDependency` остаются работоспособными.
     """
-    return RateLimitDependency(
+    return SafeRateLimiter(
         limiter=get_default_limiter(),  # type: ignore[arg-type]  # RedisLimiterAdapter matches Limiter protocol (try_acquire_async)
         identifier=default_identifier,
         callback=default_callback,
