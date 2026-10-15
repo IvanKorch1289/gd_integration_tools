@@ -181,6 +181,35 @@ def _layer_baseline() -> str:
     return "unavailable"
 
 
+def _static_route_packages() -> int:
+    """Подсчитать число static route-пакетов на диске.
+
+    Static route-пакет = директория в ``routes/<name>/`` с манифестом
+    ``route.toml``. Это отличается от ``dsl_route_count`` (runtime
+    зарегистрированных маршрутов после ``create_app()``): static
+    packages могут существовать на диске, но не загружаться, если
+    не вызван ``RouteLoader``.
+
+    P1 (2026-10-15): audit asks явно разделить эти две метрики,
+    чтобы ``DSL-маршрутов = 0`` не вводил в заблуждение относительно
+    реального наличия route-пакетов.
+
+    Returns:
+        Число static route-пакетов с валидным manifest.
+
+    """
+    routes_dir = PROJECT_ROOT / "routes"
+    if not routes_dir.is_dir():
+        return 0
+    count = 0
+    for entry in routes_dir.iterdir():
+        if not entry.is_dir() or entry.name.startswith(("_", ".")):
+            continue
+        if (entry / "route.toml").is_file():
+            count += 1
+    return count
+
+
 def collect_metrics() -> dict[str, object]:
     """Собрать все метрики из фактического состояния кода.
 
@@ -195,6 +224,7 @@ def collect_metrics() -> dict[str, object]:
         "coverage_fail_under": _coverage_threshold(),
         "layer_baseline": _layer_baseline(),
         "test_count": _pytest_count(),
+        "static_route_packages": _static_route_packages(),
     }
 
     actions = routes = middleware = paths = schemas = "n/a"
@@ -250,8 +280,10 @@ def render_block(metrics: dict[str, object]) -> str:
         f"| HEAD | `{head}` | `git rev-parse HEAD` |",
         f"| Actions (runtime) | {metrics.get('action_count')} | "
         "`ActionHandlerRegistry.list_actions()` после `create_app()` |",
-        f"| DSL-маршрутов | {metrics.get('dsl_route_count')} | "
-        "`RouteRegistry.list_routes()` |",
+        f"| DSL-маршрутов (runtime) | {metrics.get('dsl_route_count')} | "
+        "`RouteRegistry.list_routes()` после `create_app()` |",
+        f"| Route-пакетов (static) | {metrics.get('static_route_packages')} | "
+        "`routes/<name>/route.toml` на диске |",
         f"| Протоколов | {metrics.get('protocol_count')} | "
         f"пакеты entrypoints: {protocols} |",
         f"| Middleware в стеке | {metrics.get('middleware_count')} | "
