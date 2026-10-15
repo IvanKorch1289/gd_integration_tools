@@ -376,3 +376,44 @@ class TestSafeRateLimiterOpenAPI:
         resp = client.post("/probe", json={"hello": "world"})
         assert resp.status_code == 200, resp.text
         assert resp.json() == {"hello": "world"}
+
+
+class TestRedisLimiterAdapterProtocolCompat:
+    """Regression 2026-10-15: adapter обязан совпадать с pyrate_limiter.
+
+    ``RateLimiter.__call__`` (upstream и наш :class:`SafeRateLimiter`) вызывает
+    ``limiter.try_acquire_async(key, blocking=self.blocking)``.
+    ``RedisLimiterAdapter.try_acquire_async`` не принимал ``blocking`` →
+    ``TypeError`` → 500 ``internal_error`` на каждом rate-limited endpoint.
+    Существующие тесты мокали ``try_acquire_async`` целиком и не ловили
+    несовместимость сигнатур.
+    """
+
+    def test_signature_matches_pyrate_limiter(self) -> None:
+        """Все kwargs из pyrate_limiter.Limiter.try_acquire_async приняты."""
+        import inspect
+
+        from pyrate_limiter import Limiter
+
+        from src.backend.entrypoints.dependencies.rate_limit import RedisLimiterAdapter
+
+        upstream = set(inspect.signature(Limiter.try_acquire_async).parameters)
+        ours = set(inspect.signature(RedisLimiterAdapter.try_acquire_async).parameters)
+        missing = upstream - ours
+        assert not missing, (
+            f"RedisLimiterAdapter не принимает kwargs из pyrate_limiter: {missing}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_accepts_blocking_keyword(self) -> None:
+        """Реальный вызов с blocking= не падает (без мока на сигнатуре)."""
+        from src.backend.entrypoints.dependencies.rate_limit import RedisLimiterAdapter
+
+        adapter = RedisLimiterAdapter(rate_limit=5, window_seconds=60)
+        limiter = MagicMock()
+        limiter.check = AsyncMock(return_value=None)
+        object.__setattr__(adapter, "_limiter", limiter)
+
+        assert await adapter.try_acquire_async("k", blocking=False) is True
+        assert await adapter.try_acquire_async("k", blocking=True) is True
+        assert await adapter.try_acquire_async("k") is True

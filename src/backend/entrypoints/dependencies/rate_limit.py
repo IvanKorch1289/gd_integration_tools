@@ -75,14 +75,30 @@ class RedisLimiterAdapter:
         self._window_seconds = window_seconds
 
     async def try_acquire_async(
-        self, name: str = "pyrate", weight: int = 1, timeout: int | float = -1
+        self,
+        name: str = "pyrate",
+        weight: int = 1,
+        blocking: bool = False,
+        timeout: int | float = -1,
     ) -> bool:
-        """Acquire `weight` permits from bucket `name`. Multi-instance via Redis.
+        """Acquire `weight` permits из bucket `name`. Multi-instance через Redis.
+
+        Сигнатура обязана совпадать с ``pyrate_limiter.Limiter.try_acquire_async``
+        (``name``, ``weight``, ``blocking``, ``timeout``) — именно так её
+        вызывает ``RateLimiter.__call__`` upstream и наш :class:`SafeRateLimiter`.
+        2026-10-15 fix: параметр ``blocking`` отсутствовал → ``TypeError`` →
+        500 ``internal_error`` на каждом rate-limited endpoint.
+
+        ``blocking`` принимается для совместимости с протоколом, но ожидание
+        permit'а **не реализовано**: Redis-адаптер проверяет лимит один раз и
+        сразу возвращает ``False`` при превышении (проект работает с
+        ``blocking=False`` → мгновенный 429 через callback).
 
         Returns:
             True if permits acquired, False if rate limit exceeded.
 
         """
+        del blocking  # protocol-compat; поведение описано в docstring
         # Map pyrate_limiter semantics → RedisRateLimiter.check()
         # window: timeout > 0 используем timeout, иначе configured window
         if timeout is None or timeout < 0:
