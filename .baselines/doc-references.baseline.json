@@ -1,6 +1,6 @@
 {
   "tool": "doc_path_validator",
-  "note": "Baseline of DANGLING documentation references: paths cited inside docs/ that do not exist on disk under src/backend or extensions. Not 'undocumented modules' - DocPathValidator.find_missing() checks the docs->code direction, so every entry is a link a reader would follow into a 404. Ratchet: the set may shrink (link fixed or removed) but must not grow.",
+  "note": "Baseline of DANGLING documentation references: paths cited inside docs/ that do not exist on disk under src/backend or extensions. Not 'undocumented modules' - DocPathValidator.find_missing() checks the docs->code direction, so every entry is a link a reader would follow into a 404. Ratchet: the set may shrink (link fixed or removed) but must not grow. | 2026-10-15: добавлен `services/ai/agents/langgraph_postgres_saver.py` — модуль удалён осознанно (audit-stabilization Proposal 3, 2026-10-14: AsyncPostgresSaver отсутствует в langchain_postgres==0.0.17). Ссылку на него сохраняют два исторических swarm-отчёта от 2026-08-06 (cycle-2/phase-1/08-agents.md, cycle-4/phase-1/08-agents.md) — это point-in-time инвентаризация файлов, её нельзя переписывать без искажения аудиторской записи. Живые ADR и docs/roadmap актуализированы.",
   "src_backend": [
     "core/ai/gateway.py",
     "core/ai/gateway/orchestrator/enforced_invoke.py",
@@ -123,6 +123,7 @@
     "plugins/composition/setup_infra.py",
     "services/.../hitl/service.py",
     "services/admin/sso.py",
+    "services/ai/agents/langgraph_postgres_saver.py",
     "services/ai/ai_agent.py",
     "services/ai/ai_providers.py",
     "services/ai/guardrails/rebuff_client.py",

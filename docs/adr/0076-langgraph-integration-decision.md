@@ -1,9 +1,20 @@
 # ADR-NEW-25: LangGraph Integration Decision
 
-**Status:** Accepted
+**Status:** Accepted (checkpointer-часть поправлена 2026-10-14)
 **Date:** 2026-05-26
 **Authors:** К4
 **Sources:** AI Audit 2026-05-26, S28 W4
+
+> **Amendment 2026-10-14 (audit-stabilization Proposal 3).** Пункт 1 ниже
+> описывает состояние на 2026-05-26 и в части Postgres-checkpointer больше не
+> соответствует коду: модуль `langgraph_postgres_saver.py` удалён —
+> `AsyncPostgresSaver` отсутствует в установленной `langchain_postgres==0.0.17`.
+> Оба feature-флага — `langgraph_postgres_checkpoint` и
+> `langgraph_checkpoint_ui` — переведены в `default=False`, при
+> `durable=True` без сконфигурированного backend поднимается
+> `CheckpointBackendUnavailable`. Решение «LangGraph остаётся optional
+> execution backend» (AgentGraphProcessor) остаётся в силе; изменён только
+> пункт про checkpointer. См. ADR-0350 и `RE_AUDIT_2026-10-15_post_fix.md`.
 
 ---
 

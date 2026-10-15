@@ -6,6 +6,17 @@
 
 ## Резюме
 
+> **Superseded в части checkpointer (2026-10-14, audit-stabilization Proposal 3).**
+> Описанная ниже «full integration» LangGraph-checkpointer реализована на
+> `langgraph_postgres_saver.py`, который удалён: `AsyncPostgresSaver`
+> отсутствует в `langchain_postgres==0.0.17`. Activities
+> `_langgraph_checkpoint_get/_put` и `thread_id = {agent_id}:{correlation_id}`
+> остались в `activity_bridge.py`, но приводят к
+> `CheckpointBackendUnavailable`; фича закрыта флагами
+> `langgraph_postgres_checkpoint=False` и `langgraph_checkpoint_ui=False`.
+> Остальные пункты S100 (Python 2 codemod, docstring ratchet, stdlib audit)
+> не затронуты. См. ADR-0076 (Amendment 2026-10-14).
+
 S100 — **первый sprint с TODO backlog = 0** (все 4 deferred features
 из S97 W3 catalog закрыты, 1 closed в S99, 1 closed в S100 W1).
 
