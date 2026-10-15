@@ -209,3 +209,90 @@ uv run ruff check tests/... src/... tools/generate_current_metrics.py
 * Mass-replace `except Exception` в оставшихся 2к boundary — запрещено
   audit'ом;
 * Baseline 1.65s → 2.40s startup time — accepted reset.
+
+---
+
+# Дополнение: реальный E2E-цикл 2026-10-15 (второй проход)
+
+Первый проход работал преимущественно по спекам и unit-тестам. Этот проход
+проверял **живое приложение** (`create_app()` + lifespan + реальные HTTP-запросы),
+и именно это выявило дефекты, которые статические проверки пропустили.
+
+## Что было проверено на живом приложении
+
+```bash
+# 1. Приложение собирается и поднимается
+create_app()                      → 162 маршрута
+TestClient(app) enter (lifespan)  → «Приложение успешно запущено: 132 actions, 3 DSL-маршрутов»
+
+# 2. Реальные HTTP-вызовы
+GET  /health                   → 200 {"status":"alive","version":"0.1.0"}
+GET  /openapi.json             → 200, 414 paths / 142 schemas
+POST /api/v1/invocations (без auth)     → 403 csrf_token_missing   (корректно)
+POST /api/v1/invocations (X-API-Key)     → CSRF-exempt → dispatch
+     action=tech.check_all_services     → 200 status=ok + реальные health-check'и
+     action=__no_such_action__          → 200 status=error "Action not registered"
+```
+
+**Ранее этот путь был недостижим**: `import src.backend.main` падал на
+устаревшем импорте `services.io.files`, а после его обхода — на
+`LifecycleStartupError: start_mongo_client` (30s timeout; в dev-среде без MongoDB
+нужен `MONGO_ENABLED=false`).
+
+## Новые дефекты (3 в одной цепочке) и почему unit-тесты их пропустили
+
+Все три находятся в rate-limit зависимости и **каждый по отдельности превращал
+защищённый endpoint в 500/422** — то есть отключал сервис вместо защиты.
+Три бага стояли друг на друге: каждый следующий был скрыт предыдущим.
+
+| # | Дефект | Симптом | Почему не видели unit-тесты | Коммит |
+|---|---|---|---|---|
+| 1 | `SafeRateLimiter.__call__(request: Any, response: Any)` | OpenAPI публиковал фиктивные **required** query params `?request=&response=` → **422** | тесты звали `__call__` напрямую, не проверяя OpenAPI-контракт | `82f433d49` |
+| 2 | `default_identifier` читал `request.user` | **500**: `AssertionError: AuthenticationMiddleware must be installed` | тесты использовали `MagicMock(spec=Request)`, где `user` — обычный атрибут | `e2645f11f` |
+| 3 | `RedisLimiterAdapter.try_acquire_async` без `blocking` | **500**: `TypeError: got an unexpected keyword argument 'blocking'` | тесты мокали `try_acquire_async` целиком, не проверяя подпись | `f66b7cdfa` |
+
+Деталь про #2: `getattr(request, "user", None)` **не** гасит `AssertionError` —
+default в `getattr` срабатывает только на `AttributeError`, а `Request.user`
+у Starlette — property, которая именно `AssertionError` бросает.
+
+**Урок:** мок-объекты со `spec=` воспроизводят форму, но не поведение реальных
+свойств Starlette/FastAPI. Контракты, зависящие от интроспекции фреймворка
+(OpenAPI-параметры, special-cases типов), нужно проверять настоящим
+экземпляром — это и дало находку.
+
+## Регрессии, внесённые собственными фиксами и пойманные по ходу
+
+| Регрессия | Как обнаружена | Коммит |
+|---|---|---|
+| 2 теста контракта feature-флагов падали после перевода LangGraph-флагов в `default=False` | `pytest tests/unit/core/config` | `ef9d81625` |
+| doc-reference гейт: 2 исторических swarm-отчёта ссылаются на удалённый `langgraph_postgres_saver` | `pytest tests/unit/docs` | `0d513d18d` |
+| CLI-scaffold генерировал no-op processor и писал в legacy `dsl_routes/` | ручной запуск `manage.py scaffold` | `c197f5dc0` |
+
+Все три закрыты отдельными атомарными коммитами с regression-тестом, падающим
+до фикса.
+
+## Проверки этого прохода
+
+```
+make cve-gate                      → PASS: 0 unignored vulnerabilities (5 allowlist)
+make audit-deps                    → EXIT=0 (ранее OSError 28 на полном диске)
+tests/unit/core/config             → 565 passed, 2 skipped
+tests/unit/entrypoints/dependencies + core/decorators + api → 83 passed
+tests/unit/services/rpa + tests/integration/rpa  → 85 passed (включая real Chromium)
+tests/unit/cli + tests/unit/tools (scaffold)      → 12 passed
+tests/unit/docs                    → 23 passed
+ruff check / format                → All checks passed (все затронутые файлы)
+tools/generate_current_metrics.py --write → README: 132 actions, 21311 тестов
+```
+
+## Открытые вопросы (не закрыты в этом цикле)
+
+* **Draft ADR-0350**: удаление или отложение `core/rate_limiter/` и
+  `core/utils/cache_keys.py` — требует решения владельца.
+* **Полный прогон `tests/unit tests/core`**: 129 падений при параллельном
+  прогоне (`-n 4`); проверено, что representative-набор (dsl blueprints, event
+  bus, worker probes) **проходит изолированно и в малых параллельных группах**
+  → симптом изоляции тестов, а не функциональных регрессий. Последовательный
+  прогон запущен для подтверждения; выводы будут в следующей ревизии отчёта.
+* **chromadb / diskcache** — 5 CVE без upstream fix, задокументированы в
+  allowlist до re-review 2026-12-15.

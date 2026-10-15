@@ -1,5 +1,39 @@
 # Security Audit Report — S40 W6
 
+> **Актуализация 2026-10-15 (audit-цикл после Dependabot).** Отчёт ниже датирован
+> 2026-06-04 и сохраняется как point-in-time запись. Актуальное состояние:
+>
+> | Проверка | Результат | Команда |
+> |---|---|---|
+> | CVE (pip-audit, runtime) | **0 unignored** (5 allowlist, без upstream fix) | `make cve-gate` |
+> | Bandit HIGH blocking | 0 (закрыт в Sprint 3) | `make security-scan` |
+> | Layer violations | 0 новых (debt 37 legacy) | `tools/check_layers.py` |
+> | Doc-reference ratchet | проходит (baseline 147) | `tests/unit/docs/` |
+> | Rate-limit контракт | исправлен 2026-10-15 | см. ниже |
+>
+> **Найдено и исправлено 2026-10-15 (3 связанных дефекта в rate-limit цепочке,
+> каждый закрыт отдельным коммитом).** Каждый из них превращал защищённый
+> endpoint в 500/422 — то есть отключал сервис вместо того, чтобы его защищать:
+>
+> 1. `SafeRateLimiter.__call__` аннотирован `Any` вместо starlette
+>    `Request`/`Response` → FastAPI публиковал фиктивные **required** query
+>    params `?request=&response=`, реальные вызовы падали с 422
+>    (`82f433d49`);
+> 2. `default_identifier` читал `request.user` — это property Starlette,
+>    бросающая `AssertionError` без AuthenticationMiddleware, а `getattr`
+>    с default её не гасит → 500 на каждом запросе (`e2645f11f`);
+> 3. `RedisLimiterAdapter.try_acquire_async` не принимал `blocking`, который
+>    передаёт `RateLimiter.__call__` → `TypeError` → 500 (`f66b7cdfa`).
+>
+> Все три найдены **реальным E2E** (POST `/api/v1/invocations`), а не
+> unit-тестами: прежние тесты мокали `try_acquire_async` и использовали
+> `MagicMock(spec=Request)`, что скрывало обе проблемы.
+>
+> **Acceptance:** после фиксов `POST /api/v1/invocations` с API-key проходит
+> полный путь HTTP → auth → CSRF-exempt → rate-limit → Invoker →
+> ActionDispatcher и возвращает `status: ok` для `tech.check_all_services`
+> (132 actions в registry).
+
 **Scope:** `src/backend/` (1478 .py files, 231 109 LOC)
 **Date:** 2026-06-04
 **Tools:** `grep` (regex sweep) + `bandit 1.9.4`

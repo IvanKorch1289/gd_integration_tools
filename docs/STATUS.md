@@ -1,5 +1,45 @@
 # docs/STATUS.md — Single Source of Truth for Project Health
 
+> **Last verified**: 2026-10-15 (audit-цикл: real E2E + rate-limit fixes)
+>
+> **2026-10-15 — что реально проверено в этом цикле** (все значения — результат
+> выполненных команд, не отчётность):
+>
+> - **Приложение поднимается**: `create_app()` → 162 маршрута; lifespan стартует
+>   полностью (`132 actions, 3 DSL-маршрутов`). Раньше падало на
+>   `LifecycleStartupError: start_mongo_client`. В dev-среде без MongoDB нужен
+>   `MONGO_ENABLED=false` — операция помечена required, деградации по умолчанию нет.
+> - **Реальный HTTP-контракт**: `GET /health` → 200 `{"status":"alive"}`;
+>   `GET /openapi.json` → 200, **414 paths / 142 schemas**;
+>   `POST /api/v1/invocations` без ключа → 403 `csrf_token_missing` (корректно);
+>   с `X-API-Key` → CSRF-exempt, action `tech.check_all_services` вернул
+>   `status: ok` с реальными health-check'ами бэкендов.
+> - **Найдено и исправлено 3 дефекта в rate-limit цепочке** (каждый ломал
+>   защищённый endpoint в 500/422): аннотации `Any` вместо starlette
+>   Request/Response в `SafeRateLimiter`, `request.user`-property без
+>   AuthenticationMiddleware, отсутствующий `blocking` в
+>   `RedisLimiterAdapter`. Коммиты `82f433d49`, `e2645f11f`, `f66b7cdfa`.
+> - **Регрессии, найденные и закрытые**: контракт feature-флагов
+>   LangGraph (`ef9d81625`), doc-reference гейт после удаления
+>   `langgraph_postgres_saver` (`0d513d18d`), CLI-scaffold с no-op processor
+>   и legacy-путём `dsl_routes/` (`c197f5dc0`).
+> - **Security-гейты**: `make cve-gate` → PASS, 0 unignored (5 allowlist без
+>   upstream fix, re-review 2026-12-15); `make audit-deps` → EXIT=0 (раньше
+>   падал с `OSError 28` на заполненном диске).
+> - **RPA**: browser launch переведён на канонический `retry_async` (tenacity,
+>   R-V15-8) + cleanup частичного startup по R-V15-11; 85 RPA-тестов (unit +
+>   integration, включая real Chromium) проходят (`9442e8da6`).
+>
+> **Известные ограничения среды** (не дефекты кода): нет MongoDB, Redis,
+> OTel-collector, Vault — проверки, требующие их, падают по таймауту;
+> APScheduler деградирует в MemoryJobStore без sync-драйвера БД.
+>
+> **Открытые вопросы, требующие владельца**: судьба `core/rate_limiter/` и
+> `core/utils/cache_keys.py` — Draft ADR-0350 подготовлен, удаление требует
+> подтверждения.
+>
+> ---
+>
 > **Last verified**: 2026-09-09, вечер (prod-readiness sprint — см. FUNCTIONAL_TEST_REPORT.md и FINAL_REPORT.md)
 >
 > **2026-09-09 (Prod-Readiness Sprint — 13 метрик, direct verification)**:
