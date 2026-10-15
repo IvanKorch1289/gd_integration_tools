@@ -47,7 +47,15 @@ def test_v3_callback_noop_without_langfuse() -> None:
 
 
 def test_v3_callback_calls_span() -> None:
-    """v3-callback вызывает start_as_current_span и span.update с корректными данными."""
+    """v3-callback вызывает start_as_current_span и span.update с корректными данными.
+
+    2026-10-15 regression fix: тест мокает ``anonymize_trace_payload``.
+    Раньше вызывался реальный Presidio → spaCy pipeline → sympy FactKB,
+    что занимало >30s и роняло тест по pytest-timeout. Presidio покрыт
+    отдельными тестами (``tests/unit/services/ai/test_ai_agent_rag.py`` и
+    ``tests/integration/ai/test_presidio_active.py``); здесь проверяется
+    только span-контракт LangFuse v3.
+    """
     from src.backend.services.ai.gateway.langfuse_callback_v3 import LangFuseCallbackV3
 
     # Подготовим mock LangFuse клиента.
@@ -67,16 +75,21 @@ def test_v3_callback_calls_span() -> None:
         "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
         "response_cost": 0.002,
     }
-    cb(
-        kwargs={
-            "model": "openai/gpt-4o-mini",
-            "messages": [{"role": "user", "content": "привет"}],
-            "metadata": {"tenant": "bank_ru", "route": "credit_check"},
-        },
-        response_obj=response,
-        start_time="2026-05-13T10:00:00",
-        end_time="2026-05-13T10:00:01",
-    )
+    # Presidio-spaCy инициализация (~30s+) — мокаем passthrough.
+    with patch(
+        "src.backend.services.ai.gateway.langfuse_pii_callback.anonymize_trace_payload",
+        side_effect=lambda payload, *, tenant_id: payload,
+    ):
+        cb(
+            kwargs={
+                "model": "openai/gpt-4o-mini",
+                "messages": [{"role": "user", "content": "привет"}],
+                "metadata": {"tenant": "bank_ru", "route": "credit_check"},
+            },
+            response_obj=response,
+            start_time="2026-05-13T10:00:00",
+            end_time="2026-05-13T10:00:01",
+        )
 
     # Проверяем, что span был создан с правильным именем трассы.
     fake_client.start_as_current_span.assert_called_once()

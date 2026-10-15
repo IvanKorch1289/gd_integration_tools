@@ -31,17 +31,44 @@ SRC = ROOT / "src"
 
 
 def processor_template(class_name: str) -> str:
-    """Возвращает код нового DSL-процессора."""
+    """Возвращает код нового DSL-процессора.
+
+    2026-10-15: шаблон переведён с no-op (``return None`` + TODO) на
+    рабочий паттерн — демонстрирует ``BaseProcessor.set_result``,
+    ``SideEffectKind`` и ``ExecutionContext`` attributes. Раньше
+    сгенерированный файл содержал только ``return None``, что делало
+    его бесполезным как стартовую точку.
+    """
     return dedent(f'''
         """{class_name} processor.
 
-        Описание работы процессора — заполните при реализации.
+        Сгенерировано ``python tools/scaffold.py processor --name {class_name}``.
+
+        Базовый шаблон демонстрирует рабочий паттерн DSL-процессора:
+
+        * ``side_effect`` — engine использует это для retry-стратегии и
+          Saga compensation (``PURE`` = нет внешних эффектов, можно
+          безопасно retry);
+        * ``set_result`` — канонический способ записи в
+          ``exchange.in_message.body`` / exchange properties;
+        * ``context`` — доступ к settings, correlation_id, tenant_id.
+
+        Чтобы сделать свой процессор:
+        1. Переименуйте класс и default-name в ``__init__``;
+        2. Замените демо-логику в ``process()`` своей бизнес-логикой;
+        3. Установите ``side_effect = SideEffectKind.IO``, если процессор
+           читает state или пишет наружу;
+        4. Установите ``compensatable = False`` для irreversible-операций
+           (отправка email, RPA-действие);
+        5. При необходимости задайте ``required_capability`` —
+           engine сделает capability-check через ``AuthorizationFacade``.
         """
 
         from __future__ import annotations
 
-        from typing import Any
+        from typing import Any, ClassVar
 
+        from src.backend.core.types.side_effect import SideEffectKind
         from src.backend.dsl.engine.context import ExecutionContext
         from src.backend.dsl.engine.exchange import Exchange
         from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -49,6 +76,12 @@ def processor_template(class_name: str) -> str:
 
         class {class_name}Processor(BaseProcessor):
             """Кратко опишите назначение процессора."""
+
+            # Engine использует эти class-vars для retry/Saga-стратегии.
+            # По умолчанию PURE (нет внешних эффектов — безопачный retry).
+            side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
+            compensatable: ClassVar[bool] = True
+            required_capability: ClassVar[str | None] = None
 
             def __init__(self, *, name: str | None = None) -> None:
                 super().__init__(name=name or "{class_name.lower()}")
@@ -59,9 +92,32 @@ def processor_template(class_name: str) -> str:
                 Args:
                     exchange: Текущее сообщение pipeline.
                     context: Контекст исполнения (settings, metrics, tracing).
+
+                Returns:
+                    ``None`` — мутация происходит через ``exchange``.
+
                 """
-                # TODO: реализуйте бизнес-логику
-                return None
+                # 1. Capability-gate (если задана required_capability).
+                #    BaseProcessor.auth_check делает проверку через
+                #    AuthorizationFacade и возвращает False при denied.
+                # if not await self.auth_check(exchange):
+                #     return
+
+                # 2. Демо-логика: записываем маркер через set_result.
+                #    Замените на свою бизнес-логику.
+                self.set_result(exchange, "body.{class_name.lower()}_processed", True)
+                # correlation_id приходит из ASGI-контекста (asgi-correlation-id)
+                # и уже прописан в exchange.meta на этапе создания Exchange.
+                self.set_result(
+                    exchange,
+                    "properties.{class_name.lower()}_correlation_id",
+                    exchange.meta.correlation_id,
+                )
+                self.set_result(
+                    exchange,
+                    "properties.{class_name.lower()}_route_id",
+                    context.route_id,
+                )
     ''').lstrip()
 
 
