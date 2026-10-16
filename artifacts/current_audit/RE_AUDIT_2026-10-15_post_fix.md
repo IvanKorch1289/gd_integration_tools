@@ -491,3 +491,132 @@ path» и «YAML route execution», — как только устранён д�
 догадками. Отдельное расследование — рекомендуемый следующий шаг; гипотеза
 «буферизация ответа в middleware» проверкой снята, гипотеза «блокирующий
 sync-вызов» остаётся ведущей.
+
+---
+
+# Пятый проход: «ошибки при пуше» — pre-push гейты и CI workflow'ы (2026-10-16)
+
+## Контекст
+
+Пользовательский запрос: «продолжай, исправить ошибки при пуше». Развилка
+оказалась шире, чем хуки `pre-commit` (8 штук, стадия `pre-push`) и сам
+`pre-push` workflow в CI (9 блокирующих гейтов) — пуск триггерится ещё в
+**16 workflow'ах** (adr-sync, api-fuzz, docs-publish, image, lint,
+perf-gate, release-gate, release, sbom, security, sentinel-integration,
+sprint-health, stubs-drift, test, type, zap). Часть из них проверялась
+локально, часть — слишком тяжёлая/требует внешних сервисов.
+
+## Зелёное по итогам прохода
+
+| Проверка | Статус |
+|---|---|
+| `pre-commit` `ruff` + `ruff-format` | ✅ clean, формат приведён к канону |
+| `pre-commit` `check-compat` (2744 файла) | ✅ |
+| `pre-commit` `check-streamlit-security` | ✅ |
+| **Все 9 pre-push гейтов** | ✅ `exit 0` (см. таблицу ниже) |
+| `lint.yml` `compileall` | ✅ |
+| `lint.yml` `gen_dsl_stubs --check` | ✅ после регенерации `base.pyi` |
+| `lint.yml` `check_python3_syntax` | ✅ |
+| `lint.yml` `ruff check src tests` | ✅ (17 → 0 ошибок) |
+| `lint.yml` `ruff F821` | ✅ |
+| `lint.yml` `ruff ERA/RUF whitelist` | ✅ |
+| `lint.yml` `check_custom_code --strict` | ✅ (vulture 0 findings) |
+| `lint.yml` `ruff format --check src tests` | ✅ (8 файлов переформатировано) |
+| `lint.yml` `check_compat` | ✅ |
+| `lint.yml` `check_layers` | ✅ |
+| `stubs-drift.yml` `gen_dsl_stubs` | ✅ после регенерации |
+| `adr-sync.yml` `generate_adr_index` | ✅ индекс перегенерирован |
+| `type.yml` `make type-check-budget` | ✅ (2 mypy-ошибки при бюджете 5) |
+| `security.yml` `pip_audit_gate` | ✅ (0 unignored, 5 allowlist) |
+
+## Pre-push гейты: что блокировало и почему
+
+Три из девяти падали. Каждый — своя история, ни одна не была результатом
+работы этой сессии (все воспроизведены на audit HEAD `32ecc5662` через
+worktree):
+
+1. **`v11-artefacts-check` → ModuleNotFoundError.**
+   `tools/export_v11_artefacts.py` импортировал `PluginManifest` по старому
+   пути `services.plugins.manifest_toml`. Каноническое место —
+   `core/plugin_runtime/manifest_toml.py` (так импортирует весь код, включая
+   `services/plugins/loader/`); прежний путь нарушал и слои. После починки
+   гейт заработал и перегенерировал 3 устаревших артефакта через
+   `make v11-artefacts`.
+
+2. **`check-secrets-simple --strict` → 9 находок, 0 реальных секретов.**
+   Проверено вручную каждое. Семь — дефект детектора: паттерн PEM матчил
+   только строку заголовка, без тела ключа, поэтому ловились пустые
+   заглушки `b"-----BEGIN PRIVATE KEY-----\n"`, `assert b"-----BEGIN PRIVATE
+   KEY-----" in chain.key_pem` и `FAKE`/`FAKE_KEY` в фикстурах.
+   Исправление: заголовок засчитывается находкой только если в файле есть
+   PEM-блок с настоящим base64-телом. Две оставшиеся — опубликованные
+   вендорами демо (AWS `AKIAIOSFODNN7EXAMPLE`, JWT с jwt.io) — вынесены
+   в `tools/check_secrets_simple_allowlist.txt` (конвенция проекта
+   `tools/<check>_allowlist.txt`). Allowlist матчится по
+   `путь+строка+паттерн` — одной строкой нельзя скрыть утечку в соседней.
+
+   Отдельно: моя первая версия правки была **неверной** и отключала бы
+   детект целиком — многострочный regex не срабатывает при построчном
+   скане. Это поймал регрессионный тест, написанный на «а настоящие ключи
+   ловятся?». Тест теперь доказывает обе стороны: заглушки не флагуются,
+   реальный PEM/RSA-PEM/PAT/AWS-ключ обнаруживаются, allowlist доказанно
+   узкий.
+
+3. **`check-deadline-propagation --strict` → 1 LEGACY.**
+   `saga_lra_processor/lifecycle_mixin.py:76` — `asyncio.wait_for` «без
+   deadline chain». Код на самом деле пропагирует deadline корректно
+   (`remaining = deadline - time.monotonic()`, проверка `remaining <= 0`,
+   сужение `min(step_timeout, remaining)`) — ровно то, чего требует
+   ADR-0305. Причина в **несимметричности эвристики**: она знала только
+   `min(remaining, …)` и `remaining() <= 0` (вызов метода), но не
+   равнозначные `min(X, remaining)` и `remaining <= 0`. Дописал обе
+   симметричные формы; гейт не ослаблен — голый `asyncio.wait_for` без
+   сужения остаётся LEGACY (закреплено тестом).
+
+## Дополнительно: `lint.yml` падал по трём причинам
+
+Все три **pre-existing** (воспроизведены на audit HEAD):
+
+1. **vulture (check_custom_code --strict)**: unused variable `authenticated`
+   в `_send_tenant_mismatch` — параметр не использовался в теле
+   (сообщение 403 намеренно статическое, чтобы не раскрывать tenant
+   неавторизованному клиенту). Оба параметра удалены; диагностические
+   значения и так логируются вызывающим кодом (`tenant DENY` WARNING).
+   Поведение ответа не изменилось.
+
+2. **ruff check src tests**: 14 авто-исправимых + 3 ручных:
+   - F841 `ctx` присваивался, но не использовался: тесты проверяли
+     `pool._contexts[0]`, игнорируя значение, которое отдаёт `acquire()`.
+     Вместо удаления добавлена проверка `ctx is pool._contexts[0].context`
+     — тест стал строже;
+   - S112 broad `except Exception: continue` в пробе портов заменён на
+     `httpx.RequestError`: свободный порт — ожидаемый исход, broad-объятие
+     маскировало бы реальные дефекты разбора ответа.
+
+3. **gen_dsl_stubs**: `base.pyi` отставал по рантайму — добавлены импорт
+   `ResponseBinding`, полная сигнатура `feature_flag()` и метод
+   `to_response()` (ADR-0349). Проверено по исходникам: всё это реально
+   есть в рантайме, стаб просто отстал.
+
+## Открытый риск: `test.yml` coverage gate
+
+`tools/check_coverage_gate.py main` вызывается с `--threshold 75 --strict`,
+а baseline `coverage_percent` = 52.25. **Если реальное покрытие не выросло
+с 28.09.2025, гейт упадёт на пуше.** Это pre-existing долг, к сессии
+отношения не имеет. Для верификации запущен полный прогон
+`pytest tests/unit tests/core --cov=src` в фоне (занимает ~30–40 минут);
+результат будет добавлен ниже отдельной записью.
+
+## Не верифицировано в этом проходе (pre-existing, тяжёлое или требует внешних сервисов)
+
+- `api-fuzz.yml` — fuzzing, требует schemathesis
+- `image.yml` — Docker build
+- `perf-gate.yml`, `perf.yml` — performance-тесты
+- `release.yml`, `release-gate.yml` — release pipeline
+- `sbom.yml` — SBOM-генерация
+- `sentinel-integration.yml` — внешний sentinel
+- `zap.yml` — OWASP ZAP scan
+- `chaos.yml` — chaos-тестирование
+- `ai-eval-nightly.yml` — nightly, не на push
+- `ai-pr-review.yml` — PR-only
+- `docs-publish.yml` — публикация документации
