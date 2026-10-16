@@ -13,6 +13,7 @@ data_formats.py`` (190 LOC, 84% miss в coverage-отчёте). Модуль —
 from __future__ import annotations
 
 import json
+from typing import Any
 
 import pytest
 
@@ -299,3 +300,148 @@ class TestToTextHelper:
         """Sanity-check: ``json.dumps``+``json.loads`` — контракт для пар."""
         data = {"k": [1, 2, 3], "nested": {"a": "b"}}
         assert json.loads(json.dumps(data)) == data
+
+
+# ── Bencode (stdlib BitTorrent encoding) ────────────────────────────
+
+
+class TestBencode:
+    """Собственная ~40-строчная реализация Bencode (BitTorrent metafile).
+
+    Используется в ``to_bencode`` / ``from_bencode`` миксина. Stdlib-only,
+    без внешних deps; round-trip покрывает dict / list / str / bytes / int /
+    bool / None-supporting cases.
+    """
+
+    def test_int_round_trip(self) -> None:
+        from src.backend.dsl.engine.processors.format_convert._helpers import (
+            _bdecode,
+            _bencode,
+        )
+
+        for n in (0, 1, 42, -1, -42, 2**31, -(2**31), 2**63):
+            enc = _bencode(n)
+            assert enc.startswith(b"i") and enc.endswith(b"e"), f"shape for {n}"
+            val, new_pos = _bdecode(enc)
+            assert val == n
+            assert new_pos == len(enc)
+
+    def test_bool_encodes_as_int(self) -> None:
+        """bool → 1/0 в bencode (subclass of int). Round-trip теряет bool-тип
+        и приходит как int. Это согласуется со спекой Bencode.
+        """
+        from src.backend.dsl.engine.processors.format_convert._helpers import (
+            _bdecode,
+            _bencode,
+        )
+
+        assert _bdecode(_bencode(True))[0] == 1
+        assert _bdecode(_bencode(False))[0] == 0
+
+    def test_str_round_trip(self) -> None:
+        from src.backend.dsl.engine.processors.format_convert._helpers import (
+            _bdecode,
+            _bencode,
+        )
+
+        for s in ("", "spam", "Multi-byte: ёж", "with\0null"):
+            enc = _bencode(s)
+            val, _ = _bdecode(enc)
+            assert val == s.encode("utf-8"), f"bencode str не round-trip: {s!r}"
+
+    def test_bytes_round_trip(self) -> None:
+        from src.backend.dsl.engine.processors.format_convert._helpers import (
+            _bdecode,
+            _bencode,
+        )
+
+        for b in (b"", b"\x00", b"\x00\x01\x02", b"with embedded \x00 null"):
+            val, _ = _bdecode(_bencode(b))
+            assert val == b, f"bencode bytes не round-trip: {b!r}"
+
+    def test_list_round_trip(self) -> None:
+        from src.backend.dsl.engine.processors.format_convert._helpers import (
+            _bdecode,
+            _bencode,
+        )
+
+        cases: list[list[Any]] = [
+            [],
+            [1, 2, 3],
+            [b"a", b"b", b"c"],  # str при бенкоде становится bytes
+            [[1, 2], [3, 4]],
+        ]
+        for lst in cases:
+            val, _ = _bdecode(_bencode(lst))
+            assert val == lst, f"bencode list не round-trip: {lst!r}"
+
+    def test_dict_keys_sorted_lexicographically(self) -> None:
+        """Спецификация Bencode требует сортировки ключей — без этого разные
+        словари с одинаковым содержимым могли бы сериализоваться по-разному,
+        ломая сравнение торрент-метаданных.
+        """
+        from src.backend.dsl.engine.processors.format_convert._helpers import _bencode
+
+        enc = _bencode({"b": 1, "a": 2, "c": 3})
+        # Внутри b'd' ключи идут лексикографически; без пробелов.
+        assert enc == b"d1:ai2e1:bi1e1:ci3ee"
+
+    def test_dict_round_trip_str_keys_become_bytes(self) -> None:
+        """str-ключи и str-значения в bencode становятся bytes. Round-trip
+        возвращает bytes. Это спецификация bencode.
+        """
+        from src.backend.dsl.engine.processors.format_convert._helpers import (
+            _bdecode,
+            _bencode,
+        )
+
+        d = {"name": "Alice", "age": 30, "tags": ["admin", "user"]}
+        expected = {
+            k.encode(): v.encode() if isinstance(v, str) else v for k, v in d.items()
+        }
+        # tags=[b"admin", b"user"] в результате декодирования.
+        expected[b"tags"] = [b"admin", b"user"]
+        val, _ = _bdecode(_bencode(d))
+        assert val == expected
+
+    def test_dict_rejects_non_string_keys(self) -> None:
+        from src.backend.dsl.engine.processors.format_convert._helpers import _bencode
+
+        with pytest.raises(TypeError, match="dict key must be str/bytes"):
+            _bencode({42: "value"})
+
+    def test_unsupported_type_raises(self) -> None:
+        from src.backend.dsl.engine.processors.format_convert._helpers import _bencode
+
+        with pytest.raises(TypeError, match="unsupported type"):
+            _bencode(object())
+
+    def test_incremental_decode_advances_position(self) -> None:
+        """``_bdecode(data, pos)`` возвращает (value, new_pos); поддержка
+        ``pos`` нужна для парсинга concatenated потоков и round-trip бенкода
+        dict-of-many-fields.
+        """
+        from src.backend.dsl.engine.processors.format_convert._helpers import (
+            _bdecode,
+            _bencode,
+        )
+
+        concat = _bencode("first") + _bencode(42) + _bencode([1, 2])
+        v1, p1 = _bdecode(concat, 0)
+        v2, p2 = _bdecode(concat, p1)
+        v3, p3 = _bdecode(concat, p2)
+        assert (v1, v2, v3) == (b"first", 42, [1, 2])
+        assert p3 == len(concat)
+
+    def test_truncated_data_raises(self) -> None:
+        from src.backend.dsl.engine.processors.format_convert._helpers import _bdecode
+
+        # b"i1" обрезано перед 'e'; str.index() поднимает ValueError.
+        with pytest.raises(ValueError):
+            _bdecode(b"i1")
+
+    def test_invalid_token_raises(self) -> None:
+        from src.backend.dsl.engine.processors.format_convert._helpers import _bdecode
+
+        with pytest.raises(ValueError, match="unexpected byte"):
+            _bdecode(b"x")
