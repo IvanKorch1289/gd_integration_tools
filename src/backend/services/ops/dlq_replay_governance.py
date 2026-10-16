@@ -349,7 +349,7 @@ class DLQReplayGovernor:
 
                 try:
                     return self._redact_recursive(json.loads(payload))
-                except json.JSONDecodeError, ValueError:
+                except (json.JSONDecodeError, ValueError):
                     pass  # fall through to flat redaction
             # Flat string redaction.
             text = payload

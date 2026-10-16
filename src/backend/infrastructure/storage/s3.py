@@ -336,7 +336,7 @@ class S3ObjectStorage(ObjectStorage):
             # leak an in-flight multipart upload. Catch them BEFORE the OSError
             # branch (BaseException is parent), attempt abort, then re-raise
             # unchanged so the runtime/loop sees the original cancel signal.
-            except asyncio.CancelledError, MemoryError:
+            except (asyncio.CancelledError, MemoryError):
                 if upload_id is not None:
                     try:
                         await s3.abort_multipart_upload(

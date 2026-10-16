@@ -56,5 +56,5 @@ class CacheWriteProcessor(BaseProcessor):
 
             data = orjson.dumps(body, default=str).decode()
             await redis_client.cache_set(key=key, value=data, expire=self._ttl)
-        except ConnectionError, TimeoutError, OSError:
+        except (ConnectionError, TimeoutError, OSError):
             pass

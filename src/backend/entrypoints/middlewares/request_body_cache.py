@@ -179,7 +179,7 @@ class RequestBodyCacheMiddleware:
             if header_name == b"content-length":
                 try:
                     return int(header_value.decode("latin-1"))
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     return None
         return None
 

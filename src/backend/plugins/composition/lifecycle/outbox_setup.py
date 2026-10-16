@@ -54,7 +54,7 @@ def _resolve_outbox_msg_id(event: OutboxEvent) -> int | None:
     if cid.startswith(_ACK_MARKER_PREFIX):
         try:
             return int(cid.removeprefix(_ACK_MARKER_PREFIX))
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             return None
     return None
 

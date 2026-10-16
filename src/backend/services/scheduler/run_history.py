@@ -110,7 +110,7 @@ class RunHistoryStore:
                 try:
                     await session.commit()
                     created += 1
-                except IntegrityError, OperationalError:
+                except (IntegrityError, OperationalError):
                     # UNIQUE constraint failed — concurrent worker уже
                     # вставил этот тик. Skip (idempotent).
                     await session.rollback()

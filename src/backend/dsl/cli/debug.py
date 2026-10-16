@@ -305,7 +305,7 @@ def _get_processor_info(processor_class: str) -> dict[str, Any]:
                     "docstring": cls.__doc__ or "No docstring",
                     "params": _extract_params(cls),
                 }
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             continue
 
     raise ValueError(f"Processor '{processor_class}' not found")
@@ -326,7 +326,7 @@ def _extract_params(cls: type[BaseProcessor]) -> dict[str, str]:
                 if param.annotation != inspect.Parameter.empty
                 else "Any"
             )
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         pass
     return params
 

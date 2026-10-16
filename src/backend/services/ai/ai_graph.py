@@ -273,7 +273,7 @@ async def build_and_run_agent(
         # Re-raise so caller (REST/GraphQL/MCP) получает 503 / typed code,
         # а не silent dict `{"error": str(exc)}`.
         raise
-    except KeyError, ValueError, asyncio.CancelledError:
+    except (KeyError, ValueError, asyncio.CancelledError):
         # P2 fix (2026-10-15): agent tool execution boundary.
         # Typed exceptions (KeyError — missing tool/action,
         # ValueError — malformed LLM response, CancelledError —

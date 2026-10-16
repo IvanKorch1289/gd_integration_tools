@@ -42,7 +42,7 @@ class ClaudeProvider:
             blocks = response.get("content", [])
             if blocks and isinstance(blocks, list):
                 return blocks[0].get("text", "")
-        except AttributeError, IndexError, TypeError:
+        except (AttributeError, IndexError, TypeError):
             _logger.exception(
                 "ai_provider.api_shape_parse_failed",
                 extra={"provider": __name__, "return_value": ""},

@@ -127,7 +127,7 @@ class RotationScheduler:
             task.cancel()
             try:
                 await task
-            except asyncio.CancelledError, Exception:
+            except (asyncio.CancelledError, Exception):
                 pass
 
     def add_watch(self, name: str, *, current_version: int | None = None) -> None:
