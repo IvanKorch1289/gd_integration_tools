@@ -84,7 +84,7 @@ def _git(*args: str) -> str:
             timeout=60,
         )
         return proc.stdout.strip() if proc.returncode == 0 else ""
-    except OSError, subprocess.SubprocessError:
+    except (OSError, subprocess.SubprocessError):
         return ""
 
 
@@ -133,7 +133,7 @@ def _pytest_count() -> str:
             check=False,
             timeout=1800,
         )
-    except OSError, subprocess.SubprocessError:
+    except (OSError, subprocess.SubprocessError):
         return "unavailable"
     for line in reversed(proc.stdout.strip().splitlines()):
         if "collected" in line:
@@ -173,7 +173,7 @@ def _layer_baseline() -> str:
             check=False,
             timeout=600,
         )
-    except OSError, subprocess.SubprocessError:
+    except (OSError, subprocess.SubprocessError):
         return "unavailable"
     for line in proc.stdout.splitlines():
         if "Нарушений" in line:

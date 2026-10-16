@@ -106,7 +106,7 @@ def _find_wait_for_calls(path: Path) -> list[WaitForCall]:
     try:
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=str(path))
-    except SyntaxError, UnicodeDecodeError:
+    except (SyntaxError, UnicodeDecodeError):
         return calls
 
     for node in ast.walk(tree):
@@ -132,7 +132,7 @@ def _file_has_text(path: Path, *needles: str) -> bool:
     """Возвращает True, если хотя бы одна из подстрок встречается в файле."""
     try:
         source = path.read_text(encoding="utf-8")
-    except SyntaxError, UnicodeDecodeError:
+    except (SyntaxError, UnicodeDecodeError):
         return False
     return any(n in source for n in needles)
 
@@ -190,7 +190,7 @@ def classify_processor(path: Path) -> ProcessorStatus:
     # Detect fan-out patterns.
     try:
         source = path.read_text(encoding="utf-8")
-    except SyntaxError, UnicodeDecodeError:
+    except (SyntaxError, UnicodeDecodeError):
         source = ""
     fanout_patterns_found = tuple(p for p in FANOUT_PATTERNS if p in source)
     has_fanout = bool(fanout_patterns_found)

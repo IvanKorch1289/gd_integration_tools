@@ -110,7 +110,7 @@ def _check_params(
         return []
     try:
         sig = inspect.signature(method)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return []
 
     has_var_kw = any(

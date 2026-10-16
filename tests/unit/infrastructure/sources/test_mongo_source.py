@@ -527,11 +527,11 @@ async def test_start_invokes_callback(monkeypatch: pytest.MonkeyPatch) -> None:
 
     try:
         await asyncio.wait_for(task, timeout=2.0)
-    except TimeoutError, asyncio.CancelledError:
+    except (TimeoutError, asyncio.CancelledError):
         task.cancel()
         try:
             await task
-        except asyncio.CancelledError, Exception:
+        except (asyncio.CancelledError, Exception):
             pass
 
     assert len(received_events) >= 1

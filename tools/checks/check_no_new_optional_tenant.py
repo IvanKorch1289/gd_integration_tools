@@ -199,7 +199,7 @@ def _read_baseline() -> list[dict] | None:
         return None
     try:
         return json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
-    except OSError, json.JSONDecodeError:
+    except (OSError, json.JSONDecodeError):
         return None
 
 

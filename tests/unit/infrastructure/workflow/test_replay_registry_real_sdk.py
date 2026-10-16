@@ -34,7 +34,7 @@ try:
     workflow_decorator = (
         temporalio_workflow.defn if hasattr(temporalio_workflow, "defn") else None
     )
-except ImportError, AttributeError:
+except (ImportError, AttributeError):
     workflow_decorator = None
 
 from src.backend.core.workflow_registry import _TEMPORAL_DEFN_MARKER, WorkflowRegistry
@@ -61,7 +61,7 @@ try:
     else:
         _t_defn = None
         _t_run = None
-except ImportError, AttributeError:
+except (ImportError, AttributeError):
     temporalio_workflow = None
     _t_defn = None
     _t_run = None

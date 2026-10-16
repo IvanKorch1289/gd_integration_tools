@@ -110,7 +110,7 @@ def build_import_index() -> dict[str, list[str]]:
     for path in _iter_python_files():
         try:
             tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
-        except SyntaxError, ValueError:
+        except (SyntaxError, ValueError):
             continue
         for name in _imported_names(tree):
             index[name].append(str(path.relative_to(REPO)))

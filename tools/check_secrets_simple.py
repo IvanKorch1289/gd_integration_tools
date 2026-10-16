@@ -101,7 +101,7 @@ def _scan_file(path: Path) -> list[Finding]:
     findings: list[Finding] = []
     try:
         text = path.read_text(encoding="utf-8", errors="ignore")
-    except OSError, PermissionError:
+    except (OSError, PermissionError):
         return findings
     pem_material = _pem_material_lines(text)
     for lineno, line in enumerate(text.splitlines(), start=1):

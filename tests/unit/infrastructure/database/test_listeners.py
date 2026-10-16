@@ -137,7 +137,7 @@ def _extra_of(record: logging.LogRecord) -> dict:
         return {}
     try:
         node = ast.parse(message, mode="eval").body
-    except ValueError, SyntaxError:
+    except (ValueError, SyntaxError):
         return {}
     if not isinstance(node, ast.Dict):
         return {}
@@ -146,7 +146,7 @@ def _extra_of(record: logging.LogRecord) -> dict:
             continue
         try:
             extra = ast.literal_eval(value)
-        except ValueError, SyntaxError:
+        except (ValueError, SyntaxError):
             return {}
         return extra if isinstance(extra, dict) else {}
     return {}
