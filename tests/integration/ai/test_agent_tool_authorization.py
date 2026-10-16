@@ -99,13 +99,14 @@ def fake_langgraph_react(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
                                 {
                                     "id": "call-1",
                                     "name": action.replace(".", "_"),
-                                    "args": {"message": prompt, "tenant_id": "tenant-X"},
+                                    "args": {
+                                        "message": prompt,
+                                        "tenant_id": "tenant-X",
+                                    },
                                 }
                             ],
                         ),
-                        ToolMessage(
-                            content=tool_result, tool_call_id="call-1"
-                        ),
+                        ToolMessage(content=tool_result, tool_call_id="call-1"),
                         AIMessage(content=f"Final: {tool_result}"),
                     ]
                 }
@@ -144,10 +145,7 @@ def fake_langgraph_react(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
             command = ActionCommandSchema(
                 action=action,
                 payload={"message": prompt, "tenant_id": "tenant-X"},
-                meta=ActionCommandMetaSchema(
-                    principal="ai_agent:test",
-                    permissions=[],
-                ),
+                meta=ActionCommandMetaSchema(principal="ai_agent:test", permissions=[]),
             )
             result = await action_handler_registry.dispatch(command)
             if hasattr(result, "model_dump"):
@@ -278,9 +276,12 @@ class TestAgentToolAuthorization:
         # В реальности LangGraph либо retry, либо raise.
         # Контракт: result НЕ содержит echoed payload, есть явная
         # failure indicator.
-        assert "error" in result or "not registered" in str(result) or \
-            result.get("response", "").startswith("Cannot") or \
-            result.get("response") == f"OK: Try DENIED:{unregistered}", (
+        assert (
+            "error" in result
+            or "not registered" in str(result)
+            or result.get("response", "").startswith("Cannot")
+            or result.get("response") == f"OK: Try DENIED:{unregistered}"
+        ), (
             f"Denial contract broken: agent silently executed unregistered "
             f"action. Result: {result}"
         )
@@ -320,10 +321,10 @@ class TestAgentToolAuthorization:
             response = result.get("response", "")
             # Проверяем что tenant-isolation-test проброшен в action
             # (через ToolMessage content → final response)
-            assert "tenant-isolation-test" in str(response) or \
-                "ok" in str(response).lower(), (
-                f"Tenant не проброшен в action: response={response!r}"
-            )
+            assert (
+                "tenant-isolation-test" in str(response)
+                or "ok" in str(response).lower()
+            ), f"Tenant не проброшен в action: response={response!r}"
         finally:
             action_handler_registry._handlers.pop(ALLOWED_TOOL_ACTION, None)
             action_handler_registry._metadata.pop(ALLOWED_TOOL_ACTION, None)
@@ -388,9 +389,7 @@ class TestAgentToolAuthorization:
         from src.backend.services.ai.ai_graph import build_and_run_agent
 
         await build_and_run_agent(
-            "simple prompt no tools",
-            tool_actions=[],
-            gateway=fake_litellm_gateway,
+            "simple prompt no tools", tool_actions=[], gateway=fake_litellm_gateway
         )
         assert fake_langgraph_react["max_iterations"] == 10, (
             f"max_iterations changed: {fake_langgraph_react['max_iterations']}; "

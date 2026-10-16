@@ -60,21 +60,13 @@ class _PilotEchoService:
     """
 
     async def echo(
-        self,
-        *,
-        message: str,
-        tenant_id: str | None = None,
-        **_: Any,
+        self, *, message: str, tenant_id: str | None = None, **_: Any
     ) -> dict[str, Any]:
         # principal/tenant читаются из auth_context, который попадает
         # в service через meta-параметр (см. ActionHandlerRegistry
         # invoke flow). В простом тесте мы читаем их напрямую из
         # request-context singleton — для unit-style E2E это допустимо.
-        return {
-            "echoed": message,
-            "tenant_seen": tenant_id,
-            "ok": True,
-        }
+        return {"echoed": message, "tenant_seen": tenant_id, "ok": True}
 
 
 _PILOT_SERVICE = _PilotEchoService()
@@ -91,9 +83,7 @@ def _get_pilot_service() -> _PilotEchoService:
 def pilot_action_registered() -> Any:
     """Регистрирует pilot action до теста, удаляет после."""
     spec = ActionHandlerSpec(
-        action=PILOT_ACTION,
-        service_getter=_get_pilot_service,
-        service_method="echo",
+        action=PILOT_ACTION, service_getter=_get_pilot_service, service_method="echo"
     )
     action_handler_registry.register_many([spec])
     yield spec
@@ -108,9 +98,7 @@ class TestAuthorizedVerticalE2E:
     """Вертикальный сценарий: авторизованный caller проходит через шину."""
 
     @pytest.mark.asyncio
-    async def test_dispatch_action_via_rest(
-        self, pilot_action_registered: Any
-    ) -> None:
+    async def test_dispatch_action_via_rest(self, pilot_action_registered: Any) -> None:
         """REST path (``entrypoints.base.dispatch_action``) выполняет
         registered action и возвращает result."""
         payload = {"message": "hello-rest", "tenant_id": "tenant-A"}
@@ -164,9 +152,7 @@ class TestAuthorizedVerticalE2E:
         command = ActionCommandSchema(
             action=PILOT_ACTION,
             payload=payload,
-            meta=ActionCommandMetaSchema(
-                principal="mcp-test-user", permissions=[]
-            ),
+            meta=ActionCommandMetaSchema(principal="mcp-test-user", permissions=[]),
         )
         mcp_result = await action_handler_registry.dispatch(command)
         # result может быть dict or Pydantic model
@@ -178,9 +164,7 @@ class TestAuthorizedVerticalE2E:
         assert rest_result["tenant_seen"] == mcp_result["tenant_seen"] == "tenant-B"
 
     @pytest.mark.asyncio
-    async def test_dispatch_action_via_soap(
-        self, pilot_action_registered: Any
-    ) -> None:
+    async def test_dispatch_action_via_soap(self, pilot_action_registered: Any) -> None:
         """SOAP path: тот же ``dispatch_action`` через ``source='soap'``.
 
         SOAP handler вызывает ``dispatch_action(action, payload,
@@ -231,16 +215,12 @@ class TestAuthorizedVerticalE2E:
         graphql_call: Any = None
         with pytest.raises(KeyError) as exc_rest:
             await dispatch_action(
-                action="missing.vertical.action",
-                payload={"x": 1},
-                source="rest",
+                action="missing.vertical.action", payload={"x": 1}, source="rest"
             )
         rest_call = exc_rest
         with pytest.raises(KeyError) as exc_graphql:
             await dispatch_action(
-                action="missing.vertical.action",
-                payload={"x": 1},
-                source="graphql",
+                action="missing.vertical.action", payload={"x": 1}, source="graphql"
             )
         graphql_call = exc_graphql
         # Оба keyerror ссылаются на тот же action name
@@ -281,8 +261,7 @@ class TestAuthorizedVerticalE2E:
                 action=capture_action,
                 payload={"input": "x"},
                 meta=ActionCommandMetaSchema(
-                    principal="ai_agent:capture_test",
-                    permissions=["role:test"],
+                    principal="ai_agent:capture_test", permissions=["role:test"]
                 ),
             )
             result = await action_handler_registry.dispatch(command)
@@ -311,9 +290,7 @@ class TestAuthorizedVerticalE2E:
             action=PILOT_ACTION,
             payload={"message": "x", "tenant_id": "tenant-correlation"},
             meta=ActionCommandMetaSchema(
-                principal="test",
-                permissions=[],
-                correlation_id="corr-e2e-vertical-1",
+                principal="test", permissions=[], correlation_id="corr-e2e-vertical-1"
             ),
         )
         result = await action_handler_registry.dispatch(command)

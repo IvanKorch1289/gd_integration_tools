@@ -78,7 +78,9 @@ class TestProcessorTemplateQuality:
         assert "SideEffectKind" in code
         assert "compensatable" in code
         assert "required_capability" in code
-        assert "from src.backend.core.types.side_effect import SideEffectKind" in code, (
+        assert (
+            "from src.backend.core.types.side_effect import SideEffectKind" in code
+        ), (
             "SideEffectKind импортируется из src.backend.core.types.side_effect "
             "(НЕ из processors.base — там только re-export/использование)"
         )

@@ -160,9 +160,7 @@ class TestAgentExceptionBoundary:
         Caller должен видеть CancelledError чтобы решить: retry,
         propagate, или abort request.
         """
-        _mock_langgraph_with_failing_agent(
-            monkeypatch, asyncio.CancelledError()
-        )
+        _mock_langgraph_with_failing_agent(monkeypatch, asyncio.CancelledError())
         from src.backend.services.ai.ai_graph import build_and_run_agent
 
         with pytest.raises(asyncio.CancelledError):

@@ -244,9 +244,8 @@ def _mock_langgraph_with_memory_saver(
     captured_invoke (опц.): если задан, будет заполнен аргументами
     ``create_react_agent`` — для теста durable=False.
     """
-    def _default_create_react_agent(
-        llm: Any, tools: list[Any], **kwargs: Any
-    ) -> Any:
+
+    def _default_create_react_agent(llm: Any, tools: list[Any], **kwargs: Any) -> Any:
         if captured_invoke is not None:
             captured_invoke["llm_present"] = llm is not None
             captured_invoke["tools_count"] = len(tools)
@@ -286,8 +285,7 @@ def _mock_langgraph_with_memory_saver(
 
 @pytest.mark.asyncio
 async def test_checkpoint_backend_unavailable_raised_when_durable_no_backend(
-    monkeypatch: pytest.MonkeyPatch,
-    fake_chat_litellm_module: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch, fake_chat_litellm_module: dict[str, Any]
 ) -> None:
     """P0 fix (2026-10-15): durable=True без configured backend поднимает
     :class:`CheckpointBackendUnavailable` (НЕ silent fallback).
@@ -315,8 +313,7 @@ async def test_checkpoint_backend_unavailable_raised_when_durable_no_backend(
 
 @pytest.mark.asyncio
 async def test_checkpoint_backend_unavailable_with_thread_id(
-    monkeypatch: pytest.MonkeyPatch,
-    fake_chat_litellm_module: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch, fake_chat_litellm_module: dict[str, Any]
 ) -> None:
     """P0 fix: ``thread_id`` попадает в exception context."""
     from src.backend.core.config.features import feature_flags as ff_mod
@@ -353,7 +350,9 @@ async def test_durable_false_uses_memory_saver(
     from src.backend.services.ai.ai_graph import build_and_run_agent
 
     result = await build_and_run_agent(
-        "prompt-durable-false", tool_actions=[], durable=False,
+        "prompt-durable-false",
+        tool_actions=[],
+        durable=False,
         gateway=fake_litellm_gateway,
     )
     assert "error" not in result
@@ -364,8 +363,7 @@ async def test_durable_false_uses_memory_saver(
 
 @pytest.mark.asyncio
 async def test_checkpoint_backend_unavailable_propagates_through_generic_handler(
-    monkeypatch: pytest.MonkeyPatch,
-    fake_chat_litellm_module: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch, fake_chat_litellm_module: dict[str, Any]
 ) -> None:
     """P0 fix: broad ``except Exception`` НЕ конвертирует CheckpointBackend
     в ``{"error": str(exc)}`` dict.

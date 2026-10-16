@@ -101,29 +101,25 @@ class TestExpressReplyFailureContract:
         logger.error/critical.
         """
         notifier = _FailingNotifier(RuntimeError("express API down"))
-        channel = ExpressReplyChannel(
-            notifier=notifier, default_chat_id="chat-1"
-        )
+        channel = ExpressReplyChannel(notifier=notifier, default_chat_id="chat-1")
         response = _make_response(invocation_id="inv-must-survive-1")
 
-        with caplog.at_level(logging.ERROR, logger="messaging.invocation_replies.express"):
+        with caplog.at_level(
+            logging.ERROR, logger="messaging.invocation_replies.express"
+        ):
             # send() НЕ raise (fail-safe documented)
             result = await channel.send(response)
 
         # Caller получает None (no return value, fail-safe)
         assert result is None, (
-            f"send() should return None on failure (fail-safe contract); "
-            f"got {result!r}"
+            f"send() should return None on failure (fail-safe contract); got {result!r}"
         )
         # Notifier был вызван — failure НЕ silent skip
-        assert notifier._call_count == 1, (
-            "Notifier не вызван — silent skip, не failure"
-        )
+        assert notifier._call_count == 1, "Notifier не вызван — silent skip, не failure"
         # invocation_id попал в лог (anti data-loss contract)
         log_text = " ".join(r.message for r in caplog.records)
         assert "inv-must-survive-1" in log_text, (
-            f"invocation_id потерян в логах: {log_text!r}; "
-            "regression: silent data loss"
+            f"invocation_id потерян в логах: {log_text!r}; regression: silent data loss"
         )
         # exc type залогирован (observability)
         assert "RuntimeError" in log_text, (
@@ -144,7 +140,9 @@ class TestExpressReplyFailureContract:
         channel = ExpressReplyChannel(notifier=notifier, default_chat_id="chat-2")
         response = _make_response(invocation_id="inv-exc-type-test")
 
-        with caplog.at_level(logging.ERROR, logger="messaging.invocation_replies.express"):
+        with caplog.at_level(
+            logging.ERROR, logger="messaging.invocation_replies.express"
+        ):
             await channel.send(response)
 
         log_text = " ".join(r.message for r in caplog.records)
@@ -156,7 +154,9 @@ class TestExpressReplyFailureContract:
         )
 
     @pytest.mark.asyncio
-    async def test_no_chat_id_skips_with_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+    async def test_no_chat_id_skips_with_warning(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Нет chat_id в metadata + нет default → skip + warning.
 
         Это documented fail-safe: если некуда доставить, log
@@ -173,7 +173,9 @@ class TestExpressReplyFailureContract:
             metadata={},  # НЕТ chat_id в metadata
         )
 
-        with caplog.at_level(logging.WARNING, logger="messaging.invocation_replies.express"):
+        with caplog.at_level(
+            logging.WARNING, logger="messaging.invocation_replies.express"
+        ):
             await channel.send(response)
 
         log_text = " ".join(r.message for r in caplog.records)
@@ -208,12 +210,12 @@ class TestExpressReplyFailureContract:
                 )
 
         notifier = _OKNotifier()
-        channel = ExpressReplyChannel(
-            notifier=notifier, default_chat_id="chat-ok"
-        )
+        channel = ExpressReplyChannel(notifier=notifier, default_chat_id="chat-ok")
         response = _make_response(invocation_id="inv-ok-1", result={"data": 42})
 
-        with caplog.at_level(logging.ERROR, logger="messaging.invocation_replies.express"):
+        with caplog.at_level(
+            logging.ERROR, logger="messaging.invocation_replies.express"
+        ):
             await channel.send(response)
 
         error_records = [r for r in caplog.records if r.levelno >= logging.ERROR]

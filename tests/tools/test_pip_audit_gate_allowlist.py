@@ -56,7 +56,6 @@ def test_load_allowlist_returns_set_matching_file_content() -> None:
     fallback (бывший D-AUDIT-10301 bug) и файл случайно совпадёт с
     hardcoded-пустым set — тест должен упасть на этом.
     """
-    import re
 
     body = _CANONICAL_ALLOWLIST.read_text(encoding="utf-8")
     # Считаем непустые не-комментарные строки, как делает _load_allowlist.

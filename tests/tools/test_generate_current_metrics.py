@@ -29,9 +29,7 @@ def metric_tool_module() -> object:
     Скрипт лежит в ``tools/`` без ``__init__.py``; используем
     ``importlib.util.spec_from_file_location``.
     """
-    spec = importlib.util.spec_from_file_location(
-        "generate_current_metrics", TOOL_PATH
-    )
+    spec = importlib.util.spec_from_file_location("generate_current_metrics", TOOL_PATH)
     assert spec is not None and spec.loader is not None, (
         f"Не удалось загрузить spec для {TOOL_PATH}"
     )
@@ -77,7 +75,9 @@ def test_static_route_packages_ignores_underscore_dirs(
     )
     # Директория без route.toml НЕ должна считаться
     (fake_routes / "not_a_route").mkdir()
-    (fake_routes / "not_a_route" / "main.py").write_text("# nothing\n", encoding="utf-8")
+    (fake_routes / "not_a_route" / "main.py").write_text(
+        "# nothing\n", encoding="utf-8"
+    )
     # Файл на верхнем уровне — игнорируется
     (fake_routes / "stray.txt").write_text("not a dir\n", encoding="utf-8")
 

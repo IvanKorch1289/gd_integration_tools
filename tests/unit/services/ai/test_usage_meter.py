@@ -104,7 +104,7 @@ class TestExtractUsage:
         """Dict response с usage но без prompt_tokens → defaults 0."""
         response = {
             "usage": {
-                "completion_tokens": 50,
+                "completion_tokens": 50
                 # no prompt_tokens
             }
         }
@@ -115,9 +115,7 @@ class TestExtractUsage:
 
     def test_pydantic_object_response(self) -> None:
         """litellm.ModelResponse-style object с .usage attribute."""
-        usage_obj = SimpleNamespace(
-            prompt_tokens=200, completion_tokens=100
-        )
+        usage_obj = SimpleNamespace(prompt_tokens=200, completion_tokens=100)
         response = SimpleNamespace(usage=usage_obj, id="obj-1")
         stats = extract_usage(response)
         assert stats.prompt_tokens == 200
@@ -167,10 +165,7 @@ class TestExtractUsage:
         или ``int()`` coercion. Str не конвертится (int('100')=100,
         но мы не падаем — поведение зависит от int() coercion)."""
         response = {
-            "usage": {
-                "prompt_tokens": raw_prompt,
-                "completion_tokens": raw_completion,
-            }
+            "usage": {"prompt_tokens": raw_prompt, "completion_tokens": raw_completion}
         }
         if raw_prompt == "100":
             # int("100") works → ожидаем 100; raw_completion="50" → 50

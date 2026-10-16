@@ -71,9 +71,7 @@ async def real_browser_pool():
 
 
 @pytest.mark.asyncio
-async def test_two_contexts_have_isolated_cookies(
-    real_browser_pool: Any,
-) -> None:
+async def test_two_contexts_have_isolated_cookies(real_browser_pool: Any) -> None:
     """Два BrowserContext из pool имеют РАЗНЫЕ cookies.
 
     Audit P1 пункт 1: «Два BrowserContext имеют разные cookies и
@@ -95,18 +93,11 @@ async def test_two_contexts_have_isolated_cookies(
             )
             # Tenant A: ставим cookie
             await ctx_a.add_cookies(
-                [
-                    {
-                        "name": "tenant",
-                        "value": "tenant-A",
-                        "url": "https://example.com",
-                    }
-                ]
+                [{"name": "tenant", "value": "tenant-A", "url": "https://example.com"}]
             )
             cookies_a = await ctx_a.cookies()
             assert any(
-                c["name"] == "tenant" and c["value"] == "tenant-A"
-                for c in cookies_a
+                c["name"] == "tenant" and c["value"] == "tenant-A" for c in cookies_a
             ), f"Tenant A cookie not set: {cookies_a}"
 
             # Tenant B: должен быть пустой (изоляция)
@@ -119,9 +110,7 @@ async def test_two_contexts_have_isolated_cookies(
 
 
 @pytest.mark.asyncio
-async def test_two_contexts_have_isolated_local_storage(
-    real_browser_pool: Any,
-) -> None:
+async def test_two_contexts_have_isolated_local_storage(real_browser_pool: Any) -> None:
     """Два BrowserContext имеют РАЗНЫЙ localStorage.
 
     localStorage в Playwright полностью изолирован per-context. Этот
@@ -143,9 +132,7 @@ async def test_two_contexts_have_isolated_local_storage(
             await page_a.goto("https://example.com/")
             await page_a.evaluate("localStorage.setItem('tenant', 'tenant-A')")
             storage_a = await page_a.evaluate("localStorage.getItem('tenant')")
-            assert storage_a == "tenant-A", (
-                f"Tenant A localStorage broken: {storage_a}"
-            )
+            assert storage_a == "tenant-A", f"Tenant A localStorage broken: {storage_a}"
 
             page_b = await ctx_b.new_page()
             await page_b.goto("https://example.com/")
@@ -173,9 +160,7 @@ async def test_exception_in_body_closes_and_releases_context(
     # Phase 1: trigger exception в body
     with pytest.raises(RuntimeError, match="test-exception"):
         async with real_browser_pool.acquire() as ctx:
-            assert not ctx.is_closed(), (
-                "Context must be open inside acquire() body"
-            )
+            assert not ctx.is_closed(), "Context must be open inside acquire() body"
             raise RuntimeError("test-exception")
     # Phase 2: pool остался с size=2 — оба context снова доступны
     assert len(real_browser_pool._contexts) == 2, (
@@ -189,13 +174,12 @@ async def test_exception_in_body_closes_and_releases_context(
     # Phase 3: можем acquire'ить снова — slot реально свободен
     async with real_browser_pool.acquire() as ctx2:
         assert not ctx2.is_closed(), (
-            "Re-acquired context should be open (real context, not a "
-            "zombie/closed one)"
+            "Re-acquired context should be open (real context, not a zombie/closed one)"
         )
-        assert ctx2 is real_browser_pool._contexts[0].context or \
-            ctx2 is real_browser_pool._contexts[1].context, (
-            "Re-acquired context is not from the pool"
-        )
+        assert (
+            ctx2 is real_browser_pool._contexts[0].context
+            or ctx2 is real_browser_pool._contexts[1].context
+        ), "Re-acquired context is not from the pool"
 
 
 # ─────────────────────────── 3. cancellation during page op releases context ───────────────────────────
@@ -211,6 +195,7 @@ async def test_cancellation_during_page_op_releases_context(
     освобождает context». Проверяем через finally-block semantics
     в acquire() + реальный page.goto() который можно отменить.
     """
+
     async def _cancel_during_goto() -> None:
         async with real_browser_pool.acquire() as ctx:
             page = await ctx.new_page()

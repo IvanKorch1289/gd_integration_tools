@@ -220,19 +220,13 @@ def _emit(path: Path, code: str, dry_run: bool) -> None:
 @app.command(name="processor", help="Создать новый DSL-процессор")
 def cmd_processor(
     name: str = typer.Option(
-        ...,
-        "--name",
-        help="Имя класса (без Processor-суффикса).",
+        ..., "--name", help="Имя класса (без Processor-суффикса)."
     ),
     module: str | None = typer.Option(
-        None,
-        "--module",
-        help="Имя файла в processors/ (default: custom).",
+        None, "--module", help="Имя файла в processors/ (default: custom)."
     ),
     dry_run: bool = typer.Option(
-        False,
-        "--dry-run",
-        help="Показать содержимое без записи.",
+        False, "--dry-run", help="Показать содержимое без записи."
     ),
 ) -> None:
     """Создаёт файл процессора в ``src/backend/dsl/engine/processors/<module>.py``."""
@@ -244,20 +238,14 @@ def cmd_processor(
 
 @app.command(name="service", help="Создать новый сервис")
 def cmd_service(
-    name: str = typer.Option(
-        ...,
-        "--name",
-        help="Имя класса (без Service-суффикса).",
-    ),
+    name: str = typer.Option(..., "--name", help="Имя класса (без Service-суффикса)."),
     group: str | None = typer.Option(
         None,
         "--group",
         help="Подпакет: ai / ops / integrations / io / core (default: core).",
     ),
     dry_run: bool = typer.Option(
-        False,
-        "--dry-run",
-        help="Показать содержимое без записи.",
+        False, "--dry-run", help="Показать содержимое без записи."
     ),
 ) -> None:
     """Создаёт файл сервиса в ``src/services/<group>/<name>.py``."""
@@ -270,20 +258,12 @@ def cmd_service(
 
 @app.command(name="route", help="Создать новый DSL-маршрут")
 def cmd_route(
-    name: str = typer.Option(
-        ...,
-        "--name",
-        help="route_id (e.g., invoices.sync).",
-    ),
+    name: str = typer.Option(..., "--name", help="route_id (e.g., invoices.sync)."),
     source: str | None = typer.Option(
-        None,
-        "--source",
-        help="Источник (default: internal:manual).",
+        None, "--source", help="Источник (default: internal:manual)."
     ),
     dry_run: bool = typer.Option(
-        False,
-        "--dry-run",
-        help="Показать содержимое без записи.",
+        False, "--dry-run", help="Показать содержимое без записи."
     ),
 ) -> None:
     """Создаёт файл маршрута в ``src/backend/dsl/routes/<name>.py``."""
