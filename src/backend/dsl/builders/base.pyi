@@ -23,7 +23,7 @@ from src.backend.dsl.engine.exchange import Exchange
 
 from src.backend.dsl.engine.middleware import ProcessorMiddleware
 
-from src.backend.dsl.engine.pipeline import Pipeline
+from src.backend.dsl.engine.pipeline import Pipeline, ResponseBinding
 
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
@@ -991,7 +991,15 @@ class RouteBuilder:
         """Fallback-цепочка: последовательно пробует процессоры, останавливается на первом успехе."""
         ...
 
-    def feature_flag(self, name: str) -> Self:
+    def feature_flag(
+        self,
+        name: Union[str, None] = ...,
+        *,
+        flag: Union[str, None] = ...,
+        default: bool = ...,
+        stop_on_disabled: bool = ...,
+        output_field: str = ...,
+    ) -> Self:
         """Привязывает маршрут к feature flag (можно отключить без рестарта)."""
         ...
 
@@ -3193,6 +3201,10 @@ class RouteBuilder:
 
     def to_protobuf_like(self) -> RouteBuilder:
         """Convert ``dict`` → base64-encoded JSON ``bytes`` (protobuf-like wire format)."""
+        ...
+
+    def to_response(self, binding: ResponseBinding) -> Self:
+        """Привязать к маршруту response-binding (ADR-0349)."""
         ...
 
     def to_route(self, route_id: str, *, result_property: str = ...) -> RouteBuilder:

@@ -51,14 +51,14 @@ class TestBuilderFacadeDSLExportsIdentity:
         assert get_tracer is _orig
 
     def test_route_registry_identity(self) -> None:
-        from src.backend.dsl.registry import route_registry as _orig
         from src.backend.dsl.portal.builder_facade import route_registry
+        from src.backend.dsl.registry import route_registry as _orig
 
         assert route_registry is _orig
 
     def test_workflow_declaration_identity(self) -> None:
-        from src.backend.dsl.workflow.spec import WorkflowDeclaration as _orig
         from src.backend.dsl.portal.builder_facade import WorkflowDeclaration
+        from src.backend.dsl.workflow.spec import WorkflowDeclaration as _orig
 
         assert WorkflowDeclaration is _orig
 
@@ -87,16 +87,12 @@ class TestBuilderFacadeYAMLLoaders:
     """YAML loader functions identity preserved."""
 
     def test_load_workflow_from_yaml_callable(self) -> None:
-        from src.backend.dsl.portal.builder_facade import (
-            load_workflow_from_yaml,
-        )
+        from src.backend.dsl.portal.builder_facade import load_workflow_from_yaml
 
         assert callable(load_workflow_from_yaml)
 
     def test_load_workflow_from_file_callable(self) -> None:
-        from src.backend.dsl.portal.builder_facade import (
-            load_workflow_from_file,
-        )
+        from src.backend.dsl.portal.builder_facade import load_workflow_from_file
 
         assert callable(load_workflow_from_file)
 
@@ -108,9 +104,7 @@ class TestBuilderFacadeYAMLLoaders:
         assert callable(load_all_workflows_from_directory)
 
     def test_load_pipeline_from_yaml_callable(self) -> None:
-        from src.backend.dsl.portal.builder_facade import (
-            load_pipeline_from_yaml,
-        )
+        from src.backend.dsl.portal.builder_facade import load_pipeline_from_yaml
 
         assert callable(load_pipeline_from_yaml)
 
@@ -126,9 +120,7 @@ class TestBuilderFacadeUnknownAttribute:
 
     def test_existing_function_still_works(self) -> None:
         """Verify module-level functions still callable after refactor."""
-        from src.backend.dsl.portal.builder_facade import (
-            list_workflow_templates,
-        )
+        from src.backend.dsl.portal.builder_facade import list_workflow_templates
 
         result = list_workflow_templates()
         assert isinstance(result, list)

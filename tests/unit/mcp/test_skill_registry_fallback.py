@@ -70,4 +70,3 @@ def test_skill_registry_none_graceful_fallback() -> None:
         # Restore original SkillRegistry
         if original_skill_registry != "UNSET":
             gw_module.SkillRegistry = original_skill_registry
-

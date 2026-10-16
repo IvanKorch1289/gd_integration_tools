@@ -11,14 +11,16 @@
 
 Тест использует уже-запущенное приложение или поднимает временно.
 """
+
 from __future__ import annotations
+
 import socket
 import subprocess
 import time
 from pathlib import Path
 
-import pytest
 import httpx
+import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 # Порядок проверки (предпочитаем dev-сессию на 18008-18009)
@@ -40,17 +42,37 @@ def _app_url() -> str:
             r = httpx.get(f"http://127.0.0.1:{port}/openapi.json", timeout=1.5)
             if r.status_code == 200:
                 return f"http://127.0.0.1:{port}"
-        except Exception:
+        except httpx.RequestError:
+            # Порт свободен — это ожидаемый исход пробы, а не ошибка.
+            # Ловим узкий httpx.RequestError (ConnectError/Timeout и т.п.),
+            # а не broad Exception: broad-объятие маскировало бы реальные
+            # дефекты разбора ответа (S112).
             continue
     # Boot own
     port = _free_port()
     proc = subprocess.Popen(
-        ["uv", "run", "python", "-m", "uvicorn", "src.backend.main:app",
-         "--host", "127.0.0.1", "--port", str(port), "--log-level", "warning"],
+        [
+            "uv",
+            "run",
+            "python",
+            "-m",
+            "uvicorn",
+            "src.backend.main:app",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(port),
+            "--log-level",
+            "warning",
+        ],
         cwd=REPO,
-        env={"APP_PROFILE": "dev_light", "PATH": "/usr/bin:/bin",
-             "HOME": str(Path.home())},
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        env={
+            "APP_PROFILE": "dev_light",
+            "PATH": "/usr/bin:/bin",
+            "HOME": str(Path.home()),
+        },
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
     base = f"http://127.0.0.1:{port}"
     for _ in range(60):
@@ -108,6 +130,4 @@ def test_api_endpoint_csp_is_strict(app_url: str) -> None:
     """Любой /api/v1/ endpoint должен иметь строгую CSP (не CDN)."""
     r = httpx.head(f"{app_url}/api/v1/actions", timeout=5.0)
     csp = r.headers.get("content-security-policy", "")
-    assert "cdn.jsdelivr.net" not in csp, (
-        f"/api/* CSP must be strict, got: {csp!r}"
-    )
+    assert "cdn.jsdelivr.net" not in csp, f"/api/* CSP must be strict, got: {csp!r}"

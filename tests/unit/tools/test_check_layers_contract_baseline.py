@@ -70,9 +70,7 @@ def test_load_contract_tolerates_missing_file(
     assert check_layers._load_contract() == set()
 
 
-def test_load_baselines_returns_two_sets(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_load_baselines_returns_two_sets(monkeypatch: pytest.MonkeyPatch) -> None:
     """``_load_baselines`` возвращает пару, а не один объединённый набор."""
     monkeypatch.setattr(check_layers, "_load_allowlist", lambda: {"a\tb\tc"})
     monkeypatch.setattr(check_layers, "_load_contract", lambda: {"d\te\tf"})
@@ -95,7 +93,9 @@ def test_stale_detection_covers_contract_class(
     allowlist_file = tmp_path / "allowlist.txt"
     allowlist_file.write_text("a.py\tservices\tx.mod\n", encoding="utf-8")
     contract_file = tmp_path / "contract.txt"
-    contract_file.write_text("ghost.py\tservices\tsrc.backend.dsl.gone\n", encoding="utf-8")
+    contract_file.write_text(
+        "ghost.py\tservices\tsrc.backend.dsl.gone\n", encoding="utf-8"
+    )
 
     monkeypatch.setattr(check_layers, "ALLOWLIST_PATH", allowlist_file)
     monkeypatch.setattr(check_layers, "CONTRACT_PATH", contract_file)

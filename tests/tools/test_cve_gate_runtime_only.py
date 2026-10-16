@@ -63,9 +63,7 @@ def test_audit_deps_uses_uv_export_not_uv_freeze() -> None:
 
     # Найти recipe audit-deps до следующей строки верхнего уровня
     lines = body.splitlines()
-    start = next(
-        i for i, ln in enumerate(lines) if ln.startswith("audit-deps:")
-    )
+    start = next(i for i, ln in enumerate(lines) if ln.startswith("audit-deps:"))
     recipe: list[str] = []
     for line in lines[start + 1 :]:
         if line and not line[0].isspace() and not line.startswith(("##", "#")):
@@ -73,9 +71,7 @@ def test_audit_deps_uses_uv_export_not_uv_freeze() -> None:
         recipe.append(line)
     recipe_text = "\n".join(recipe)
 
-    assert re.search(
-        r"uv\s+export\s+--no-dev\s+--no-all-extras", recipe_text
-    ), (
+    assert re.search(r"uv\s+export\s+--no-dev\s+--no-all-extras", recipe_text), (
         "audit-deps recipe must use `uv export --no-dev --no-all-extras` "
         "to exclude [project.optional-dependencies] (redteam/ai/rag/mcp/rpa) "
         "from cve-gate."
@@ -115,14 +111,7 @@ def test_optional_extra_not_in_runtime_export(extra_pkg: str) -> None:
     они легитимные runtime-deps. Этот тест проверяет только direct extras.
     """
     proc = subprocess.run(
-        [
-            "uv",
-            "export",
-            "--no-dev",
-            "--no-all-extras",
-            "--format",
-            "requirements-txt",
-        ],
+        ["uv", "export", "--no-dev", "--no-all-extras", "--format", "requirements-txt"],
         capture_output=True,
         text=True,
         cwd=REPO,
@@ -154,10 +143,7 @@ def test_make_cve_gate_passes() -> None:
     Требует ~30-60 сек.
     """
     proc = subprocess.run(
-        ["make", "cve-gate"],
-        capture_output=True,
-        text=True,
-        cwd=REPO,
+        ["make", "cve-gate"], capture_output=True, text=True, cwd=REPO
     )
     assert proc.returncode == 0, (
         f"`make cve-gate` failed (exit {proc.returncode}):\n"
@@ -165,4 +151,3 @@ def test_make_cve_gate_passes() -> None:
         f"--- stderr ---\n{proc.stderr[-2000:]}"
     )
     assert "CVE gate passed" in proc.stdout or "CVE gate passed" in proc.stderr
-

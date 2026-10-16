@@ -47,9 +47,7 @@ SECURITY_MK = REPO_ROOT / "make" / "security.mk"
 def _target_recipe(path: Path, target: str) -> str:
     """Тело рецепта make-цели (до следующей цели верхнего уровня)."""
     lines = path.read_text(encoding="utf-8").splitlines()
-    start = next(
-        i for i, ln in enumerate(lines) if ln.startswith(f"{target}:")
-    )
+    start = next(i for i, ln in enumerate(lines) if ln.startswith(f"{target}:"))
     body: list[str] = []
     for line in lines[start + 1 :]:
         if line and not line[0].isspace() and not line.startswith(("##", "#")):
@@ -92,9 +90,7 @@ def _strip_messages(recipe: str) -> str:
     В `type-check-strict-profile` конструкция `$(WARN) "..."; exit 0; \\`
     стоит на одной строке — жадный `[^\\n]*` скрыл бы сам `exit 0`.
     """
-    return re.sub(
-        r'\$\((?:INFO|WARN|ERROR|SUCCESS)\)\s*"[^"]*"', "true", recipe
-    )
+    return re.sub(r'\$\((?:INFO|WARN|ERROR|SUCCESS)\)\s*"[^"]*"', "true", recipe)
 
 
 def _logical_commands(recipe: str) -> list[str]:
@@ -151,8 +147,7 @@ def _make_like_status(commands: list[str], env: dict[str, str]) -> int:
 
 
 @pytest.mark.parametrize(
-    ("target",),
-    [("type-check-strict",), ("type-check-strict-profile",)],
+    ("target",), [("type-check-strict",), ("type-check-strict-profile",)]
 )
 def test_type_check_gate_does_not_swallow_mypy_internal_error(target: str) -> None:
     """Гейты типов обязаны пробрасывать exit 2 (internal error) mypy.
@@ -265,8 +260,7 @@ def test_pip_audit_failures_are_not_silently_discarded_in_ci_path() -> None:
     reached, _ = _ci_reaches_cve_gate()
     suppressed = bool(
         re.search(
-            r"\bpip-audit\s+--[^\n]*\|\|\s*true",
-            _target_recipe(SECURITY_MK, "sbom"),
+            r"\bpip-audit\s+--[^\n]*\|\|\s*true", _target_recipe(SECURITY_MK, "sbom")
         )
     )
 

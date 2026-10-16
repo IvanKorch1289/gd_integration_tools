@@ -123,15 +123,18 @@ def _impersonation_allowed(auth: object, target_tenant: str) -> bool:
     return False
 
 
-async def _send_tenant_mismatch(
-    send: Send, *, authenticated: str, requested: str
-) -> None:
+async def _send_tenant_mismatch(send: Send) -> None:
     """Отклонить запрос 403 ``tenant_mismatch`` (fail-closed).
+
+    Тело ответа намеренно НЕ содержит значений tenant: ответ уходит
+    неаутентифицированному/неавторизованному клиенту, и подстановка
+    идентификаторов раскрывала бы их. Диагностические значения логируются
+    вызывающим кодом (см. ``tenant DENY`` WARNING выше по стеку), поэтому
+    передавать их сюда было избыточно — параметры удалены 2026-10-16
+    (vulture dead-code gate в CI).
 
     Args:
         send: ASGI send-канал.
-        authenticated: tenant из аутентифицированного principal'а.
-        requested: tenant из заголовка ``X-Tenant-ID``.
 
     """
     body = json.dumps(
@@ -222,9 +225,7 @@ class TenantMiddleware:
                         auth_tenant,
                         header_value,
                     )
-                    await _send_tenant_mismatch(
-                        send, authenticated=auth_tenant, requested=header_value
-                    )
+                    await _send_tenant_mismatch(send)
                     return
             # Авторитетный tenant: заголовок не может его переопределить.
             state["tenant_id"] = auth_tenant
@@ -245,9 +246,7 @@ class TenantMiddleware:
                     scope.get("path"),
                     header_value,
                 )
-                await _send_tenant_mismatch(
-                    send, authenticated=self._default, requested=header_value
-                )
+                await _send_tenant_mismatch(send)
                 return
             state["tenant_id"] = self._default
         elif "tenant_id" not in state:

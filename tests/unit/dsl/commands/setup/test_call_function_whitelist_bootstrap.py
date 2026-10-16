@@ -32,9 +32,9 @@ def test_collect_whitelist_helper_exists() -> None:
     """``_collect_call_function_whitelist_from_manifests`` определена в orchestrator."""
     from src.backend.dsl.commands.setup import orchestrator
 
-    assert hasattr(
-        orchestrator, "_collect_call_function_whitelist_from_manifests"
-    ), "Sprint 226 regression: whitelist collect helper not in orchestrator"
+    assert hasattr(orchestrator, "_collect_call_function_whitelist_from_manifests"), (
+        "Sprint 226 regression: whitelist collect helper not in orchestrator"
+    )
     assert callable(orchestrator._collect_call_function_whitelist_from_manifests)
 
 
@@ -87,7 +87,7 @@ def test_whitelist_helper_populates_from_manifest(tmp_path: Path) -> None:
 
     monkey = getattr(__import__("pytest"), "MonkeyPatch")
     mp = monkey()
-        # type: ignore[unused-ignore]
+    # type: ignore[unused-ignore]
     mp.setattr(settings_module, "settings", _StubSettings)
 
     # Гарантируем, что whitelist до теста пуст от прошлых вызовов.
@@ -107,8 +107,8 @@ def test_whitelist_helper_populates_from_manifest(tmp_path: Path) -> None:
 
 def test_whitelist_helper_survives_missing_dir(monkeypatch) -> None:
     """Helper no-op если settings.v11.extensions_dir не задан."""
-    from src.backend.dsl.commands.setup import orchestrator
     import src.backend.core.config.settings as settings_module
+    from src.backend.dsl.commands.setup import orchestrator
 
     class _StubSettings:
         class _StubV11:

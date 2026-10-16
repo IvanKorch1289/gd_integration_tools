@@ -24,19 +24,16 @@ Real Playwright runtime mock-out через прямой инжект в self._c
 (тесты не требуют настоящего браузера). Полная live-runtime проверка
 делается в integration-тестах или docker-compose.
 """
+
 from __future__ import annotations
 
 import asyncio
-from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
-from src.backend.services.rpa.browser_pool import (
-    PlaywrightBrowserPool,
-    _PooledContext,
-)
+from src.backend.services.rpa.browser_pool import PlaywrightBrowserPool, _PooledContext
 
 
 def _make_pool_with_mock_contexts(size: int = 2) -> PlaywrightBrowserPool:
@@ -55,9 +52,7 @@ def _make_pool_with_mock_contexts(size: int = 2) -> PlaywrightBrowserPool:
     pool._browser = None
     pool._contexts = [
         _PooledContext(
-            context=SimpleNamespace(close=_async_noop),
-            in_use=False,
-            created_at=0.0,
+            context=SimpleNamespace(close=_async_noop), in_use=False, created_at=0.0
         )
         for _ in range(size)
     ]
@@ -101,6 +96,8 @@ async def test_acquire_exception_releases_slot() -> None:
 
     with pytest.raises(RuntimeError, match="boom"):
         async with pool.acquire() as ctx:
+            # acquire() отдаёт ровно тот pooled-context, который помечен in_use.
+            assert ctx is pool._contexts[0].context
             assert pool._contexts[0].in_use is True
             raise RuntimeError("boom")
 
@@ -117,6 +114,7 @@ async def test_acquire_cancellation_releases_slot() -> None:
 
     with pytest.raises(asyncio.CancelledError):
         async with pool.acquire() as ctx:
+            assert ctx is pool._contexts[0].context
             assert pool._contexts[0].in_use is True
             raise asyncio.CancelledError()
 
@@ -155,6 +153,7 @@ async def test_shutdown_closes_all_contexts_and_resets_started() -> None:
         async def tracker(_orig=original):
             closed.append(_orig)
             return await _orig()
+
         p.context.close = tracker
 
     await pool.shutdown()

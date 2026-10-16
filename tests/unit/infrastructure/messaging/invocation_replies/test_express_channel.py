@@ -11,20 +11,18 @@ Proposal 4: заменить 'except Exception as _:' на 'except Exception as 
 через capture-logging сложно в async-kонтексте; вместо этого проверяем
 что source-файл содержит правильный паттерн (as exc + type(exc).__name__).
 """
+
 from __future__ import annotations
 
 import ast
 from pathlib import Path
-
-import pytest
 
 # Test file is at: tests/unit/infrastructure/messaging/invocation_replies/test_express_channel.py
 # Go up 5 levels to get to repo root:
 # tests/unit/infrastructure/messaging/invocation_replies → repo root
 REPO = Path(__file__).resolve().parents[5]
 EXPRESS_FILE = (
-    REPO
-    / "src/backend/infrastructure/messaging/invocation_replies/express.py"
+    REPO / "src/backend/infrastructure/messaging/invocation_replies/express.py"
 )
 
 
