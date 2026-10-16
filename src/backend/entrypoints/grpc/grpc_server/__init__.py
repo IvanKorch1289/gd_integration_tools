@@ -159,12 +159,12 @@ def _patch_rpc_methods() -> None:
             if not hasattr(_obj, "request_streaming"):
                 try:
                     _obj.request_streaming = False  # type: ignore[attr-defined]
-                except (AttributeError, TypeError):  # noqa: F401 — stub attribute injection best-effort
+                except AttributeError, TypeError:  # noqa: F401 — stub attribute injection best-effort
                     pass
             if not hasattr(_obj, "response_streaming"):
                 try:
                     _obj.response_streaming = False  # type: ignore[attr-defined]
-                except (AttributeError, TypeError):  # noqa: F401 — stub attribute injection best-effort
+                except AttributeError, TypeError:  # noqa: F401 — stub attribute injection best-effort
                     pass
 
     # D-AUDIT-18801 fix (cycle 188): wrap Stub.__init__ methods to
@@ -276,7 +276,7 @@ def _patch_rpc_methods() -> None:
 
                 _mod = importlib.import_module(_module_name)
                 _cls = getattr(_mod, _cls_name)
-            except (ImportError, AttributeError):
+            except ImportError, AttributeError:
                 continue
         else:
             try:
@@ -300,12 +300,12 @@ def _patch_rpc_methods() -> None:
         """
         try:
             method.__dict__[attr_name] = attr_value
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             # Some functions don't allow __dict__ assignment.
             # Try setattr on the function instead.
             try:
                 setattr(method, attr_name, attr_value)
-            except (AttributeError, TypeError):  # noqa: F401 — setattr best-effort for grpc methods
+            except AttributeError, TypeError:  # noqa: F401 — setattr best-effort for grpc methods
                 pass
 
     for _cls_name in (

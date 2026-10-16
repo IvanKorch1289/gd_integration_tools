@@ -81,7 +81,7 @@ def needs_argon2_upgrade(stored_hash: str) -> bool:
     try:
         ph = PasswordHasher()
         return ph.check_needs_rehash(stored_hash)
-    except (InvalidHashError, ValueError):
+    except InvalidHashError, ValueError:
         return True
 
 
@@ -229,7 +229,7 @@ class APIKeyAuth:
         if is_argon2_hash(expected_hash):
             try:
                 self._hasher.verify(expected_hash, raw)
-            except (VerifyMismatchError, VerificationError):
+            except VerifyMismatchError, VerificationError:
                 return False
             except InvalidHashError as exc:
                 logger.warning(

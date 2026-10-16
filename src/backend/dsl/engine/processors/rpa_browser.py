@@ -82,7 +82,7 @@ def _extract_domain(url: str) -> str:
 
         parsed = urlparse(url)
         return parsed.netloc or ""
-    except (ValueError, TypeError, AttributeError):
+    except ValueError, TypeError, AttributeError:
         return ""
 
 

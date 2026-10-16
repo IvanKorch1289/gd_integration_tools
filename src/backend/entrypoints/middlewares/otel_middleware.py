@@ -183,7 +183,7 @@ class OtelMiddleware:
                 span.set_attribute("http.status_code", response_status)
                 if response_status >= 500:
                     self._mark_error(span, RuntimeError(f"HTTP {response_status}"))
-            except (AttributeError, TypeError):  # noqa: violation-check — OTel API surface best-effort
+            except AttributeError, TypeError:  # noqa: violation-check — OTel API surface best-effort
                 pass
 
             # Post-response context: route_id может быть выставлен downstream.
@@ -192,7 +192,7 @@ class OtelMiddleware:
             if route_id:
                 try:
                     span.set_attribute("app.route_id", str(route_id))
-                except (AttributeError, TypeError):
+                except AttributeError, TypeError:
                     pass
 
     def _extract_context(self, scope: Scope) -> Any:
@@ -228,7 +228,7 @@ class OtelMiddleware:
         carrier: dict[str, str] = {}
         try:
             self._propagator.inject(carrier)
-        except (AttributeError, RuntimeError, TypeError, ValueError):  # pragma: no cover
+        except AttributeError, RuntimeError, TypeError, ValueError:  # pragma: no cover
             # cycle-9/D-AUDIT-1021: см. выше — narrow для inject path.
             return
         for key, value in carrier.items():

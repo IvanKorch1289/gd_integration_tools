@@ -243,8 +243,15 @@ DSL поддерживается двумя способами одноврем�
 >   игнорировался. Во всех `routes/*/*.dsl.yaml` блок удалён;
 > * **`RouteBuilder.to(...)` — это алиас `process(processor)`**
 >   (`dsl/builders/base/fluent_mixin.py:49`), т.е. принимает объект
->   процессора, а НЕ `(sink, code, body)`. Метода `.to_response()` не
->   существует. Поэтому response-binding отсутствует в обеих модах;
+>   процессора, а НЕ `(sink, code, body)`.
+>
+>   > **Amendment 2026-10-16.** `.to_response()` теперь существует
+>   > (`dsl/builders/base/__init__.py:332`, через ADR-0349):
+>   > `def to_response(self, binding: ResponseBinding) -> Self`.
+>   > Используется в `dsl/builders/variable_mixin.py:28`.
+>   > Но **YAML-loader по-прежнему не читает ключ `to:`** —
+>   > response-binding закрыт только в Python-моде, в YAML остаётся
+>   > gap (см. ADR-0349 Draft);
 > * **`policy` — `@property`, а не метод**, поэтому как YAML-шаг не
 >   вызывается. Политика повторов задаётся через `retry`;
 > * **`call_function` сейчас неисполним в strict-режиме.** Whitelist

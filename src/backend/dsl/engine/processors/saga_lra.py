@@ -609,7 +609,7 @@ class SagaLRAProcessor(BaseProcessor):
                 effective_timeout = remaining
         except SagaStepTimeoutError:
             raise
-        except (ImportError, AttributeError, RuntimeError):
+        except ImportError, AttributeError, RuntimeError:
             # Не ломаем saga-step, если RequestContext недоступен или
             # deadline_budget отсутствует — fallback к unbounded wait.
             pass

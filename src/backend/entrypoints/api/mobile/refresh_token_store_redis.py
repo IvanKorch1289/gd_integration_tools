@@ -113,7 +113,7 @@ class RedisRefreshTokenStore:
             # Token key value contains generation (set by issue)
             try:
                 token_gen = int(value)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 return False
             return token_gen == current_gen
         except Exception as exc:

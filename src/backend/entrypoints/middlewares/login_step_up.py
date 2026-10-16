@@ -124,7 +124,7 @@ def validate_step_up_token(token: str, client_ip: str) -> bool:
         return False
     try:
         payload = json.loads(base64.urlsafe_b64decode(payload_b64.encode("ascii")))
-    except (ValueError, json.JSONDecodeError):
+    except ValueError, json.JSONDecodeError:
         return False
     if not isinstance(payload, dict):
         return False

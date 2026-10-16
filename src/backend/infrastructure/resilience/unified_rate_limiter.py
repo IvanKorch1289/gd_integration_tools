@@ -121,7 +121,7 @@ class RedisRateLimiter:
             # get_redis_client() вешал запрос на 30-90с (connect retry).
             if not bool(getattr(settings.redis, "enabled", True)):
                 return {"remaining": policy.limit, "reset_at": 0, "limit": policy.limit}
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             pass  # конфиг недоступен — обычный путь (fail-open в except ниже)
 
         try:
