@@ -56,14 +56,30 @@ def acquire(self, cost: float = 1.0, *, timeout: float | None = None) -> bool:
 
 ### `core/utils/cache_keys.py` — 48 LOC
 
-Хелперы для формирования cache-key строк. Проверка:
+> **Amendment 2026-10-16.** Re-проверка при подготовке к accept обнаружила,
+> что ADR-0350 содержит **ошибочное утверждение** про cache_keys. Ниже —
+> исправленная доказательная база.
+
+Хелпер `build_cache_key` для детерминированных cache-ключей через SHA256.
+Используется минимум в двух местах:
 
 ```bash
-grep -rn "utils.cache_keys\|from.*cache_keys import" src/ tests/ --include="*.py"
+$ grep -rn "from src.backend.core.utils.cache_keys" src/ tests/ --include="*.py"
+src/backend/infrastructure/decorators/caching/decorator.py:17:from src.backend.core.utils.cache_keys import build_cache_key
+src/backend/core/resilience/cache_decorators.py:36:from src.backend.core.utils.cache_keys import build_cache_key
+src/backend/core/utils/__init__.py:21:from src.backend.core.utils.cache_keys import build_cache_key
+tests/unit/core/utils/test_cache_keys.py:7:from src.backend.core.utils.cache_keys import build_cache_key
 ```
 
-→ 0 результатов (совпадения `list_cache_keys` в `services/core/admin.py`
-относятся к методу админ-сервиса, а не к этому модулю).
+4 совпадения: 3 production (`caching/decorator.py:127`,
+`cache_decorators.py:224`, `utils/__init__.py:21` re-export) и 1 test.
+**Это НЕ мёртвый код.** ADR-0350 v1 (2026-10-15) ошибся в подсчёте —
+видимо, проверка была ограничена только `core/utils/cache_keys.py`-internal
+ссылками, а реальные импортёры в `infrastructure/decorators/caching/` и
+`core/resilience/cache_decorators.py` были пропущены.
+
+**Решение:** `cache_keys.py` остаётся. Это shared utility, и его
+перенос/удаление сломает минимум 3 production-модуля.
 
 ## Рассмотренные альтернативы
 
@@ -102,18 +118,20 @@ grep -rn "import_module\|__import__" src/ tests/ --include="*.py" \
 
 ## Решение
 
-**Удалить** `src/backend/core/rate_limiter/` и
-`src/backend/core/utils/cache_keys.py`.
+**Удалить** только `src/backend/core/rate_limiter/` (245 LOC).
+**Оставить** `src/backend/core/utils/cache_keys.py` — он активно
+используется (см. Amendment 2026-10-16).
 
-Обоснование: доказанный нулевой импорт (статический + динамический),
-уже существующая замена с лучшими свойствами, и запрет-паттерн
-(`time.sleep` в async-контексте) в удаляемом коде.
+Обоснование для rate_limiter: доказанный нулевой импорт (статический +
+динамический), уже существующая замена с лучшими свойствами
+(`entrypoints/dependencies/rate_limit.py` + `infrastructure/resilience/unified_rate_limiter.py`),
+и запрет-паттерн (`time.sleep` в async-контексте) в удаляемом коде.
 
 ## Последствия
 
 ### Позитивные
 
-- Кодовая база уменьшается на 293 LOC.
+- Кодовая база уменьшается на 245 LOC (только rate_limiter; cache_keys остаётся).
 - `time.sleep()` в потенциально-async пути исчезает.
 - Deprecated-ловушка для новых разработчиков устранена.
 
@@ -122,6 +140,8 @@ grep -rn "import_module\|__import__" src/ tests/ --include="*.py" \
 - `DEPRECATED.md` удаляется вместе с пакетом. Если кто-то ссылался на
   него в документации — нужно обновить ссылки (grep по `DEPRECATED.md`
   в этом PR).
+- `tests/unit/core/rate_limiter/test_rate_limiter_focused.py` тоже
+  удаляется (1 focused test для мёртвого кода).
 
 ### Миграция
 
@@ -133,6 +153,10 @@ grep -rn "import_module\|__import__" src/ tests/ --include="*.py" \
 - per-resource лимиты в resilience-коде →
   `infrastructure/resilience/unified_rate_limiter.py`;
 - generic retry → `tenacity` (R-V15-8).
+
+`cache_keys.build_cache_key` остаётся без изменений — её потребителям
+(`caching/decorator.py`, `cache_decorators.py`) ничего не нужно
+обновлять.
 
 ## Проверка после удаления
 
