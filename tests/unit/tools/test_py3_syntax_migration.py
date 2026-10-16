@@ -1,19 +1,22 @@
 """Regression test: Py2 → Py3 syntax migration guard.
 
 Защищает от повторного появления Python 2 ``except X, Y:`` синтаксиса
-в ``src/backend/**``. Этот синтаксис не парсится в Python 3.7+ и блокирует
-любой import (включая pytest assert rewrite), поэтому критично, чтобы
-``ast.parse`` чисто проходил по всем модулям ``src/backend/``.
+в ``src/backend/**``, ``tests/**`` и ``tools/**``. Этот синтаксис не
+парсится в Python 3.7+ и блокирует любой import (включая pytest assert
+rewrite) и любую загрузку tools-скриптов, поэтому критично, чтобы
+``ast.parse`` чисто проходил по всем модулям в этих трёх директориях.
 
-История: в 2026-Q3 найдено 138 Py2-``except`` в 112 модулях после миграции
-на Python 3.14. Они были исправлены одним проходом (см. commit
-``fix(syntax): …``). Этот тест предотвращает регрессию.
+История: в 2026-Q3 найдено 138 Py2-``except`` в 112 модулях ``src/backend/``
+после миграции на Python 3.14. В round 2 (commit ``a543fbaf6``) добиты
+оставшиеся 200 случаев в ``src/backend/``. В round 3 (commit
+``ae5bb0490``) устранены 37 случаев в ``tests/`` и ``tools/``. Этот тест
+предотвращает регрессию во всех трёх директориях.
 
 Тест не фиксирует список путей (это хрупко); он проверяет **все** файлы
-``src/backend/**/*.py`` на двух инвариантах:
+в охраняемых корнях на двух инвариантах:
 
 1. ``ast.parse`` принимает файл без ``SyntaxError``.
-2. В AST нет узла ``ast.ExceptHandler`` без скобок (т.е. Py2-форма).
+2. В коде нет паттерна ``except X, Y:`` (Py2-форма).
 
 Это покрывает любые новые файлы, добавленные в проект.
 """
@@ -23,11 +26,20 @@ from __future__ import annotations
 import ast
 import pathlib
 
-# Корень исходников — единственная hard-coded точка.
-SRC_ROOT = pathlib.Path("src/backend")
+# Корни, которые мы охраняем от Py2-syntax regression.
+SRC_ROOTS: tuple[pathlib.Path, ...] = (
+    pathlib.Path("src/backend"),
+    pathlib.Path("tests"),
+    pathlib.Path("tools"),
+)
 
 
 def _iter_py_files() -> list[pathlib.Path]:
+    files: list[pathlib.Path] = []
+    for root in SRC_ROOTS:
+        if root.exists():
+            files.extend(root.rglob("*.py"))
+    return sorted(files)
     return sorted(SRC_ROOT.rglob("*.py"))
 
 
