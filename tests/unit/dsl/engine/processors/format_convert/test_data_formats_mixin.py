@@ -129,6 +129,15 @@ class TestCsvRoundTrip:
 
 
 class TestXmlRoundTrip:
+    """Тесты ``_to_xml`` / ``_from_xml`` через ``xmltodict``.
+
+    Требует ``xmltodict`` (hard-dep в pyproject.toml: ``xmltodict>=0.14.0,<1.0.0``).
+    Если в среде отсутствует (например, dev-light) — все тесты skip'аются.
+    """
+
+    def setup_method(self) -> None:
+        pytest.importorskip("xmltodict", reason="xmltodict hard-dep not installed")
+
     def test_to_xml_uses_root_tag(self) -> None:
         f = _Formats(root_tag="order")
         out = f._to_xml({"id": 1, "name": "foo"})
@@ -179,6 +188,15 @@ class TestYamlRoundTrip:
 
 
 class TestTomlRoundTrip:
+    """Тесты ``_to_toml`` / ``_from_toml`` через ``tomli_w`` (write) + ``tomllib`` (read).
+
+    Требует ``tomli_w`` для write (read использует stdlib ``tomllib`` на 3.11+).
+    Если ``tomli_w`` отсутствует в среде — тесты skip'аются.
+    """
+
+    def setup_method(self) -> None:
+        pytest.importorskip("tomli_w", reason="tomli_w not installed")
+
     def test_to_toml_requires_dict(self) -> None:
         with pytest.raises(ValueError, match="requires dict"):
             _Formats()._to_toml([1, 2])
@@ -260,6 +278,15 @@ class TestMsgpackRoundTrip:
 
 
 class TestExcelRoundTrip:
+    """Тесты ``_to_excel`` / ``_from_excel`` через ``openpyxl``.
+
+    Требует ``openpyxl`` (опциональная зависимость для Excel-формата).
+    Если отсутствует в среде — тесты skip'аются.
+    """
+
+    def setup_method(self) -> None:
+        pytest.importorskip("openpyxl", reason="openpyxl not installed")
+
     def test_excel_round_trip(self) -> None:
         f = _Formats(sheet_name="S")
         rows = [{"a": 1, "b": "x"}, {"a": 2, "b": "y"}]
