@@ -684,3 +684,100 @@ Coverage.xml не сгенерирован, так как pytest пишет ар
 - `ai-eval-nightly.yml` — nightly, не на push
 - `ai-pr-review.yml` — PR-only
 - `docs-publish.yml` — публикация документации
+
+---
+
+# Седьмой проход: измерение реального coverage (2026-10-16, вечер)
+
+Полный прогон `pytest tests/unit tests/core --cov=src --cov-report=xml -n 4`
+прошёл целиком за 26:35 (`20385 passed, 114 failed, 164 skipped, 55 xfailed,
+45 xpassed`).
+
+**Реальное покрытие: 38.48%** (line-rate из coverage.xml, 46523 из 120895
+покрытых строк).
+
+## Coverage gate `test.yml` на CI — БЛОКИРУЕТ
+
+```
+$ uv run python tools/check_coverage_gate.py main \
+    --coverage-xml coverage.xml \
+    --baseline .baselines/coverage.json \
+    --threshold 75 --strict
+
+Coverage: 38.48%
+Threshold: 75.00%
+Baseline: 52.25%
+FAIL: coverage 38.48% < threshold 75.00%
+```
+
+Gate падает по **обоим** причинам:
+- `current (38.48) < threshold (75)` → FAIL
+- `baseline (52.25) - current (38.48) = 13.77 > 0.5` → FAIL (strict drop)
+
+То есть пуш в текущем виде красный на CI независимо от всех остальных
+фиксов этой сессии. **Это единственный реальный оставшийся блокер.**
+
+## Откуда потеря
+
+Анализ coverage.xml по файлам src/, ранжированный по непокрытым строкам:
+
+| miss/total | %miss | файл |
+|---|---|---|
+| 230/300 | 77% | `infrastructure/clients/storage/s3_pool/client.py` |
+| 205/238 | 87% | `dsl/engine/processors/saga_lra.py` |
+| 202/241 | 84% | `dsl/engine/processors/eip/transformation.py` |
+| 199/231 | 87% | `dsl/engine/processors/scraping.py` |
+| 190/228 | 84% | `infrastructure/storage/s3.py` |
+| 185/204 | 91% | `plugins/composition/setup_infra/pools.py` |
+| 181/249 | 73% | `infrastructure/decorators/caching/decorator.py` |
+| 177/245 | 73% | `dsl/engine/processors/rpa_browser.py` |
+| 173/197 | 88% | `core/ai/skill_registry.py` |
+| 171/171 | 100% | `infrastructure/clients/transport/browser.py` |
+| 168/186 | 91% | `core/docs_generator/generator.py` |
+| 167/214 | 79% | `entrypoints/email/imap_monitor.py` |
+| 165/210 | 79% | `dsl/orchestration/triggers.py` |
+| 164/216 | 76% | `services/integrations/webhook_relay.py` |
+| 159/190 | 84% | `dsl/engine/processors/format_convert/data_formats.py` |
+
+**Итого: 1797 файлов с пропусками, 72 887 непокрытых строк из 113 050 (64%)**.
+
+Потери концентрированы в инфраструктурном коде (S3, пулы, browser
+transport) и DSL-процессорах (saga_LRA, scraping, transformation,
+rpa_browser). Это модули, в которые эта сессия не вносила нового
+покрытия, но и тесты не добавляла. Кто-то их не покрыл раньше; baseline
+52.25% зафиксирован 28.09.2025, с тех пор покрытие упало до 38.48% —
+либо модули разрослись без тестов, либо тесты сломались.
+
+## Что с этим делать
+
+Варианты, в порядке убывания честности:
+
+1. **Написать недостающие тесты** — реальная починка, не ослабляющая
+   гейт. Объём: ~15 000 непокрытых строк в 1797 файлах. Трудозатраты —
+   дни, не сессия. Подойдёт для отдельного целенаправленного спринта
+   «покрытие» с приоритизацией по criticality модулей.
+
+2. **Снизить threshold** в `.github/workflows/test.yml` с 75 до 40 (с
+   запасом от 38.48). Это **ослабит** coverage gate — больше не будет
+   ловить падение покрытия. С течением времени маскирует деградацию.
+   Не рекомендую без отдельной мотивации.
+
+3. **Обновить baseline** через `tools/check_coverage_gate.py --update-baseline
+   --threshold 40`, откатив ratchet к реальному состоянию. Снова
+   ослабление (если оставить тот же threshold 75, гейт сразу пройдёт,
+   но ничего не блокирует). Не рекомендую.
+
+4. **Пометить gate как informational** (Phase 1) в коде gate'а —
+   `--strict` выключить. Опять же ослабление.
+
+5. **Принять push-блокер как известный долг** и завести issue
+   «coverage < 75% с 2025-09-28, требуется целенаправленный спринт» —
+   рекомендую как минимум.
+
+## Решение, зафиксированное этой сессией
+
+Никаких автоматических правок, ослабляющих гейт, **не предпринято**.
+Coverage gate остаётся блокирующим — то есть пуск через CI потребует
+предварительного решения владельца. Это согласуется с правилом проекта
+«не ослаблять security gates без проверки»: coverage — quality gate, и
+его ослабление относится к той же категории.
