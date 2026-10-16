@@ -99,7 +99,7 @@ def default_env_feature_flag_resolver(flag: str) -> bool:
         from src.backend.core.config.features import feature_flags
 
         value = getattr(feature_flags, flag, None)
-    except ImportError, AttributeError, RuntimeError:
+    except (ImportError, AttributeError, RuntimeError):
         return False
     if value is None:
         return False

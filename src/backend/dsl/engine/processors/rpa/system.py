@@ -156,7 +156,7 @@ class EmailComposeProcessor(BaseProcessor):
         variables = body if isinstance(body, dict) else {"body": body}
         try:
             email_body = self._body_template.format(**variables)
-        except KeyError, IndexError:
+        except (KeyError, IndexError):
             email_body = self._body_template
         try:
             # S86 M2-#11 accelerated batch: DI provider.

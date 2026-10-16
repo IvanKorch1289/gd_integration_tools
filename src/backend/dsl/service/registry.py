@@ -34,7 +34,7 @@ class ServiceDSLRegistry:
 
             if not getattr(feature_flags, "service_toml_loader", False):
                 return
-        except ImportError, AttributeError:
+        except (ImportError, AttributeError):
             return
 
         self._services[spec.name] = spec

@@ -192,7 +192,7 @@ def _serialize_exchange(exchange: Any) -> dict[str, Any]:
             "status": str(getattr(exchange, "status", "unknown")),
             "body": getattr(getattr(exchange, "out_message", None), "body", None),
         }
-    except AttributeError, TypeError:
+    except (AttributeError, TypeError):
         return {"status": "error", "body": None}
 
 

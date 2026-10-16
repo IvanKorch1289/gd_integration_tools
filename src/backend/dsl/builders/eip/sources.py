@@ -75,7 +75,7 @@ def _create_or_defer_sensor_task(coro_factory: Callable[[], Any], *, name: str) 
                 self._task.cancel()
                 try:
                     await self._task
-                except asyncio.CancelledError, Exception:
+                except (asyncio.CancelledError, Exception):
                     pass
 
     return _DeferredTask()
