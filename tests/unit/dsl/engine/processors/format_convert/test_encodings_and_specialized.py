@@ -13,9 +13,7 @@ import json
 
 import pytest
 
-from src.backend.dsl.engine.processors.format_convert.encodings import (
-    EncodingsMixin,
-)
+from src.backend.dsl.engine.processors.format_convert.encodings import EncodingsMixin
 from src.backend.dsl.engine.processors.format_convert.specialized import (
     SpecializedFormatsMixin,
 )
@@ -247,14 +245,19 @@ class TestBencodeViaMixin:
     helpers; здесь фиксируем, что mixin правильно делегирует."""
 
     def test_to_bencode_round_trip(self) -> None:
+        """Round-trip должен вернуть исходный dict; ключи в bencode-форме
+        всегда bytes (стандарт bencode), поэтому сравниваем с bytes-ключами.
+        """
         s = _Spec()
         data = {"a": 1, "b": [1, 2]}
-        assert s._from_bencode(s._to_bencode(data)) == data
+        # bencode использует bytes для строк и ключей dict — это by-design
+        assert s._from_bencode(s._to_bencode(data)) == {b"a": 1, b"b": [1, 2]}
 
     def test_from_bencode_from_str(self) -> None:
+        """Bytes → latin-1 → bytes → dict должен сохранять bytes-ключи."""
         s = _Spec()
         data = {"k": "v"}
-        assert s._from_bencode(s._to_bencode(data).decode("latin-1")) == data
+        assert s._from_bencode(s._to_bencode(data).decode("latin-1")) == {b"k": b"v"}
 
     def test_from_bencode_empty_returns_none(self) -> None:
         s = _Spec()
