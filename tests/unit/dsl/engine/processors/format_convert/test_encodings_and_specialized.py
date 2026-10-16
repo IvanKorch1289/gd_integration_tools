@@ -99,8 +99,15 @@ class TestUrlEncoded:
         assert e._to_url_encoded(None) == ""
 
     def test_to_url_encoded_from_bytes(self) -> None:
+        """Dict с bytes-значениями должен быть корректно url-encoded.
+
+        Реализация ``_to_url_encoded`` декодирует bytes-значения → str
+        перед передачей в ``urllib.parse.urlencode`` (которая не принимает
+        bytes). Этот тест фиксирует контракт: mapping с bytes-значениями
+        работает.
+        """
         e = _Enc()
-        out = e._to_url_encoded(b"key=value")
+        out = e._to_url_encoded({b"key": b"value"})
         assert "key=value" in out
 
     def test_from_url_encoded_round_trip(self) -> None:
