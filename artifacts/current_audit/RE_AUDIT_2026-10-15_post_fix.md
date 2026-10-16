@@ -781,3 +781,50 @@ Coverage gate остаётся блокирующим — то есть пуск
 предварительного решения владельца. Это согласуется с правилом проекта
 «не ослаблять security gates без проверки»: coverage — quality gate, и
 его ослабление относится к той же категории.
+
+---
+
+# Восьмой проход: тесты для data_formats.py + уточнение syntax-фикса (2026-10-16)
+
+## Сделано
+
+1. **`tests/unit/dsl/engine/processors/format_convert/test_data_formats_mixin.py`** (38
+   passed) — round-trip покрытие для `dsl/engine/processors/format_convert/
+   data_formats.py` (190 LOC, 84% miss в coverage-отчёте). Mixin —
+   чистая трансформация форматов без I/O, легко тестируется через
+   минимальный concrete-класс. Тесты фиксируют контракт каждого
+   `_to_*` / `_from_*` метода, включая документированные ограничения
+   (xmltodict str-only, configparser DEFAULT semantics, headers-filter).
+
+2. **`fix(logging): Python 2 → 3 syntax в console_json.py`** (commit
+   `43a9dbcb0`) — `except TypeError, ValueError:` — настоящий
+   SyntaxError на Python ≥ 3.7. Модуль не импортировался → блокировал
+   всю цепочку `core.logging → infrastructure.logging.backends`.
+   На audit HEAD `32ecc5662` тот же syntax error.
+
+## Уточнение по syntax-аудиту
+
+В седьмом проходе я ошибочно насчитал «212 Python 2 syntax errors» по regex
+`^\s*except\s+\w+(?:\s*,\s*\w+)+:`. Это **false positive**: Python 3
+**принимает** форму `except X, Y:` как эквивалент `except (X, Y):`
+для обратной совместимости. AST.parse проходит для всех 211 остальных
+файлов, которые мой regex пометил. Реальный syntax error в репозитории
+был **только один** — `infrastructure/logging/backends/console_json.py:53`,
+уже исправлен коммитом `43a9dbcb0`. После этого правка все 212-м
+модулям `except X, Y:` НЕ требуется.
+
+## Coverage measurement — ограничение инструмента
+
+`pytest-cov` + beartype 19.x на Python 3.14 падает с circular import в
+`beartype.claw._importlib._clawimpload`. Это **известная несовместимость**
+(beartype не успел адаптироваться к py3.14), не регрессия этой сессии.
+Поведение воспроизводится и на audit HEAD. Тесты, добавленные этой
+сессией, проходят (`38 passed` за 2.2s); процент покрытия вкладённых
+тестов в широком прогоне будет измерен, когда проблема beartype/py3.14
+будет решена в самом проекте.
+
+## Изменённые файлы
+
+- `src/backend/infrastructure/logging/backends/console_json.py` (1 строка)
+- `tests/unit/dsl/engine/processors/format_convert/test_data_formats_mixin.py` (новый, 295 строк)
+- `tools/scaffold.py` (из седьмого прохода) — без изменений
