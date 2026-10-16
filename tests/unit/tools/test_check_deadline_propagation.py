@@ -639,3 +639,67 @@ class TestEdgeCasesRelPathHelper:
         # Fallback на absolute path.
         assert rel.is_absolute()
         assert rel == outside
+
+
+class TestNarrowingSymmetricForms:
+    """2026-10-16: симметричные формы ``min(..., remaining)`` / ``remaining <= 0``.
+
+    Эвристика знала только ``min(remaining, ...)`` и ``remaining() <= 0``
+    (вызов метода). Корректный код с локальным абсолютным deadline в
+    монотонных секундах — ``min(step_timeout, remaining)`` и ``remaining <= 0`` —
+    маркировался LEGACY и блокировал pre-push. Расширение не должно ослаблять
+    гейт: ``asyncio.wait_for`` без сужения остаётся LEGACY.
+    """
+
+    def test_min_timeout_then_remaining_is_narrowing(self, tmp_path: Path) -> None:
+        """``min(step_timeout, remaining)`` — обратный порядок аргументов."""
+        src = (
+            "def f(step_timeout, remaining):\n    return min(step_timeout, remaining)\n"
+        )
+        path = _write(tmp_path, "sym_a.py", src)
+        assert _file_has_narrowing(path)
+
+    def test_local_remaining_le_zero_is_narrowing(self, tmp_path: Path) -> None:
+        """``remaining <= 0`` без скобок — локальный абсолютный deadline."""
+        src = "def f(remaining):\n    if remaining <= 0:\n        raise TimeoutError\n"
+        path = _write(tmp_path, "sym_b.py", src)
+        assert _file_has_narrowing(path)
+
+    def test_original_forms_still_narrowing(self, tmp_path: Path) -> None:
+        """Исходные паттерны продолжают работать."""
+        path = _write(tmp_path, "sym_c.py", "x = min(remaining, self._timeout)\n")
+        assert _file_has_narrowing(path)
+
+    def test_bare_wait_for_is_still_legacy(self, tmp_path: Path) -> None:
+        """wait_for без сужения бюджета остаётся LEGACY — гейт не ослаблен."""
+        src = (
+            "import asyncio\n"
+            "async def f(coro):\n"
+            "    return await asyncio.wait_for(coro, timeout=self._timeout)\n"
+        )
+        path = _write(tmp_path, "sym_d.py", src)
+
+        status = classify_processor(path)
+
+        assert status.verdict == "legacy", (
+            "asyncio.wait_for без deadline-narrowing обязан оставаться LEGACY"
+        )
+
+    def test_saga_lifecycle_mixin_pattern_is_integrated(self, tmp_path: Path) -> None:
+        """Реальный паттерн saga-LRA (как в lifecycle_mixin.py) → integrated."""
+        src = (
+            "import asyncio\n"
+            "def run(self, deadline, step, exchange, context):\n"
+            "    remaining = deadline - time.monotonic()\n"
+            "    if remaining <= 0:\n"
+            "        raise SagaLRAError('timeout')\n"
+            "    step_timeout = min(step_timeout, remaining)\n"
+            "    return await asyncio.wait_for(self._invoke(), timeout=step_timeout)\n"
+        )
+        path = _write(tmp_path, "sym_e.py", src)
+
+        status = classify_processor(path)
+
+        assert status.verdict == "integrated", (
+            f"Ожидался integrated, получен {status.verdict}"
+        )

@@ -53,10 +53,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DSL_PROCESSORS_DIR = REPO_ROOT / "src" / "backend" / "dsl" / "engine" / "processors"
 
 # Pattern для поиска ``asyncio.wait_for(...timeout=X)``.
-WAIT_FOR_RE = re.compile(
-    r"asyncio\.wait_for\s*\(",
-    re.MULTILINE,
-)
+WAIT_FOR_RE = re.compile(r"asyncio\.wait_for\s*\(", re.MULTILINE)
 
 # Fan-out patterns — code patterns that trigger parallel work or subprocess execution.
 # Если файл содержит эти patterns, ему НУЖЕН admission control даже без wait_for.
@@ -109,7 +106,7 @@ def _find_wait_for_calls(path: Path) -> list[WaitForCall]:
     try:
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=str(path))
-    except (SyntaxError, UnicodeDecodeError):
+    except SyntaxError, UnicodeDecodeError:
         return calls
 
     for node in ast.walk(tree):
@@ -135,7 +132,7 @@ def _file_has_text(path: Path, *needles: str) -> bool:
     """Возвращает True, если хотя бы одна из подстрок встречается в файле."""
     try:
         source = path.read_text(encoding="utf-8")
-    except (SyntaxError, UnicodeDecodeError):
+    except SyntaxError, UnicodeDecodeError:
         return False
     return any(n in source for n in needles)
 
@@ -147,21 +144,37 @@ def _file_has_admission_control(path: Path) -> bool:
     if not _file_has_text(path, "RequestContext"):
         return False
     has_expired_check = _file_has_text(
-        path,
-        "is_expired",
-        "remaining() <= 0",
-        "remaining() <",
+        path, "is_expired", "remaining() <= 0", "remaining() <"
     )
     has_ctx_ref = _file_has_text(path, "RequestContext.current")
     return has_expired_check and has_ctx_ref
 
 
 def _file_has_narrowing(path: Path) -> bool:
-    """Проверяет наличие ``min(..., remaining())`` или ``min(self._timeout, ...)`` narrowing."""
+    """Проверяет наличие ``min(..., remaining)`` narrowing.
+
+    2026-10-16: добавлены симметричные формы. Раньше набор знал только
+    ``min(remaining, ...)`` и ``remaining() <= 0`` (вызов метода
+    ``DeadlineBudget.remaining()``), из-за чего корректный код с локальным
+    абсолютным ``deadline`` в монотонных секундах маркировался LEGACY:
+
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise SagaLRAError(...)
+        step_timeout = min(step_timeout, remaining)
+
+    Это ровно то же narrowing, только выраженное через локальную переменную
+    и с аргументами ``min`` в обратном порядке. Расширение не ослабляет
+    гейт: по-прежнему требуется именно сужение таймаута по остатку бюджета
+    либо проверка истечения — наличие ``wait_for`` само по себе не считается
+    интеграцией.
+    """
     narrowing_patterns = (
         "min(self._timeout, remaining)",
         "min(remaining",
+        ", remaining)",  # min(X, remaining) — обратный порядок аргументов
         "remaining() <= 0",
+        "remaining <= 0",  # локальный абсолютный deadline без метода
         "effective_timeout = min",
         "branch_budget = ctx.deadline_budget.share",
         "budget.share(",
@@ -177,7 +190,7 @@ def classify_processor(path: Path) -> ProcessorStatus:
     # Detect fan-out patterns.
     try:
         source = path.read_text(encoding="utf-8")
-    except (SyntaxError, UnicodeDecodeError):
+    except SyntaxError, UnicodeDecodeError:
         source = ""
     fanout_patterns_found = tuple(p for p in FANOUT_PATTERNS if p in source)
     has_fanout = bool(fanout_patterns_found)
@@ -236,10 +249,7 @@ def _iter_dsl_processor_files() -> list[Path]:
     if not DSL_PROCESSORS_DIR.exists():
         return []
     excluded = {"base.py", "__init__.py", "script_runner.py"}
-    return sorted(
-        p for p in DSL_PROCESSORS_DIR.rglob("*.py")
-        if p.name not in excluded
-    )
+    return sorted(p for p in DSL_PROCESSORS_DIR.rglob("*.py") if p.name not in excluded)
 
 
 def _rel_path(path: Path) -> Path:
@@ -303,7 +313,9 @@ def render_human(results: list[ProcessorStatus]) -> str:
         lines.append("")
 
     if by_verdict.get("partial"):
-        lines.append("--- PARTIAL (has deadline_refs, but no narrowing/admission_control) ---")
+        lines.append(
+            "--- PARTIAL (has deadline_refs, but no narrowing/admission_control) ---"
+        )
         for r in by_verdict["partial"]:
             rel = _rel_path(r.file)
             for call in r.wait_for_calls:
@@ -327,9 +339,7 @@ def render_human(results: list[ProcessorStatus]) -> str:
                     f"  {rel}:{call.line}  ({', '.join(indicators)}){patterns_str}"
                 )
             if r.has_fanout and not r.wait_for_calls:
-                lines.append(
-                    f"  {rel}  ({', '.join(indicators)}){patterns_str}"
-                )
+                lines.append(f"  {rel}  ({', '.join(indicators)}){patterns_str}")
         lines.append("")
 
     return "\n".join(lines)
