@@ -9,7 +9,7 @@
 | `ai.guardrail.policy_read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение per-tenant guardrail policy (NeMo/LlamaGuard/Lakera enable map) из tenant_config.py; scope = tenant-id или '*' (S24 W2, ADR-NEW-17, S172: Rebuff заменён на NeMo, F4.2). |
 | `ai.guardrails.lakera` | ✅ | `GlobScopeMatcher` | ➖ | Вызов Lakera Guard prompt-injection / PII detector. scope = '*' или конкретный provider-id (S11 K1 W2). |
 | `ai.guardrails.nemo` | ✅ | `GlobScopeMatcher` | ➖ | Вызов NeMo Colang self-check guard (S172, replaces Rebuff). scope = '*' или provider-id. research/agent-framework/REPORT.md F4.2. |
-| `ai.guardrails.rebuff` | ✅ | `GlobScopeMatcher` | ➖ | [DEPRECATED S172] Вызов Rebuff prompt-injection detector — upstream archived 2026; capability сохранён для backward-compat grants в existing roles. Migrate to ai.guardrails.nemo. research/agent-framework/REPORT.md F4.2. |
+| `ai.guardrails.rebuff` | ✅ | `GlobScopeMatcher` | ➖ | [DEPRECATED S172] Вызов Rebuff prompt-injection detector — upstream archived 2026; capability сохранён для backward-compat grants in existing roles. Migrate to ai.guardrails.nemo. research/agent-framework/REPORT.md F4.2. |
 | `ai.invoke` | ✅ | `GlobScopeMatcher` | ➖ | Вызов LLM через единую точку входа AIGateway (ADR-NEW-19). Проверяется на каждый AIGateway.invoke(request.workflow_id); scope = workflow_id pattern или '*' (S25 W1). |
 | `ai.memory.delete` | ✅ | `GlobScopeMatcher` | ➖ | Удаление user-memory из MemoryProtocol (GDPR / 152-ФЗ user-erasure); scope = tenant-id или '*' (S24 W3, ADR-NEW-18). |
 | `ai.memory.read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение из MemoryProtocol (LangGraph Checkpointer / Mem0 / AgentMemory); namespace = '<tenant_id>:<scope>'; scope = tenant-id или '*' (S24 W3, ADR-NEW-18). |
@@ -20,6 +20,7 @@
 | `ai.rag.pii_redaction` | ✅ | `ExactAliasMatcher` | ➖ | Применение PII-маскера к augment_result.documents[*].content в RAG retrieval pipeline (S11 K1 W1). |
 | `ai.route.optimize` | ✅ | `GlobScopeMatcher` | ➖ | AI-анализ route-метрик + генерация PR markdown (S11 K4 W7); scope = route-name или '*'. |
 | `ai.stream` | ✅ | `SegmentedGlobMatcher` | ➖ | Token-level streaming LLM (SSE/WS) через LLMStreamingService (scope = 'model:<prefix>', optional). |
+| `audit.write` | ✅ | `GlobScopeMatcher` | ✅ | Запись audit-event в audit-sink (infrastructure/audit, admin_audit, correlation-логи). Добавлена 2026-10-06: capability реально используется роутами с шагом `audit:`, но в vocabulary отсутствовала, из-за чего они не могли объявить её ни публично, ни через плагин. scope = tenant-id, audit-sink или '*'. |
 | `cache.read` | ✅ | `SegmentedGlobMatcher` | ➖ | Чтение кэша через CacheFacade (namespace по ':'). |
 | `cache.write` | ✅ | `SegmentedGlobMatcher` | ➖ | Запись в кэш через CacheFacade (namespace по ':'). |
 | `code.execute` | ✅ | `ExactAliasMatcher` | ➖ | Запуск пользовательского кода в sandbox (e2b/pyodide) через CodeSandbox; прямой subprocess запрещён (V15 R-V15-4). |
@@ -28,6 +29,7 @@
 | `db.write` | ✅ | `ExactAliasMatcher` | ➖ | Запись в БД через DatabaseFacade (rw-сессия). |
 | `fs.read` | ✅ | `SegmentedGlobMatcher` | ➖ | Чтение файлов через FSFacade (path-glob по '/'). |
 | `fs.write` | ✅ | `SegmentedGlobMatcher` | ➖ | Унифицированная запись файлов. fs.create_new — deprecated alias (post-S20 removal). Scope: fs.write.workspace.<session_id> для AI-workspaces; fs.write.tenant.<tenant_id> / fs.write.repo.<area> для системных. |
+| `jupyter.hub` | ✅ | `GlobScopeMatcher` | ➖ | Выполнение ноутбуков на Jupyter Hub через NotebookFacade. Добавлена 2026-10-06: capability отсутствовала в vocabulary, из-за чего routes/jupyter_hub_run/ не мог объявить её. Имя двухсегментное (<resource>.<verb>), поэтому scope обязателен: роут объявляет 'jupyter.hub:run'. |
 | `langmem.admin` | ✅ | `ExactAliasMatcher` | ➖ | Администрирование LangMem: consolidate(), stats(), RLM reset (D.6). |
 | `llm.invoke` | ✅ | `SegmentedGlobMatcher` | ➖ | Вызов LLM-провайдера через LLMFacade (provider/model по '/'). |
 | `mcp.gateway.invoke` | ✅ | `GlobScopeMatcher` | ➖ | Вызов tool через MCPGateway namespace (credit/analytics/system) с auth + WAF (ADR-NEW-23); scope = namespace-name или '*' (S27 W4). |
@@ -35,10 +37,12 @@
 | `mcp.gateway.invoke.credit` | ✅ | `GlobScopeMatcher` | ➖ | Вызов tool в namespace 'credit' через MCPGateway (ADR-0070, S27 W4); scope = tool-name или '*'. |
 | `mcp.gateway.invoke.system` | ✅ | `GlobScopeMatcher` | ➖ | Вызов tool в namespace 'system' через MCPGateway (ADR-0070, S27 W4); scope = tool-name или '*'. |
 | `mcp.tool.call` | ✅ | `GlobScopeMatcher` | ➖ | Вызов MCP-инструмента (FastMCP HTTP transport); scope = action-name pattern. |
+| `message.claim_check.retrieve` | ✅ | `ExactAliasMatcher` | ➖ | Восстановление payload по claim token через EIP ClaimCheckProcessor retrieve-режим. |
+| `message.claim_check.store` | ✅ | `ExactAliasMatcher` | ➖ | Сохранение claim token в Redis/S3 через EIP ClaimCheckProcessor store-режим (message-level payload offload). |
 | `mq.consume` | ✅ | `GlobScopeMatcher` | ➖ | Подписка на сообщения через MQFacade (topic-glob). |
 | `mq.publish` | ✅ | `GlobScopeMatcher` | ➖ | Публикация сообщений через MQFacade (topic-glob). |
-| `net.inbound` | ✅ | `GlobScopeMatcher` | ➖ | Регистрация webhook/SSE-эндпоинтов через WebhookFacade. |
-| `net.outbound` | ✅ | `GlobScopeMatcher` | ➖ | Исходящие HTTP/gRPC через {HTTP,GRPC}Facade. |
+| `net.inbound` | ✅ | `GlobScopeMatcher` | ✅ | Регистрация webhook/SSE-эндпоинтов через WebhookFacade. |
+| `net.outbound` | ✅ | `GlobScopeMatcher` | ✅ | Исходящие HTTP/gRPC через {HTTP,GRPC}Facade. |
 | `pii.audit` | ✅ | `GlobScopeMatcher` | ➖ | Запись audit-event pii.{detected,anonymized,blocked} с tenant_id + entity_type + redacted_hash в immutable Postgres audit-sink; scope = tenant-id или '*' (S24 W1, ADR-NEW-16). |
 | `pii.read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение текста через PII-detector pipeline (Presidio + ru NER) перед маскированием/anonymize; scope = tenant-id или '*' (S24 W1, ADR-NEW-16). |
 | `pii.tokenize.reversible` | ✅ | `GlobScopeMatcher` | ➖ | Reversible PII-токенизация через PIITokenizer (Presidio + AES-GCM TokenRegistry); обязательна для unmask round-trip (ADR-NEW-21). scope = domain-id (banking, hr, medical) или '*' (S25 W4). |
@@ -47,5 +51,7 @@
 | `skill.invoke` | ✅ | `GlobScopeMatcher` | ➖ | Вызов AI skill через SkillRegistry (ADR-NEW-22, S26 W5); scope = skill-id pattern (``credit.score.calculate``, ``credit.*``) или '*' (S27 W3 DSL .skill_invoke()). |
 | `storage.read` | ✅ | `SegmentedGlobMatcher` | ➖ | Чтение из объектного хранилища через StorageFacade (key/prefix). |
 | `storage.write` | ✅ | `SegmentedGlobMatcher` | ➖ | Запись/удаление в объектном хранилище через StorageFacade (key). |
+| `workflow.claim_check.store` | ✅ | `ExactAliasMatcher` | ➖ | Сохранение Temporal workflow payload через WorkflowClaimCheckProcessor (Temporal best practice для больших event-history). |
+| `workflow.continue_as_new.request` | ✅ | `ExactAliasMatcher` | ➖ | Запрос Continue-As-New в Temporal workflow (Temporal best practice для долгоживущих executions). |
 | `workflow.signal` | ✅ | `GlobScopeMatcher` | ➖ | Сигнал workflow через WorkflowFacade. |
 | `workflow.start` | ✅ | `GlobScopeMatcher` | ➖ | Запуск workflow через WorkflowFacade (workflow_id-glob). |

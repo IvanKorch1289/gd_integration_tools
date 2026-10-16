@@ -25,8 +25,8 @@ import json
 from collections.abc import Iterable
 from pathlib import Path
 
+from src.backend.core.plugin_runtime.manifest_toml import PluginManifest
 from src.backend.core.security.capabilities import build_default_vocabulary
-from src.backend.services.plugins.manifest_toml import PluginManifest
 from src.backend.services.routes.manifest_toml import RouteManifest
 
 __all__ = (

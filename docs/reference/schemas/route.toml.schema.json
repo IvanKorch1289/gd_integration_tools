@@ -63,6 +63,81 @@
       "title": "_IPRestrictionModel",
       "type": "object"
     },
+    "_RouteFeatureFlagsModel": {
+      "additionalProperties": false,
+      "description": "Секция ``[feature_flags]`` — список разрешённых feature-flags маршрута.\n\nГенерируется route-wizard'ом (``tools/wizards/route_templates.py``)\nвместе с плоским манифестом, поэтому модель обязана его принимать.",
+      "properties": {
+        "default": {
+          "description": "Имена флагов, доступных маршруту.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Default",
+          "type": "array"
+        }
+      },
+      "title": "_RouteFeatureFlagsModel",
+      "type": "object"
+    },
+    "_RouteSLOModel": {
+      "additionalProperties": false,
+      "description": "ADR-0079 — inline SLO-декларация маршрута в ``route.toml``.\n\nПоддерживает обе авторские формы:\n\n* Form A (плоская, ``slo = { p95_ms = 500, timeout_ms = 5000 }``);\n* Form B (секция ``[route.slo]`` — составные маршруты).\n\nНабор полей взят из ADR-0079: ``p95_ms`` (обязателен, > 0),\n``p99_ms``, ``timeout_ms``, ``rps_target`` (опциональны, > 0).\n``extra=\"forbid\"`` — опечатка в ключе SLO валит load, а не\nмолча игнорируется.",
+      "properties": {
+        "p95_ms": {
+          "description": "SLO-цель: p95-латентность, мс.",
+          "exclusiveMinimum": 0,
+          "title": "P95 Ms",
+          "type": "integer"
+        },
+        "p99_ms": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "SLO-цель: p99-латентность, мс.",
+          "title": "P99 Ms"
+        },
+        "rps_target": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Целевой RPS (capacity planning).",
+          "title": "Rps Target"
+        },
+        "timeout_ms": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Жёсткий таймаут обработчика маршрута, мс.",
+          "title": "Timeout Ms"
+        }
+      },
+      "required": [
+        "p95_ms"
+      ],
+      "title": "_RouteSLOModel",
+      "type": "object"
+    },
     "_RouteTimeoutModel": {
       "additionalProperties": false,
       "description": "Pydantic-обёртка над :class:`RouteTimeoutSpec` для парсинга TOML.\n\nИспользует ``extra=\"forbid\"`` чтобы поймать опечатки в ``[timeout]``\nсекции на этапе load (вместо silent ignore).",
@@ -239,7 +314,7 @@
     }
   },
   "additionalProperties": false,
-  "description": "Манифест маршрута V11 (``routes/<name>/route.toml``).\n\nСм. ADR-043 для полного описания формата, lifecycle и\ninvariant'а ``route.capabilities ⊆ union(plugins.capabilities)``.\n\nAttributes:\n    name: snake_case-имя маршрута; совпадает с каталогом\n        ``routes/<name>/``.\n    version: SemVer-строка маршрута.\n    requires_core: PEP-440 SpecifierSet — диапазон версий ядра.\n    requires_plugins: Mapping ``plugin_name → SemVer-spec`` для\n        плагинов, чьи Processor/Source/Sink/Action использует\n        pipeline.\n    tenant_aware: Если ``True`` — pipeline сознательно работает\n        в TenantContext.\n    feature_flag: ``True``/``False`` (статически вкл./выкл.),\n        ``str`` (имя ENV или dotted-path к\n        ``IFeatureFlagProvider``), ``None`` (по умолчанию вкл.).\n    tags: Тэги для admin-grouping и DSL-Linter.\n    description: Опц. человекочитаемая аннотация.\n    pipelines: Список path'ей ``*.dsl.yaml`` относительно\n        ``routes/<name>/`` (главный — первый, остальные — fragments).\n    capabilities: Декларация runtime-gate (см. ADR-044).\n        Должна быть подмножеством объединения capabilities\n        требуемых плагинов + публичных capabilities ядра\n        (проверка в :class:`RouteLoader`, а не в pydantic).\n    security: Опц. секция ``[security]`` с requires_permission.\n        K3 S19 W3: route_authz_requires_permission feature flag\n        активирует проверку permissions через AuthorizationGateway.\n    timeout: Конфигурация таймаутов (connect / read / write / total).",
+  "description": "Манифест маршрута V11 (``routes/<name>/route.toml``).\n\nСм. ADR-043 для полного описания формата, lifecycle и\ninvariant'а ``route.capabilities ⊆ union(plugins.capabilities)``.\n\nAttributes:\n    name: snake_case-имя маршрута; совпадает с каталогом\n        ``routes/<name>/``.\n    version: SemVer-строка маршрута.\n    requires_core: PEP-440 SpecifierSet — диапазон версий ядра.\n    requires_plugins: Mapping ``plugin_name → SemVer-spec`` для\n        плагинов, чьи Processor/Source/Sink/Action использует\n        pipeline.\n    tenant_aware: Если ``True`` — pipeline сознательно работает\n        в TenantContext.\n    feature_flag: ``True``/``False`` (статически вкл./выкл.),\n        ``str`` (имя ENV или dotted-path к\n        ``IFeatureFlagProvider``), ``None`` (по умолчанию вкл.).\n    tags: Тэги для admin-grouping и DSL-Linter.\n    description: Опц. человекочитаемая аннотация.\n    pipelines: Список path'ей ``*.dsl.yaml`` относительно\n        ``routes/<name>/`` (главный — первый, остальные — fragments).\n    capabilities: Декларация runtime-gate (см. ADR-044).\n        Должна быть подмножеством объединения capabilities\n        требуемых плагинов + публичных capabilities ядра\n        (проверка в :class:`RouteLoader`, а не в pydantic).\n    security: Опц. секция ``[security]`` с requires_permission.\n        K3 S19 W3: route_authz_requires_permission feature flag\n        активирует проверку permissions через AuthorizationGateway.\n    timeout: Конфигурация таймаутов (connect / read / write / total).\n    schedule: Планировщик запуска маршрута (``\"never\"`` — только\n        on-demand вызов). R-V15-2 объявляет ``schedule`` частью\n        манифеста; scaffold/wizard пишут ``schedule = \"never\"``.\n    slo: ADR-0079 inline-SLO (``p95_ms`` обязателен, ``p99_ms`` /\n        ``timeout_ms`` / ``rps_target`` опциональны).\n    feature_flags: Секция ``[feature_flags]`` со списком\n        разрешённых feature-flags маршрута (генерируется wizard'ом).",
   "properties": {
     "capabilities": {
       "default": [],
@@ -276,6 +351,17 @@
       "default": null,
       "title": "Feature Flag"
     },
+    "feature_flags": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/_RouteFeatureFlagsModel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "name": {
       "minLength": 1,
       "pattern": "^[a-z][a-z0-9_]*$",
@@ -309,10 +395,33 @@
       "title": "Requires Workflows",
       "type": "object"
     },
+    "schedule": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Schedule"
+    },
     "security": {
       "anyOf": [
         {
           "$ref": "#/$defs/_SecurityModel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "slo": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/_RouteSLOModel"
         },
         {
           "type": "null"
