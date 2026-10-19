@@ -214,6 +214,9 @@ class AgentOrchestrationMixin:
 
         try:
             from src.backend.services.ai.ai_graph import build_and_run_agent
+            from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
+                CheckpointBackendUnavailable,
+            )
 
             result = await build_and_run_agent(
                 prompt=sanitized.sanitized, tool_actions=tools or [], durable=durable
@@ -232,6 +235,12 @@ class AgentOrchestrationMixin:
             return {"success": True, "data": result, "feedback_id": feedback_id}
         except ImportError:
             return {"success": False, "error": "langgraph не установлен."}
+        except CheckpointBackendUnavailable:
+            # P0 propagation (2026-10-19): typed exception MUST reach HTTP
+            # layer для маппинга в 503 / CHECKPOINT_BACKEND_UNAVAILABLE.
+            # Broad ``except Exception`` ниже НЕ должен глотать typed error.
+            logger.warning("Agent run: durable=True без configured checkpointer")
+            raise
         except Exception as exc:
             logger.error("Agent run error: %s", exc)
             return {"success": False, "error": str(exc)}
