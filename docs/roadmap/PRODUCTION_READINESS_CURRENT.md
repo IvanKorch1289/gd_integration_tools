@@ -560,6 +560,72 @@ installed — for the same wrong reason. Green is not the same as checked.
 
 ---
 
+## Post-CURRENT audit additions (drift signal)
+
+> **This section was added on 2026-10-19 by REVIEW.md (commit `9cae22f7c`)
+> appended-section sweep).** The SHA baseline for "what was true on Sep 28" is
+> `98698dd51`; this doc was frozen at that commit. The items below were
+> merged between `98698dd51` and `ebf5610f7` (HEAD at time of audit). They
+> do NOT yet feed into the §"Known open defects" or §"Status by area"
+> blocks; that's a separate ratcheting pass. The purpose here is to
+> prevent stakeholders from reading "not production-ready" and missing
+> the operational drift that has materially changed since.
+
+### Security hardening (4 CRITICAL closures)
+
+- **`fix(security): D-4 (CRITICAL) — tenant для ownership берётся из AuthContext` (`5687a1a8d`)**: Object-authorization теперь использует AuthContext как source of truth, не `X-Tenant-ID` header. Закрывает уязвимость auth-bypass.
+- **`fix(security): F-D1 (CRITICAL) — привязка tenant и для principal'ов без tenant_id` (`c894e27cb`)**: Tenant isolation работает и для principals без `tenant_id` claim. `f2c100244` закрывает F-D1 для ORM/RLS path.
+- **`fix(security): F-AP1 (CRITICAL) — SSRF в RPA/browser` (`7ae5ff346`)**: `page.goto()` guarded против SSRF (browser nav → internal).
+- **`fix(security): F-AP2 — WAF-гейт обязан видеть браузерную навигацию` (`2d9f4323b`)**: `make check-waf-coverage-strict` теперь покрывает browser-automation surface.
+- **ADR-0347** (`ff4d6684c`) — граница tenant-изоляции для авто-регистрируемой поверхности.
+
+### Mypy typing waves (M1–M6)
+
+| Wave | Files | Commit |
+|---|---|---|
+| M1 | `dsl/_validate_module_whitelist` | `d2c5a4d75` |
+| M2+ | `services/ai/langgraph_postgres_saver + pydantic_ai provider` | `31ac7ddbf` |
+| M2+M3+M4 | `services/ai/rpa` adapters (pydantic_ai + browser_pool) | `003e5e6b8` |
+
+Net effect: ~6 dedicated commits закрыли mypy-typing debt в `services/ai/rpa/`.
+
+### Middleware & RPA stabilization
+
+- **`fix(rate-limit): default_identifier не роняет 500` (`e2645f11f`)**: `RateLimitMiddleware` теперь не требует `AuthenticationMiddleware`.
+- **`fix(rpa): browser launch retry через tenacity + cleanup частичного startup` (`9442e8da6`)**: Resilient browser pool initialization.
+- **`test(rpa): real-browser integration tests для BrowserPool` (`943c22470`)** + **`BrowserPool acquire/release lifecycle contract`** (`c8b4593dd`).
+- **`test(body_hash): 100% coverage для entrypoints/middlewares/_body_hash.py`** (`bdfbe04d3`).
+- **`test(security): CSP differentiation regression + chromium /docs fix`** (`0e52959d1`).
+
+### AI / LLM
+
+- **`fix(ai): P0 LangGraph capability consistency`** (`55489eef0`).
+- **`fix(agent_sandbox): propagate CheckpointBackendUnavailable through ProcessPool`** (`f81402656`).
+- **`fix(ai_agent): propagate CheckpointBackendUnavailable through run_agent`** (`2e13ff5a9`).
+- **`fix(agent_dsl): correct kwargs for build_and_run_agent in langgraph_agent`** (`2d4ce64dd`).
+- **`fix(nats_jetstream): use event_time/event_id in SourceEvent construction`** (`127d4d011`).
+- **`test(ai): coverage для usage_meter`** (`008648511`).
+
+### Makefile / CI plumbing
+
+- **`fix(ci): make ci actually runs tests, and CI gets a real time bound`** (`e59534f88`): `make ci` теперь ends at real `pytest tests/unit` (см. `make/pipelines.mk:22-46`), не `pytest --co`. Закрывает wiring debt из §"Known open defects".
+
+### Dependabot wave 2026-10-15
+
+- **`deps(security): Dependabot 2026-10-15 — fix 31 of 38 CVEs, allowlist 7 (no-fix)`** (`56ecf3c3a`):
+  - **G-12 (pymdown-extensions cap)** — closed. CVE-2026-61632 (path traversal) + CVE-2026-67422 (ReDoS) устранены поднятием cap до `>=11.0.1,<12.0.0`. 19-дневный drift signal между CURRENT (Sep 28) и fix (Oct 15).
+  - **`test(security): update allowlist contract — 5 active entries from Dependabot 2026-10-15`** (`24c264b54`).
+- 7 CVE остаются в allowlist (no-fix).
+
+### Audit / docs drift closure
+
+- **`docs(audit): except-Exception audit на critical boundaries (Volна 7)`** (`87b9a397b`).
+- **`docs(adr): ADR-0347 — граница tenant-изоляции для авто-регистрируемой поверхности`** (`ff4d6684c`).
+- **`docs(audit): v11 — record 3 post-audit stabilization commits`** (`423252fb5`).
+- **`docs(audit): артефакты повторного доказательного аудита на 2d9f4323b`** (`dfd4bf510`).
+
+---
+
 ## How to refresh this document
 
 1. Re-measure coverage: `uv run pytest tests/unit --cov=src/backend --cov-report=xml`.
