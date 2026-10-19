@@ -14,6 +14,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
+from uuid import uuid4
 
 from src.backend.core.interfaces.source import SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
@@ -183,11 +184,20 @@ class NATSJetStreamSource:
 
         """
         async for nats_msg in self.stream():
-            event = SourceEvent(  # type: ignore[call-arg]  # R2.MYPY: SourceEvent signature uses different kwargs
+            # BUGFIX (2026-10-19): SourceEvent требует ``event_time`` (datetime)
+            # и ``event_id`` (str), не ``timestamp``. Раньше ``timestamp=``
+            # падал с TypeError на runtime (SourceEvent — @dataclass(slots=True),
+            # не Pydantic, поэтому # type: ignore[call-arg] скрывал реальный bug).
+            ts: datetime | None = nats_msg.timestamp
+            event_time = (
+                datetime.fromtimestamp(ts, tz=UTC) if isinstance(ts, (int, float)) else datetime.now(UTC)
+            )
+            event = SourceEvent(
                 source_id=self.source_id,
                 kind=self.kind,
                 payload=nats_msg.data,
-                timestamp=nats_msg.timestamp,
+                event_time=event_time,
+                event_id=str(uuid4()),
                 metadata={
                     "subject": nats_msg.subject,
                     "stream": self._stream,
