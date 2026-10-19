@@ -58,6 +58,10 @@ class ProcessPoolAgentSandbox:
         max_wall_time_s: float | None = None,
     ) -> AgentSandboxResult:
         """Run agent в process-pool worker (sync, wrapped в to_thread)."""
+        from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
+            CheckpointBackendUnavailable,
+        )
+
         wall_time = (
             max_wall_time_s if max_wall_time_s is not None else self._max_wall_time_s
         )
@@ -81,6 +85,15 @@ class ProcessPoolAgentSandbox:
             return AgentSandboxResult(
                 success=success, data=result, backend="process_pool"
             )
+        except CheckpointBackendUnavailable:
+            # P0 propagation (2026-10-19): typed exception MUST propagate
+            # через sandbox boundary. Broad ``except Exception`` ниже
+            # НЕ должен глотать typed error (иначе caller не отличит
+            # backend-unavailable от generic 500).
+            _logger.warning(
+                "ProcessPoolAgentSandbox: durable=True без configured checkpointer"
+            )
+            raise
         except TimeoutError:
             return AgentSandboxResult(
                 success=False,
