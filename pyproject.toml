@@ -594,13 +594,17 @@ doc-templates = [
     "xlsxwriter>=3.2.0,<4.0.0",
 ]
 # Sprint 5 — К4 RAG memory layer (optional providers).
-# langchain-postgres — AsyncPostgresSaver для LangGraph checkpoints
-# (used by services/ai/agents/langgraph_postgres_saver.py).
+# REMOVED langchain-postgres>=0.0.10,<1.0.0 (dead dependency):
+# langgraph_postgres_saver.py удалён (audit-stabilization Proposal 3,
+# commit 00cba5a71). AsyncPostgresSaver не существует в
+# langchain_postgres==0.0.17; durable checkpoint backend отсутствует.
+# При попытке build_and_run_agent(..., durable=True) — typed
+# CheckpointBackendUnavailable (services/ai/agents/langgraph_checkpoint_exceptions.py).
 # mem0ai REMOVED: zero imports, custom memory consolidation (UnifiedMemoryGateway)
 # is better suited for self-hosted deployment.
 ai-memory = [
     # REMOVED mem0ai>=0.1.0,<1.0.0 (unused)
-    "langchain-postgres>=0.0.10,<1.0.0",
+    # REMOVED langchain-postgres>=0.0.10,<1.0.0 (dead since 2026-10-14)
 ]
 # Sprint 5 — Multimodal RAG (PDF/image OCR и docling parsing).
 # docling — IBM Research document parser (PDF/DOCX → structured Markdown).
@@ -1036,7 +1040,7 @@ module = [
     "mlflow.*",
     "mem0",
     "nemoguardrails",
-    "langchain_postgres",
+    # REMOVED langchain_postgres (dead dep — langgraph_postgres_saver removed 2026-10-14)
     "aiobotocore",
     "aiobotocore.*",
     "aioboto3",
