@@ -386,3 +386,52 @@ async def test_checkpoint_backend_unavailable_propagates_through_generic_handler
     # провалится. Это и есть regression protection.
     with pytest.raises(CheckpointBackendUnavailable):
         await build_and_run_agent("hello", tool_actions=[], durable=True)
+
+
+async def test_saver_removed_error_message_does_not_suggest_git_checkout(
+    monkeypatch: pytest.MonkeyPatch, fake_chat_litellm_module: dict[str, Any]
+) -> None:
+    """Regression: when ``langgraph_postgres_checkpoint=True`` but saver is
+    removed, error context must NOT instruct the user to ``git checkout`` an
+    old commit.
+
+    Раньше context содержал ``"fix": "git checkout 00cba5a71~1 to restore
+    langgraph_postgres_saver.py"`` — это misleading fix (saver удалён по
+    design, восстанавливать нельзя) и нарушение integrity: рекомендовать
+    restore deleted code как fix делает систему хрупкой.
+
+    Корректное поведение: error context указывает на root cause
+    (``saver_module_removed``) и направляет на feature flag / durable flag,
+    но НЕ предлагает восстанавливать удалённый код.
+    """
+    from src.backend.core.config.features import feature_flags as ff_mod
+
+    # Включаем flag (иначе первая ветка вернёт "feature_flag_disabled")
+    monkeypatch.setattr(ff_mod, "langgraph_postgres_checkpoint", True)
+    _mock_langgraph_with_memory_saver(monkeypatch)
+
+    from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
+        CheckpointBackendUnavailable,
+    )
+    from src.backend.services.ai.ai_graph import build_and_run_agent
+
+    with pytest.raises(CheckpointBackendUnavailable) as exc_info:
+        await build_and_run_agent("hello", tool_actions=[], durable=True)
+
+    # Восстанавливаем original state
+    monkeypatch.setattr(ff_mod, "langgraph_postgres_checkpoint", False)
+
+    # Context должен указывать root cause
+    assert exc_info.value.context.get("reason") == "saver_module_removed"
+
+    # НО не должен предлагать git checkout (integrity + misleading fix)
+    fix_msg = str(exc_info.value.context.get("fix", ""))
+    assert "git checkout" not in fix_msg.lower(), (
+        f"Error context suggests `git checkout` as fix — это misleading: "
+        f"saver удалён по design, восстанавливать нельзя. "
+        f"Got: {fix_msg!r}"
+    )
+    assert "restore" not in fix_msg.lower() or "do not" in fix_msg.lower(), (
+        f"Error context suggests `restore` as fix — misleading. "
+        f"Got: {fix_msg!r}"
+    )

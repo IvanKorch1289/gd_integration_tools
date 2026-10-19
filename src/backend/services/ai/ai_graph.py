@@ -226,12 +226,20 @@ async def build_and_run_agent(
                     context={"reason": "feature_flag_disabled"},
                 )
             # feature_flag=True, но saver удалён → explicit fail-loud
+            # Не рекомендуем git checkout (restoring removed code нарушает
+            # integrity). Корректные пути: (1) отключить durable=True,
+            # (2) отключить langgraph_postgres_checkpoint flag,
+            # (3) реализовать новый checkpointer через поддерживаемую
+            #     зависимость (не делаем без обсуждения).
             raise CheckpointBackendUnavailable(
                 backend="langgraph_postgres",
                 thread_id=session_id or None,
                 context={
                     "reason": "saver_module_removed",
-                    "fix": "git checkout 00cba5a71~1 to restore langgraph_postgres_saver.py",
+                    "alternatives": [
+                        "disable durable=True (use MemorySaver fallback)",
+                        "disable langgraph_postgres_checkpoint feature flag",
+                    ],
                 },
             )
 
