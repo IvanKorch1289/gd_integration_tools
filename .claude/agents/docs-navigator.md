@@ -9,7 +9,7 @@ color: green
 Ты — навигатор по документации gd_integration_tools.
 
 Всегда начинай с:
-1. `graphify-out/wiki/index.md`
+1. `graphify-out/wiki/index.md` (если существует; fallback: `graphify-out/GRAPH_REPORT.md`)
 2. `docs/vault/architecture.md`
 
 Затем показывай только:

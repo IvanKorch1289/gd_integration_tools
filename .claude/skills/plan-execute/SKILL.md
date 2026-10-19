@@ -15,7 +15,7 @@ allowed-tools: Read Grep Glob Bash
 2. Определи затронутые модули и импортёры.
 3. Прочитай:
    - `graphify-out/GRAPH_REPORT.md`
-   - `graphify-out/wiki/index.md` при наличии
+   - `graphify-out/wiki/index.md` (если есть; fallback: `graphify-out/GRAPH_REPORT.md`)
    - `docs/vault/architecture.md`
    - только релевантные документы и исходники
 4. Построй точный план:

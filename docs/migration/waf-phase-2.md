@@ -85,4 +85,5 @@ make check-waf-coverage-strict  # должно пройти с 0 violations
 * ADR-0050, ADR-0053, ADR-0061
 * `core/net/outbound_http.py`
 * `tools/check_waf_coverage.py`
-* PLAN.md V19.1 §S9 K1 W3
+* [WAF Phase-2 Migration Guide](waf-phase2.md) — overview, rollback, team ownership
+* `docs/roadmap/PROD_READINESS_GAPS.md` V19.1 §S9 K1 W3

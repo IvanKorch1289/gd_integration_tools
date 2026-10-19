@@ -4,6 +4,9 @@
 > V15 R-V15-5, V18.1 §S1/S3 (К1 stream).
 > Аудитория: команды К2–К5, plugin authors, integration owners.
 
+> **Per-callsite recipe**: см. [waf-phase-2.md](waf-phase-2.md) — пошаговая
+> миграция одного callsite (Шаг 1-6).
+
 ## Status
 
 * **Phase-2 default-on**: `outbound_via_facade=True` стал значением по

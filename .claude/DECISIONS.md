@@ -324,7 +324,7 @@ README + `docs/backends.md` явная декларация: «Tier-A — produc
 
 ## ADR из DEEP-RESEARCH Sprint 21-23 (post-production gap-backlog)
 
-Источник: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` (Hermes Agent ultrathink, 10 L1–L10 субагентов). После Sprint 20 (`v1.0.0-production`) запускается post-production backlog S21-S23 (PLAN.md V22.2 FINAL §4) для закрытия 28 нерешённых GAP-пунктов. 4 новых ADR (ADR-NEW-12..15) — backbone S21/S23.
+Источник: `docs/architecture/repository-navigation-audit.md` + `docs/roadmap/PROD_READINESS_GAPS.md` (DEEP-RESEARCH Hermes Agent, 10 L1–L10 субагентов, 2026-05-20; исходный gap-analysis/ каталог удалён в ходе G8). После Sprint 20 (`v1.0.0-production`) запускается post-production backlog S21-S23 для закрытия 28 нерешённых GAP-пунктов. 4 новых ADR (ADR-NEW-12..15) — backbone S21/S23.
 
 ### ADR-NEW-12: Row-Level Security (RLS) Strategy для multi-tenant PostgreSQL таблиц
 
@@ -472,7 +472,7 @@ Feature-flag `CHAOS_CI_PR_GATE` (default-OFF в S23 backbone; flip default-ON п
 
 **Последствия**. (+) Compliance 152-ФЗ. (+) Defense-in-depth с NeMo/LlamaGuard (ADR-NEW-17). (−) Latency overhead ~20ms p95 на 4kb текста. (−) `ru_core_news_lg` weights 1.5GB (CI cache).
 
-**Wave**: `[wave:s24/w1-presidio-ru-ner]`. Источник: gap-analysis/AI-GAP-ANALYSIS-2026-05-22 P0-1 Зона 7.
+**Wave**: `[wave:s24/w1-presidio-ru-ner]`. Источник: `docs/roadmap/PROD_READINESS_GAPS.md` (AI-GAP-ANALYSIS 2026-05-22, P0-1 Зона 7).
 
 ---
 
@@ -490,7 +490,7 @@ Feature-flag `CHAOS_CI_PR_GATE` (default-OFF в S23 backbone; flip default-ON п
 
 **Последствия**. (+) Jailbreak detection at input + LLM output classification. (+) Banking-specific topic filter. (−) Latency p95 ≤ 80ms combined overhead (target). (−) GPU pool требуется для Llama Guard 3. (−) Streaming compatibility требует особого handling.
 
-**Wave**: `[wave:s24/w2-nemo-llamaguard]`. Источник: gap-analysis/AI-GAP-ANALYSIS-2026-05-22 P0-2 Зона 8.
+**Wave**: `[wave:s24/w2-nemo-llamaguard]`. Источник: `docs/roadmap/PROD_READINESS_GAPS.md` (AI-GAP-ANALYSIS 2026-05-22, P0-2 Зона 8).
 
 ---
 
@@ -509,7 +509,7 @@ Feature-flag `CHAOS_CI_PR_GATE` (default-OFF в S23 backbone; flip default-ON п
 
 **Последствия**. (+) Resume-after-crash multi-turn агента. (+) Unified MemoryProtocol для AI-агентов. (+) ACID + pgvector hybrid (BM25 + dense). (−) Каждый node-step = Postgres write (latency ≤ 5ms p95 target). (−) Mem0 — молодая библиотека (API меняется, commit pinning).
 
-**Wave**: `[wave:s24/w3-memory-persistence]`. Источник: gap-analysis/AI-GAP-ANALYSIS-2026-05-22 P0-3 Зона 2.
+**Wave**: `[wave:s24/w3-memory-persistence]`. Источник: `docs/roadmap/PROD_READINESS_GAPS.md` (AI-GAP-ANALYSIS 2026-05-22, P0-3 Зона 2).
 
 ---
 
@@ -605,7 +605,7 @@ Feature-flag `CHAOS_CI_PR_GATE` (default-OFF в S23 backbone; flip default-ON п
 
 ## Архитектурные рекомендации V2 GAP-анализа (A-01 → A-07)
 
-Источник: GAP-анализ V2 (`gap-analysis/GAP-ANALYSIS-V2-gd_integration_tools-2026-05-21.md`).
+Источник: GAP-анализ V2 (`docs/roadmap/PROD_READINESS_GAPS.md` V2 + `docs/architecture/repository-navigation-audit.md`).
 Прошли цикл самокритики: Critic + Devil's Advocate. QUALITY_SCORE: 74/100.
 
 ### ADR-A-01: RouteMiddlewareSpec dataclass для декларативной композиции middleware

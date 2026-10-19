@@ -487,7 +487,7 @@ pytest tests/integration/ai/test_presidio_active.py \
 
 **Sprint 21 — Resilience & Multi-tenancy Hardening** — закрыт coordinator-self mode за одну сессию (11 коммитов: backbone + 9 wave + closure). 55/55 unit-тестов passing (+5 skipped: RLS требует Postgres).
 
-**Источник**: `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + PLAN.md V22.2 FINAL §4.
+**Источник**: `docs/architecture/repository-navigation-audit.md` + `docs/roadmap/PROD_READINESS_GAPS.md` (DEEP-RESEARCH 2026-05-20).
 
 ### Wave-таблица (10 wave landed)
 
@@ -697,7 +697,7 @@ S21_TEST_PG_DSN=postgresql+asyncpg://... pytest tests/security/test_rls_isolatio
 - **Sprint 18** — Operational/Security (S-L1, S-L7, S-L8) + 10 функциональных предложений из Phase 3 диалога
 - **Sprint 19** — DSL/AI расширения (S-L4) + 6 функциональных предложений (workflow versioning, route composition, route authz, multipart RAG, reranking, RPA sessions)
 - **Sprint 20** — Coverage finale + pre-prod-check v2 38/38 + DR & Backup verified
-- **Sprint 21-23 (NEW V22.2 FINAL, post-production)** — 28 пунктов из `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` + 5 follow-up. См. секцию «Sprint 21-23 GAP-backlog» ниже.
+- **Sprint 21-23 (NEW V22.2 FINAL, post-production)** — 28 пунктов из `docs/roadmap/PROD_READINESS_GAPS.md` (DEEP-RESEARCH 2026-05-20) + 5 follow-up. См. секцию «Sprint 21-23 GAP-backlog» ниже.
 
 ---
 
@@ -706,7 +706,7 @@ S21_TEST_PG_DSN=postgresql+asyncpg://... pytest tests/security/test_rls_isolatio
 **Контекст**. После первого анализа (V1, 668 LOC, 10 суб-агентов) запущен цикл
 итеративной самокритики: Critic + Devil's Advocate + Integration Bus Expert.
 Принято 14 замечаний из 17. QUALITY_SCORE: 51 → 74/100 (Δ ~41%).
-Полный отчёт: `gap-analysis/GAP-ANALYSIS-V2-gd_integration_tools-2026-05-21.md`.
+Полный отчёт: `docs/roadmap/PROD_READINESS_GAPS.md` (V2) + `docs/architecture/repository-navigation-audit.md`.
 
 ### Ключевые уточнения V2 vs V1
 
@@ -804,7 +804,7 @@ out of scope cycle 34 (требует отдельного wire в storage facto
 
 ## Sprint 21-23 GAP-backlog (DEEP-RESEARCH 2026-05-20) — post-production без дат
 
-**Контекст**. После Sprint 20 (`v1.0.0-production`) начинается post-production backlog S21-S23 (PLAN.md V22.2 FINAL §4) для закрытия 28 нерешённых GAP-пунктов из `gap-analysis/DEEP-RESEARCH-gd_integration_tools-2026-05-20.md` (668 LOC, Hermes Agent ultrathink, 10 L1–L10 субагентов).
+**Контекст**. После Sprint 20 (`v1.0.0-production`) начинается post-production backlog S21-S23 для закрытия 28 нерешённых GAP-пунктов из `docs/roadmap/PROD_READINESS_GAPS.md` (DEEP-RESEARCH 2026-05-20, 668 LOC, Hermes Agent ultrathink, 10 L1–L10 субагентов).
 
 **Финальная оценка готовности** до S21-S23: **6.3/10** → после S21-S23: **≥ 8.5/10** (production-grade).
 

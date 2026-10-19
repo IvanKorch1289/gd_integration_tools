@@ -65,8 +65,8 @@
 | Позиция | Факт | Вердикт |
 |---|---|---|
 | mkdocs nav `API Reference: api/` | `docs/api/` **НЕ СУЩЕСТВУЕТ** — секция сайта мертва (mkdocstrings с `paths: [src]` настроен) | **FIX** nav (генерация API reference или убрать пункт) |
-| `docs/workflow/` vs `docs/workflows/` | workflow/: 1 файл (versioning D172); workflows/: обзор. Nav ведёт только в `workflows/` | **CONSOLIDATE** → `workflows/` |
-| `docs/migration/` vs `docs/migrations/` | Два документа об одном WAF Phase-2 (`waf-phase-2.md` vs `waf-phase2.md`). Nav — `migration/` | **CONSOLIDATE** |
+| `docs/workflow/` vs `docs/workflows/` | workflow/: 1 файл (versioning D172); workflows/: обзор. Nav ведёт только в `workflows/` | **CONSOLIDATE** → `workflows/` (Sprint 47 принял singular; см. 9cf3429ba) |
+| `docs/migration/` vs `docs/migrations/` | Два документа об одном WAF Phase-2 (`waf-phase-2.md` vs `waf-phase2.md`). Nav — `migration/` | **CONSOLIDATE** (Sprint 47 принял singular; см. 9cf3429ba) |
 | `docs/docs/` | Не stray-docs: `.vale.ini` + стили + словари | **MOVE** → `.vale/` (вводящее в заблуждение имя) |
 | `docs/sprints/` + `docs/retros/` + `SPRINT_171_*.md` в корне docs/ | Снапшоты распылены по 3+ местам | **CONSOLIDATE** (одно место для sprint-снапшотов) |
 | `docs/audit/` | 118 файлов / 6.8M (52% объёма docs), датированные снапшоты | **CONSOLIDATE** в archive-зону / чистка по расписанию |

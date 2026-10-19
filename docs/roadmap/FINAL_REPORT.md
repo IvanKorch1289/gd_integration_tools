@@ -185,7 +185,7 @@ owner: ai-team. Связано с mcp 2.x/fastmcp 4 дрейфом (см. `3e5e1
 | Позиция | Статус | Evidence |
 |---|---|---|
 | Stale focused-кластеры | **59 тестов починены**: prometheus_alerting 14, sse 13, rag_invalidation 13, plugin_resource_monitor 11, tracing 9, audit_verify_lifecycle 10 — все под текущие контракты (`1749b9491`, `91e22a43a`). Итог доменных сьюточек: 568 passed / 1✗ (mq_trace — WIP полосы) | grep FAILED по доменам |
-| G8 навигация | Дубли каталогов устранены: `docs/workflow/`→`workflows/worker-versioning.md`, `docs/migrations/`→`migration/` (git mv; синхронно с полосой 9cf3429ba); AGENTS.md — актуальная фаза + канонические источники вместо PLAN.md/Sprint-36; ARCHITECTURE.md — дата 2026-09-11 | `8f62c06bb` |
+| G8 навигация | Дубли каталогов устранены: `docs/workflows/`→`workflow/worker-versioning.md`, `docs/migrations/`→`migration/{dlq-partition,waf-phase2}.md` (git mv, коммит 9cf3429ba; описание в этом отчёте было инвертировано); AGENTS.md — актуальная фаза + канонические источники вместо `docs/roadmap/PROD_READINESS_GAPS.md`/Sprint-36; ARCHITECTURE.md — дата 2026-09-11 | `8f62c06bb`, `9cf3429ba` |
 | Ruff gate | 29 новых lint-профессий полосы (F402/S108 в новых модулях) — исправлены, gate восстановлен | worktree |
 | Остаётся красным | smart_session (7, load-flak), workflow_tools (2), mq_trace (1, WIP полосы), langfuse (1, флак), SOAP invoke (G4) | — |
 

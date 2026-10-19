@@ -97,7 +97,7 @@ Sprint 171+: middleware/RPA/integration audits) — см. git-историю и
 ## Что читать сначала
 
 1. `CLAUDE.md` — полные правила (читай при любой неоднозначности);
-2. `PLAN.md` (V22) — текущий roadmap и архитектурные решения;
+2. `docs/roadmap/FINAL_REPORT.md` + `docs/roadmap/PROD_READINESS_GAPS.md` — текущий roadmap и архитектурные решения;
 3. `graphify-out/...` (если есть) — индекс кода;
 4. `ARCHITECTURE.md`;
 5. `.claude/DECISIONS.md`, `.claude/KNOWN_ISSUES.md`.
@@ -249,7 +249,17 @@ Kimi Code автоматически подхватывает:
 **Из `.claude/skills/` (через `extra_skill_dirs`):**
 - `codebase-map`, `plan-execute`, `verify-change`, `compact-session`,
   `connector-building`, `refactoring`, `workflow-engineering`,
-  `feature-development`, `commit-work`, `research-current-tech`.
+  `feature-development`, `commit-work`, `research-current-tech`,
+  `grill-me` (обязательно для размытых задач; user-invoked),
+  `grilling` (model-invocable — агенты сами вызывают на размытых задачах).
+
+**Обязательная ступень (размытая задача → grill-me / grilling):**
+новая фича / архитектурное решение / дизайн / бизнес-логика с множеством
+неопределённостей, противоречивыми требованиями или неявными допущениями —
+прежде чем составлять план, вызвать `grilling` через Skill tool. Если
+пользователь сам формулирует «сырую» идею — рекомендовать ему `/grill-me`.
+Только когда дизайн уже сформулирован или задача механическая — переходить
+сразу к `plan-execute`.
 
 **Из `.kimi-code/skills/`:**
 - `python-dev` — правила Python-разработки (этот проект);
@@ -276,11 +286,21 @@ Kimi Code автоматически подхватывает:
 ## Полный контекст
 
 Если раздел выше неполон или устарел — **читай `CLAUDE.md`**. Он синхронизирован
-с `PLAN.md` V22 FINAL и является source of truth для проекта.
+с `docs/roadmap/FINAL_REPORT.md` (V22 final, prod-readiness v8) и является source of truth для проекта.
 
 ---
 
 ## Текущая фаза (Sprint 171+ / B-series 2026-07-28)
+
+### Sprint numbering map
+
+| Обозначение | Что это | Период |
+|---|---|---|
+| Sprint 35 | SBOM+cosign/OWASP ZAP/chaos/hypothesis/pip-audit | 2026-07-31 → 2026-08-18 |
+| Sprint 36 | Production Readiness (90%+) | 2026-08-18 → 2026-08-31 |
+| Sprint 170+ / Sprint 171 | audit-waves M5/M6/M6.1/M7 (middleware, RPA, settings, integration) | 2026-08-25 → 2026-09-11 |
+| B-series (B1..B7) | post-2026-07-28 hygiene (pre-existing commits, docstring gate, mkdocs, etc.) | 2026-09-... |
+| FW7-series (FW7.1..FW7.83) | docstring ratchet (commit-range 360a57e6b..647b081be) | 2026-09-... |
 
 ### Аудит (завершён 2026-07-28)
 
