@@ -89,10 +89,15 @@ class LangGraphAgentProcessor(BaseAIProcessor):
 
         from src.backend.services.ai.ai_graph import build_and_run_agent
 
-        result = await build_and_run_agent(  # type: ignore[call-arg]  # R2.MYPY: build_and_run_agent signature uses positional or different kwargs
-            query=self.query,
-            thread_id=self.thread_id,
-            max_iterations=self.max_iterations,
+        # BUGFIX (2026-10-19): ранее передавались kwargs которых нет в
+        # build_and_run_agent signature (query=, thread_id=, max_iterations=),
+        # что вызывало TypeError при реальном вызове (маскировалось
+        # только mock'ом в test_invoke_calls_build_and_run_agent).
+        # Правильные имена: prompt, tool_actions, session_id.
+        result = await build_and_run_agent(
+            prompt=self.query,
+            tool_actions=[],
+            session_id=self.thread_id,
         )
         output = result.get("output", "") if isinstance(result, dict) else str(result)
         self.set_result(exchange, self.target, output)
