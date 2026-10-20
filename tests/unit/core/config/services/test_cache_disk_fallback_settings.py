@@ -39,23 +39,23 @@ class TestDiskFallbackFieldExists:
 
 class TestDiskFallbackDefaults:
     def test_disk_fallback_path_default(self) -> None:
-        """Default ``disk_fallback_path`` matches the previous hard-coded value."""
-        # Use isolated env (no overrides) to check defaults.
-        with patch.dict(os.environ, {}, clear=False):
-            for key in (
-                "CACHE_DISK_FALLBACK_PATH",
-                "CACHE_DISK_FALLBACK_ENABLED",
-            ):
-                os.environ.pop(key, None)
-            settings = CacheSettings()
-        assert settings.disk_fallback_path == "var/cache/disk_fallback"
+        """Pydantic default ``disk_fallback_path`` matches the previous hard-coded value."""
+        # Check Pydantic class default (independent of YAML loader).
+        field_default = CacheSettings.model_fields["disk_fallback_path"].default
+        assert field_default == "var/cache/disk_fallback"
 
     def test_disk_fallback_enabled_default_true(self) -> None:
-        """Default ``disk_fallback_enabled`` is True (cycle 163: backward-compat)."""
-        with patch.dict(os.environ, {}, clear=False):
-            os.environ.pop("CACHE_DISK_FALLBACK_ENABLED", None)
-            settings = CacheSettings()
-        assert settings.disk_fallback_enabled is True
+        """Pydantic default ``disk_fallback_enabled`` is True (cycle 163: backward-compat).
+
+        Cycle 168: проверка через ``model_fields[...]`` — runtime значение
+        может быть переопределено через ``config_profiles/base.yml`` (для
+        in-cluster production disk=off). См. ``TestSingletonExposesFields``
+        для проверки runtime значения.
+        """
+        field_default = CacheSettings.model_fields[
+            "disk_fallback_enabled"
+        ].default
+        assert field_default is True
 
 
 class TestDiskFallbackEnvOverride:

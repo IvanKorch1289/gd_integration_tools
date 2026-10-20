@@ -228,6 +228,13 @@ cache:
   # Cycle 164 (ADR-0352): cache_expire_seconds мигрировал из redis: сюда —
   # это CACHE concern, не redis-специфичный.
   cache_expire_seconds: 300
+  # Cycle 168 (PROD_READINESS_LOGGING_CACHE_2026-10-20 §2.1): L3 disk
+  # fallback управляется через YAML. ``disk_fallback_enabled=false`` для
+  # in-cluster production (диск — anti-pattern, shared state между
+  # подами). ``disk_fallback_path`` — относительно CWD; абсолютный путь
+  # для выделенного storage volume (например, EmptyDir на k8s).
+  disk_fallback_enabled: false
+  disk_fallback_path: "var/cache/disk_fallback"
 
 
 watermark:
