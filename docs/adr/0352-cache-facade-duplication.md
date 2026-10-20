@@ -68,59 +68,54 @@
 - ✅ 14 unit-тестов в `tests/tools/test_check_cache_facade_uniqueness.py`
   покрывают positive/negative cases.
 
-### Stage 2 (Sprint 7+ Dev2): MERGE — один фасад
+### Stage 2 (Cycle 165 — DONE): MERGE — один canonical ABC
 
-**Решение: оставить `services.cache.facade.UnifiedCacheFacade` как canonical,
-перенести ABC-семантику из `core/cache/facade.py` через композицию.**
+**Решение: `core.cache.facade.UnifiedCacheFacade` остаётся canonical ABC.
+`services.cache.facade.UnifiedCacheFacade` теперь `extends` core ABC.**
 
 Обоснование:
-1. Services-фасад DI-регистрируется → доступен через `get_service()` →
-   правильный pattern для V15 multi-tenant production.
-2. Services-фасад имеет capability check → обязательно для V15 R-V15-1
-   (Plugin contract + capability-runtime-gate).
-3. Services-фасад возвращает `CacheResult` → даёт observability
-   (hit/miss/backend) для SLO / dashboard.
-4. Namespace param в Services-фасаде → правильная изоляция между
-   плагинами и тенантниками (особенно при работе с `tenant:{id}:` prefix).
+- Layer rule (CLAUDE.md): `services → core` OK; `core → services` FORBIDDEN.
+- `core/cache/facade.py` — canonical interface definition.
+- `services/cache/facade.py` — concrete impl с namespace + capability +
+  observability (extends core ABC).
 
-**План merge:**
+**Cycle 165 (DONE) — что сделано:**
 
-1. Создать `src/backend/core/cache/facade.py::UnifiedCacheFacade` как
-   **alias** (re-export) на `services.cache.facade.UnifiedCacheFacade`:
+1. **`src/backend/services/cache/facade.py`** — `class UnifiedCacheFacade`
+   теперь extends `core.cache.facade.UnifiedCacheFacade` (ABC). Все ABC
+   abstract methods реализованы:
+   - `get(key) → bytes | None`
+   - `set(key, value, ttl_seconds, tags)`
+   - `delete(*keys)`
+   - `delete_by_tag(tag) → int`
+   - `exists(key) → bool`
+   - `healthcheck() → bool`
 
-   ```python
-   # core/cache/facade.py
-   from src.backend.services.cache.facade import (
-       CacheResult,
-       UnifiedCacheFacade,
-   )
-   ```
+2. Namespace-aware варианты вынесены в `*_ns` методы:
+   - `get_ns(key, namespace) → CacheResult`
+   - `set_ns(key, value, ttl, tags, namespace)`
+   - `delete_ns(*keys, namespace)`
+   - `delete_by_tag_ns(tag, namespace) → int`
+   - `exists_ns(key, namespace) → bool`
+   - `delete_pattern_ns(pattern, namespace)`
+   - `healthcheck_ns()`
 
-2. Перенести ABC-семантику (`MemoryCacheFacade`, `FallbackCacheFacade`,
-   `RedisCacheFacade`) в `services/cache/facade.py`
-   как **internal implementations**, НЕ re-exported из `core/cache/__init__.py`.
+3. Facade-level `_tag_index` для tag invalidation без native backend tag support.
 
-3. Сохранить `MemoryCacheFacade`, `FallbackCacheFacade`,
-   `RedisCacheFacade` для backward-compat в
-   `core/cache/facade.py` НО пометить как `Deprecated` (будут алиасы на
-   новые internal implementations).
+4. **`src/backend/core/di/providers/cache.py::get_cache_facade`** — docstring
+   обновлён: dev/test path. Production canonical = services facade.
 
-3.1. **Cycle 164 (DONE):** `DiskCacheFacade` (core) **удалена** как
-dead code — НЕ используется в production runtime path. Disk-tier
-реализуется через `infrastructure.cache.backends.disk.DiskCacheBackend`
-(async I/O via aiofiles, atomic writes). См. CACHE_AUDIT §9 + CI guard
-`tools/checks/check_cache_facade_uniqueness.py::FORBIDDEN_DISK_CACHE_NAMES`.
+5. **CI guard расширен**: `_check_services_facade_extends_core()` —
+   проверяет, что services facade extends core ABC. Запрещает новые
+   classes без правильного inheritance.
 
-4. Добавить `namespace`, `cache_result` в `UnifiedCacheFacade` API
-   (из Services-фасада).
+6. **Tests обновлены**:
+   - `tests/unit/services/cache/test_facade.py` — все 14 тестов используют
+     `*_ns` методы (наследие старого API); 7 новых ABC-метод-тестов.
+   - `tests/unit/core/cache/test_facade_audit.py` — обновлены signature
+     checks для ABC parity. Добавлен `test_services_is_core_subclass`.
 
-5. Добавить `delete_by_tag` в Services-фасад (из Core-фасада) — для
-   tag-invalidation parity.
-
-6. **CI gate**: `tools/checks/check_cache_facade_uniqueness.py` —
-   проверяет, что только два файла могут определять `UnifiedCacheFacade`:
-   - `src/backend/core/cache/facade.py` (как re-export alias)
-   - `src/backend/services/cache/facade.py` (canonical implementation)
+**Result:** 802 cache-тестов проходят. Layer rule сохранён.
 
 ### Stage 3 (Sprint 8): DEPRECATE core-фасад
 

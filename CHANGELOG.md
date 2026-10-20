@@ -7291,3 +7291,45 @@ CI guard (`make check-cache-facade-uniqueness`) нашёл naming clash:
 CI guard теперь чистый (3 memory-класса в правильных файлах).
 
 Refs: ADR-0352 Stage 6 (cycle 164), CI guard `_check_memory_cache_class_locations`.
+
+## [Unreleased] — 2026-10-20 — Cycle 165: ADR-0352 Stage 2 — UnifiedCacheFacade merge
+
+### feat(cache): services.UnifiedCacheFacade extends core ABC (Stage 2)
+
+Cycle 165 закрывает Stage 2 ADR-0352 (MERGE фасадов).
+
+**Решение:** `core.cache.facade.UnifiedCacheFacade` остаётся canonical ABC.
+`services.cache.facade.UnifiedCacheFacade` теперь `extends` core ABC.
+
+Обоснование: layer rule (CLAUDE.md / tools/check_layers.py) предписывает
+`services → core` OK; `core → services` FORBIDDEN. Следовательно, canonical
+должен быть в core/.
+
+**Изменения:**
+
+* **`src/backend/services/cache/facade.py`** — `class UnifiedCacheFacade`
+  наследует `core.cache.facade.UnifiedCacheFacade`. ABC abstract methods
+  реализованы: `get`, `set`, `delete`, `delete_by_tag`, `exists`,
+  `healthcheck`. Namespace-aware варианты вынесены в `*_ns` методы
+  (`get_ns(key, namespace) → CacheResult`, `set_ns`, `delete_ns`,
+  `delete_by_tag_ns`, `exists_ns`, `delete_pattern_ns`, `healthcheck_ns`).
+  Facade-level `_tag_index` для tag invalidation без native backend tag.
+
+* **`src/backend/core/di/providers/cache.py::get_cache_facade`** — docstring
+  обновлён (dev/test path; production canonical = services facade).
+  LOC stays 496 (<500).
+
+* **`tools/checks/check_cache_facade_uniqueness.py`** — новый check
+  `_check_services_facade_extends_core()` — verify services facade
+  extends core ABC (CLAUDE.md layer rule).
+
+* **`tests/unit/services/cache/test_facade.py`** — обновлены 14 тестов
+  (используют `*_ns`); добавлены 7 ABC-тестов (get/set/delete/delete_by_tag/
+  exists/healthcheck/set_with_tags).
+
+* **`tests/unit/core/cache/test_facade_audit.py`** — обновлены signature
+  checks. Добавлен `test_services_is_core_subclass`.
+
+**Result:** 802 cache-тестов проходят. Layer rule сохранён.
+
+Refs: ADR-0352 Stage 2 (cycle 165).
