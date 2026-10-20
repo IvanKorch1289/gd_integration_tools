@@ -246,6 +246,17 @@ arch-ratchet: check-env ## P1 S172 W2: architecture ratchet (frontend layer + ap
 check-no-duplicate-scripts: ## S64 org-2: fail if scripts/ and tools/ have duplicate file names
 	@$(UV_RUN) python tools/checks/no_duplicate_scripts.py
 
+# Cycle 163 cache audit (ADR-0352 Stage 1): CI guard предотвращает несанкционированные
+# определения class UnifiedCacheFacade, потерянные re-exports в cache.__init__,
+# дублирование module-level cache_settings singleton. См. docs/adr/0352.
+check-cache-facade-uniqueness: ## Cycle 163 / ADR-0352: cache facade uniqueness guard
+	@$(INFO) "Checking cache facade uniqueness (ADR-0352 Stage 1)..."
+	@$(UV_RUN) python tools/checks/check_cache_facade_uniqueness.py --strict
+	@$(SUCCESS) "Cache facade uniqueness verified!"
+
+check-cache-facade-uniqueness-json: ## Cycle 163 / ADR-0352: cache facade check (machine-readable JSON)
+	@$(UV_RUN) python tools/checks/check_cache_facade_uniqueness.py --json
+
 alembic-drift: check-env ## Cycle-15 (D-AUDIT-1504): Alembic schema drift detection gate (--metadata-only offline mode)
 	@$(UV_RUN) python -m tools.check_alembic_drift --metadata-only
 
