@@ -31,6 +31,7 @@ __all__ = (
     "LoggerProtocol",
     "configure_logging",
     "get_logger",
+    "init_application_logging",
     "init_log_sinks",
     "shutdown_log_sinks",
     "shutdown_logging",

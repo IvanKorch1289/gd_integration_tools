@@ -172,6 +172,12 @@ async def phase_watchers(app: FastAPI) -> None:
     )
 
     await start_dsl_yaml_watcher(app)
+    # Cycle 161 audit: логируем успешный старт watcher'а для operational
+    # observability (без этого нет visibility в "watcher up" events).
+    _logger.info(
+        "startup.phase.watchers.completed",
+        extra={"phase": "watchers", "event": "startup.phase.watchers.completed"},
+    )
 
 
 async def phase_plugin_loader(app: FastAPI) -> None:
@@ -185,6 +191,16 @@ async def phase_plugin_loader(app: FastAPI) -> None:
         await loader.discover_and_load()
 
         app.state.plugin_loader = loader
+        # Cycle 161 audit: успешный load плагинов — критический checkpoint.
+        # Раньше logging был только при исключении, успех был silent.
+        _logger.info(
+            "startup.phase.plugin_loader.completed",
+            extra={
+                "phase": "plugin_loader",
+                "loader_type": type(loader).__name__,
+                "event": "startup.phase.plugin_loader.completed",
+            },
+        )
 
     except Exception as exc:
         _logger.warning("Plugin loader bootstrap skipped: %s", exc)

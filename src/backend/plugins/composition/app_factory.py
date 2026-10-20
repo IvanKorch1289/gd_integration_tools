@@ -5,6 +5,9 @@ from fastapi.responses import HTMLResponse, ORJSONResponse, Response
 
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
+from src.backend.core.logging import (
+    init_application_logging as _init_application_logging,
+)
 from src.backend.entrypoints.api.openapi_security import apply_security_to_openapi
 from src.backend.entrypoints.api.v1.routers import get_v1_routers
 from src.backend.entrypoints.graphql.schema import graphql_router
@@ -50,6 +53,40 @@ def create_app() -> FastAPI:
         app = create_app()
         uvicorn.run(app)
     """
+    # Cycle 161 audit — централизованная инициализация logging-стека ДО
+    # создания FastAPI app и middleware stack. Без этого:
+    #  - structlog backend auto-detected, но SinkRouter НЕ активен →
+    #    events НЕ доходят до ConsoleJson/DiskRotating/GraylogGelf.
+    #  - Все логгеры используют lazy default (только console).
+    # После вызова: profile-based router активен, события fan-out'ятся
+    # во все настроенные sink-и. См. ADR-0351 § Phase 2.
+    #
+    # Cycle 162 fix: Settings-driven init — все параметры из settings.
+    #  - level: settings.logging.level (LogStorageSettings.level).
+    #  - environment: settings.app.environment ("development" / "production" / "staging").
+    #  - profile: get_active_profile() (читает env APP_PROFILE) — НЕ
+    #    settings.app.profile (такого поля не существует).
+    #  - graylog_host/port: settings.logging.host / .port.
+    try:
+        from src.backend.core.config.profile import get_active_profile
+
+        _init_application_logging(
+            level=settings.logging.level,
+            environment=settings.app.environment,
+            profile=get_active_profile(),
+            log_dir=settings.logging.dir_log_name,
+            graylog_host=settings.logging.host,
+            graylog_port=settings.logging.port,
+            graylog_protocol="tcp" if settings.logging.use_tls else "udp",
+        )
+    except Exception as exc:  # pragma: no cover — failure-tolerant startup
+        # Если logging init падает (например, structlog missing в CI) —
+        # логируем через lazy get_logger (fallback) и продолжаем.
+        get_logger("app_factory").warning(
+            "init_application_logging failed: %s — приложение продолжит работу с lazy defaults",
+            exc,
+        )
+
     # Инициализация базового приложения
     app = FastAPI(
         lifespan=lifespan,
