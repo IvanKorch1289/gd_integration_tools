@@ -68,6 +68,11 @@ ALLOWED_MEMORY_CACHE_CLASSES: dict[str, str] = {
     "LruMemoryCache": "src/backend/infrastructure/cache/lru_cache.py",
 }
 
+# Cycle 165 (ADR-0352 Stage 2): services.UnifiedCacheFacade MUST extend
+# core.UnifiedCacheFacade ABC (layer rule: services → core OK; core → services FORBIDDEN).
+SERVICES_FACADE_FILE = "src/backend/services/cache/facade.py"
+CORE_FACADE_FILE = "src/backend/core/cache/facade.py"
+
 # Modules that may re-export ``UnifiedCacheFacade`` via __all__.
 # core/cache/__init__.py + services/cache/__init__.py.
 ALLOWED_REEXPORT_MODULES: frozenset[str] = frozenset(
@@ -346,6 +351,62 @@ def _check_memory_cache_class_locations(
             )
 
 
+def _check_services_facade_extends_core(
+    py: Path, report: Report
+) -> None:
+    """Cycle 165 (ADR-0352 Stage 2): services.UnifiedCacheFacade MUST
+    наследоваться от core.UnifiedCacheFacade (ABC).
+
+    Layer rule (CLAUDE.md) предписывает `services → core` allowed,
+    `core → services` FORBIDDEN. После Stage 2 services facade
+    использует core ABC как canonical interface.
+    """
+    try:
+        rel = str(py.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return
+
+    if rel != SERVICES_FACADE_FILE:
+        return
+
+    try:
+        tree = ast.parse(py.read_text(encoding="utf-8", errors="ignore"))
+    except SyntaxError:
+        return
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "UnifiedCacheFacade":
+            # Check base classes — must include core.UnifiedCacheFacade.
+            base_names: list[str] = []
+            for base in node.bases:
+                if isinstance(base, ast.Attribute):
+                    # src.backend.core.cache.facade.UnifiedCacheFacade
+                    base_names.append(ast.unparse(base))
+                elif isinstance(base, ast.Name):
+                    base_names.append(base.id)
+            # Accept either full path or alias (e.g. _CoreUnifiedCacheFacade).
+            extends_core = any(
+                "core.cache.facade.UnifiedCacheFacade" in name
+                or "_CoreUnifiedCacheFacade" in name
+                for name in base_names
+            )
+            if not extends_core:
+                report.add(
+                    Violation(
+                        kind="services_facade_must_extend_core",
+                        file=rel,
+                        line=node.lineno,
+                        message=(
+                            f"class UnifiedCacheFacade in {rel} MUST extend "
+                            f"core.cache.facade.UnifiedCacheFacade ABC "
+                            f"(ADR-0352 Stage 2 + CLAUDE.md layer rule). "
+                            f"Found bases: {base_names or '(none)'}."
+                        ),
+                        snippet=f"class {node.name}({', '.join(base_names)}):",
+                    )
+                )
+
+
 def _check_settings_singleton(
     py: Path, report: Report
 ) -> None:
@@ -412,6 +473,7 @@ def main(argv: list[str] | None = None) -> int:
         _check_settings_singleton(py, report)
         _check_disk_cache_uniqueness(py, report)
         _check_memory_cache_class_locations(py, report)
+        _check_services_facade_extends_core(py, report)
 
     if args.json:
         print(

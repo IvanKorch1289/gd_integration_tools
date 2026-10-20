@@ -161,15 +161,23 @@ class TestFacadesAreDifferent:
         # They are NOT the same — that is the problem we are documenting.
         assert Core is not Services
 
-    def test_services_has_namespace(self) -> None:
-        """Services facade has namespace-aware methods."""
+    def test_services_has_namespace_via_ns_methods(self) -> None:
+        """Services facade has namespace-aware methods (``*_ns``).
+
+        Cycle 165 (ADR-0352 Stage 2): ABC-style ``get(key)`` returns bytes,
+        namespace-aware variant ``get_ns(key, namespace)`` returns CacheResult.
+        """
         import inspect
 
         from src.backend.services.cache import UnifiedCacheFacade as Services
 
-        # get() should accept a namespace kwarg.
+        # ABC-style get() does NOT accept namespace (matches core ABC).
         sig = inspect.signature(Services.get)
-        assert "namespace" in sig.parameters
+        assert "namespace" not in sig.parameters
+
+        # Namespace-aware variant is a separate method.
+        sig_ns = inspect.signature(Services.get_ns)
+        assert "namespace" in sig_ns.parameters
 
     def test_core_lacks_namespace(self) -> None:
         """Core facade does NOT have namespace kwarg (ABC)."""
@@ -180,14 +188,28 @@ class TestFacadesAreDifferent:
         sig = inspect.signature(Core.get)
         assert "namespace" not in sig.parameters
 
-    def test_services_returns_cache_result(self) -> None:
-        """Services.get() returns CacheResult (dataclass)."""
+    def test_services_abc_returns_bytes(self) -> None:
+        """Services.get() (ABC-style) returns bytes | None.
+
+        Cycle 165: services.UnifiedCacheFacade extends core ABC — ABC methods
+        match the core signature exactly. Namespace-aware ``get_ns()`` returns
+        ``CacheResult``.
+        """
         import inspect
 
         from src.backend.services.cache import UnifiedCacheFacade as Services
 
-        # Return annotation should be CacheResult (not bytes).
         sig = inspect.signature(Services.get)
+        # Return annotation should be bytes (ABC parity with core).
+        assert "bytes" in str(sig.return_annotation)
+
+    def test_services_get_ns_returns_cache_result(self) -> None:
+        """Services.get_ns() returns CacheResult (dataclass)."""
+        import inspect
+
+        from src.backend.services.cache import UnifiedCacheFacade as Services
+
+        sig = inspect.signature(Services.get_ns)
         assert "CacheResult" in str(sig.return_annotation)
 
     def test_core_returns_bytes(self) -> None:
@@ -199,6 +221,13 @@ class TestFacadesAreDifferent:
         sig = inspect.signature(Core.get)
         # Return annotation should mention bytes.
         assert "bytes" in str(sig.return_annotation)
+
+    def test_services_is_core_subclass(self) -> None:
+        """Cycle 165 (Stage 2): services.UnifiedCacheFacade IS-A core ABC."""
+        from src.backend.core.cache import UnifiedCacheFacade as Core
+        from src.backend.services.cache import UnifiedCacheFacade as Services
+
+        assert issubclass(Services, Core)
 
 
 class TestCanonicalEntryPoints:

@@ -391,10 +391,9 @@ def set_redis_lock_class_provider(lock_class: Any) -> None:
 def get_cache_facade(enable_fallback: bool = True) -> Any:
     """Build UnifiedCacheFacade per active profile (Rule 1 single-entry).
 
-    S165 W1: dev_light -> MemoryCacheFacade. prod -> Redis + fallback
-    (deferred to S165 W2 when CB+pool for Redis wired).
-
-    Pattern #18 (TTL+tag invalidation + fallback chain).
+    S165 W1: dev_light → MemoryCacheFacade. Cycle 165 (ADR-0352 Stage 2):
+    dev/test path. Production canonical — ``services.cache.UnifiedCacheFacade``.
+    Both share ``core.cache.UnifiedCacheFacade`` ABC. Pattern #18.
     """
     try:
         from src.backend.core.cache.facade import FallbackCacheFacade, MemoryCacheFacade
