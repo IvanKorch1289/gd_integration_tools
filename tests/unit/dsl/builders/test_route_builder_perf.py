@@ -70,15 +70,17 @@ def test_route_builder_mro_size() -> None:
 
     Pre-decomp: 76 mixins + RouteBuilder + 5 base classes = 82.
     Post-decomp target: ~10 facade mixins + RouteBuilder + 5 base = ~16.
+    Cycle 170 (ADR-0356): +1 mixin (InfraLoggingMixin) для ``infra_log_write``
+    processor integration.
     """
     rb = _build_route_builder()
     mro = rb.__class__.__mro__
     mixins = [
         c for c in mro if c.__name__.endswith("Mixin") or c.__name__ == "RouteBuilder"
     ]
-    assert len(mixins) == 76, (
-        f"Expected 76 mixins in MRO, got {len(mixins)}. "
-        f"MRO: {[c.__name__ for c in mro]}"
+    assert len(mixins) == 77, (
+        f"Expected 77 mixins in MRO (76 + InfraLoggingMixin cycle 170), "
+        f"got {len(mixins)}. MRO: {[c.__name__ for c in mro]}"
     )
 
 
