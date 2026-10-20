@@ -7172,3 +7172,30 @@ Cycle 163 cache audit обнаружил централизованной нас
 **Total**: 117 cache tests pass (78 предыдущих + 39 новых).
 
 Refs: ADR-0352, cycle 163 cache audit, `docs/cache/CACHE_AUDIT_2026-10-20.md`.
+
+### feat(tools): cache facade uniqueness CI guard (ADR-0352 Stage 1)
+
+Закрывает Stage 1 ADR-0352: добавлен статический guard для предотвращения
+regressions до Stage 2-4 (merge/deprecate/remove фасадов).
+
+* **`tools/checks/check_cache_facade_uniqueness.py`** (новый, 280 LOC) —
+  AST-based guard с 3 проверками:
+  1. **Unauthorized definitions** — `class UnifiedCacheFacade` только в
+     `core/cache/facade.py` или `services/cache/facade.py` (whitelist).
+  2. **Missing re-exports** — `__all__` cache-пакетов должен содержать
+     `UnifiedCacheFacade`.
+  3. **Duplicate settings singleton** — `cache_settings = CacheSettings()`
+     только в `core/config/services/cache.py`.
+
+  Режимы: `--strict` (exit 1 на violation, для CI), `--json`
+  (machine-readable для pre-commit hooks / dashboards).
+
+* **`make/quality.mk`** — `make check-cache-facade-uniqueness` +
+  `make check-cache-facade-uniqueness-json` targets.
+
+* **`tests/tools/test_check_cache_facade_uniqueness.py`** (новый, 14
+  тестов) — positive (detection) + negative (clean state) cases,
+  subprocess-based + module-import-based, AST-extract unit tests.
+  Все green (24s).
+
+Refs: ADR-0352, cycle 163 cache audit.

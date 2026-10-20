@@ -53,14 +53,20 @@
 
 **Принять двухэтапный план унификации**, с реализацией в Sprint 7+ Dev2:
 
-### Stage 1 (этот коммит — cycle 163): DOCUMENTATION + GUARDRAIL
+### Stage 1 (cycle 163 — DONE): DOCUMENTATION + GUARDRAIL
 
 - ✅ Создан `docs/cache/CACHE_AUDIT_2026-10-20.md` — полный аудит.
 - ✅ Создан этот ADR-0352 — фиксация решения.
 - ✅ Закрыт централизованной настройки gap (`disk_fallback_path`).
-- ⏳ Deferred: добавить `tools/checks/check_cache_facade_uniqueness.py` —
+- ✅ Добавлен `tools/checks/check_cache_facade_uniqueness.py` —
   статический guard, запрещающий `class UnifiedCacheFacade` за пределами
-  `core/cache/facade.py` и `services/cache/facade.py`.
+  whitelist (`core/cache/facade.py`, `services/cache/facade.py`).
+  Проверяет 3 инварианта: (1) unauthorized definitions,
+  (2) missing `__all__` re-export в cache `__init__.py`,
+  (3) duplicate `cache_settings` singleton. `--strict` mode для CI gate.
+- ✅ Подключён через `make check-cache-facade-uniqueness` (см. make/quality.mk).
+- ✅ 14 unit-тестов в `tests/tools/test_check_cache_facade_uniqueness.py`
+  покрывают positive/negative cases.
 
 ### Stage 2 (Sprint 7+ Dev2): MERGE — один фасад
 
