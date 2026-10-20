@@ -49,9 +49,12 @@ class TestCoreUnifiedCacheFacadeExists:
 
     def test_concrete_subclasses_exist(self) -> None:
         """Core facade has MemoryCacheFacade, FallbackCacheFacade
-        (re-exported). RedisCacheFacade / DiskCacheFacade exist in the
-        module but are NOT in __all__ — they are imported via direct
-        submodule access (``src.backend.core.cache.facade``)."""
+        (re-exported). RedisCacheFacade exists in the module but is NOT
+        in __all__ — accessed via direct submodule (``src.backend.core.cache.facade``).
+
+        Cycle 164 consolidation (ADR-0352): DiskCacheFacade удалена — см.
+        ``infrastructure.cache.backends.disk.DiskCacheBackend``.
+        """
         from src.backend.core.cache import (
             FallbackCacheFacade,
             MemoryCacheFacade,
@@ -61,14 +64,36 @@ class TestCoreUnifiedCacheFacadeExists:
         for cls in (MemoryCacheFacade, FallbackCacheFacade):
             assert cls is not None
 
-        # These are NOT in __all__ — accessible only via .facade submodule.
-        from src.backend.core.cache.facade import (
-            DiskCacheFacade,
-            RedisCacheFacade,
-        )
+        # RedisCacheFacade is in __all__ now (cycle 164). DiskCacheFacade удалена.
+        from src.backend.core.cache.facade import RedisCacheFacade
 
-        for cls in (RedisCacheFacade, DiskCacheFacade):
-            assert cls is not None
+        assert RedisCacheFacade is not None
+
+    def test_disk_cache_facade_removed(self) -> None:
+        """Cycle 164: DiskCacheFacade (core) удалена — см. ADR-0352.
+
+        Disk-tier покрывается DiskCacheBackend (infrastructure):
+        см. tests/unit/infrastructure/cache/test_disk_backend.py +
+        test_disk_focused.py.
+        """
+        # Class must NOT exist — any attempt to import raises ImportError.
+        import pytest
+
+        with pytest.raises(ImportError):
+            from src.backend.core.cache.facade import DiskCacheFacade  # noqa: F401
+
+    def test_disk_cache_backend_canonical(self) -> None:
+        """Canonical disk-tier — DiskCacheBackend (infrastructure)."""
+        from src.backend.infrastructure.cache.backends.disk import DiskCacheBackend
+
+        assert DiskCacheBackend is not None
+        # Path resolved at init time.
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            backend = DiskCacheBackend(base_path=Path(tmp))
+            assert backend is not None
 
     def test_memory_facade_basic(self) -> None:
         """MemoryCacheFacade get/set round-trip works."""

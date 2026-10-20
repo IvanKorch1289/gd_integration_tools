@@ -19,7 +19,6 @@ from pydantic import BaseModel, Field
 __all__ = (
     "CacheError",
     "CacheInvalidationPolicy",
-    "DiskCacheFacade",
     "RedisCacheFacade",
     "UnifiedCacheFacade",
 )
@@ -49,10 +48,16 @@ class UnifiedCacheFacade(ABC):
     Реализации:
       - RedisCacheFacade (production, redis.asyncio)
       - MemoryCacheFacade (dev_light, cachetools.TTLCache)
-      - DiskCacheFacade (S3/filesystem fallback, Rule 6)
-      - FallbackCacheFacade (Redis -> Memory -> Disk chain)
+      - FallbackCacheFacade (primary -> fallback chain, Rule 6)
 
     TTL + tag invalidation policy per CacheInvalidationPolicy.
+
+    Note:
+        Cycle 164 consolidation (ADR-0352): DiskCacheFacade удалена как
+        dead code. Disk-tier реализован через
+        ``src.backend.infrastructure.cache.backends.disk.DiskCacheBackend``
+        (async I/O via aiofiles) и используется production runtime через
+        :class:`services.cache.UnifiedCacheFacade`.
     """
 
     policy: ClassVar[CacheInvalidationPolicy] = CacheInvalidationPolicy()
@@ -303,97 +308,11 @@ class RedisCacheFacade(UnifiedCacheFacade):
             raise CacheError(f"redis healthcheck failed: {exc}") from exc
 
 
-class DiskCacheFacade(UnifiedCacheFacade):
-    """Filesystem-based cache facade (S31 Task 2 fallback tier).
-
-    Только для dev_light / single-node deployments. Production path —
-    :class:`RedisCacheFacade`.
-    """
-
-    def __init__(self, root_dir: str = "/tmp/gd_cache") -> None:
-        import os
-
-        # P0-S7 (audit 2026-08-19): B108 nosec — dev_light only.
-        # Production uses RedisCacheFacade. ``/tmp/gd_cache`` is a
-        # documented dev fallback (V15 R-V15-4).
-        os.makedirs(root_dir, exist_ok=True)  # nosec B108
-        self._root = root_dir
-        import asyncio
-
-        self._lock = asyncio.Lock()
-
-    def _path(self, key: str) -> str:
-        """Преобразует cache key в filesystem path с hash."""
-        import hashlib
-        import os
-
-        h = hashlib.sha256(key.encode("utf-8")).hexdigest()
-        return os.path.join(self._root, h[:2], h)
-
-    async def get(self, key: str) -> bytes | None:
-        """Прочитать значение key из filesystem cache."""
-        import os
-
-        path = self._path(key)
-        if not os.path.exists(path):
-            return None
-        try:
-            async with self._lock:
-                with open(path, "rb") as f:
-                    return f.read()
-        except OSError as exc:
-            raise CacheError(f"disk read failed: {exc}") from exc
-
-    async def set(
-        self,
-        key: str,
-        value: bytes,
-        ttl_seconds: int | None = None,
-        tags: list[str] | None = None,
-    ) -> None:
-        """Записать значение в filesystem cache с TTL через mtime."""
-        import os
-
-        path = self._path(key)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        try:
-            async with self._lock:
-                with open(path, "wb") as f:
-                    f.write(value)
-                # TTL через mtime (lazy expiration на read)
-                if ttl_seconds is not None:
-                    import time
-
-                    os.utime(
-                        path, (time.time() + ttl_seconds, time.time() + ttl_seconds)
-                    )
-        except OSError as exc:
-            raise CacheError(f"disk write failed: {exc}") from exc
-
-    async def delete(self, *keys: str) -> None:
-        """Удалить ключи из filesystem cache."""
-        import os
-
-        async with self._lock:
-            for key in keys:
-                path = self._path(key)
-                try:
-                    os.remove(path)
-                except FileNotFoundError:  # noqa: violation-check — file already removed by another worker
-                    pass
-
-    async def delete_by_tag(self, tag: str) -> int:
-        """Tag invalidation в disk backend — no-op (Redis-only feature)."""
-        return 0
-
-    async def exists(self, key: str) -> bool:
-        """Проверить наличие ключа в filesystem cache."""
-        import os
-
-        return os.path.exists(self._path(key))
-
-    async def healthcheck(self) -> bool:
-        """Healthcheck — проверка, что root directory writable."""
-        import os
-
-        return os.path.isdir(self._root) and os.access(self._root, os.W_OK)
+# NOTE (cycle 164 cache consolidation, ADR-0352):
+# DiskCacheFacade (был здесь) удалён — DEAD CODE: не использовался в
+# production runtime path. Production использует
+# ``src.backend.infrastructure.cache.backends.disk.DiskCacheBackend``
+# (async I/O via aiofiles, atomic writes) через
+# :class:`services.cache.UnifiedCacheFacade`. Удалены также тесты в
+# ``tests/unit/core/cache/test_facade.py`` (disk_facade секция) и
+# ссылка в ``tests/unit/core/cache/test_facade_audit.py``.

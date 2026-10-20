@@ -1,4 +1,8 @@
-"""Tests for UnifiedCacheFacade (S165 W1) + Redis/DiskCacheFacade (S31 Task 2)."""
+"""Tests for UnifiedCacheFacade (S165 W1) + RedisCacheFacade (S31 Task 2).
+
+Cycle 164 consolidation (ADR-0352): DiskCacheFacade (core) удалена — dead
+code. Disk-tier теперь покрывается DiskCacheBackend (см. tests/unit/infrastructure/cache/test_disk_*).
+"""
 
 from __future__ import annotations
 
@@ -11,7 +15,6 @@ import pytest
 from src.backend.core.cache.facade import (
     CacheError,
     CacheInvalidationPolicy,
-    DiskCacheFacade,
     FallbackCacheFacade,
     MemoryCacheFacade,
     RedisCacheFacade,
@@ -236,73 +239,31 @@ async def test_redis_facade_backend_errors_raise_cache_error(
         await redis_facade.get("k")
 
 
-# ─────────── DiskCacheFacade (S31 Task 2 fallback tier) ───────────
+# ─────────── DiskCacheFacade REMOVED (cycle 164, ADR-0352) ───────────
+# DiskCacheFacade (core) был dead code — production runtime использовал
+# только DiskCacheBackend (infrastructure). Disk-tier покрывается
+# tests/unit/infrastructure/cache/test_disk_backend.py и
+# tests/unit/infrastructure/cache/test_disk_focused.py.
+# ──────────────────────────────────────────────────────────────────────
 
 
-@pytest.fixture
-def disk_root() -> str:
-    with tempfile.TemporaryDirectory() as d:
-        yield d
-
-
-@pytest.fixture
-def disk_facade(disk_root: str) -> DiskCacheFacade:
-    return DiskCacheFacade(root_dir=disk_root)
+# ─────────── Fallback chain: Redis → Memory ───────────
 
 
 @pytest.mark.asyncio
-async def test_disk_facade_get_set_roundtrip(disk_facade: DiskCacheFacade) -> None:
-    await disk_facade.set("k", b"value")
-    assert await disk_facade.get("k") == b"value"
+async def test_fallback_redis_down_to_memory() -> None:
+    """Fallback chain: Redis failing → Memory picks up via get().
 
-
-@pytest.mark.asyncio
-async def test_disk_facade_missing_returns_none(disk_facade: DiskCacheFacade) -> None:
-    assert await disk_facade.get("nonexistent") is None
-
-
-@pytest.mark.asyncio
-async def test_disk_facade_delete(disk_facade: DiskCacheFacade) -> None:
-    await disk_facade.set("a", b"1")
-    await disk_facade.set("b", b"2")
-    await disk_facade.delete("a", "b")
-    assert await disk_facade.get("a") is None
-    assert await disk_facade.get("b") is None
-
-
-@pytest.mark.asyncio
-async def test_disk_facade_exists(disk_facade: DiskCacheFacade) -> None:
-    assert await disk_facade.exists("x") is False
-    await disk_facade.set("x", b"1")
-    assert await disk_facade.exists("x") is True
-
-
-@pytest.mark.asyncio
-async def test_disk_facade_delete_by_tag_noop(disk_facade: DiskCacheFacade) -> None:
-    """Tag invalidation не поддерживается в DiskCacheFacade (Redis-only feature)."""
-    assert await disk_facade.delete_by_tag("any") == 0
-
-
-@pytest.mark.asyncio
-async def test_disk_facade_healthcheck(disk_facade: DiskCacheFacade) -> None:
-    assert await disk_facade.healthcheck() is True
-
-
-# ─────────── Fallback chain: Redis → Disk ───────────
-
-
-@pytest.mark.asyncio
-async def test_fallback_redis_down_to_disk() -> None:
-    """Fallback chain: Redis failing → Disk picks up via get()."""
+    Cycle 164: переписано с DiskCacheFacade на MemoryCacheFacade (disk-tier
+    больше не покрывается core/ — это ответственность infrastructure).
+    """
     primary_backend = MagicMock()
     primary_backend.get = AsyncMock(side_effect=RuntimeError("redis down"))
     primary = RedisCacheFacade(backend=primary_backend)
 
-    with tempfile.TemporaryDirectory() as d:
-        fallback = DiskCacheFacade(root_dir=d)
-        # Pre-populate fallback with "k" value
-        await fallback.set("k", b"value")
-        chain = FallbackCacheFacade(primary=primary, fallback=fallback)
-        # get() → primary raises RuntimeError → wrapped as CacheError by
-        # RedisCacheFacade → fallback.get returns "value"
-        assert await chain.get("k") == b"value"
+    fallback = MemoryCacheFacade(maxsize=10, default_ttl=60)
+    await fallback.set("k", b"value")
+    chain = FallbackCacheFacade(primary=primary, fallback=fallback)
+    # get() → primary raises RuntimeError → wrapped as CacheError by
+    # RedisCacheFacade → fallback.get returns "value"
+    assert await chain.get("k") == b"value"
