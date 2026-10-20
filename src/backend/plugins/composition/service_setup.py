@@ -126,18 +126,28 @@ def _register_cache_facade() -> None:
         from src.backend.infrastructure.cache.backends.disk import DiskCacheBackend
         from src.backend.infrastructure.cache.backends.memory import MemoryBackend
         from src.backend.infrastructure.cache.factory import create_cache_backend
+        from src.backend.infrastructure.cache.tenant_wrapper import TenantCacheBackend
 
         primary = create_cache_backend(cache_settings)
-        memory = MemoryBackend(maxsize=cache_settings.l1_maxsize)
+        # Cycle 168 (PROD_READINESS §1.2): memory и disk fallback тоже
+        # оборачиваются в TenantCacheBackend для defense-in-depth против
+        # cross-tenant data leak через shared L1/L3 fallback.
+        memory = (
+            TenantCacheBackend(
+                MemoryBackend(maxsize=cache_settings.l1_maxsize)
+            )
+            if cache_settings.l1_enabled
+            else None
+        )
         # Cycle 163 audit fix: disk_fallback_path теперь в CacheSettings
         # (cycle 162 audit found: getattr-fallback маскировал отсутствие
         # поля). disk_fallback_enabled позволяет отключить L3 tier
         # (например, для in-cluster production, где диск — anti-pattern).
-        disk = (
-            DiskCacheBackend(Path(cache_settings.disk_fallback_path))
-            if cache_settings.disk_fallback_enabled
-            else None
-        )
+        disk: TenantCacheBackend | None = None
+        if cache_settings.disk_fallback_enabled:
+            disk = TenantCacheBackend(
+                DiskCacheBackend(Path(cache_settings.disk_fallback_path))
+            )
 
         capability_check = None
         if has_service(CapabilityGate):
