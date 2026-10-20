@@ -66,6 +66,9 @@ from src.backend.dsl.builders.infrastructure_dsl import (
     InfrastructureDSL as InfrastructureDSL,
 )
 from src.backend.dsl.builders.integration import IntegrationMixin as IntegrationMixin
+from src.backend.dsl.builders.infra_logging_mixin import (
+    InfraLoggingMixin as InfraLoggingMixin,
+)
 from src.backend.dsl.builders.ip_restriction_mixin import (
     IPRestrictionMixin as IPRestrictionMixin,
 )
@@ -132,6 +135,7 @@ class RouteBuilder(  # type: ignore[misc]
     ConfigMixin,
     ValidationMixin,
     DepsMixin,
+    InfraLoggingMixin,  # S170 ADR-0356: infra_log_write processor integration
     FeatureMixin,
     ResilienceMixin,
     ComplianceMixin,
