@@ -388,25 +388,25 @@ def set_redis_lock_class_provider(lock_class: Any) -> None:
 # ─────────────── S165 W1: UnifiedCacheFacade (Rule 1, Rule 6) ───────────────
 
 
-def get_cache_facade(enable_fallback: bool = True) -> Any:
-    """Build UnifiedCacheFacade per active profile (Rule 1 single-entry).
+def get_cache_facade(
+    enable_fallback: bool = True,
+) -> "MemoryBackend | None":
+    """Dev/test helper: returns ``MemoryBackend`` (NOT ``UnifiedCacheFacade``).
 
-    Cycle 167 (ADR-0352 Stage 4): dev/test path. Production canonical —
-    ``services.cache.UnifiedCacheFacade`` (registered via
-    ``plugins.composition.service_setup._register_cache_facade``). Layer
-    rule (core → services FORBIDDEN) — direct import отсутствует.
+    Cycle 168 (PROD_READINESS §1.7): production canonical — это
+    ``services.cache.UnifiedCacheFacade``. ``MemoryBackend`` не реализует
+    ``UnifiedCacheFacade.delete_by_tag()`` / ``healthcheck()``.
+    ``enable_fallback=False`` → ``None`` (раньше параметр игнорировался).
     """
+    if not enable_fallback:
+        return None
     try:
         from src.backend.infrastructure.cache.backends.memory import (
             MemoryBackend,
         )
     except ImportError:
         return None
-
-    memory = MemoryBackend(maxsize=1000, default_ttl=3600)
-    if not enable_fallback:
-        return memory
-    return memory
+    return MemoryBackend(maxsize=1000, default_ttl=3600)
 
 
 __all__ = (
