@@ -7110,3 +7110,65 @@ $ python -c "init_application_logging()" (no args, end-to-end)
 ```
 
 Refs: ADR-0351, cycle-160/161/162.
+
+## [Unreleased] — 2026-10-20 — Cycle 163: Cache architecture audit + ADR-0352 (facade unification plan)
+
+### feat(cache): CacheSettings.disk_fallback_path + disk_fallback_enabled (centralized config fix)
+
+Cycle 163 cache audit обнаружил централизованной настройки gap:
+`src/backend/plugins/composition/service_setup.py::_register_cache_facade`
+резолвил `disk_fallback_path` через `getattr(cache_settings, ..., None)` —
+но **это поле не было определено в `CacheSettings`**. `getattr` молча
+возвращал `None`, и DEFP-значение `Path("var/cache/disk_fallback")` хардкодилось
+в composition root. Это нарушало централизованную настройку — поле
+нельзя было переопределить через env / YAML.
+
+**Что сделано:**
+
+* **`CacheSettings.disk_fallback_path: str = "var/cache/disk_fallback"`** —
+  новое поле с описанием и json_schema_extra примером. Env override:
+  `CACHE_DISK_FALLBACK_PATH`.
+* **`CacheSettings.disk_fallback_enabled: bool = True`** — новое поле,
+  позволяет отключить L3 disk-fallback (для in-cluster production, где
+  диск — anti-pattern). Env override: `CACHE_DISK_FALLBACK_ENABLED`.
+* **`plugins/composition/service_setup.py::_register_cache_facade`** —
+  убран `getattr`-fallback, использован `cache_settings.disk_fallback_path`
+  и `cache_settings.disk_fallback_enabled` напрямую. При
+  `disk_fallback_enabled=False` L3 tier = `None` (2-tier: primary + memory).
+
+**Миграция:**
+
+* DEFP-значение `Path("var/cache/disk_fallback")` сохранено → backward-compat.
+* Существующие конфиги (env / YAML) автоматически подхватывают новое
+  поле без изменений.
+
+### docs(cache): audit document + ADR-0352 (facade duplication)
+
+* **`docs/cache/CACHE_AUDIT_2026-10-20.md`** (новый, 240 строк) — полный
+  архитектурный аудит cycle 163: проверка работоспособности (PASSED),
+  унификация (❌ CRITICAL — два `UnifiedCacheFacade`), централизованная
+  настройка (⚠️ GAP — исправлен в этом коммите), тестовое покрытие
+  (73 файла, 250+ тестов), CI gates, известные неконсистентности.
+
+* **`docs/adr/0352-cache-facade-duplication.md`** (новый, ADR) —
+  фиксация плана унификации в 4 этапах (Stage 1 — documentation +
+  guardrail, Stage 2 — merge (Sprint 7+ Dev2), Stage 3 — deprecate
+  (Sprint 8), Stage 4 — remove (Sprint 9)). Этот коммит закрывает
+  Stage 1.
+
+### test(cache): cycle 163 audit regression coverage
+
+* **`tests/unit/core/config/services/test_cache_disk_fallback_settings.py`**
+  (новый, 10 тестов) — покрытие новых полей `CacheSettings.disk_fallback_path`
+  и `disk_fallback_enabled`: existence, defaults, env overrides,
+  singleton exposure, regression на `getattr`-fallback в service_setup.py.
+
+* **`tests/unit/core/cache/test_facade_audit.py`** (новый, 15 тестов) —
+  документирование двух `UnifiedCacheFacade` (regression — prevents
+  silent removal до ADR-0352 stages 2-4): существование обеих реализаций,
+  re-export в `__init__.py`, smoke test round-trip, проверка API drift
+  (namespace vs без, CacheResult vs bytes).
+
+**Total**: 117 cache tests pass (78 предыдущих + 39 новых).
+
+Refs: ADR-0352, cycle 163 cache audit, `docs/cache/CACHE_AUDIT_2026-10-20.md`.
