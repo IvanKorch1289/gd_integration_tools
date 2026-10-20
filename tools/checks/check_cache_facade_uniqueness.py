@@ -47,6 +47,19 @@ ALLOWED_DEFINITION_FILES: frozenset[str] = frozenset(
     }
 )
 
+# Cycle 164 consolidation (ADR-0352): DiskCacheFacade (core) удалена как
+# dead code. Только DiskCacheBackend (infrastructure) допустим для disk-tier.
+ALLOWED_DISK_CACHE_DEFINITIONS: frozenset[str] = frozenset(
+    {
+        "src/backend/infrastructure/cache/backends/disk.py",
+    }
+)
+FORBIDDEN_DISK_CACHE_NAMES: frozenset[str] = frozenset(
+    {
+        "DiskCacheFacade",  # core — dead code, удалён cycle 164
+    }
+)
+
 # Modules that may re-export ``UnifiedCacheFacade`` via __all__.
 # core/cache/__init__.py + services/cache/__init__.py.
 ALLOWED_REEXPORT_MODULES: frozenset[str] = frozenset(
@@ -221,6 +234,64 @@ def _extract_all_names(tree: ast.Module) -> set[str]:
     return names
 
 
+def _check_disk_cache_uniqueness(
+    py: Path, report: Report
+) -> None:
+    """Cycle 164 (ADR-0352 consolidation): DiskCacheFacade (core) forbidden.
+
+    Disk-tier реализуется ТОЛЬКО через DiskCacheBackend (infrastructure).
+    Любое определение class DiskCacheFacade за пределами infrastructure/cache/
+    — violation.
+    """
+    try:
+        tree = ast.parse(py.read_text(encoding="utf-8", errors="ignore"))
+    except SyntaxError:
+        return
+
+    try:
+        rel = str(py.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return
+
+    # Skip if file is in allowed location (defines DiskCacheBackend).
+    if rel in ALLOWED_DISK_CACHE_DEFINITIONS:
+        # But still check it does NOT also define DiskCacheFacade.
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef) and node.name in FORBIDDEN_DISK_CACHE_NAMES:
+                report.add(
+                    Violation(
+                        kind="forbidden_disk_cache_class",
+                        file=rel,
+                        line=node.lineno,
+                        message=(
+                            f"class {node.name} must NOT be defined in "
+                            f"'{rel}' (DiskCacheBackend is the canonical disk-tier, "
+                            f"per ADR-0352 cycle 164 consolidation)."
+                        ),
+                        snippet=f"class {node.name}:",
+                    )
+                )
+        return
+
+    # Outside allowed location: any DiskCacheFacade class is a violation.
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name in FORBIDDEN_DISK_CACHE_NAMES:
+            snippet = ast.unparse(node).split("\n")[0][:120]
+            report.add(
+                Violation(
+                    kind="forbidden_disk_cache_class",
+                    file=rel,
+                    line=node.lineno,
+                    message=(
+                        f"class {node.name} is forbidden (ADR-0352 cycle 164 "
+                        f"consolidation). Use infrastructure.cache.backends.disk."
+                        f"DiskCacheBackend instead."
+                    ),
+                    snippet=snippet,
+                )
+            )
+
+
 def _check_settings_singleton(
     py: Path, report: Report
 ) -> None:
@@ -285,6 +356,7 @@ def main(argv: list[str] | None = None) -> int:
         _check_definition_uniqueness(py, report)
         _check_reexport_contract(py, report)
         _check_settings_singleton(py, report)
+        _check_disk_cache_uniqueness(py, report)
 
     if args.json:
         print(
