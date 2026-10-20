@@ -129,10 +129,15 @@ def _register_cache_facade() -> None:
 
         primary = create_cache_backend(cache_settings)
         memory = MemoryBackend(maxsize=cache_settings.l1_maxsize)
-        disk_path = getattr(cache_settings, "disk_fallback_path", None) or Path(
-            "var/cache/disk_fallback"
+        # Cycle 163 audit fix: disk_fallback_path теперь в CacheSettings
+        # (cycle 162 audit found: getattr-fallback маскировал отсутствие
+        # поля). disk_fallback_enabled позволяет отключить L3 tier
+        # (например, для in-cluster production, где диск — anti-pattern).
+        disk = (
+            DiskCacheBackend(Path(cache_settings.disk_fallback_path))
+            if cache_settings.disk_fallback_enabled
+            else None
         )
-        disk = DiskCacheBackend(disk_path)
 
         capability_check = None
         if has_service(CapabilityGate):

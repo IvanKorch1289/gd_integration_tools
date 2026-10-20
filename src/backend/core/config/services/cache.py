@@ -454,6 +454,24 @@ class CacheSettings(BaseSettingsWithLoader):
             "Требует соответствующего deployment."
         ),
     )
+    disk_fallback_path: str = Field(
+        default="var/cache/disk_fallback",
+        description=(
+            "Cycle 163 audit fix: путь L3 disk-fallback для "
+            ":class:`services.cache.UnifiedCacheFacade`. Используется при "
+            "недоступности primary + memory-fallback. Относительные пути "
+            "резолвятся относительно CWD; абсолютные — as-is. Директория "
+            "создаётся :class:`DiskCacheBackend` лениво."
+        ),
+        json_schema_extra={"example": "/var/lib/gd/cache/disk_fallback"},
+    )
+    disk_fallback_enabled: bool = Field(
+        default=True,
+        description=(
+            "Cycle 163 audit fix: включить L3 disk-fallback. Если ``False`` — "
+            "только primary + memory (2-tier), без диска."
+        ),
+    )
 
 
 cache_settings = CacheSettings()
