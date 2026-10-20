@@ -1,0 +1,10 @@
+35bf69eae31451f252657a8cb0673f00035424e6 2026-10-19 18:01:00 +0300 docs(REVIEW): update §11 commit log (5 commits) + §12 G-10 re-measurement
+25eee5571162f8703bb318d751206d09d3921ba0 2026-10-19 18:00:37 +0300 test(G-9): per-op auth inventory test (REVIEW §10 OQ-4 recommendation)
+851ebb3ad1f7dffa24999d9307e9bbe77d713ee7 2026-10-19 17:49:13 +0300 docs(roadmap): append 'Post-CURRENT audit additions' drift-section to PRODUCTION_READINESS_CURRENT
+107367f75d5eece8a1ab4fe8bdf7e8c515b94f36 2026-10-19 17:47:49 +0300 test(G10-B3): delete dead test_init.py referencing deleted scaffold classes
+ebf5610f7c7bf8c2a5ab1bd66dbdbb638a0e55ee 2026-10-19 17:21:48 +0300 refactor(G10-B3): delete dsl/orchestration/__init__.py scaffold
+9cae22f7c08a1b41f04dcbf7c1889583b264e969 2026-10-19 17:21:45 +0300 docs(G8): 21 atomic doc-accuracy fixes across 11 files
+127d4d011478ff775a66e6a325ffba586fef7cc3 2026-10-19 16:30:21 +0300 fix(nats_jetstream): use event_time/event_id in SourceEvent construction
+2d4ce64ddb0fd09ac736c09f33a220d9904dc018 2026-10-19 16:26:02 +0300 fix(agent_dsl): correct kwargs for build_and_run_agent in langgraph_agent
+f814026562f505c487400f6df9602b469d18518d 2026-10-19 16:21:13 +0300 fix(agent_sandbox): propagate CheckpointBackendUnavailable through ProcessPool
+2e13ff5a9b4bc261dfececcc268c8dfe46717f5e 2026-10-19 16:18:18 +0300 fix(ai_agent): propagate CheckpointBackendUnavailable through run_agent

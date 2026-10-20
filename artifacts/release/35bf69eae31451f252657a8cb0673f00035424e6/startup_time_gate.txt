@@ -1,0 +1,21 @@
+Startup-time gate: PER-MODULE MAX=3.0s
+                    TOTAL MAX=3.0s
+                    REGRESSION TOLERANCE=30%
+                    SAMPLES=3 (judged on median)
+Modules: 7
+
+  [OK] src.backend.core.config.features: median=0.546s  [0.526, 0.585, 0.546]
+  [OK] src.backend.core.tenancy: median=0.392s  [0.389, 0.402, 0.392]
+  [OK] src.backend.core.messaging: median=0.287s  [0.287, 0.269, 0.287]
+  [OK] src.backend.dsl.registry.processor: median=0.388s  [0.375, 0.388, 0.416]
+  [OK] src.backend.dsl.registry.lazy_processor: median=0.386s  [0.363, 0.386, 0.393]
+  [OK] src.backend.services.routes.loader: median=0.416s  [0.398, 0.421, 0.416]
+  [OK] src.backend.infrastructure.messaging.dlq: median=0.003s  [0.003, 0.003, 0.002]
+
+TOTAL: 2.452s (median of 3)
+SAMPLES: 2.342, 2.453, 2.452
+        min=2.342s max=2.453s spread=0.111s
+BASELINE: 2.400s
+REGRESSION LIMIT: 3.120s (baseline × 1.3)
+
+OK: startup-time gate passed

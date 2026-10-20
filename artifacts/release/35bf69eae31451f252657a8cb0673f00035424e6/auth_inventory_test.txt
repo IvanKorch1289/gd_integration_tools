@@ -1,0 +1,8 @@
+
+src/backend/entrypoints/graphql/auto_schema.py:207
+tests/integration/security/test_per_op_auth_inventory.py::test_route_has_auth_guard[GET::/api/admin/{path:path}]
+  /home/user/dev/gd_integration_tools/src/backend/entrypoints/graphql/auto_schema.py:207: DeprecationWarning: Passing an extension instance to `extensions=[...]` is deprecated and will be removed in a future release. Pass the class itself, or a factory callable (e.g. `lambda: MyExtension(arg=...)`), so that a fresh extension is constructed for each request. See https://github.com/strawberry-graphql/strawberry/issues/4369.
+    schema = strawberry.Schema(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+458 passed, 5 warnings in 11.08s
