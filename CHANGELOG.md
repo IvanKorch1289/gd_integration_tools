@@ -7371,3 +7371,21 @@ Cycle 166 закрывает Stage 3 ADR-0352.
 | 167 | TODO | Stage 4 — REMOVE deprecated concrete impls |
 
 Refs: ADR-0352 Stage 3, ADR-0352.1 migration guide.
+
+## [Unreleased] — 2026-10-20 — Cycle 167: ADR-0352 Stage 4 — REMOVE core-facade concrete impls
+
+### refactor(core): REMOVE core-facade concrete impls (Stage 4 DONE)
+
+Cycle 167 closes ADR-0352 Stage 4 — final REMOVE.
+
+**Changes:**
+
+* `src/backend/core/cache/facade.py` — REMOVED `MemoryCacheFacade`, `FallbackCacheFacade`, `RedisCacheFacade`. Module 370 -> 125 LOC (only ABC + `CacheError` + `CacheInvalidationPolicy`).
+* `src/backend/core/cache/__init__.py` — `__all__` reduced to 4 symbols.
+* `src/backend/core/di/providers/cache.py::get_cache_facade` — uses `MemoryBackend` directly. LOC stays 499.
+* `pyproject.toml::filterwarnings` — removed stale pattern (classes REMOVED, no warnings).
+* Tests updated (5 files): mock impls replace removed concrete impls.
+
+**Result:** 952 cache tests pass. Layer rule preserved.
+
+Refs: ADR-0352 Stages 1-4 + ADR-0352.1 migration guide.

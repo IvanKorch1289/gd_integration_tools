@@ -230,11 +230,50 @@ consolidation issue, а intentional design**. Три memory-класса в ра
 
 Refs: cycle 164, CACHE_AUDIT_2026-10-20 §6.4 (CLARIFIED).
 
-### Stage 4 (Sprint 9): REMOVE core-фасад
+### Stage 4 (Cycle 167 — DONE): REMOVE core-фасад
 
-1. Удалить `core/cache/facade.py` (кроме re-export).
-2. Удалить backward-compat классы.
-3. `__init__.py` core/cache — только 3-tier + helpers.
+**Cycle 167 changes:**
+
+1. **`src/backend/core/cache/facade.py`** — REMOVED ``MemoryCacheFacade``,
+   ``FallbackCacheFacade``, ``RedisCacheFacade``. Module сократился
+   с 370 LOC до ~125 LOC (только ABC + ``CacheError`` + ``CacheInvalidationPolicy``).
+   ``__all__`` теперь содержит только ``UnifiedCacheFacade`` ABC +
+   ``CacheError`` + ``CacheInvalidationPolicy``.
+
+2. **`src/backend/core/cache/__init__.py`** — убраны ``MemoryCacheFacade``
+   + ``FallbackCacheFacade``. ``__all__`` сокращён до 4 символов
+   (UnifiedCacheFacade + CacheError + CacheInvalidationPolicy +
+   ThreeTierRagCache).
+
+3. **`src/backend/core/di/providers/cache.py::get_cache_facade`** —
+   обновлён под Stage 4: использует ``MemoryBackend`` (infrastructure)
+   как primary + memory_fallback. LOC stays 499 (<500).
+   Production path остаётся ``services.cache.UnifiedCacheFacade``
+   через composition root.
+
+4. **`pyproject.toml::filterwarnings`** — удалён stale pattern
+   для ``src.backend.core.cache.facade`` (классы REMOVED, warnings
+   больше не возникают).
+
+6. **Tests обновлены:**
+   - ``tests/unit/core/cache/test_facade.py`` — переписан (mock impls
+     вместо удалённых concrete impls).
+   - ``tests/unit/core/cache/test_facade_audit.py`` — обновлены
+     (``test_concrete_impls_removed`` + ``test_concrete_impls_removed_via_core_cache``).
+   - ``tests/unit/core/cache/test_init.py`` — ``__all__`` 6 → 4 символов,
+     добавлен ``test_deprecated_concrete_impls_not_exported``.
+   - ``tests/unit/cache/test_three_memory_roles.py`` — REMOVED
+     ``TestMemoryCacheFacadeCoreRole`` (класс удалён).
+   - ``tests/unit/core/cache/test_deprecation_warnings.py`` —
+     переписан: ImportError вместо DeprecationWarning (Stage 4).
+     Добавлен ``test_filterwarnings_pattern_removed``.
+
+**Stage 5 (future cycle) — TODO**: cleanup остаточных DeprecationWarning
+filterwarnings pattern (если есть). Текущий State: stage 4 fully
+closed, 2 UnifiedCacheFacade IS-A relation documented.
+
+**Result:** 952 cache-тестов проходят. Layer rule сохранён. Один
+canonical ABC, один canonical production impl.
 
 ## Альтернативы (отклонённые)
 
