@@ -1,5 +1,92 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-10-20 — Cycle 168: PROD_READINESS logging + cache fixes (4 critical + 2 high)
+
+### fix(cache): DiskCacheBackend per-key TTL via expiry sidecar (PROD_READINESS §1.1)
+
+`DiskCacheBackend.set()` явно игнорировал `ttl` (`del ttl`) — значение
+оставалось на диске бессрочно и `get_ns` мог вернуть его через L3 tier
+как stale data после primary TTL expiry.
+
+Cycle 168: TTL реализован через expiry sidecar (`.expires` файл рядом с
+data файлом):
+
+- `set(key, value, ttl=N)` → запись `expires_at = time.time() + N` в sidecar.
+- `get(key)` → проверка sidecar; при истечении — `None` + cleanup.
+- `delete(*keys)` → удаление data + sidecar (full cleanup).
+- `ttl=None` → backward-compat: sidecar не создаётся, значение без expiry.
+- legacy файлы без sidecar читаются без expiry (backward-compat).
+
+Tests: `tests/unit/infrastructure/cache/test_disk_ttl.py` (7 cases).
+
+### fix(cache): wrap L1/L3 fallback in TenantCacheBackend + honor l1_enabled (PROD_READINESS §1.2)
+
+Только `primary` (Redis) оборачивался в `TenantCacheBackend` (cycle 34 B-03).
+L1 (memory) и L3 (disk) fallback tiers работали без tenant-prefix —
+потенциальная cross-tenant data leak через shared L1/L3 fallback.
+
+Cycle 168: `_register_cache_facade()` теперь оборачивает `memory` и
+`disk` в `TenantCacheBackend`. Дополнительно `l1_enabled` honor'ится
+(раньше был dead config — `MemoryBackend` создавался всегда).
+
+### fix(cache): log throttling + tag_index success-only update (PROD_READINESS §3, §1.6)
+
+**Log throttling**: при недоступности Redis каждое `get_ns` логировало
+WARNING → 5000 warnings/sec в benchmark → backpressure в
+`batching_router` → потеря логов. Cycle 168: throttling через
+`_LOG_THROTTLE_WINDOW_SECONDS = 60s` — первое предупреждение за window
+= WARNING с описанием; последующие = DEBUG. **50x reduction** в log spam.
+
+**tag_index success-only**: `_tag_index` обновлялся даже при полном set
+failure → инвалидация пыталась удалить несуществующие ключи. Cycle 168:
+tag tracking только если хотя бы один backend принял запись.
+
+Tests: `tests/unit/services/cache/test_log_throttling.py` (5 cases),
+`tests/unit/services/cache/test_tenant_wrapper_fallback.py` (5 cases).
+
+### config(cache): add disk_fallback_* to base.yml (PROD_READINESS §2.1)
+
+`disk_fallback_enabled` и `disk_fallback_path` были доступны только через
+`CACHE_*` env vars; оператор prod не мог управлять L3 tier из YAML.
+
+Cycle 168: оба поля добавлены в `config_profiles/base.yml::cache`.
+`disk_fallback_enabled: false` для in-cluster production (диск — anti-pattern,
+shared state между подами); путь относительно CWD.
+
+### docs(cache): cycle 168 PROD_READINESS report — logging+cache audit
+
+`artifacts/current_audit/PROD_READINESS_LOGGING_CACHE_2026-10-20.md` —
+полный prod-readiness review с TL;DR, critical/high/medium рисками,
+performance baseline, ADR closure audit, fix sequence и verification plan.
+
+### ADR closure audit (cycle 168)
+
+| ADR | Статус | Audit verdict |
+|---|---|---|
+| 0352 cache-facade-duplication | ✅ Complete (cycle 167) | Все 4 Stage выполнены |
+| 0351 logging-facade-status-audit | Active | Phase 1 (schema_registry) done; 83 inline `import logging` остаются |
+| 0350 remove-dead-code-rate-limiter-cache-keys | Draft | Amendment 2026-10-16 исправил cache_keys claim; удаление `core/rate_limiter/` требует explicit approval |
+| 0084 / 0090 / 0311 | Active | Содержат устаревшие claims, требуют re-baseline (cycle 169+) |
+
+### Verification
+
+```bash
+make check-cache-facade-uniqueness  # CLEAN
+uv run python tools/check_layers.py --strict  # pre-existing only, no new violations
+uv run python -m pytest tests/unit/{core,services,infrastructure}/cache \
+  tests/unit/infrastructure/logging tests/unit/core/config/services \
+  tests/tools/test_check_cache_facade_uniqueness.py
+# 644 passed, 1 skipped (aiomcache)
+```
+
+### Deferred (требует explicit approval per CLAUDE.md)
+
+- ADR-0350: удаление `core/rate_limiter/` (245 LOC, no production callers).
+- ADR-0351 phase 2+: миграция 83 inline `import logging` модулей.
+- Cluster-wide tag invalidation для multi-process deployment.
+
+---
+
 ## [Unreleased] — 2026-09-23 — W9 P2-13 Phase 7: core/di/providers/workflow god-module split (602 LOC → 6 submodules)
 
 ### refactor(di): workflow providers god-module → package with 6 cohesion submodules
