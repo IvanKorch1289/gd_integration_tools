@@ -2797,9 +2797,6 @@ ai-2026 = [
 ai-eval = [
     { name = "deepeval", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
-ai-memory = [
-    { name = "langchain-postgres", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-]
 ai-model-registry = [
     { name = "huggingface-hub", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "mlflow", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -3125,7 +3122,6 @@ requires-dist = [
     { name = "jsonpath-ng", marker = "extra == 'dsl-extras'", specifier = ">=1.6.0,<2.0.0" },
     { name = "jsonschema", specifier = ">=4.23.0,<5.0.0" },
     { name = "jupyter-client", marker = "extra == 'jupyter'", specifier = ">=8.0.0" },
-    { name = "langchain-postgres", marker = "extra == 'ai-memory'", specifier = ">=0.0.10,<1.0.0" },
     { name = "langfuse", marker = "extra == 'ai'", specifier = ">=2.0.0" },
     { name = "langgraph", marker = "extra == 'ai'", specifier = ">=0.3.0" },
     { name = "language-tool-python", marker = "extra == 'docs-ru'", specifier = ">=2.8,<3" },
@@ -4625,24 +4621,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/89/7b/406b4a8dd43dd01f69e04aafdee206809a2097134b2f944e12802eae7948/langchain_core-1.6.2.tar.gz", hash = "sha256:1ec6d3a98f7c8cdbb5bb0deff86e7ca37e16bf4f8f49f022d10723656c62352d", size = 1004390, upload-time = "2026-09-04T21:29:22.769Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a8/62/d3fb7c215cb2f237c3fe84880bf347a38deafef6033b6d5f1339ba8ca401/langchain_core-1.6.2-py3-none-any.whl", hash = "sha256:21e6c7cf097c68b777fd69ea00864f09bd9ca76ac73e3e3fa14e1ee366eb4711", size = 571690, upload-time = "2026-09-04T21:29:21.175Z" },
-]
-
-[[package]]
-name = "langchain-postgres"
-version = "0.0.17"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "asyncpg", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "langchain-core", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "numpy", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "pgvector", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "psycopg", extra = ["binary"], marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "psycopg-pool", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "sqlalchemy", extra = ["asyncio"], marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/58/16/27327ba9b12aa4835cfc1dad3ece7be13ec0f1619c42329640382251e87d/langchain_postgres-0.0.17.tar.gz", hash = "sha256:8d0d4f8223f3d74471abd640e4173316f9874f28f417d674cc8b0b50ee735c09", size = 238731, upload-time = "2026-02-17T08:21:24.267Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8e/f2/be46a73f4ab41c7ea80834a63f19ad446f4e770ea81d14cc14550d5c73dc/langchain_postgres-0.0.17-py3-none-any.whl", hash = "sha256:2bf18f0619a13827f957bd1e9e5d97199df54772e71e105610955c4d78bfd527", size = 48511, upload-time = "2026-02-17T08:21:23.336Z" },
 ]
 
 [[package]]
@@ -6795,18 +6773,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pgvector"
-version = "0.3.6"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/d8/fd6009cee3e03214667df488cdcf9609461d729968da94e4f95d6359d304/pgvector-0.3.6.tar.gz", hash = "sha256:31d01690e6ea26cea8a633cde5f0f55f5b246d9c8292d68efdef8c22ec994ade", size = 25421, upload-time = "2024-10-27T00:15:09.632Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fb/81/f457d6d361e04d061bef413749a6e1ab04d98cfeec6d8abcfe40184750f3/pgvector-0.3.6-py3-none-any.whl", hash = "sha256:f6c269b3c110ccb7496bac87202148ed18f34b390a0189c783e351062400a75a", size = 24880, upload-time = "2024-10-27T00:15:08.045Z" },
-]
-
-[[package]]
 name = "phonenumbers"
 version = "9.0.39"
 source = { registry = "https://pypi.org/simple" }
@@ -7323,18 +7289,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a3/69/8e7414f7dc10b2959e664330cdcf393e412f67355975dafa876cef265264/psycopg_binary-3.3.5-cp314-cp314-musllinux_1_2_ppc64le.whl", hash = "sha256:14fdfd65a96ecbd8b586d14546105641f4a6ac7cbe335c786830ea4de94bbe60", size = 4284766, upload-time = "2026-08-31T22:45:17.881Z" },
     { url = "https://files.pythonhosted.org/packages/c1/72/33f293c1d3ee9114f47e9ef4880f31c9de864e84a9b09454c26e106c25ed/psycopg_binary-3.3.5-cp314-cp314-musllinux_1_2_riscv64.whl", hash = "sha256:8dbd694f3741dd4ac5bc60b70e17f7841aefb3f0f38cef4d2756de270e03af43", size = 4011958, upload-time = "2026-08-31T22:45:24.792Z" },
     { url = "https://files.pythonhosted.org/packages/b7/c9/8e38840e5a7d006987bbc9acb29951912253fa50549a4db92b3aa535f089/psycopg_binary-3.3.5-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:14f432430fd9e1a9e7d9ab2fe14956c77f5d074ebdc556a1ad04e9a1bd3fca04", size = 4323273, upload-time = "2026-08-31T22:45:32.973Z" },
-]
-
-[[package]]
-name = "psycopg-pool"
-version = "3.3.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "typing-extensions", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/90/82/7a23d26039827ecd4ebe93905651029ddd307c5182ad59296dfb6f67b528/psycopg_pool-3.3.1.tar.gz", hash = "sha256:b10b10b7a175d5cc1592147dc5b7eec8a9e0834eb3ed2c4a92c858e2f51eb63c", size = 31661, upload-time = "2026-05-01T23:31:59.809Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/37/ed/89c2c620af0e1660354cd8aabf9f5b21f911597ce22acb37c805d6c86bc8/psycopg_pool-3.3.1-py3-none-any.whl", hash = "sha256:2af5b432941c4c9ad5c87b3fa410aec910ec8f7c122855897983a06c45f2e4b5", size = 40023, upload-time = "2026-05-01T23:31:53.136Z" },
 ]
 
 [[package]]
