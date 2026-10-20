@@ -1,35 +1,32 @@
-"""Smoke tests for cache facade audit findings (cycle 163).
+"""Smoke tests for cache facade (cycle 163 → cycle 167).
 
-Cycle 163 cache audit found two ``UnifiedCacheFacade`` classes:
+Cycle 163 cache audit found two ``UnifiedCacheFacade`` classes. After
+ADR-0352 Stages 1-4 (cycles 163-167), canonical ABC остаётся в core,
+production impl — в services (extends ABC).
 
-1. ``src.backend.core.cache.facade.UnifiedCacheFacade`` — ABC, no namespace.
-2. ``src.backend.services.cache.facade.UnifiedCacheFacade`` — concrete,
-   namespace-aware, capability-checked, DI-registered.
+Cycle 167 (Stage 4): core-facade concrete impls (MemoryCacheFacade,
+FallbackCacheFacade, RedisCacheFacade) REMOVED. ABC + CacheError +
+CacheInvalidationPolicy — единственное что осталось.
 
-These tests:
+Tests verify:
+1. ABC остаётся canonical в core.
+2. Services facade extends ABC (Stage 2 merge).
+3. Concrete impls REMOVED (Stage 4).
+4. DiskCacheBackend (infrastructure) — canonical disk-tier.
 
-1. Document both classes' existence (regression — prevents one from being
-   silently removed before ADR-0352 stages 2-4).
-2. Verify the public re-exports work.
-3. Smoke-test that both facades can be instantiated with minimal args.
-
-These are NOT unification tests — they encode the current (problematic)
-state so that:
-
-- ADR-0352 stage 2 (merge) can update tests in one place.
-- Stage 4 (REMOVE) can verify removal.
-
-See docs/adr/0352-cache-facade-duplication.md for the merge plan.
+See docs/adr/0352-cache-facade-duplication.md.
 """
 
 from __future__ import annotations
 
+import pytest
+
 
 class TestCoreUnifiedCacheFacadeExists:
-    """Document the core ABC."""
+    """Document the core ABC (canonical after Stage 4)."""
 
     def test_import_works(self) -> None:
-        """``UnifiedCacheFacade`` is importable from ``core.cache.facade``."""
+        """``UnifiedCacheFacade`` ABC is importable."""
         from src.backend.core.cache.facade import (
             UnifiedCacheFacade as CoreUnifiedCacheFacade,
         )
@@ -37,48 +34,61 @@ class TestCoreUnifiedCacheFacadeExists:
         assert CoreUnifiedCacheFacade is not None
 
     def test_reexport_from_core_cache(self) -> None:
-        """``UnifiedCacheFacade`` is re-exported from ``src.backend.core.cache``."""
+        """``UnifiedCacheFacade`` re-exported from ``src.backend.core.cache``."""
         from src.backend.core.cache import UnifiedCacheFacade
 
-        # Should be the same class as core.cache.facade.
         from src.backend.core.cache.facade import (
             UnifiedCacheFacade as CoreDirect,
         )
 
         assert UnifiedCacheFacade is CoreDirect
 
-    def test_concrete_subclasses_exist(self) -> None:
-        """Core facade has MemoryCacheFacade, FallbackCacheFacade
-        (re-exported). RedisCacheFacade exists in the module but is NOT
-        in __all__ — accessed via direct submodule (``src.backend.core.cache.facade``).
+    def test_abc_methods(self) -> None:
+        """ABC имеет abstract methods: get/set/delete/delete_by_tag/exists/healthcheck."""
+        from src.backend.core.cache.facade import UnifiedCacheFacade
 
-        Cycle 164 consolidation (ADR-0352): DiskCacheFacade удалена — см.
-        ``infrastructure.cache.backends.disk.DiskCacheBackend``.
-        """
-        from src.backend.core.cache import (
-            FallbackCacheFacade,
-            MemoryCacheFacade,
+        abstract_methods = set(UnifiedCacheFacade.__abstractmethods__)
+        expected = {"get", "set", "delete", "delete_by_tag", "exists", "healthcheck"}
+        assert expected.issubset(abstract_methods), (
+            f"Missing abstract methods: {expected - abstract_methods}"
         )
 
-        # These ARE in __all__ — public.
-        for cls in (MemoryCacheFacade, FallbackCacheFacade):
-            assert cls is not None
+    def test_cache_error_and_policy_exported(self) -> None:
+        """``CacheError`` + ``CacheInvalidationPolicy`` экспортированы."""
+        from src.backend.core.cache import CacheError, CacheInvalidationPolicy
 
-        # RedisCacheFacade is in __all__ now (cycle 164). DiskCacheFacade удалена.
-        from src.backend.core.cache.facade import RedisCacheFacade
+        assert CacheError is not None
+        assert CacheInvalidationPolicy is not None
 
-        assert RedisCacheFacade is not None
+    def test_concrete_impls_removed(self) -> None:
+        """Cycle 167 (Stage 4): MemoryCacheFacade, FallbackCacheFacade,
+        RedisCacheFacade REMOVED из core.cache.facade.
+        """
+        # Direct submodule imports should fail.
+        for name in ("MemoryCacheFacade", "FallbackCacheFacade", "RedisCacheFacade"):
+            with pytest.raises(ImportError):
+                __import__(
+                    "src.backend.core.cache.facade",
+                    fromlist=[name],
+                )
+                from src.backend.core.cache.facade import name  # noqa: F401
+
+    def test_concrete_impls_removed_via_core_cache(self) -> None:
+        """Concrete impls также удалены из ``src.backend.core.cache.__all__``."""
+        from src.backend.core.cache import __all__
+
+        for name in (
+            "MemoryCacheFacade",
+            "FallbackCacheFacade",
+            "RedisCacheFacade",
+            "DiskCacheFacade",
+        ):
+            assert name not in __all__, (
+                f"{name} should NOT be in core.cache.__all__ (Stage 4 REMOVE)"
+            )
 
     def test_disk_cache_facade_removed(self) -> None:
-        """Cycle 164: DiskCacheFacade (core) удалена — см. ADR-0352.
-
-        Disk-tier покрывается DiskCacheBackend (infrastructure):
-        см. tests/unit/infrastructure/cache/test_disk_backend.py +
-        test_disk_focused.py.
-        """
-        # Class must NOT exist — any attempt to import raises ImportError.
-        import pytest
-
+        """Cycle 164: DiskCacheFacade (core) удалена."""
         with pytest.raises(ImportError):
             from src.backend.core.cache.facade import DiskCacheFacade  # noqa: F401
 
@@ -87,7 +97,6 @@ class TestCoreUnifiedCacheFacadeExists:
         from src.backend.infrastructure.cache.backends.disk import DiskCacheBackend
 
         assert DiskCacheBackend is not None
-        # Path resolved at init time.
         import tempfile
         from pathlib import Path
 
@@ -95,23 +104,9 @@ class TestCoreUnifiedCacheFacadeExists:
             backend = DiskCacheBackend(base_path=Path(tmp))
             assert backend is not None
 
-    def test_memory_facade_basic(self) -> None:
-        """MemoryCacheFacade get/set round-trip works."""
-        import asyncio
-
-        from src.backend.core.cache import MemoryCacheFacade
-
-        async def _check() -> None:
-            cache = MemoryCacheFacade(maxsize=16, default_ttl=60)
-            await cache.set("k", b"v")
-            assert await cache.get("k") == b"v"
-            assert await cache.exists("k") is True
-
-        asyncio.run(_check())
-
 
 class TestServicesUnifiedCacheFacadeExists:
-    """Document the services-level concrete facade."""
+    """Document the services-level concrete facade (extends core ABC)."""
 
     def test_import_works(self) -> None:
         """``UnifiedCacheFacade`` is importable from ``services.cache.facade``."""
@@ -122,7 +117,7 @@ class TestServicesUnifiedCacheFacadeExists:
         assert ServicesUnifiedCacheFacade is not None
 
     def test_reexport_from_services_cache(self) -> None:
-        """``UnifiedCacheFacade`` is re-exported from ``src.backend.services.cache``."""
+        """``UnifiedCacheFacade`` re-exported from ``src.backend.services.cache``."""
         from src.backend.services.cache import UnifiedCacheFacade
 
         from src.backend.services.cache.facade import (
@@ -148,59 +143,22 @@ class TestServicesUnifiedCacheFacadeExists:
 
 
 class TestFacadesAreDifferent:
-    """Document the API drift between the two facades.
-
-    When ADR-0352 is implemented, these tests will be updated.
-    """
+    """Document the API differences post-Stage-2 merge."""
 
     def test_different_classes(self) -> None:
-        """The two ``UnifiedCacheFacade`` are NOT the same class."""
+        """Core ABC vs services concrete — разные классы."""
         from src.backend.core.cache import UnifiedCacheFacade as Core
         from src.backend.services.cache import UnifiedCacheFacade as Services
 
-        # They are NOT the same — that is the problem we are documenting.
         assert Core is not Services
 
-    def test_services_has_namespace_via_ns_methods(self) -> None:
-        """Services facade has namespace-aware methods (``*_ns``).
-
-        Cycle 165 (ADR-0352 Stage 2): ABC-style ``get(key)`` returns bytes,
-        namespace-aware variant ``get_ns(key, namespace)`` returns CacheResult.
-        """
-        import inspect
-
-        from src.backend.services.cache import UnifiedCacheFacade as Services
-
-        # ABC-style get() does NOT accept namespace (matches core ABC).
-        sig = inspect.signature(Services.get)
-        assert "namespace" not in sig.parameters
-
-        # Namespace-aware variant is a separate method.
-        sig_ns = inspect.signature(Services.get_ns)
-        assert "namespace" in sig_ns.parameters
-
-    def test_core_lacks_namespace(self) -> None:
-        """Core facade does NOT have namespace kwarg (ABC)."""
-        import inspect
-
-        from src.backend.core.cache import UnifiedCacheFacade as Core
-
-        sig = inspect.signature(Core.get)
-        assert "namespace" not in sig.parameters
-
     def test_services_abc_returns_bytes(self) -> None:
-        """Services.get() (ABC-style) returns bytes | None.
-
-        Cycle 165: services.UnifiedCacheFacade extends core ABC — ABC methods
-        match the core signature exactly. Namespace-aware ``get_ns()`` returns
-        ``CacheResult``.
-        """
+        """Services.get() (ABC-style) returns bytes | None."""
         import inspect
 
         from src.backend.services.cache import UnifiedCacheFacade as Services
 
         sig = inspect.signature(Services.get)
-        # Return annotation should be bytes (ABC parity with core).
         assert "bytes" in str(sig.return_annotation)
 
     def test_services_get_ns_returns_cache_result(self) -> None:
@@ -219,7 +177,6 @@ class TestFacadesAreDifferent:
         from src.backend.core.cache import UnifiedCacheFacade as Core
 
         sig = inspect.signature(Core.get)
-        # Return annotation should mention bytes.
         assert "bytes" in str(sig.return_annotation)
 
     def test_services_is_core_subclass(self) -> None:

@@ -5,8 +5,14 @@ known inconsistency. Cycle 164 analysis: this is INTENTIONAL design — three
 memory classes serve different layers with different responsibilities:
 
 1. ``MemoryCacheFacade`` (core/cache/facade.py) — ``UnifiedCacheFacade`` ABC
-   impl. Used by ``core/di/providers/cache.py::get_cache_facade`` for
+   impl. USED BY ``core/di/providers/cache.py::get_cache_facade`` for
    dev_light/test fallback + ``FallbackCacheFacade`` chain.
+
+   **Cycle 167 (ADR-0352 Stage 4)**: REMOVED из ``core.cache.facade``.
+   Тесты для MemoryCacheFacade удалены (см. ADR-0352.1 migration guide).
+   Disk-tier покрывается DiskCacheBackend (infrastructure):
+   см. tests/unit/infrastructure/cache/test_disk_backend.py +
+   test_disk_focused.py.
 
 2. ``MemoryBackend`` (infrastructure/cache/backends/memory.py) —
    ``CacheBackend`` interface impl. Used by services.UnifiedCacheFacade 3-tier
@@ -15,61 +21,15 @@ memory classes serve different layers with different responsibilities:
 3. ``LruMemoryCache`` (infrastructure/cache/lru_cache.py) — duck-typed
    L1 of RAG 3-tier router. Has prometheus metrics + Any types (RAG embeddings).
 
-These tests verify each class works in its distinct role. If anyone tries
-to "consolidate" — they must explicitly motivate the trade-off (loss of
-tag invalidation / delete_pattern / metrics).
+After Stage 4 (cycle 167):
+- core.cache.MemoryCacheFacade REMOVED (только ABC + CacheError + Policy).
+- services.cache.UnifiedCacheFacade — canonical production facade.
+- MemoryBackend + LruMemoryCache — separate abstractions для разных слоёв.
 """
 
 from __future__ import annotations
 
 import asyncio
-
-
-class TestMemoryCacheFacadeCoreRole:
-    """``MemoryCacheFacade`` (core) — UnifiedCacheFacade ABC impl with tags."""
-
-    async def test_basic_get_set(self) -> None:
-        """Round-trip get/set works."""
-        from src.backend.core.cache.facade import MemoryCacheFacade
-
-        cache = MemoryCacheFacade(maxsize=10, default_ttl=60)
-        await cache.set("k", b"value")
-        assert await cache.get("k") == b"value"
-
-    async def test_tag_invalidation_unique_to_memory_cache_facade(self) -> None:
-        """Tag invalidation — UNIQUE feature of MemoryCacheFacade.
-
-        MemoryBackend and LruMemoryCache do NOT support delete_by_tag.
-        This test verifies MemoryCacheFacade preserves this capability.
-        """
-        from src.backend.core.cache.facade import MemoryCacheFacade
-
-        cache = MemoryCacheFacade(maxsize=10, default_ttl=60)
-        await cache.set("a", b"1", tags=["group1"])
-        await cache.set("b", b"2", tags=["group1", "group2"])
-        await cache.set("c", b"3", tags=["group2"])
-
-        deleted = await cache.delete_by_tag("group1")
-        assert deleted == 2  # a, b
-        assert await cache.get("a") is None
-        assert await cache.get("b") is None
-        assert await cache.get("c") == b"3"  # only group2, preserved
-
-    async def test_healthcheck_always_true(self) -> None:
-        """In-memory cache is always healthy."""
-        from src.backend.core.cache.facade import MemoryCacheFacade
-
-        cache = MemoryCacheFacade()
-        assert await cache.healthcheck() is True
-
-    async def test_uses_unified_cache_facade_abc(self) -> None:
-        """MemoryCacheFacade IS-A UnifiedCacheFacade (ABC inheritance)."""
-        from src.backend.core.cache.facade import (
-            MemoryCacheFacade,
-            UnifiedCacheFacade,
-        )
-
-        assert issubclass(MemoryCacheFacade, UnifiedCacheFacade)
 
 
 class TestMemoryBackendInfrastructureRole:
@@ -86,7 +46,8 @@ class TestMemoryBackendInfrastructureRole:
     async def test_delete_pattern_unique_to_memory_backend(self) -> None:
         """delete_pattern — UNIQUE feature of MemoryBackend.
 
-        MemoryCacheFacade and LruMemoryCache do NOT support pattern deletion.
+        MemoryCacheFacade и LruMemoryCache do NOT support pattern deletion.
+        MemoryCacheFacade удалена в Stage 4.
         """
         from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 
@@ -101,26 +62,23 @@ class TestMemoryBackendInfrastructureRole:
         assert await backend.get("order:1") == b"data3"
 
     async def test_no_tag_invalidation(self) -> None:
-        """MemoryBackend does NOT support tag invalidation (unlike MemoryCacheFacade)."""
+        """MemoryBackend does NOT support tag invalidation (REMOVED MemoryCacheFacade).
+
+        Cycle 167: MemoryCacheFacade удалена. Tag invalidation теперь
+        только в services.UnifiedCacheFacade (``delete_by_tag_ns``).
+        """
         from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 
         backend = MemoryBackend()
-        # delete_by_tag should not exist on MemoryBackend.
         assert not hasattr(backend, "delete_by_tag") or not callable(
             getattr(backend, "delete_by_tag", None)
-        ), (
-            "MemoryBackend should NOT have delete_by_tag — this is a "
-            "MemoryCacheFacade-only feature (distinct role)."
         )
 
     async def test_no_healthcheck(self) -> None:
-        """MemoryBackend does NOT have healthcheck (unlike MemoryCacheFacade)."""
+        """MemoryBackend does NOT have healthcheck."""
         from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 
         backend = MemoryBackend()
-        # CacheBackend interface (which MemoryBackend implements) does not
-        # require healthcheck. Different from UnifiedCacheFacade.
-        # We just verify MemoryBackend doesn't accidentally add it.
         assert not hasattr(backend, "healthcheck") or not callable(
             getattr(backend, "healthcheck", None)
         )
@@ -141,7 +99,6 @@ class TestLruMemoryCacheRouterRole:
         from src.backend.infrastructure.cache.lru_cache import LruMemoryCache
 
         cache = LruMemoryCache(max_size=10, ttl_seconds=60, scope="test")
-        # Any types — embedding-like objects.
         await cache.set("k1", {"vector": [0.1, 0.2, 0.3], "id": "doc-1"})
         await cache.set("k2", [1, 2, 3])
         await cache.set("k3", "string-value")
@@ -162,20 +119,13 @@ class TestLruMemoryCacheRouterRole:
 
         assert cache_a.scope == "rag-l1-embeddings"
         assert cache_b.scope == "rag-l1-messages"
-        # Different scopes allow separate metric tracking per cache instance.
         assert cache_a.scope != cache_b.scope
 
     async def test_no_tag_or_pattern_delete(self) -> None:
-        """LruMemoryCache does NOT support tag or pattern deletion.
-
-        L1 tier of RAG router uses invalidation() to clear whole cache.
-        No per-tag or per-pattern operations (different role).
-        """
+        """LruMemoryCache does NOT support tag or pattern deletion."""
         from src.backend.infrastructure.cache.lru_cache import LruMemoryCache
 
         cache = LruMemoryCache()
-        # LruMemoryCache has invalidate() and clear() but NOT delete_by_tag
-        # or delete_pattern. These are role-specific to other classes.
         assert not hasattr(cache, "delete_by_tag") or not callable(
             getattr(cache, "delete_by_tag", None)
         )
@@ -185,11 +135,8 @@ class TestLruMemoryCacheRouterRole:
 
     async def test_used_by_tier_router(self) -> None:
         """LruMemoryCache is the L1 of infrastructure.ai.semantic_cache.TierRouter."""
-        # This test verifies the actual integration: that TierRouter uses
-        # LruMemoryCache as L1 (not MemoryBackend or MemoryCacheFacade).
         from src.backend.infrastructure.ai.semantic_cache import TierRouter
 
-        # Stub L2 and L3 backends.
         class _StubBackend:
             async def get(self, key):
                 return None
@@ -198,78 +145,79 @@ class TestLruMemoryCacheRouterRole:
                 pass
 
         router = TierRouter(l1=None, l2=_StubBackend(), l3=_StubBackend())
-        # After init, l1 should default to LruMemoryCache.
         assert router.l1 is not None
-        # The default L1 is LruMemoryCache (NOT MemoryBackend or MemoryCacheFacade).
         from src.backend.infrastructure.cache.lru_cache import LruMemoryCache
 
         assert isinstance(router.l1, LruMemoryCache)
 
 
-class TestThreeClassesHaveDifferentRoles:
-    """Verify the three classes have DIFFERENT interfaces (no accidental duplicates)."""
+class TestTwoClassesHaveDifferentRoles:
+    """MemoryBackend (infra) + LruMemoryCache (infra) — DIFFERENT layers."""
 
     def test_different_base_classes(self) -> None:
-        """Each class implements a DIFFERENT interface (or none)."""
-        from src.backend.core.cache.facade import MemoryCacheFacade
+        """Каждый класс implements DIFFERENT interface."""
+        from src.backend.core.cache.facade import UnifiedCacheFacade
         from src.backend.core.interfaces.cache import CacheBackend
         from src.backend.infrastructure.cache.backends.memory import MemoryBackend
         from src.backend.infrastructure.cache.lru_cache import LruMemoryCache
 
-        # MemoryCacheFacade → UnifiedCacheFacade ABC (NOT CacheBackend).
-        from src.backend.core.cache.facade import UnifiedCacheFacade
-
-        assert issubclass(MemoryCacheFacade, UnifiedCacheFacade)
-        assert not issubclass(MemoryCacheFacade, CacheBackend)
-
         # MemoryBackend → CacheBackend interface.
         assert issubclass(MemoryBackend, CacheBackend)
+        assert not issubclass(MemoryBackend, UnifiedCacheFacade)
 
         # LruMemoryCache — duck-typed (no interface inheritance).
-        # (Per its docstring: "Совместим с CacheBackend, но не наследует от него".)
         assert not issubclass(LruMemoryCache, CacheBackend)
         assert not issubclass(LruMemoryCache, UnifiedCacheFacade)
 
     def test_different_type_signatures(self) -> None:
         """Each class has DIFFERENT return type semantics."""
-        from src.backend.core.cache.facade import MemoryCacheFacade
         from src.backend.infrastructure.cache.backends.memory import MemoryBackend
         from src.backend.infrastructure.cache.lru_cache import LruMemoryCache
 
-        # MemoryCacheFacade.get → bytes | None (tag-aware policy).
-        facade = MemoryCacheFacade()
-        assert "bytes" in str(facade.get.__annotations__.get("return", ""))
-
-        # MemoryBackend.get → bytes | None (no policy).
         backend = MemoryBackend()
         assert "bytes" in str(backend.get.__annotations__.get("return", ""))
 
-        # LruMemoryCache.get → Any | None (RAG embeddings, etc).
         lru = LruMemoryCache()
         assert "Any" in str(lru.get.__annotations__.get("return", ""))
+
+
+class TestCoreMemoryCacheFacadeRemoved:
+    """Cycle 167 (Stage 4): MemoryCacheFacade REMOVED из core.cache.facade."""
+
+    def test_memory_cache_facade_removed_from_core(self) -> None:
+        """``MemoryCacheFacade`` больше не доступен в ``core.cache.facade``."""
+        import pytest
+
+        with pytest.raises(ImportError):
+            exec(  # noqa: S102
+                "from src.backend.core.cache.facade import MemoryCacheFacade"
+            )
+
+    def test_memory_cache_facade_removed_from_core_cache(self) -> None:
+        """``MemoryCacheFacade`` НЕ в ``core.cache.__all__``."""
+        from src.backend.core.cache import __all__
+
+        assert "MemoryCacheFacade" not in __all__
 
 
 class TestNoUnintendedConsolidation:
     """Guards against accidental consolidation."""
 
-    def test_three_classes_are_distinct_objects(self) -> None:
-        """Sanity: three distinct classes, no aliases."""
-        from src.backend.core.cache.facade import MemoryCacheFacade
-        from src.backend.infrastructure.cache.backends.memory import MemoryBackend
-        from src.backend.infrastructure.cache.lru_cache import LruMemoryCache
-
-        assert MemoryCacheFacade is not MemoryBackend
-        assert MemoryCacheFacade is not LruMemoryCache
-        assert MemoryBackend is not LruMemoryCache
-
-    def test_import_paths_distinct(self) -> None:
-        """Each class lives in a distinct module path."""
-        from src.backend.core.cache.facade import MemoryCacheFacade as MCF
+    def test_two_classes_are_distinct_objects(self) -> None:
+        """Sanity: 2 distinct classes, no aliases."""
         from src.backend.infrastructure.cache.backends.memory import (
             MemoryBackend as MB,
         )
         from src.backend.infrastructure.cache.lru_cache import LruMemoryCache as LMC
 
-        assert MCF.__module__ == "src.backend.core.cache.facade"
+        assert MB is not LMC
+
+    def test_import_paths_distinct(self) -> None:
+        """Each class lives in a distinct module path."""
+        from src.backend.infrastructure.cache.backends.memory import (
+            MemoryBackend as MB,
+        )
+        from src.backend.infrastructure.cache.lru_cache import LruMemoryCache as LMC
+
         assert MB.__module__ == "src.backend.infrastructure.cache.backends.memory"
         assert LMC.__module__ == "src.backend.infrastructure.cache.lru_cache"

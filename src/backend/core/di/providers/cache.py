@@ -391,19 +391,22 @@ def set_redis_lock_class_provider(lock_class: Any) -> None:
 def get_cache_facade(enable_fallback: bool = True) -> Any:
     """Build UnifiedCacheFacade per active profile (Rule 1 single-entry).
 
-    S165 W1: dev_light → MemoryCacheFacade. Cycle 165 (ADR-0352 Stage 2):
-    dev/test path. Production canonical — ``services.cache.UnifiedCacheFacade``.
-    Both share ``core.cache.UnifiedCacheFacade`` ABC. Pattern #18.
+    Cycle 167 (ADR-0352 Stage 4): dev/test path. Production canonical —
+    ``services.cache.UnifiedCacheFacade`` (registered via
+    ``plugins.composition.service_setup._register_cache_facade``). Layer
+    rule (core → services FORBIDDEN) — direct import отсутствует.
     """
     try:
-        from src.backend.core.cache.facade import FallbackCacheFacade, MemoryCacheFacade
+        from src.backend.infrastructure.cache.backends.memory import (
+            MemoryBackend,
+        )
     except ImportError:
         return None
 
-    memory = MemoryCacheFacade()
+    memory = MemoryBackend(maxsize=1000, default_ttl=3600)
     if not enable_fallback:
         return memory
-    return FallbackCacheFacade(primary=memory, fallback=memory)
+    return memory
 
 
 __all__ = (

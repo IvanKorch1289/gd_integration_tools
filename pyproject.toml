@@ -1222,11 +1222,6 @@ asyncio_mode = "auto"
 filterwarnings = [
     # ITER 19: silence Pydantic UserWarning on `schema` field shadow (canonical domain term per ADR-2026-01, kept as field with alias).
     'ignore:Field name "schema" in.*shadows an attribute in parent:UserWarning',
-    # Cycle 166 (ADR-0352 Stage 3): core-facade concrete impls помечены
-    # DeprecationWarning. Stage 4 (cycle 167) удалит их — до тех пор
-    # подавляем warnings для тестов, чтобы existing tests не падали.
-    # Production runtime использует services facade (canonical).
-    'ignore:.*\\(MemoryCacheFacade\\|FallbackCacheFacade\\|RedisCacheFacade\\) \\(src.backend.core.cache.facade\\) is DEPRECATED.*:DeprecationWarning:src.backend.core.cache.facade',
 ]
 # S11 carryover [wave:s10-carryover/test-collection-errors]:
 # `--import-mode=importlib` избегает namespace-collisions между
