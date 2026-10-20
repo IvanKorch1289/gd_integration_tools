@@ -157,6 +157,64 @@ CACHE_AUDIT_2026-10-20 §8:**
 
 **Result:** 354 cache-тестов проходят (78 предыдущих + 9 migration + 14 guard + ...).
 
+### Stage 6 (cycle 164 — DONE): CLARIFY memory class roles
+
+**CACHE_AUDIT_2026-10-20 §6** упоминает "MemoryCacheFacade vs LruMemoryCache"
+как известную неконсистентность. После cycle 164 анализа: **это не
+consolidation issue, а intentional design**. Три memory-класса в разных
+слоях с разными ролями:
+
+| Class | Layer | Interface | Purpose |
+|---|---|---|---|
+| `MemoryCacheFacade` | `core/cache/facade.py` | `UnifiedCacheFacade` ABC | dev_light/test fallback + `FallbackCacheFacade` chain |
+| `MemoryBackend` | `infrastructure/cache/backends/memory.py` | `CacheBackend` interface | L1/L2 of `services.UnifiedCacheFacade` 3-tier |
+| `LruMemoryCache` | `infrastructure/cache/lru_cache.py` | duck-typed | L1 of RAG 3-tier router (L1 → L2 Redis → L3 Qdrant) с prometheus metrics |
+
+**Ключевые различия:**
+
+1. **`MemoryCacheFacade`** (high-level ABC impl):
+   - `bytes | None` return
+   - Tag invalidation через `delete_by_tag(tag)`
+   - `healthcheck()` (always True)
+   - `ClassVar[CacheInvalidationPolicy]` (TTL/max_entries/enable_tag_invalidation)
+   - Used by: `core/di/providers/cache.py::get_cache_facade`
+
+2. **`MemoryBackend`** (low-level backend impl):
+   - `bytes | None` return
+   - `delete_pattern(pattern)` (отсутствует в MemoryCacheFacade)
+   - Нет tag invalidation
+   - Нет healthcheck
+   - Used by: `_register_cache_facade` (services) как L2 fallback
+
+3. **`LruMemoryCache`** (tier-router L1, no ABC):
+   - `Any | None` return (для RAG embeddings — не bytes)
+   - Prometheus metrics (hit/miss/set с `scope` label)
+   - Нет tag invalidation, нет healthcheck, нет delete_pattern
+   - Used by: `infrastructure/ai/semantic_cache.py` (TierRouter L1)
+
+**Почему НЕ consolidation:**
+
+- Разные layers: core vs infrastructure (layer rule).
+- Разные interfaces: ABC vs Protocol vs duck-typed.
+- Разные type semantics: bytes vs Any.
+- Уникальные features в каждом: tag invalidation (только MemoryCacheFacade),
+  delete_pattern (только MemoryBackend), prometheus metrics (только LruMemoryCache).
+
+**Consolidation would:**
+1. Нарушить layer rule (core ← infrastructure).
+2. Потерять tag invalidation / delete_pattern / metrics features.
+3. Усложнить testing (mock всех features для всех use cases).
+
+**Тест:** `tests/unit/cache/test_three_memory_roles.py` — 3 теста:
+- `MemoryCacheFacade` + tag invalidation round-trip.
+- `MemoryBackend` + delete_pattern round-trip.
+- `LruMemoryCache` + prometheus metrics scope.
+
+Эти тесты фиксируют контракт каждого класса. Если кто-то решит
+объединить — должен явно мотивировать trade-off.
+
+Refs: cycle 164, CACHE_AUDIT_2026-10-20 §6.4 (CLARIFIED).
+
 ### Stage 4 (Sprint 9): REMOVE core-фасад
 
 1. Удалить `core/cache/facade.py` (кроме re-export).

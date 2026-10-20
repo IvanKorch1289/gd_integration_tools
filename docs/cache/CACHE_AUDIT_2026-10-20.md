@@ -168,11 +168,21 @@ TOTAL: ~73 test files, 250+ tests
    `RedisSettings.cache_expire_seconds` остался как deprecated @property
    (backward-compat). Decorator + config_profiles/base.yml обновлены.
    Тесты: `tests/unit/core/config/services/test_cache_expire_seconds_migration.py`.
-4. **`MemoryCacheFacade`** (core) vs `LruMemoryCache` (infrastructure, с
-   prometheus-metrics) — две in-memory реализации с разной семантикой.
-   `LruMemoryCache` — для hotpath (router), `MemoryCacheFacade` — для
-   dev_light fallback.
-   *(deferred: оба используются в production, требует более глубокого анализа)*
+4. ✅ **CLARIFIED (cycle 164)**: Три memory-класса в разных слоях с разными ролями
+   — **intentional design**, не consolidation issue:
+
+   | Class | Layer | Interface | Purpose |
+   |---|---|---|---|
+   | `MemoryCacheFacade` | core/cache/ | `UnifiedCacheFacade` ABC | DI fallback chain (`get_cache_facade`) + `FallbackCacheFacade` chain |
+   | `MemoryBackend` | infrastructure/cache/ | `CacheBackend` interface | L1/L2 of services.UnifiedCacheFacade 3-tier (primary/memory/disk) |
+   | `LruMemoryCache` | infrastructure/cache/ | duck-typed | L1 of RAG 3-tier router (L1 → L2 Redis → L3 Qdrant) with prometheus metrics |
+
+   These serve different abstraction levels and SHOULD remain separate.
+   `MemoryCacheFacade` имеет tag invalidation (отсутствует в `MemoryBackend`),
+   `MemoryBackend` имеет `delete_pattern` (отсутствует в `MemoryCacheFacade`),
+   `LruMemoryCache` имеет prometheus metrics + Any types (для RAG embeddings).
+
+   Подробнее: см. ADR-0352 Stage 6 + `tests/unit/cache/test_three_memory_roles.py`.
 5. (бывший #4) ~~`cache_expire_seconds` в `RedisSettings`~~ — RESOLVED cycle 164.
    cache-параметр, а не Redis-специфичный). Возможно стоит перенести в
    `CacheSettings` (требует миграции).

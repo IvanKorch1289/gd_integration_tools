@@ -7265,3 +7265,29 @@ CACHE concern, не redis-специфичный. Мигрирован из `Red
 
 Refs: ADR-0352 Stage 5 (cycle 164), cycle 163 cache audit,
 docs/cache/CACHE_AUDIT_2026-10-20.md §9.
+
+### refactor(core): MemoryBackend → AgentMemoryBackend (naming disambiguation, cycle 164)
+
+CI guard (`make check-cache-facade-uniqueness`) нашёл naming clash:
+``MemoryBackend`` определён в ДВУХ местах с разной семантикой:
+
+1. ``src.backend.infrastructure.cache.backends.memory.MemoryBackend`` — cache
+   backend (cachetools.TTLCache + bytes).
+2. ``src.backend.core.protocols.MemoryBackend`` — Protocol для AI agent
+   conversation state (Redis/Memcached/Postgres/in-memory).
+
+Это нарушение R1 "single canonical API per concept" — два разных концепта
+с одним именем. Cycle 164 disambiguation: rename protocols.py
+``MemoryBackend`` → ``AgentMemoryBackend``.
+
+**Изменения:**
+
+* **`src/backend/core/protocols.py`**: ``class MemoryBackend(Protocol)`` →
+  ``class AgentMemoryBackend(Protocol)``. ``__all__`` обновлён. Docstring
+  объясняет различие с cache MemoryBackend + ссылка на ADR-0352 Stage 6.
+* **`tests/unit/core/test_protocols.py`**: импорт и test class переименованы
+  в ``AgentMemoryBackend`` / ``TestAgentMemoryBackend``.
+
+CI guard теперь чистый (3 memory-класса в правильных файлах).
+
+Refs: ADR-0352 Stage 6 (cycle 164), CI guard `_check_memory_cache_class_locations`.
