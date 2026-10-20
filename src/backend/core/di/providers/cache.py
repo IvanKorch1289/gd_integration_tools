@@ -1,14 +1,7 @@
 """Cache domain providers — invalidation, response/RAG/redis caches.
 
-W9 P2-13 Phase 2 (cycle 153, MINIMAX plan): сокращён с 868 LOC (89 funcs в 26
-concerns) до ~370 LOC (8 cache concerns + back-compat re-exports для
-перемещённых functions).
-
-History:
-- Wave 6.2 (pre-split): один файл ``providers.py`` с 114 функциями.
-- S38 P1.2c: ``_impl.py`` → 6 domain files (cache.py 20 funcs, db, http,
-  ai, auth, workflow).
-- S36-W23: + ``storage.py``.
+W9 P2-13 Phase 2 (cycle 153, MINIMAX plan): сокращён с 868 LOC до ~370 LOC.
+History: Wave 6.2 → 114 funcs; S38 P1.2c → 6 domain files; S36-W23 → + storage.
 - M2-#11 batch 7-19: providers добавлялись в cache.py вместо proper domain
   files → drift до 89 funcs в 26 concerns (god-module anti-pattern).
 - **W9 P2-13 Phase 2**: misattributed providers перенесены в proper domains
@@ -385,46 +378,10 @@ def set_redis_lock_class_provider(lock_class: Any) -> None:
     _overrides["redis_lock_class"] = lock_class
 
 
-# ─────────────── S165 W1: UnifiedCacheFacade (Rule 1, Rule 6) ───────────────
-
-
-def get_unified_cache_facade_provider() -> Any:
-    """Возвращает :class:`services.cache.UnifiedCacheFacade` из svcs registry.
-
-    Cycle 170 (ADR-0354): production canonical facade для DSL processors.
-    Использует tenant prefix через ``TenantCacheBackend`` (cycle 34 B-03)
-    — defense-in-depth против cache poisoning (S21 K1 W2).
-
-    Returns:
-        ``UnifiedCacheFacade`` или ``None`` если service не зарегистрирован
-        (например, в tests с отключённым svcs registry).
-
-    Notes:
-        Core → services прямой import запрещён layer rule. Здесь —
-        lazy resolve через ``get_service``, который не нарушает
-        ``tools/check_layers.py`` (динамические imports невидимы для
-        static analysis).
-
-    """
-    if "unified_cache_facade" in _overrides:
-        return _overrides["unified_cache_facade"]
-    try:
-        from src.backend.core.svcs_registry import get_service
-        from src.backend.services.cache import UnifiedCacheFacade
-
-        return get_service(UnifiedCacheFacade)
-    except (KeyError, ImportError):
-        # Service не зарегистрирован (например, unit tests без
-        # ``plugins.composition.service_setup``). Возвращаем None —
-        # CacheProcessor fallback на inline-логику.
-        return None
-
-
-def set_unified_cache_facade_provider(facade: Any) -> None:
-    """Test-override для ``unified_cache_facade`` provider."""
-    _overrides["unified_cache_facade"] = facade
-
-
+# S165 W1: UnifiedCacheFacade (Rule 1, Rule 6) + S170 ADR-0354 re-export.
+from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401
+    get_unified_cache_facade_provider, set_unified_cache_facade_provider,
+)
 def get_cache_facade(
     enable_fallback: bool = True,
 ) -> "MemoryBackend | None":
@@ -454,7 +411,7 @@ __all__ = (
     "get_rag_cache_provider",
     "get_redis_client_provider",
     "get_redis_kv_client_provider",
-    "get_unified_cache_facade_provider",  # S170 ADR-0354: DSL cache facade
+    "get_unified_cache_facade_provider",
     "set_unified_cache_facade_provider",
     "get_redis_lock_class_provider",
     "get_redis_stream_client_provider",

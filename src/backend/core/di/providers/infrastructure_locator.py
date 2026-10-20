@@ -394,6 +394,43 @@ def get_dsl_variables_attr(name: str) -> Any:  # type: ignore[no-redef]
     return _load_provider("infrastructure.database.models", name)
 
 
+def get_unified_cache_facade_provider() -> Any:
+    """Возвращает :class:`services.cache.UnifiedCacheFacade` из svcs registry.
+
+    Cycle 170 (ADR-0354): production canonical facade для DSL processors.
+    Использует tenant prefix через ``TenantCacheBackend`` (cycle 34 B-03)
+    — defense-in-depth против cache poisoning (S21 K1 W2).
+
+    Returns:
+        ``UnifiedCacheFacade`` или ``None`` если service не зарегистрирован
+        (например, в tests с отключённым svcs registry).
+
+    Notes:
+        Core → services прямой import запрещён layer rule. Здесь —
+        lazy resolve через ``get_service``, который не нарушает
+        ``tools/check_layers.py`` (динамические imports невидимы для
+        static analysis).
+
+    """
+    if "unified_cache_facade" in _unified_cache_overrides:
+        return _unified_cache_overrides["unified_cache_facade"]
+    try:
+        from src.backend.core.svcs_registry import get_service
+        from src.backend.services.cache import UnifiedCacheFacade
+
+        return get_service(UnifiedCacheFacade)
+    except (KeyError, ImportError):
+        return None
+
+
+def set_unified_cache_facade_provider(facade: Any) -> None:
+    """Test-override для ``unified_cache_facade`` provider."""
+    _unified_cache_overrides["unified_cache_facade"] = facade
+
+
+_unified_cache_overrides: dict[str, Any] = {}
+
+
 # Legacy 44 inline functions moved to _PROVIDERS_REGISTRY + auto-generation
 # above. Kept for reference (deleted during S224 refactor — see git history):
 # get_prompt_cache_middleware, get_abstract_repository_class,
@@ -498,6 +535,8 @@ __all__ = (
     "get_sqlalchemy_repository_class",
     "get_tavily_provider_class",
     "get_three_tier_rag_cache_class",
+    "get_unified_cache_facade_provider",  # S170 ADR-0354: DSL cache facade
+    "set_unified_cache_facade_provider",  # S170 ADR-0354: test override
     "get_unified_rate_limiter_attr",
     "get_web_search_service_class",
     "get_web_search_service_factory",
