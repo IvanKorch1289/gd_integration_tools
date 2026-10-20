@@ -231,13 +231,35 @@ marker'е нет интеграции с `CacheProcessor` или
 | §1.2 `LogProcessor` без message | `core.py:245` | Добавлен `message` + `${...}` interpolation |
 | §1.3 `InfraLogWriteProcessor` literal | `infra_log.py:36` | Добавлен `${...}` interpolation |
 | §1.4 `RouteBuilder.log` chainable tests | `test_log_message_cycle169.py` | 2 chainable теста |
+| §3 stale `route.to_cache()` docs | `docs/dsl/index.md`, `docs/ai/index.md`, `docs/ARCHITECTURE.md` | Заменены на `route.cache()` / `route.cache_write()` |
+| §3 YAML `log:` regression test | `test_log_yaml_message.py` | 4 cases (with/without message, default level, infra_log_write rejected) |
 
-**Tests added**: `tests/unit/dsl/engine/processors/test_log_message_cycle169.py`
-— 12 cases (LogProcessor message, RouteBuilder.log, InfraLogWrite
-interpolation).
+**Tests added**: 16 total cycle 169 (`test_log_message_cycle169.py` +
+`test_log_yaml_message.py`).
 
-**Verification**: 2390 + 12 = 2402 passed (5 skipped — pre-existing,
+**Verification**: 2390 + 16 = 2406 passed (5 skipped — pre-existing,
 external deps).
+
+### Дополнительное открытие (cycle 169+ post-audit)
+
+**`infra_log_write` dead declaration** — процессор зарегистрирован через
+`@processor("infra_log_write", namespace="infra", ...)`, но **не доступен
+через YAML DSL** (нет метода `infra_log_write()` в `RouteBuilder`).
+
+`_apply_processor` в `yaml_loader/build.py:193` использует
+`_is_allowed_processor` whitelist — только публичные методы
+`RouteBuilder`. `infra_log_write` в whitelist не входит → YAML вызов
+падает с `ValueError: Unknown or forbidden processor 'infra_log_write'`.
+
+**Fix options** (cycle 170+):
+1. Добавить явный метод `infra_log_write()` в новый mixin (например,
+   `InfraLoggingMixin`) → минимальное изменение, backward-compat.
+2. Расширить `_is_allowed_processor` для поддержки
+   `@processor`-декларированных классов через lazy registry → более
+   общий подход.
+
+Рекомендуется option 2 для consistency с другими namespace-decorated
+processors.
 
 ---
 
