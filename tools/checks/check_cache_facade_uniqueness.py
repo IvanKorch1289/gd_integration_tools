@@ -60,6 +60,14 @@ FORBIDDEN_DISK_CACHE_NAMES: frozenset[str] = frozenset(
     }
 )
 
+# Cycle 164 Stage 6 (ADR-0352): 3 memory-класса в разных слоях с разными ролями.
+# Whitelist фиксирует, что consolidation между ними FORBIDDEN без ADR.
+ALLOWED_MEMORY_CACHE_CLASSES: dict[str, str] = {
+    "MemoryCacheFacade": "src/backend/core/cache/facade.py",
+    "MemoryBackend": "src/backend/infrastructure/cache/backends/memory.py",
+    "LruMemoryCache": "src/backend/infrastructure/cache/lru_cache.py",
+}
+
 # Modules that may re-export ``UnifiedCacheFacade`` via __all__.
 # core/cache/__init__.py + services/cache/__init__.py.
 ALLOWED_REEXPORT_MODULES: frozenset[str] = frozenset(
@@ -292,6 +300,52 @@ def _check_disk_cache_uniqueness(
             )
 
 
+def _check_memory_cache_class_locations(
+    py: Path, report: Report
+) -> None:
+    """Cycle 164 Stage 6 (ADR-0352): 3 memory-класса должны быть в своих файлах.
+
+    Whitelist фиксирует, что consolidation между ними FORBIDDEN без ADR.
+    Если кто-то попытается:
+    1. Перенести MemoryCacheFacade в infrastructure/ или наоборот — violation.
+    2. Создать новый memory-класс (любой) вне whitelist — violation.
+    """
+    try:
+        tree = ast.parse(py.read_text(encoding="utf-8", errors="ignore"))
+    except SyntaxError:
+        return
+
+    try:
+        rel = str(py.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ClassDef):
+            continue
+        class_name = node.name
+        if class_name not in ALLOWED_MEMORY_CACHE_CLASSES:
+            continue
+        expected_file = ALLOWED_MEMORY_CACHE_CLASSES[class_name]
+        if rel != expected_file:
+            report.add(
+                Violation(
+                    kind="memory_cache_class_misplaced",
+                    file=rel,
+                    line=node.lineno,
+                    message=(
+                        f"class {class_name} must be defined ONLY in "
+                        f"'{expected_file}' (per ADR-0352 Stage 6). "
+                        f"Found in '{rel}'. Consolidation between the 3 "
+                        f"memory classes (MemoryCacheFacade / MemoryBackend / "
+                        f"LruMemoryCache) requires explicit ADR — see "
+                        f"docs/adr/0352-cache-facade-duplication.md."
+                    ),
+                    snippet=f"class {class_name}:",
+                )
+            )
+
+
 def _check_settings_singleton(
     py: Path, report: Report
 ) -> None:
@@ -357,6 +411,7 @@ def main(argv: list[str] | None = None) -> int:
         _check_reexport_contract(py, report)
         _check_settings_singleton(py, report)
         _check_disk_cache_uniqueness(py, report)
+        _check_memory_cache_class_locations(py, report)
 
     if args.json:
         print(
