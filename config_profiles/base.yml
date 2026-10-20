@@ -194,7 +194,9 @@ external_databases:
 
 redis:
   encoding: "utf-8"
-  cache_expire_seconds: 300
+  # NOTE (cycle 164, ADR-0352): cache_expire_seconds мигрировал в cache: section.
+  # Чтение через settings.redis.cache_expire_seconds сохранено как deprecated
+  # property — backwards-compat. Удалить эту строку можно после cycle 166.
   max_connections: 20
   socket_timeout: 600
   socket_connect_timeout: 60
@@ -223,6 +225,9 @@ cache:
   l1_enabled: true
   l1_maxsize: 1000
   keydb_active_replica: false
+  # Cycle 164 (ADR-0352): cache_expire_seconds мигрировал из redis: сюда —
+  # это CACHE concern, не redis-специфичный.
+  cache_expire_seconds: 300
 
 
 watermark:

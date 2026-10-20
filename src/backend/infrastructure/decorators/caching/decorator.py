@@ -63,7 +63,10 @@ class CachingDecorator:
         redis_failures_threshold: int = 3,
         redis_cooldown_seconds: int = 10,
     ) -> None:
-        self.expire = expire or settings.redis.cache_expire_seconds
+        self.expire = expire or settings.cache.cache_expire_seconds
+        # Cycle 164 (ADR-0352): cache_expire_seconds мигрировал из RedisSettings
+        # в CacheSettings. Property на RedisSettings сохранён для backward-compat
+        # (deprecated), но новый код должен читать settings.cache.cache_expire_seconds.
         # TTL jitter: ±10% от expire (cache stampede prevention, P1).
         if self.expire and self.expire > 1:
             jitter = int(self.expire * _TTL_JITTER_RATIO)

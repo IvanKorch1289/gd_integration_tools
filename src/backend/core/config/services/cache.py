@@ -75,12 +75,10 @@ class RedisSettings(BaseSettingsWithLoader):
     )
 
     # Параметры производительности
-    cache_expire_seconds: int = Field(
-        ...,
-        ge=60,
-        description="Время жизни кэша по умолчанию в секундах",
-        json_schema_extra={"example": 300},
-    )
+    # NOTE (cycle 164, ADR-0352 consolidation): cache_expire_seconds
+    # мигрировал в CacheSettings — это CACHE concern, не redis-специфичный.
+    # Для backward-compat сохранён property, который читает из
+    # CacheSettings.cache_expire_seconds (single source of truth).
     max_connections: int = Field(
         50,
         ge=1,
@@ -268,6 +266,23 @@ class RedisSettings(BaseSettingsWithLoader):
         json_schema_extra={"example": "sentinel-secure-password"},
     )
 
+    @property
+    def cache_expire_seconds(self) -> int:
+        """DEPRECATED (cycle 164, ADR-0352): мигрировано в CacheSettings.
+
+        Backward-compat: возвращает значение из ``cache_settings.cache_expire_seconds``
+        (single source of truth). Используется в:
+          - ``infrastructure/decorators/caching/decorator.py`` (обновлён до
+            ``settings.cache.cache_expire_seconds`` в этом же коммите).
+
+        Existing code, который читает ``settings.redis.cache_expire_seconds``,
+        продолжит работать через этот property. Через 2 cycles property
+        удаляется — все callers должны мигрировать.
+        """
+        from src.backend.core.config.services.cache import cache_settings
+
+        return cache_settings.cache_expire_seconds
+
     def resolve_retry_on_error(self) -> list[type[BaseException]]:
         """Резолвит ``retry_on_error`` (FQN) в реальные классы исключений.
 
@@ -453,6 +468,20 @@ class CacheSettings(BaseSettingsWithLoader):
             "Включить multi-master режим KeyDB (active-active). "
             "Требует соответствующего deployment."
         ),
+    )
+    cache_expire_seconds: int = Field(
+        default=300,
+        ge=60,
+        description=(
+            "Cycle 164 миграция (из RedisSettings): TTL по умолчанию для "
+            "cache-операций. Раньше это поле было в RedisSettings, что было "
+            "misleading (это CACHE concern, не redis-специфичный). Используется "
+            "в :class:`infrastructure.decorators.caching.decorator` для "
+            "default TTL при отсутствии явного expire в декораторе. "
+            "Минимальное значение 60 секунд (анти-pattern: слишком короткий "
+            "TTL → cache stampede)."
+        ),
+        json_schema_extra={"example": 300},
     )
     disk_fallback_path: str = Field(
         default="var/cache/disk_fallback",
