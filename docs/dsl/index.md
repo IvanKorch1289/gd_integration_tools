@@ -61,11 +61,28 @@ route = (
     .from_cdc_capture("orders.changes", profile="prod", tables=["orders"])
     .cdc_transform(operations=["INSERT", "UPDATE"], project=["id", "table", "operation"])
     .to_eventbus("domain.orders")
-    .to_cache(ttl=60)
+    .cache(key_fn=lambda ex: f"orders:{ex.in_message.body['id']}", ttl=60)
+    .log(level="info", message="Order ${properties.action} processed")
+    .audit(action="order.processed", metadata_from="properties.action_result")
     .dispatch_action("analytics.process_changes")
     .build()
 )
 ```
+
+> **Cycle 169 (DSL_AUDIT_CACHE_LOGGING_2026-10-20):**
+>
+> - `.cache(key_fn, ttl=60)` → :class:`CacheProcessor`
+>   (`dsl/engine/processors/ai/cache_processor.py`) — Redis-backed с TTL.
+>   ⚠️ НЕ оборачивается в `TenantCacheBackend` (cycle 170+ TODO); для
+>   multi-tenant deployment используйте собственную key_fn с tenant-prefix.
+> - `.log(level, message="...")` (cycle 169) — поддерживает
+>   `${body.x}` / `${properties.foo}` / `${result.bar}` / `${header.X-Foo}`
+>   интерполяцию через `_resolve` helper.
+> - `.audit(action, metadata_from=...)` → :class:`AuditProcessor` —
+>   immutable audit log (HMAC-chained).
+> - ⚠️ `policy.cache(ttl_seconds, key, backend)` — это
+>   `PolicyMarkerProcessor`, **не** реальный cache (no-op). Для реального
+>   cache используйте `.cache(key_fn=..., ttl=...)`.
 
 ## Validation
 
