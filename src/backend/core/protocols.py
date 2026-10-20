@@ -14,7 +14,8 @@
 * :class:`BrowserAutomation` — Playwright → Selenium → Puppeteer.
 * :class:`NotificationChannel` — Email → Express (BotX) → Telegram → SMS.
 * :class:`Exporter` — CSV → Excel → PDF → JSON → Parquet.
-* :class:`MemoryBackend` — Redis → Memcached → Postgres → in-memory.
+* :class:`AgentMemoryBackend` — Redis → Memcached → Postgres → in-memory
+  (хранилище состояния AI-агента: диалоги, долгосрочные факты).
 * :class:`CDCStrategy` — polling → LogMiner (Oracle) → LISTEN/NOTIFY (PG).
 * :class:`SoapClient` — zeep → suds → кастомный.
 * :class:`PromptStore` — LangFuse → файловый реестр → БД.
@@ -32,12 +33,12 @@ from collections.abc import AsyncIterator
 from typing import Any, Protocol, runtime_checkable
 
 __all__ = (
+    "AgentMemoryBackend",
     "BrowserAutomation",
     "CDCEvent",
     "CDCStrategy",
     "Exporter",
     "LLMProvider",
-    "MemoryBackend",
     "NotificationChannel",
     "NotificationMessage",
     "PromptStore",
@@ -192,8 +193,17 @@ class Exporter[T](Protocol):
 
 
 @runtime_checkable
-class MemoryBackend(Protocol):
-    """Хранилище состояния AI-агента (Redis / Memcached / Postgres / in-memory)."""
+class AgentMemoryBackend(Protocol):
+    """Хранилище состояния AI-агента (Redis / Memcached / Postgres / in-memory).
+
+    Cycle 164 (ADR-0352 Stage 6): RENAMED из ``MemoryBackend`` →
+    ``AgentMemoryBackend`` для устранения naming clash с
+    :class:`src.backend.infrastructure.cache.backends.memory.MemoryBackend`
+    (cache backend, другое назначение). Этот протокол — для AI agent
+    conversation state и long-term facts, не для cache.
+
+    См. ADR-0352 §Stage 6.
+    """
 
     async def get_conversation(
         self, session_id: str, *, limit: int = 50

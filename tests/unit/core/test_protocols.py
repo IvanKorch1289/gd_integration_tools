@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from src.backend.core.protocols import (
+    AgentMemoryBackend,
     BrowserAutomation,
     CDCStrategy,
     Exporter,
     LLMProvider,
-    MemoryBackend,
     NotificationChannel,
     NotificationMessage,
     PromptStore,
@@ -100,7 +100,12 @@ class TestExporter:
         assert isinstance(Fake(), Exporter)
 
 
-class TestMemoryBackend:
+class TestAgentMemoryBackend:
+    """Cycle 164 (ADR-0352 Stage 6): renamed from TestMemoryBackend.
+
+    Disambiguates from cache MemoryBackend
+    (src.backend.infrastructure.cache.backends.memory.MemoryBackend).
+    """
     def test_is_runtime_checkable(self) -> None:
         class Fake:
             async def get_conversation(
@@ -124,7 +129,7 @@ class TestMemoryBackend:
             async def clear(self, session_id: str) -> None:
                 pass
 
-        assert isinstance(Fake(), MemoryBackend)
+        assert isinstance(Fake(), AgentMemoryBackend)
 
 
 class TestCDCStrategy:
