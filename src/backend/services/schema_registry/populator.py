@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.logging import get_logger
 from src.backend.services.schema_registry.registry import (
     SchemaEntry,
     SchemaKind,
@@ -22,6 +23,8 @@ from src.backend.services.schema_registry.registry import (
 
 if TYPE_CHECKING:
     from src.backend.core.api.extensions import RouteRegistry
+
+logger = get_logger(__name__)
 
 __all__ = (
     "populate_from_actions",
@@ -177,9 +180,7 @@ def populate_from_manifests(registry: ServiceSchemaRegistry | None = None) -> in
         # ImportError — plugin_runtime missing, AttributeError — malformed
         # registry, RuntimeError — not initialized. Bare `except Exception`
         # маскировал unrelated runtime errors (KeyError, TypeError).
-        import logging
-
-        logging.getLogger(__name__).debug(
+        logger.debug(
             "schema_registry.populator_plugin_registry_unavailable",
             extra={"error": str(plugin_reg_exc)},
         )

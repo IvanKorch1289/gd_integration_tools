@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.services.schema_registry.registry import (
     SchemaEntry,
     SchemaKind,
@@ -16,6 +17,8 @@ from src.backend.services.schema_registry.registry import (
 )
 
 __all__ = ("register_default_event_schemas",)
+
+logger = get_logger(__name__)
 
 
 def register_default_event_schemas(registry: ServiceSchemaRegistry) -> int:
@@ -54,9 +57,7 @@ def register_default_event_schemas(registry: ServiceSchemaRegistry) -> int:
             # generation failed, ValueError — invalid field, ImportError —
             # forward-ref missing. Bare `except Exception` маскировал
             # unrelated runtime errors (KeyError, RuntimeError).
-            import logging
-
-            logging.getLogger(__name__).debug(
+            logger.debug(
                 "event_schemas.model_schema_failed",
                 extra={
                     "subject": subject,
