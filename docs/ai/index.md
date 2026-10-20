@@ -44,7 +44,13 @@ src/backend/services/ai/gateway/
 | `route.invoke_llm()` | Single LLM call |
 | `route.invoke_agent()` | LangGraph agent |
 | `route.rag_query()` | RAG retrieval |
-| `route.to_cache()` | AI response cache (S165 W1) |
+| `route.cache(key_fn=..., ttl=...)` | AI response cache (S165 W1; :class:`CacheProcessor`) |
+| `route.cache_write(key_fn=..., ttl=...)` | Write to AI cache (:class:`CacheWriteProcessor`) |
+
+> **Cycle 169 fix**: `route.to_cache()` — это устаревшее имя, метод не
+> существует в `RouteBuilder` (TypeError). Используйте `route.cache()`
+> для read и `route.cache_write()` для write. См.
+> `artifacts/current_audit/DSL_AUDIT_CACHE_LOGGING_2026-10-20.md` §2.
 
 ## Sandbox (S166 W2)
 

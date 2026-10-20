@@ -17,7 +17,7 @@
 | Auth | `core.auth.facade.AuthFacade` | `route.use_auth()` |
 | Audit | `core.audit.facade` | N/A |
 | Storage | `core.storage.facade.StorageFacade` | `route.from_s3()`, `route.from_file()` |
-| Cache | `core.cache.facade.UnifiedCacheFacade` | `route.to_cache()` |
+| Cache | `core.cache.facade.UnifiedCacheFacade` | `route.cache()` (read), `route.cache_write()` |
 | Secrets | `core.audit.facade.secrets` | `route.use_secret()` |
 | External HTTP | `core.resilience.breaker` (purgatory) | `route.proxy()` |
 
