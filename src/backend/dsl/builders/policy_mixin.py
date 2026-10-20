@@ -58,12 +58,51 @@ class PolicyChain:
     def __init__(self, builder: RouteBuilder) -> None:
         self._builder = builder
 
-    def cache(
+    def cache_policy(
         self, *, ttl_seconds: int = 60, key: str | None = None, backend: str = "redis"
     ) -> RouteBuilder:
-        """Add cache policy (через CacheProcessor / Redis backend)."""
+        """Add cache policy (через CacheProcessor / Redis backend).
+
+        Cycle 170 (ADR-0355): этот метод был переименован из ``cache()``
+        чтобы избежать MRO collision с реальным
+        :meth:`RouteBuilder.cache` (:class:`CacheProcessor`). Старое имя
+        ``cache()`` остаётся как deprecated shim с ``DeprecationWarning``.
+        """
         return self._add_policy_processor(
             "cache", ttl_seconds=ttl_seconds, key=key, backend=backend
+        )
+
+    def cache(  # type: ignore[override]
+        self, *, ttl_seconds: int = 60, key: str | None = None, backend: str = "redis"
+    ) -> RouteBuilder:
+        """DEPRECATED (cycle 170, ADR-0355): use :meth:`cache_policy`.
+
+        Этот метод — marker, который НЕ реализует cache логику. MRO
+        collision с :meth:`RouteBuilder.cache` (реальный cache через
+        :class:`CacheProcessor`) приводит к silent no-op при вызове.
+
+        Используйте один из:
+
+        - ``builder.cache_policy(...)`` — marker для policy framework.
+        - ``builder.cache(key_fn=..., ttl=...)`` — реальный cache
+          через :class:`CacheProcessor` (RAG/LLM cache).
+
+        Этот shim сохранён до cycle 175 для backward-compat. После —
+        удаляется (см. ADR-0355 followup).
+        """
+        import warnings
+
+        warnings.warn(
+            "PolicyMixin.cache() is deprecated since cycle 170 (ADR-0355). "
+            "Use PolicyMixin.cache_policy() for the marker, or "
+            "RouteBuilder.cache(key_fn=..., ttl=...) for real CacheProcessor. "
+            "The old name collides with RouteBuilder.cache via MRO and creates "
+            "silent no-op cache.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.cache_policy(
+            ttl_seconds=ttl_seconds, key=key, backend=backend
         )
 
     def circuit_breaker(
