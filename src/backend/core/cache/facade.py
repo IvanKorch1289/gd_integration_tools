@@ -2,8 +2,21 @@
 
 """S165 W1: UnifiedCacheFacade (Rule 1, Rule 6).
 
-Single entry point для cache capability (TTL + invalidation policy).
-Подключается через DI: ``from src.backend.core.di.providers.cache import get_cache_facade``.
+Canonical ABC для cache capability (TTL + invalidation policy).
+
+.. deprecated::
+    Cycle 166 (ADR-0352 Stage 3): ``core.cache.facade`` помечен DEPRECATED.
+    Canonical facade для production:
+    ``src.backend.services.cache.facade.UnifiedCacheFacade``
+    (extends этот ABC + namespace + capability + observability).
+
+    ABC остаётся canonical interface (services facade extends его). Но
+    ``MemoryCacheFacade``, ``FallbackCacheFacade``, ``RedisCacheFacade``
+    concrete impls deprecated — будут удалены в Stage 4 (Cycle 167).
+
+    Migration: ``from src.backend.services.cache import UnifiedCacheFacade``
+    (production) или ``from src.backend.core.di.providers.cache import get_cache_facade``
+    (dev/test).
 
 Per Rule 1: консьюмер не должен знать о backend (Redis / Memory / Disk).
 Per Rule 6: pool + healthcheck + retry fallback (Redis -> Memory при недоступности).
@@ -11,6 +24,7 @@ Per Rule 6: pool + healthcheck + retry fallback (Redis -> Memory при недо
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
@@ -22,6 +36,24 @@ __all__ = (
     "RedisCacheFacade",
     "UnifiedCacheFacade",
 )
+
+
+def _warn_deprecated(class_name: str, stacklevel: int = 2) -> None:
+    """Issue deprecation warning для core-facade concrete impls.
+
+    Cycle 166 (ADR-0352 Stage 3): ``MemoryCacheFacade``,
+    ``FallbackCacheFacade``, ``RedisCacheFacade`` будут удалены в
+    Stage 4 (Cycle 167).
+    """
+    warnings.warn(
+        f"{class_name} (src.backend.core.cache.facade) is DEPRECATED "
+        f"since cycle 166 (ADR-0352 Stage 3). Use "
+        f"src.backend.services.cache.UnifiedCacheFacade (production) or "
+        f"src.backend.core.di.providers.cache.get_cache_facade (dev/test). "
+        f"Will be removed in cycle 167 (Stage 4).",
+        DeprecationWarning,
+        stacklevel=stacklevel,
+    )
 
 
 class CacheError(Exception):
@@ -97,11 +129,18 @@ class MemoryCacheFacade(UnifiedCacheFacade):
     """In-memory cache facade (dev_light / tests).
 
     Uses cachetools.TTLCache.
+
+    .. deprecated::
+        Cycle 166 (ADR-0352 Stage 3): используйте
+        ``src.backend.core.di.providers.cache.get_cache_facade`` или
+        ``src.backend.services.cache.UnifiedCacheFacade``. Will be removed
+        in cycle 167 (Stage 4).
     """
 
     def __init__(
         self, maxsize: int | None = None, default_ttl: int | None = None
     ) -> None:
+        _warn_deprecated("MemoryCacheFacade", stacklevel=2)
         from cachetools import TTLCache
 
         self._cache: TTLCache[str, tuple[bytes, float]] = TTLCache(
@@ -174,11 +213,18 @@ class FallbackCacheFacade(UnifiedCacheFacade):
 
     S165 W1: Redis -> Memory -> Disk (3-tier fallback).
     Each tier has healthcheck; on failure переход к следующему.
+
+    .. deprecated::
+        Cycle 166 (ADR-0352 Stage 3): use
+        ``src.backend.services.cache.UnifiedCacheFacade`` (built-in 3-tier
+        fallback через primary/memory_fallback/disk_fallback). Will be
+        removed in cycle 167 (Stage 4).
     """
 
     def __init__(
         self, primary: UnifiedCacheFacade, fallback: UnifiedCacheFacade
     ) -> None:
+        _warn_deprecated("FallbackCacheFacade", stacklevel=2)
         self.primary = primary
         self.fallback = fallback
 
@@ -244,6 +290,11 @@ class RedisCacheFacade(UnifiedCacheFacade):
     :class:`UnifiedCacheFacade` Protocol. Tag-invalidation уже реализована
     в backend через SADD/SMEMBERS (``__cache_tag:{tag}`` index).
 
+    .. deprecated::
+        Cycle 166 (ADR-0352 Stage 3): use
+        ``src.backend.services.cache.UnifiedCacheFacade`` (production
+        canonical). Will be removed in cycle 167 (Stage 4).
+
     Args:
         backend: :class:`RedisBackend` instance (DI-injected).
 
@@ -254,6 +305,7 @@ class RedisCacheFacade(UnifiedCacheFacade):
     """
 
     def __init__(self, backend: Any) -> None:
+        _warn_deprecated("RedisCacheFacade", stacklevel=2)
         self._backend = backend
 
     async def get(self, key: str) -> bytes | None:
