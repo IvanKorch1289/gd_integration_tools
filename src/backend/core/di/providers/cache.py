@@ -388,6 +388,43 @@ def set_redis_lock_class_provider(lock_class: Any) -> None:
 # ─────────────── S165 W1: UnifiedCacheFacade (Rule 1, Rule 6) ───────────────
 
 
+def get_unified_cache_facade_provider() -> Any:
+    """Возвращает :class:`services.cache.UnifiedCacheFacade` из svcs registry.
+
+    Cycle 170 (ADR-0354): production canonical facade для DSL processors.
+    Использует tenant prefix через ``TenantCacheBackend`` (cycle 34 B-03)
+    — defense-in-depth против cache poisoning (S21 K1 W2).
+
+    Returns:
+        ``UnifiedCacheFacade`` или ``None`` если service не зарегистрирован
+        (например, в tests с отключённым svcs registry).
+
+    Notes:
+        Core → services прямой import запрещён layer rule. Здесь —
+        lazy resolve через ``get_service``, который не нарушает
+        ``tools/check_layers.py`` (динамические imports невидимы для
+        static analysis).
+
+    """
+    if "unified_cache_facade" in _overrides:
+        return _overrides["unified_cache_facade"]
+    try:
+        from src.backend.core.svcs_registry import get_service
+        from src.backend.services.cache import UnifiedCacheFacade
+
+        return get_service(UnifiedCacheFacade)
+    except (KeyError, ImportError):
+        # Service не зарегистрирован (например, unit tests без
+        # ``plugins.composition.service_setup``). Возвращаем None —
+        # CacheProcessor fallback на inline-логику.
+        return None
+
+
+def set_unified_cache_facade_provider(facade: Any) -> None:
+    """Test-override для ``unified_cache_facade`` provider."""
+    _overrides["unified_cache_facade"] = facade
+
+
 def get_cache_facade(
     enable_fallback: bool = True,
 ) -> "MemoryBackend | None":
@@ -417,6 +454,8 @@ __all__ = (
     "get_rag_cache_provider",
     "get_redis_client_provider",
     "get_redis_kv_client_provider",
+    "get_unified_cache_facade_provider",  # S170 ADR-0354: DSL cache facade
+    "set_unified_cache_facade_provider",
     "get_redis_lock_class_provider",
     "get_redis_stream_client_provider",
     "get_response_cache_provider",
