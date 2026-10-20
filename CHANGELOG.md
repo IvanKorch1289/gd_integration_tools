@@ -7199,3 +7199,69 @@ regressions до Stage 2-4 (merge/deprecate/remove фасадов).
   Все green (24s).
 
 Refs: ADR-0352, cycle 163 cache audit.
+
+## [Unreleased] — 2026-10-20 — Cycle 164: Cache consolidation (ADR-0352 deferred items resolved)
+
+### refactor(cache): DiskCacheFacade (core) удалена — dead code consolidation
+
+Cycle 164 закрывает один из deferred items ADR-0352: `DiskCacheFacade` (core)
+оказался DEAD CODE — НЕ использовался в production runtime path. Disk-tier
+реализуется через `infrastructure.cache.backends.disk.DiskCacheBackend`
+(async I/O via aiofiles, atomic writes) и используется production runtime
+через `services.cache.UnifiedCacheFacade`.
+
+**Решение:** удалить `DiskCacheFacade` (core). `DiskCacheBackend` (infrastructure)
+— единственный canonical disk-tier.
+
+**Изменения:**
+
+* **`src/backend/core/cache/facade.py`** — `class DiskCacheFacade` удалена (-87 LOC).
+  `__all__` обновлён. Docstring `UnifiedCacheFacade` обновлён с
+  cross-reference на `DiskCacheBackend`. NOTE comment оставлен с пояснением
+  consolidation.
+* **`tests/unit/core/cache/test_facade.py`** — disk_facade секция удалена
+  (6 тестов + 2 fixture). Fallback chain тест переписан на
+  `MemoryCacheFacade` (Redis → Memory вместо Redis → Disk).
+* **`tests/unit/core/cache/test_facade_audit.py`** — добавлены
+  `test_disk_cache_facade_removed` (ImportError) и
+  `test_disk_cache_backend_canonical`.
+
+### refactor(peak): cache_expire_seconds миграция в CacheSettings
+
+Cycle 164 закрывает второй deferred item: `cache_expire_seconds` — это
+CACHE concern, не redis-специфичный. Мигрирован из `RedisSettings` →
+`CacheSettings` (single source of truth).
+
+**Изменения:**
+
+* **`src/backend/core/config/services/cache.py`**:
+  - `CacheSettings.cache_expire_seconds: int = Field(default=300, ge=60)` —
+    новое поле с явным описанием.
+  - `RedisSettings.cache_expire_seconds` — больше НЕ Field. Вместо него
+    `@property`, возвращающий `cache_settings.cache_expire_seconds` (single
+    source of truth). Backward-compat для существующих callers.
+* **`src/backend/infrastructure/decorators/caching/decorator.py`** — изменён
+  с `settings.redis.cache_expire_seconds` на `settings.cache.cache_expire_seconds`
+  (canonical). Property на RedisSettings продолжит работать, но новый код
+  читает из `settings.cache`.
+* **`config_profiles/base.yml`** — `cache_expire_seconds: 300` мигрирован
+  из `redis:` секции в `cache:`. Informational comment в `redis:` секции
+  предупреждает про deprecated read-path.
+* **`tests/unit/core/config/test_redis_sentinel_settings.py`** — убраны
+  `cache_expire_seconds=300` из 7 конструкторов `RedisSettings(...)` (поле
+  удалено из `model_fields`, теперь property).
+* **`tests/unit/core/config/services/test_cache_expire_seconds_migration.py`**
+  — НОВЫЙ, 9 тестов: field existence, default, ge=60 constraint,
+  env override (`CACHE_CACHE_EXPIRE_SECONDS`), singleton exposure,
+  RedisSettings backward-compat property, decorator uses canonical,
+  YAML redaction.
+
+### feat(tools): CI guard — запрет DiskCacheFacade recreation
+
+`tools/checks/check_cache_facade_uniqueness.py` расширен
+`FORBIDDEN_DISK_CACHE_NAMES` + `_check_disk_cache_uniqueness()`. Cycle 164
+закрепляет решение: DiskCacheFacade (core) больше не должна появляться.
+`make check-cache-facade-uniqueness` ловит нарушения.
+
+Refs: ADR-0352 Stage 5 (cycle 164), cycle 163 cache audit,
+docs/cache/CACHE_AUDIT_2026-10-20.md §9.

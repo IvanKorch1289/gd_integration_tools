@@ -23,7 +23,7 @@
 | `MemoryCacheFacade` | `src/backend/core/cache/facade.py` | ✅ PASS |
 | `FallbackCacheFacade` (Redis → Memory → Disk) | `src/backend/core/cache/facade.py` | ✅ PASS |
 | `RedisCacheFacade` | `src/backend/core/cache/facade.py` | ✅ PASS |
-| `DiskCacheFacade` | `src/backend/core/cache/facade.py` | ✅ PASS |
+| `DiskCacheFacade` | `src/backend/core/cache/facade.py` | ❌ REMOVED (cycle 164 dead code, ADR-0352 consolidation) |
 | `UnifiedCacheFacade` (services — capability-checked) | `src/backend/services/cache/facade.py` | ✅ PASS |
 | `ThreeTierRagCache` | `src/backend/core/cache/rag.py` | ✅ PASS |
 | Backend factory | `src/backend/infrastructure/cache/factory.py` | ✅ PASS |
@@ -61,7 +61,6 @@ tests/unit/infrastructure/cache/test_lru_cache.py
   - `MemoryCacheFacade` (dev_light / tests)
   - `FallbackCacheFacade` (primary → fallback chain, Rule 6)
   - `RedisCacheFacade` (production, RedisBackend wrapper)
-  - `DiskCacheFacade` (filesystem fallback, dev_light only)
 - API: `get(key)`, `set(key, value, ttl_seconds, tags)`,
   `delete(*keys)`, `delete_by_tag(tag)`, `exists(key)`, `healthcheck()`.
 - TTL + tag invalidation policy через `ClassVar[CacheInvalidationPolicy]`.
@@ -160,14 +159,21 @@ TOTAL: ~73 test files, 250+ tests
 ### 6. Известные неконсистентности (для будущих циклов)
 
 1. **Два `UnifiedCacheFacade`** — главная неконсистентность. ADR-0352.
-2. **`DiskCacheFacade`** в `core/cache/facade.py` vs `DiskCacheBackend` в
-   `infrastructure/cache/backends/disk.py` — два разных класса с похожей
-   семантикой, но разными API. Требует ADR на консолидацию.
-3. **`MemoryCacheFacade`** (core) vs `LruMemoryCache` (infrastructure, с
+2. ✅ **RESOLVED (cycle 164)**: `DiskCacheFacade` (core) удалена как dead code.
+   Disk-tier теперь ТОЛЬКО через `DiskCacheBackend` (infrastructure). CI guard
+   `tools/checks/check_cache_facade_uniqueness.py` добавлен — запрещает
+   `class DiskCacheFacade` за пределами infrastructure/.
+3. ✅ **RESOLVED (cycle 164)**: `cache_expire_seconds` мигрирован из
+   `RedisSettings` → `CacheSettings` (CACHE concern, не redis-специфичный).
+   `RedisSettings.cache_expire_seconds` остался как deprecated @property
+   (backward-compat). Decorator + config_profiles/base.yml обновлены.
+   Тесты: `tests/unit/core/config/services/test_cache_expire_seconds_migration.py`.
+4. **`MemoryCacheFacade`** (core) vs `LruMemoryCache` (infrastructure, с
    prometheus-metrics) — две in-memory реализации с разной семантикой.
    `LruMemoryCache` — для hotpath (router), `MemoryCacheFacade` — для
    dev_light fallback.
-4. **`cache_expire_seconds`** в `RedisSettings` — naming misleading (это
+   *(deferred: оба используются в production, требует более глубокого анализа)*
+5. (бывший #4) ~~`cache_expire_seconds` в `RedisSettings`~~ — RESOLVED cycle 164.
    cache-параметр, а не Redis-специфичный). Возможно стоит перенести в
    `CacheSettings` (требует миграции).
 5. **`CacheSettings.max_connections`** отсутствует, хотя `RedisSettings.max_connections`
@@ -189,9 +195,16 @@ TOTAL: ~73 test files, 250+ tests
 
 - **Полная унификация двух `UnifiedCacheFacade`** — слишком крупный refactor,
   требует отдельного wave (Dev2). См. ADR-0352.
-- **Консолидация `DiskCacheFacade` + `DiskCacheBackend`** — требует решения,
-  какому слою принадлежит.
-- **`cache_expire_seconds` миграция** в `CacheSettings` — breaking change
-  для конфигов, требует миграционной ADR.
+- ✅ **`DiskCacheFacade` consolidation** — RESOLVED cycle 164 (удалена).
+- ✅ **`cache_expire_seconds` миграция** — RESOLVED cycle 164 (мигрирован).
 
-Refs: ADR-0352, cycle 163 cache audit
+### 9. Cycle 164 — RESOLVED deferred items (this commit set)
+
+**ADR-0352 deferred items, выполненные в cycle 164:**
+
+| Item | Status | Resolution |
+|---|---|---|
+| DiskCacheFacade vs DiskCacheBackend | ✅ RESOLVED | DiskCacheFacade (core) удалена. DiskCacheBackend (infrastructure) — единственный disk-tier. CI guard добавлен. |
+| `cache_expire_seconds` миграция | ✅ RESOLVED | Поле перенесено из RedisSettings в CacheSettings. Decorator + config_profiles/base.yml обновлены. RedisSettings.cache_expire_seconds сохранён как deprecated @property. |
+
+Refs: ADR-0352, cycle 163 cache audit, cycle 164 consolidation

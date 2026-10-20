@@ -97,13 +97,19 @@
    ```
 
 2. Перенести ABC-семантику (`MemoryCacheFacade`, `FallbackCacheFacade`,
-   `RedisCacheFacade`, `DiskCacheFacade`) в `services/cache/facade.py`
+   `RedisCacheFacade`) в `services/cache/facade.py`
    как **internal implementations**, НЕ re-exported из `core/cache/__init__.py`.
 
 3. Сохранить `MemoryCacheFacade`, `FallbackCacheFacade`,
-   `RedisCacheFacade`, `DiskCacheFacade` для backward-compat в
+   `RedisCacheFacade` для backward-compat в
    `core/cache/facade.py` НО пометить как `Deprecated` (будут алиасы на
    новые internal implementations).
+
+3.1. **Cycle 164 (DONE):** `DiskCacheFacade` (core) **удалена** как
+dead code — НЕ используется в production runtime path. Disk-tier
+реализуется через `infrastructure.cache.backends.disk.DiskCacheBackend`
+(async I/O via aiofiles, atomic writes). См. CACHE_AUDIT §9 + CI guard
+`tools/checks/check_cache_facade_uniqueness.py::FORBIDDEN_DISK_CACHE_NAMES`.
 
 4. Добавить `namespace`, `cache_result` в `UnifiedCacheFacade` API
    (из Services-фасада).
@@ -120,10 +126,36 @@
 
 1. В `core/cache/__init__.py` оставить только re-exports + deprecation
    warnings на `MemoryCacheFacade`, `FallbackCacheFacade`,
-   `RedisCacheFacade`, `DiskCacheFacade`.
+   `RedisCacheFacade`. ~~`DiskCacheFacade`~~ удалена в cycle 164.
 2. Обновить `core/di/providers/cache.py::get_cache_facade` —
    делегировать на `services.cache.UnifiedCacheFacade`.
 3. Миграционная ADR (ADR-0352.1) с примерами кода до/после.
+
+### Stage 5 (cycle 164 — DONE): DEFERRED ITEMS RESOLVED
+
+**Cycle 164 (этот набор коммитов) закрыл оба deferred item из
+CACHE_AUDIT_2026-10-20 §8:**
+
+| Item | Решение |
+|---|---|
+| `DiskCacheFacade` (core) vs `DiskCacheBackend` (infrastructure) consolidation | **DiskCacheFacade удалена** (dead code, не в production). DiskCacheBackend — единственный disk-tier. CI guard запрещает рекурсию. |
+| `cache_expire_seconds` миграция в `CacheSettings` | **Мигрирован**. Decorator + config_profiles/base.yml обновлены. `RedisSettings.cache_expire_seconds` — deprecated @property (backward-compat). |
+
+Изменения:
+
+* `src/backend/core/cache/facade.py` — `class DiskCacheFacade` удалена (87 LOC).
+* `src/backend/core/cache/facade.py::UnifiedCacheFacade` docstring — обновлён.
+* `tests/unit/core/cache/test_facade.py` — disk_facade секция удалена, fallback chain тест переписан на MemoryCacheFacade.
+* `tests/unit/core/cache/test_facade_audit.py` — добавлены `test_disk_cache_facade_removed` и `test_disk_cache_backend_canonical`.
+* `src/backend/core/config/services/cache.py` — `CacheSettings.cache_expire_seconds` (default 300, ge=60).
+* `src/backend/core/config/services/cache.py::RedisSettings.cache_expire_seconds` — @property (backward-compat).
+* `src/backend/infrastructure/decorators/caching/decorator.py` — `settings.cache.cache_expire_seconds`.
+* `config_profiles/base.yml` — `cache_expire_seconds: 300` в `cache:` секции (не `redis:`).
+* `tools/checks/check_cache_facade_uniqueness.py` — `FORBIDDEN_DISK_CACHE_NAMES` + `_check_disk_cache_uniqueness()`.
+* `tests/unit/core/config/services/test_cache_expire_seconds_migration.py` — новый, 9 тестов.
+* `tests/unit/core/config/test_redis_sentinel_settings.py` — убраны `cache_expire_seconds=300` из 7 мест.
+
+**Result:** 354 cache-тестов проходят (78 предыдущих + 9 migration + 14 guard + ...).
 
 ### Stage 4 (Sprint 9): REMOVE core-фасад
 
