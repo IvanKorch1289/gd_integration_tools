@@ -31,6 +31,8 @@ ABC-style methods (core ABC):
 
 from __future__ import annotations
 
+import time
+from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -41,6 +43,69 @@ from src.backend.core.logging import get_logger
 __all__ = ("CacheResult", "UnifiedCacheFacade")
 
 _logger = get_logger("services.cache.facade")
+
+# Cycle 168 (PROD_READINESS_LOGGING_CACHE_2026-10-20 §3): log throttling.
+# При недоступности primary (Redis) каждый ``get_ns`` логирует WARNING.
+# В production это приводит к log-spam (5000 warnings/sec observed в
+# benchmark) → backpressure в batching_router → потеря логов.
+#
+# Решение: time-window based throttle. Первое предупреждение за window
+# выводится на WARNING; последующие — на DEBUG. Через 60s counter
+# сбрасывается. Это сохраняет видимость инцидента без flooding.
+_LOG_THROTTLE_WINDOW_SECONDS = 60.0
+_log_throttle_counters: dict[str, tuple[float, int]] = defaultdict(
+    lambda: (0.0, 0)
+)
+
+
+def _throttled_warning(
+    *,
+    backend: str,
+    operation: str,
+    key: str,
+    error: BaseException,
+) -> None:
+    """WARNING первый за window; остальные DEBUG (throttle).
+
+    Args:
+        backend: Имя backend'а (``"primary"``, ``"memory"``, ``"disk"``).
+        operation: Имя операции (``"get"``, ``"set"``, ``"delete"``).
+        key: Cache key (для message).
+        error: Exception, который произошёл.
+
+    """
+    bucket = f"{backend}.{operation}"
+    now = time.monotonic()
+    started_at, count = _log_throttle_counters[bucket]
+    if now - started_at >= _LOG_THROTTLE_WINDOW_SECONDS:
+        _log_throttle_counters[bucket] = (now, 1)
+        _logger.warning(
+            "Cache %s %s failed key=%s: %s (suppressing repeats for %.0fs)",
+            backend,
+            operation,
+            key,
+            error,
+            _LOG_THROTTLE_WINDOW_SECONDS,
+        )
+        return
+    _log_throttle_counters[bucket] = (started_at, count + 1)
+    if count == 1:
+        _logger.warning(
+            "Cache %s %s failing (suppressed %d repeats in %.0fs window)",
+            backend,
+            operation,
+            count,
+            _LOG_THROTTLE_WINDOW_SECONDS,
+        )
+    else:
+        _logger.debug(
+            "Cache %s %s failed (suppressed): key=%s err=%s",
+            backend,
+            operation,
+            key,
+            error,
+        )
+
 
 CapabilityChecker = Callable[[str, str, str | None], None]
 
@@ -162,7 +227,7 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
             if value is not None:
                 return CacheResult(value=value, hit=True, backend="primary")
         except Exception as exc:
-            _logger.warning("Cache primary get failed key=%s: %s", full, exc)
+            _throttled_warning(backend="primary", operation="get", key=full, error=exc)
 
         if self._memory is not None:
             try:
@@ -170,7 +235,7 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
                 if value is not None:
                     return CacheResult(value=value, hit=True, backend="memory")
             except Exception as exc:
-                _logger.warning("Cache memory get failed key=%s: %s", full, exc)
+                _throttled_warning(backend="memory", operation="get", key=full, error=exc)
 
         if self._disk is not None:
             try:
@@ -178,7 +243,7 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
                 if value is not None:
                     return CacheResult(value=value, hit=True, backend="disk")
             except Exception as exc:
-                _logger.warning("Cache disk get failed key=%s: %s", full, exc)
+                _throttled_warning(backend="disk", operation="get", key=full, error=exc)
 
         return CacheResult(value=None, hit=False, backend="none")
 
@@ -194,6 +259,7 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
         self._assert("cache.write", namespace)
         full = self._full_key(namespace, key)
 
+        successful_writes = 0
         for name, backend in (
             ("primary", self._primary),
             ("memory", self._memory),
@@ -203,11 +269,14 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
                 continue
             try:
                 await backend.set(full, value, ttl=ttl)
+                successful_writes += 1
             except Exception as exc:
-                _logger.warning("Cache %s set failed key=%s: %s", name, full, exc)
+                _throttled_warning(backend=name, operation="set", key=full, error=exc)
 
-        # Tag tracking (facade-level, для non-Redis backends).
-        if tags:
+        # Cycle 168 (PROD_READINESS §1.6): tag_index обновляется только
+        # если хотя бы один backend принял запись. Иначе tag invalidation
+        # в дальнейшем будет пытаться удалить несуществующие ключи.
+        if tags and successful_writes > 0:
             ns_tags = self._tag_index.setdefault(namespace, {})
             for tag in tags:
                 ns_tags.setdefault(tag, set()).add(key)
@@ -227,7 +296,7 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
             try:
                 await backend.delete(*full_keys)
             except Exception as exc:
-                _logger.warning("Cache %s delete failed: %s", name, exc)
+                _throttled_warning(backend=name, operation="delete", key=str(full_keys), error=exc)
 
         # Очищаем key из tag_index (во всех namespace).
         for ns_tags in self._tag_index.values():
@@ -251,11 +320,17 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
                 if await backend.exists(full):
                     return True
             except Exception as exc:
-                _logger.warning("Cache %s exists failed key=%s: %s", name, full, exc)
+                _throttled_warning(backend=name, operation="exists", key=full, error=exc)
         return False
 
     async def delete_pattern_ns(self, pattern: str, namespace: str = "default") -> None:
-        """Namespace-aware delete_pattern (только primary/memory)."""
+        """Namespace-aware delete_pattern (только primary/memory).
+
+        Cycle 168: disk fallback исключён намеренно — disk backend хэширует
+        ключи через SHA256, pattern matching невозможен без reverse index.
+        Для disk namespace-prefix flush использовать ``flush_namespace()``
+        (отдельный метод, см. ADR-0352 Stage 5 / cycle 169 TODO).
+        """
         self._assert("cache.write", namespace)
         full_pattern = self._full_key(namespace, pattern)
 
@@ -265,7 +340,7 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
             try:
                 await backend.delete_pattern(full_pattern)
             except Exception as exc:
-                _logger.warning("Cache %s delete_pattern failed: %s", name, exc)
+                _throttled_warning(backend=name, operation="delete_pattern", key=full_pattern, error=exc)
 
     async def delete_by_tag_ns(self, tag: str, namespace: str = "default") -> int:
         """Namespace-aware delete_by_tag (facade-level tracking).
