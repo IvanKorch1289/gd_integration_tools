@@ -1,5 +1,93 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-10-20 — Cycle 170: Deferred ADR fixes (cache + DSL cleanups)
+
+### refactor(core): remove `core/rate_limiter/` (ADR-0353)
+
+Удалён `src/backend/core/rate_limiter/` (245 LOC) и
+`tests/unit/core/rate_limiter/test_rate_limiter_focused.py`.
+- 0 production callers (статический + динамический grep — чисто).
+- Заменён в `entrypoints/dependencies/rate_limit.py` (SafeRateLimiter) +
+  `infrastructure/resilience/unified_rate_limiter.py` (RedisRateLimiter).
+- Устраняет anti-pattern `time.sleep()` в async-контексте.
+
+ADR supersedes ADR-0350 (Draft, содержал устаревшее cache_keys
+утверждение — Amendment 2026-10-16 исправил).
+
+### fix(dsl): deprecate `policy.cache()` marker — `cache_policy()` (ADR-0355)
+
+`PolicyMixin.cache()` это marker (no-op), MRO-коллидит с реальным
+`RouteBuilder.cache()` (CacheProcessor). Переименовано в
+`cache_policy()` с deprecated shim + `DeprecationWarning`. Backward-compat
+до cycle 175.
+
+### fix(cache,dsl): `CacheProcessor` → `services.UnifiedCacheFacade` (ADR-0354)
+
+`CacheProcessor`/`CacheWriteProcessor` теперь используют
+`UnifiedCacheFacade` через новый DI provider
+`get_unified_cache_facade_provider()` (lazy resolve, не нарушает layer rule).
+
+Преимущества:
+- Tenant prefix через `TenantCacheBackend` (cycle 34 B-03 fix) — defense-in-depth
+  против cross-tenant data leak в DSL cache lookup.
+- Capability check (`cache.read`/`cache.write`).
+- Namespace isolation (`namespace="dsl_cache"`).
+- Layer rule preservation (core → services через DI).
+
+Реализация provider перенесена в `infrastructure_locator.py` для
+соблюдения LOC budget (<500 LOC для `cache.py`).
+
+### fix(cache,dsl): RedisError handling + `InfraLoggingMixin` (ADR-0356)
+
+`CacheProcessor`/`CacheWriteProcessor`: `except` расширен до
+`(redis.exceptions.RedisError, ConnectionError, TimeoutError, OSError)`
+— dual coverage для redis-py errors + builtin network errors.
+
+`InfraLoggingMixin` добавлен в `RouteBuilder` MRO — `infra_log_write`
+теперь доступен через YAML DSL (cycle 169 dead-declaration fix).
+
+### test(dsl): regression test fixes after cycle 170
+
+9 failing тестов доработаны:
+- `test_route_builder_mro_size` — MRO 76→77 (+1 mixin)
+- 7 cache tests с builtin/redis exceptions — dual except
+- `test_yaml_infra_log_write_rejected` → `test_yaml_infra_log_write_works`
+
+### docs(prod-readiness): cycle 170 final assessment
+
+`artifacts/current_audit/CYCLE_170_PROD_READINESS_2026-10-20.md` —
+**PRODUCTION-READY** verdict для cache + logging.
+
+### Verification
+
+```bash
+# Cycle 170 baseline
+uv run python -m pytest \
+    tests/unit/dsl tests/unit/core/cache tests/unit/services/cache \
+    tests/unit/cache tests/unit/infrastructure/cache \
+    tests/unit/infrastructure/logging tests/unit/core/config/services \
+    tests/unit/core/di/providers \
+    tests/tools/test_check_cache_facade_uniqueness.py -q
+# 6008 passed, 22 skipped, 32 xfailed, 25 xpassed, 0 failed
+
+# Cache facade uniqueness guard
+make check-cache-facade-uniqueness  # CLEAN
+
+# LOC check
+uv run python -m pytest tests/unit/core/di/providers/test_w9_p2_13_phase2_cache_split.py::TestCacheShimReduction::test_cache_under_500_loc -v
+# PASSED (cache.py: 500 LOC)
+```
+
+### Outstanding (non-blocking, cycle 175+)
+
+- ADR-0351 phase 2+: миграция 83 inline `import logging`
+- Cluster-wide tag invalidation
+- Реальный cache в `policy.cache_policy()` через UnifiedCacheFacade
+- Удаление deprecated `policy.cache()` shim
+- ADR-0084/0090/0311 re-baseline
+
+---
+
 ## [Unreleased] — 2026-10-20 — Cycle 169: DSL audit — cache + logging processors
 
 ### fix(dsl): log/audit message interpolation (DSL_AUDIT §1.1-§1.4)
