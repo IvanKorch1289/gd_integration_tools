@@ -7333,3 +7333,41 @@ Cycle 165 закрывает Stage 2 ADR-0352 (MERGE фасадов).
 **Result:** 802 cache-тестов проходят. Layer rule сохранён.
 
 Refs: ADR-0352 Stage 2 (cycle 165).
+
+## [Unreleased] — 2026-10-20 — Cycle 166: ADR-0352 Stage 3 — core-facade DEPRECATED
+
+### feat(core): core-facade concrete impls помечены DEPRECATED (Stage 3)
+
+Cycle 166 закрывает Stage 3 ADR-0352.
+
+**Что сделано:**
+
+* **`src/backend/core/cache/facade.py`** — `_warn_deprecated()` helper
+  + ``DeprecationWarning`` на instantiation `MemoryCacheFacade`,
+  `FallbackCacheFacade`, `RedisCacheFacade`. Docstrings обновлены
+  с deprecation notice + migration hint.
+
+* **ABC `UnifiedCacheFacade`** остаётся canonical (НЕ помечен deprecated).
+  Services facade extends ABC (Stage 2 cycle 165).
+
+* **`pyproject.toml::filterwarnings`** — добавлен ignore pattern для
+  `DeprecationWarning` от `src.backend.core.cache.facade`. Tests не
+  fail на warnings.
+
+* **Migration guide** — `docs/adr/0352.1-cache-facade-migration-guide.md`
+  (новый, ~210 строк): TL;DR, OLD/NEW patterns, API mapping, type
+  checks, capability check, testing advice, cycle timeline.
+
+* **`tests/unit/core/cache/test_deprecation_warnings.py`** (новый, 7
+  тестов): warning emission + migration guide + ABC/services not
+  deprecated. Все green.
+
+**Cycle timeline:**
+
+| Cycle | Status | Action |
+|---|---|---|
+| 165 | DONE | Stage 2 — services facade extends core ABC |
+| 166 | DONE | Stage 3 — DEPRECATION warnings (current commit) |
+| 167 | TODO | Stage 4 — REMOVE deprecated concrete impls |
+
+Refs: ADR-0352 Stage 3, ADR-0352.1 migration guide.

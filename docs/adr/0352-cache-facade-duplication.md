@@ -117,14 +117,34 @@
 
 **Result:** 802 cache-тестов проходят. Layer rule сохранён.
 
-### Stage 3 (Sprint 8): DEPRECATE core-фасад
+### Stage 3 (Cycle 166 — DONE): DEPRECATE core-фасад
 
-1. В `core/cache/__init__.py` оставить только re-exports + deprecation
-   warnings на `MemoryCacheFacade`, `FallbackCacheFacade`,
-   `RedisCacheFacade`. ~~`DiskCacheFacade`~~ удалена в cycle 164.
-2. Обновить `core/di/providers/cache.py::get_cache_facade` —
-   делегировать на `services.cache.UnifiedCacheFacade`.
-3. Миграционная ADR (ADR-0352.1) с примерами кода до/после.
+**Cycle 166 changes:**
+
+1. **`src/backend/core/cache/facade.py`** — `_warn_deprecated()` helper +
+   `DeprecationWarning` на instantiation: `MemoryCacheFacade`,
+   `FallbackCacheFacade`, `RedisCacheFacade`. Docstrings обновлены с
+   deprecation notice + migration hint.
+
+2. **ABC `UnifiedCacheFacade` остаётся canonical** — НЕ помечен deprecated.
+   Services facade extends ABC (Stage 2).
+
+3. **`pyproject.toml::filterwarnings`** — добавлен ignore pattern для
+   `DeprecationWarning` от `src.backend.core.cache.facade`. Tests не
+   fail на warnings. Production runtime не подавляет warnings (явный сигнал).
+
+4. **Migration guide** — `docs/adr/0352.1-cache-facade-migration-guide.md`
+   (новый, ~210 строк) с OLD/NEW patterns, API mapping, type checks,
+   capability check, testing advice, cycle timeline.
+
+5. **Tests** — `tests/unit/core/cache/test_deprecation_warnings.py` (новый,
+   7 тестов): warning emission, migration guide existence + content,
+   ABC + services facade НЕ помечены deprecated.
+
+6. **Stage 4 (Cycle 167) — TODO** — REMOVE deprecated concrete impls
+   (`MemoryCacheFacade`, `FallbackCacheFacade`, `RedisCacheFacade`).
+   ABC остаётся. `core.cache.facade` модуль сокращается до ~70 LOC
+   (только ABC + CacheError + CacheInvalidationPolicy).
 
 ### Stage 5 (cycle 164 — DONE): DEFERRED ITEMS RESOLVED
 
