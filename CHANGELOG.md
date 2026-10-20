@@ -1,5 +1,67 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-10-20 — Cycle 169: DSL audit — cache + logging processors
+
+### fix(dsl): log/audit message interpolation (DSL_AUDIT §1.1-§1.4)
+
+Закрыты 4 issues из `artifacts/current_audit/DSL_AUDIT_CACHE_LOGGING_2026-10-20.md`:
+
+- `RouteBuilder.log(level, message="")` — добавлен optional `message`
+  параметр (backward-compat). Раньше protocol
+  (`base/_protocols/_core.py:44`) объявлял `log(level, message)`, но
+  impl принимал только `level` — TypeError на втором аргументе.
+- `LogProcessor.message` — интерполяция `${body.x}` /
+  `${properties.foo}` / `${result.bar}` / `${header.X-Foo}` через
+  `_resolve` helper (`processors/entity/_resolve_helper.py`). Legacy
+  режим (`message=""`) сохранён.
+- `InfraLogWriteProcessor` — добавлена `${...}` интерполяция. Раньше
+  `message` логировался literal-строкой, что противоречило docstring
+  ("message: 'Processing order ${properties.order_id}'").
+- Graceful degradation: нерезолвящийся placeholder остаётся literal
+  `${...}` (легче отлаживать).
+
+Tests: `tests/unit/dsl/engine/processors/test_log_message_cycle169.py`
+(12 cases).
+
+### fix(cache): get_cache_facade enable_fallback=False → None (cycle 168 deferred)
+
+PROD_READINESS_LOGGING_CACHE_2026-10-20 §1.7: `enable_fallback`
+параметр игнорировался (`memory` в обеих ветках). Cycle 169 fix:
+- `False` → `None` (consistency с documented intent)
+- type hint `Any` → `MemoryBackend | None` (explicit contract)
+- docstring: warning о том, что возвращаемый MemoryBackend не
+  реализует `UnifiedCacheFacade.delete_by_tag()` / `healthcheck()`
+- production canonical — `services.cache.UnifiedCacheFacade`
+
+Tests: `tests/unit/core/di/providers/test_get_cache_facade.py` (4 cases).
+
+### docs(dsl): cycle 169 DSL_AUDIT_CACHE_LOGGING_REPORT
+
+`artifacts/current_audit/DSL_AUDIT_CACHE_LOGGING_2026-10-20.md` —
+полный DSL audit: 6 issues (3 logging HIGH, 2 cache HIGH, 1 cache
+MEDIUM), 4 closed в cycle 169, 3 deferred.
+
+### Deferred (cycle 170+, требуют architectural decisions)
+
+- `CacheProcessor` без `TenantCacheBackend` prefix (HIGH) — cross-tenant
+  risk в DSL cache lookup.
+- `CacheProcessor` узкий `except` (HIGH) — не ловит `redis.exceptions.*`.
+- `RouteBuilder.cache()` — misleading marker (MEDIUM) — пользователь
+  думает что cache работает, но это no-op.
+
+### Verification
+
+```bash
+uv run python -m pytest tests/unit/dsl/engine/processors -q
+# 2390 passed, 5 skipped (pre-existing external deps)
+uv run python -m pytest tests/unit/dsl/engine/processors/test_log_message_cycle169.py -v
+# 12 passed (new)
+uv run python tools/check_layers.py --strict
+# no new violations
+```
+
+---
+
 ## [Unreleased] — 2026-10-20 — Cycle 168: PROD_READINESS logging + cache fixes (4 critical + 2 high)
 
 ### fix(cache): DiskCacheBackend per-key TTL via expiry sidecar (PROD_READINESS §1.1)
