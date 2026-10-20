@@ -22,8 +22,11 @@ import orjson as json
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.config.settings import settings
+from src.backend.core.logging import get_logger
 from src.backend.core.security.ip_restriction_store import get_ip_restriction_store
 from src.backend.core.utils.converters import convert_pattern
+
+_logger = get_logger("auth.ip_restriction")
 
 __all__ = ("IPRestrictionMiddleware",)
 
@@ -73,6 +76,18 @@ class IPRestrictionMiddleware:
         client_ip = client[0] if client else None
 
         if not self._store.is_allowed(path, client_ip):
+            # Cycle 161 audit: 403 для IP-restricted routes должны логироваться
+            # для SIEM / SOC audit trail. НЕ логируем full client_ip в PII
+            # contexts (RFC 3041 не PII по умолчанию, но X-Forwarded-For может
+            # содержать PII).
+            _logger.warning(
+                "auth.ip_restricted.denied",
+                extra={
+                    "path": path,
+                    "client_ip": client_ip,
+                    "event": "auth.ip_restricted.denied",
+                },
+            )
             await self._send_403(send)
             return
 

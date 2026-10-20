@@ -29,8 +29,11 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.auth import AuthContext, AuthMethod
 from src.backend.core.config.settings import settings
+from src.backend.core.logging import get_logger
 from src.backend.core.tenancy import bind_tenant_from_metadata, unbind_tenant
 from src.backend.core.utils.converters import convert_pattern
+
+_logger = get_logger("auth.api_key")
 
 __all__ = ("APIKeyMiddleware",)
 
@@ -88,6 +91,16 @@ class APIKeyMiddleware:
         # Извлекаем X-API-Key header (case-insensitive).
         api_key = _get_header_value(scope, b"x-api-key")
         if api_key is None:
+            # Cycle 161 audit: логируем failed auth для SOC / SIEM audit.
+            # Не логируем само значение ключа (даже частично) — PII/PHI risk.
+            _logger.warning(
+                "auth.api_key.missing",
+                extra={
+                    "path": path,
+                    "client": scope.get("client"),
+                    "event": "auth.api_key.missing",
+                },
+            )
             await self._send_401(send, detail="Требуется API-ключ")
             return
 
@@ -95,6 +108,18 @@ class APIKeyMiddleware:
         import secrets as _secrets
 
         if not _secrets.compare_digest(api_key, settings.secure.api_key):
+            # Cycle 161 audit: invalid API-key попытки должны логироваться для
+            # brute-force detection. Логируем только первые 8 символов для
+            # корреляции + ничего больше.
+            _logger.warning(
+                "auth.api_key.invalid",
+                extra={
+                    "path": path,
+                    "client": scope.get("client"),
+                    "key_prefix": api_key[:8] if len(api_key) >= 8 else "***",
+                    "event": "auth.api_key.invalid",
+                },
+            )
             await self._send_401(send, detail="Неверный API-ключ")
             return
 
@@ -118,15 +143,16 @@ class APIKeyMiddleware:
             },
         )
         scope.setdefault("state", {})["auth"] = auth_ctx
-        # S124 W3: debug log для trace auth flow (временно).
-        import logging
-
-        _auth_log = logging.getLogger("auth.debug")
-        _auth_log.warning(
-            "API_KEY auth set: principal=%s admin_roles=%s scope_state_keys=%s",
-            auth_ctx.principal,
-            auth_ctx.metadata.get("admin_roles"),
-            list(scope.get("state", {}).keys()),
+        # S124 W3: debug log для trace auth flow.
+        # Cycle 161 audit: используем canonical facade вместо inline stdlib.
+        _logger.debug(
+            "auth.api_key.set",
+            extra={
+                "principal": auth_ctx.principal,
+                "admin_roles": auth_ctx.metadata.get("admin_roles"),
+                "scope_state_keys": list(scope.get("state", {}).keys()),
+                "event": "auth.api_key.set",
+            },
         )
 
         # API-ключ валиден → пробрасываем downstream.

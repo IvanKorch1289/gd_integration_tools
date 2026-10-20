@@ -23,7 +23,10 @@ import json
 
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from src.backend.core.logging import get_logger
 from src.backend.core.state.runtime import blocked_routes
+
+_logger = get_logger("route.blocked")
 
 __all__ = ("BlockedRoutesMiddleware", "blocked_routes")
 
@@ -75,6 +78,19 @@ class BlockedRoutesMiddleware:
         # Проверяем blocked patterns.
         for pattern in blocked_routes:
             if fnmatch.fnmatch(path, pattern):
+                # Cycle 161 audit: blocked routes (maintenance mode / disabled
+                # endpoints) логируются для observability и operational
+                # dashboards (отслеживание сколько запросов пытается попасть
+                # на отключённый endpoint).
+                _logger.warning(
+                    "route.blocked.denied",
+                    extra={
+                        "path": path,
+                        "pattern": pattern,
+                        "client": scope.get("client"),
+                        "event": "route.blocked.denied",
+                    },
+                )
                 # 403 response напрямую через send (НЕ raise — pure ASGI).
                 await self._send_403(send, detail="Route is disabled")
                 return
