@@ -49,8 +49,29 @@ class ValidationMixin(_RouteBuilderProtocol):
         """Устанавливает runtime-свойство Exchange."""
         return self._add(SetPropertyProcessor(key=key, value=value))
 
-    def log(self, level: str = "info") -> Self:
-        """Логирование текущего состояния Exchange (для отладки)."""
+    def log(self, level: str = "info", message: str = "") -> Self:
+        """Логирование текущего состояния Exchange (для отладки).
+
+        Cycle 169 (DSL_AUDIT_CACHE_LOGGING_2026-10-20 §2.1): добавлен
+        опциональный ``message`` параметр. Раньше protocol
+        (``base/_protocols/_core.py``) объявлял ``log(level, message)``,
+        но реализация принимала только ``level`` — TypeError на втором
+        аргументе. Теперь:
+
+        - ``message=""`` (default) — логируется тип body + properties
+          (legacy behavior).
+        - ``message="текст {var}"`` — логируется literal текст через
+          ``_resolve`` (vars из exchange.properties). Если vars не
+          переданы — выводится как literal.
+
+        Args:
+            level: ``debug`` | ``info`` | ``warning`` | ``error`` | ``critical``.
+            message: Опциональный текст с опциональной интерполяцией
+                ``${properties.foo}``.
+
+        """
+        if message:
+            return self._add(LogProcessor(level=level, message=message))
         return self._add(LogProcessor(level=level))
 
     def validate(self, model: type) -> Self:

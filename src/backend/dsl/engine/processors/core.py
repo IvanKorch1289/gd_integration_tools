@@ -243,29 +243,66 @@ class EnrichProcessor(BaseProcessor):
     meta={"tier": 1, "category": "observability"},
 )
 class LogProcessor(BaseProcessor):
-    """Логирует текущее состояние Exchange (тип body, список properties).
+    """Логирует текущее состояние Exchange.
+
+    Cycle 169 (DSL_AUDIT_CACHE_LOGGING_2026-10-20 §2.1): добавлена
+    опциональная интерполяция ``message`` через ``${body.x}`` /
+    ``${properties.foo}`` / ``${result.bar}`` / ``${header.X-Foo}``
+    (используется ``_resolve`` helper из
+    ``processors/entity/_resolve_helper.py``).
+
+    Два режима:
+    - ``message=""`` (legacy): логирует тип body + список property keys.
+    - ``message="text ${properties.x}"``: интерполирует placeholders,
+      логирует результат.
 
     Полезен для отладки pipeline. Не изменяет данные.
     """
 
-    def __init__(self, *, level: str = "info", name: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        level: str = "info",
+        message: str = "",
+        name: str | None = None,
+    ) -> None:
         super().__init__(name=name or "log")
         self._level = level
+        self._message = message
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Обработать exchange согласно логике процессора. Читает body / properties, мутирует exchange, raises exceptions для error handling pipeline."""
+        """Логирует состояние exchange (см. docstring)."""
+        import re
+
         logger = get_logger("dsl.pipeline")
         log_fn = getattr(logger, self._level, logger.info)
-        log_fn(
-            "Exchange[route=%s]: body=%s, properties=%s",
-            context.route_id,
-            type(exchange.in_message.body).__name__,
-            list(exchange.properties.keys()),
-        )
+        if self._message:
+            # Интерполяция ${namespace.path} placeholders.
+            from src.backend.dsl.engine.processors.entity._resolve_helper import (
+                _resolve as _resolve_expr,
+            )
+
+            def _sub(m: re.Match[str]) -> str:
+                expr = m.group(1)
+                resolved = _resolve_expr(exchange, expr)
+                return str(resolved) if resolved is not None else m.group(0)
+
+            rendered = re.sub(r"\$\{([^}]+)\}", _sub, self._message)
+            log_fn("Exchange[route=%s]: %s", context.route_id, rendered)
+        else:
+            log_fn(
+                "Exchange[route=%s]: body=%s, properties=%s",
+                context.route_id,
+                type(exchange.in_message.body).__name__,
+                list(exchange.properties.keys()),
+            )
 
     def to_spec(self) -> dict[str, Any] | None:
-        """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec). Returns None для non-serializable state."""
-        return {"log": {"level": self._level}}
+        """Сериализовать конфигурацию процессора в dict (для YAML/JSON spec)."""
+        spec: dict[str, Any] = {"level": self._level}
+        if self._message:
+            spec["message"] = self._message
+        return {"log": spec}
 
 
 class ValidateProcessor(BaseProcessor):
