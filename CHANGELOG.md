@@ -6844,3 +6844,269 @@ ruff check --select F401,F841,F811,E9                                → All che
 
 Refs: MINIMAX W6 P1-8, ADR-0084, ADR-0318 (Phase 1), ADR-0319 (Phase 2),
 cycle 152.
+
+## [Unreleased] — 2026-10-20 — Cycle 160/161: Logging facade status audit + migration plan (Phase 1)
+
+### feat(docs): выделенный документ по архитектуре логирования
+
+Cycle-160/161 audit: вся logging-инфраструктура (`core/logging/` facade +
+`infrastructure/logging/` backends + `SinkRouter` + `LogSink` ABC) протестирована
+и работает корректно. Создан выделенный reference-документ с описанием
+архитектуры.
+
+**Что сделано**:
+
+* **`docs/architecture/logging.md`** (новый, 404 строки) — единая страница с
+  описанием:
+    * Структуры пакетов (core/ vs infrastructure/) и layer boundary.
+    * Полного pipeline из 11 structlog processors (включая PII redaction,
+      correlation binding, format_exc_info, _route_to_sinks_lazy).
+    * Profile-based `SinkRouter` mapping (dev_light → ConsoleJson; dev →
+      ConsoleJson + DiskRotating; staging/prod → GraylogGelf + DiskRotating
+      с `BatchingSinkRouter`).
+    * Backend-ов (`StructlogGraylogBackend` default + `StdlibLoggingBackend`
+      fallback).
+    * Public API (`get_logger`, `configure_logging`, `init_log_sinks`,
+      `shutdown_log_sinks`, `shutdown_logging`, `LoggerProtocol`).
+    * Lifecycle (startup/shutdown sequence с `S60 W1` GELF FD leak fix).
+    * Тестового покрытия (~95+ unit-тестов).
+    * CI gates (`tools/audit_stdlib_logging.py --ci` + layer-check).
+    * Известных неконсистентностей (183 inline `import logging` случаев).
+    * Расширения (как добавить новый `LogSink` / backend).
+    * Ссылок на ADR (0166, 0312, 0325, 0351).
+
+### refactor(services): schema_registry — миграция inline `import logging` → facade (Phase 1)
+
+Cycle-160: устранён inline `import logging` + `logging.getLogger(__name__)`
+антипаттерн в 3 файлах `services/schema_registry/` — теперь используют
+canonical `from src.backend.core.logging import get_logger` + module-level
+`logger = get_logger(__name__)`.
+
+**Что сделано**:
+
+* **`src/backend/services/schema_registry/registry.py`** — 4 inline-блока
+  удалены, заменены на `logger.debug(...)` (logger уже импортирован).
+* **`src/backend/services/schema_registry/populator.py`** — добавлен
+  `from src.backend.core.logging import get_logger` + `logger = get_logger(__name__)`;
+  1 inline-блок удалён.
+* **`src/backend/services/schema_registry/event_schemas.py`** — добавлен
+  `from src.backend.core.logging import get_logger` + `logger = get_logger(__name__)`;
+  1 inline-блок удалён.
+
+Итого: **−6 inline-блоков** в одной цикле. 82/82 тестов
+`tests/unit/services/schema_registry/` pass.
+
+### test(logging): lifecycle regression tests для facade
+
+Cycle-160: новый `test_lifecycle_shutdown.py` (17 тестов) фиксирует поведение
+logging facade в edge-кейсах (shutdown → re-init, bind, multiple configure,
+lazy init без явного `configure_logging`).
+
+**Что сделано**:
+
+* **`tests/unit/infrastructure/logging/test_lifecycle_shutdown.py`** (новый, 17 тестов):
+  * `TestConfigureLoggingLifecycle` (2) — configure returns structlog backend.
+  * `TestGetLoggerAfterConfigure` (4) — get_logger + emit
+    info/warning/error/exception.
+  * `TestBindReturnsChildLogger` (2) — bind creates child logger with context.
+  * `TestShutdownLoggingFlushesHandlers` (3) — shutdown не raise + reset
+    backend + flushes stdlib handlers (`S60 W1` GELF FD leak fix).
+  * `TestGetLoggerLazyAfterShutdown` (2) — get_logger после shutdown = fresh
+    backend.
+  * `TestMultipleConfigureCalls` (2) — reconfigure replaces backend.
+  * `TestFacadeLoggingEndToEnd` (1) — full lifecycle через facade.
+  * `TestLoggingWithoutExplicitConfigure` (1) — lazy auto-init через get_logger().
+
+### docs: ADR-0351 — Logging Facade Status Audit & Migration Plan
+
+Cycle-160: формальный аудит status quo + 3-фазный migration plan для оставшихся
+183 inline-блоков.
+
+**Что сделано**:
+
+* **`docs/adr/0351-logging-facade-status-audit.md`** (новый, ADR) — фиксирует:
+  * Status quo (103 тестов pass, вся инфраструктура работает).
+  * Phase 1 (cycle-160, ЗАКРЫТО) — 3 файла schema_registry мигрированы.
+  * Phase 2 (cycle-162+) — 9 приоритетных файлов с ≥3 inline-блоками.
+  * Phase 3 (cycle-166+, opportunistic) — оставшиеся ~177 файлов.
+
+### Verification
+
+```
+$ python -m pytest tests/unit/infrastructure/logging/ -q
+→ 83 passed (66 previous + 17 new lifecycle_shutdown)
+
+$ python -m pytest tests/unit/log_sinks/ -q
+→ 24 passed
+
+$ python -m pytest tests/unit/core/test_logging_facade.py -q
+→ 5 passed
+
+$ python -m pytest tests/unit/core/test_logging_layer_check.py -q
+→ 5 passed
+
+$ python -m pytest tests/unit/core/observability/test_logging_helpers.py -q
+→ 13 passed
+
+$ python -m pytest tests/unit/services/schema_registry/ -q
+→ 82 passed (после миграции registry.py, populator.py, event_schemas.py)
+```
+
+Refs: ADR-0166, ADR-0312, ADR-0325, ADR-0351, cycle-160/161.
+
+## [Unreleased] — 2026-10-20 — Cycle 161: централизованная инициализация logging + security-critical middleware logging
+
+### feat(logging): `init_application_logging()` — единая точка инициализации стека
+
+Cycle 161 audit обнаружил критический gap: `configure_logging()` и
+`init_log_sinks()` НЕ вызывались нигде в lifespan startup — приложение
+стартовало с lazy default structlog backend, но БЕЗ `SinkRouter` (event_dict
+НЕ доходили до ConsoleJson / DiskRotating / GraylogGelf).
+
+Решение — новая high-level функция `init_application_logging()`, которая
+делает обе вещи в правильном порядке + читает настройки из `settings.app`
+(environment, profile).
+
+**Что сделано**:
+
+* **`src/backend/infrastructure/logging/factory.py`** — добавлена
+  `init_application_logging(level, environment, profile, ...)` функция.
+  Экспортирована через `__all__`.
+* **`src/backend/core/logging/__init__.py`** — facade re-exports
+  `init_application_logging` через `__all__` + `__getattr__` lazy
+  resolution.
+* **`src/backend/plugins/composition/app_factory.py`** — добавлен
+  централизованный вызов в начале `create_app()` с failure-tolerant
+  обработкой (если init падает → lazy fallback + warning).
+
+### feat(middlewares): security logging для critical middleware
+
+Cycle 161 audit обнаружил 3 middleware без logging, где логирование
+НЕОБХОДИМО для SOC/SIEM audit trail:
+
+* **`src/backend/entrypoints/middlewares/api_key.py`** — исправлен inline
+  `import logging` + bypass canonical facade; добавлено логирование:
+  - `auth.api_key.missing` (warning) — нет API-key в запросе.
+  - `auth.api_key.invalid` (warning) — invalid API-key (логируется только
+    первые 8 символов для brute-force detection корреляции).
+  - `auth.api_key.set` (debug) — успешная аутентификация.
+* **`src/backend/entrypoints/middlewares/admin_ip.py`** — добавлено
+  логирование `auth.ip_restricted.denied` (warning) для SIEM.
+* **`src/backend/entrypoints/middlewares/blocked_routes.py`** — добавлено
+  логирование `route.blocked.denied` (warning) для operational dashboards.
+
+### feat(startup_phases): дополнено logging успешных phases
+
+* **`src/backend/plugins/composition/lifecycle/startup_phases/services.py`** —
+  добавлено:
+  - `startup.phase.watchers.completed` (info) — успешный старт DSL YAML watcher.
+  - `startup.phase.plugin_loader.completed` (info) — успешная загрузка плагинов.
+  Раньше logging был только при исключениях, успех был silent.
+
+### test(logging): centralized init regression tests (12 тестов)
+
+* **`tests/unit/infrastructure/logging/test_centralized_init.py`** (новый, 12 тестов):
+  - `TestInitApplicationLogging` (5) — configure backend + SinkRouter activation.
+  - `TestInitApplicationLoggingFailureTolerant` (1) — не падает на invalid level.
+  - `TestCentralizedInitShutsDownCleanly` (2) — reset state после shutdown.
+  - `TestRouterFanOutAfterInit` (1) — event_dict доходят до sinks.
+  - `TestFacadeSurfaceExport` (2) — facade re-exports работают.
+  - `TestCentralizedInitInLifespanContext` (1) — сценарий использования в app_factory.
+
+### docs: обновлённый lifecycle раздел
+
+* **`docs/architecture/logging.md`** — обновлён "Lifecycle: startup" раздел:
+  - Документирован cycle 161 `init_application_logging()` pattern.
+  - Разделён low-level API (legacy) и recommended pattern.
+  - Cross-reference на ADR-0351 § Phase 2.
+
+### Verification
+
+```
+$ python -m pytest tests/unit/infrastructure/logging/ tests/unit/services/schema_registry/
+→ 177 passed in 5.11s (95 logging + 82 schema_registry)
+
+$ python -m ruff check (8 modified файлов)
+→ All checks passed!
+
+$ python -c "from src.backend.core.logging import init_application_logging, ..."
+→ Backend: StructlogGraylogBackend, router_configured = True (после init)
+```
+
+Refs: ADR-0351, cycle-160/161.
+
+## [Unreleased] — 2026-10-20 — Cycle 162: settings-driven init fixes + regression verification
+
+### fix(logging): settings-driven init — правильные атрибуты settings
+
+Cycle 162 audit cycle 161 кода обнаружил 3 критические runtime-ошибки:
+
+1. **`settings.log`** НЕ существует — правильное поле `settings.logging`
+   (LogStorageSettings). Цикл 161 использовал несуществующее имя →
+   в реальном runtime AttributeError при create_app().
+2. **`settings.app.profile`** НЕ существует — правильный API
+   `get_active_profile()` (читает env `APP_PROFILE`).
+3. **`build_sinks_for_profile()`** принимает `disk_path`, не `log_dir` —
+   добавлен mapping `f"{log_dir}/app.jsonl"`.
+
+Исправления в `src/backend/plugins/composition/app_factory.py` и
+`src/backend/infrastructure/logging/factory.py`.
+
+### feat(logging): `use_settings=True` mode для auto-read параметров
+
+Добавлен параметр `use_settings=True` в `init_application_logging()`:
+- `level` ← `settings.logging.level`
+- `environment` ← `settings.app.environment`
+- `profile` ← `get_active_profile()`
+- `log_dir` ← `settings.logging.dir_log_name`
+- `graylog_host` ← `settings.logging.host`
+- `graylog_port` ← `settings.logging.port`
+- `graylog_protocol` ← `"tcp"` если `settings.logging.use_tls` else `"udp"`
+
+Caller может вызвать `init_application_logging()` без параметров — всё
+автоматически из settings. Любой параметр может быть переопределён
+через kwargs.
+
+### test(logging): settings-driven init regression tests (17 тестов)
+
+* **`tests/unit/infrastructure/logging/test_settings_driven_init.py`** (новый):
+  - `TestSettingsDrivenInitDefault` (5) — init без параметров читает всё из settings.
+  - `TestSettingsDrivenInitOverriddenByExplicit` (3) — explicit kwargs override settings.
+  - `TestSettingsDrivenInitFailureTolerant` (1) — `use_settings=False` для тестов.
+  - `TestSettingsDrivenInitInAppFactoryPattern` (1) — полный lifespan pattern.
+  - `TestAppFactorySettingsReadConsistency` (3) — подтверждает правильные атрибуты.
+  - `TestSettingsDrivenInitLogsSettingsRead` (1) — не падает без settings.
+  - `TestSettingsDrivenInitWithCustomGraylog` (2) — custom host/port/disk_path.
+  - `TestSettingsDrivenInitIdempotent` (1) — двойной init без raise.
+
+### docs: env variables таблица в `docs/architecture/logging.md`
+
+Добавлена таблица centralized config через env variables:
+`APP_PROFILE`, `LOG_LEVEL`, `LOG_HOST`, `LOG_PORT`, `LOG_UDP_PORT`,
+`LOG_USE_TLS`, `LOG_NAME_LOG_FILE`, `LOG_DIR_LOG_NAME`.
+
+### Verification (cycle 162 final)
+
+```
+$ python -m pytest tests/unit/infrastructure/logging/ \
+ tests/unit/services/schema_registry/ \
+ tests/unit/core/test_logging_facade.py \
+ tests/unit/core/test_logging_layer_check.py \
+ tests/unit/core/observability/test_logging_helpers.py -q
+→ 217 passed in 5.35s
+
+$ python -m pytest tests/unit/entrypoints/middlewares/test_api_key_dedup.py \
+ tests/unit/entrypoints/middlewares/test_api_key_auth_state_cycle34.py -q
+→ 11 passed in 0.39s
+
+$ python -m ruff check (10 modified файлов)
+→ All checks passed!
+
+$ python -c "init_application_logging()" (no args, end-to-end)
+→ Backend: StructlogGraylogBackend
+→ Router configured: True
+→ Active sinks: ['ConsoleJsonLogSink', 'DiskRotatingLogSink']
+→ Exception events содержат full traceback
+```
+
+Refs: ADR-0351, cycle-160/161/162.

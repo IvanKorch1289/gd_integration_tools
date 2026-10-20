@@ -170,6 +170,7 @@ ResponseValidatorProcessor	dsl/engine/processors/validate_response.py	Pydantic-v
 
 Порядок:
 
+    **Если задача «размытая» — сначала `grilling`.** Новая фича / архитектурное решение / дизайн / бизнес-логика с множеством неопределённостей, противоречивыми требованиями или неявными допущениями → сначала запустить `grilling` (Skill tool, model-invocable) или рекомендовать пользователю `/grill-me` (user-invoked обёртка над grilling, `disable-model-invocation: true`). Цель — выявить скрытые допущения и зафиксировать дизайн-дерево **до** планирования. Когда дизайн уже сформулирован или задача механическая (багфикс, рефакторинг с готовым планом) — этот шаг пропускается.
     Определить цель задачи (привязать к Wave/Sprint из CHANGELOG.md).
     Определить потенциально затронутые модули, импортёры и зависимости (Graphify).
     Если задача требует актуальных внешних данных — выполнить web research.
@@ -525,7 +526,7 @@ system-analyst	Анализ внешних технологий (web research о
 /plan, /map, /trace, /verify, /review, /contract-review, /dsl-review, /dead-code, /docs-scan, /research, /upgrade-check, /commit-work, /compact.
 Основные skills (.claude/skills/)
 
-plan-execute, codebase-map, verify-change, commit-work, compact-session, feature-development, connector-building, refactoring, research-current-tech, workflow-engineering.
+plan-execute, codebase-map, verify-change, commit-work, compact-session, feature-development, connector-building, refactoring, research-current-tech, workflow-engineering, grill-me, grilling.
 Pre-step initialization ritual
 
 graphify update . && \
