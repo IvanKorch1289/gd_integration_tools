@@ -1,36 +1,65 @@
-"""Cache services package.
+"""Cache services — public API.
 
-Canonical entry point for extensions: :class:`UnifiedCacheFacade`.
+Canonical entry point: ``src.backend.services.cache.UnifiedCacheFacade``
+(production concrete impl) + ``get_unified_cache_facade()`` (lazy singleton
+helper).
+
+Cycle 167 (ADR-0352) Stage 4: core ABC остаётся canonical interface;
+production facade в services. Cycle 168 (ADR-0354) добавил
+``get_unified_cache_facade_provider()`` в core DI; cycle 170 — этот helper
+возвращает тот же singleton через svcs registry для consumers, которые
+хотят «facade by import», а не DI lookup.
+
+CI guard (``tools/checks/check_cache_facade_uniqueness.py``) требует:
+- ``UnifiedCacheFacade`` re-exported в ``__all__`` (R1 single canonical API).
+- ``get_unified_cache_facade`` exposed на package level.
 """
 
 from __future__ import annotations
 
-from src.backend.services.cache.facade import CacheResult, UnifiedCacheFacade
+from functools import lru_cache
 
-__all__ = ("CacheResult", "UnifiedCacheFacade", "get_unified_cache_facade")
+from src.backend.services.cache.facade import (
+    CacheResult,
+    UnifiedCacheFacade,
+)
+
+__all__ = (
+    "CacheResult",
+    "UnifiedCacheFacade",
+    "get_unified_cache_facade",
+)
 
 
-def get_unified_cache_facade(*, plugin: str = "extension") -> UnifiedCacheFacade:
-    """Получить ``UnifiedCacheFacade`` из DI-контейнера.
+@lru_cache(maxsize=1)
+def get_unified_cache_facade() -> UnifiedCacheFacade:
+    """Singleton helper: returns production ``UnifiedCacheFacade``.
 
-    Args:
-        plugin: Имя caller'а для capability-audit.
+    Cycle 170: lazy resolve через svcs registry (``register_factory`` в
+    ``plugins.composition.service_setup._register_cache_facade``). Если
+    registry не инициализирован (например, в lightweight tests без
+    composition root) — возвращается ``None``.
 
-    Raises:
-        RuntimeError: если ``UnifiedCacheFacade`` не зарегистрирован в svcs.
+    Использование::
+
+        from src.backend.services.cache import get_unified_cache_facade
+        facade = get_unified_cache_facade()
+        if facade is None:
+            # lightweight mode — нет svcs registry
+            ...
+        else:
+            await facade.set_ns(key, value, ttl=60, namespace="...")
+
+    Returns:
+        ``UnifiedCacheFacade`` singleton или ``None`` если svcs registry
+        пуст.
 
     """
-    from src.backend.core.svcs_registry import get_service, has_service
+    try:
+        from src.backend.core.svcs_registry import has_service, get_service
 
-    if not has_service(UnifiedCacheFacade):
-        raise RuntimeError("UnifiedCacheFacade not registered in svcs")
-    facade = get_service(UnifiedCacheFacade)
-    if plugin != "extension":
-        return UnifiedCacheFacade(
-            primary=facade._primary,
-            memory_fallback=facade._memory,
-            disk_fallback=facade._disk,
-            capability_check=facade._check,
-            plugin=plugin,
-        )
-    return facade
+        if has_service(UnifiedCacheFacade):
+            return get_service(UnifiedCacheFacade)
+        return None
+    except (ImportError, KeyError):
+        return None
