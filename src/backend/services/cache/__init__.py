@@ -1,23 +1,28 @@
 """Cache services — public API.
 
 Canonical entry point: ``src.backend.services.cache.UnifiedCacheFacade``
-(production concrete impl) + ``get_unified_cache_facade()`` (lazy singleton
-helper).
+(production concrete impl) + ``get_unified_cache_facade()`` (factory helper).
 
 Cycle 167 (ADR-0352) Stage 4: core ABC остаётся canonical interface;
 production facade в services. Cycle 168 (ADR-0354) добавил
 ``get_unified_cache_facade_provider()`` в core DI; cycle 170 — этот helper
-возвращает тот же singleton через svcs registry для consumers, которые
-хотят «facade by import», а не DI lookup.
+возвращает production facade из svcs registry или создаёт новый для
+non-default plugin.
 
 CI guard (``tools/checks/check_cache_facade_uniqueness.py``) требует:
 - ``UnifiedCacheFacade`` re-exported в ``__all__`` (R1 single canonical API).
 - ``get_unified_cache_facade`` exposed на package level.
+
+Helper semantics:
+- ``get_unified_cache_facade(plugin="extension")`` — для default plugin
+  возвращает singleton из svcs registry (production path).
+- ``get_unified_cache_facade(plugin="my_plugin")`` — для non-default
+  создаёт новый instance с указанным plugin name (для extension-isolated
+  facade). Используется в domain extensions.
+- Raises ``RuntimeError`` если default plugin facade не зарегистрирован.
 """
 
 from __future__ import annotations
-
-from functools import lru_cache
 
 from src.backend.services.cache.facade import (
     CacheResult,
@@ -31,35 +36,61 @@ __all__ = (
 )
 
 
-@lru_cache(maxsize=1)
-def get_unified_cache_facade() -> UnifiedCacheFacade:
-    """Singleton helper: returns production ``UnifiedCacheFacade``.
+_DEFAULT_PLUGIN = "extension"
 
-    Cycle 170: lazy resolve через svcs registry (``register_factory`` в
-    ``plugins.composition.service_setup._register_cache_facade``). Если
-    registry не инициализирован (например, в lightweight tests без
-    composition root) — возвращается ``None``.
 
-    Использование::
+def get_unified_cache_facade(plugin: str = _DEFAULT_PLUGIN) -> UnifiedCacheFacade:
+    """Возвращает ``UnifiedCacheFacade`` для указанного plugin.
 
-        from src.backend.services.cache import get_unified_cache_facade
-        facade = get_unified_cache_facade()
-        if facade is None:
-            # lightweight mode — нет svcs registry
-            ...
-        else:
-            await facade.set_ns(key, value, ttl=60, namespace="...")
+    Cycle 170 (helper для services-level consumers):
+    - ``plugin="extension"`` (default) → singleton из svcs registry
+      (production facade, зарегистрирован в
+      ``plugins.composition.service_setup._register_cache_facade``).
+    - ``plugin=<other>`` → новый ``UnifiedCacheFacade`` instance с
+      минимальной in-memory primary (для extension-isolated use cases).
+      Override disk/memory через прямое конструирование если нужно.
+
+    Args:
+        plugin: Имя plugin для изоляции facade. Default ``"extension"``
+            — production singleton.
 
     Returns:
-        ``UnifiedCacheFacade`` singleton или ``None`` если svcs registry
-        пуст.
+        ``UnifiedCacheFacade`` instance (singleton или new).
+
+    Raises:
+        RuntimeError: если ``plugin="extension"`` (default) facade не
+            зарегистрирован в svcs registry (composition root не
+            инициализирован).
+
+    Example::
+
+        # Production path (default plugin)
+        from src.backend.services.cache import get_unified_cache_facade
+        facade = get_unified_cache_facade()
+        await facade.set_ns(key, val, namespace="myapp")
+
+        # Extension-isolated path
+        my_facade = get_unified_cache_facade(plugin="my_extension")
+        await my_facade.set_ns(key, val, plugin="my_extension")
 
     """
-    try:
+    if plugin == _DEFAULT_PLUGIN:
+        # Production path: lookup registered singleton.
         from src.backend.core.svcs_registry import has_service, get_service
 
-        if has_service(UnifiedCacheFacade):
-            return get_service(UnifiedCacheFacade)
-        return None
-    except (ImportError, KeyError):
-        return None
+        if not has_service(UnifiedCacheFacade):
+            raise RuntimeError(
+                "UnifiedCacheFacade not registered in svcs registry. "
+                "Production path requires composition root initialization "
+                "via plugins.composition.service_setup.setup_default_services(). "
+                "For non-production use, specify plugin argument explicitly."
+            )
+        return get_service(UnifiedCacheFacade)
+
+    # Non-default plugin: build new isolated instance.
+    from src.backend.infrastructure.cache.backends.memory import MemoryBackend
+
+    return UnifiedCacheFacade(
+        primary=MemoryBackend(),
+        plugin=plugin,
+    )
