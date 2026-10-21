@@ -407,6 +407,10 @@ test-core = [
     "pytest-asyncio>=1.0.0,<2.0.0",
     "aiosqlite>=0.20.0,<1.0.0",
     "respx>=0.22,<1",
+    # S3 test deps: без moto весь tests/unit/storage/test_s3_object_storage.py
+    # молча skip-ился (audit 2026-10-21, Wave 0). ThreadedMotoServer даёт
+    # real S3 wire protocol — mock_aws у aioboto3 несовместим.
+    "moto[s3]>=5.0.0,<6.0.0",
 ]
 test-api = [
     # FastAPI/Starlette test fixtures + httpx для endpoint tests.

@@ -31,6 +31,17 @@ import pytest
 pytest.importorskip(
     "moto", reason="moto not in test deps; S124 W2 honest skip (TD-0244)"
 )
+# Cycle 171 (Wave 0): moto восстановлен в extra `test-core`, но `aioboto3`
+# по-прежнему не объявлен — aiobotocore (его транзитивная зависимость) пинит
+# boto3/botocore на узкие диапазоны и несовместим с зафиксированными в
+# uv.lock boto3/botocore 1.43.75. Пока конфликт не разрешён, S3Backend не
+# собирается, поэтому тесты честно скипаются, а не падают с ImportError.
+# См. artifacts/current_audit/S3_CACHE_LOGGING_AUDIT_2026-10-21.md (CRITICAL-05).
+pytest.importorskip(
+    "aioboto3",
+    reason="aioboto3 undeclared: aiobotocore pins boto3/botocore incompatible "
+    "with uv.lock 1.43.75 (audit 2026-10-21, CRITICAL-05)",
+)
 
 from moto.server import ThreadedMotoServer
 

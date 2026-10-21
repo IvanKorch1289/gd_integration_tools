@@ -14,11 +14,31 @@
 
 | Backend | ObjectStorage | DSL processor | Unit tests | Chaos tests | Status |
 |---|---|---|---|---|---|
-| S3 / MinIO / AWS | `S3ObjectStorage` (aioboto3) | `to_s3`/`from_s3`/`s3_presign`/`s3_delete`/`s3_list` | 20 (S61 W1+W3) | `test_object_storage_chain_chaos.py` | ✅ |
+| S3 / MinIO / AWS | `S3ObjectStorage` (aioboto3) | 5 процессоров, **недоступны из YAML**¹ | 20 (S61 W1+W3)² | `test_object_storage_chain_chaos.py` | ⚠️ |
 | LocalFS | `LocalFSStorage` | (используется через `get_object_storage`) | 11 (legacy) | `test_object_storage_chain_chaos.py` | ✅ |
 | S3Client (aiobotocore pool) | n/a (high-perf) | n/a | 0 (через chaos) | `test_s3_chain.py` | 🟡 |
 
-**W3 deliverable**: 5 DSL processors + S3ObjectStorage refactor (proper async context manager) → ✅.
+¹ **Недоступны из YAML**: `dsl/yaml_loader/build.py:198` резолвит YAML-шаг через
+`getattr(builder, proc_name)`, но соответствующие методы `RouteBuilder` удалены
+(`dsl/builders/infrastructure_dsl.py:486-487`). Декларативно объектным хранилищем
+сейчас нельзя достичь. Дополнительно: YAML-ключ `from_s3` коллизирует с
+S3-poll-сенсором (`dsl/builders/eip/sources.py:363`).
+
+² **Тесты были пропущены**: `moto` отсутствовал в зависимостях, поэтому весь
+`tests/unit/storage/test_s3_object_storage.py` (~20 тестов) завершался
+`Skipped`, а не выполнялся. Заявленное покрытие было номинальным.
+Восстановлено в cycle 171 / Wave 0 (`moto[s3]` добавлен в extra `test-core`).
+
+**Дополнительно найдено в cycle 171:** `aioboto3` не объявлен ни в
+`pyproject.toml`, ни в `uv.lock`. При чистом развёртывании `S3ObjectStorage.__init__`
+(`s3.py:125`) бросает `ImportError`, а `storage/factory.py:155-160` перехватывает
+его и **молча** возвращает `LocalFS` — то есть production целиком работает на
+pod-local диске.
+
+**W3 deliverable**: 5 DSL processors + S3ObjectStorage refactor (proper async
+context manager) → ⚠️ процессоры написаны, но недостижимы из YAML; покрытие
+было номинальным (тесты skip-ились). См. сноски ¹ ² и раздел «Что найдено
+в cycle 171» в `artifacts/current_audit/S3_CACHE_LOGGING_AUDIT_2026-10-21.md`.
 
 ## Redis (cache / message broker)
 
