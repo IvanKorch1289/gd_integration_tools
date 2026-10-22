@@ -21,6 +21,7 @@ Cycle 171 audit (CRITICAL-01). До фикса дефолт ``fallback_exception
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

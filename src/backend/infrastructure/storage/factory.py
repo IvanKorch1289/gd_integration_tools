@@ -180,8 +180,16 @@ def get_object_storage() -> ObjectStorage:
         "resilience.fallbacks.minio chain",
         provider,
     )
-    return FallbackObjectStorage(
+    chain = FallbackObjectStorage(
         primary=primary,
         secondary=get_local_fs_storage(),
         name=f"storage.{provider}→local_fs",
     )
+    # Cycle 271 (CRITICAL-03): tenant-изоляция ключей. Раньше S3ObjectStorage
+    # применял один глобальный key_prefix ко всем тенантам, а параметр
+    # key_prefix в конструкторе (s3.py:109, «для tenant-изоляции») сюда не
+    # передавался. Wrapper добавляет tenants/{tenant_id}/ ко всем ключам.
+    # Дёшево и слоисто: cache делает ровно то же через TenantCacheBackend.
+    from src.backend.infrastructure.storage.tenant_wrapper import TenantObjectStorage
+
+    return TenantObjectStorage(chain)

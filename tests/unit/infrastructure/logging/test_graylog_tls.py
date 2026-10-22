@@ -22,9 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from src.backend.infrastructure.logging.backends.graylog_gelf import (
-    GraylogGelfLogSink,
-)
+from src.backend.infrastructure.logging.backends.graylog_gelf import GraylogGelfLogSink
 
 pytestmark = pytest.mark.asyncio
 

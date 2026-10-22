@@ -144,14 +144,19 @@ class _FakeS3ObjectStorage:
 def test_get_object_storage_s3_returns_fallback_wrapper(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """S131 W1: provider='s3' + aioboto3 available → FallbackObjectStorage(S3, LocalFS).
+    """S131 W1 + cycle 271: provider='s3' → TenantObjectStorage(Fallback(S3, LocalFS)).
 
     Singleton (``lru_cache``) — wrapper переиспользуется между вызовами.
+
+    Cycle 271 (CRITICAL-03) добавил внешний tenant-слой поверх fallback-цепочки,
+    поэтому корень композиции теперь ``TenantObjectStorage``, а цепочка лежит
+    в ``._wrapped``.
     """
     import sys
     import types
 
     from src.backend.infrastructure.storage.fallback import FallbackObjectStorage
+    from src.backend.infrastructure.storage.tenant_wrapper import TenantObjectStorage
 
     # Inject fake ``storage.s3`` module в sys.modules (botocore не установлен
     # в test env — реальный ``import s3`` фейлит, поэтому inject mock).
@@ -167,15 +172,20 @@ def test_get_object_storage_s3_returns_fallback_wrapper(
     with caplog.at_level("INFO"):
         storage = get_object_storage()
 
-    # Wrapper, not bare S3
-    assert isinstance(storage, FallbackObjectStorage), (
-        f"expected FallbackObjectStorage, got {type(storage).__name__}"
+    # Tenant-слой — корень композиции (cycle 271).
+    assert isinstance(storage, TenantObjectStorage), (
+        f"expected TenantObjectStorage, got {type(storage).__name__}"
+    )
+    # Fallback-цепочка — под ним.
+    chain = storage.wrapped
+    assert isinstance(chain, FallbackObjectStorage), (
+        f"expected FallbackObjectStorage inside, got {type(chain).__name__}"
     )
     # Primary = S3, Secondary = LocalFS
-    assert isinstance(storage._primary, _FakeS3ObjectStorage)
-    assert isinstance(storage._secondary, LocalFSStorage)
+    assert isinstance(chain._primary, _FakeS3ObjectStorage)
+    assert isinstance(chain._secondary, LocalFSStorage)
     # Chain name matches provider
-    assert "s3" in storage._name
+    assert "s3" in chain._name
     # INFO log recorded
     assert "FallbackObjectStorage" in caplog.text or "minio chain" in caplog.text
 
