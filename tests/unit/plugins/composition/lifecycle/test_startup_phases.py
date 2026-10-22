@@ -23,11 +23,26 @@ from src.backend.plugins.composition.lifecycle.startup_phases import (
 
 @pytest.mark.unit
 def test_startup_phases_count() -> None:
-    """STARTUP_PHASES должен иметь 19 фаз (5 obs + 3 infra + 11 services).
+    """STARTUP_PHASES должен иметь 20 фаз (5 obs + 3 infra + 12 services).
+
+    Cycle 271: добавляется ``services.phase_ai_safety_cleanup`` — cleanup-loop
+    для AI-workspace (R-V15-11) больше не остаётся незапущенным.
 
     Если добавляешь новую фазу, обнови этот test.
     """
-    assert len(STARTUP_PHASES) == 19, f"Expected 19 phases, got {len(STARTUP_PHASES)}"
+    assert len(STARTUP_PHASES) == 20, f"Expected 20 phases, got {len(STARTUP_PHASES)}"
+
+
+@pytest.mark.unit
+def test_startup_phases_include_ai_safety_cleanup() -> None:
+    """Cleanup-loop AI-workspace обязан стартовать вместе с приложением.
+
+    Регрессия (audit 2026-10-21, HIGH-10): ``stop_ai_safety`` был в
+    shutdown, а ``start_ai_safety`` не вызывался нигде в production-коде,
+    поэтому 7-дневный TTL workspace'ов не применялся.
+    """
+    names = [p.__name__ for p in STARTUP_PHASES]
+    assert "phase_ai_safety_cleanup" in names
 
 
 @pytest.mark.unit

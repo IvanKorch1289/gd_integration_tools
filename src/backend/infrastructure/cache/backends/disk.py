@@ -189,16 +189,23 @@ class DiskCacheBackend(CacheBackend):
     async def exists(self, key: str) -> bool:
         """Check if key exists in disk cache.
 
+        Cycle 271 (audit HIGH-08): раньше проверялось только наличие файла,
+        поэтому для просроченного ключа возвращалось ``True`` — stale-результат
+        прямо в обход ``get()``, который sidecar проверяет. Теперь expiry
+        проверяется так же, как в ``get()``.
+
         Args:
             key: Cache key.
 
         Returns:
-            True if key exists, False otherwise.
+            True если ключ существует **и не просрочен**, иначе False.
 
         """
         path = self._safe_path(key)
         try:
-            return await aiofiles.os.path.exists(str(path))
+            if not await aiofiles.os.path.exists(str(path)):
+                return False
+            return not await self._is_expired(key)
         except OSError as exc:
             _logger.debug("DiskCache exists failed key=%s: %s", key, exc)
             return False

@@ -6,7 +6,7 @@
 Группировка:
 - :mod:`observability` — OTel, Sentry, LogSink, Audit HMAC, ConfigValidator
 - :mod:`infrastructure` — Redis cluster, setup_infra, EventBus
-- :mod:`services` — Service registration, AIGateway, DSL, PluginLoader, V11, Outbox, Workflow, Schema, FeatureFlag
+- :mod:`services` — Service registration, AI Safety cleanup, AIGateway, DSL, PluginLoader, V11, Outbox, Workflow, Schema, FeatureFlag
 
 Принцип: best-effort startup (hard errors propagate, optional subsystems log+continue).
 Каждая фаза оборачивает свой critical path в try/except с понятным warning.
@@ -41,6 +41,7 @@ STARTUP_PHASES: tuple[Phase, ...] = (
     infrastructure.phase_eventbus_startup,
     # Services (10 phases)
     services.phase_service_registration,
+    services.phase_ai_safety_cleanup,
     services.phase_ai_gateway_singleton,
     services.phase_dsl_commands,
     services.phase_watchers,

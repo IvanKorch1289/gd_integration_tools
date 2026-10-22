@@ -67,6 +67,37 @@ async def phase_service_registration(app: FastAPI) -> None:  # noqa: ARG001
     register_all_services()
 
 
+async def phase_ai_safety_cleanup(app: FastAPI) -> None:
+    """Запускает AI Safety cleanup-loop (R-V15-11: TTL + quota).
+
+    Cycle 171 audit (HIGH-10): ``stop_ai_safety`` был подключён в
+    ``shutdown.py``, но ``start_ai_safety`` **не вызывался нигде** в
+    production-коде — только из ``mutants/tests/``. В результате
+    ``AIWorkspaceManager.cleanup_expired`` не запускался, и 7-дневный TTL
+    для ``${AI_WORKSPACE}/<tenant>/<session>/`` не соблюдался: workspace'ы
+    росли бесконечно.
+
+    Fail-open по той же причине, что и у соседних optional-фаз: если AI не
+    развёрнут, отсутствие cleanup не должно ронять старт приложения.
+
+    Args:
+        app: Приложение FastAPI.
+
+    Returns:
+        None.
+
+    """
+    try:
+        from src.backend.plugins.composition.ai_safety_setup import start_ai_safety
+
+        await start_ai_safety(app)
+    except Exception as exc:
+        _logger.warning(
+            "AI safety cleanup-loop не запущен (R-V15-11 TTL не применяется): %s",
+            exc,
+        )
+
+
 async def phase_ai_gateway_singleton(app: FastAPI) -> None:
     """Проверяет наличие composition-singleton AIGateway (Sprint 1.5 L5).
 
@@ -340,6 +371,7 @@ async def phase_feature_flag_broadcaster(app: FastAPI) -> None:  # noqa: ARG001
 
 __all__ = (
     "phase_service_registration",
+    "phase_ai_safety_cleanup",
     "phase_ai_gateway_singleton",
     "phase_dsl_commands",
     "phase_watchers",
