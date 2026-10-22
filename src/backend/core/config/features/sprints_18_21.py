@@ -236,8 +236,11 @@ class Sprints1821Flags(BaseSettings):
             "K1 Sprint 21 Wave 2 (B-03 closure). Owner: K1 Security. "
             "Активирует infrastructure/cache/tenant_wrapper.py::TenantCacheBackend — "
             "auto-prefix всех cache-keys через tenant ContextVar. "
-            "При False — wrapping no-op (прямая делегация в underlying backend). "
-            "default-OFF до миграции callsites get/set на wrapped backend и smoke."
+            "При False — wrapping no-op (прямая делегация в underlying backend)."
+            " NB: описание раньше утверждало «default-OFF до миграции callsites», "
+            "что противоречило фактическому значению поля. Значение по умолчанию — "
+            "``True`` (изоляция включена); менять его на False имеет смысл только "
+            "вместе с отключающим аудитом кода."
         ),
     )
 

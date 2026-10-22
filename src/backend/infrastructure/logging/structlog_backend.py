@@ -270,11 +270,20 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             )
             handlers.append(file_handler)
 
-        # Configure stdlib root logger
+        # Configure stdlib root logger.
+        # Cycle 271 (audit HIGH-09): раньше здесь стоял
+        # ``logging.basicConfig(..., force=True)``, что запрещено V15-доктриной
+        # и опасно: ``force=True`` сносит обработчики, установленные
+        # централизованным ``init_application_logging()`` (cycle 168), а
+        # результат зависит от порядка импортов. Ниже — эквивалентная ручная
+        # настройка root-логгера без побочных эффектов на чужие handler'ы.
         log_level = getattr(logging, level.upper(), logging.INFO)
-        logging.basicConfig(
-            format="%(message)s", level=log_level, handlers=handlers, force=True
-        )
+        root_logger = logging.getLogger()
+        root_logger.setLevel(log_level)
+        for existing in root_logger.handlers[:]:
+            root_logger.removeHandler(existing)
+        for h in handlers:
+            root_logger.addHandler(h)
 
         # Configure per-name loggers
         names = logger_names or []

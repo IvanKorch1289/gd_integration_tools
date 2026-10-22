@@ -398,7 +398,11 @@ class InfrastructureDSL:
             .clickhouse_insert("events", batch_size=500)
             .es_index("events-2026", doc_id_from="body.id")
             .mongo_find("audit_log", {"level": "error"})
-            .s3_put("backups/daily.json")
+            # NB: S3-шагов в RouteBuilder пока нет — процессоры
+            # to_s3/from_s3/s3_* существуют, но недостижимы из YAML
+            # (dsl/yaml_loader/build.py резолвит шаг через getattr(builder, ...)).
+            # См. audit 2026-10-21, HIGH-02. Строка с .s3_put() удалена:
+            # такого метода нет, и пример вводил в заблуждение.
             .sql_exec("UPDATE jobs SET status = :status", params={"status": "done"})
             .build()
         )

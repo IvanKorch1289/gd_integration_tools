@@ -45,7 +45,12 @@
 ### Остаётся deferred
 
 - **Cluster-wide tag invalidation** (multi-process deployment).
-  Workaround: используйте `RedisBackend.delete_by_tag` напрямую для cluster-wide.
+  ~~Workaround: используйте `RedisBackend.delete_by_tag` напрямую для cluster-wide.~~
+  **ПОПРАВКА (cycle 271, audit HIGH-07): этот workaround недействителен.**
+  `delete_by_tag` (`cache/backends/redis.py:107-132`) исполняет все команды
+  через единственный подключённый клиент, без обхода нод кластера; на
+  `RedisCluster` multi-key `DEL` между hash-слотами упадёт с `CROSSSLOT`.
+  Нужен реальный fan-out по нодам (или общий hash-slot для tag-индекса).
 
 ---
 
