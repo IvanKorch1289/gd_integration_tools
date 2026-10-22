@@ -608,6 +608,9 @@ resilience:
   fallbacks:
     db_main:        {chain: ["sqlite_ro"],                  mode: auto}
     redis:          {chain: ["memcached", "memory"],        mode: auto}
+    # NB (audit 2026-10-21): `minio` ниже НЕ читается кодом — цепочка
+    # fallback захардкожена в infrastructure/storage/factory.py. Ключ оставлен
+    # как документация намерения, чтобы при изменении цепочки его не забыли.
     minio:          {chain: ["local_fs"],                   mode: auto}
     vault:          {chain: ["env_keyring"],                mode: auto}
     clickhouse:     {chain: ["pg_audit", "jsonl"],          mode: auto}

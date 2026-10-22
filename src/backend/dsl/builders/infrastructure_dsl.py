@@ -327,39 +327,12 @@ class MongoFindProcessor(_InfraOp):
     compensatable: ClassVar[bool] = True
 
 
-# ── S3 (S181 I-3.1) — phantom stubs REWIRED to real implementations ──
-
-
-# Lazy import: real S3 processors from storage/s3.py
-def _get_real_s3_delete_processor() -> type:
-    """Lazy import real S3DeleteProcessor (S181 I-3.1).
-
-    Previously :class:`S3DeleteProcessor` был phantom stub. Теперь
-    rewire к :class:`src.backend.dsl.engine.processors.storage.s3.S3DeleteProcessor`.
-    """
-    from src.backend.dsl.engine.processors.storage.s3 import (
-        S3DeleteProcessor as _RealS3Delete,
-    )
-
-    return _RealS3Delete
-
-
-def _get_real_s3_list_processor() -> type:
-    """Lazy import real S3ListProcessor (S181 I-3.1)."""
-    from src.backend.dsl.engine.processors.storage.s3 import (
-        S3ListProcessor as _RealS3List,
-    )
-
-    return _RealS3List
-
-
-def _get_real_s3_presign_processor() -> type:
-    """Lazy import real S3PresignProcessor (S181 I-3.1)."""
-    from src.backend.dsl.engine.processors.storage.s3 import (
-        S3PresignProcessor as _RealS3Presign,
-    )
-
-    return _RealS3Presign
+# ── S3 (S181 I-3.1) — rewire удалён в cycle 271 (audit MEDIUM-04) ──
+# Прежние ``_get_real_s3_delete_processor`` / ``_get_real_s3_list_processor`` /
+# ``_get_real_s3_presign_processor`` не имели ни одного вызывающего (проверено
+# grep'ом по src/ и tests/). Реальные процессоры теперь подключаются напрямую
+# из методов ``to_s3``/``s3_get``/``s3_presign``/``s3_delete``/``s3_list``
+# через ``_add_lazy`` — lazy-импорт даёт тот же эффект без мёртвого кода.
 
 
 class SftpGetProcessor(_InfraOp):

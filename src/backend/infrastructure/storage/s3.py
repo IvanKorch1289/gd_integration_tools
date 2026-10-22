@@ -185,7 +185,15 @@ class S3ObjectStorage(ObjectStorage):
         return full_key
 
     async def _ensure_bucket(self, s3: Any) -> None:
-        """Lazy-инициализация bucket (idempotent, один раз на инстанс)."""
+        """Lazy-инициализация bucket (idempotent, один раз на инстанс).
+
+        Cycle 271 (audit MEDIUM-01): ловились только ``ClientError``. Но
+        ``_ensure_bucket`` вызывается из ``_S3Session.__aenter__``, то есть
+        **вне** try/except каждой операции, поэтому ``BotoCoreError``
+        (connection refused, DNS, таймаут) вылетал наружу не обёрнутым и
+        ломал документированный контракт «все ошибки → ``ServiceError``».
+        Теперь оба типа оборачиваются единообразно.
+        """
         if self._bucket_ready:
             return
         try:
@@ -210,13 +218,19 @@ class S3ObjectStorage(ObjectStorage):
                     exc,
                 )
                 raise ServiceError(f"S3 head_bucket failed: {exc}") from exc
+        except BotoCoreError as exc:
+            # Сетевой/транспортный отказ — раньше уходил наружу сырым.
+            self.logger.error(
+                "S3ObjectStorage: head_bucket transport error bucket=%s err=%s",
+                self._bucket,
+                exc,
+            )
+            raise ServiceError(f"S3 head_bucket unreachable: {exc}") from exc
         self._bucket_ready = True
 
-    def _wrap_boto(self, op: str, full_key: str) -> ServiceError:
-        """Вернуть ServiceError-обёртку для boto-исключений (helper)."""
-        return ServiceError(f"S3 {op} failed: {{}}").__class__(  # type: ignore[arg-type]
-            f"S3 {op} failed for key={full_key}"
-        )
+    # NOTE (cycle 271, audit MEDIUM-04): прежний ``_wrap_boto`` удалён —
+    # вызывающих не было, а тело строилось через ``ServiceError(...).__class__(...)``,
+    # что не даёт никакой пользы поверх прямого ``ServiceError(f"...")``.
 
     # ── ObjectStorage interface ──────────────────────────────────────────
 
