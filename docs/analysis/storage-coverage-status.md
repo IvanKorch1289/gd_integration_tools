@@ -30,10 +30,11 @@ S3-poll-сенсором (`dsl/builders/eip/sources.py:363`).
 Восстановлено в cycle 171 / Wave 0 (`moto[s3]` добавлен в extra `test-core`).
 
 **Дополнительно найдено в cycle 171:** `aioboto3` не объявлен ни в
-`pyproject.toml`, ни в `uv.lock`. При чистом развёртывании `S3ObjectStorage.__init__`
-(`s3.py:125`) бросает `ImportError`, а `storage/factory.py:155-160` перехватывает
-его и **молча** возвращает `LocalFS` — то есть production целиком работает на
-pod-local диске.
+`pyproject.toml`, ни в `uv.lock`, хотя `S3ObjectStorage.__init__` (`s3.py:125`)
+вызывает его eagerly. В **production** это приводит к явному падению
+(`ProductionConfigError` на composition root — покрыто тестом
+`test_get_object_storage_raises_in_production_when_s3_fallback_to_local`),
+а в **staging/dev** — к молчаливой деградации на LocalFS с одним WARNING'ом.
 
 **W3 deliverable**: 5 DSL processors + S3ObjectStorage refactor (proper async
 context manager) → ⚠️ процессоры написаны, но недостижимы из YAML; покрытие
