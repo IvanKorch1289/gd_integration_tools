@@ -487,8 +487,98 @@ class InfrastructureDSL:
             )
         )
 
-    # ── S3 DELETED (S175 #5) — use ToS3Processor/FromS3Processor/S3PresignProcessor/ ──
-    # ── S3DeleteProcessor/S3ListProcessor из ``storage/s3.py``. ──
+    # ── S3 (cycle 271, audit HIGH-02 — восстановлены) ──
+    # S175 #5 удалил эти методы, полагаясь на прямое использование процессоров.
+    # Но YAML-loader резолвит шаг через ``getattr(builder, proc_name)``
+    # (dsl/yaml_loader/build.py), поэтому декларативно вызвать object storage
+    # стало невозможно: пять процессоров существовали и были недостижимы.
+    #
+    # Имена: ``from_s3`` ЗАНЯТ — он принадлежит ``SourcesEIPsMixin.from_s3``
+    # (S3 poll-сенсор, MRO-позиция 18 против 39 у InfrastructureDSL), поэтому
+    # чтение объекта экспонируется как ``s3_get``. Это устраняет коллизию
+    # двух разных смыслов одного YAML-ключа, а не маскирует её порядком MRO.
+    # Остальные четыре имени свободны и совпадают с ``@processor`` op_name.
+
+    def to_s3(
+        self,
+        *,
+        data_property: str = "body",
+        key_from: str = "data",
+        content_type_from: str | None = None,
+        result_property: str = "s3_key",
+    ) -> RouteBuilder:
+        """Загрузить данные в S3; фактический ключ → ``result_property``.
+
+        Args:
+            data_property: property с ``bytes``/``str`` для загрузки.
+            key_from: выражение для целевого ключа.
+            content_type_from: выражение для ContentType (опционально).
+            result_property: property для полного (префиксованного) ключа.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.storage.s3",
+            "ToS3Processor",
+            data_property=data_property,
+            key_from=key_from,
+            content_type_from=content_type_from,
+            result_property=result_property,
+        )
+
+    def s3_get(
+        self,
+        *,
+        key_from: str = "s3_key",
+        result_property: str = "body",
+    ) -> RouteBuilder:
+        """Скачать объект S3; содержимое → ``result_property``.
+
+        Именуется ``s3_get``, а не ``from_s3``: последнее имя уже занято
+        S3 poll-сенсором в ``SourcesEIPsMixin`` (см. комментарий выше).
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.storage.s3",
+            "FromS3Processor",
+            key_from=key_from,
+            result_property=result_property,
+        )
+
+    def s3_presign(
+        self,
+        *,
+        key_from: str = "s3_key",
+        expires_in: int = 3600,
+        result_property: str = "download_url",
+    ) -> RouteBuilder:
+        """Сформировать presigned-URL; ссылка → ``result_property``."""
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.storage.s3",
+            "S3PresignProcessor",
+            key_from=key_from,
+            expires_in=expires_in,
+            result_property=result_property,
+        )
+
+    def s3_delete(self, *, key_from: str = "s3_key") -> RouteBuilder:
+        """Удалить объект по ключу из ``key_from``."""
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.storage.s3",
+            "S3DeleteProcessor",
+            key_from=key_from,
+        )
+
+    def s3_list(
+        self,
+        *,
+        prefix_from: str | None = None,
+        result_property: str = "s3_keys",
+    ) -> RouteBuilder:
+        """Получить список ключей с optional prefix → ``result_property``."""
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.storage.s3",
+            "S3ListProcessor",
+            prefix_from=prefix_from,
+            result_property=result_property,
+        )
 
     # ── SFTP (2) — S104 W1 ──
 

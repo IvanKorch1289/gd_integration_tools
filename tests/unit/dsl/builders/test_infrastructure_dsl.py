@@ -51,7 +51,19 @@ class TestInfrastructureDSLInMRO:
         assert InfrastructureDSL.__slots__ == ()
 
     def test_method_count_s175_hybrid(self) -> None:
-        """S175 #5: 9 kept wrapper methods (deleted 5)."""
+        """S175 #5 hybrid + cycle 271: S3-семейство восстановлено.
+
+        S175 #5 удалил пять S3-методов как «дубли процессоров». Для
+        ``redis_get``/``clickhouse_query``/``sql_exec`` это верно — у них нет
+        ``@processor`` op_name. Но ``to_s3``/``s3_get``/``s3_presign``/
+        ``s3_delete``/``s3_list`` зарегистрированы как публичные processor'ы
+        (``@processor(...)`` в ``dsl/engine/processors/storage/s3.py``), а
+        YAML-loader резолвит шаг через ``getattr(builder, proc_name)``. Удаление
+        методов сделало их недостижимыми из YAML (audit 2026-10-21, HIGH-02):
+        пять процессоров существовали, имели тесты и не вызывались из DSL.
+
+        Поэтому S3-семейство возвращено; остальные удаления S175 #5 сохраняются.
+        """
         methods = [m for m in dir(InfrastructureDSL) if not m.startswith("_")]
         # KEPT methods (после S175 #5 hybrid).
         expected_kept = {
@@ -68,18 +80,28 @@ class TestInfrastructureDSLInMRO:
         for m in expected_kept:
             assert m in methods, f"Missing kept method: {m}"
 
+        # Восстановлены в cycle 271 (HIGH-02) — см. docstring.
+        restored = {"to_s3", "s3_get", "s3_presign", "s3_delete", "s3_list"}
+        for m in restored:
+            assert m in methods, f"Restored S3 method missing: {m}"
+
         # DELETED methods (S175 #5 hybrid — moved to infra_*).
         deleted = {
             "redis_get",  # InfraRedisGetProcessor
             "clickhouse_query",  # InfraClickHouseQueryProcessor
-            "s3_put",  # ToS3Processor
-            "s3_get",  # FromS3Processor
-            "s3_delete",  # S3DeleteProcessor (storage/s3.py)
-            "s3_list",  # S3ListProcessor (storage/s3.py)
             "sql_exec",  # InfraDbQueryProcessor
         }
         for m in deleted:
             assert m not in methods, f"Deleted method still present: {m}"
+
+    def test_s3_put_name_is_not_used(self) -> None:
+        """``s3_put`` из старого доктринного примера так и не был реальным API.
+
+        Настоящее имя шага загрузки — ``to_s3`` (совпадает с ``@processor``
+        op_name). Псевдоним не вводим: это был бы мёртвый код ради красоты.
+        """
+        methods = [m for m in dir(InfrastructureDSL) if not m.startswith("_")]
+        assert "s3_put" not in methods
 
 
 class TestDeletedStubsRegression:
