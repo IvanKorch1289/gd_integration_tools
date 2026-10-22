@@ -381,7 +381,16 @@ Branch: `audit/s3-cache-logging-cycle-171`. Each wave is one commit.
 | CRITICAL-03 | No per-tenant key isolation | **FIXED** | `02db354b9` — `TenantObjectStorage`, 11 tests, factory wires it around the whole chain |
 | CRITICAL-04 | Cleartext logs; `use_tls` selects plaintext path | **FIXED** | `9bba00f8a` — real TLS in the sink; 5 tests with a live TLS server |
 | CRITICAL-05 | `aioboto3` undeclared | **PARTIAL / BLOCKED** | Cannot be declared (aiobotocore ↔ boto3 1.43.75 conflict). Needs a dependency decision |
+| HIGH-02 | No YAML step can reach S3 | **FIXED** | `2bcf3f10e` — builder methods restored; a YAML route with all five steps builds. Read step named `s3_get` to avoid the `from_s3` sensor collision |
+| MEDIUM-01 | `ServiceError` contract broken by `_ensure_bucket` | **FIXED** | `e175a3fbe` — `BotoCoreError` now wrapped, which also makes it fallback-eligible |
+| MEDIUM-04 | Dead helpers + unread config key | **FIXED** | `e175a3fbe` — `_wrap_boto` and three `_get_real_s3_*` removed (0 call sites); `base.yml` key annotated |
+| DOC-01/02/03 | Coverage doc, `FS_*` docs, `.s3_put` | **FIXED** | `7d8f07268`, `5a2857423`, `2c67c1632` — new `docs/infra/object-storage.md` |
+| MEDIUM-06 | Unbounded semantic cache | **RETRACTED** | Claim was false: `EmbeddingVectorCache` is bounded by `TTLCache(maxsize=1024, ttl=300)` |
+| MEDIUM-02 | No SSE/ACL/versioning settings | Open | Needs a config design decision |
+| MEDIUM-03 | Presign has no per-key authorization | Open | Needs an ownership model |
+| MEDIUM-05 | `policy.cache_policy()` is a marker | Open | Needs ADR |
 | HIGH-07 | `delete_by_tag` not cluster-wide | **PARTIAL** | Cycle-170 doc corrected (`5a2857423`); real fan-out still open |
+| LOW-03 | 74 inline `import logging` | Open | Hot-path subset not migrated |
 | HIGH-08 | `DiskCacheBackend.exists()` ignores TTL | **FIXED** | `c8c19b299` |
 | HIGH-09 | `logging.basicConfig` in prod path | **FIXED** | `5a2857423` |
 | HIGH-10 | AI workspace cleanup never started | **FIXED** | `c8c19b299` — new startup phase; root cause was the missing `start_ai_safety` caller, not the unused cleaner class |
