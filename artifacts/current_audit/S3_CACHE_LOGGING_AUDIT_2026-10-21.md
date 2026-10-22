@@ -364,7 +364,36 @@ occurrence is the docstring itself.
 
 ---
 
-## 8. Decision record (grilling, 3 rounds)
+## 8. Remediation status (cycle 171 implementation)
+
+Branch: `audit/s3-cache-logging-cycle-171`. Each wave is one commit.
+
+| ID | Finding | Status | Evidence |
+|---|---|---|---|
+| CRITICAL-01 | Fail-open writes lose data silently | **FIXED** | `a978d3beb` — narrowed catch, ERROR logging, `storage_fallback_total` metric, quarantine registry. 15 regression tests |
+| CRITICAL-02 | Tenant quota is dead code | **OPEN** | Deferred: needs facade gate + atomic check; not started |
+| CRITICAL-03 | No per-tenant key isolation | **FIXED** | `02db354b9` — `TenantObjectStorage`, 11 tests, factory wires it around the whole chain |
+| CRITICAL-04 | Cleartext logs; `use_tls` selects plaintext path | **FIXED** | `9bba00f8a` — real TLS in the sink; 5 tests with a live TLS server |
+| CRITICAL-05 | `aioboto3` undeclared | **PARTIAL / BLOCKED** | Cannot be declared (aiobotocore ↔ boto3 1.43.75 conflict). Needs a dependency decision |
+| HIGH-07 | `delete_by_tag` not cluster-wide | **PARTIAL** | Cycle-170 doc corrected (`5a2857423`); real fan-out still open |
+| HIGH-08 | `DiskCacheBackend.exists()` ignores TTL | **FIXED** | `c8c19b299` |
+| HIGH-09 | `logging.basicConfig` in prod path | **FIXED** | `5a2857423` |
+| HIGH-10 | AI workspace cleanup never started | **FIXED** | `c8c19b299` — new startup phase; root cause was the missing `start_ai_safety` caller, not the unused cleaner class |
+| HIGH-03 | Capability gate silently bypassed | **FIXED** | `48a40ad85` — gate resolved from registry; ungated path now warns |
+| HIGH-04 | Credentials never validated | **FIXED (scoped)** | `fd29f9873` — loud ERROR in prod, non-fatal |
+| MEDIUM-05 | `policy.cache_policy()` is a marker | Open | Documented; needs ADR |
+| MEDIUM-06 | Unbounded semantic cache | Open | — |
+| LOW-02 | Flag description vs default | **FIXED** | `5a2857423` |
+| LOW-03 | 74 inline `import logging` | Open | Hot-path subset not migrated |
+| DOC-01/02/03 | Coverage doc, `FS_*` docs, `.s3_put` | **PARTIAL** | `7d8f07268`, `5a2857423`; `FS_*` reference doc still missing |
+
+**Self-correction recorded**: the Wave 0 commit message claimed a clean deploy
+would "silently run on pod-local disk". That was wrong for production and was
+retracted in `4505d15d5` — see §3 CRITICAL-05 for the verified scope.
+
+---
+
+## 9. Decision record (grilling, 3 rounds)
 
 | # | Decision | Choice |
 |---|---|---|

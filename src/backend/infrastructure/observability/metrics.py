@@ -60,6 +60,7 @@ __all__ = (
     "record_queue_consumer_lag",
     "record_queue_dlq_depth",
     "record_storage_fallback",
+    "record_storage_quota_violation",
 )
 
 
@@ -213,6 +214,22 @@ def record_storage_fallback(
         operation=operation,
         severity="write" if is_write else "read",
     ).inc()
+
+
+# ── ObjectStorage quota (cycle 271 audit) ────────────────────────────────
+# tenant_file_quota был реализован, но не вызывался — ни один upload не
+# проверялся. Пока enforcement выключен (alert-only), этот счётчик —
+# единственный сигнал о фактическом распределении размеров.
+_storage_quota_violation_counter = metrics_registry.counter(
+    "storage_quota_violation_total",
+    "Uploads that exceeded the per-tenant storage quota",
+    labels=("plugin",),
+)
+
+
+def record_storage_quota_violation(plugin: str) -> None:
+    """Инкрементирует счётчик превышений per-tenant квоты хранилища."""
+    _storage_quota_violation_counter.labels(plugin=plugin).inc()
 
 
 def get_dsl_metrics() -> dict[str, Any]:

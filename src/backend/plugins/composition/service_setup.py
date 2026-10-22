@@ -102,8 +102,33 @@ def _register_storage_facade() -> None:
         if has_service(CapabilityGate):
             gate = get_service(CapabilityGate)
             capability_check = getattr(gate, "check", None)
+
+        # Cycle 271 (CRITICAL-02): quota-manager наконец подключён. Раньше
+        # tenant_file_quota был полностью реализован, но не имел ни одного
+        # вызывающего, поэтому ни один upload не проверялся. Enforcement
+        # выключен (alert-only) — см. StorageFacade._check_quota.
+        quota_manager = None
+        enforce_quota = False
+        try:
+            from src.backend.infrastructure.storage.tenant_file_quota import (
+                get_tenant_file_quota_manager,
+            )
+
+            quota_manager = get_tenant_file_quota_manager()
+            from src.backend.core.config.settings import settings
+
+            enforce_quota = bool(
+                getattr(settings.storage, "enforce_quota", False)
+            )
+        except Exception as exc:
+            _logger.warning("storage.quota_manager_unavailable: %s", exc)
+
         return StorageFacade(
-            storage=storage, capability_check=capability_check, plugin="system"
+            storage=storage,
+            capability_check=capability_check,
+            plugin="system",
+            quota_manager=quota_manager,
+            enforce_quota=enforce_quota,
         )
 
     register_factory(StorageFacade, _factory)

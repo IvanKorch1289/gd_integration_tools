@@ -31,6 +31,18 @@ CapabilityChecker = Callable[[str, str, str | None], None]
 """Сигнатура capability-check: ``(plugin, capability, scope) -> None`` raise при denied."""
 
 
+def _record_quota_violation(plugin: str, key: str) -> None:
+    """Инкрементит счётчик превышений квоты (метрика не должна ронять запись)."""
+    try:
+        from src.backend.infrastructure.observability.metrics import (
+            record_storage_quota_violation,
+        )
+
+        record_storage_quota_violation(plugin)
+    except Exception:  # pragma: no cover - observability best-effort
+        _logger.debug("storage.quota_metric_failed", exc_info=True)
+
+
 class StorageFacade:
     """Capability-checked фасад объектного хранилища для extensions.
 
@@ -48,10 +60,14 @@ class StorageFacade:
         *,
         capability_check: CapabilityChecker | None = None,
         plugin: str = "extension",
+        quota_manager: Any | None = None,
+        enforce_quota: bool = False,
     ) -> None:
         self._storage = storage
         self._check = capability_check
         self._plugin = plugin
+        self._quota = quota_manager
+        self._enforce_quota = enforce_quota
 
     def _assert_read(self, key: str) -> None:
         if self._check is not None:
@@ -60,6 +76,64 @@ class StorageFacade:
     def _assert_write(self, key: str) -> None:
         if self._check is not None:
             self._check(self._plugin, "storage.write", key)
+
+    async def _check_quota(self, key: str, size_bytes: int) -> None:
+        """Per-tenant upload quota gate (cycle 271, CRITICAL-02).
+
+        ``tenant_file_quota`` был полностью реализован, но не имел ни одного
+        вызывающего — ни один upload не проверялся. Здесь фасад становится
+        primary gate'ом (он же capability-checked путь для extensions), а
+        ``S3ObjectStorage`` может оставаться domain-agnostic.
+
+        Режимы (``enforce_quota``, по умолчанию **False**):
+        * ``False`` — alert-only: превышение логируется на ERROR и
+          инкрементит метрику, но запись не блокируется. Так реальное
+          распределение размеров видно до включения enforcement;
+        * ``True``  — превышение поднимает ``ServiceError``.
+        """
+        if self._quota is None:
+            return
+
+        from src.backend.core.tenancy import current_tenant
+
+        tenant = current_tenant()
+        tenant_id = getattr(tenant, "tenant_id", None) if tenant else None
+        if not tenant_id:
+            # System uploads — quota не применяется (см. check_can_upload).
+            return
+
+        try:
+            result = await self._quota.check_can_upload(tenant_id, size_bytes)
+        except Exception as exc:
+            # Проверка квоты не должна ронять запись: fail-open с видимым логом.
+            _logger.warning(
+                "storage.quota_check_failed tenant=%s key=%s: %s",
+                tenant_id,
+                key,
+                exc,
+            )
+            return
+
+        if result.allowed:
+            return
+
+        _record_quota_violation(self._plugin, key)
+
+        if self._enforce_quota:
+            raise ServiceError(
+                f"storage quota exceeded for tenant {tenant_id}: {result.reason}"
+            )
+
+        _logger.error(
+            "STORAGE QUOTA EXCEEDED (alert-only, запись разрешена): tenant=%s "
+            "key=%s reason=%s current_files=%s current_bytes=%s. "
+            "Включите enforce_quota после ревью распределения.",
+            tenant_id,
+            key,
+            result.reason,
+            result.current_files,
+            result.current_bytes,
+        )
 
     async def upload(
         self, key: str, data: bytes, content_type: str | None = None
@@ -72,6 +146,7 @@ class StorageFacade:
 
         """
         self._assert_write(key)
+        await self._check_quota(key, len(data or b""))
         try:
             return await self._storage.upload(key, data, content_type=content_type)
         except Exception as exc:
@@ -97,6 +172,13 @@ class StorageFacade:
 
         """
         self._assert_write(key)
+        # Размер известен только для bytes; для потока квота не проверяется
+        # (поток может быть безлимитным — считать байты заранее нельзя).
+        if isinstance(data, (bytes, bytearray, str)):
+            await self._check_quota(
+                key,
+                len(data.encode("utf-8")) if isinstance(data, str) else len(data),
+            )
         try:
             # Если есть async-stream API — используем напрямую
             if hasattr(self._storage, "upload_stream"):

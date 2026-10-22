@@ -26,8 +26,13 @@ def get_storage_facade(*, plugin: str = "extension") -> StorageFacade:
         raise RuntimeError("StorageFacade not registered in svcs")
     facade = get_service(StorageFacade)
     if plugin != "extension":
-        # Return a facade view with the caller plugin name.
+        # Return a facade view with the caller plugin name. Квота и режим
+        # enforcement наследуются — иначе view мог бы обойти alert-only.
         return StorageFacade(
-            storage=facade._storage, capability_check=facade._check, plugin=plugin
+            storage=facade._storage,
+            capability_check=facade._check,
+            plugin=plugin,
+            quota_manager=facade._quota,
+            enforce_quota=facade._enforce_quota,
         )
     return facade
