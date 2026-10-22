@@ -391,6 +391,34 @@ Branch: `audit/s3-cache-logging-cycle-171`. Each wave is one commit.
 would "silently run on pod-local disk". That was wrong for production and was
 retracted in `4505d15d5` — see §3 CRITICAL-05 for the verified scope.
 
+### Regression evidence (baseline vs branch)
+
+Full sweep over `tests/unit/{storage,infrastructure,services/storage,log_sinks,core/config,plugins/composition,dsl}` (`-p no:randomly`):
+
+| Run | Tree | Failures |
+|---|---|---|
+| 1 | `master` | 58 |
+| 2 | `master` | **81** |
+| 3 | branch `audit/s3-cache-logging-cycle-171` | 54 |
+| 4 | branch | 59 |
+
+**Set-difference `master`(run 2) vs branch(run 4) = zero new failures.**
+
+Two conclusions that matter more than the raw counts:
+
+1. **The suite is heavily order/pollution-sensitive.** Two runs of *identical
+   `master` code* produced 58 and 81 failures. Counts on this tree are not a
+   regression signal on their own.
+2. **`test_watermarks.py::test_advance_property_monotonic` is pre-existing
+   flakiness**, not a regression from this work: it fails on `master`, passes in
+   isolation, passes alongside `tests/unit/log_sinks` (which rules out the
+   `logging.basicConfig` removal as the cause), and shares no code path with any
+   change made here.
+
+The branch consistently shows *fewer* failures than `master`, consistent with
+Wave 0 restoring `moto` and converting 24 silently-skipped S3 tests into a real
+suite.
+
 ---
 
 ## 9. Decision record (grilling, 3 rounds)
