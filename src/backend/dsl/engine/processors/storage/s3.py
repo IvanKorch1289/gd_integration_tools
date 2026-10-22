@@ -86,9 +86,38 @@ def _get_storage_facade(context: ExecutionContext) -> Any:
 
     # Test fallback path — задокументированное layer violation.
     # S84 M2-#11: DI provider вместо inline infrastructure import.
+    #
+    # Cycle 271 (audit HIGH-03): раньше здесь строился StorageFacade вообще без
+    # capability_check, и ``StorageFacade._assert_*`` молча ничего не делал —
+    # то есть DSL-шаг к S3 проходил мимо V11.1 capability-gate. Пытаемся
+    # достать gate из реестра; если его нет — это осознанный skip, но о нём
+    # обязано быть известно логами, а не только чтением кода.
     from src.backend.core.di.providers.cache import get_object_storage_provider
+    from src.backend.core.svcs_registry import get_service, has_service
+    from src.backend.services.storage import StorageFacade
 
-    return StorageFacade(get_object_storage_provider(), plugin=plugin)
+    capability_check = None
+    try:
+        from src.backend.core.security.capabilities.gate import CapabilityGate
+
+        if has_service(CapabilityGate):
+            capability_check = get_service(CapabilityGate).check
+    except (ImportError, AttributeError, KeyError, NameError) as exc:
+        _logger.debug("dsl.storage.capability_gate_unavailable: %s", exc)
+
+    if capability_check is None:
+        _logger.warning(
+            "DSL storage step %r runs without capability-gate: CapabilityGate "
+            "не зарегистрирован, storage.read/write не проверяются. Это "
+            "допустимо в unit-тестах, но в production означает обход V11.1.",
+            plugin,
+        )
+
+    return StorageFacade(
+        get_object_storage_provider(),
+        capability_check=capability_check,
+        plugin=plugin,
+    )
 
 
 # ── to_s3 ─────────────────────────────────────────────────────────────────
