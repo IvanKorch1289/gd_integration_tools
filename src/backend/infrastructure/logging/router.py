@@ -74,6 +74,9 @@ def build_sinks_for_profile(
     graylog_host: str = "graylog",
     graylog_port: int = 12201,
     graylog_protocol: str = "udp",
+    graylog_use_tls: bool = False,
+    graylog_ca_bundle: str | None = None,
+    graylog_tls_verify: bool = True,
 ) -> list[LogSink]:
     """Построить список sink-ов согласно профилю запуска.
 
@@ -88,6 +91,13 @@ def build_sinks_for_profile(
             :func:`~src.core.config.profile.get_active_profile`.
         disk_path: путь к файлу для disk-rotating sink.
         graylog_host/port/protocol: параметры Graylog input.
+        graylog_use_tls: оборачивать TCP-транспорт в TLS. До cycle 271 флаг
+            ``use_tls`` из конфигурации использовался **только** как выбор
+            ``tcp``/``udp`` и само шифрование не выполнялось, поэтому
+            production отправлял логи открытым текстом (audit CRITICAL-04).
+        graylog_ca_bundle: путь к CA-бандлу для проверки сертификата.
+        graylog_tls_verify: проверять сертификат и hostname. Default ``True``;
+            отключение — осознанный компромисс и логируется WARNING'ом.
     """
     active = profile if profile is not None else get_active_profile()
 
@@ -102,6 +112,9 @@ def build_sinks_for_profile(
                     host=graylog_host,
                     port=graylog_port,
                     protocol="tcp" if graylog_protocol == "tcp" else "udp",
+                    use_tls=graylog_use_tls,
+                    ca_bundle=graylog_ca_bundle,
+                    tls_verify=graylog_tls_verify,
                 ),
                 DiskRotatingLogSink(path=disk_path),
             ]

@@ -193,6 +193,8 @@ def init_application_logging(
     graylog_host: str | None = None,
     graylog_port: int | None = None,
     graylog_protocol: str | None = None,
+    graylog_use_tls: bool | None = None,
+    graylog_ca_bundle: str | None = None,
     use_settings: bool = True,
 ) -> BaseLoggerBackend:
     """Единая точка инициализации всего logging-стека приложения.
@@ -275,6 +277,10 @@ def init_application_logging(
                 graylog_port = _settings.logging.port
             if graylog_protocol is None:
                 graylog_protocol = "tcp" if _settings.logging.use_tls else "udp"
+            if graylog_use_tls is None:
+                graylog_use_tls = bool(getattr(_settings.logging, "use_tls", False))
+            if graylog_ca_bundle is None:
+                graylog_ca_bundle = getattr(_settings.logging, "ca_bundle", None)
         except (ImportError, AttributeError):
             # settings не доступны (например, в unit-test минимальном окружении) —
             # используем явные defaults. Backend уже инициализирован с ними.
@@ -311,6 +317,12 @@ def init_application_logging(
         sinks_kwargs["graylog_port"] = graylog_port
     if graylog_protocol is not None:
         sinks_kwargs["graylog_protocol"] = graylog_protocol
+    # Cycle 171 (audit CRITICAL-04): use_tls раньше влиял только на выбор
+    # tcp/udp; теперь он доходит до sink'а и действительно включает TLS.
+    if graylog_use_tls:
+        sinks_kwargs["graylog_use_tls"] = True
+        if graylog_ca_bundle:
+            sinks_kwargs["graylog_ca_bundle"] = graylog_ca_bundle
 
     init_log_sinks(profile=profile_arg, **sinks_kwargs)
     return backend

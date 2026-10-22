@@ -3,7 +3,24 @@ r"""``GraylogGelfLogSink`` — отправка логов в Graylog по пр�
 Поддерживаются два транспорта:
 
 * ``udp`` — стандартный GELF UDP (быстрый, без подтверждений);
-* ``tcp`` — GELF TCP (с делимитером ``\\x00``, надёжнее, но медленнее).
+* ``tcp`` — GELF TCP (с делимитером ``\\x00``, надёжнее, но медленнее);
+  при ``use_tls=True`` соединение дополнительно оборачивается в TLS
+  (cycle 171, audit CRITICAL-04).
+
+TLS
+---
+До cycle 271 параметр ``use_tls`` из конфигурации использовался **только** как
+переключатель ``tcp``/``udp``: ``_send_tcp`` открывал сырой сокет, и весь модуль
+не содержал ссылок на ``ssl``. Поскольку ``prod.yml`` выставляет ``use_tls:
+true``, а ``logging/factory.py`` переводит это в ``protocol="tcp"``,
+production отправлял логи с tenant-контекстом и PII **открытым текстом** —
+флаг выбирал единственный транспорт, не умеющий шифровать.
+
+Теперь ``use_tls`` доходит до sink-а и включает настоящий TLS:
+``ssl.create_default_context()`` + проверка сертификата и hostname.
+Ошибка TLS-переговоров **пробрасывается**: молчаливый откат на plaintext
+означал бы утечку, поэтому его быть не должно. Явное отключение проверки —
+``tls_verify=False``, оно логируется WARNING'ом.
 
 Сериализация GELF-payload — ручная (структура GELF 1.1), это позволяет
 не зависеть жёстко от ``pygelf`` / ``graypy``: если опциональный пакет
@@ -54,6 +71,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import socket
+import ssl
 import time
 import zlib
 from typing import TYPE_CHECKING, Any, Final, Literal
@@ -152,6 +170,9 @@ class GraylogGelfLogSink(LogSink):
         breaker_spec: BreakerSpec | None = None,
         connect_timeout: float = 2.0,
         queue_maxsize: int = _DEFAULT_QUEUE_MAXSIZE,
+        use_tls: bool = False,
+        ca_bundle: str | None = None,
+        tls_verify: bool = True,
     ) -> None:
         self.name = name
         self.is_healthy = True
@@ -160,6 +181,9 @@ class GraylogGelfLogSink(LogSink):
         self._protocol: GelfProtocol = protocol
         self._compress = compress
         self._connect_timeout = connect_timeout
+        self._use_tls = use_tls
+        self._ca_bundle = ca_bundle
+        self._tls_verify = tls_verify
         _lazy_breaker_imports()
         self._breaker = _get_breaker_registry_fn().get_or_create(
             f"log_sink:{name}",
@@ -381,6 +405,12 @@ class GraylogGelfLogSink(LogSink):
             if hasattr(socket, "TCP_KEEPCNT"):
                 sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
             sock.connect((self._host, self._port))
+            if self._use_tls:
+                # Cycle 171 audit (CRITICAL-04): раньше use_tls игнорировался
+                # и логи (с tenant-контекстом и PII) уходили открытым текстом.
+                # Ошибка TLS-переговора пробрасывается: молчаливый откат на
+                # plaintext здесь означал бы утечку, поэтому его быть не должно.
+                sock = self._wrap_tls(sock)
             self._tcp_socket = sock
         try:
             self._tcp_socket.sendall(payload + _TCP_DELIMITER)
@@ -392,6 +422,45 @@ class GraylogGelfLogSink(LogSink):
                 pass
             self._tcp_socket = None
             raise
+
+    def _wrap_tls(self, sock: socket.socket) -> socket.socket:
+        """Оборачивает уже соединённый TCP-сокет в TLS.
+
+        Сертификация обязательна: ``CERT_NONE``/``check_hostname=False``
+        запрещены V15-доктриной. Отключить проверку можно только явным
+        ``tls_verify=False`` (и это уже требует осознанного решения).
+
+        Args:
+            sock: Соединённый plaintext-сокет.
+
+        Returns:
+            ``SSLSocket`` с включённым TLS.
+
+        Raises:
+            ssl.SSLError: Ошибка TLS-переговоров — пробрасывается вызывающему,
+                чтобы логи **не ушли** в канал открытым текстом.
+        """
+        context = ssl.create_default_context(cafile=self._ca_bundle)
+        if not self._tls_verify:
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            _INTERNAL_LOG.warning(
+                "graylog_gelf.tls_verification_disabled host=%s:%s",
+                self._host,
+                self._port,
+            )
+        wrapped = context.wrap_socket(
+            sock,
+            server_hostname=self._host if self._tls_verify else None,
+        )
+        _INTERNAL_LOG.info(
+            "graylog_gelf.tls_enabled host=%s:%s protocol=%s verify=%s",
+            self._host,
+            self._port,
+            self._protocol,
+            self._tls_verify,
+        )
+        return wrapped
 
     def _close_sockets(self) -> None:
         """Закрыть UDP/TCP сокеты, если были созданы."""
