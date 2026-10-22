@@ -111,6 +111,24 @@ class FileStorageSettings(BaseSettingsWithLoader):
         """Возвращает эндпоинт без схемы подключения (например, 'https://')."""
         return str(self.endpoint).split("://")[-1]
 
+    def has_credentials(self) -> bool:
+        """True, если заданы **оба** credential'а.
+
+        Cycle 271 audit (HIGH-04): ``access_key``/``secret_key`` по умолчанию
+        пусты и не объявлены ни в одном config-профиле — они приходят из
+        переменных окружения на этапе деплоя. Отсутствие валидации означало,
+        что опечатка в ``FS_ACCESS_KEY`` тихо превращала клиент в anonymous,
+        и деплой при этом выглядел здоровым. Теперь это проверяемо явно.
+        """
+        return bool(self.access_key.strip()) and bool(self.secret_key.strip())
+
+    def requires_credentials(self) -> bool:
+        """True, если провайдеру действительно нужны credential'ы.
+
+        Для ``provider=local`` (LocalFS) ключи не используются.
+        """
+        return self.provider != "local"
+
 
 fs_settings = FileStorageSettings()
 """Глобальные настройки файлового хранилища"""

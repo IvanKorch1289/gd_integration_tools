@@ -38,6 +38,18 @@ __all__ = ("get_local_fs_storage", "get_object_storage")
 logger = get_logger(__name__)
 
 
+def _is_production_environment() -> bool:
+    """True, если текущее окружение — production (best-effort, без raise)."""
+    try:
+        from src.backend.core.config.settings import settings
+
+        return getattr(getattr(settings, "app", None), "environment", None) == (
+            "production"
+        )
+    except Exception:
+        return False
+
+
 def _enforce_local_fs_safe_in_prod() -> None:
     """Composition root guard: LocalFS недопустим в production-окружении.
 
@@ -152,6 +164,21 @@ def get_object_storage() -> ObjectStorage:
         from src.backend.infrastructure.storage.s3 import S3ObjectStorage
 
         primary = S3ObjectStorage(fs_settings)
+
+        # Cycle 271 (audit HIGH-04): credential'ы приходят из env и не имеют
+        # собственной валидации. Опечатка в FS_ACCESS_KEY тихо превращала
+        # клиент в anonymous. Не роняем старт (dev/test fixtures полагаются
+        # на anonymous), но делаем это видимым — в production на уровне ERROR.
+        if fs_settings.requires_credentials() and not fs_settings.has_credentials():
+            msg = (
+                "ObjectStorage provider=%r запущен БЕЗ credentials "
+                "(FS_ACCESS_KEY/FS_SECRET_KEY пусты) — клиент будет "
+                "anonymous. Проверьте переменные окружения деплоя."
+            )
+            if _is_production_environment():
+                logger.error(msg, provider)
+            else:
+                logger.warning(msg, provider)
     except ImportError as exc:
         logger.warning(
             "ObjectStorage provider=%r требует aioboto3 (S61 W1, install "
