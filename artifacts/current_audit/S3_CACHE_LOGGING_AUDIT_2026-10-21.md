@@ -280,11 +280,17 @@ CONFIRMED, 1 PARTIAL, 1 doc-invalidating.**
   runtime fix silently bypass caching. Real caching requires
   `builder.cache(key_fn=..., ttl=...)`.
 
-### MEDIUM-06 — Unbounded semantic cache
-- **Where**: `cache/rag/semantic.py:118-148`
-- `SemanticCache._cache` is a plain `dict` with no eviction and no TTL,
-  bypassing the TTL that cycle 168 added to `MemoryBackend`. Unbounded growth in
-  long-running RAG workers.
+### MEDIUM-06 — RETRACTED: semantic cache is not unbounded
+An agent reported `SemanticCache._cache` as a plain unbounded `dict`. Checked
+and **false** on two counts:
+
+- `SemanticCache` persists to **Qdrant**, not to an in-process dict — the dict
+  the agent saw belongs to `EmbeddingVectorCache`;
+- `EmbeddingVectorCache` is already bounded by
+  `cachetools.TTLCache(maxsize=1024, ttl=300)`
+  (`cache/rag/embedding_cache.py:28-33`).
+
+No unbounded container remains in `cache/rag/`.
 
 ### LOW-02 — tenant-prefix flag description contradicts its default
 - `core/config/features/sprints_18_21.py:232-241`: field default is `True`
@@ -385,7 +391,8 @@ Branch: `audit/s3-cache-logging-cycle-171`. Each wave is one commit.
 | MEDIUM-06 | Unbounded semantic cache | Open | — |
 | LOW-02 | Flag description vs default | **FIXED** | `5a2857423` |
 | LOW-03 | 74 inline `import logging` | Open | Hot-path subset not migrated |
-| DOC-01/02/03 | Coverage doc, `FS_*` docs, `.s3_put` | **PARTIAL** | `7d8f07268`, `5a2857423`; `FS_*` reference doc still missing |
+| DOC-01 | Coverage doc, `FS_*` docs, `.s3_put` | **FIXED** | `7d8f07268` (coverage doc), `5a2857423` (`.s3_put`), and new `docs/infra/object-storage.md` — full `FS_*` reference, failure semantics, credential/tenant/DSL sections |
+| HIGH-02 | No YAML step can reach S3 | **FIXED** | `2bcf3f10e` — builder methods restored; a YAML route with all five steps now builds. Read step named `s3_get` to avoid the `from_s3` sensor collision |
 
 **Self-correction recorded**: the Wave 0 commit message claimed a clean deploy
 would "silently run on pod-local disk". That was wrong for production and was
