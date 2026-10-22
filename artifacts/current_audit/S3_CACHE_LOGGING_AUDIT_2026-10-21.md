@@ -371,7 +371,7 @@ Branch: `audit/s3-cache-logging-cycle-171`. Each wave is one commit.
 | ID | Finding | Status | Evidence |
 |---|---|---|---|
 | CRITICAL-01 | Fail-open writes lose data silently | **FIXED** | `a978d3beb` — narrowed catch, ERROR logging, `storage_fallback_total` metric, quarantine registry. 15 regression tests |
-| CRITICAL-02 | Tenant quota is dead code | **OPEN** | Deferred: needs facade gate + atomic check; not started |
+| CRITICAL-02 | Tenant quota is dead code | **FIXED (alert-only)** | `6fc7e6113` — facade gate wired, `storage_quota_violation_total` metric; `enforce_quota` defaults off per your rollout decision. Atomic check+record and the 7-day counter rollover remain open |
 | CRITICAL-03 | No per-tenant key isolation | **FIXED** | `02db354b9` — `TenantObjectStorage`, 11 tests, factory wires it around the whole chain |
 | CRITICAL-04 | Cleartext logs; `use_tls` selects plaintext path | **FIXED** | `9bba00f8a` — real TLS in the sink; 5 tests with a live TLS server |
 | CRITICAL-05 | `aioboto3` undeclared | **PARTIAL / BLOCKED** | Cannot be declared (aiobotocore ↔ boto3 1.43.75 conflict). Needs a dependency decision |
