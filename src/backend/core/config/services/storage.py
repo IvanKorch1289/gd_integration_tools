@@ -129,6 +129,25 @@ class FileStorageSettings(BaseSettingsWithLoader):
         """
         return self.provider != "local"
 
+    # Безопасность хранения/раздачи (cycle 271, audit MEDIUM-02).
+    server_side_encryption: str = Field(
+        default="AES256",
+        description=(
+            "Алгоритм SSE для put_object (``AES256`` или ``aws:kms``). "
+            "Пустая строка отключает серверное шифрование."
+        ),
+        json_schema_extra={"example": "AES256"},
+    )
+    presign_ttl_max_seconds: int = Field(
+        default=604800,
+        description=(
+            "Потолок TTL для presigned-URL (7 дней по умолчанию). "
+            "Запросы с ``expires_in`` выше потолка ограничиваются им и "
+            "логируются: бессрочная ссылка на объект — вектор утечки."
+        ),
+        json_schema_extra={"example": 604800},
+    )
+
 
 fs_settings = FileStorageSettings()
 """Глобальные настройки файлового хранилища"""

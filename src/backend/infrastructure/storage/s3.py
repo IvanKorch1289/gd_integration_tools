@@ -252,6 +252,12 @@ class S3ObjectStorage(ObjectStorage):
         params: dict[str, Any] = {"Bucket": self._bucket, "Key": full_key, "Body": data}
         if content_type:
             params["ContentType"] = content_type
+        # Cycle 271 (audit MEDIUM-02): SSE по умолчанию. Раньше настройки
+        # не существовало вовсе, и объекты ложились с настройками бакета по
+        # умолчанию — то есть шифрование зависело от конфигурации окружения.
+        sse = (self._settings.server_side_encryption or "").strip()
+        if sse:
+            params["ServerSideEncryption"] = sse
         async with self._open() as s3:
             try:
                 await s3.put_object(**params)
@@ -476,14 +482,31 @@ class S3ObjectStorage(ObjectStorage):
     async def presigned_url(self, key: str, expires_in: int = 3600) -> str:
         """Generate presigned URL for S3 object.
 
+        Cycle 271 (audit MEDIUM-02): ``expires_in`` теперь ограничен
+        ``presign_ttl_max_seconds``. Раньше потолка не существовало, поэтому
+        ``expires_in=10**9`` выдавал ссылку, практически неотличимую от
+        постоянного доступа. Превышение не отвергается молча — оно логируется
+        и обрезается, чтобы вызывающий знал о фактическом TTL.
+
         Args:
             key: Object key.
-            expires_in: URL expiration time in seconds.
+            expires_in: Запрошенный TTL в секундах; обрезается до потолка.
 
         Returns:
             Presigned URL string.
 
         """
+        max_ttl = self._settings.presign_ttl_max_seconds
+        if max_ttl > 0 and expires_in > max_ttl:
+            self.logger.warning(
+                "S3ObjectStorage.presigned_url TTL clamped key=%s requested=%ss "
+                "max=%ss",
+                key,
+                expires_in,
+                max_ttl,
+            )
+            expires_in = max_ttl
+
         full_key = self._safe_key(key)
         async with self._open() as s3:
             try:
