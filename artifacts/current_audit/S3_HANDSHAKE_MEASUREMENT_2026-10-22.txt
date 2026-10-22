@@ -1,0 +1,15 @@
+S3 handshake measurement (cycle 172, HIGH-01)
+  operations:           20
+  max_pool_connections: 20
+
+  BEFORE (client per operation): pools= 20  time=0.335s
+  AFTER  (long-lived client)    : pools=  1  time=0.444s
+
+  OK: one connection pool for 20 operations (was 20 before the fix)
+
+NOTE (честность измерения):
+moto отвечает "Connection: close" на каждый запрос, поэтому keep-alive на стороне
+сервера невозможен независимо от клиента. Измерение доказывает то, что реально
+контролирует починенный код — КОЛИЧЕСТВО ПУЛОВ (1 вместо 20) — но не утверждает,
+что в этом окружении сократилось число TCP-хендшейков. Сокращение хендшейков
+требует сервера с keep-alive (реальный S3/MinIO) и измеряется отдельно.
