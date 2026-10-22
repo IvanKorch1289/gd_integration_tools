@@ -30,13 +30,71 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 from typing import Any, Literal
 
+from src.backend.core.errors import ServiceError
 from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
-__all__ = ("FallbackObjectStorage",)
+__all__ = ("DEFAULT_FALLBACK_EXCEPTIONS", "FallbackObjectStorage", "QuarantineEntry")
 
 _logger = get_logger("storage.fallback")
+
+#: Исключения, означающие **отказ инфраструктуры** primary-backend'а, а не
+#: ошибку в коде вызывающего. Значение по умолчанию изменено в cycle 171:
+#: прежний ``(Exception,)`` глушил в том числе ``ValueError``/``TypeError``,
+#: поэтому баг в вызывающем коде маскировался под «успешную» запись на диск.
+#:
+#: ``OSError`` покрывает ``ConnectionError``/``TimeoutError``/socket-ошибки
+#: (все они — подклассы ``OSError``). ``ServiceError`` — обёртка boto-ошибок,
+#: которую возвращает ``S3ObjectStorage``.
+DEFAULT_FALLBACK_EXCEPTIONS: tuple[type[BaseException], ...] = (
+    ServiceError,
+    OSError,
+)
+
+#: Операции, меняющие состояние primary-backend'а. Их fallback на secondary
+#: означает, что данные оказались на временном носителе и будут потеряны при
+#: eviction пода — такие события логируются на уровне ERROR и требуют алертинга.
+_WRITE_OPS = frozenset({"upload", "upload_stream", "delete"})
+
+
+class QuarantineEntry:
+    """Объект, записанный в secondary во время отказа primary.
+
+    Хранится в памяти процесса. Нужен для re-upload при восстановлении
+    primary: без него данные, ушедшие на pod-local диск, неотличимы от
+    обычных локальных файлов.
+
+    Attributes:
+        key: Ключ объекта (без tenant-префикса secondary).
+        operation: Какая операция деградировала.
+        chain: Имя цепочки.
+        size: Размер в байтах, если известен (``0`` для stream/delete).
+        error: Текст исходной ошибки primary.
+    """
+
+    __slots__ = ("chain", "error", "key", "operation", "size")
+
+    def __init__(
+        self,
+        *,
+        key: str,
+        operation: str,
+        chain: str,
+        size: int = 0,
+        error: str = "",
+    ) -> None:
+        self.key = key
+        self.operation = operation
+        self.chain = chain
+        self.size = size
+        self.error = error
+
+    def __repr__(self) -> str:
+        return (
+            f"QuarantineEntry(key={self.key!r}, operation={self.operation!r}, "
+            f"chain={self.chain!r}, size={self.size})"
+        )
 
 
 class FallbackObjectStorage(ObjectStorage):
@@ -51,10 +109,16 @@ class FallbackObjectStorage(ObjectStorage):
         primary: Главный backend (обычно S3/MinIO/AWS).
         secondary: Fallback backend (обычно LocalFS или read-only S3).
         fallback_exceptions: Какие exceptions от primary триггерят fallback.
-            Default — ``(Exception,)`` (любая ошибка). Для более
-            безопасного поведения используйте ``(OSError, IOError,
-            ConnectionError)`` чтобы НЕ fallback'ить на логических
-            ошибках (например, ``KeyError``).
+            Default — ``DEFAULT_FALLBACK_EXCEPTIONS`` (``ServiceError`` +
+            ``OSError``), то есть **только отказ инфраструктуры**. До
+            cycle 171 дефолтом был ``(Exception,)``, из-за чего баг
+            вызывающего кода (``ValueError``/``TypeError``) маскировался
+            под успешную запись в secondary. Расширить дефолт осознанно:
+            ``fallback_exceptions=DEFAULT_FALLBACK_EXCEPTIONS + (MyErr,)``.
+        quarantine: Регистрировать write-операции, ушедшие в secondary, в
+            списке карантина (для последующего re-upload). Default ``True``.
+        quarantine_max: Максимум записей карантина; при переполнении
+            вытесняется самая старая.
         name: Имя chain (для логов и метрик). Default — ``"primary→secondary"``.
 
     Raises:
@@ -70,13 +134,20 @@ class FallbackObjectStorage(ObjectStorage):
         primary: ObjectStorage,
         secondary: ObjectStorage,
         *,
-        fallback_exceptions: tuple[type[BaseException], ...] = (Exception,),
+        fallback_exceptions: tuple[type[BaseException], ...] = (
+            DEFAULT_FALLBACK_EXCEPTIONS
+        ),
         name: str = "primary→secondary",
+        quarantine: bool = True,
+        quarantine_max: int = 10_000,
     ) -> None:
         self._primary = primary
         self._secondary = secondary
         self._fallback_exceptions = fallback_exceptions
         self._name = name
+        self._quarantine_enabled = quarantine
+        self._quarantine_max = quarantine_max
+        self._quarantine: list[QuarantineEntry] = []
         # Per-method fallback count для observability
         self._fallback_count: dict[str, int] = {
             "download": 0,
@@ -93,31 +164,96 @@ class FallbackObjectStorage(ObjectStorage):
         """Read-only view of per-method fallback counter (для тестов + metrics)."""
         return dict(self._fallback_count)
 
+    @property
+    def quarantined(self) -> list[QuarantineEntry]:
+        """Объекты, записанные в secondary во время отказа primary.
+
+        Пустой список означает, что primary отвечает штатно. Непустой —
+        данные ждут re-upload и могут быть потеряны при eviction пода.
+        """
+        return list(self._quarantine)
+
+    def drain_quarantine(self) -> list[QuarantineEntry]:
+        """Возвращает накопленные записи карантина и очищает список.
+
+        Вызывается re-upload-воркером после успешного восстановления
+        primary: он перечитывает secondary и перезаливает в S3.
+        """
+        entries, self._quarantine = self._quarantine, []
+        return entries
+
     def _should_fallback(self, exc: BaseException) -> bool:
         """True если exc в списке fallback_exceptions."""
         return isinstance(exc, self._fallback_exceptions)
 
+    def _record_fallback(
+        self, op: str, exc: BaseException, key: str | None = None, size: int = 0
+    ) -> None:
+        """Инкрементит счётчик, эмитит метрику и логирует fallback.
+
+        Write-операции логируются на уровне ERROR: данные оказались на
+        временном носителе (pod-local диск) и будут потеряны при eviction.
+        Read-операции остаются WARNING — это деградация, но не потеря.
+        """
+        is_write = op in _WRITE_OPS
+        self._fallback_count[op] += 1
+
+        if is_write and self._quarantine_enabled:
+            if len(self._quarantine) >= self._quarantine_max:
+                self._quarantine.pop(0)
+            self._quarantine.append(
+                QuarantineEntry(
+                    key=key or "",
+                    operation=op,
+                    chain=self._name,
+                    size=size,
+                    error=str(exc),
+                )
+            )
+
+        # Local import: observalyzer тянет prometheus_client; не хотим его
+        # в import-path самого storage.
+        try:
+            from src.backend.infrastructure.observability.metrics import (
+                record_storage_fallback,
+            )
+
+            record_storage_fallback(self._name, op, is_write=is_write)
+        except Exception:  # pragma: no cover - метрика не должна ронять I/O
+            _logger.debug(
+                "storage_fallback.metric_failed chain=%s op=%s",
+                self._name,
+                op,
+                exc_info=True,
+            )
+
+        log = _logger.error if is_write else _logger.warning
+        log(
+            "FallbackObjectStorage[%s] %s primary failed (%s: %s), "
+            "falling back to secondary%s",
+            self._name,
+            op,
+            type(exc).__name__,
+            str(exc),
+            " — ДАННЫЕ ЗАПИСАНЫ НА ВРЕМЕННЫЙ НОСИТЕЛЬ, ТРЕБУЕТСЯ RE-UPLOAD"
+            if is_write
+            else "",
+        )
+
     async def _with_fallback(
-        self, op: str, primary_call: Any, secondary_call: Any
+        self, op: str, primary_call: Any, secondary_call: Any, *, key: str = "", size: int = 0
     ) -> Any:
         """Execute primary_call; при matched exception — secondary_call.
 
-        Логирует warning на fallback, инкрементит счётчик.
+        Инкрементит счётчик, эмитит метрику и логирует (ERROR для write-операций,
+        WARNING для read). Не-fallback-исключения пробрасываются без изменений.
         """
         try:
             return await primary_call()
         except BaseException as primary_exc:
             if not self._should_fallback(primary_exc):
                 raise
-            self._fallback_count[op] += 1
-            _logger.warning(
-                "FallbackObjectStorage[%s] %s primary failed (%s: %s), "
-                "falling back to secondary",
-                self._name,
-                op,
-                type(primary_exc).__name__,
-                str(primary_exc),
-            )
+            self._record_fallback(op, primary_exc, key=key, size=size)
             return await secondary_call()
 
     async def download(self, key: str) -> bytes:
@@ -151,7 +287,9 @@ class FallbackObjectStorage(ObjectStorage):
             secondary_loc.append(loc)
             return loc
 
-        return await self._with_fallback("upload", _primary, _secondary)
+        return await self._with_fallback(
+            "upload", _primary, _secondary, key=key, size=len(data or b"")
+        )
 
     async def delete(self, key: str) -> None:
         """``delete``: primary → secondary fallback.
@@ -180,14 +318,7 @@ class FallbackObjectStorage(ObjectStorage):
         except BaseException as primary_exc:
             if not self._should_fallback(primary_exc):
                 raise
-            self._fallback_count["delete"] += 1
-            _logger.warning(
-                "FallbackObjectStorage[%s] delete primary failed (%s: %s), "
-                "attempting secondary",
-                self._name,
-                type(primary_exc).__name__,
-                str(primary_exc),
-            )
+            self._record_fallback("delete", primary_exc, key=key)
             await _secondary()
 
     async def exists(self, key: str) -> bool:
@@ -257,14 +388,6 @@ class FallbackObjectStorage(ObjectStorage):
         except BaseException as primary_exc:
             if not self._should_fallback(primary_exc):
                 raise
-            self._fallback_count["upload_stream"] += 1
-            _logger.warning(
-                "FallbackObjectStorage[%s] upload_stream primary failed (%s: %s), "
-                "falling back to secondary upload",
-                self._name,
-                type(primary_exc).__name__,
-                str(primary_exc),
-            )
             # Дочитываем остаток потока (если primary упала до полного чтения).
             try:
                 async for chunk in stream:
@@ -280,8 +403,12 @@ class FallbackObjectStorage(ObjectStorage):
                     "storage_fallback.stream_drain_failed",
                     extra={"key": key, "error": str(stream_exc)},
                 )
+            payload = bytes(buffer)
+            self._record_fallback(
+                "upload_stream", primary_exc, key=key, size=len(payload)
+            )
             return await self._secondary.upload(
-                key, bytes(buffer), content_type=content_type
+                key, payload, content_type=content_type
             )
 
     def supports_presigned(self) -> bool:

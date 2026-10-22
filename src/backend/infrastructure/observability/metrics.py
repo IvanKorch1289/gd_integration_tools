@@ -59,6 +59,7 @@ __all__ = (
     "record_pool_metric",
     "record_queue_consumer_lag",
     "record_queue_dlq_depth",
+    "record_storage_fallback",
 )
 
 
@@ -182,6 +183,36 @@ _queue_lag_gauge = metrics_registry.gauge(
 _queue_dlq_gauge = metrics_registry.gauge(
     "queue_dlq_depth", "Dead letter queue depth", labels=("queue",)
 )
+
+# ── ObjectStorage fallback (cycle 171 audit) ─────────────────────────────
+# FallbackObjectStorage отдаёт данные с secondary (LocalFS), когда primary
+# (S3/MinIO) недоступен. Для write-операций это означает, что объект ушёл в
+# pod-local диск и будет потерян при eviction — раньше это было видно только
+# по WARNING-логу, без метрики и без алерта (audit CRITICAL-01).
+# severity="write" — данные под риском потери; "read" — деградация чтения.
+_storage_fallback_counter = metrics_registry.counter(
+    "storage_fallback_total",
+    "ObjectStorage fallback events: primary failed, secondary served the call",
+    labels=("chain", "operation", "severity"),
+)
+
+
+def record_storage_fallback(
+    chain: str, operation: str, *, is_write: bool
+) -> None:
+    """Инкрементирует счётчик fallback-событий object storage.
+
+    Args:
+        chain: Имя цепочки (например ``storage.aws→local_fs``).
+        operation: Имя операции (``upload``/``download``/…).
+        is_write: ``True`` для операций записи — они требуют алертинга,
+            потому что данные окажутся на временном носителе.
+    """
+    _storage_fallback_counter.labels(
+        chain=chain,
+        operation=operation,
+        severity="write" if is_write else "read",
+    ).inc()
 
 
 def get_dsl_metrics() -> dict[str, Any]:
