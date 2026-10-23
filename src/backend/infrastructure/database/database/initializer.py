@@ -189,9 +189,51 @@ class DatabaseInitializer:
                         f"-c statement_timeout={int(self.settings.command_timeout) * 1000}"
                     )
 
-            if self.settings.ca_bundle:
-                ssl_context = ssl.create_default_context(cafile=self.settings.ca_bundle)
-                connect_args["ssl"] = ssl_context
+            # Cycle 172 (CRITICAL-09): TLS определялся **исключительно** по
+            # ``ca_bundle``, поэтому ``ssl_mode: "require"`` в prod.yml при
+            # ``ca_bundle: null`` не давал шифрования — соединение с
+            # production-БД уходило открытым. Теперь ``ssl_mode`` honoured:
+            #
+            # * ``disable`` / ``allow`` → TLS выключен явно;
+            # * ``prefer`` / ``require`` / ``verify-ca`` / ``verify-full``
+            #   → TLS с обязательной проверкой сертификата.
+            #
+            # Два сознательных отклонения от libpq, оба в сторону строгости —
+            # потому что проект запрещает ``ssl.CERT_NONE`` /
+            # ``check_hostname=False`` (CLAUDE.md, V1 Security Constraints):
+            #
+            # 1. В libpq ``require`` = «шифровать, сертификат НЕ проверять».
+            #    Здесь ``require`` проверяет сертификат, как ``verify-ca``.
+            # 2. В libpq ``prefer`` = «попробовать TLS, при неудаче молча уйти
+            #    в plaintext». Этот молчаливый fallback не реализован: вместо
+            #    него ``prefer`` включает TLS и пишет warning.
+            #
+            # Следствие для эксплуатации: если БД использует самоподписанный
+            # сертификат, соединение будет падать. Это правильное поведение —
+            # оператор задаёт ``ca_bundle`` либо явно выбирает ``disable``,
+            # вместо того чтобы молча получать незашифрованное соединение.
+            ssl_mode = (self.settings.ssl_mode or "").strip().lower()
+            if ssl_mode and ssl_mode not in ("disable", "allow", "false", "off"):
+                if ssl_mode not in ("prefer", "require", "verify-ca", "verify-full"):
+                    raise ValueError(
+                        f"Unsupported ssl_mode={ssl_mode!r} for "
+                        f"{self.settings.type}; expected one of: disable, allow, "
+                        "prefer, require, verify-ca, verify-full"
+                    )
+                if ssl_mode == "prefer":
+                    db_logger.warning(
+                        "database ssl_mode=prefer: TLS включён с проверкой "
+                        "сертификата. libpq-fallback в plaintext намеренно не "
+                        "реализован (CLAUDE.md V1 запрещает ssl.CERT_NONE). "
+                        "Если БД без TLS — задайте ssl_mode=disable явно."
+                    )
+                if self.settings.ca_bundle:
+                    connect_args["ssl"] = ssl.create_default_context(
+                        cafile=self.settings.ca_bundle
+                    )
+                else:
+                    # Системное хранилище CA: create_default_context без cafile.
+                    connect_args["ssl"] = ssl.create_default_context()
 
         elif self.settings.type == DatabaseTypeChoices.oracle:
             connect_args.update({"tcp_connect_timeout": self.settings.connect_timeout})

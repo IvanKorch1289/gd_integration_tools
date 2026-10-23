@@ -274,6 +274,27 @@ class PersistenceMixin:
             result_property=result_property,
         )
 
+    def infra_db_query(
+        self,
+        sql: str,
+        *,
+        to: str = "body.result",
+    ) -> RouteBuilder:
+        """SQL-запрос через инфраструктурный facade session manager.
+
+        Cycle 172 (HIGH-09): процессор ``infra_db_query`` был зарегистрирован
+        в реестре, но метода ``RouteBuilder`` не существовало — YAML-шаг
+        падал с ``ValueError: Unknown or forbidden processor 'infra_db_query'``.
+        Тем самым заявленная в документации возможность была недостижима из
+        маршрута.
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.infra_db",
+            "InfraDbQueryProcessor",
+            sql=sql,
+            to=to,
+        )
+
     def db_query_external(
         self,
         profile: str,

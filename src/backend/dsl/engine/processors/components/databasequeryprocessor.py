@@ -26,12 +26,19 @@ class DatabaseQueryProcessor(BaseProcessor):
         sql: str,
         *,
         params_from_body: bool = True,
+        params: dict[str, Any] | None = None,
         result_property: str = "db_result",
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"db_query:{sql[:30]}")
         self._sql = sql
         self._params_from_body = params_from_body
+        # Cycle 172 (CRITICAL-08): явные bind-параметры. Раньше процессор
+        # умел брать параметры только из тела exchange, поэтому
+        # ``DbCrudProcessor`` — который строит ``:column``-плейсхолдеры —
+        # выбрасывал сгенерированные параметры и получал StatementError.
+        # Явные params имеют приоритет над телом exchange.
+        self._params = dict(params) if params is not None else None
         self._result_property = result_property
 
     _FORBIDDEN_SQL = {"DROP", "ALTER", "TRUNCATE", "CREATE", "GRANT", "REVOKE"}
@@ -61,8 +68,10 @@ class DatabaseQueryProcessor(BaseProcessor):
             exchange.fail(f"SQL validation failed: {exc}")
             return
 
-        params = {}
-        if self._params_from_body:
+        params: dict[str, Any] = {}
+        if self._params is not None:
+            params = self._params
+        elif self._params_from_body:
             body = exchange.in_message.body
             if isinstance(body, dict):
                 params = body

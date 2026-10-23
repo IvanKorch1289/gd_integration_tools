@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from functools import lru_cache
 from typing import Any
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.core.config.database import DatabaseConnectionSettings
 from src.backend.core.config.external_databases import (
@@ -63,10 +67,67 @@ def get_external_db_registry() -> ExternalDatabaseRegistry:
     return ExternalDatabaseRegistry(configs=settings.external_databases.profiles)  # type: ignore[arg-type]  # R2.MYPY: Callable[[],dict]
 
 
+@lru_cache(maxsize=1)
+def get_db_manager() -> DatabaseInitializer:
+    """DB-менеджер main-БД — тот же singleton, что и :func:`get_db_initializer`.
+
+    Cycle 172 (CRITICAL-07): функция **не существовала**, хотя на неё ссылались
+    ``core/di/providers/db.py::get_db_manager_provider`` и
+    ``DatabaseQueryProcessor``. Итог был такой: ``module.get_db_manager``
+    бросал ``AttributeError``, поэтому **каждый** DSL-шаг
+    ``db_query`` / ``db_insert`` / ``db_update`` / ``db_upsert`` / ``db_delete``
+    падал в ``exchange.fail(...)``. Вся DB-DSL поверхность была мертва.
+
+    Возвращается :class:`DatabaseInitializer`, потому что именно у него есть
+    ``get_async_engine()`` — этого и ждёт вызывающий код (и все остальные
+    места, которые берут engine напрямую: ``setup_infra/pools.py``,
+    ``setup_infra/health.py``, ``processors/storage_ext.py``,
+    ``processors/ml_inference.py``).
+
+    Отдельное имя сохранено, потому что оно часть публичной DI-контракции:
+    ``get_db_manager_provider()`` возвращает ссылку на этот callable, и тесты
+    подменяют его через ``set_db_manager_provider``.
+    """
+    return get_db_initializer()
+
+
+@asynccontextmanager
+async def get_db_session() -> AsyncIterator[AsyncSession]:
+    """Async context manager, отдающий сессию main-БД.
+
+    Cycle 172 (CRITICAL-10): функции **не существовало**, хотя из неё
+    импортировали три resilience-цепочки отказоустойчивости:
+
+    * ``resilience/components/database_chain.py`` — PG → SQLite read-only
+      fallback;
+    * ``resilience/components/audit_chain.py``;
+    * ``resilience/components/mongo_chain.py``.
+
+    Любая из них падала с ``ImportError`` вместо деградации — то есть сам
+    механизм failover по БД не работал никогда.
+
+    Сессия коммитится при успешном выходе и откатывается при исключении,
+    что соответствует семантике ``DatabaseSessionManager.transaction()``.
+    """
+    bundle = get_db_initializer().as_bundle()
+    session = bundle.async_session_maker()
+    try:
+        yield session
+    except BaseException:
+        await session.rollback()
+        await session.close()
+        raise
+    else:
+        await session.commit()
+        await session.close()
+
+
 def __getattr__(name: str) -> Any:
     """Module-level lazy accessor для backward compat импортов (Wave 6.1)."""
     if name == "db_initializer":
         return get_db_initializer()
     if name == "external_db_registry":
         return get_external_db_registry()
+    if name == "get_db_manager":
+        return get_db_manager
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

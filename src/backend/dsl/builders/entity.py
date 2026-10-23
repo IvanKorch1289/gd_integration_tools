@@ -118,11 +118,23 @@ class EntityMixin:
         entity: str,
         *,
         payload_from: str = "body",
+        body: str | None = None,
         result_property: str = "action_result",
     ) -> RouteBuilder:
-        """Алиас к :meth:`entity_create` (R-V15-12 / 80/20 YAML)."""
+        """Алиас к :meth:`entity_create` (R-V15-12 / 80/20 YAML).
+
+        Args:
+            body: Короткий алиас к ``payload_from`` — выражение, из которого
+                берётся payload (``"body.order"``). Именно эта форма задокументирована
+                в ``CLAUDE.md`` (``crud_create: { entity: orders, body: ... }``),
+                но до cycle 172 параметра не существовало, так что пример из
+                документации падал с ``TypeError``.
+
+        """
         return self.entity_create(
-            entity=entity, payload_from=payload_from, result_property=result_property
+            entity=entity,
+            payload_from=body if body is not None else payload_from,
+            result_property=result_property,
         )
 
     def crud_read(
@@ -143,13 +155,17 @@ class EntityMixin:
         *,
         id_from: str = "body.id",
         payload_from: str = "body",
+        body: str | None = None,
         result_property: str = "action_result",
     ) -> RouteBuilder:
-        """Алиас к :meth:`entity_update` (R-V15-12)."""
+        """Алиас к :meth:`entity_update` (R-V15-12).
+
+        ``body`` — короткий алиас к ``payload_from`` (см. :meth:`crud_create`).
+        """
         return self.entity_update(
             entity=entity,
             id_from=id_from,
-            payload_from=payload_from,
+            payload_from=body if body is not None else payload_from,
             result_property=result_property,
         )
 

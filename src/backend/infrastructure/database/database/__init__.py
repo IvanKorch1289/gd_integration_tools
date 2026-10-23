@@ -14,6 +14,9 @@ from __future__ import annotations
 from src.backend.infrastructure.database.database.accessors import (
     __getattr__,  # S64 W3: accessor re-export
     get_db_initializer,  # S64 W3: accessor re-export
+    get_db_manager,  # cycle 172 CRITICAL-07: DI-провайдер db_manager
+    get_db_session,  # cycle 172 CRITICAL-10: session для failover-цепочек
+
     get_external_db_registry,  # S64 W3: accessor re-export
     get_smart_session_manager,  # S64 W3: accessor re-export
 )
@@ -33,6 +36,8 @@ __all__ = (
     "ExternalDatabaseRegistry",
     "__getattr__",
     "get_db_initializer",
+    "get_db_manager",
+    "get_db_session",
     "get_external_db_registry",
     "get_smart_session_manager",
 )

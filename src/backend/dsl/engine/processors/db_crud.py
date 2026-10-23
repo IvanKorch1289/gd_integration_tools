@@ -384,16 +384,20 @@ class DbCrudProcessor(BaseProcessor):
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
         # 1. Build SQL
+        # Cycle 172 (CRITICAL-08): параметры больше не выбрасываются. Раньше
+        # они писались в ``_params`` и терялись, а ``DatabaseQueryProcessor``
+        # брал параметры из тела exchange — то есть несвязанные ``:column``
+        # плейсхолдеры доходили до СУБД и давали StatementError.
         if self._operation == "INSERT":
-            sql, _params = build_insert_sql(self._table, self._data)
+            sql, params = build_insert_sql(self._table, self._data)
         elif self._operation == "UPDATE":
-            sql, _params = build_update_sql(self._table, self._data, self._where)
+            sql, params = build_update_sql(self._table, self._data, self._where)
         elif self._operation == "UPSERT":
-            sql, _params = build_upsert_sql_dialect(
+            sql, params = build_upsert_sql_dialect(
                 self._dialect, self._table, self._data, self._conflict_keys
             )
         else:  # DELETE
-            sql, _params = build_delete_sql(self._table, self._where)
+            sql, params = build_delete_sql(self._table, self._where)
 
         _logger.info(
             "db_crud: op=%s dialect=%s table=%s sql=%s",
@@ -409,6 +413,6 @@ class DbCrudProcessor(BaseProcessor):
         )
 
         query_proc = DatabaseQueryProcessor(
-            sql=sql, result_property=self._result_property
+            sql=sql, params=params, result_property=self._result_property
         )
         await query_proc.process(exchange, context)
