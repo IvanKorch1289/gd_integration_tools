@@ -77,7 +77,13 @@ class PoolMonitor:
         try:
             from src.backend.infrastructure.database.database import db_initializer
 
-            pool = db_initializer._async_engine.pool
+            # Cycle 172 (MEDIUM-07): атрибут называется ``async_engine``,
+            # а читался ``_async_engine``. ``AttributeError`` глотался
+            # ниже, поэтому ``collect_stats()`` **всегда** возвращал
+            # ``None`` — мониторинг пула не работал ни разу.
+            # В этом же файле на строке ~144 атрибут указан правильно,
+            # что подтверждает опечатку, а не опровергает её.
+            pool = db_initializer.async_engine.pool
 
             checked_in = pool.checkedin()
             checked_out = pool.checkedout()

@@ -62,7 +62,11 @@ class TestPoolMonitor:
         mock_engine.pool = mock_pool
 
         mock_initializer = MagicMock()
-        mock_initializer._async_engine = mock_engine
+        # Cycle 172 (MEDIUM-07): атрибут реально называется ``async_engine``.
+        # Тест задавал ``_async_engine`` — то есть **воспроизводил опечатку**
+        # в моке, из-за чего оставался зелёным на неработающем
+        # ``collect_stats()``. Теперь тест держит настоящий контракт.
+        mock_initializer.async_engine = mock_engine
 
         with patch(
             "src.backend.infrastructure.database.database.db_initializer",

@@ -146,7 +146,11 @@ class DatabaseInitializer:
                     "max_overflow": self.settings.max_overflow,
                     "pool_recycle": self.settings.pool_recycle,
                     "pool_timeout": self.settings.pool_timeout,
-                    "pool_pre_ping": True,
+                    # Cycle 172 (HIGH-12): значение было захардкожено
+                    # (``True``), поле ``pool_pre_ping`` в конфиге и в
+                    # ``config_profiles/prod.yml`` не читалось — настройка
+                    # была мёртвой. Теперь берётся из настроек.
+                    "pool_pre_ping": self.settings.pool_pre_ping,
                     "pool_use_lifo": self.settings.pool_use_lifo,
                 }
             )

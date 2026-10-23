@@ -75,6 +75,15 @@ database:
   pool_timeout: 10
   pool_pre_ping: true
   pool_use_lifo: true
+  # Cycle 172 (MEDIUM-09): поле ``replica_dsn`` существовало в конфиге, но
+  # отсутствовало во **всех** профилях — read-replica-роутинг был выключен
+  # и никогда не включался, а ``SmartSessionManager`` молча писал в primary.
+  # null = «реплики нет, весь трафик идёт на primary» (поведение по
+  # умолчанию). Чтобы включить — укажите async-DSN реплики, например:
+  #   replica_dsn: "postgresql+asyncpg://user:pwd@pg-replica:5432/main_db"
+  # ВНИМАНИЕ: конфиги не поддерживают env-подстановку вида ${VAR:-default} —
+  # значение подставляется деплой-уровнем (Helm), а не Python-загрузчиком.
+  replica_dsn: null
 
 
 external_databases:

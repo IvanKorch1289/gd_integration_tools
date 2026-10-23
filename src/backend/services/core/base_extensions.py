@@ -30,11 +30,43 @@ __all__ = (
 F = TypeVar("F", bound=Callable[..., Awaitable[Any]])
 
 
+def _resolve_session_manager(repo: Any) -> Any:
+    """Возвращает менеджер сессий для репозитория.
+
+    Cycle 172 (MEDIUM-08): расширения чинили **несуществующий** контракт.
+    ``SQLAlchemyRepository`` не имеет атрибута ``session_manager`` — он
+    декорирует методы модульным синглтоном ``main_session_manager``. Из-за
+    этого ``getattr(repo, "session_manager", None)`` всегда возвращал
+    ``None``, ``@transactional`` молча превращался в no-op, а
+    ``bulk_upsert``/``soft_delete`` падали с ``RuntimeError``.
+
+    Здесь сначала проверяется явный ``repo.session_manager`` (если
+    репозиторий всё же его предоставляет), затем — основной менеджер сессий.
+    """
+    manager = getattr(repo, "session_manager", None)
+    if manager is not None:
+        return manager
+
+    from src.backend.infrastructure.database.session_manager import (
+        get_main_session_manager,
+    )
+
+    return get_main_session_manager()
+
+
 def transactional[F: Callable[..., Awaitable[Any]]](fn: F) -> F:
     """Декоратор: оборачивает async метод в DB-транзакцию.
 
-    Использует session_manager из BaseService.repo если доступен.
-    Fallback: просто выполняет метод.
+    Использует менеджер сессий репозитория (``repo.session_manager``), при его
+    отсутствии — основной менеджер сессий.
+
+    Cycle 172 (MEDIUM-08): декоратор был **мёртвым no-op** — искомый
+    ``session_manager`` у репозитория отсутствовал, поэтому ветка с
+    ``transaction()`` не срабатывала никогда. Дополнительно
+    ``session_manager.transaction()`` требует обязательного аргумента
+    ``session``, тогда как вызывался без него — то есть даже при
+    «правильном» репозитории ветка упала бы с ``TypeError``.
+    Теперь сессия открывается явно, а транзакция оборачивает её.
 
     Usage::
 
@@ -49,12 +81,14 @@ def transactional[F: Callable[..., Awaitable[Any]]](fn: F) -> F:
 
     @functools.wraps(fn)
     async def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-        session_manager = getattr(getattr(self, "repo", None), "session_manager", None)
+        repo = getattr(self, "repo", None)
+        session_manager = _resolve_session_manager(repo) if repo is not None else None
         if session_manager is None or not hasattr(session_manager, "transaction"):
             return await fn(self, *args, **kwargs)
 
-        async with session_manager.transaction():
-            return await fn(self, *args, **kwargs)
+        async with session_manager.create_session() as session:
+            async with session_manager.transaction(session):
+                return await fn(self, *args, **kwargs)
 
     return wrapper  # type: ignore[return-value]
 
@@ -111,11 +145,14 @@ async def bulk_upsert(
     update_dict = {col: getattr(stmt.excluded, col) for col in update_columns}
     stmt = stmt.on_conflict_do_update(index_elements=conflict_columns, set_=update_dict)
 
-    session_manager = getattr(repo, "session_manager", None)
+    session_manager = _resolve_session_manager(repo)
     if session_manager is None:
         raise RuntimeError("repo.session_manager is required")
 
-    async with session_manager.session() as session:
+    # Cycle 172 (MEDIUM-08): метода ``session_manager.session()`` не
+    # существует — у ``DatabaseSessionManager`` есть ``create_session()``.
+    # Вызов падал с ``AttributeError``.
+    async with session_manager.create_session() as session:
         result = await session.execute(stmt)
         await session.commit()
         return result.rowcount or len(rows)
@@ -146,11 +183,13 @@ async def soft_delete(repo: Any, key: str, value: Any) -> bool:
         .values(is_deleted=True, deleted_at=datetime.now(UTC))
     )
 
-    session_manager = getattr(repo, "session_manager", None)
+    session_manager = _resolve_session_manager(repo)
     if session_manager is None:
         raise RuntimeError("repo.session_manager is required")
 
-    async with session_manager.session() as session:
+    # Cycle 172 (MEDIUM-08): см. ``bulk_upsert`` — реальный API менеджера
+    # сессий — ``create_session()``, а не ``session()``.
+    async with session_manager.create_session() as session:
         result = await session.execute(stmt)
         await session.commit()
         return (result.rowcount or 0) > 0

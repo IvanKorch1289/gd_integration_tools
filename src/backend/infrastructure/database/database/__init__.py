@@ -16,7 +16,6 @@ from src.backend.infrastructure.database.database.accessors import (
     get_db_initializer,  # S64 W3: accessor re-export
     get_db_manager,  # cycle 172 CRITICAL-07: DI-провайдер db_manager
     get_db_session,  # cycle 172 CRITICAL-10: session для failover-цепочек
-
     get_external_db_registry,  # S64 W3: accessor re-export
     get_smart_session_manager,  # S64 W3: accessor re-export
 )

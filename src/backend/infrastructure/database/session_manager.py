@@ -3,12 +3,14 @@ from contextlib import asynccontextmanager
 from functools import lru_cache, wraps
 from typing import ParamSpec, TypeVar
 
+from sqlalchemy.exc import InterfaceError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.backend.core.config.settings import settings
 from src.backend.core.errors import DatabaseError, NotFoundError
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
+from src.backend.core.resilience.retry import retry_async
 from src.backend.core.tenancy.sqlalchemy_filter import apply_tenant_filter
 from src.backend.infrastructure.database.database import (
     get_db_initializer,
@@ -31,6 +33,20 @@ __all__ = (
 
 P = ParamSpec("P")
 R = TypeVar("R")
+
+#: Ошибки, при которых повторное установление соединения осмысленно.
+#: Cycle 172 (MEDIUM-10): ``max_retries`` был объявлен в конфиге, но не
+#: читался ни одним читателем в DB-слое — настройка была мёртвой.
+#:
+#: Повтор делается **только** на этапе установления соединения. Тело
+#: транзакции не переигрывается намеренно: оно не идемпотентно, и повтор
+#: после частичной записи способен продублировать данные. Именно поэтому в
+#: retryable-попадают только ``OperationalError``/``InterfaceError`` —
+#: драйвер сообщает о недоступности соединения, а не о логической ошибке.
+_RETRYABLE_CONNECT_ERRORS: tuple[type[BaseException], ...] = (
+    OperationalError,
+    InterfaceError,
+)
 
 
 class DatabaseSessionManager:
@@ -61,10 +77,51 @@ class DatabaseSessionManager:
             ),
         )
 
+    async def _acquire_session(self) -> AsyncSession:
+        """Открывает сессию, повторяя попытку при недоступности соединения.
+
+        Cycle 172 (MEDIUM-10): ``max_retries`` был объявлен в конфиге, но не
+        читался ни одним читателем в DB-слое — настройка была мёртвой.
+
+        Повтор выполняется через единый API ``core.resilience.retry``
+        (tenacity) — R-V15-8 требует консолидировать кастомный retry-код
+        поверх tenacity, а не плодить ещё одну реализацию.
+
+        Важно: соединение устанавливается **явно** (``session.connection()``).
+        ``async_sessionmaker`` создаёт сессию лениво, реальное соединение
+        происходит на первом запросе — то есть уже за пределами retry-области,
+        и повтор был бы фиктивным.
+
+        Тело транзакции не переигрывается: оно не идемпотентно.
+        """
+        max_retries = max(0, int(settings.database.max_retries))
+
+        async def _open() -> AsyncSession:
+            session = self.session_maker()
+            try:
+                await session.connection()
+            except BaseException:
+                await session.close()
+                raise
+            return session
+
+        if max_retries == 0:
+            return await _open()
+
+        return await retry_async(
+            _open,
+            max_attempts=max_retries + 1,
+            base_delay=0.5,
+            max_delay=10.0,
+            retryable=_RETRYABLE_CONNECT_ERRORS,
+            op=f"db.connect:{self.db_name}",
+        )
+
     @asynccontextmanager
     async def create_session(self) -> AsyncGenerator[AsyncSession]:
         """Создаёт и возвращает асинхронную сессию (под защитой circuit breaker)."""
-        async with self._breaker.guard(), self.session_maker() as session:
+        async with self._breaker.guard():
+            session = await self._acquire_session()
             try:
                 yield session
             except Exception as exc:
@@ -77,6 +134,8 @@ class DatabaseSessionManager:
                 raise DatabaseError(
                     message=f"Failed to create database session for '{self.db_name}'"
                 ) from exc
+            finally:
+                await session.close()
 
     @asynccontextmanager
     async def transaction(self, session: AsyncSession) -> AsyncGenerator[None]:
@@ -119,38 +178,47 @@ class DatabaseSessionManager:
         def decorator(method: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
             @wraps(method)
             async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-                async with self.session_maker() as session:
-                    try:
-                        if isolation_level:
-                            await session.connection(
-                                execution_options={"isolation_level": isolation_level}
+                # Cycle 172 (HIGH-11): breaker'а оборачивал только
+                # ``create_session()``. Все 11 методов ``SQLAlchemyRepository``
+                # идут через этот декоратор, а не через ``create_session()``,
+                # поэтому breaker ``db:main`` на основном CRUD-пути не
+                # срабатывал **никогда** — фича существовала только на бумаге.
+                # Теперь guard стоит на обоих путях.
+                async with self._breaker.guard():
+                    async with self.session_maker() as session:
+                        try:
+                            if isolation_level:
+                                await session.connection(
+                                    execution_options={
+                                        "isolation_level": isolation_level
+                                    }
+                                )
+
+                            result = await method(*args, session=session, **kwargs)  # type: ignore[arg-type]
+
+                            if commit and session.in_transaction():
+                                await session.commit()
+
+                            return result
+
+                        except NotFoundError:
+                            raise
+                        except Exception as exc:
+                            if session.in_transaction():
+                                await session.rollback()
+
+                            self.logger.error(
+                                "Ошибка при выполнении транзакции в БД '%s': %s",
+                                self.db_name,
+                                str(exc),
+                                exc_info=True,
                             )
-
-                        result = await method(*args, session=session, **kwargs)  # type: ignore[arg-type]
-
-                        if commit and session.in_transaction():
-                            await session.commit()
-
-                        return result
-
-                    except NotFoundError:
-                        raise
-                    except Exception as exc:
-                        if session.in_transaction():
-                            await session.rollback()
-
-                        self.logger.error(
-                            "Ошибка при выполнении транзакции в БД '%s': %s",
-                            self.db_name,
-                            str(exc),
-                            exc_info=True,
-                        )
-                        raise DatabaseError(
-                            message=(
-                                f"Ошибка при выполнении транзакции "
-                                f"в БД '{self.db_name}' - {exc!s}"
-                            )
-                        ) from exc
+                            raise DatabaseError(
+                                message=(
+                                    f"Ошибка при выполнении транзакции "
+                                    f"в БД '{self.db_name}' - {exc!s}"
+                                )
+                            ) from exc
 
             return wrapper
 
@@ -165,8 +233,16 @@ def get_main_session_manager() -> DatabaseSessionManager:
     )
 
 
+@lru_cache(maxsize=32)
 def get_external_session_manager(profile_name: str) -> DatabaseSessionManager:
-    """Возвращает session manager для внешней БД по profile_name."""
+    """Возвращает session manager для внешней БД по profile_name.
+
+    Cycle 172 (LOW-03): менеджер создавался заново на **каждый** вызов, тогда
+    как основной БД-кэшируется через ``@lru_cache``. Каждый новый экземпляр
+    регистрировал собственный breaker ``db:<profile>`` в общем реестре —
+    счётчики отказов обнулялись, и breaker не накапливал историю сбоев.
+    Теперь внешние менеджеры кэшируются по имени профиля.
+    """
     initializer = get_external_db_registry().get_initializer(profile_name)
 
     return DatabaseSessionManager(

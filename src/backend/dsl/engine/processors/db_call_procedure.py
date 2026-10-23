@@ -45,6 +45,10 @@ __all__ = ("DbCallProcedureProcessor",)
 
 _ALLOWED_PARAM_SOURCES = frozenset({"body", "properties", "headers", "none"})
 
+#: Допустимые диалекты вызова stored procedure. ``None`` (не указан) означает
+#: «вывести из типа СУБД профиля» — см. ``_resolve_dialect``.
+_ALLOWED_DIALECTS = frozenset({"postgres", "mssql", "oracle", "mysql", "db2"})
+
 
 @processor(
     "db_call_procedure",
@@ -57,7 +61,10 @@ _ALLOWED_PARAM_SOURCES = frozenset({"body", "properties", "headers", "none"})
             "schema": {"type": "string"},
             "params_from": {"type": "string", "enum": sorted(_ALLOWED_PARAM_SOURCES)},
             "result_property": {"type": "string"},
-            "dialect": {"type": "string", "enum": ["postgres", "mssql", "oracle"]},
+            "dialect": {
+                "type": ["string", "null"],
+                "enum": ["postgres", "mssql", "oracle", "mysql", "db2", None],
+            },
         },
         "required": ["profile", "name"],
     },
@@ -89,7 +96,7 @@ class DbCallProcedureProcessor(BaseProcessor):
         schema: str = "public",
         params_from: str = "body",
         result_property: str = "sp_result",
-        dialect: str = "postgres",
+        dialect: str | None = None,
         proc_name: str | None = None,
     ) -> None:
         super().__init__(name=proc_name or f"db_call_procedure:{schema}.{name}")
@@ -101,24 +108,57 @@ class DbCallProcedureProcessor(BaseProcessor):
             raise ValueError(
                 f"db_call_procedure: params_from must be one of {sorted(_ALLOWED_PARAM_SOURCES)}"
             )
-        if dialect not in {"postgres", "mssql", "oracle"}:
+        if dialect is not None and dialect not in _ALLOWED_DIALECTS:
             raise ValueError(
-                "db_call_procedure: dialect must be 'postgres'|'mssql'|'oracle'"
+                "db_call_procedure: dialect must be one of "
+                f"{sorted(_ALLOWED_DIALECTS)} or None (auto)"
             )
         self._profile = profile
         self._sp_name = name
         self._schema = schema
         self._params_from = params_from
         self._result_property = result_property
+        # Cycle 172 (HIGH-14): ``None`` означает «вывести диалект из типа СУБД
+        # профиля». Раньше дефолт был ``"postgres"`` для любого профиля, и
+        # Oracle-профиль получал невалидный ``CALL``.
         self._dialect = dialect
+
+    def _resolve_dialect(self) -> str:
+        """Возвращает эффективный диалект вызова процедуры.
+
+        Явный ``dialect`` имеет приоритет. Если он не задан, диалект
+        выводится из типа СУБД профиля внешней БД.
+        """
+        if self._dialect is not None:
+            return self._dialect
+
+        from src.backend.core.enums.database import DatabaseTypeChoices
+        from src.backend.infrastructure.database.database import (
+            get_external_db_registry,
+        )
+
+        try:
+            initializer = get_external_db_registry().get_initializer(self._profile)
+            db_type = initializer.settings.type
+        except Exception:
+            # Профиль недоступен (изолированный тест, не поднятый registry) —
+            # консервативный fallback на ANSI ``CALL``.
+            return "postgres"
+
+        mapping = {
+            DatabaseTypeChoices.postgresql: "postgres",
+            DatabaseTypeChoices.mssql: "mssql",
+            DatabaseTypeChoices.oracle: "oracle",
+            DatabaseTypeChoices.mysql: "mysql",
+            DatabaseTypeChoices.db2: "db2",
+        }
+        return mapping.get(db_type, "postgres")
 
     def _build_call_sql(self, params: dict[str, Any]) -> str:
         """Строит SQL для вызова процедуры с bind-параметрами ``:name``."""
         binds = ", ".join(f":{key}" for key in params) if params else ""
         full_name = f"{self._schema}.{self._sp_name}"
-        match self._dialect:
-            case "postgres":
-                return f"CALL {full_name}({binds})"
+        match self._resolve_dialect():
             case "mssql":
                 return f"EXEC {full_name} {binds}"
             case "oracle":
@@ -198,6 +238,6 @@ class DbCallProcedureProcessor(BaseProcessor):
             spec["params_from"] = self._params_from
         if self._result_property != "sp_result":
             spec["result_property"] = self._result_property
-        if self._dialect != "postgres":
+        if self._dialect is not None:
             spec["dialect"] = self._dialect
         return {"db_call_procedure": spec}

@@ -55,9 +55,22 @@ class ExternalDatabaseRegistry:
         return await self.get_initializer(profile_name).check_connection()
 
     async def initialize_all_pools(self) -> None:
-        """Прогревает пулы всех активных внешних БД."""
-        for initializer in self._initializers.values():
-            await initializer.initialize_async_pool()
+        """Прогревает пулы всех активных внешних БД.
+
+        Cycle 172 (MEDIUM-10): метод существовал, но **не имел ни одного
+        вызывающего** — пулы внешних БД никогда не прогревались, и первый
+        запрос к внешнему профилю платил cold-start latency.
+
+        Отказ одного профиля не должен срывать прогрев остальных, поэтому
+        ошибки изолируются по профилю.
+        """
+        for profile_name, initializer in self._initializers.items():
+            try:
+                await initializer.initialize_async_pool()
+            except Exception as exc:
+                self.logger.warning(
+                    "Не удалось прогреть пул внешней БД '%s': %s", profile_name, exc
+                )
 
     async def close_all(self) -> None:
         """Закрывает соединения всех внешних БД."""

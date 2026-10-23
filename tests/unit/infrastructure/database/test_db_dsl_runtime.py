@@ -34,7 +34,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine  # noqa: E40
 
 from src.backend.core.config.database import DatabaseConnectionSettings  # noqa: E402
 from src.backend.dsl.engine.context import ExecutionContext  # noqa: E402
-from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message  # noqa: E402
+from src.backend.dsl.engine.exchange import (  # noqa: E402
+    Exchange,
+    ExchangeStatus,
+    Message,
+)
 from src.backend.dsl.engine.processors.components.databasequeryprocessor import (  # noqa: E402
     DatabaseQueryProcessor,
 )

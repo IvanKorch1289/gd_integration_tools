@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import ClassVar
+from urllib.parse import quote_plus
 
 from pydantic import Field, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
@@ -226,15 +227,23 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
 
         driver = self.async_driver if is_async else self.sync_driver
 
+        # Cycle 172 (HIGH-13): логин и пароль интерполировались в DSN сырым.
+        # Пароль с ``@ : / # ? %`` ломал строку подключения — SQLAlchemy
+        # разбирал её как другой хост/путь. Внешний контур уже использовал
+        # ``quote_plus`` (``external_databases/connection.py``) — основной
+        # теперь приведён к тому же поведению.
+        username = quote_plus(self.username)
+        password = quote_plus(self.password)
+
         if self.type == DatabaseTypeChoices.postgresql:
             return (
-                f"postgresql+{driver}://{self.username}:{self.password}"
+                f"postgresql+{driver}://{username}:{password}"
                 f"@{self.host}:{self.port}/{self.name}"
             )
 
         if self.type == DatabaseTypeChoices.oracle:
             return (
-                f"oracle+{driver}://{self.username}:{self.password}"
+                f"oracle+{driver}://{username}:{password}"
                 f"@{self.host}:{self.port}/?service_name={self.name}"
             )
 
@@ -244,7 +253,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
             # (опциональные deps, см. pyproject.toml [project.optional-dependencies]).
             mssql_driver = driver or ("aioodbc" if is_async else "pyodbc")
             return (
-                f"mssql+{mssql_driver}://{self.username}:{self.password}"
+                f"mssql+{mssql_driver}://{username}:{password}"
                 f"@{self.host}:{self.port}/{self.name}"
                 f"?driver=ODBC+Driver+17+for+SQL+Server"
             )
@@ -253,7 +262,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
             # aiomysql / pymysql. Требует ``aiomysql`` (async) или ``pymysql`` (sync).
             mysql_driver = driver or ("aiomysql" if is_async else "pymysql")
             return (
-                f"mysql+{mysql_driver}://{self.username}:{self.password}"
+                f"mysql+{mysql_driver}://{username}:{password}"
                 f"@{self.host}:{self.port}/{self.name}"
             )
 
@@ -261,7 +270,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
             # ibm_db / ibm_db_sa. Требует ``ibm_db`` или ``ibm_db_sa``.
             db2_driver = driver or "ibm_db_sa"
             return (
-                f"db2+{db2_driver}://{self.username}:{self.password}"
+                f"db2+{db2_driver}://{username}:{password}"
                 f"@{self.host}:{self.port}/{self.name}"
             )
 
@@ -276,7 +285,7 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
             # placeholder URL: не используется SQLAlchemy, но сигнализирует
             # ``is_async=True`` для downstream dialector.
             return (
-                f"clickhouse://{self.username}:{self.password}"
+                f"clickhouse://{quote_plus(self.username)}:{quote_plus(self.password)}"
                 f"@{self.host}:{self.port}/{self.name}"
             )
 

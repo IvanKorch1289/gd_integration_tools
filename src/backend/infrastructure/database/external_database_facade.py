@@ -266,6 +266,41 @@ class ExternalDatabaseFacade:
     def _get_manager(self, profile: str) -> DatabaseSessionManager:
         return self._session_manager_factory(profile)
 
+    @staticmethod
+    def _resolve_procedure_dialect(profile: str) -> str:
+        """Определяет диалект вызова процедуры по типу СУБД профиля.
+
+        Cycle 172 (HIGH-14): ``dialect`` по умолчанию был ``"postgres"`` для
+        **любого** профиля. Oracle-профиль получал ``CALL schema.proc(...)`` —
+        невалидный для Oracle SQL (нужен ``BEGIN ... END;``), MSSQL — тоже
+        ``CALL`` вместо ``EXEC``. Профиль знает свой тип СУБД, поэтому
+        диалект выводится из него, а не задаётся по умолчанию.
+
+        Явный ``dialect`` по-прежнему имеет приоритет — он нужен для
+        нестандартных случаев (например, эмуляции Oracle поверх PG).
+        """
+        from src.backend.core.enums.database import DatabaseTypeChoices
+        from src.backend.infrastructure.database.database import (
+            get_external_db_registry,
+        )
+
+        try:
+            initializer = get_external_db_registry().get_initializer(profile)
+            db_type = initializer.settings.type
+        except Exception:
+            # Профиль недоступен (например, в изолированном тесте) —
+            # остаёмся на консервативном поведении.
+            return "postgres"
+
+        mapping = {
+            DatabaseTypeChoices.postgresql: "postgres",
+            DatabaseTypeChoices.mssql: "mssql",
+            DatabaseTypeChoices.oracle: "oracle",
+            DatabaseTypeChoices.mysql: "mysql",
+            DatabaseTypeChoices.db2: "db2",
+        }
+        return mapping.get(db_type, "postgres")
+
     async def query(
         self, profile: str, sql: str, params: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
@@ -322,12 +357,19 @@ class ExternalDatabaseFacade:
         params: dict[str, Any] | None = None,
         *,
         schema: str = "public",
-        dialect: str = "postgres",
+        dialect: str | None = None,
     ) -> Any:
-        """Вызов stored procedure через профиль внешней БД с auto-commit."""
+        """Вызов stored procedure через профиль внешней БД с auto-commit.
+
+        ``dialect`` по умолчанию ``None`` — диалект выводится из типа СУБД
+        профиля (см. :meth:`_resolve_procedure_dialect`).
+        """
         self._assert_execute_procedure(profile)
         manager = self._get_manager(profile)
-        sql = _build_procedure_sql(name, params or {}, schema=schema, dialect=dialect)
+        effective_dialect = dialect or self._resolve_procedure_dialect(profile)
+        sql = _build_procedure_sql(
+            name, params or {}, schema=schema, dialect=effective_dialect
+        )
         try:
             async with (
                 manager.create_session() as session,

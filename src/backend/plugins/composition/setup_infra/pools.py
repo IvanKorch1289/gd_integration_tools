@@ -398,6 +398,33 @@ async def _warmup_connection_pools() -> None:
         timeout_seconds=5.0,
     ).warmup()
 
+    # Cycle 172 (MEDIUM-10): пулы **внешних** БД не прогревались вовсе —
+    # ``ExternalDatabaseRegistry.initialize_all_pools()`` существовал, но не
+    # имел ни одного вызывающего. Теперь прогрев внешних профилей идёт
+    # после основных пулов, чтобы cold-start первого запроса к внешней БД
+    # не оплачивался клиентом.
+    await _warmup_external_database_pools()
+
+
+async def _warmup_external_database_pools() -> None:
+    """Прогревает пулы всех зарегистрированных внешних БД.
+
+    Никогда не raise: недоступность внешнего профиля не должна ломать
+    старт приложения. Ошибка по профилю изолируется внутри
+    ``initialize_all_pools``.
+    """
+    try:
+        from src.backend.infrastructure.database.database import (
+            get_external_db_registry,
+        )
+
+        registry = get_external_db_registry()
+        if not registry.list_profiles():
+            return
+        await registry.initialize_all_pools()
+    except Exception:
+        app_logger.warning("Прогрев пулов внешних БД пропущен", exc_info=True)
+
 
 def _redis_enabled() -> bool:
     """Возвращает ``True``, если интеграция с Redis активна в текущем профиле.

@@ -29,7 +29,7 @@ class PersistenceMixin:
         schema: str = "public",
         params_from: str = "body",
         result_property: str = "sp_result",
-        dialect: str = "postgres",
+        dialect: str | None = None,
     ) -> RouteBuilder:
         """K3 S5 W8 — вызвать stored procedure через ExternalDatabaseRegistry.
 
@@ -39,7 +39,11 @@ class PersistenceMixin:
             schema: Schema-префикс (default ``public``).
             params_from: ``body`` / ``properties`` / ``headers`` / ``none``.
             result_property: Куда положить result-set.
-            dialect: ``postgres`` / ``mssql`` / ``oracle``.
+            dialect: ``postgres`` / ``mssql`` / ``oracle`` / ``mysql`` / ``db2``.
+                Если не задан (``None``) — диалект выводится из типа СУБД
+                профиля. Cycle 172 (HIGH-14): дефолт был ``"postgres"`` для
+                любого профиля, из-за чего Oracle-профиль получал
+                невалидный ``CALL`` вместо ``BEGIN ... END;``.
 
         Returns:
             ``RouteBuilder`` для chain-продолжения.
