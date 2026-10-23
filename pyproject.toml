@@ -90,6 +90,16 @@ dependencies = [
     "watchfiles>=1.0.0,<2.0.0",
     "structlog>=24.4.0,<27.0.0",
     "redis>=5.0.0,<6.0.0",
+    # S3-бэкенд (infrastructure/storage/s3.py) — асинхронный клиент botocore.
+    # Аудит 2026-10-22 (CRITICAL-06): раньше здесь требовался `aioboto3`,
+    # который не был объявлен НИГДЕ (ни в dependencies, ни в uv.lock) —
+    # S3-бэкенд не поднимался, а его тесты пропускались на 100%.
+    # `aioboto3` непригоден: весь его релизный ряд (12.x–15.x) жёстко пинит
+    # `aiobotocore==2.x`, а тот — `botocore<1.40.62`, что несовместимо с
+    # зафиксированным botocore 1.43.75. `aiobotocore` 3.x того же API
+    # (get_session().create_client) совместим и уже был в uv.lock транзитивно.
+    "aiobotocore>=3.9.1,<4.0.0",
+    "botocore>=1.43.66,<1.43.76",
     "aiomqtt>=2.0.0,<3.0.0",
     "nats-py>=2.9.0,<3.0.0",  # NATS source/sink (infrastructure/sources/nats.py)
     "aioimaplib>=1.0.0,<3.0.0",  # S44 W12b: widened <2.0.0 -> <3.0.0 to allow aioimaplib 2.0.x (dependabot #121)
@@ -1047,8 +1057,6 @@ module = [
     # REMOVED langchain_postgres (dead dep — langgraph_postgres_saver removed 2026-10-14)
     "aiobotocore",
     "aiobotocore.*",
-    "aioboto3",
-    "aioboto3.*",
     "botocore",
     "botocore.*",
     "litellm",

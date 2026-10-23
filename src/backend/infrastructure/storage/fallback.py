@@ -47,10 +47,7 @@ _logger = get_logger("storage.fallback")
 #: ``OSError`` покрывает ``ConnectionError``/``TimeoutError``/socket-ошибки
 #: (все они — подклассы ``OSError``). ``ServiceError`` — обёртка boto-ошибок,
 #: которую возвращает ``S3ObjectStorage``.
-DEFAULT_FALLBACK_EXCEPTIONS: tuple[type[BaseException], ...] = (
-    ServiceError,
-    OSError,
-)
+DEFAULT_FALLBACK_EXCEPTIONS: tuple[type[BaseException], ...] = (ServiceError, OSError)
 
 #: Операции, меняющие состояние primary-backend'а. Их fallback на secondary
 #: означает, что данные оказались на временном носителе и будут потеряны при
@@ -76,13 +73,7 @@ class QuarantineEntry:
     __slots__ = ("chain", "error", "key", "operation", "size")
 
     def __init__(
-        self,
-        *,
-        key: str,
-        operation: str,
-        chain: str,
-        size: int = 0,
-        error: str = "",
+        self, *, key: str, operation: str, chain: str, size: int = 0, error: str = ""
     ) -> None:
         self.key = key
         self.operation = operation
@@ -241,7 +232,13 @@ class FallbackObjectStorage(ObjectStorage):
         )
 
     async def _with_fallback(
-        self, op: str, primary_call: Any, secondary_call: Any, *, key: str = "", size: int = 0
+        self,
+        op: str,
+        primary_call: Any,
+        secondary_call: Any,
+        *,
+        key: str = "",
+        size: int = 0,
     ) -> Any:
         """Execute primary_call; при matched exception — secondary_call.
 
@@ -407,13 +404,31 @@ class FallbackObjectStorage(ObjectStorage):
             self._record_fallback(
                 "upload_stream", primary_exc, key=key, size=len(payload)
             )
-            return await self._secondary.upload(
-                key, payload, content_type=content_type
-            )
+            return await self._secondary.upload(key, payload, content_type=content_type)
 
     def supports_presigned(self) -> bool:
         """True если primary supports presigned (default True)."""
         return self._primary.supports_presigned()
+
+    async def aclose(self) -> None:
+        """Закрыть долгоживущие клиенты primary и secondary (cycle 172, HIGH-01).
+
+        Оба бэкенда могут держать пул соединений (S3 — долгоживущий клиент),
+        поэтому закрываются оба; ошибка одного не должна мешать закрытию
+        другого.
+        """
+        for backend in (self._primary, self._secondary):
+            aclose = getattr(backend, "aclose", None)
+            if aclose is None:
+                continue
+            try:
+                await aclose()
+            except Exception as exc:  # noqa: BLE001 — shutdown не должен падать
+                _logger.warning(
+                    "FallbackObjectStorage.aclose failed backend=%s: %s",
+                    type(backend).__name__,
+                    exc,
+                )
 
     async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Health: primary если available, иначе secondary.

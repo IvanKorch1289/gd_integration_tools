@@ -3,21 +3,27 @@
 Закрывает stub из :mod:`src.backend.infrastructure.storage.factory`,
 который при ``provider != "local"`` падал в LocalFS-fallback.
 
-Реализована поверх :mod:`aioboto3` (high-level async boto3 wrapper).
-Каждая операция открывает собственный ``async with session.client(...)`` —
-это идиоматический паттерн aioboto3 и одновременно избавляет от
-lifecycle-issues (``aclose``, idle connections, retry state).
+Реализована поверх :mod:`aiobotocore` — асинхронного слоя над botocore.
 
-Для горячих путей ingestion (миллионы объектов в час) — :class:`S3Client`
-из ``infrastructure/clients/storage/s3_pool.py`` с aiobotocore long-lived
-pool. Здесь (admin/blueprint/extension deployment, DSL processors) —
-aioboto3 проще и совместим с moto-mock без отдельного MinIO.
+**Почему не ``aioboto3``** (цикл 172, аудит CRITICAL-06):
+весь опубликованный ``aioboto3`` (12.x–15.x) жёстко пинит
+``aiobotocore[boto3]==2.x``, а тот — ``botocore<1.40.62``, что несовместимо с
+зафиксированным в ``uv.lock`` ``botocore 1.43.75``. ``aiobotocore 3.9.1``
+(в ``uv.lock`` уже транзитивно) требует ``botocore<1.43.76,>=1.43.66`` — то есть
+совместим, и предоставляет ``get_session().create_client(...)`` — прямой
+drop-in для ``aioboto3.Session().client(...)``.
 
-S61 W3 refactor: введён :class:`_S3Session` (proper async context manager)
-вместо ручного ``(s3, aexit)`` tuple + per-method ``try/finally``.
+**Долгоживущий клиент** (цикл 172, аудит HIGH-01): раньше клиент создавался и
+закрывался на каждую операцию, поэтому ``max_pool_connections`` применялся к
+пулу, который умирал сразу, и каждое обращение платило полный TCP+TLS
+handshake. Теперь клиент один на инстанс, переиспользуется между операциями и
+закрывается явно — через :meth:`S3ObjectStorage.aclose` (вызывается на
+shutdown). Транспортный отказ помечает клиент как stale — следующая операция
+поднимает новый.
+
 Каждая операция теперь::
 
-    async with self._session() as s3:
+    async with self._open() as s3:
         await s3.put_object(...)
 
 Безопасность:
@@ -46,56 +52,75 @@ from src.backend.infrastructure.clients.base_connector import HealthResult
 __all__ = ("S3ObjectStorage",)
 
 
-def _import_aioboto3() -> Any:
-    """Lazy-import aioboto3; raises ImportError с инструкцией по установке."""
+def _import_aiobotocore() -> Any:
+    """Lazy-import aiobotocore; raises ImportError с инструкцией по установке.
+
+    Цикл 172 (CRITICAL-06): раньше здесь импортировался ``aioboto3``, который
+    не был объявлен ни в ``pyproject.toml``, ни в ``uv.lock``, ни в окружении —
+    S3-бэкенд не поднимался вовсе, а его тесты пропускались на 100%.
+    ``aiobotocore`` — та же асинхронная обёртка над botocore без конфликта
+    версий (см. docstring модуля).
+    """
     try:
-        import aioboto3
+        from aiobotocore.session import get_session
     except ImportError as exc:
         raise ImportError(
-            "S3ObjectStorage requires aioboto3. Install: uv pip install aioboto3"
+            "S3ObjectStorage requires aiobotocore. Install: uv pip install aiobotocore"
         ) from exc
-    return aioboto3
+    return get_session
+
+
+def _is_transport_error(exc: BaseException | None) -> bool:
+    """True, если по цепочке ``__cause__``/``__context__`` найден транспортный сбой.
+
+    Транспортный сбой означает, что TCP/TLS-соединение стало непригодным
+    (connection refused, DNS, таймаут) — клиент нужно пересоздать. Ошибки
+    уровня ``ClientError`` (404, AccessDenied и т.п.) транспортными не являются:
+    пересоздание клиента их не исправит.
+    """
+    seen: set[int] = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, (BotoCoreError, OSError, TimeoutError)):
+            return True
+        current = current.__cause__ or current.__context__
+    return False
 
 
 # ── internal session helper ──────────────────────────────────────────────
 
 
 class _S3Session(AbstractAsyncContextManager[Any]):
-    """Async context manager для aioboto3 client + lazy bucket init.
+    """Async context manager поверх **долгоживущего** S3-клиента.
 
-    Используется через :meth:`S3ObjectStorage._session`::
+    Используется через :meth:`S3ObjectStorage._open`::
 
-        async with storage._session() as s3:
+        async with storage._open() as s3:
             await s3.put_object(...)
 
-    На выходе из ``__aexit__`` корректно закрывает underlying client
-    (важно для hot-path: idle connection leak prevention).
+    В отличие от прежней реализации (клиент создавался и закрывался на каждую
+    операцию), здесь клиент создаётся один раз и переиспользуется — иначе
+    ``max_pool_connections`` не даёт эффекта, а каждое обращение платит полный
+    TCP+TLS handshake.
+
+    Закрытие клиента — **не** здесь: клиент живёт вместе с инстансом
+    хранилища и закрывается через :meth:`S3ObjectStorage.aclose`.
     """
 
     def __init__(self, storage: S3ObjectStorage) -> None:
         self._storage = storage
-        self._cm: Any = None
-        self._s3: Any = None
 
     async def __aenter__(self) -> Any:
-        self._cm = self._storage._session.client(**self._storage._client_kwargs)
-        self._s3 = await self._cm.__aenter__()
-        try:
-            await self._storage._ensure_bucket(self._s3)
-        except BaseException:
-            await self._cm.__aexit__(None, None, None)
-            self._cm = None
-            self._s3 = None
-            raise
-        return self._s3
+        return await self._storage._get_client()
 
     async def __aexit__(self, exc_type: object, exc: object, tb: object) -> None:
-        if self._cm is not None:
-            try:
-                await self._cm.__aexit__(exc_type, exc, tb)
-            finally:
-                self._cm = None
-                self._s3 = None
+        # Клиент долгоживущий — закрывать его здесь нельзя. Но если операция
+        # упала с транспортным сбросом, клиент помечается stale: следующая
+        # операция поднимет новый (старый пул уже мёртв).
+        if exc is not None and _is_transport_error(exc):  # type: ignore[arg-type]
+            await self._storage._invalidate_client()
+        return None
 
 
 # ── public class ─────────────────────────────────────────────────────────
@@ -110,8 +135,10 @@ class S3ObjectStorage(ObjectStorage):
             ``None`` → ``settings.key_prefix``.
 
     Используется как singleton (через :func:`get_object_storage` фабрику).
-    Соединение устанавливается на каждую операцию (aioboto3 contract);
-    для высокочастотных сценариев — ``S3Client`` с persistent pool.
+    Клиент долгоживущий (цикл 172, HIGH-01): создаётся лениво при первой
+    операции, переиспользуется между операциями — иначе
+    ``max_pool_connections`` не даёт эффекта и каждое обращение платит полный
+    TCP+TLS handshake — и закрывается явно через :meth:`aclose` на shutdown.
     """
 
     def __init__(
@@ -122,9 +149,68 @@ class S3ObjectStorage(ObjectStorage):
         self._prefix = (
             key_prefix if key_prefix is not None else settings.key_prefix
         ).rstrip("/")
-        self._session = _import_aioboto3().Session()
+        self._session = _import_aiobotocore()()
         self._bucket_ready: bool = False
         self.logger = get_logger(__name__)
+        # Долгоживущий клиент (цикл 172, HIGH-01). Создаётся лениво при
+        # первой операции и закрывается явно через aclose().
+        self._client: Any = None
+        self._client_cm: Any = None
+        self._client_lock = asyncio.Lock()
+
+    # ── client lifecycle ──────────────────────────────────────────────────
+
+    async def _get_client(self) -> Any:
+        """Вернуть долгоживущий S3-клиент, создав его при необходимости.
+
+        Создание защищено ``_client_lock``: конкурентные операции не должны
+        создать два клиента (и два пула соединений) параллельно.
+        """
+        if self._client is not None:
+            return self._client
+        async with self._client_lock:
+            if self._client is not None:
+                return self._client
+            cm = self._session.create_client(**self._client_kwargs)
+            client = await cm.__aenter__()
+            try:
+                await self._ensure_bucket(client)
+            except BaseException:
+                await cm.__aexit__(None, None, None)
+                raise
+            self._client_cm = cm
+            self._client = client
+            self.logger.debug(
+                "S3ObjectStorage: client created bucket=%s pool=%s",
+                self._bucket,
+                self._settings.max_pool_connections,
+            )
+            return client
+
+    async def _invalidate_client(self) -> None:
+        """Пометить текущий клиент как непригодный и закрыть его.
+
+        Вызывается при транспортном отказе: TCP/TLS-соединение может быть
+        разорвано, и следующая операция должна получить свежий клиент с новым
+        пулом, а не битый.
+        """
+        async with self._client_lock:
+            cm, self._client_cm = self._client_cm, None
+            self._client = None
+        if cm is not None:
+            try:
+                await cm.__aexit__(None, None, None)
+            except Exception as exc:  # noqa: BLE001 — закрытие не должно ронять вызывающего
+                self.logger.warning("S3ObjectStorage: client close failed: %s", exc)
+        self._bucket_ready = False
+
+    async def aclose(self) -> None:
+        """Закрыть долгоживущий клиент и освободить пул соединений.
+
+        Вызывается на shutdown приложения. После вызова следующая операция
+        lazily поднимет новый клиент.
+        """
+        await self._invalidate_client()
 
     # ── internal helpers ─────────────────────────────────────────────────
 
@@ -356,7 +442,7 @@ class S3ObjectStorage(ObjectStorage):
             # leak an in-flight multipart upload. Catch them BEFORE the OSError
             # branch (BaseException is parent), attempt abort, then re-raise
             # unchanged so the runtime/loop sees the original cancel signal.
-            except (asyncio.CancelledError, MemoryError):
+            except asyncio.CancelledError, MemoryError:
                 if upload_id is not None:
                     try:
                         await s3.abort_multipart_upload(
@@ -520,7 +606,7 @@ class S3ObjectStorage(ObjectStorage):
                     "S3ObjectStorage.presigned_url failed key=%s err=%s", full_key, exc
                 )
                 raise ServiceError(f"S3 presign failed: {exc}") from exc
-        # aioboto3 может вернуть корутину или строку в зависимости от версии
+        # aiobotocore может вернуть корутину или строку в зависимости от версии
         if hasattr(url, "__await__"):
             url = await url  # type: ignore[unreachable]
         return str(url)

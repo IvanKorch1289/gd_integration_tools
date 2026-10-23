@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import os
 import tempfile
+import types
 from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -279,34 +280,41 @@ class TestHttpSensor:
 # ── S3Sensor ────────────────────────────────────────────────────────
 
 
+def _patch_aiobotocore(monkeypatch, session_cls) -> None:
+    """Подменяет ``aiobotocore.get_session()`` на fake-сессию.
+
+    Cycle 172: S3Sensor переведён с ``aioboto3`` на ``aiobotocore``
+    (см. аудит CRITICAL-06). Тесты, которые раньше подменяли
+    ``sys.modules["aioboto3"]`` и ждали пропуска при его отсутствии,
+    теперь работают на реальной зависимости.
+    """
+    import sys
+
+    fake_module = types.ModuleType("aiobotocore")
+    fake_module.get_session = lambda: session_cls()  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "aiobotocore", fake_module)
+
+
 class TestS3Sensor:
-    def test_import_error_without_aioboto3(self, monkeypatch) -> None:
-        """Если aioboto3 не установлен, S3Sensor construction raises ImportError."""
+    def test_import_error_without_aiobotocore(self, monkeypatch) -> None:
+        """Если aiobotocore не установлен, S3Sensor construction raises ImportError."""
         import sys
 
-        monkeypatch.setitem(sys.modules, "aioboto3", None)  # type: ignore[arg-type]
-        with pytest.raises(ImportError, match="aioboto3"):
+        monkeypatch.setitem(sys.modules, "aiobotocore", None)  # type: ignore[arg-type]
+        monkeypatch.setitem(sys.modules, "aiobotocore.session", None)  # type: ignore[arg-type]
+        with pytest.raises(ImportError, match="aiobotocore"):
             S3Sensor(bucket="b", key="k")
 
-    def test_construction_with_aioboto3(self) -> None:
-        try:
-            import aioboto3  # noqa: F401 — availability probe (try/except ImportError guard)
-        except ImportError:
-            pytest.skip("aioboto3 not installed in this env")
+    def test_construction_with_aiobotocore(self) -> None:
         s = S3Sensor(bucket="my-bucket", key="path/to/file.json", region="eu-west-1")
         assert s._bucket == "my-bucket"
         assert s._key == "path/to/file.json"
         assert s._region == "eu-west-1"
 
     @pytest.mark.asyncio
-    async def test_match_when_object_exists_v2(self) -> None:
-        try:
-            import aioboto3  # noqa: F401 — availability probe (try/except ImportError guard)
-        except ImportError:
-            pytest.skip("aioboto3 not installed in this env")
+    async def test_match_when_object_exists_v2(self, monkeypatch) -> None:
         sensor = S3Sensor(bucket="b", key="k", poll_interval_s=0.5)
 
-        # Build a fake aioboto3 module with required symbols
         class FakeClient:
             async def head_object(self, **kwargs):
                 return {
@@ -321,24 +329,16 @@ class TestS3Sensor:
                 return None
 
         class FakeSession:
-            def client(self, *a, **kw):
+            def create_client(self, *a, **kw):
                 return FakeClient()
 
-        fake_mod = MagicMock()
-        fake_mod.Session = FakeSession
+        _patch_aiobotocore(monkeypatch, FakeSession)
 
-        with patch.dict("sys.modules", {"aioboto3": fake_mod}):
-            result = await sensor.watch(
-                trigger=_trigger(timeout_s=2.0, poll=0.5), input={}
-            )
+        result = await sensor.watch(trigger=_trigger(timeout_s=2.0, poll=0.5), input={})
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_404_timeout_v2(self) -> None:
-        try:
-            import aioboto3  # noqa: F401 — availability probe (try/except ImportError guard)
-        except ImportError:
-            pytest.skip("aioboto3 not installed in this env")
+    async def test_404_timeout_v2(self, monkeypatch) -> None:
         sensor = S3Sensor(bucket="b", key="missing", poll_interval_s=0.5)
 
         class FakeClient:
@@ -352,14 +352,10 @@ class TestS3Sensor:
                 return None
 
         class FakeSession:
-            def client(self, *a, **kw):
+            def create_client(self, *a, **kw):
                 return FakeClient()
 
-        fake_mod = MagicMock()
-        fake_mod.Session = FakeSession
+        _patch_aiobotocore(monkeypatch, FakeSession)
 
-        with patch.dict("sys.modules", {"aioboto3": fake_mod}):
-            result = await sensor.watch(
-                trigger=_trigger(timeout_s=0.1, poll=0.5), input={}
-            )
+        result = await sensor.watch(trigger=_trigger(timeout_s=0.1, poll=0.5), input={})
         assert result is False

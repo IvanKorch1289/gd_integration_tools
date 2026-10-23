@@ -29,8 +29,8 @@ from src.backend.core.logging import get_logger
 from src.backend.core.net import OutboundHttpClient
 from src.backend.core.orchestration.sensor import Sensor, SensorTrigger
 
-# S3 sensor uses aioboto3 (user-approved dep, install via `uv pip install aioboto3`).
-# Lazy import: S3Sensor construction fails with ImportError if aioboto3 not installed,
+# S3 sensor uses aiobotocore (declared dep in pyproject).
+# Lazy import: S3Sensor construction fails with ImportError if aiobotocore not installed,
 # so the rest of the module works on light installs.
 
 __all__ = (
@@ -353,8 +353,8 @@ class S3Sensor:
         poll_interval_s: interval between polls (default 30.0).
 
     Raises:
-        ImportError: если ``aioboto3`` не установлен.
-            Установка: ``uv pip install aioboto3``.
+        ImportError: если ``aiobotocore`` не установлен.
+            Установка: ``uv pip install aiobotocore``.
 
     """
 
@@ -370,10 +370,10 @@ class S3Sensor:
         poll_interval_s: float = 30.0,
     ) -> None:
         try:
-            import aioboto3
+            import aiobotocore  # noqa: F401
         except ImportError as e:
             raise ImportError(
-                "S3Sensor requires aioboto3. Install: uv pip install aioboto3"
+                "S3Sensor requires aiobotocore. Install: uv pip install aiobotocore"
             ) from e
         self._bucket = bucket
         self._key = key
@@ -392,7 +392,7 @@ class S3Sensor:
     ) -> bool:
         """Поллит S3 object до его появления (head_object 200).
 
-        Apache Airflow S3KeySensor analogue (async через aioboto3). На каждой
+        Apache Airflow S3KeySensor analogue (async через aiobotocore). На каждой
         итерации делает ``head_object``, проверяет 200. 404 — ожидаемое
         состояние (waiting), другие ошибки — warning. Exponential backoff.
         При timeout возвращает ``False``.
@@ -406,18 +406,18 @@ class S3Sensor:
             ``True`` при появлении объекта, ``False`` при timeout.
 
         """
-        import aioboto3
+        import aiobotocore
 
         start = time.monotonic()
         timeout_s = trigger.timeout.total_seconds() if trigger.timeout else None
         attempt = 0
         _log.info("S3Sensor: polling s3://%s/%s", self._bucket, self._key)
 
-        session = aioboto3.Session()
+        session = aiobotocore.get_session()
         while True:
             attempt += 1
             try:
-                async with session.client(
+                async with session.create_client(
                     "s3",
                     aws_access_key_id=self._aws_access_key_id,
                     aws_secret_access_key=self._aws_secret_access_key,

@@ -134,11 +134,11 @@ def get_object_storage() -> ObjectStorage:
 
     * ``"local"`` → :class:`LocalFSStorage` (bare, без wrapper).
     * любой другой (``"s3"`` / ``"minio"`` / ``"aws"``) →
-      :class:`S3ObjectStorage` поверх aioboto3, **wrapped в
+      :class:`S3ObjectStorage` поверх aiobotocore, **wrapped в
       :class:`FallbackObjectStorage` с LocalFS secondary** (S131 W1).
       Runtime try-S3-then-fallback per
       ``resilience.fallbacks.minio: {chain: ["local_fs"]}`` (W26).
-      При отсутствии aioboto3 или ошибке инициализации — fallback
+      При отсутствии aiobotocore или ошибке инициализации — fallback
       на bare LocalFS с warning (чтобы dev_light не падал на свежей
       инсталляции без [sources-cdc]).
 
@@ -181,7 +181,7 @@ def get_object_storage() -> ObjectStorage:
                 logger.warning(msg, provider)
     except ImportError as exc:
         logger.warning(
-            "ObjectStorage provider=%r требует aioboto3 (S61 W1, install "
+            "ObjectStorage provider=%r требует aiobotocore (S61 W1, install "
             "[sources-cdc]); fallback на LocalFS. cause=%s",
             provider,
             exc,

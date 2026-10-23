@@ -150,3 +150,14 @@ class TenantObjectStorage(ObjectStorage):
     def supports_presigned(self) -> bool:
         """Делегирует capability underlying backend'у."""
         return self._wrapped.supports_presigned()
+
+    async def aclose(self) -> None:
+        """Закрыть долгоживущий клиент underlying backend'а (cycle 172, HIGH-01).
+
+        Проброс выполняется по всей цепочке обёрток: S3-клиент держит пул
+        соединений, и без явного закрытия сокеты остаются жить до конца
+        процесса.
+        """
+        aclose = getattr(self._wrapped, "aclose", None)
+        if aclose is not None:
+            await aclose()

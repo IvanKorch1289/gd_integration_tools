@@ -1,9 +1,9 @@
 """Unit-тесты ``S3ObjectStorage`` через ``moto.server.ThreadedMotoServer``.
 
 Использует standalone moto HTTP-сервер (real S3 wire protocol),
-aioboto3 совместим с ним нативно. ``mock_aws`` decorator у aioboto3
-не работает (incompatible response body types в moto 5.2 + aiobotocore
-2.25), поэтому server-side mocking.
+aiobotocore совместим с ним нативно. ``mock_aws`` decorator не работает
+(incompatible response body types в moto 5.2 + aiobotocore), поэтому
+server-side mocking.
 
 Покрывает:
 
@@ -15,7 +15,8 @@ aioboto3 совместим с ним нативно. ``mock_aws`` decorator у 
 * ``presigned_url`` возвращает строку с подписью;
 * path-traversal (``..``, абсолютные, пустые) → ``ValueError``;
 * ``healthcheck`` → True на живой bucket;
-* ``ServiceError`` оборачивает boto-исключения.
+* ``ServiceError`` оборачивает boto-исключения;
+* переиспользование долгоживущего клиента между операциями (cycle 172, HIGH-01).
 """
 
 # assert — стандартная идиома pytest
@@ -31,16 +32,13 @@ import pytest
 pytest.importorskip(
     "moto", reason="moto not in test deps; S124 W2 honest skip (TD-0244)"
 )
-# Cycle 171 (Wave 0): moto восстановлен в extra `test-core`, но `aioboto3`
-# по-прежнему не объявлен — aiobotocore (его транзитивная зависимость) пинит
-# boto3/botocore на узкие диапазоны и несовместим с зафиксированными в
-# uv.lock boto3/botocore 1.43.75. Пока конфликт не разрешён, S3Backend не
-# собирается, поэтому тесты честно скипаются, а не падают с ImportError.
-# См. artifacts/current_audit/S3_CACHE_LOGGING_AUDIT_2026-10-21.md (CRITICAL-05).
+# Cycle 172 (CRITICAL-06): aioboto3 заменён на aiobotocore — весь релизный ряд
+# aioboto3 жёстко пинит aiobotocore==2.x → botocore<1.40.62, что несовместимо
+# с зафиксированным botocore 1.43.75. aiobotocore 3.9.1 совместим и объявлен
+# прямой зависимостью (pyproject.toml).
+# См. artifacts/current_audit/S3_CACHE_DB_FS_LOGGING_AUDIT_2026-10-22.md.
 pytest.importorskip(
-    "aioboto3",
-    reason="aioboto3 undeclared: aiobotocore pins boto3/botocore incompatible "
-    "with uv.lock 1.43.75 (audit 2026-10-21, CRITICAL-05)",
+    "aiobotocore", reason="aiobotocore not installed — S3 backend requires it"
 )
 
 from moto.server import ThreadedMotoServer
@@ -225,7 +223,11 @@ def test_supports_presigned_true(storage: S3ObjectStorage) -> None:
 async def test_healthcheck_true_when_bucket_accessible(
     storage: S3ObjectStorage,
 ) -> None:
-    assert await storage.healthcheck() is True
+    # Cycle 172: тест был написан против несуществующего ``healthcheck()`` и
+    # потому 100% скипался — дефект был невидим. Реальный контракт —
+    # ``health()`` → ``HealthResult`` (см. ``HealthCheckable``).
+    result = await storage.health()
+    assert result.status == "ok"
 
 
 # ── key safety ──────────────────────────────────────────────────────────
@@ -271,7 +273,13 @@ async def test_key_with_double_slash_rejected(storage: S3ObjectStorage) -> None:
 
 
 async def test_factory_uses_s3_when_provider_not_local(moto_server: Any) -> None:
-    """``get_object_storage`` возвращает ``S3ObjectStorage`` при provider=s3."""
+    """``get_object_storage`` возвращает S3-цепочку при provider != local.
+
+    Cycle 172: утверждение было написано против ``S3ObjectStorage`` напрямую,
+    но с cycle 171 (CRITICAL-03) фабрика оборачивает цепочку в
+    ``TenantObjectStorage(FallbackObjectStorage(S3, LocalFS))``. Тест 100%
+    скипался, поэтому устарел незамеченным.
+    """
     from src.backend.infrastructure.storage import factory
 
     factory.get_object_storage.cache_clear()
@@ -280,10 +288,17 @@ async def test_factory_uses_s3_when_provider_not_local(moto_server: Any) -> None
             "src.backend.core.config.settings.settings.storage.provider", "minio"
         )
         store = factory.get_object_storage()
-        assert isinstance(store, S3ObjectStorage)
+
+        # Разворачиваем обёртки до S3-первичного backend'а.
+        inner = store
+        while not isinstance(inner, S3ObjectStorage):
+            inner = getattr(inner, "_wrapped", None) or getattr(inner, "_primary", None)
+            assert inner is not None, "S3 не найден в цепочке фабрики"
+
+        assert isinstance(inner, S3ObjectStorage)
         # factory хранит настройки из fs_settings (module-level);
         # bucket реально существует, даже если endpoint = production
-        assert store._bucket  # type: ignore[attr-defined]
+        assert inner._bucket  # type: ignore[attr-defined]
     factory.get_object_storage.cache_clear()
 
 
@@ -302,3 +317,79 @@ async def test_factory_returns_local_when_provider_local() -> None:
     assert isinstance(store, LocalFSStorage)
     factory.get_object_storage.cache_clear()
     factory.get_local_fs_storage.cache_clear()
+
+
+# ── долгоживущий клиент (cycle 172, HIGH-01) ────────────────────────────
+
+
+async def test_client_is_reused_across_operations(storage: S3ObjectStorage) -> None:
+    """Клиент создаётся один раз и переиспользуется между операциями.
+
+    До cycle 172 клиент создавался и закрывался на каждую операцию, поэтому
+    ``max_pool_connections`` применялся к пулу, который умирал сразу, а
+    каждое обращение платило полный TCP+TLS handshake.
+    """
+    await storage.upload("reuse/a.txt", b"x")
+    first = storage._client
+    assert first is not None, "клиент должен быть создан после первой операции"
+
+    await storage.upload("reuse/b.txt", b"y")
+    await storage.download("reuse/a.txt")
+    await storage.exists("reuse/b.txt")
+
+    assert storage._client is first, "клиент не должен пересоздаваться"
+    assert await storage._get_client() is first
+
+
+async def test_operations_reuse_single_http_session(
+    storage: S3ObjectStorage, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """N операций → одна HTTP-сессия с одним пулом (доказательство HIGH-01).
+
+    В aiobotocore пул соединений живёт в ``aiohttp.ClientSession``, а она
+    создаётся **на клиента**. До cycle 172 клиент создавался на каждую
+    операцию — то есть на каждую операцию создавался свой ``ClientSession``
+    со своим ``TCPConnector`` и пулом, и ``max_pool_connections`` был
+    мёртвой настройкой.
+
+    Почему не считаем TCP-соединения: ``moto`` отвечает
+    ``Connection: close`` на каждый запрос, поэтому keep-alive на его стороне
+    невозможен независимо от клиента. Проверяем то, что реально контролирует
+    клиент: количество сессий и размер пула.
+    """
+    import aiohttp
+
+    created: list[aiohttp.ClientSession] = []
+    original_init = aiohttp.ClientSession.__init__
+
+    def counting_init(self: aiohttp.ClientSession, *args: Any, **kwargs: Any) -> None:
+        original_init(self, *args, **kwargs)
+        created.append(self)
+
+    monkeypatch.setattr(aiohttp.ClientSession, "__init__", counting_init)
+
+    for idx in range(5):
+        await storage.upload(f"pool/{idx}.txt", b"x")
+
+    assert len(created) == 1, (
+        f"ожидалась 1 HTTP-сессия на 5 операций, получено {len(created)}"
+    )
+    connector = created[0].connector
+    assert connector.limit == storage._settings.max_pool_connections, (
+        f"размер пула {connector.limit} != max_pool_connections "
+        f"{storage._settings.max_pool_connections}"
+    )
+
+
+async def test_aclose_releases_client(storage: S3ObjectStorage) -> None:
+    """``aclose()`` закрывает клиент; следующая операция поднимает новый."""
+    await storage.upload("close/a.txt", b"x")
+    first = storage._client
+    assert first is not None
+
+    await storage.aclose()
+    assert storage._client is None, "aclose() обязан освободить клиент"
+
+    await storage.upload("close/b.txt", b"y")
+    assert storage._client is not None
+    assert storage._client is not first, "после aclose ожидается новый клиент"

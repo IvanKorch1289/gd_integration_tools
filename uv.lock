@@ -2687,6 +2687,7 @@ version = "0.20.0"
 source = { editable = "." }
 dependencies = [
     { name = "aio-pika", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "aiobotocore", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "aiofiles", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "aioimaplib", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "aiokafka", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -2699,6 +2700,7 @@ dependencies = [
     { name = "asgi-idempotency-header", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "asyncpg", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "beautifulsoup4", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "botocore", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "cachetools", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "casbin", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "click", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
@@ -3046,6 +3048,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aio-pika", specifier = ">=9.5.5,<10.0.0" },
+    { name = "aiobotocore", specifier = ">=3.9.1,<4.0.0" },
     { name = "aiocache", marker = "extra == 'caching'", specifier = ">=0.12.3" },
     { name = "aiofiles", specifier = ">=24.1.0,<26.0.0" },
     { name = "aioimaplib", specifier = ">=1.0.0,<3.0.0" },
@@ -3071,6 +3074,7 @@ requires-dist = [
     { name = "asgi-idempotency-header", specifier = ">=0.2.0,<1.0.0" },
     { name = "asyncpg", specifier = ">=0.31.0,<1.0.0" },
     { name = "beautifulsoup4", specifier = ">=4.12.3,<5.0.0" },
+    { name = "botocore", specifier = ">=1.43.66,<1.43.76" },
     { name = "brotli", marker = "extra == 'compression'", specifier = ">=1.1.0,<2.0.0" },
     { name = "cachetools", specifier = ">=5.3.0,<8.0.0" },
     { name = "casbin", specifier = ">=1.36.0,<2.0.0" },

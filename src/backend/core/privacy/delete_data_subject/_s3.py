@@ -3,9 +3,9 @@
 W9 P2-13 Phase 3 (cycle 153): извлечено из ``core/privacy/delete_data_subject.py``
 (691 LOC god-module).
 
-Требует ``aioboto3`` или ``boto3``. Если lib не установлена, adapter
+Требует ``aiobotocore``. Если lib не установлена, adapter
 возвращает SKIPPED с reason (production deployment должен иметь
-``pip install aioboto3``).
+``pip install aiobotocore``).
 
 Back-compat: ``core/privacy/delete_data_subject.py`` продолжает re-export
 ``S3ErasureAdapter`` через thin ``__init__.py`` shim (см. ADR-0328).
@@ -76,17 +76,19 @@ class S3ErasureAdapter:
                 )
 
             try:
-                from aioboto3 import Session  # type: ignore[import-not-found]
+                from aiobotocore.session import (  # type: ignore[import-not-found]
+                    get_session,
+                )
             except ImportError:
                 return AdapterResult(
                     adapter_name=self.name,
                     status=ErasureResultStatus.SKIPPED,
                     duration_ms=(time.monotonic() - start) * 1000,
-                    error="aioboto3 not installed — pip install aioboto3",
+                    error="aiobotocore not installed — pip install aiobotocore",
                 )
 
-            session = Session()
-            async with session.client("s3") as s3:
+            session = get_session()
+            async with session.create_client("s3") as s3:
                 # List objects matching tenant+subject prefix.
                 # Per ADR-0345: tenants/{tenant_id}/{subject_type}/{subject_id}/
                 prefix = f"tenants/{resolved_tenant_id}/{subject_type}/{subject_id}/"

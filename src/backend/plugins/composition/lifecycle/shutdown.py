@@ -157,6 +157,21 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
             exc_info=True,
         )
 
+    # ── 8b. ObjectStorage: закрыть долгоживущий S3-клиент ──
+    # Cycle 172 (HIGH-01): S3-клиент теперь долгоживущий (пул соединений
+    # переиспользуется между операциями), поэтому его нужно закрыть явно —
+    # иначе пул держит сокеты до принудительного завершения процесса.
+    try:
+        from src.backend.infrastructure.storage.factory import get_object_storage
+
+        store = get_object_storage()
+        aclose = getattr(store, "aclose", None)
+        if aclose is not None:
+            await aclose()
+            _logger.debug("ObjectStorage client closed")
+    except Exception as storage_exc:
+        _logger.warning("ObjectStorage shutdown error: %s", storage_exc)
+
     _logger.info("Приложение остановлено")
 
     # ── 9. LogSink final flush + close ──

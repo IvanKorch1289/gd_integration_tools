@@ -374,7 +374,7 @@ class SourcesEIPsMixin(EIPMixinBase):
         Apache Airflow S3KeySensor analogue. Polls S3 head_object до match.
         При match → dsl_service.dispatch.
 
-        Требует ``aioboto3``: ``uv pip install aioboto3``.
+        Требует ``aiobotocore``: ``uv pip install aiobotocore``.
         Raises ImportError при construction если не установлен.
         """
         from src.backend.core.orchestration.airflow_sensors import S3Sensor
