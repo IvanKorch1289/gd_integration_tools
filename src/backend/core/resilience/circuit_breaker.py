@@ -19,6 +19,7 @@ S173 M2.4: реализованы обёртки:
 from __future__ import annotations
 
 import importlib.util
+import sys
 import time
 from collections import deque
 from collections.abc import AsyncIterator
@@ -29,7 +30,18 @@ from typing import Final, Protocol, runtime_checkable
 
 # Probe without importing the optional package or binding its concrete types;
 # the canonical breaker implementation owns all actual purgatory interactions.
-HAS_PURGATORY: Final = importlib.util.find_spec("purgatory") is not None
+#
+# Cycle 172: ``importlib.util.find_spec`` бросает ``ValueError``, если модуль
+# уже лежит в ``sys.modules``, но его ``__spec__`` не установлен (например,
+# на время теста пакет подменён double'ом). Из-за этого импорт
+# ``core.resilience.circuit_breaker`` падал, а вместе с ним — сбор всего
+# дерева тестов, импортирующих этот модуль после подмены.
+try:
+    HAS_PURGATORY: Final = importlib.util.find_spec("purgatory") is not None
+except (ImportError, ValueError):
+    # Пакет либо отсутствует, либо уже импортирован как подмена — в обоих
+    # случаях считаем его доступным и полагаемся на реальный импорт ниже.
+    HAS_PURGATORY = "purgatory" in sys.modules
 
 
 # ────────────────── Minimal contract (для RPA / non-purgatory consumers) ───

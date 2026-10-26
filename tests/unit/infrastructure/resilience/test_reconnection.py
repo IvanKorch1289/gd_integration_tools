@@ -18,6 +18,29 @@ import pytest
 
 # purgatory / tenacity могут отсутствовать в окружении unit-тестов;
 # подменяем модули до импорта resilience-пакета.
+#
+# Cycle 172: прежняя подмена оставалась в ``sys.modules`` навсегда, и
+# ``importlib.util.find_spec("purgatory")`` в
+# ``core.resilience.circuit_breaker`` падал с
+# ``ValueError: purgatory.__spec__ is not set`` — из-за этого сбор всего
+# дерева ``tests/unit/core/`` падал, если он шёл после
+# ``tests/unit/infrastructure/``. Теперь исходные модули восстанавливаются
+# на завершении сессии.
+_STUBBED_MODULE_NAMES = (
+    "purgatory",
+    "purgatory.domain",
+    "purgatory.domain.messages",
+    "purgatory.domain.messages.base",
+    "purgatory.domain.messages.events",
+    "purgatory.domain.model",
+    "tenacity",
+    "prometheus_client",
+)
+
+_ORIGINAL_MODULES: dict[str, object] = {
+    name: sys.modules.get(name) for name in _STUBBED_MODULE_NAMES
+}
+
 _purgatory = MagicMock()
 sys.modules["purgatory"] = _purgatory
 sys.modules["purgatory.domain"] = MagicMock()
@@ -39,6 +62,15 @@ from src.backend.infrastructure.resilience.reconnection import (
     ReconnectN,
     build,
 )
+
+# ``reconnection`` уже захватил ссылки на подменённые модули — возвращаем
+# ``sys.modules`` в исходное состояние, чтобы подмена не утекала в другие
+# тесты (см. комментарий к ``_ORIGINAL_MODULES`` выше).
+for _name, _original in _ORIGINAL_MODULES.items():
+    if _original is None:
+        sys.modules.pop(_name, None)
+    else:
+        sys.modules[_name] = _original
 
 
 @pytest.fixture(autouse=True)

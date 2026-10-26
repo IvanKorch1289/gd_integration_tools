@@ -12,10 +12,22 @@ from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.core.resilience.retry import retry_async
 from src.backend.core.tenancy.sqlalchemy_filter import apply_tenant_filter
-from src.backend.infrastructure.database.database import (
-    get_db_initializer,
-    get_external_db_registry,
-)
+
+# Cycle 172 (Wave 4.3): ``get_external_db_registry`` импортируется
+# напрямую, поэтому ``patch("...session_manager.get_external_db_registry")``
+# в тестах бьёт по **другому** объекту модуля, если ``sys.modules`` был
+# перезаполнен (outbox-тесты подменяют session_manager заглушкой, а
+# ``tests/unit/conftest.py`` вычищает её на ``pytest_collectstart``).
+# В итоге патч не срабатывал, и тест падал на реальном
+# ``settings.external_databases.profiles`` — который требует
+# EXT_DB_<PROFILE>_USERNAME в env.
+#
+# Решение — тот же module-level lookup, что в ``accessors.py`` (S145 W3):
+# обращаемся к атрибуту пакета в момент вызова, а не к локальной ссылке.
+# Тест тогда может подменить пакетный экспорт, и он гарантированно
+# подхватится независимо от того, какой объект модуля лежит в sys.modules.
+from src.backend.infrastructure.database import database as _database_pkg
+from src.backend.infrastructure.database.database import get_db_initializer
 
 db_logger = get_logger("database")
 
@@ -167,17 +179,35 @@ class DatabaseSessionManager:
     ) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
         """Декоратор сервисного метода.
 
-        Поведение сохраняется прежним:
+        Поведение:
         - в метод пробрасывается `session=...`;
         - при ошибке выполняется rollback;
         - при `commit=True` выполняется commit.
 
         Параметр `isolation_level` сохранён для обратной совместимости.
+
+        Cycle 172 (CRITICAL-13): если вызывающий код **передал** сессию
+        явно (``method(session=my_session, ...)``), декоратор использует её
+        и не управляет её lifecycle — commit/rollback остаются на вызывающем.
+
+        Раньше декоратор всегда подставлял свою сессию поверх переданной:
+        ``method(*args, session=session, **kwargs)`` давало
+        ``TypeError: got multiple values for keyword argument 'session'``.
+        На этом падали три метода ``SQLAlchemyRepository`` — ``get_all_versions``,
+        ``get_latest_version`` (через ``main_class.get(session=...)``) и
+        ``restore_to_version`` (через ``self.update(session=...)``).
+        То есть весь versioning-контур репозитория был неработоспособен.
         """
 
         def decorator(method: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
             @wraps(method)
             async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+                # Сессия, переданная вызывающим: используем её as-is.
+                provided_session = kwargs.get("session")
+                if provided_session is not None:
+                    kwargs.pop("session")
+                    return await method(*args, session=provided_session, **kwargs)  # type: ignore[arg-type]
+
                 # Cycle 172 (HIGH-11): breaker'а оборачивал только
                 # ``create_session()``. Все 11 методов ``SQLAlchemyRepository``
                 # идут через этот декоратор, а не через ``create_session()``,
@@ -243,7 +273,7 @@ def get_external_session_manager(profile_name: str) -> DatabaseSessionManager:
     счётчики отказов обнулялись, и breaker не накапливал историю сбоев.
     Теперь внешние менеджеры кэшируются по имени профиля.
     """
-    initializer = get_external_db_registry().get_initializer(profile_name)
+    initializer = _database_pkg.get_external_db_registry().get_initializer(profile_name)
 
     return DatabaseSessionManager(
         session_maker=initializer.async_session_maker, db_name=profile_name

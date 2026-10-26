@@ -380,17 +380,35 @@ def test_external_session_manager_is_cached() -> None:
     Раньше каждый вызов создавал новый менеджер, а значит — новый breaker
     в общем реестре: счётчики отказов обнулялись и breaker не накапливал
     историю сбоев.
+
+    Cycle 172 (Wave 4.3): патчится **пакетный** экспорт
+    ``src.backend.infrastructure.database.database.get_external_db_registry``,
+    а не ``session_manager.get_external_db_registry``. Прямой импорт
+    привязывал функцию к конкретному объекту модуля, и в батчевом прогоне
+    (outbox-тесты подменяют ``sys.modules["...session_manager"]`` заглушкой,
+    conftest вычищает её на ``pytest_collectstart``) патч попадал в другой
+    объект модуля. Тест уходил в реальный
+    ``settings.external_databases.profiles`` и падал с
+    ``ValueError: Не найден username для внешней БД 'oracle_1'``.
+
+    Дополнительно сбрасывается ``lru_cache`` менеджера: иначе значение,
+    посчитанное предыдущим тестом батча, возвращалось бы из кэша и
+    проверка кэширования становилась бы ложной.
     """
     from unittest.mock import MagicMock, patch
 
-    with patch(
-        "src.backend.infrastructure.database.session_manager.get_external_db_registry"
-    ) as registry:
-        initializer = MagicMock()
-        initializer.async_session_maker = MagicMock()
-        registry.return_value.get_initializer.return_value = initializer
+    get_external_session_manager.cache_clear()
+    try:
+        with patch(
+            "src.backend.infrastructure.database.database.get_external_db_registry"
+        ) as registry:
+            initializer = MagicMock()
+            initializer.async_session_maker = MagicMock()
+            registry.return_value.get_initializer.return_value = initializer
 
-        first = get_external_session_manager("probe-profile")
-        second = get_external_session_manager("probe-profile")
+            first = get_external_session_manager("probe-profile")
+            second = get_external_session_manager("probe-profile")
 
-        assert first is second, "менеджер внешней БД должен кэшироваться"
+            assert first is second, "менеджер внешней БД должен кэшироваться"
+    finally:
+        get_external_session_manager.cache_clear()

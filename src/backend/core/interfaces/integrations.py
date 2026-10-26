@@ -34,7 +34,7 @@ Wave 6.4: создано для устранения layer-violations в
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
 from contextlib import AbstractAsyncContextManager as AsyncContextManager
 from typing import Any, Protocol, runtime_checkable
 
@@ -254,10 +254,38 @@ class ExternalSessionManagerProtocol(Protocol):
     """Контракт менеджера сессий внешней БД (read-only / RPC).
 
     Реализация: ``infrastructure.database.session_manager.DatabaseSessionManager``.
+
+    Cycle 172 (Wave 4.2): протокол объявлял **только** ``create_session()``,
+    хотя реализация даёт заметно больше, и эти методы реально
+    используются внешним контуром:
+
+    * ``transaction`` — commit/rollback вокруг блока;
+    * ``connection`` — декоратор, открывающий сессию на время вызова;
+    * ``get_session`` — dependency-совместимый генератор сессии;
+    * ``get_transaction_session`` — то же с транзакцией.
+
+    Без их объявления потребители протокола обращались к недекларированной
+    поверхности, а mypy не мог проверить контракт.
     """
 
     def create_session(self) -> AsyncContextManager[Any]:
         """Возвращает async context manager с SQLAlchemy ``AsyncSession``."""
+        ...
+
+    def transaction(self, session: Any) -> AsyncContextManager[Any]:
+        """Оборачивает переданную сессию в commit/rollback-контекст."""
+        ...
+
+    def connection(self, *args: Any, **kwargs: Any) -> Any:
+        """Декоратор, пробрасывающий в метод ``session=...``."""
+        ...
+
+    def get_session(self) -> AsyncGenerator[Any]:
+        """Dependency-совместимый генератор сессии без auto-commit."""
+        ...
+
+    def get_transaction_session(self) -> AsyncGenerator[Any]:
+        """Dependency-совместимый генератор транзакционной сессии."""
         ...
 
 

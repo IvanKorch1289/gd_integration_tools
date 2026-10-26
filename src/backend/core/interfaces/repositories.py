@@ -53,6 +53,33 @@ class RepositoryProtocol(Protocol):
         """Получить первую/последнюю запись (сортировка по PK)."""
         ...
 
+    async def get_paginated(self, *args: Any, **kwargs: Any) -> Any:
+        """Получить страницу записей с пагинацией.
+
+        Cycle 172 (Wave 4.1): метод отсутствовал в протоколе, хотя
+        ``services/core/base/crud_mixin.py`` вызывает
+        ``self.repo.get_paginated(...)`` — сервисный слой зависел от
+        недекларированной поверхности.
+        """
+        ...
+
+    async def count(self, *args: Any, **kwargs: Any) -> Any:
+        """Получить количество записей в таблице.
+
+        Cycle 172 (Wave 4.1): отсутствовал в протоколе, хотя
+        реализация ``SQLAlchemyRepository.count`` существует и является
+        частью публичной поверхности репозитория.
+        """
+        ...
+
+    async def bulk_create(self, *args: Any, **kwargs: Any) -> Any:
+        """Массово вставить записи одним INSERT.
+
+        Cycle 172 (Wave 4.1): отсутствовал в протоколе, хотя
+        ``SQLAlchemyRepository.bulk_create`` реализован.
+        """
+        ...
+
     async def get_all_versions(self, *args: Any, **kwargs: Any) -> Any:
         """Получить все версии сущности (versioning pattern)."""
         ...
