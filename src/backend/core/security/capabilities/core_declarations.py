@@ -95,6 +95,10 @@ CORE_CAPABILITIES: tuple[str, ...] = (
     "message.claim_check.store",
     "security.waf.check",
     "secret.read",
+    "web_search.perplexity.invoke",
+    "web_search.tavily.invoke",
+    "workflow.claim_check.store",
+    "workflow.continue_as_new.request",
     "workflow.convert.format",
     "workflow.subprocess.invoke",
     # RPA

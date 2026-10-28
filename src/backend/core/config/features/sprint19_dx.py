@@ -126,7 +126,9 @@ class Sprint19DXFlags(BaseSettings):
             "При True BrowserCookieStore (S21 W7) интегрируется в BrowserLaunchProcessor "
             "с lazy-restore. Redis-backed session-store key = tenant_id:session_id с cookies/auth/local-storage. "
             "TTL configurable. RPA-route routes/banking_legacy_session_demo/ как reference. "
-            "default-OFF до smoke-test session persistence after browser restart."
+            "NB: описание раньше утверждало «default-OFF до smoke-test session "
+            "persistence after browser restart», что противоречило фактическому "
+            "значению поля. Значение по умолчанию — ``True``."
         ),
     )
 

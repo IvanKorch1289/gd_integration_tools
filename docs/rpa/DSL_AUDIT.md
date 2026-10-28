@@ -1,61 +1,101 @@
-# DSL Audit — RPA/OCR/Archives/Hash/Search/Proxy/WAF/Antivirus (S171 M17.1)
+# DSL Audit — RPA / OCR / Archives / Hash / Search / Proxy / WAF / Antivirus
 
-## Audit summary
+> **Актуальность.** Документ приведён в соответствие с кодом в cycle 172
+> (ADR-0370). Capability-имена сверены с vocabulary
+> (`src/backend/core/security/capabilities/vocabulary/defaults/`),
+> список процессоров — с `src/backend/dsl/engine/processors/`.
+> Гейт актуальности — `tests/rpa/test_rpa_docs.py`.
 
-Все основные DSL-процессоры присутствуют в проекте.
-Аудит проведён по запросу: проверить DSL и наличие функций
-OCR/архивов/хэш-сумм/поиска в файлах/прокси/WAF/антивируса.
+## Существующие процессоры
 
-## ✅ Существующие processors
+| Категория | Файл | Процессор | Capability |
+|---|---|---|---|
+| **OCR** | `rpa/operations/imageocrprocessor.py` | `ImageOcrProcessor` (pytesseract) | `rpa.image.ocr` |
+| **OCR** | `ai_banking/document.py` | `DocumentClassifierProcessor`, `FrancotypingProcessor`, `TransactionCategorizerProcessor`, `FinDocOcrLlmProcessor` | нет (AI-контур) |
+| **OCR (helper)** | `rpa/pdf_extract.py` | `PdfExtractProcessor` | нет (standalone-helper) |
+| **Documents** | `rpa/documents.py` | `PdfReadProcessor` / `PdfMergeProcessor` / `WordReadProcessor` / `WordWriteProcessor` / `ExcelReadProcessor` | `rpa.pdf.read` / `rpa.pdf.merge` / `rpa.word.read` / `rpa.word.write` / `rpa.excel.read` |
+| **Documents (helper)** | `rpa/office_extract.py` | `OfficeExtractProcessor` | нет (standalone-helper) |
+| **Archives** | `rpa/operations/archiveprocessor.py` | `ArchiveProcessor` (zip/tar/gz) | `rpa.archive.execute` |
+| **Archives** | `zip_archive.py` | `ZipArchiveProcessor` | нет (legacy, без гейта) |
+| **Hash** | `rpa/operations/hashprocessor.py` | `HashProcessor` (md5/sha/blake) | `rpa.hash.compute` |
+| **Hash** | `webhook_signature.py` | `WebhookSignatureProcessor` (HMAC) | нет |
+| **Search** | `rpa/operations/regexprocessor.py` | `RegexProcessor` | `rpa.regex.execute` |
+| **Search** | `regex_extractor.py` | `RegexExtractorProcessor` | нет (legacy, без гейта) |
+| **Search** | `web_search.py` | `WebSearchProcessor` | нет (шейперы) |
+| **Search** | `streaming/windows.py` | `_BaseWindow` | нет |
+| **Proxy** | `proxy/forward.py` | `ForwardToProcessor` | нет |
+| **Proxy** | `proxy/redirect.py` | `RedirectProcessor` | нет |
+| **Proxy** | `proxy/expose.py` | `ExposeProxyProcessor` | нет |
+| **WAF** | `waf_check.py` | `WafCheckProcessor` (19 OWASP CRS-паттернов) | `security.waf.check` |
+| **Antivirus** | `scan_file.py` | `ScanFileProcessor` (ClamAV) | нет (гейта нет — owner-задача) |
+| **Detect** | `rpa/mime_detect.py` | `MimeDetectProcessor` (magic bytes) | нет (standalone-helper) |
+| **Detect** | `rpa/encoding_detect.py` | `EncodingDetectProcessor` | нет (standalone-helper) |
 
-| Категория | Файл | Status |
-|-----------|------|--------|
-| **OCR** | `dsl/engine/processors/rpa/operations/imageocrprocessor.py` | ✅ ImageOCRProcessor (pytesseract) |
-| **OCR** | `dsl/engine/processors/ai_banking/document.py` | ✅ DocumentProcessor (Pytesseract + presidio) |
-| **OCR** | `dsl/engine/processors/rpa/documents.py` | ✅ DocumentExtractProcessor |
-| **Archives** | `dsl/engine/processors/zip_archive.py` | ✅ ZipArchiveProcessor |
-| **Archives** | `dsl/engine/processors/rpa/operations/archiveprocessor.py` | ✅ ArchiveProcessor (zip/tar/gz) |
-| **Hash** | `dsl/engine/processors/rpa/operations/hashprocessor.py` | ✅ HashProcessor (md5/sha/blake) |
-| **Hash** | `dsl/engine/processors/webhook_signature.py` | ✅ WebhookSignature (HMAC) |
-| **Search** | `dsl/engine/processors/regex_extractor.py` | ✅ RegexExtractor |
-| **Search** | `dsl/engine/processors/web_search.py` | ✅ WebSearchProcessor |
-| **Search** | `dsl/engine/processors/business.py` | ✅ (text search) |
-| **Search** | `dsl/engine/processors/streaming/windows.py` | ✅ (windowed search) |
-| **Proxy** | `dsl/engine/processors/proxy/forward.py` | ✅ ProxyForwardProcessor |
-| **Proxy** | `dsl/engine/processors/proxy/redirect.py` | ✅ ProxyRedirectProcessor |
-| **Proxy** | `dsl/engine/processors/proxy/expose.py` | ✅ ProxyExposeProcessor |
-| **WAF** | `dsl/engine/processors/waf_check.py` | ✅ WafCheckProcessor (19 OWASP CRS patterns) |
-| **Antivirus** | `dsl/engine/processors/scan_file.py` | ✅ ScanFileProcessor (ClamAV) |
+> «нет» = у процессора не объявлен `required_capability`; capability-гейт
+> к нему не применяется. Это осознанный долг (ADR-0361/ADR-0366),
+> а не ошибка документации.
 
-## ❌ GAPS (для M18+)
+## GAPS (открытые)
 
-| Gap | Описание | Приоритет |
-|-----|----------|-----------|
-| `FileSearchProcessor` | Поиск подстроки/regex в файлах с фильтром по path | P2 (M18) |
-| `PdfExtractProcessor` | PDF text extraction (pypdf/pdfplumber) | P2 (M18) |
-| `OfficeExtractProcessor` | .docx/.xlsx extraction (python-docx/openpyxl) | P3 (M19) |
-| `MimeDetectProcessor` | MIME-type detection (magic bytes) | P3 (M19) |
-| `EncodingDetectProcessor` | Кодировка файла (chardet/charset-normalizer) | P3 (M19) |
+| Gap | Описание | Статус |
+|---|---|---|
+| `FileSearchProcessor` | Поиск подстроки/regex в файлах с фильтром по path | **P2 — открыт**: класса нет ни в одном модуле `src/backend`; guard `validate_path` есть, но подключать нечего |
+
+## Закрытые ранее пункты
+
+Были в GAPS-таблице S171 M17.1, с тех пор реализованы:
+
+| Бывший gap | Реализация |
+|---|---|
+| `PdfExtractProcessor` | `rpa/pdf_extract.py` (lazy pypdf) |
+| `OfficeExtractProcessor` | `rpa/office_extract.py` (python-docx / openpyxl) |
+| `MimeDetectProcessor` | `rpa/mime_detect.py` (magic bytes, stdlib-only) |
+| `EncodingDetectProcessor` | `rpa/encoding_detect.py` |
+
+> Все четыре — **standalone-helpers**, а не `BaseProcessor`: они не
+> регистрируются в `ProcessorRegistry` и недостижимы из YAML. При
+> подключении к DSL им нужен `required_capability` + регистрация.
+
+## Открытый долг вне GAPS-таблицы
+
+Capability-гейт не объявлен у legacy-процессоров proxy/antivirus и у
+части core-процессоров: `ForwardToProcessor`, `RedirectProcessor`,
+`ExposeProxyProcessor`, `ScanFileProcessor`, `ZipArchiveProcessor`,
+`RegexExtractorProcessor`, `WebhookSignatureProcessor`. Для них
+`required_capability` пуст — гейт не применяется. Это долг
+ADR-0361/ADR-0366 (fail-closed enforcement для baseline-набора), а не
+дефект документации.
 
 ## DSL capability taxonomy
 
+Реальные capability-имена (все — из vocabulary, 108 штук):
+
 ```python
-required_capability: str | None = "ocr.extract"  # OCR
-required_capability: str | None = "archive.extract"  # Archives
-required_capability: str | None = "fs.hash"  # Hash
-required_capability: str | None = "fs.search"  # Search
-required_capability: str | None = "proxy.invoke"  # Proxy
-required_capability: str | None = "security.waf.check"  # WAF (D207)
-required_capability: str | None = "security.antivirus.scan"  # Antivirus
+# RPA — файлы / документы / почта
+required_capability: str | None = "rpa.file.list"       # файловые операции
+required_capability: str | None = "rpa.pdf.read"        # документы
+required_capability: str | None = "rpa.email.read"       # почта
+
+# RPA — вычисления и интеграции
+required_capability: str | None = "rpa.hash.compute"     # хеши
+required_capability: str | None = "rpa.archive.execute"  # архивы
+required_capability: str | None = "rpa.regex.execute"    # поиск по тексту
+required_capability: str | None = "rpa.shell.exec"       # shell
+required_capability: str | None = "rpa.http.request"     # HTTP-интеграции
+
+# Ядро
+required_capability: str | None = "security.waf.check"   # WAF (D207)
+required_capability: str | None = "fs.read"              # файловая система ядра
 ```
 
-## Audit verdict
+Имена вида `ocr.extract`, `archive.extract`, `fs.hash`, `fs.search`,
+`proxy.invoke`, `security.antivirus.scan` **в vocabulary не существуют** —
+предыдущая версия этого документа ссылалась на выдуманные capability.
 
-**M17.1: 100% coverage по основным функциям.** Все процессоры
-OCR/archives/hash/search/proxy/WAF/antivirus реализованы и протестированы.
-GAPS (FileSearch, PdfExtract, etc.) — отдельный M18+ план.
+## Связанные документы
 
-Refs:
-- D198 (path convention: src/backend/*)
-- D207 (WAF DSL pattern)
-- M17.1 audit phase
+- `docs/rpa/RPA_GUIDE.md` — обзор RPA-подсистемы и capability-каталог;
+- ADR-0358 — path-allowlist;
+- ADR-0361 — семантика `required_capability`;
+- ADR-0366 — runtime-enforcement capability-гейта;
+- ADR-0370 — консолидация RPA-конфига и тестовая гигиена.

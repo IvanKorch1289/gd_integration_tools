@@ -1,12 +1,17 @@
 """RPA service settings (S164 W4).
 
 Centralizes RPA-related configuration:
-- Desktop RPA session pool (timeout, TTL, max sessions)
-- PlaywrightBrowserPool size + per-action settings
-- OCR backend settings (placeholder for future expansion)
+- PlaywrightBrowserPool size + browser-launch retry settings
 
 Pattern: ``MailSettings`` / ``WSSettings`` — BaseSettingsWithLoader +
 yaml_group + env_prefix.
+
+Cycle 172 (ADR-0370, решение D3): desktop-*, browser-viewport-*, ocr-*
+поля удалены — они не читались в рантайме, а ``extra="forbid"`` делал
+их источником риска падения старта (унаследованный ``RPA_*`` env).
+Параметры desktop-RPA pool'а задаются ctor-аргументами
+``DesktopRPASessionPool``; флаг OCR живёт в
+``feature_flags.rpa_ocr_enabled``.
 
 DSL override (per-route): ``route.toml::[transport] pool_size``,
 ``message_timeout_s``, etc. — реализуется через ``DslService.get_route_overrides``
@@ -30,9 +35,7 @@ class RPASettings(BaseSettingsWithLoader):
 
     Используются в:
         * ``entrypoints/websocket/ws_handler.py`` (PlaywrightBrowserPool)
-        * ``services/rpa/desktop_session_pool.py`` (DesktopRPASessionPool)
-        * ``services/rpa/desktop_rpa_client.py`` (DesktopRpaClient)
-        * ``services/rpa/ocr_processor.py`` (feature-flag fallback)
+        * ``services/rpa/browser_pool.py`` (pool size / headless / retry)
 
     Per-route override через ``route.toml::[transport]`` (S163 W17).
     """
@@ -40,52 +43,23 @@ class RPASettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "rpa"
     model_config = SettingsConfigDict(env_prefix="RPA_", extra="forbid")
 
-    # ── Desktop RPA session pool (windows-worker sidecar) ──────────
-
-    desktop_base_url: str | None = Field(
-        default=None,
-        description="URL windows-worker sidecar (``http://windows-worker:9001``).",
-    )
-    desktop_api_key: str | None = Field(
-        default=None,
-        description="API-key для аутентификации sidecar'а (X-API-Key header).",
-    )
-    desktop_timeout: float = Field(
-        default=30.0,
-        gt=0,
-        description="Connect+read timeout для DesktopRPA HTTP-запросов (seconds).",
-    )
-    desktop_ttl_seconds: float = Field(
-        default=1800.0,
-        gt=0,
-        description="Idle TTL для DesktopRPA session до закрытия (default 30min).",
-    )
-    desktop_max_sessions: int = Field(
-        default=16,
-        gt=0,
-        description="Upper limit для DesktopRPA session pool (per app_name).",
-    )
-
     # ── PlaywrightBrowserPool (anti-detection browser automation) ───
+    #
+    # Cycle 172 (ADR-0370, решение D3): desktop_* / browser_viewport_* /
+    # ocr_* / desktop_cb_* / desktop_retry_* удалены — ни одно из этих
+    # полей не читалось в рантайме (``grep`` по ``src/`` — 0 чтений),
+    # а ``extra="forbid"`` превращал их в риск падения старта при
+    # унаследованных ``RPA_*`` env-переменных. Параметры pool'а
+    # desktop-RPA живут в самом ``DesktopRPASessionPool`` (ctor-аргументы).
 
     browser_pool_size: int = Field(
         default=2,
         ge=1,
         description="Количество предсозданных Playwright contexts в pool.",
     )
-    browser_kind: str = Field(
-        default="chromium",
-        description="Browser engine: ``chromium`` / ``firefox`` / ``webkit``.",
-    )
     browser_headless: bool = Field(
         default=True,
         description="Run browser in headless mode (False для локальной отладки).",
-    )
-    browser_viewport_width: int = Field(
-        default=1280, gt=0, description="Browser viewport width (pixels)."
-    )
-    browser_viewport_height: int = Field(
-        default=720, gt=0, description="Browser viewport height (pixels)."
     )
     browser_launch_max_retries: int = Field(
         default=2,
@@ -110,25 +84,11 @@ class RPASettings(BaseSettingsWithLoader):
         ),
     )
 
-    # ── OCR backend (feature-flag gated) ─────────────────────────────
-
-    ocr_enabled: bool = Field(default=False)
-    ocr_default_lang: str = Field(
-        default="eng+rus",
-        description="Default Tesseract language code (``eng``, ``rus``, ``eng+rus``).",
-    )
-
     # ── Resilience defaults (apply unless overridden per-route) ────
-
-    desktop_cb_failure_threshold: int = Field(
-        default=5, gt=0, description="CB failure threshold для DesktopRpaClient/Pool."
-    )
-    desktop_cb_recovery_seconds: float = Field(
-        default=30.0, gt=0, description="CB recovery timeout (seconds)."
-    )
-    desktop_retry_max_attempts: int = Field(
-        default=3, gt=0, description="Max retry attempts для DesktopRpaClient.execute."
-    )
+    #
+    # Cycle 172 (ADR-0370): desktop_cb_* / desktop_retry_max_attempts
+    # удалены — не читались (0 чтений в ``src/``); пороги CB/retry
+    # задаются на уровне самого ``DesktopRPASessionPool``/``RPACallPolicy``.
 
 
 # Singleton per pattern (ws_settings, cache_settings, etc.).

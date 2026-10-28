@@ -197,3 +197,93 @@ class TestSaveAndRestore:
             tenant_id="t1", user_id="u1", domain="d1", cookies=cookies
         )
         assert redis.set.await_count == first_write_count + 1
+
+
+class _InMemoryRedis:
+    """Минимальный Redis-клсс: хранит значения и TTL."""
+
+    def __init__(self) -> None:
+        self._store: dict[str, bytes] = {}
+        self._ttls: dict[str, int] = {}
+
+    async def set(self, key: str, value: bytes, ex: int | None = None) -> None:
+        """Сохранить значение (и TTL, если задан)."""
+        self._store[key] = value
+        if ex is not None:
+            self._ttls[key] = ex
+
+    async def get(self, key: str) -> bytes | None:
+        """Вернуть значение по ключу (None — если отсутствует)."""
+        return self._store.get(key)
+
+    async def delete(self, *keys: str) -> int:
+        """Удалить ключи, вернуть количество удалённых."""
+        deleted = 0
+        for key in keys:
+            if key in self._store:
+                del self._store[key]
+                deleted += 1
+        return deleted
+
+
+class TestMultiTenantIsolation:
+    """Tenant A не видит cookies tenant B (перенесено из tests/rpa/)."""
+
+    async def test_tenant_isolation(self) -> None:
+        redis = _InMemoryRedis()
+        store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
+
+        await store.save_cookies(
+            tenant_id="bank_a",
+            user_id="u",
+            domain="d.com",
+            cookies=[{"name": "tok_a"}],
+        )
+        await store.save_cookies(
+            tenant_id="bank_b",
+            user_id="u",
+            domain="d.com",
+            cookies=[{"name": "tok_b"}],
+        )
+
+        assert await store.restore_cookies(
+            tenant_id="bank_a", user_id="u", domain="d.com"
+        ) == [{"name": "tok_a"}]
+        assert await store.restore_cookies(
+            tenant_id="bank_b", user_id="u", domain="d.com"
+        ) == [{"name": "tok_b"}]
+
+
+class TestTtl:
+    """TTL в Redis — 24h по умолчанию (перенесено из tests/rpa/)."""
+
+    async def test_default_ttl_passed_to_redis(self) -> None:
+        redis = _InMemoryRedis()
+        store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
+        await store.save_cookies(
+            tenant_id="t", user_id="u", domain="d.com", cookies=[{"name": "x"}]
+        )
+        key = next(iter(redis._store))
+        assert redis._ttls[key] == 86400
+
+
+class TestWorkerRestart:
+    """Cookies переживают «рестарт worker'а» (перенесено из tests/rpa/)."""
+
+    async def test_cookies_survive_new_store_instance(self) -> None:
+        redis = _InMemoryRedis()
+        first = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
+        await first.save_cookies(
+            tenant_id="t",
+            user_id="u",
+            domain="d.com",
+            cookies=[{"name": "auth", "value": "tok"}],
+        )
+
+        # Новый инстанс store на том же Redis — эмуляция рестарта worker'а.
+        second = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
+        restored = await second.restore_cookies(
+            tenant_id="t", user_id="u", domain="d.com"
+        )
+        assert restored == [{"name": "auth", "value": "tok"}]
+

@@ -253,7 +253,10 @@ class Sprints1821Flags(BaseSettings):
             "tenacity retry + circuit breaker + DLQ для browser_pool/cdc/file_watcher/"
             "webhook_scheduler/desktop_rpa_client. При False — call-сайты используют "
             "legacy ad-hoc try/except (события теряются без DLQ). "
-            "default-OFF до миграции 5 callsites и toxiproxy-теста."
+            "NB: описание раньше утверждало «default-OFF до миграции 5 callsites», "
+            "что противоречило фактическому значению поля. Значение по умолчанию — "
+            "``True`` (resilience-обёртка включена); отключать его следует только "
+            "вместе с аудитом call-сайтов."
         ),
     )
 
@@ -290,7 +293,9 @@ class Sprints1821Flags(BaseSettings):
             "httpx-clients с session affinity по app_name, auto-reconnect на stale "
             "handle, TTL 30 min через TaskRegistry. При False — DesktopRpaClient "
             "создаёт новый httpx-instance на каждый вызов (B-09). "
-            "default-OFF до warm 5 sessions smoke + reconnect-теста."
+            "NB: описание раньше утверждало «default-OFF до warm 5 sessions smoke», "
+            "что противоречило фактическому значению поля. Значение по умолчанию — "
+            "``True`` (пул включён)."
         ),
     )
 
@@ -302,7 +307,9 @@ class Sprints1821Flags(BaseSettings):
             "Активирует services/rpa/browser_pool.py::save_cookies/restore_cookies "
             "через Redis hash 'browser:session:{tenant}:{user}:{domain}' c TTL 24h. "
             "При False — каждый acquire() = новый login (S-L5-2). "
-            "default-OFF до integration-теста на browser restart preservation."
+            "NB: описание раньше утверждало «default-OFF до integration-теста на "
+            "browser restart preservation», что противоречило фактическому значению "
+            "поля. Значение по умолчанию — ``True`` (cookies персистятся)."
         ),
     )
 

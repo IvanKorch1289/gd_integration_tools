@@ -222,7 +222,9 @@ class InfrastructureFlags(BaseSettings):
             "Owner: K3 RPA. Активирует OCRProcessor поверх pytesseract "
             "(extras [rpa-ocr], требует Tesseract на хосте). При False — "
             "OCRProcessor.from_environment() возвращает NoOpOCRProcessor. "
-            "Default-OFF до staging-smoke."
+            "NB: описание раньше утверждало «Default-OFF до staging-smoke», "
+            "что противоречило фактическому значению поля. Значение по умолчанию — "
+            "``True``."
         ),
     )
 

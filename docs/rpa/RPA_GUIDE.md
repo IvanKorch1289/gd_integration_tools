@@ -1,157 +1,260 @@
-# RPA Guide (Sprint 171 — M6)
+# RPA Guide (Sprint 171 — M6; актуализировано в cycle 172)
 
-> **Domain-agnostic RPA infrastructure.** 37+ DSL processors covering
-> file operations, terminal/shell, documents (PDF/Word/Excel), browser
-> automation (patchright), desktop (pywinauto), OCR (pytesseract),
-> image processing, banking integrations (Citrix/Terminal3270).
+> **Domain-agnostic RPA infrastructure.** 46 DSL-процессоров под
+> capability-гейтом: файловые операции, terminal/shell, документы
+> (PDF/Word/Excel), браузерная автоматизация (patchright), desktop
+> (pywinauto / pyautogui), OCR (pytesseract), изображения, почта и
+> банковские интеграции (Citrix / Terminal3270 / Appium).
 
-## Architecture
+> **Актуальность документа.** Capability-таблица ниже генерируется из
+> vocabulary (`src/backend/core/security/capabilities/vocabulary/defaults/rpa_fs.py`)
+> и сверяется с `required_capability` процессоров. Гейт актуальности —
+> `tests/rpa/test_rpa_docs.py` (падает при расхождении с кодом).
+
+## Архитектура
 
 ```
-DSL Processors (35+ classes, 8 files)
+DSL-процессоры (46 с rpa.* capability)
         ↓
-Capability-Gated (rpa.file.*, rpa.shell.*, rpa.browser.*, ...)
+Capability-гейт (required_capability → CapabilityGate)
         ↓
-HTTP Middleware: RpaPolicyMiddleware (deny-by-default, role check)
+HTTP-middleware: RpaPolicyMiddleware (deny-by-default, role-check)
         ↓
-Audit Events (rpa.* в ClickHouse/Redis)
+path-allowlist (settings.dsl.allowed_paths) — для файловых операций
 ```
 
-## File Operations (10 processors)
+> **Audit-события RPA-процессоров не реализованы.** Класс `audit_event`
+> объявлен на 308 процессорах, но потребителя у него нет: ни DSL-движок,
+> ни middleware не читают это поле, в ClickHouse/Redis ничего не пишется.
+> Это owner-задача (подключение audit-sink к DSL-слою), а не реализованная
+> возможность. Не строьте архитектуру, опираясь на «audit events → ClickHouse».
 
-| Processor | Capability | Description |
-|-----------|-----------|-------------|
-| `FileMoveProcessor` | `rpa.file.move` | copy/move/rename |
-| `FileDeleteProcessor` | `rpa.file.delete` | secure file/dir deletion |
-| `FileListProcessor` | `rpa.file.list` | glob-поиск (async via `to_thread`) |
-| `FilteredDirectoryScanProcessor` (M7) | `rpa.directory.scan` | recursive `**` + size/mtime filters |
-| `FileWatchProcessor` | `rpa.file.watch` | watchdog create/modify/delete |
-| `ArchiveProcessor` | `rpa.file.archive` | ZIP/TAR/GZ |
-| `HashProcessor` | `rpa.file.hash` | SHA256/MD5 |
-| `EncryptProcessor` | `rpa.file.encrypt` | symmetric encryption |
-| `DecryptProcessor` | `rpa.file.decrypt` | symmetric decryption |
-| `TemplateRenderProcessor` | `rpa.file.template` | Jinja2 |
-| `RegexProcessor` | `rpa.file.regex` | extract/replace |
+## Capability-каталог RPA
 
-## Terminal / Shell (2 processors)
+Имена — из vocabulary; 41 capability, 46 процессоров (три capability
+используются двумя-тремя процессорами: `rpa.shell.exec` — тремя,
+`rpa.http.request` — тремя).
 
-| Processor | Capability | Description |
-|-----------|-----------|-------------|
-| `ShellExecProcessor` | `rpa.shell.exec` | sync shell exec |
-| `TerminalExecProcessor` | `rpa.shell.exec` | async subprocess с timeout (M6) |
+### Файлы, каталоги, архивы, передача (9)
 
-## Documents (8 processors)
+| Процессор | Capability | Назначение |
+|---|---|---|
+| `FileMoveProcessor` | `rpa.file.move` | move / copy / rename файла |
+| `FileDeleteProcessor` | `rpa.file.delete` | удаление файла или каталога |
+| `FileListProcessor` | `rpa.file.list` | glob-поиск по каталогу (async) |
+| `FilteredDirectoryScanProcessor` | `rpa.directory.scan` | рекурсивный `**` + фильтры size/mtime |
+| `FileWatchProcessor` | `rpa.file.watch` | watchdog: create / modify / delete |
+| `ArchiveProcessor` | `rpa.archive.execute` | ZIP / TAR / GZ (create + extract) |
+| `CsvReadProcessor` | `rpa.file.csv.read` | чтение CSV (файл или inline-контент) |
+| `CsvWriteProcessor` | `rpa.file.csv.write` | запись CSV + защита от formula-injection |
+| `FtpUploadProcessor` | `rpa.ftp.upload` | выгрузка по FTP/FTPS (TLS по умолчанию) |
 
-| Processor | Capability | Description |
-|-----------|-----------|-------------|
-| `PdfReadProcessor` | `rpa.doc.pdf.read` | extract text |
-| `PdfMergeProcessor` | `rpa.doc.pdf.merge` | combine PDFs |
-| `WordReadProcessor` | `rpa.doc.word.read` | .docx text |
-| `WordWriteProcessor` | `rpa.doc.word.write` | .docx creation |
-| `ExcelReadProcessor` | `rpa.doc.excel.read` | openpyxl-based |
+### Хеши, крипто, текст (5)
 
-## Images (3 processors)
+| Процессор | Capability | Назначение |
+|---|---|---|
+| `HashProcessor` | `rpa.hash.compute` | SHA256 / MD5 / BLAKE |
+| `EncryptProcessor` | `rpa.crypto.encrypt` | Fernet (AES-128-CBC + HMAC-SHA256) |
+| `DecryptProcessor` | `rpa.crypto.decrypt` | Fernet |
+| `RegexProcessor` | `rpa.regex.execute` | extract / replace / match |
+| `TemplateRenderProcessor` | `rpa.template.render` | Jinja2 (sandboxed) |
 
-| Processor | Capability | Description |
-|-----------|-----------|-------------|
-| `ImageOcrProcessor` | `rpa.image.ocr` | pytesseract |
-| `ImageResizeProcessor` | `rpa.image.resize` | pillow |
-| `ImageConvertProcessor` | `rpa.image.convert` | pillow format |
+### Shell, сеть, почта (6)
 
-## Browser Automation (8 processors)
+| Процессор | Capability | Назначение |
+|---|---|---|
+| `ShellExecProcessor` | `rpa.shell.exec` | синхронный shell-exec (fail-closed whitelist, ADR-0368) |
+| `TerminalExecProcessor` | `rpa.shell.exec` | async subprocess с timeout |
+| `SshCommandProcessor` | `rpa.shell.exec` | выполнение команды по SSH |
+| `HttpRequestProcessor` | `rpa.http.request` | async HTTP-запрос (httpx) |
+| `EmailComposeProcessor` | `rpa.email.send` | отправка письма по SMTP |
+| `EmailReadProcessor` | `rpa.email.read` | чтение письма по IMAP |
 
-| Processor | Capability | Description |
-|-----------|-----------|-------------|
-| `BrowserLaunchProcessor` | `rpa.browser.launch` | patchright (anti-detection) |
-| `NavigateProcessor` | `rpa.browser.navigate` | URL |
-| `ClickProcessor` | `rpa.browser.click` | click element |
-| `FillProcessor` | `rpa.browser.fill` | form input |
-| `ExtractProcessor` | `rpa.browser.extract` | text/data |
-| `WaitForProcessor` | `rpa.browser.wait` | wait for selector |
-| `ScreenshotProcessor` | `rpa.browser.screenshot` | PNG capture |
-| `PdfProcessor` | `rpa.browser.pdf` | browser → PDF |
+### Документы (5)
 
-## Banking (4 processors)
+| Процессор | Capability | Назначение |
+|---|---|---|
+| `PdfReadProcessor` | `rpa.pdf.read` | извлечение текста из PDF |
+| `PdfMergeProcessor` | `rpa.pdf.merge` | объединение PDF |
+| `WordReadProcessor` | `rpa.word.read` | чтение .docx |
+| `WordWriteProcessor` | `rpa.word.write` | создание .docx |
+| `ExcelReadProcessor` | `rpa.excel.read` | чтение XLSX (openpyxl) |
 
-| Processor | Capability | Description |
-|-----------|-----------|-------------|
-| `CitrixSessionProcessor` | `rpa.banking.citrix` | Citrix ICA |
-| `TerminalEmulator3270Processor` | `rpa.banking.terminal3270` | mainframes |
-| `AppiumMobileProcessor` | `rpa.banking.appium` | mobile |
-| `EmailDrivenProcessor` | `rpa.banking.email` | email workflow |
+### Изображения и OCR (2)
 
-## Desktop (Windows-only, requires `[rpa-windows]` extra)
+| Процессор | Capability | Назначение |
+|---|---|---|
+| `ImageOcrProcessor` | `rpa.image.ocr` | OCR через pytesseract (Tesseract на хосте) |
+| `ImageResizeProcessor` | `rpa.image.resize` | изменение размера (Pillow) |
 
-- `DesktopRpaProcessor` — pywinauto Win32/UIA automation
-- `KeystrokeReplayProcessor` — record/replay keystrokes
+### Браузерная автоматизация (8)
 
-## Security (defense in depth)
+| Процессор | Capability | Назначение |
+|---|---|---|
+| `BrowserLaunchProcessor` | `rpa.browser.launch` | запуск браузера (patchright) |
+| `NavigateProcessor` | `rpa.browser.navigate` | переход по URL |
+| `ClickProcessor` | `rpa.browser.click` | клик по элементу |
+| `FillProcessor` | `rpa.browser.fill` | заполнение поля формы |
+| `ExtractProcessor` | `rpa.browser.extract` | извлечение текста/данных |
+| `WaitForProcessor` | `rpa.browser.wait` | ожидание селектора |
+| `ScreenshotProcessor` | `rpa.browser.screenshot` | снимок экрана (PNG) |
+| `PdfProcessor` | `rpa.browser.pdf` | сохранение страницы в PDF |
 
-**3 layers:**
+### Банкинг, desktop, AI (8)
 
-1. **HTTP middleware** (`RpaPolicyMiddleware`, M6 NEW)
-   - Layer 1, order 124
-   - Deny-by-default for `/api/v1/rpa/*`
-   - Requires `rpa.admin` role in `X-Roles` header
-   - Audit denied requests
+| Процессор | Capability | Назначение |
+|---|---|---|
+| `CitrixSessionProcessor` | `rpa.citrix.invoke` | Citrix ICA-сессия (заглушка: делегирует в сервис) |
+| `TerminalEmulator3270Processor` | `rpa.terminal3270.invoke` | мейнфрейм 3270 (заглушка) |
+| `AppiumMobileProcessor` | `rpa.appium.invoke` | мобильная автоматизация (заглушка) |
+| `EmailDrivenProcessor` | `rpa.email.extract` | pipeline «письмо → структурированные данные» (заглушка) |
+| `KeystrokeReplayProcessor` | `rpa.keystroke.replay` | воспроизведение сценария клавиатуры/мыши |
+| `DesktopRpaProcessor` | `rpa.desktop.invoke` | desktop-приложения через windows-worker sidecar |
+| `DesktopPyAutoGUIProcessor` | `rpa.desktop.automate` | автоматизация desktop через pyautogui |
+| `AIRpaProcessor` | `rpa.ai.decide` | AI-принятие решения внутри RPA-сценария |
 
-2. **DSL capability check** (`required_capability` on every processor)
-   - Per-processor capability string
-   - Resolved at runtime via `CapabilityGate`
-   - Default-deny
+### Веб-скрейпинг (3)
 
-3. **Audit events** (`audit_event` on every processor)
-   - All RCE-shaped ops logged to ClickHouse/Redis
-   - Includes path, command, user, timestamp
+| Процессор | Capability | Назначение |
+|---|---|---|
+| `ScrapeProcessor` | `rpa.http.request` | одноразовый scrape страницы |
+| `PaginateProcessor` | `rpa.http.request` | постраничный обход |
+| `ApiProxyProcessor` | `rpa.http.request` | проксирование API-вызовов |
 
-## Performance
+## Безопасность (defense in depth)
 
-**Async patterns:**
-- `asyncio.to_thread` для I/O-bound ops (file I/O, network)
-- `asyncio.create_subprocess_shell` для shell ops с timeout
-- `asyncio.wait_for(proc.communicate(), timeout)` для cancellation
+**Слоя 2 (из 3 заявленных работают):**
 
-**CPU-bound patterns:**
-- `src.backend.core.utils.cpu_bound.run_cpu_bound(fn, ...)` для heavy ops
-- `use_process_pool=True` для parallel across cores
-- Default: `asyncio.to_thread` (lightweight)
+1. **HTTP-middleware** (`RpaPolicyMiddleware`, pure ASGI)
+   - deny-by-default для префикса `/api/v1/rpa`;
+   - требуемая роль — `rpa.admin` (настраивается через `required_role`);
+   - источник роли — **`scope["state"]["auth"].roles`**, объект auth-контекста,
+     который выставляет upstream auth-middleware. Заголовок `X-Roles` **не
+     читается** (см. `src/backend/entrypoints/middlewares/rpa_policy.py:104-116`);
+   - при отсутствии auth-контекста — 403 (fail-closed).
 
-**Settings** (`config_profiles/dev.yml`):
+2. **DSL capability-гейт** (`required_capability` на каждом процессоре)
+   - имя capability сверяется с vocabulary и с baseline-декларацией ядра
+     (`core/security/capabilities/core_declarations.py`);
+   - fail-closed: незаявленная capability → deny;
+   - фактическая enforcement — ADR-0366.
+
+3. **Audit-события** — **не реализованы** (см. врезку в разделе «Архитектура»).
+
+## Path-allowlist (ADR-0358)
+
+Файловые RPA-операции (и core-процессоры FileRead/FileWrite/FileWatch/
+FileDelete/DirectoryScan) работают **только** внутри allowlist-каталогов:
+
+| Источник | Значение |
+|---|---|
+| `settings.dsl.allowed_paths` | список каталогов (`config_profiles/base.yml`, секция `dsl:`) |
+| env `DSL_ALLOWED_PATHS` | перекрывает список; разделитель — `:` |
+| по умолчанию | `/data/uploads`, `/data/exports`, `/tmp/dsl`, `/var/data` |
+
+Проверка — `validate_path()` в `src/backend/dsl/engine/processors/_path_safety.py`:
+путь нормализуется (`Path.resolve`) и отклоняется, если не попадает ни в один
+разрешённый префикс (`PathTraversalError`). Аргумент проверяется **до**
+обращения к файловой системе.
+
+В YAML-шагах путь берётся из параметров конструктора, поэтому литерал
+пути в маршруте должен попадать в allowlist — иначе шаг завершится
+ошибкой `PathTraversalError`, а не «пустым результатом».
+
+## Настройки
+
+Модель — `src/backend/core/config/services/rpa.py` (`RPASettings`,
+env-префикс `RPA_`, `extra="forbid"`). Секция `rpa:` в
+`config_profiles/base.yml` содержит только живые поля:
+
 ```yaml
 rpa:
-  shell_timeout_s: 30
-  file_watch_timeout_s: 60
-  max_archive_size_mb: 1000
-  process_pool_size: 3  # cpu_count - 1
+  browser_pool_size: 2                     # предсозданных Playwright-контекстов
+  browser_headless: true                   # false — только для локальной отладки
+  browser_launch_max_retries: 2            # повторов (не попыток) при transient-crash
+  browser_launch_retry_base_seconds: 0.5   # база exponential backoff
 ```
 
-## Usage example (DSL YAML)
+Параметры desktop-RPA pool'а (`base_url`, `api_key`, `timeout`,
+`ttl_seconds`, `max_sessions`) — ctor-аргументы `DesktopRPASessionPool`,
+а не настройки приложения. Мёртвые поля (13 штук) удалены в ADR-0370.
+
+Флаги — в `core/config/features/`: `rpa_session_persistence`,
+`browser_cookies_redis_persist`, `desktop_rpa_session_pool_enabled`,
+`rpa_resilience_wrapper_enabled`, `rpa_ocr_enabled`.
+
+## Производительность
+
+**Async-паттерны:**
+- `asyncio.to_thread` для blocking I/O (файлы, сеть);
+- `asyncio.create_subprocess_exec` + `asyncio.wait_for` для shell;
+- `run_cpu_bound(fn, use_process_pool=True)` из
+  `src/backend/core/utils/cpu_bound.py` для CPU-bound задач (PDF/OCR/image).
+
+**Известные ограничения:**
+- `wait_for(to_thread(...))` не прерывает поток executor'а — поток
+  доработает текущий I/O (owner-задача, вне cycle 172);
+- `pdfplumber` молча отдаёт `tables=[]` при отсутствии зависимости —
+  установку `pdfplumber` нужно контролировать (ADR-0367).
+
+## Пример маршрута (DSL YAML)
+
+Имена шагов — публичные методы `RouteBuilder` (`dsl/builders/ai_rpa/rpa.py`).
+Ключи внутри шага — kwargs конструктора процессора.
 
 ```yaml
-- file_list:
-    pattern: "/incoming/*.csv"
-    recursive: true
-    to: body.files
-- terminal_exec:
-    command: "wc -l ${body.files[0]}"
-    timeout: 10
-    to: body.line_count
-- file_delete:
-    path: "${body.files[0]}"
-    missing_ok: true
+route_id: rpa.inbox.daily
+source:
+  http:
+    method: POST
+    path: /api/v1/rpa/inbox/daily
+steps:
+  - email_read:
+      host: imap.example.com
+      port: 993
+      user: robot
+      folder: INBOX
+      to: body.emails
+  - csv_write:
+      dst: /data/exports/mails.csv
+      rows:
+        - subject: "Отчёт за день"
+          rows: 42
+  - file_list:
+      pattern: /data/exports/*.csv
+      recursive: true
+      to: body.files
+  - terminal_exec:
+      command: wc -l /data/exports/mails.csv
+      timeout: 10
+      to: body.line_count
+  - file_delete:
+      path: /data/exports/mails.csv
+      missing_ok: true
 ```
 
-## Patterns (D-rules)
+> Имена `file_list` / `terminal_exec` / `file_delete` / `csv_read` /
+> `csv_write` / `ftp_upload` / `http_request` / `email_read` появились в
+> `RouteBuilder` в cycle 172 (ADR-0369). До этого соответствующие
+> процессоры существовали, но были недостижимы из YAML
+> («Unknown or forbidden processor»).
 
-- **D143**: RPA thin wrapper pattern — 1-line delegation to library
-- **D144**: RCE-shaped capability gating (audit + role)
-- **D145**: async subprocess pattern (`create_subprocess_shell` + timeout)
-- **D146**: file I/O via `asyncio.to_thread` (no blocking event loop)
-- **D147**: RpaPolicyMiddleware deny-by-default
+## Связанные ADR
 
-## See also
+- **ADR-0358** — allowlist файловых путей и единый path-барьер DSL;
+- **ADR-0361** — семантика `required_capability`;
+- **ADR-0366** — runtime-enforcement capability-гейта;
+- **ADR-0367** — файловый доступ и защита от инъекций в RPA-процессорах;
+- **ADR-0368** — fail-closed whitelist shell-команд;
+- **ADR-0369** — достижимость RPA-шагов из YAML и канон имён;
+- **ADR-0370** — консолидация RPA-конфига и тестовая гигиена.
 
-- `src/backend/dsl/engine/processors/rpa/` — all DSL processors
-- `src/backend/services/rpa/` — service-layer implementations
-- `src/backend/entrypoints/middlewares/rpa_policy.py` — security middleware
-- `src/backend/core/utils/cpu_bound.py` — performance helper
+## Где смотреть код
+
+- `src/backend/dsl/engine/processors/rpa/` — RPA-процессоры (operations, documents);
+- `src/backend/dsl/engine/processors/rpa_browser.py` — браузер;
+- `src/backend/dsl/engine/processors/rpa_banking.py` — банкинг/desktop-заглушки;
+- `src/backend/services/rpa/` — сервисный слой (session pool, cookies, OCR);
+- `src/backend/entrypoints/middlewares/rpa_policy.py` — security-middleware;
+- `src/backend/core/utils/cpu_bound.py` — helper для CPU-bound задач;
+- `src/backend/core/security/capabilities/vocabulary/defaults/rpa_fs.py` — vocabulary.

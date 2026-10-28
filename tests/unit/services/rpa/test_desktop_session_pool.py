@@ -176,3 +176,83 @@ def test_get_set_desktop_rpa_pool_singleton() -> None:
     # Reset
     set_desktop_rpa_pool(None)
     assert get_desktop_rpa_pool() is None
+
+
+def _mock_client() -> MagicMock:
+    """Mock httpx-клиента с awaitable ``aclose``."""
+    client = MagicMock()
+    client.aclose = AsyncMock(return_value=None)
+    return client
+
+
+@pytest.mark.asyncio
+async def test_session_affinity_returns_same_client(pool: DesktopRPASessionPool) -> None:
+    """Повторный acquire того же app_name возвращает тот же client."""
+    with patch(
+        "src.backend.services.rpa.desktop_session_pool.make_http_client"
+    ) as mock_make:
+        mock_make.side_effect = lambda *a, **kw: _mock_client()
+        async with pool.acquire("calc") as client1:
+            pass
+        async with pool.acquire("calc") as client2:
+            pass
+    assert client1 is client2
+    assert mock_make.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_different_apps_get_different_clients(pool: DesktopRPASessionPool) -> None:
+    """Разные app_name → разные clients."""
+    with patch(
+        "src.backend.services.rpa.desktop_session_pool.make_http_client"
+    ) as mock_make:
+        mock_make.side_effect = lambda *a, **kw: _mock_client()
+        async with pool.acquire("notepad") as first:
+            pass
+        async with pool.acquire("calc") as second:
+            pass
+    assert first is not second
+    stats = await pool.stats()
+    assert stats.total == 2
+    assert set(stats.by_app) == {"notepad", "calc"}
+
+
+@pytest.mark.asyncio
+async def test_ttl_expiry_recreates_session() -> None:
+    """Idle-сессия старше TTL → пересоздаётся на следующем acquire."""
+    import asyncio
+
+    pool = DesktopRPASessionPool(
+        base_url="http://worker:9001", ttl_seconds=0.001, max_sessions=2
+    )
+    with patch(
+        "src.backend.services.rpa.desktop_session_pool.make_http_client"
+    ) as mock_make:
+        mock_make.side_effect = lambda *a, **kw: _mock_client()
+        async with pool.acquire("app") as first:
+            pass
+        await asyncio.sleep(0.01)
+        async with pool.acquire("app") as second:
+            pass
+    assert first is not second
+    assert mock_make.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_force_reconnect_removes_session(pool: DesktopRPASessionPool) -> None:
+    """Принудительный reconnect удаляет сессию из пула."""
+    with patch(
+        "src.backend.services.rpa.desktop_session_pool.make_http_client"
+    ) as mock_make:
+        mock_make.side_effect = lambda *a, **kw: _mock_client()
+        async with pool.acquire("notepad"):
+            pass
+        stats_before = await pool.stats()
+        assert stats_before.total == 1
+
+        await pool.reconnect("notepad")
+
+        stats_after = await pool.stats()
+        assert stats_after.total == 0
+        assert "notepad" not in stats_after.by_app
+
