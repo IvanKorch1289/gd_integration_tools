@@ -98,7 +98,11 @@ class RenderTemplateProcessor(BaseProcessor):
 
 
 class RenderTemplateFileProcessor(BaseProcessor):
-    """Рендерит Jinja2-шаблон из файла."""
+    """Рендерит Jinja2-шаблон из файла.
+
+    Путь к файлу-шаблону проверяется по path-allowlist (``validate_path``)
+    до чтения шаблона.
+    """
 
     def __init__(
         self,
@@ -144,6 +148,20 @@ class RenderTemplateFileProcessor(BaseProcessor):
 
         """
         from jinja2 import Environment, FileSystemLoader
+
+        # Второй независимый барьер безопасности: capability ограничивает
+        # факт вызова, allowlist — каталог шаблона. Проверка выполняется
+        # ДО чтения файла (symlink-путь тоже резолвится validate_path).
+        from src.backend.dsl.engine.processors._path_safety import (
+            PathTraversalError,
+            validate_path,
+        )
+
+        try:
+            validate_path(self._path)
+        except PathTraversalError as exc:
+            exchange.fail(f"render_template_file blocked: {exc}")
+            return
 
         safe_path = _safe_template_path(self._path)
         base_dir = os.path.dirname(safe_path) or "."

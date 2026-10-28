@@ -30,6 +30,12 @@ def _bypass_auth() -> None:
     )
 
 
+@pytest.fixture(autouse=True)
+def _allow_tmp_dirs(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Разрешить tmp-каталоги тестов (env-override allowlist'а)."""
+    monkeypatch.setenv("DSL_ALLOWED_PATHS", tempfile.gettempdir())
+
+
 def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any]:
     return Exchange(in_message=Message(body=body, headers=headers or {}))
 

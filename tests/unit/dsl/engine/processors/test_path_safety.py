@@ -5,8 +5,11 @@ Wave: [tech-debt/coverage].
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
+from src.backend.core.config.settings import settings
 from src.backend.dsl.engine.processors._path_safety import (
     PathTraversalError,
     validate_path,
@@ -78,3 +81,40 @@ class TestPathTraversalError:
     def test_can_be_caught_as_value_error(self) -> None:
         with pytest.raises(ValueError):
             raise PathTraversalError("test")
+
+
+class TestAllowedPathsSource:
+    """Wave 13 Q7 (A) — источники allowlist: env → конфиг → defaults.
+
+    env ``DSL_ALLOWED_PATHS`` остаётся override'ом поверх конфига
+    ``settings.dsl.allowed_paths`` (YAML-профиль).
+    """
+
+    def test_config_used_when_env_absent(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("DSL_ALLOWED_PATHS", raising=False)
+        monkeypatch.setattr(settings.dsl, "allowed_paths", ["/cfg/allowed"])
+
+        assert validate_path("/cfg/allowed/file.txt").endswith("allowed/file.txt")
+        with pytest.raises(PathTraversalError, match="outside allowed"):
+            validate_path("/data/uploads/file.txt")
+
+    def test_env_takes_priority_over_config(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", "/env/allowed")
+        monkeypatch.setattr(settings.dsl, "allowed_paths", ["/cfg/allowed"])
+
+        assert validate_path("/env/allowed/file.txt").endswith("allowed/file.txt")
+        with pytest.raises(PathTraversalError, match="outside allowed"):
+            validate_path("/cfg/allowed/file.txt")
+
+    def test_fallback_to_defaults_when_settings_unavailable(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Settings недоступны (ImportError) → встроенные defaults."""
+        monkeypatch.delenv("DSL_ALLOWED_PATHS", raising=False)
+        monkeypatch.setitem(sys.modules, "src.backend.core.config.settings", None)
+
+        assert validate_path("/data/uploads/file.txt").endswith("uploads/file.txt")
+        with pytest.raises(PathTraversalError, match="outside allowed"):
+            validate_path("/etc/passwd")

@@ -19,10 +19,15 @@ class TestFilteredDirectoryScanProcessor:
         assert p.pattern == "*.txt"
 
     @pytest.mark.asyncio
-    async def test_scans_recursive(self, tmp_path: Path) -> None:
+    async def test_scans_recursive(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
             FilteredDirectoryScanProcessor,
         )
+
+        # Wave 13 Q7 (B): сканируемая директория проверяется по allowlist.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
 
         (tmp_path / "a.txt").write_text("a")
         (tmp_path / "sub").mkdir()
@@ -43,10 +48,15 @@ class TestFilteredDirectoryScanProcessor:
         assert names == ["a.txt", "b.txt"]
 
     @pytest.mark.asyncio
-    async def test_filter_by_size(self, tmp_path: Path) -> None:
+    async def test_filter_by_size(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
             FilteredDirectoryScanProcessor,
         )
+
+        # Wave 13 Q7 (B): сканируемая директория проверяется по allowlist.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
 
         (tmp_path / "small.txt").write_text("hi")
         (tmp_path / "big.txt").write_text("x" * 1000)

@@ -19,6 +19,12 @@ import pytest
 from src.backend.dsl.engine.processors.file_watch import FileWatchProcessor
 
 
+@pytest.fixture(autouse=True)
+def _allow_tmp_dirs(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Разрешить tmp-каталоги тестов (env-override allowlist'а)."""
+    monkeypatch.setenv("DSL_ALLOWED_PATHS", tempfile.gettempdir())
+
+
 class TestPatterns:
     """S176 #4: ``patterns`` (tuple) вместо ``pattern`` (str)."""
 

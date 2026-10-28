@@ -71,6 +71,20 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="read"):
             return
+        # Второй независимый барьер безопасности: capability
+        # (``rpa.directory.scan``) ограничивает факт вызова, allowlist — путь
+        # сканирования.
+        from src.backend.dsl.engine.processors._path_safety import (
+            PathTraversalError,
+            validate_path,
+        )
+
+        try:
+            safe_directory = validate_path(self.directory)
+        except PathTraversalError as exc:
+            exchange.fail(f"directory_scan blocked: {exc}")
+            return
+
         """Async-safe сканирование директории с фильтрами, cap и timeout.
 
         Выполняет glob-сканирование в thread (``asyncio.to_thread``) с защитой
@@ -83,8 +97,8 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
             context: Контекст выполнения маршрута.
         """
 
-        def _scan() -> list[str]:
-            root = Path(self.directory)
+        def _scan(root_dir: str) -> list[str]:
+            root = Path(root_dir)
             if not root.exists():
                 return []
             results: list[str] = []
@@ -143,7 +157,7 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
         # Timeout protection (P0-1 fix)
         try:
             files = await asyncio.wait_for(
-                asyncio.to_thread(_scan), timeout=effective_timeout
+                asyncio.to_thread(_scan, safe_directory), timeout=effective_timeout
             )
         except TimeoutError:
             _rpa_logger.warning(

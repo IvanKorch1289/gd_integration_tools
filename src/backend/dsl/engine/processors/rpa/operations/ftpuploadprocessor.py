@@ -85,7 +85,21 @@ class FtpUploadProcessor(BaseProcessor):
         """
         if not await self.auth_check(exchange, action="write"):
             return
-        if not os.path.exists(self.local_path):
+        # Второй независимый барьер безопасности: capability
+        # (``rpa.ftp.upload``) ограничивает факт вызова, allowlist — путь
+        # читаемого файла (иначе возможна эксфильтрация через FTP).
+        from src.backend.dsl.engine.processors._path_safety import (
+            PathTraversalError,
+            validate_path,
+        )
+
+        try:
+            safe_local_path = validate_path(self.local_path)
+        except PathTraversalError as exc:
+            exchange.fail(f"ftp_upload blocked: {exc}")
+            return
+
+        if not os.path.exists(safe_local_path):
             raise FileNotFoundError(f"FtpUploadProcessor: {self.local_path}")
 
         def _upload() -> None:
@@ -102,7 +116,7 @@ class FtpUploadProcessor(BaseProcessor):
                 try:
                     if self.user:
                         ftp.login(self.user, self.password)
-                    with open(self.local_path, "rb") as f:
+                    with open(safe_local_path, "rb") as f:
                         ftp.storbinary(f"STOR {self.remote_path}", f)
                 finally:
                     try:
@@ -137,7 +151,7 @@ class FtpUploadProcessor(BaseProcessor):
                     ftp.login(self.user, self.password)
                 # Switch data channel to TLS too (RFC 4217 §5.1).
                 ftp.prot_p()
-                with open(self.local_path, "rb") as f:
+                with open(safe_local_path, "rb") as f:
                     ftp.storbinary(f"STOR {self.remote_path}", f)
             finally:
                 try:

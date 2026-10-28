@@ -18,6 +18,12 @@ from src.backend.dsl.engine.processors import file_watch as fw_mod
 from src.backend.dsl.engine.processors.file_watch import FileWatchProcessor
 
 
+@pytest.fixture(autouse=True)
+def _allow_tmp_dirs(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Разрешить tmp-каталоги тестов (env-override allowlist'а)."""
+    monkeypatch.setenv("DSL_ALLOWED_PATHS", tempfile.gettempdir())
+
+
 def _make_exchange() -> Exchange:
     return Exchange(in_message=Message(body=None, headers={}), properties={})
 

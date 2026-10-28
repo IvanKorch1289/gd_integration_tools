@@ -51,10 +51,16 @@ class TestFileDeleteProcessor:
 
 class TestFileListProcessor:
     @pytest.mark.asyncio
-    async def test_lists_files_with_pattern(self, tmp_path: Path) -> None:
+    async def test_lists_files_with_pattern(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from src.backend.dsl.engine.processors.rpa.operations.filelistprocessor import (
             FileListProcessor,
         )
+
+        # Wave 13 Q7 (B): RPA-процессоры проверяют путь по allowlist
+        # (DSL_ALLOWED_PATHS) — tmp_path pytest вне дефолтного allowlist.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
 
         (tmp_path / "a.txt").write_text("a")
         (tmp_path / "b.txt").write_text("b")
@@ -85,11 +91,16 @@ class TestFileWatchProcessor:
         assert p.timeout == 1.0
 
     @pytest.mark.asyncio
-    async def test_watch_returns_empty_when_timeout(self, tmp_path: Path) -> None:
+    async def test_watch_returns_empty_when_timeout(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Если ничего не изменилось за timeout → возвращает []."""
         from src.backend.dsl.engine.processors.rpa.operations.filewatchprocessor import (
             FileWatchProcessor,
         )
+
+        # Wave 13 Q7 (B): наблюдаемая директория проверяется по allowlist.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
 
         p = FileWatchProcessor(directory=str(tmp_path), pattern="*.txt", timeout=0.1)
         p.auth_check = AsyncMock(return_value=True)

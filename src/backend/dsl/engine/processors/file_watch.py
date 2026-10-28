@@ -27,6 +27,10 @@ from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors._path_safety import (
+    PathTraversalError,
+    validate_path,
+)
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry.processor import processor
 
@@ -149,6 +153,8 @@ class FileWatchProcessor(BaseProcessor):
         S176 #4: поддерживает multi-directory + multi-pattern + max_results.
         S178 #2: blocking filesystem I/O (isdir/listdir/walk/stat) обёрнуты
         в ``asyncio.to_thread`` чтобы не блокировать event loop.
+        Wave 13 Q7 (A): каждый сканируемый каталог проверяется
+        ``validate_path`` — вне allowlist → ``exchange.fail``.
 
         Args:
             exchange: Текущий exchange; результат — в свойстве
@@ -180,6 +186,13 @@ class FileWatchProcessor(BaseProcessor):
         for directory in effective_dirs:
             if directory is None:
                 continue  # None-каталог (legacy tuple) — skip
+            # Wave 13 Q7 (A): path-traversal guard — сканировать можно только
+            # каталоги из allowlist (``settings.dsl.allowed_paths``).
+            try:
+                directory = validate_path(directory)
+            except PathTraversalError as exc:
+                exchange.fail(f"file_watch blocked: {exc}")
+                return
             # S178 #2: isdir() — blocking, переносим в thread.
             try:
                 exists = await asyncio.to_thread(os.path.isdir, directory)  # type: ignore[arg-type]  # R2.MYPY: directory is Any|str|None, to_thread expects PathLike

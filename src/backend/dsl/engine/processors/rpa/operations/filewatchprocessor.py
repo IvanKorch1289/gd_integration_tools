@@ -78,6 +78,19 @@ class FileWatchProcessor(BaseProcessor):
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="read"):
             return
+        # Второй независимый барьер безопасности: capability (``rpa.file.watch``)
+        # ограничивает факт вызова, allowlist — путь наблюдения.
+        from src.backend.dsl.engine.processors._path_safety import (
+            PathTraversalError,
+            validate_path,
+        )
+
+        try:
+            safe_directory = validate_path(self.directory)
+        except PathTraversalError as exc:
+            exchange.fail(f"file_watch blocked: {exc}")
+            return
+
         """Блокирует выполнение до появления файлов в директории (watchdog, синхронно)."""
         try:
             from watchdog.events import FileSystemEventHandler
@@ -101,7 +114,7 @@ class FileWatchProcessor(BaseProcessor):
                     collector.add(str(event.src_path))
 
         observer = Observer()
-        observer.schedule(_Handler(), self.directory, recursive=False)
+        observer.schedule(_Handler(), safe_directory, recursive=False)
         observer.start()
         try:
             await asyncio.sleep(self.timeout)
@@ -111,7 +124,7 @@ class FileWatchProcessor(BaseProcessor):
 
         _rpa_logger.info(
             "file_watch dir=%s pattern=%s changes=%d",
-            self.directory,
+            safe_directory,
             self.pattern,
             len(collector.changes),
         )

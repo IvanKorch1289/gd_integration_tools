@@ -447,11 +447,17 @@ class TestFilteredDirectoryScanDeadline:
     """``FilteredDirectoryScanProcessor.timeout_seconds`` сужается через deadline budget."""
 
     @pytest.mark.asyncio
-    async def test_expired_budget_admission_control(self, tmp_path) -> None:
+    async def test_expired_budget_admission_control(
+        self, tmp_path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Budget expired → пустой results + deadline_exhausted=True."""
         from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
             FilteredDirectoryScanProcessor,
         )
+
+        # Wave 13 Q7 (B): сканируемый каталог проверяется по path-allowlist —
+        # tmp_path pytest вне дефолтного allowlist.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
 
         budget = DeadlineBudget.from_timeout(timeout=1.0)
         await asyncio.sleep(1.2)

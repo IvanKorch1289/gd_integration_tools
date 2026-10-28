@@ -36,6 +36,9 @@ class TestFtpUploadSecurity:
     ) -> None:
         local = tmp_path / "f.txt"
         local.write_text("x")
+        # Wave 13 Q7 (B): локальный файл проверяется по path-allowlist —
+        # tmp_path pytest вне дефолтного allowlist.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
         # Ensure insecure flag is NOT set.
         monkeypatch.delenv(_INSECURE_ENV, raising=False)
 
@@ -106,6 +109,9 @@ class TestFtpUploadSecurity:
     ) -> None:
         local = tmp_path / "f.txt"
         local.write_text("x")
+        # Wave 13 Q7 (B): локальный файл проверяется по path-allowlist —
+        # tmp_path pytest вне дефолтного allowlist.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
         monkeypatch.delenv(_INSECURE_ENV, raising=False)
 
         plaintext_calls = {"ftp_constructed": 0, "tls_constructed": 0}
@@ -171,6 +177,9 @@ class TestFtpUploadSecurity:
     ) -> None:
         local = tmp_path / "f.txt"
         local.write_text("x")
+        # Wave 13 Q7 (B): локальный файл проверяется по path-allowlist —
+        # tmp_path pytest вне дефолтного allowlist.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
         # Set ONLY the env var; ctor flag stays False.
         monkeypatch.setenv(_INSECURE_ENV, "1")
 
@@ -238,6 +247,9 @@ class TestFtpUploadSecurity:
     ) -> None:
         local = tmp_path / "f.txt"
         local.write_text("x")
+        # Wave 13 Q7 (B): локальный файл проверяется по path-allowlist —
+        # tmp_path pytest вне дефолтного allowlist.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
         monkeypatch.setenv(_INSECURE_ENV, "1")
 
         plaintext_calls = {"ftp_constructed": 0, "tls_constructed": 0}

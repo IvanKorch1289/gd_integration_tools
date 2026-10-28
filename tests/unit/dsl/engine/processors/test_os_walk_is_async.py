@@ -29,8 +29,16 @@ import os
 import tempfile
 from unittest.mock import MagicMock
 
+import pytest
+
 from src.backend.dsl.engine.exchange import Exchange, Message
 from src.backend.dsl.engine.processors.file_watch import FileWatchProcessor
+
+
+@pytest.fixture(autouse=True)
+def _allow_tmp_dirs(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Разрешить tmp-каталоги тестов (env-override allowlist'а)."""
+    monkeypatch.setenv("DSL_ALLOWED_PATHS", tempfile.gettempdir())
 
 
 def _make_exchange() -> Exchange:

@@ -4,6 +4,10 @@
 - сканирование директории с фильтрацией по паттерну
 - рекурсивное сканирование
 - обработку несуществующей директории
+
+Wave 13 Q7 (A): FileWatchProcessor проверяет сканируемый каталог по
+path-allowlist (``settings.dsl.allowed_paths``) → tmp-каталоги тестов
+должны быть разрешены через env-override ``DSL_ALLOWED_PATHS``.
 """
 
 from __future__ import annotations
@@ -17,6 +21,12 @@ import pytest
 
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.engine.processors.file_watch import FileWatchProcessor
+
+
+@pytest.fixture(autouse=True)
+def _allow_tmp_dirs(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Разрешить tmp-каталоги тестов (env-override allowlist'а)."""
+    monkeypatch.setenv("DSL_ALLOWED_PATHS", tempfile.gettempdir())
 
 
 def _make_exchange(properties: dict[str, Any] | None = None) -> Exchange[Any]:
@@ -78,8 +88,13 @@ class TestFileWatchProcessor:
             assert result[0]["name"] == "nested.csv"
 
     @pytest.mark.asyncio
-    async def test_file_watch_nonexistent_directory(self) -> None:
+    async def test_file_watch_nonexistent_directory(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Несуществующая директория — exchange.fail."""
+        # Путь вне allowlist блокируется раньше existence-check'а,
+        # поэтому разрешаем именно этот префикс.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", "/nonexistent")
         proc = FileWatchProcessor(directory="/nonexistent/path")
         exchange = _make_exchange()
         await proc.process(exchange, MagicMock())

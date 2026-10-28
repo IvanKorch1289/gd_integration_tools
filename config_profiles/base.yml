@@ -646,3 +646,9 @@ http3:
 
 # S90 M5-#5: backpressure на MQ
 queue_consumer_max_prefetch: 10
+dsl:
+  allowed_paths:
+    - "/data/uploads"
+    - "/data/exports"
+    - "/tmp/dsl"
+    - "/var/data"

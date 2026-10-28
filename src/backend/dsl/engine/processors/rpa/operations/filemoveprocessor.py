@@ -20,6 +20,7 @@ class FileMoveProcessor(BaseProcessor):
 
     Params: src, dst, mode="copy"|"move"|"rename".
     Значения можно передать через body (dict с ключами src, dst).
+    Оба пути (src и dst) проверяются по path-allowlist (``validate_path``).
     """
 
     required_capability: ClassVar[str | None] = "rpa.file.move"
@@ -50,20 +51,36 @@ class FileMoveProcessor(BaseProcessor):
         if not src or not dst:
             exchange.fail("file_move requires src and dst")
             return
+
+        # Второй независимый барьер безопасности: capability (``rpa.file.move``)
+        # ограничивает факт вызова, allowlist — путь. Проверяем ОБА пути:
+        # источник (чтение) и цель (запись за пределы каталога).
+        from src.backend.dsl.engine.processors._path_safety import (
+            PathTraversalError,
+            validate_path,
+        )
+
+        try:
+            safe_src = validate_path(src)
+            safe_dst = validate_path(dst)
+        except PathTraversalError as exc:
+            exchange.fail(f"file_move blocked: {exc}")
+            return
+
         try:
             # ponytail: wrap blocking I/O in asyncio.to_thread to avoid blocking event loop
             import asyncio
 
             if self._mode == "move":
-                await asyncio.to_thread(shutil.move, src, dst)
+                await asyncio.to_thread(shutil.move, safe_src, safe_dst)
             elif self._mode == "rename":
                 import os
 
-                await asyncio.to_thread(os.rename, src, dst)
+                await asyncio.to_thread(os.rename, safe_src, safe_dst)
             else:
-                await asyncio.to_thread(shutil.copy2, src, dst)
+                await asyncio.to_thread(shutil.copy2, safe_src, safe_dst)
             exchange.set_property(
-                "file_operation", {"mode": self._mode, "src": src, "dst": dst}
+                "file_operation", {"mode": self._mode, "src": safe_src, "dst": safe_dst}
             )
         except (FileNotFoundError, PermissionError, OSError) as exc:
             exchange.fail(f"File {self._mode} failed: {exc}")

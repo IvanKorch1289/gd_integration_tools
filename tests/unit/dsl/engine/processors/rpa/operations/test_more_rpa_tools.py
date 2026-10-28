@@ -200,6 +200,8 @@ class TestFtpUploadProcessor:
 
         src = tmp_path / "data.txt"
         src.write_text("hello")
+        # Wave 13 Q7 (B): локальный файл проверяется по path-allowlist.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
         p = FtpUploadProcessor(
             host="ftp.example.com",
             port=21,
@@ -264,6 +266,8 @@ class TestFtpUploadProcessor:
         monkeypatch.setenv("FTP_INSECURE_OK", "1")
         src = tmp_path / "data.txt"
         src.write_text("hello")
+        # Wave 13 Q7 (B): локальный файл проверяется по path-allowlist.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
         p = FtpUploadProcessor(
             host="ftp.example.com",
             port=21,

@@ -3,13 +3,15 @@
 Управляет:
 - директорией с DSL-маршрутами в YAML;
 - включением hot-reload watcher'а (``watchfiles.awatch``);
-- параметром debounce для группировки file-event'ов.
+- параметром debounce для группировки file-event'ов;
+- allowlist'ом файловых путей для DSL-процессоров (path-traversal guard).
 
 Все поля имеют разумные defaults — секция в YAML-профилях опциональна.
 """
 
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 from typing import ClassVar
 
@@ -35,6 +37,10 @@ class DSLSettings(BaseSettingsWithLoader):
             событий при сохранении редактором (tmp-файл + rename).
         rate_convert_providers: Словарь URL провайдеров курсов валют
             для RateConvertProcessor.
+        allowed_paths: Allowlist каталогов файловой системы, из которых
+            DSL-процессорам (FileRead/FileWrite/FileWatch/FileDelete/
+            DirectoryScan) разрешено читать данные. Env ``DSL_ALLOWED_PATHS``
+            (разделитель ``:``) перекрывает это значение.
     """
 
     yaml_group: ClassVar[str] = "dsl"
@@ -66,6 +72,19 @@ class DSLSettings(BaseSettingsWithLoader):
         },
         title="Провайдеры курсов валют",
         description="Словарь name → URL-шаблон для RateConvertProcessor.",
+    )
+    allowed_paths: list[str] = Field(
+        default_factory=lambda: [
+            "/data/uploads",
+            "/data/exports",
+            str(Path(tempfile.gettempdir()) / "dsl"),
+            "/var/data",
+        ],
+        title="Allowlist файловых путей (path-traversal guard)",
+        description=(
+            "Каталоги ФС, из которых DSL-процессорам разрешено читать/сканировать "
+            "файлы. Перекрывается env DSL_ALLOWED_PATHS (разделитель ':')."
+        ),
     )
 
 

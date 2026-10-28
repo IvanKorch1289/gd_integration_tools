@@ -37,6 +37,10 @@ from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors._path_safety import (
+    PathTraversalError,
+    validate_path,
+)
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
     FilteredDirectoryScanProcessor,
@@ -137,7 +141,8 @@ class DirectoryScanProcessor(BaseProcessor):
         """Депрекированный directory scan processor (shim на FilteredDirectoryScanProcessor).
 
         Разрешает путь из ``self._path`` или exchange.body, проверяет path-traversal
-        и существование директории, затем делегирует к
+        (allowlist каталогов — ``settings.dsl.allowed_paths``) и существование
+        директории, затем делегирует к
         :class:`FilteredDirectoryScanProcessor` (async-safe). Результат
         обогащается metadata (size, mtime) и сортируется.
 
@@ -158,6 +163,16 @@ class DirectoryScanProcessor(BaseProcessor):
             path = body.get("path") if isinstance(body, dict) else str(body)  # type: ignore[assignment]
         if not path:
             exchange.fail("DirectoryScanProcessor: no path provided")
+            return
+
+        # Wave 13 Q7 (A): path-traversal guard — сканировать можно только
+        # каталоги из allowlist (``settings.dsl.allowed_paths``). Проверка
+        # идёт ДО existence-check, чтобы нарушение allowlist не маскировалось
+        # сообщением «not a directory».
+        try:
+            path = validate_path(path)
+        except PathTraversalError as exc:
+            exchange.fail(f"DirectoryScanProcessor blocked: {exc}")
             return
 
         # Guard against path traversal / missing dir.
