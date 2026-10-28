@@ -8,7 +8,8 @@ Single entry point для объектного хранилища (S3/MinIO/Loca
 Single entry point соглашение:
 - consumer не знает о backend (S3/MinIO/LocalFS) — Rule 1
 - pool + healthcheck + retry fallback (S3→LocalFS при недоступности) — Rule 6
-- capability-checked (storage.read.<key>, storage.write.<key>) — Rule 5
+- capability-checked (storage.read.<key>, storage.write.<key>,
+  storage.presign.<key>) — Rule 5
 """
 
 from __future__ import annotations

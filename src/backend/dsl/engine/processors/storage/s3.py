@@ -276,7 +276,7 @@ class FromS3Processor(BaseProcessor):
 # ── s3_presign ────────────────────────────────────────────────────────────
 
 
-@processor("s3_presign", namespace="core", capabilities=("storage.read",))
+@processor("s3_presign", namespace="core", capabilities=("storage.presign",))
 class S3PresignProcessor(BaseProcessor):
     """Генерирует presigned URL для S3/MinIO (LocalFS возвращает ``file://``).
 

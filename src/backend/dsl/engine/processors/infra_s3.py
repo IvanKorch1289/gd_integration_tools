@@ -1,10 +1,19 @@
 """DSL processor ``infra_s3`` (Sprint 170 M2 Phase 2).
 
-S3/MinIO operations через facade_get_object_storage::
+S3/MinIO operations через StorageFacade::
 
     - infra_s3_get:
         key: reports/2026.pdf
         to: body.content
+
+Wave 13 (Q6): процессор больше не обходит фасад. Раньше storage
+поднимался напрямую через ``get_object_storage_class()(context)``
+(и вообще был нерабочим — модуль ``infrastructure.storage.object_storage``
+не существует), из-за чего ``_assert_read`` не вызывался и capability
+``storage.read`` не проверялась. Теперь используется общий резолвер
+фасада из ``dsl.engine.processors.storage.s3`` — тот же механизм, что
+у core-шагов ``to_s3``/``from_s3``/``s3_list``: фасад с capability-check
+из ``CapabilityGate`` (svcs_registry) и plugin = route_id.
 """
 
 from __future__ import annotations
@@ -40,10 +49,11 @@ class InfraS3GetProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
-        from src.backend.core.di.providers.infrastructure_locator import (
-            get_object_storage_class,
-        )
+        # Ленивый импорт общего резолвера фасада: DSL не импортирует
+        # services.* на уровне модуля (ADR-0354), а фасад берётся из
+        # DI/svcs_registry вместе с capability-check.
+        from src.backend.dsl.engine.processors.storage.s3 import _get_storage_facade
 
-        storage = get_object_storage_class()(context)  # type: ignore[call-arg]
+        storage = _get_storage_facade(context)
         content = await storage.download(self.key)
         self.set_result(exchange, self.target, content)

@@ -55,6 +55,20 @@ def patch_storage(fs_storage: LocalFSStorage) -> Iterator[None]:
     factory.get_object_storage.cache_clear()
 
 
+@pytest.fixture
+def patch_storage_facade(fs_storage: LocalFSStorage) -> Iterator[None]:
+    """Monkey-patch get_object_storage → StorageFacade поверх fs_storage."""
+    from src.backend.dsl.engine.processors import storage
+    from src.backend.services.storage.facade import StorageFacade
+
+    original_get = storage.s3._get_storage_facade
+    storage.s3._get_storage_facade = lambda context: StorageFacade(  # type: ignore[assignment]
+        fs_storage, plugin="dsl"
+    )
+    yield
+    storage.s3._get_storage_facade = original_get  # type: ignore[assignment]
+
+
 def _make_exchange(properties: dict[str, Any] | None = None) -> Exchange[Any]:
     return Exchange(properties=properties or {})
 
@@ -203,6 +217,48 @@ async def test_s3_presign_fails_on_invalid_key(patch_storage: None) -> None:
     proc = S3PresignProcessor()
     await proc.process(ex, context=None)  # type: ignore[arg-type]
     assert ex.error is not None
+
+
+async def test_s3_presign_works_via_storage_facade(
+    patch_storage_facade: None, fs_storage: LocalFSStorage
+) -> None:
+    """s3_presign работает поверх StorageFacade (регрессия, Wave 13 Q6).
+
+    Процессор звал ``facade.supports_presigned()``, которого у фасада
+    не было → ``AttributeError``. Прежние тесты подменяли фасад на сырой
+    ``LocalFSStorage``, поэтому баг не ловился.
+    """
+    await fs_storage.upload("file.txt", b"x")
+    ex = _make_exchange({"s3_key": "file.txt"})
+    proc = S3PresignProcessor(expires_in=60)
+    await proc.process(ex, context=None)  # type: ignore[arg-type]
+    assert ex.error is None
+    assert ex.properties["download_url"].startswith("file://")
+
+
+async def test_s3_presign_fails_when_backend_lacks_presign_support(
+    tmp_path: Path,
+) -> None:
+    """Фасад сообщает «presigned не поддерживается» → exchange.fail()."""
+    from src.backend.dsl.engine.processors import storage
+    from src.backend.services.storage.facade import StorageFacade
+
+    class _NoPresign(LocalFSStorage):
+        def supports_presigned(self) -> bool:
+            return False
+
+    original_get = storage.s3._get_storage_facade
+    storage.s3._get_storage_facade = lambda context: StorageFacade(  # type: ignore[assignment]
+        _NoPresign(base_path=tmp_path), plugin="dsl"
+    )
+    try:
+        ex = _make_exchange({"s3_key": "file.txt"})
+        proc = S3PresignProcessor()
+        await proc.process(ex, context=None)  # type: ignore[arg-type]
+    finally:
+        storage.s3._get_storage_facade = original_get  # type: ignore[assignment]
+    assert ex.error is not None
+    assert "не поддерживает" in ex.error
 
 
 def test_s3_presign_rejects_zero_expires() -> None:

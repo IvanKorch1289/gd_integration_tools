@@ -75,7 +75,9 @@ class TestInfraS3GetProcessor:
 
     @pytest.mark.asyncio
     async def test_reads_s3_object(self) -> None:
+        """infra_s3_get скачивает объект через StorageFacade."""
         from src.backend.dsl.engine.processors.infra_s3 import InfraS3GetProcessor
+        from src.backend.services.storage.facade import StorageFacade
 
         p = InfraS3GetProcessor(key="test/file.json", to="body.content")
         ex = MagicMock()
@@ -83,16 +85,92 @@ class TestInfraS3GetProcessor:
         ex.in_message.body = body
         ex.set_property = MagicMock()
         ctx = MagicMock()
-        # Patch get_object_storage_class at module level
         storage_instance = MagicMock()
         storage_instance.download = AsyncMock(return_value=b'{"data": 1}')
-        storage_class = MagicMock(return_value=storage_instance)
+        facade = StorageFacade(storage=storage_instance, plugin="route-1")
         with patch(
-            "src.backend.core.di.providers.infrastructure_locator.get_object_storage_class",
-            return_value=storage_class,
+            "src.backend.dsl.engine.processors.storage.s3._get_storage_facade",
+            return_value=facade,
         ):
             await p.process(ex, ctx)
         assert body.get("content") == b'{"data": 1}'
+
+    @pytest.mark.asyncio
+    async def test_goes_through_facade_and_checks_read_capability(self) -> None:
+        """Шаг идёт через фасад → ``_assert_read`` вызывается (storage.read)."""
+        from src.backend.dsl.engine.processors.infra_s3 import InfraS3GetProcessor
+        from src.backend.services.storage.facade import StorageFacade
+
+        checks: list[tuple[str, str, str | None]] = []
+        storage_instance = MagicMock()
+        storage_instance.download = AsyncMock(return_value=b"payload")
+
+        p = InfraS3GetProcessor(key="test/file.json", to="body.content")
+        ex = MagicMock()
+        body = {}
+        ex.in_message.body = body
+        ex.set_property = MagicMock()
+        ctx = MagicMock()
+        facade = StorageFacade(
+            storage=storage_instance,
+            capability_check=lambda plugin, cap, scope: checks.append(
+                (plugin, cap, scope)
+            ),
+            plugin="route-1",
+        )
+        with patch(
+            "src.backend.dsl.engine.processors.storage.s3._get_storage_facade",
+            return_value=facade,
+        ):
+            await p.process(ex, ctx)
+
+        assert checks == [("route-1", "storage.read", "test/file.json")]
+        assert body.get("content") == b"payload"
+
+    @pytest.mark.asyncio
+    async def test_capability_gate_from_registry_is_used(self) -> None:
+        """CapabilityGate из svcs_registry проверяет storage.read.<key>."""
+        from src.backend.core.security.capabilities.gate import CapabilityGate
+        from src.backend.dsl.engine.context import ExecutionContext
+        from src.backend.dsl.engine.processors.infra_s3 import InfraS3GetProcessor
+
+        calls: list[tuple[str, str, str | None]] = []
+
+        class _Gate:
+            """Минимальный stand-in CapabilityGate (только ``check``)."""
+
+            def check(self, plugin: str, capability: str, scope: str | None) -> None:
+                calls.append((plugin, capability, scope))
+
+        storage_instance = MagicMock()
+        storage_instance.download = AsyncMock(return_value=b"payload")
+
+        p = InfraS3GetProcessor(key="test/file.json", to="body.content")
+        ex = MagicMock()
+        body = {}
+        ex.in_message.body = body
+        ex.set_property = MagicMock()
+        ctx = ExecutionContext(route_id="route-1")
+
+        def _has_service(key: object) -> bool:
+            # StorageFacade в реестре не зарегистрирован → fallback-путь
+            # резолвера фасада (DI-provider + gate из реестра).
+            return key is CapabilityGate
+
+        with (
+            patch(
+                "src.backend.core.svcs_registry.has_service", side_effect=_has_service
+            ),
+            patch("src.backend.core.svcs_registry.get_service", return_value=_Gate()),
+            patch(
+                "src.backend.core.di.providers.cache.get_object_storage_provider",
+                return_value=storage_instance,
+            ),
+        ):
+            await p.process(ex, ctx)
+
+        assert calls == [("route-1", "storage.read", "test/file.json")]
+        assert body.get("content") == b"payload"
 
 
 class TestInfraRedisGetProcessor:
@@ -196,7 +274,10 @@ class TestDSLProcessorErrorPropagation:
 
     @pytest.mark.asyncio
     async def test_infra_s3_propagates_storage_error(self) -> None:
+        """Ошибка backend'а пробрасывается как ServiceError (фасад оборачивает)."""
+        from src.backend.core.errors import ServiceError
         from src.backend.dsl.engine.processors.infra_s3 import InfraS3GetProcessor
+        from src.backend.services.storage.facade import StorageFacade
 
         p = InfraS3GetProcessor(key="missing.json", to="body.content")
         ex = MagicMock()
@@ -204,12 +285,12 @@ class TestDSLProcessorErrorPropagation:
         ctx = MagicMock()
         storage_instance = MagicMock()
         storage_instance.download = AsyncMock(side_effect=ConnectionError("S3 down"))
-        storage_class = MagicMock(return_value=storage_instance)
+        facade = StorageFacade(storage=storage_instance, plugin="route-1")
         with patch(
-            "src.backend.core.di.providers.infrastructure_locator.get_object_storage_class",
-            return_value=storage_class,
+            "src.backend.dsl.engine.processors.storage.s3._get_storage_facade",
+            return_value=facade,
         ):
-            with pytest.raises(ConnectionError):
+            with pytest.raises(ServiceError):
                 await p.process(ex, ctx)
 
     @pytest.mark.asyncio

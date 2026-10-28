@@ -5,10 +5,13 @@
 (ADR-044 capability model).
 
 Контракт:
-* read-операции (download/exists/list/presign) требуют capability
+* read-операции (download/exists/list) требуют capability
   ``storage.read.<key_or_prefix>``;
 * write-операции (upload/delete) требуют capability
-  ``storage.write.<key>``.
+  ``storage.write.<key>``;
+* выдача presigned-ссылки (presign) требует capability
+  ``storage.presign.<key>`` — ссылка даёт клиенту прямой доступ
+  к бакету, поэтому это не чтение (Wave 13, Q6).
 
 При отсутствии ``capability_check`` (unit-тесты) — capability-проверка
 пропускается.
@@ -76,6 +79,11 @@ class StorageFacade:
     def _assert_write(self, key: str) -> None:
         if self._check is not None:
             self._check(self._plugin, "storage.write", key)
+
+    def _assert_presign(self, key: str) -> None:
+        """Проверка capability для выдачи presigned-ссылки (Wave 13, Q6)."""
+        if self._check is not None:
+            self._check(self._plugin, "storage.presign", key)
 
     async def _check_quota(self, key: str, size_bytes: int) -> None:
         """Per-tenant upload quota gate (cycle 271, CRITICAL-02).
@@ -238,10 +246,38 @@ class StorageFacade:
             raise ServiceError(f"storage list_keys failed: {exc}") from exc
 
     async def presigned_url(self, key: str, expires_in: int = 3600) -> str:
-        """Сгенерировать presigned URL."""
-        self._assert_read(key)
+        """Сгенерировать presigned URL.
+
+        Требует capability ``storage.presign.<key>``: ссылка даёт клиенту
+        прямой доступ к бакету (Wave 13, Q6).
+
+        Raises:
+            CapabilityDeniedError: недостаточно прав.
+            ServiceError: ошибка backend'а.
+
+        """
+        self._assert_presign(key)
         try:
             return await self._storage.presigned_url(key, expires_in=expires_in)
         except Exception as exc:
             _logger.warning("StorageFacade presigned_url failed key=%s: %s", key, exc)
             raise ServiceError(f"storage presigned_url failed: {exc}") from exc
+
+    def supports_presigned(self) -> bool:
+        """Поддерживает ли backend presigned-URL.
+
+        Capability-нейтральный feature-флаг: не требует ``storage.presign``,
+        так как сам факт поддержки не раскрывает данные и не выдаёт ссылку.
+
+        Делегирует backend'у; если у backend'а метода нет (old
+        implementation) — возвращается default ``True``, как в
+        ``FallbackStorage`` (см. infrastructure/storage/fallback.py).
+
+        Returns:
+            ``True``, если backend умеет выдавать presigned-URL.
+
+        """
+        check = getattr(self._storage, "supports_presigned", None)
+        if check is None:
+            return True
+        return bool(check())
