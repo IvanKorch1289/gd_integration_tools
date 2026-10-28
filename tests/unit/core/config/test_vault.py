@@ -13,7 +13,10 @@ class TestVaultSettings:
         # it's False (per conftest env override).
         assert s.enabled is False
         assert s.addr == "http://127.0.0.1:8200"
-        assert s.secret_path == "app/config"
+        # ADR-0372: YAML выше .env → secret_path берётся из
+        # config_profiles/base.yml::vault (там и живёт "app/config" в
+        # некоторых окружениях — но приоритет теперь зафиксирован).
+        assert s.secret_path == "secret/data/gd_integration_tools"
 
     def test_coerce_empty_string(self) -> None:
         s = VaultSettings(enabled="")

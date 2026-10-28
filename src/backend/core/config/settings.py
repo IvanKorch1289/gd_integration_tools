@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Any
 
 from pydantic_settings import BaseSettings
 
@@ -20,6 +21,7 @@ from src.backend.core.config.base import (
 )
 from src.backend.core.config.cert_store import CertStoreSettings, cert_store_settings
 from src.backend.core.config.clickhouse import ClickHouseSettings, clickhouse_settings
+from src.backend.core.config.config_loader import reload_settings
 from src.backend.core.config.database import (
     DatabaseConnectionSettings,
     db_connection_settings,
@@ -173,6 +175,24 @@ class Settings(BaseSettings):
 
     # Транспортные клиенты (SFTP/FTP) — Sprint 17 W1 b2 partial closure
     transport: TransportSettings = transport_settings
+
+    def reload(self) -> dict[str, Any]:
+        """Перезагружает конфигурацию и обновляет настройки in-place.
+
+        ADR-0372: раньше метод не существовал — hot-reload callback
+        ``settings.reload()`` молча ничего не делал, а админ-эндпоинт
+        ``POST /admin/config/reload`` отвечал ложным успехом.
+
+        Механика: кэши YAML/Vault сбрасываются, вложенные Settings и
+        модульные синглтоны пересоздаются, а их значения переносятся в
+        существующие объекты **in-place** (ссылки потребителей остаются
+        валидными).
+
+        Returns:
+            Отчёт ``{"reloaded": [...], "failed": [...]}``.
+
+        """
+        return reload_settings(self)
 
 
 @lru_cache

@@ -1,12 +1,14 @@
 import os
+import sys
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, ClassVar
 
-from dotenv import load_dotenv
 from pydantic.fields import FieldInfo
 from pydantic_settings import (
     BaseSettings,
+    EnvSettingsSource,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
@@ -14,7 +16,14 @@ from pydantic_settings import (
 from src.backend.core.config.constants import consts
 from src.backend.core.config.profile import get_active_profile
 
-__all__ = ("BaseSettingsWithLoader",)
+__all__ = (
+    "BaseSettingsWithLoader",
+    "clear_vault_cache",
+    "clear_yaml_cache",
+    "ensure_env_file_loaded",
+    "load_env_file",
+    "reload_settings",
+)
 
 
 def _logger() -> Any:
@@ -75,7 +84,89 @@ def repo_root() -> Path:
     return _REPO_ROOT
 
 
-load_dotenv(_REPO_ROOT / ".env")
+_ENV_FILE_VALUES: dict[str, str] = {}
+"""Содержимое ``.env`` (кэш): ``KEY -> значение`` из файла.
+
+Нужно, чтобы отличать «переменную из ``.env``» от «настоящей переменной
+окружения»: если значение в ``os.environ`` совпадает со значением из
+файла — источник считается файловым (низкий приоритет), иначе —
+настоящим окружением (приоритет №2). Подход устойчив к
+``importlib.reload`` модуля (не зависит от накопленного состояния).
+"""
+
+
+def _dotenv_only_keys() -> set[str]:
+    """Ключи, значения которых в ``os.environ`` пришли из ``.env``.
+
+    Returns:
+        Множество имён переменных (в нижнем регистре).
+
+    """
+    return {
+        key.lower()
+        for key, value in _ENV_FILE_VALUES.items()
+        if os.environ.get(key) == value
+    }
+
+
+def load_env_file(path: Path | None = None, *, override: bool = False) -> bool:
+    """Явно загружает ``.env`` в ``os.environ`` (ADR-0372).
+
+    Решение владельца (cycle 172): «в ``.env`` — только секреты».
+    Поэтому ``.env`` — отдельный ИСТОЧНИК с фиксированным приоритетом
+    (ниже env/Vault/Consul/YAML), а не неявная подмена окружения на
+    уровне импорта модуля.
+
+    Раньше ``load_dotenv()`` вызывался на уровне модуля — переменные из
+    ``.env`` попадали в ``os.environ`` ДО сборки цепочки источников и
+    поэтому перебивали и Vault, и YAML.
+
+    Args:
+        path: Путь к ``.env`` (по умолчанию — ``<repo_root>/.env``).
+        override: Перезаписывать ли уже установленные переменные окружения.
+
+    Returns:
+        ``True`` — файл прочитан, ``False`` — файла нет.
+
+    """
+    from dotenv import dotenv_values
+
+    env_path = path or (_REPO_ROOT / ".env")
+    if not env_path.is_file():
+        return False
+
+    values = {
+        key: value
+        for key, value in dotenv_values(env_path).items()
+        if value is not None
+    }
+    for key, value in values.items():
+        if key in os.environ and not override:
+            continue
+        os.environ[key] = value
+    _ENV_FILE_VALUES.update(values)
+    return True
+
+
+def ensure_env_file_loaded(path: Path | None = None) -> bool:
+    """Идемпотентная загрузка ``.env`` (не более одного раза за процесс).
+
+    Args:
+        path: Путь к ``.env`` (по умолчанию — ``<repo_root>/.env``).
+
+    Returns:
+        ``True`` — ``.env`` загружен (или уже был), ``False`` — файла нет.
+
+    """
+    global _ENV_FILE_LOADED
+    if _ENV_FILE_LOADED:
+        return True
+    _ENV_FILE_LOADED = True
+    return load_env_file(path)
+
+
+_ENV_FILE_LOADED: bool = False
+"""Флаг однократной загрузки ``.env`` (см. :func:`ensure_env_file_loaded`)."""
 
 
 # v6 W5.4 — module-level cache для base + overlay yaml reads.
@@ -87,8 +178,66 @@ load_dotenv(_REPO_ROOT / ".env")
 # (NOT 5-8s as original estimate — corrected after W5.4 benchmark).
 # Per v6 §10 W5 «Lazy import применять только при доказанном выигрыше»:
 # cache invalidation при смене профиля runtime → перечитываем.
-_BASE_YAML_CACHE: dict[str, dict[str, Any]] = {}
-_OVERLAY_YAML_CACHE: dict[str, dict[str, Any]] = {}
+#
+# ADR-0372: кэш хранит СЛЕДОК ФАЙЛА ((mtime_ns, size)) — при изменении
+# файла на диске запись перечитывается автоматически. Раньше кэш жил
+# вечно → hot-reload подхватывал старое значение YAML.
+_YamlCache = dict[str, tuple[tuple[int, int], dict[str, Any]]]
+
+_BASE_YAML_CACHE: _YamlCache = {}
+_OVERLAY_YAML_CACHE: _YamlCache = {}
+
+
+def clear_yaml_cache() -> None:
+    """Сбрасывает кэш прочитанных YAML-профилей.
+
+    Вызывается из hot-reload: без сброса (и без проверки mtime) новое
+    значение из ``config_profiles/*.yml`` не попадало бы в настройки.
+
+    Returns:
+        None.
+
+    """
+    _BASE_YAML_CACHE.clear()
+    _OVERLAY_YAML_CACHE.clear()
+
+
+def _file_stamp(path: Path) -> tuple[int, int]:
+    """Возвращает признак актуальности файла: ``(mtime_ns, size)``.
+
+    Args:
+        path: Путь к файлу.
+
+    Returns:
+        Кортеж ``(mtime_ns, size)``; ``(0, 0)`` — файл недоступен.
+
+    """
+    try:
+        stat = path.stat()
+    except OSError:
+        return (0, 0)
+    return (stat.st_mtime_ns, stat.st_size)
+
+
+def _read_yaml_cached(path: Path, cache: _YamlCache) -> dict[str, Any]:
+    """Читает YAML с кэшем, инвалидируемым по изменению файла.
+
+    Args:
+        path: Путь к YAML-файлу.
+        cache: Кэш (``path -> (stamp, data)``).
+
+    Returns:
+        Разобранное содержимое YAML (пустой dict — если файла нет).
+
+    """
+    key = path.as_posix()
+    stamp = _file_stamp(path)
+    cached = cache.get(key)
+    if cached is not None and cached[0] == stamp:
+        return cached[1]
+    data = _read_yaml(path)
+    cache[key] = (stamp, data)
+    return data
 
 
 def _read_base_yaml_cached(profiles_dir: Path) -> dict[str, Any]:
@@ -98,11 +247,7 @@ def _read_base_yaml_cached(profiles_dir: Path) -> dict[str, Any]:
     cache валиден пока процесс живёт. При смене profile через env
     профильный overlay перечитывается (отдельный cache key).
     """
-    key = profiles_dir.as_posix()
-    if key not in _BASE_YAML_CACHE:
-        base_path = profiles_dir / "base.yml"
-        _BASE_YAML_CACHE[key] = _read_yaml(base_path)
-    return _BASE_YAML_CACHE[key]
+    return _read_yaml_cached(profiles_dir / "base.yml", _BASE_YAML_CACHE)
 
 
 def _read_overlay_yaml_cached(profiles_dir: Path, profile_name: str) -> dict[str, Any]:
@@ -111,11 +256,7 @@ def _read_overlay_yaml_cached(profiles_dir: Path, profile_name: str) -> dict[str
     Key = (profiles_dir, profile_name). При смене profile через env
     (get_active_profile() возвращает новое имя) → cache miss → перечитываем.
     """
-    key = f"{profiles_dir.as_posix()}::{profile_name}"
-    if key not in _OVERLAY_YAML_CACHE:
-        overlay_path = profiles_dir / f"{profile_name}.yml"
-        _OVERLAY_YAML_CACHE[key] = _read_yaml(overlay_path)
-    return _OVERLAY_YAML_CACHE[key]
+    return _read_yaml_cached(profiles_dir / f"{profile_name}.yml", _OVERLAY_YAML_CACHE)
 
 
 def _deep_merge(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
@@ -144,29 +285,89 @@ def _read_yaml(path: Path) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+def _profiles_dir() -> Path:
+    """Каталог с YAML-профилями (``config_profiles/``)."""
+    return _REPO_ROOT / "config_profiles"
+
+
+def _merged_profile_yaml() -> dict[str, Any]:
+    """Слияние ``base.yml`` + overlay активного профиля (с кэшем).
+
+    Returns:
+        Итоговый словарь конфигурации.
+
+    """
+    profiles_dir = _profiles_dir()
+    return _deep_merge(
+        _read_base_yaml_cached(profiles_dir),
+        _read_overlay_yaml_cached(profiles_dir, get_active_profile().value),
+    )
+
+
+def _vault_yaml_config() -> dict[str, Any]:
+    """Секция ``vault`` из YAML-профиля (с кэшем чтения).
+
+    ADR-0372: ``VAULT_ADDR``/``VAULT_SECRET_PATH`` — не секреты, они
+    задаются в ``config_profiles/*.yml::vault`` (см. ``.env.example``).
+
+    Returns:
+        Словарь настроек Vault из YAML (пустой — если секции нет).
+
+    """
+    vault_cfg = _merged_profile_yaml().get("vault") or {}
+    return vault_cfg if isinstance(vault_cfg, dict) else {}
+
+
+def _env_lookup(name: str) -> str:
+    """Значение переменной окружения, заданное НЕ через ``.env``.
+
+    ADR-0372: значения из ``.env`` не должны перебивать YAML/Vault —
+    они приходят отдельным источником (dotenv) с низким приоритетом.
+    Поэтому для «настоящих» переменных окружения используется этот
+    lookup, а ``.env``-значения — как последний fallback.
+
+    Args:
+        name: Имя переменной окружения.
+
+    Returns:
+        Значение переменной или пустая строка.
+
+    """
+    if name.lower() in _dotenv_only_keys():
+        return ""
+    return os.environ.get(name, "")
+
+
 def _is_vault_enabled() -> bool:
     """Решает, активировать ли VaultConfigSettingsSource.
 
     Приоритет: env-override (``VAULT_ENABLED``) → YAML (``vault.enabled``)
     → значение по умолчанию ``True``. Helper не инстанциирует
     ``VaultSettings`` — это вызвало бы рекурсию через
-    ``customise_sources``; YAML читается напрямую.
+    ``customise_sources``; YAML читается напрямую (через кэш — ADR-0372).
     """
     from os import getenv
 
     raw = getenv("VAULT_ENABLED")
     if raw is not None and raw.strip():
         return raw.strip().lower() not in {"0", "false", "no"}
-    base = _read_yaml(_REPO_ROOT / "config_profiles" / "base.yml")
-    overlay = _read_yaml(
-        _REPO_ROOT / "config_profiles" / f"{get_active_profile().value}.yml"
-    )
-    vault_cfg = _deep_merge(base, overlay).get("vault") or {}
+    vault_cfg = _vault_yaml_config()
     return bool(vault_cfg.get("enabled", True))
 
 
 class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
-    """Abstract base class for filtered settings sources."""
+    """Abstract base class for filtered settings sources.
+
+    ``fail_closed`` (ADR-0372) разделяет два принципа загрузки:
+
+    * ``True`` (YAML) — ошибка чтения ПРОБРАСЫВАЕТСЯ: отсутствие
+      ``config_profiles/{profile}.yml`` не должно молча откатывать
+      приложение на дефолты;
+    * ``False`` (Vault/Consul) — fail-soft: внешний источник недоступен →
+      источник возвращает ``{}``, конфигурация собирается из остальных.
+    """
+
+    fail_closed: ClassVar[bool] = False
 
     def __init__(self, settings_cls: type[BaseSettings]):
         super().__init__(settings_cls)
@@ -188,6 +389,11 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
 
             return self._filter_data(raw_data)
         except Exception as exc:
+            if self.fail_closed:
+                _logger().error(
+                    "Ошибка в %s (fail-closed): %s", self.__class__.__name__, exc
+                )
+                raise
             self._handle_error(exc)
             return {}
 
@@ -253,10 +459,14 @@ class YamlConfigSettingsLoader(FilteredSettingsSource):
           enabled-флаги для конкретного окружения).
 
     Финальная конфигурация = ``_deep_merge(base, profile)``. Оба файла
-    обязательны — отсутствие любого из них приводит к фатальной ошибке.
+    обязательны — отсутствие любого из них приводит к фатальной ошибке
+    (``fail_closed`` — источник пробрасывает исключение, а не откатывается
+    на дефолты; ADR-0372).
     Секреты приходят из env / Vault; в YAML их быть не должно (см.
     ``tools/config_audit.py`` и ``.env.example``).
     """
+
+    fail_closed: ClassVar[bool] = True
 
     def __init__(
         self, settings_cls: type[BaseSettings], profiles_dir: Path | None = None
@@ -300,6 +510,26 @@ Vault выполняется N раз, поэтому 30+ одинаковых �
 """
 
 
+_VAULT_SECRET_CACHE: dict[tuple[str, str], dict[str, Any]] = {}
+"""Кэш секретов Vault: ``(addr, secret_path) -> payload``.
+
+ADR-0372: без кэша Vault читался 46 раз на старте (92 HTTP-запроса:
+``is_authenticated`` + ``read_secret_version`` на каждый Settings-класс).
+Секрет одинаков для всех классов → достаточно одного чтения. Кэш
+сбрасывается в :func:`clear_vault_cache` (hot-reload).
+"""
+
+
+def clear_vault_cache() -> None:
+    """Сбрасывает кэш секретов Vault (hot-reload).
+
+    Returns:
+        None.
+
+    """
+    _VAULT_SECRET_CACHE.clear()
+
+
 _HVAC_AVAILABLE: bool | None = None
 """Cached result of ``_hvac_module_available()``. None = not checked yet.
 
@@ -339,6 +569,11 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
     профиле ``dev_light`` поставляется overlay ``vault.enabled: false``,
     что отключает источник без необходимости трогать env.
 
+    ADR-0372: ``VAULT_ADDR``/``VAULT_SECRET_PATH`` — не секреты, они
+    задаются в ``config_profiles/*.yml::vault`` (см. ``.env.example``);
+    приоритет: реальное окружение → YAML → ``.env``. ``VAULT_TOKEN`` —
+    секрет: реальное окружение → ``.env`` (в YAML секретов нет).
+
     Если Vault недоступен (connection refused, таймаут, auth-fail) —
     источник один раз пишет warning и затем тихо возвращает ``{}`` для
     остальных Settings-классов (см. ``_VAULT_UNREACHABLE``).
@@ -347,8 +582,6 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
     def _load_data(self) -> dict[str, Any]:
         """Load data from Vault."""
         global _VAULT_UNREACHABLE
-
-        from os import getenv
 
         if not _is_vault_enabled():
             return {}
@@ -367,12 +600,26 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
             _VAULT_UNREACHABLE = True
             return {}
 
-        vault_addr = getenv("VAULT_ADDR")
-        vault_token = getenv("VAULT_TOKEN")
-        vault_secret_path = getenv("VAULT_SECRET_PATH")
+        yaml_cfg = _vault_yaml_config()
+        vault_addr = (
+            _env_lookup("VAULT_ADDR")
+            or yaml_cfg.get("addr")
+            or os.environ.get("VAULT_ADDR", "")
+        )
+        vault_token = _env_lookup("VAULT_TOKEN") or os.environ.get("VAULT_TOKEN", "")
+        vault_secret_path = (
+            _env_lookup("VAULT_SECRET_PATH")
+            or yaml_cfg.get("secret_path")
+            or os.environ.get("VAULT_SECRET_PATH", "")
+        )
 
         if not all([vault_addr, vault_token, vault_secret_path]):
             return {}
+
+        cache_key = (vault_addr, vault_secret_path)
+        cached = _VAULT_SECRET_CACHE.get(cache_key)
+        if cached is not None:
+            return cached
 
         from hvac import Client
         from hvac.exceptions import VaultError
@@ -386,7 +633,9 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
                 return {}
 
             response = client.secrets.kv.v2.read_secret_version(path=vault_secret_path)
-            return response.get("data", {}).get("data", {})
+            payload = response.get("data", {}).get("data", {})
+            _VAULT_SECRET_CACHE[cache_key] = payload
+            return payload
         except (RequestException, VaultError) as exc:
             _VAULT_UNREACHABLE = True
             self._log_vault_unreachable(str(exc) or type(exc).__name__)
@@ -423,11 +672,39 @@ def _is_consul_enabled() -> bool:
     return False
 
 
+def _parse_consul_addr(consul_addr: str) -> tuple[str, int, str]:
+    """Разбирает ``CONSUL_ADDR`` в ``(host, port, scheme)``.
+
+    ADR-0372: раньше порт терялся (``split(":")[0]``) — ``http://consul:9500``
+    превращался в ``consul`` + дефолтный 8500, т.е. Consul KV читался не с
+    того сервера.
+
+    Args:
+        consul_addr: Значение ``CONSUL_ADDR`` (``host``, ``host:port`` или URL).
+
+    Returns:
+        Кортеж ``(host, port, scheme)``.
+
+    """
+    from urllib.parse import urlsplit
+
+    raw = consul_addr.strip()
+    parsed = urlsplit(raw if "://" in raw else f"//{raw}")
+    host = parsed.hostname or "localhost"
+    port = parsed.port or 8500
+    scheme = parsed.scheme or "http"
+    return host, port, scheme
+
+
 class ConsulConfigSettingsSource(FilteredSettingsSource):
     """Consul KV source для hot-reload runtime-config (Rule 7).
 
     Загружает keys с префиксом ``runtime/{yaml_group}/``.
     На prod: opt-in через ``CONSUL_ENABLED=true`` + ``CONSUL_ADDR``.
+
+    ADR-0372: источник стоит **выше** YAML — иначе «runtime-config из
+    Consul KV» не работал: YAML перекрывал значения из Consul.
+    Недоступность Consul — fail-soft (возвращает ``{}``).
     """
 
     def _load_data(self) -> dict[str, Any]:
@@ -441,12 +718,17 @@ class ConsulConfigSettingsSource(FilteredSettingsSource):
         if not consul_addr:
             return {}
 
+        prefix = f"runtime/{self.yaml_group}/"
         try:
             from src.backend.core.config.consul_config import ConsulConfigStore
 
-            host = consul_addr.split("://")[-1].split(":")[0]
-            store = ConsulConfigStore(host=host)
-            prefix = f"runtime/{self.yaml_group}/"
+            host, port, scheme = _parse_consul_addr(consul_addr)
+            store = ConsulConfigStore(
+                host=host,
+                port=port,
+                scheme=scheme,
+                token=getenv("CONSUL_TOKEN") or None,
+            )
             data: dict[str, Any] = {}
             for key, value in store.items(prefix):
                 field_name = key.removeprefix(prefix)
@@ -465,6 +747,28 @@ class ConsulConfigSettingsSource(FilteredSettingsSource):
             return {}
 
 
+class DotEnvAwareEnvSource(EnvSettingsSource):
+    """Env-source, игнорирующий переменные, подставленные из ``.env``.
+
+    ADR-0372: без этого ``.env`` фактически оставался бы приоритетом №2
+    (env) и перебивал Vault/YAML. Значения ``.env`` должны приходить
+    отдельным источником (dotenv) — с приоритетом ниже env/Vault/Consul.
+
+    Переменные, которые были в ``os.environ`` ДО загрузки ``.env``,
+    остаются видимыми: реальное окружение приоритетнее файла.
+    """
+
+    def __init__(self, settings_cls: type[BaseSettings]) -> None:
+        super().__init__(settings_cls)
+        dotenv_keys = _dotenv_only_keys()
+        if dotenv_keys:
+            self.env_vars = {
+                key: value
+                for key, value in self.env_vars.items()
+                if key not in dotenv_keys
+            }
+
+
 class BaseSettingsWithLoader(BaseSettings):
     """Base class for configuration models with multi-source loading support.
 
@@ -472,8 +776,9 @@ class BaseSettingsWithLoader(BaseSettings):
     - Initialization parameters
     - Environment variables
     - Vault secrets
+    - Consul KV runtime-config
+    - .env file (secrets only — см. ADR-0372)
     - YAML configuration files
-    - .env files
     - File-based secrets
 
     Subclasses must define:
@@ -482,7 +787,14 @@ class BaseSettingsWithLoader(BaseSettings):
     """
 
     yaml_group: ClassVar[str | None] = None
-    model_config = SettingsConfigDict(env_prefix="", extra="forbid")
+    model_config = SettingsConfigDict(
+        env_prefix="",
+        extra="forbid",
+        env_file=str(_REPO_ROOT / ".env"),
+        # Только поля модели: без этого dotenv-source отдаёт лишние ключи
+        # из .env как "extra" → ValidationError при extra="forbid".
+        dotenv_filtering="only_existing",
+    )
 
     @classmethod
     def settings_customise_sources(
@@ -495,23 +807,143 @@ class BaseSettingsWithLoader(BaseSettings):
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         """Customize configuration sources and their priority order.
 
-        Priority order (highest first):
-        1. Initialization parameters
-        2. Environment variables
-        3. Vault secrets
-        4. YAML configuration
-        5. .env file
-        6. File-based secrets
+        Priority order (highest first, ADR-0372):
+
+        1. Initialization parameters (``Settings(...)``)
+        2. Environment variables (реальное окружение процесса)
+        3. Vault secrets (``vault.enabled: true``)
+        4. Consul KV runtime-config (``CONSUL_ENABLED=true``)
+        5. YAML configuration (``base.yml`` + overlay профиля)
+        6. .env file (только секреты — см. ``.env.example``)
+        7. File-based secrets
+
+        ADR-0372:
+        * Consul поднят ВЫШЕ YAML — раньше он стоял после YAML и
+          «runtime-config из Consul KV» молча перекрывался YAML-значениями;
+        * значения ``.env`` вынесены из env-source в отдельный источник
+          (dotenv) и опущены НИЖЕ YAML: файл не перебивает YAML/Vault,
+          а заполняет только то, чего больше нигде нет (то есть секреты).
         """
         if not cls.yaml_group:
             raise ValueError("Subclasses must define `yaml_group` class variable")
 
+        # ADR-0372: явная точка загрузки ``.env`` — вход в цепочку
+        # источников (не импорт модуля и не sitecustomize). Значения файла
+        # попадают в настройки отдельным источником (dotenv, приоритет
+        # ниже YAML), а в ``os.environ`` — только чтобы процесс видел
+        # секреты (feature-флаги, прямые читатели ``os.environ``).
+        ensure_env_file_loaded()
+
         return (
             init_settings,
-            env_settings,
+            DotEnvAwareEnvSource(settings_cls),
             VaultConfigSettingsSource(settings_cls),
-            YamlConfigSettingsLoader(settings_cls),
             ConsulConfigSettingsSource(settings_cls),  # D-AUDIT-A12-02 fix (cycle 1)
+            YamlConfigSettingsLoader(settings_cls),
             dotenv_settings,
             file_secret_settings,
         )
+
+
+def _apply_in_place(target: Any, source: Any) -> None:
+    """Копирует значения ``source`` в уже существующий объект ``target``.
+
+    Нужно для hot-reload: потребители держат ссылки на модульные
+    синглтоны (``app_base_settings`` и т.п.), поэтому настройки обновляются
+    **in-place** — ссылки остаются валидными, значения — новыми.
+
+    Args:
+        target: Объект-получатель (уже существующий экземпляр модели).
+        source: Новый валидный экземпляр той же модели.
+
+    Returns:
+        None.
+
+    """
+    target.__dict__.clear()
+    target.__dict__.update(source.__dict__)
+    target.__pydantic_fields_set__.clear()
+    target.__pydantic_fields_set__.update(source.__pydantic_fields_set__)
+    source_extra = getattr(source, "__pydantic_extra__", None)
+    if source_extra:
+        if target.__pydantic_extra__ is None:
+            target.__pydantic_extra__ = {}
+        target.__pydantic_extra__.clear()
+        target.__pydantic_extra__.update(source_extra)
+
+
+def _iter_settings_singletons() -> Iterator[tuple[str, str, Any]]:
+    """Перебирает модульные синглтоны настроек пакета ``core.config``.
+
+    ADR-0372: настройки замораживались на импорте — 40+ модульных
+    экземпляров. Чтобы hot-reload обновлял их все, обходим уже
+    импортированные модули пакета и собираем объекты-настройки.
+
+    Yields:
+        Кортежи ``(module_name, attr_name, instance)``.
+
+    """
+    prefix = f"{__name__.rsplit('.', 1)[0]}."
+    for module_name, module in list(sys.modules.items()):
+        if module is None or not module_name.startswith(prefix):
+            continue
+        for attr_name, value in list(vars(module).items()):
+            if isinstance(value, BaseSettings):
+                yield module_name, attr_name, value
+
+
+def reload_settings(root: BaseSettings) -> dict[str, Any]:
+    """Перечитывает конфигурацию из всех источников и обновляет настройки.
+
+    Последовательность (ADR-0372):
+
+    1. сбрасываются кэши YAML и секретов Vault;
+    2. для каждой вложенной модели корневого ``Settings`` и каждого
+       модульного синглтона пакета ``core.config`` создаётся НОВЫЙ
+       экземпляр (перечитывание источников);
+    3. значения нового экземпляра переносятся в существующий объект
+       **in-place** — ссылки потребителей не ломаются.
+
+    Ошибка отдельной модели не роняет весь reload: она попадает в
+    ``failed``, а прежние значения сохраняются.
+
+    Args:
+        root: Корневой объект настроек (обычно ``settings``).
+
+    Returns:
+        Отчёт ``{"reloaded": [...], "failed": [...]}``.
+
+    """
+    clear_yaml_cache()
+    clear_vault_cache()
+
+    targets: list[tuple[str, Any]] = []
+    for field_name in type(root).model_fields:
+        value = getattr(root, field_name, None)
+        if isinstance(value, BaseSettings):
+            targets.append((field_name, value))
+    for module_name, attr_name, value in _iter_settings_singletons():
+        targets.append((f"{module_name}.{attr_name}", value))
+
+    reloaded: list[str] = []
+    failed: list[dict[str, str]] = []
+    seen: set[int] = set()
+    for label, target in targets:
+        if target is root or id(target) in seen:
+            continue
+        seen.add(id(target))
+        try:
+            fresh = type(target)()
+        except Exception as exc:
+            _logger().error("Не удалось перезагрузить настройки %s: %s", label, exc)
+            failed.append({"name": label, "error": str(exc)})
+            continue
+        _apply_in_place(target, fresh)
+        reloaded.append(label)
+
+    _logger().info(
+        "Настройки перезагружены: %d обновлено, %d с ошибками",
+        len(reloaded),
+        len(failed),
+    )
+    return {"reloaded": reloaded, "failed": failed}

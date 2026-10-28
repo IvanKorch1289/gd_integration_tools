@@ -17,6 +17,12 @@ class TestConfigHotReloader:
         rel.watch("/home/user/test/config.yml")
         assert Path("/home/user/test/config.yml") in rel._paths
 
+    def test_watch_makes_relative_path_absolute(self) -> None:
+        """ADR-0372: watcher не должен зависеть от текущего каталога."""
+        rel = ConfigHotReloader()
+        rel.watch("config_profiles")
+        assert all(path.is_absolute() for path in rel._paths)
+
     def test_on_reload_registers_callback(self) -> None:
         rel = ConfigHotReloader()
 
@@ -67,6 +73,24 @@ class TestConfigHotReloader:
         assert result["succeeded"] == 0
         assert len(result["failed"]) == 1
         assert "boom" in result["failed"][0]["error"]
+
+    @pytest.mark.asyncio
+    async def test_trigger_reload_without_callbacks_reports_failure(self) -> None:
+        """Без зарегистрированных callback'ов reload — ошибка, а не успех (ADR-0372)."""
+        rel = ConfigHotReloader()
+        result = await rel.trigger_reload()
+        assert result["succeeded"] == 0
+        assert result["failed"], "Отсутствие callback'ов должно попадать в failed"
+        assert result["ok"] is False
+
+    @pytest.mark.asyncio
+    async def test_trigger_reload_reports_callbacks_count(self) -> None:
+        """Отчёт содержит число зарегистрированных callback'ов."""
+        rel = ConfigHotReloader()
+        rel.on_reload(lambda: None)
+        result = await rel.trigger_reload()
+        assert result["callbacks"] == 1
+        assert result["ok"] is True
 
     @pytest.mark.asyncio
     async def test_start_skips_when_already_running(self) -> None:

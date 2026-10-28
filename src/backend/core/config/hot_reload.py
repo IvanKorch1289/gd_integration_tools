@@ -54,8 +54,20 @@ class ConfigHotReloader:
         self._debounce_ms = debounce_ms
 
     def watch(self, path: str | Path) -> None:
-        """Добавляет файл или директорию в список отслеживаемых."""
-        self._paths.add(Path(path))
+        """Добавляет файл или директорию в список отслеживаемых.
+
+        Путь приводится к абсолютному (ADR-0372): относительный
+        ``config_profiles`` зависел от текущего рабочего каталога и
+        «терял» watcher при запуске не из корня репозитория.
+
+        Args:
+            path: Файл или директория для наблюдения.
+
+        Returns:
+            None.
+
+        """
+        self._paths.add(Path(path).absolute())
 
     def on_reload(self, callback: ReloadCallback) -> None:
         """Регистрирует callback, вызываемый при изменении."""
@@ -64,8 +76,39 @@ class ConfigHotReloader:
     async def trigger_reload(self, reason: str = "manual") -> dict[str, Any]:
         """Вручную вызывает все callback'и (для админ-эндпоинта).
 
-        Возвращает отчёт с количеством успешных/провалившихся callback'ов.
+        Отчёт честный (ADR-0372): если callback'ов нет или callback
+        завершился ошибкой — это попадает в ``failed``, а не в ``succeeded``.
+        Раньше отсутствие ``settings.reload()`` давало ложный успех
+        ``{"succeeded": 1, "failed": []}``.
+
+        Args:
+            reason: Причина перезагрузки (для логов и отчёта).
+
+        Returns:
+            Отчёт ``{"reason", "succeeded", "failed", "callbacks", "ok"}``.
+
         """
+        if not self._callbacks:
+            logger.error(
+                "Config reload requested (%s), но ни один callback не зарегистрирован",
+                reason,
+            )
+            return {
+                "reason": reason,
+                "succeeded": 0,
+                "failed": [
+                    {
+                        "callback": "<none>",
+                        "error": (
+                            "no reload callbacks registered — "
+                            "конфигурация не перезагружена"
+                        ),
+                    }
+                ],
+                "callbacks": 0,
+                "ok": False,
+            }
+
         ok, failed = 0, []
         for cb in self._callbacks:
             try:
@@ -79,7 +122,13 @@ class ConfigHotReloader:
                 )
                 logger.error("Hot-reload callback failed: %s", exc)
         logger.info("Config reloaded (%s): %d OK, %d failed", reason, ok, len(failed))
-        return {"reason": reason, "succeeded": ok, "failed": failed}
+        return {
+            "reason": reason,
+            "succeeded": ok,
+            "failed": failed,
+            "callbacks": len(self._callbacks),
+            "ok": not failed,
+        }
 
     async def start(self) -> None:
         """Запускает watcher в отдельной таске."""
@@ -146,3 +195,35 @@ def get_hot_reloader() -> ConfigHotReloader:
     if _reloader is None:
         _reloader = ConfigHotReloader()
     return _reloader
+
+
+def register_settings_reload_callback(reloader: ConfigHotReloader) -> None:
+    """Регистрирует callback перезагрузки настроек (``settings.reload()``).
+
+    ADR-0372: метод ``settings.reload()`` обязан существовать. Если его
+    нет — callback падает с ``RuntimeError``, и ``trigger_reload``
+    сообщает об ОШИБКЕ. Раньше callback тихо ничего не делал, а
+    ``POST /admin/config/reload`` отвечал ложным успехом
+    ``{"succeeded": 1, "failed": []}``.
+
+    Args:
+        reloader: Hot-reloader, в который регистрируется callback.
+
+    Returns:
+        None.
+
+    """
+    from src.backend.core.config.settings import settings
+
+    async def _reload_settings() -> None:
+        """Перечитывает конфигурацию и обновляет настройки in-place."""
+        reload_fn = getattr(settings, "reload", None)
+        if not callable(reload_fn):
+            raise RuntimeError(
+                "settings.reload() недоступен — конфигурация не перезагружена"
+            )
+        result = reload_fn()
+        if asyncio.iscoroutine(result):
+            await result
+
+    reloader.on_reload(_reload_settings)

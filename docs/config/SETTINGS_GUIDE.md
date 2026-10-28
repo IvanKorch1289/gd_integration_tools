@@ -6,13 +6,16 @@
 ## Архитектура
 
 ```
-Config Profiles (YAML) → ConfigLoader → pydantic-settings
-                                 ↓
-                         @lru_cache singleton
-                                 ↓
-                  Hot-reload (watchfiles → on_reload)
-                                 ↓
-                            Services consume
+Источники (по приоритету):
+  init → env → Vault → Consul → YAML → .env → file-secrets
+                    ↓
+            ConfigLoader (pydantic-settings)
+                    ↓
+              @lru_cache singleton
+                    ↓
+        Hot-reload (watchfiles → on_reload → Settings.reload())
+                    ↓
+              Services consume
 ```
 
 **Слои:**
@@ -61,15 +64,75 @@ Config Profiles (YAML) → ConfigLoader → pydantic-settings
 
 **Ponytail rule**: параметры processors (timeout, max_iterations) имеют sensible defaults в kwarg, не магические числа из constants.
 
+## Приоритет источников (ADR-0372)
+
+`BaseSettingsWithLoader.settings_customise_sources` — единственное место,
+где задан порядок. **Выше = приоритетнее** (побеждает остальных):
+
+| # | Источник | Что задаёт | Как включается |
+|---|---|---|---|
+| 1 | init-параметры | `Settings(...)` / `SomeSettings(value=...)` | всегда |
+| 2 | env процесса | реальные переменные окружения | всегда |
+| 3 | Vault (KV v2) | секреты (`vault.enabled: true`) | `vault.enabled` / `VAULT_ENABLED` |
+| 4 | Consul KV | runtime-конфиг, префикс `runtime/{yaml_group}/` | `CONSUL_ENABLED=true` + `CONSUL_ADDR` |
+| 5 | YAML | несекретная конфигурация | `config_profiles/base.yml` + overlay профиля |
+| 6 | `.env` | **только секреты** (см. `.env.example`) | файл `<repo_root>/.env` |
+| 7 | file-based secrets | docker/secrets-файлы | всегда |
+
+**Что перекрывает что:**
+
+| Источник | Перекрывается | Комментарий |
+|---|---|---|
+| env процесса | всё | в т.ч. переменные из `.env`, если значение отличается от файла |
+| Vault | YAML, `.env`, file-secrets | секреты Vault важнее локального файла |
+| Consul | YAML, `.env`, file-secrets | runtime-конфиг важнее статичного YAML |
+| YAML | `.env`, file-secrets | несекретные значения живут только здесь |
+| `.env` | file-secrets | заполняет лишь то, чего нет в YAML/Consul/Vault |
+
+**Важно про `.env`:**
+
+* `.env` — **отдельный источник с приоритетом №6**, а не подмена
+  окружения: значения из файла не перебивают YAML/Vault/Consul.
+  Значение из `.env`, совпадающее с реальной переменной окружения,
+  считается реальной переменной (окружение приоритетнее файла).
+* `.env` читается явно: `load_env_file()` /
+  `ensure_env_file_loaded()` в `config_loader.py`; точка загрузки — **вход
+  в цепочку источников** (`settings_customise_sources`), а не импорт
+  модуля. CLI может вызвать `load_env_file()` раньше — вызов идемпотентный.
+* Секреты в YAML быть не должно — гейт `tools/config_audit.py` и
+  `tools/check_env_example.py --secrets-only`.
+
+**Порядок загрузки в runtime:**
+
+```
+init → env → Vault → Consul → YAML → .env → file-secrets
+```
+
+**Fail-closed / fail-soft:**
+
+* YAML — **fail-closed**: нет `config_profiles/{profile}.yml` → `RuntimeError`
+  на старте (тихий откат на дефолты запрещён);
+* Vault / Consul — **fail-soft**: недоступны → источник отдаёт `{}`,
+  конфигурация собирается из остальных.
+
 ## Hot-reload (D-rule)
 
 `src/backend/core/config/hot_reload.py`:
-- `watchfiles.awatch` background task on `config_profiles/`
+- `watchfiles.awatch` background task on `config_profiles/` (абсолютные
+  пути от корня репозитория — не зависят от CWD)
 - Debounce window 0.5s
-- Per-key lock для race-free reload
 - Валидация падает → старая версия остаётся
 - Audit emit для всех reload events
 - Feature-flag: `feature_flags.route_loader_hot_reload` (default OFF до staging)
+
+**`Settings.reload()` (ADR-0372):** перечитывает все источники, сбрасывает
+YAML-кэш и кэш секретов Vault, пересоздаёт вложенные `Settings` и
+модульные синглтоны и обновляет их **in-place** (ссылки потребителей
+не ломаются). Отчёт: `{"reloaded": [...], "failed": [...]}`.
+
+**Честный отчёт:** `POST /api/v1/admin/config/reload` возвращает
+`succeeded`/`failed`/`callbacks`/`ok`; отсутствие `settings.reload()` или
+ошибка callback'а — это **ошибка** (`failed` непустой), а не «успех».
 
 ## Consul integration (D-rule)
 
@@ -84,6 +147,7 @@ Config Profiles (YAML) → ConfigLoader → pydantic-settings
    - Opt-in через `CONSUL_ENABLED=true` + `CONSUL_ADDR`
    - Fail-silent: `load_data()` returns `{}` if unreachable
    - Prefix: `runtime/{yaml_group}/`
+   - **Приоритет выше YAML** (ADR-0372) — иначе Consul-перекрывался YAML
 
 **File fallback**: если Consul disabled/unavailable → YAML profiles + pydantic-settings defaults.
 

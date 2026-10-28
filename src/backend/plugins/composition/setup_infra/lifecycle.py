@@ -346,19 +346,23 @@ async def _start_config_hot_reload() -> None:
     Hot-reload активен по умолчанию для всех профилей кроме prod
     (с feature-flag prod_hot_reload_disable).
     """
-    from pathlib import Path
-
+    from src.backend.core.config.config_loader import repo_root
     from src.backend.core.config.hot_reload import get_hot_reloader
 
     reloader = get_hot_reloader()
 
+    # ADR-0372: пути watcher'а — абсолютные (от корня репозитория).
+    # Относительные зависели от CWD → при запуске не из корня watcher
+    # молча смотрел не туда.
+    root = repo_root()
+
     # Watch .env (если существует)
-    env_path = Path(".env")
+    env_path = root / ".env"
     if env_path.exists():
         reloader.watch(env_path)
 
     # Watch config_profiles/*.yml (canonical paths для hot-reload)
-    profiles_dir = Path("config_profiles")
+    profiles_dir = root / "config_profiles"
     if profiles_dir.exists() and profiles_dir.is_dir():
         # Watch директорию целиком — watchfiles подхватывает все *.yml файлы
         reloader.watch(profiles_dir)
@@ -375,21 +379,12 @@ async def _start_config_hot_reload() -> None:
             if p.exists():
                 reloader.watch(p)
 
-    # Register reload callback: settings.reload() если доступен
-    try:
-        from src.backend.core.config.settings import settings
+    # Register reload callback: settings.reload() (ADR-0372).
+    # Отсутствие callable — ОШИБКА, а не «успех»: раньше callback молча
+    # ничего не делал, а эндпоинт отвечал {'succeeded': 1, 'failed': []}.
+    from src.backend.core.config.hot_reload import register_settings_reload_callback
 
-        async def _reload_settings() -> None:
-            """Reload settings через hot-reload callback."""
-            reload_fn = getattr(settings, "reload", None)
-            if callable(reload_fn):
-                result = reload_fn()
-                if isawaitable(result):
-                    await result
-
-        reloader.on_reload(_reload_settings)
-    except ImportError:
-        app_logger.debug("settings reload callback not registered")
+    register_settings_reload_callback(reloader)
 
     await reloader.start()
     app_logger.info(

@@ -185,6 +185,9 @@ async def _reload_config() -> dict[str, object]:
     """Эндпоинт ручного триггера hot-reload.
 
     Возвращает агрегированный отчёт из :class:`ConfigHotReloader`.
+    ADR-0372: отчёт честный — ``failed`` непустой означает, что
+    конфигурация НЕ перезагружена (раньше отсутствие ``settings.reload()``
+    давало ложный ``{"succeeded": 1, "failed": []}``).
     """
     from src.backend.core.config.hot_reload import get_hot_reloader
 
@@ -198,7 +201,8 @@ router.add_api_route(
     summary="Горячая перезагрузка конфигурации",
     description=(
         "Вручную запускает все зарегистрированные config-reload колбеки "
-        "(без рестарта процесса). Используйте когда FS watcher недоступен."
+        "(без рестарта процесса). Используйте когда FS watcher недоступен. "
+        "Поле failed в ответе непусто → перезагрузка не удалась."
     ),
     name="reload_config",
 )
