@@ -21,7 +21,7 @@ class TestCheckMroDepth:
     def test_passes_when_within_budget(self) -> None:
         from tools.checks.check_routebuilder_mro import check_mro_depth
 
-        # Current MRO is 82 — pass with budget=100, fail with budget=50.
+        # Current MRO is 83 — pass with budget=100, fail with budget=50.
         passed, msg = check_mro_depth(max_mro_depth=100)
         assert passed is True
         assert "OK" in msg
@@ -40,8 +40,8 @@ class TestCheckMroDepth:
 
         passed, msg = check_mro_depth(max_mro_depth=50)
         assert passed is False
-        assert "RouteBuilder MRO depth: 82" in msg
-        assert "Top-level mixin bases: 78" in msg
+        assert "RouteBuilder MRO depth: 83" in msg
+        assert "Top-level mixin bases: 79" in msg
 
 
 class TestGetRouteBuilderMro:
@@ -121,7 +121,7 @@ class TestCLIMain:
         )
         assert result.returncode == 1
         assert "FAIL" in result.stdout
-        assert "82" in result.stdout
+        assert "83" in result.stdout
 
     def test_cli_default_budget_passes(self) -> None:
         """Дефолтный бюджет — ratchet: текущая глубина MRO должна в него укладываться."""
@@ -150,4 +150,4 @@ class TestCLIMain:
         )
         assert result.returncode == 0
         assert "RouteBuilder.__mro__" in result.stdout
-        assert "82 classes" in result.stdout
+        assert "83 classes" in result.stdout

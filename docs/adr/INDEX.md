@@ -153,9 +153,17 @@
 | [ADR-0363](0363-db-driver-declarations-and-dependency-gate.md) | Драйверы БД: psycopg3 как sync-дефолт, fail-fast на необъявленный драйвер, гейт объявленных зависимостей | ACCEPTED |
 | [ADR-0364](0364-remove-dead-code-wave13.md) | Удаление мёртвого кода, найденного в Wave 13 | Accepted |
 | [ADR-0365](0365-canonical-sql-identifier-validation.md) | Единый канон валидации SQL-идентификаторов | Accepted |
+| [ADR-0366](0366-dsl-capability-gate-runtime-enforcement.md) | Runtime-enforcement capability-гейта DSL-процессоров | Accepted |
+| [ADR-0367](0367-rpa-file-access-and-injection-hardening.md) | Файловый доступ и защита от инъекций в RPA-процессорах | Accepted |
+| [ADR-0368](0368-rpa-fault-tolerance.md) | Отказоустойчивость RPA: cleanup-финализаторы, живой circuit breaker, таймауты внешних вызовов | Accepted |
+| [ADR-0369](0369-rpa-step-reachability-and-yaml-naming.md) | RPA: достижимость шагов из YAML и канон именования | Accepted |
+| [ADR-0370](0370-rpa-config-consolidation.md) | Консолидация RPA-конфига, честная документация и тестовая гигиена | Accepted |
+| [ADR-0371](0371-profile-hardening-and-invariants.md) | Харденинг prod/staging-профилей и инварианты профилей | Accepted |
+| [ADR-0372](0372-settings-sources-priority-and-hot-reload.md) | Приоритет источников конфигурации и рабочий hot-reload | Accepted |
+| [ADR-0373](0373-env-secrets-only-rule-and-gates.md) | Правило «в `.env` только секреты» и гейты конфигурации | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 151 ADRs.
+**Total:** 159 ADRs.
 
