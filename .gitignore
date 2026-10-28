@@ -19,6 +19,9 @@ htmlcov/
 # Mutation testing (mutmut)
 mutants/
 
+# Quality-gate metrics (ub-mode: crapper/dryer/mutator)
+.metrics/
+
 # Virtual environments
 .venv/
 venv/

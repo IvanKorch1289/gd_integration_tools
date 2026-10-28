@@ -266,6 +266,18 @@ Kimi Code автоматически подхватывает:
 - `code-review` — чеклист ревью изменений;
 - `ponytail` — YAGNI / минимализм / "ленивый senior dev".
 
+**Обязательная ступень (любая правка кода → ub-mode):**
+скилл `ub-mode` (https://github.com/unclebob/ub-mode, установлен в Hermes как
+`software-development/ub-mode`) обязателен перед первой правкой исходника:
+First Make it Work → Then Make it Right → Follow Practice. Правило закреплено
+в `~/.hermes/SOUL.md` (действует во всех профилях) и в описании скилла.
+
+Quality-gate инструменты (в PATH, исходники `~/tools/unclebob/`):
+`crapper` (CRAP < 10 на функцию, `--no-coverage` / `--changed`),
+`dryer` (структурные дубликаты, порог 0.8), `mutator` (mutation testing).
+Метрики пишутся в `.metrics/` (в .gitignore) — гейт гонять точечно по
+изменённым модулям, а не по всему репозиторию.
+
 Формат вызова: `/skill:<name> [аргументы]`.
 
 ---

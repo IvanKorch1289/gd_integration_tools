@@ -5,6 +5,7 @@
 
 ## Обязательно
 - Для планирования использовать skill `plan-execute`
+- Для любой правки исходного кода (написание, изменение, отладка, рефакторинг, ревью) — skill `ub-mode` (https://github.com/unclebob/ub-mode): First Make it Work → Then Make it Right → Follow Practice
 - Для самопроверки использовать skill `verify-change`
 - Для завершения крупных этапов использовать skill `compact-session`
 - Для commit использовать skill `commit-work`
