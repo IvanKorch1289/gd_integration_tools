@@ -382,19 +382,26 @@ def validate_profile(
         help="exit 1 при любых WARNING (по умолчанию — только CRITICAL/ERROR).",
     ),
 ) -> None:
-    """Валидация config_profiles/<env>.yml (S18 W9, S-L9-3).
+    """Валидация MERGED-конфига профиля (S18 W9, S-L9-3; ADR-0375 — ЧАСТЬ B).
 
     Проверяет:
         * YAML syntax + наличие файла;
         * базовая schema (app/secure/database/redis sections);
-        * ConfigValidator-инварианты для production-профиля
-          (waf strict, debug=false, jwt_secret length, и т.д.).
+        * ConfigValidator-инварианты на **слиянном** конфиге
+          (``base.yml`` + overlay) — раньше проверялся только overlay,
+          и инварианты prod из base.yml (ssl_verify, vault.addr,
+          graphql.introspection) были не видны.
 
     Exit codes:
         * 0 — без нарушений.
         * 1 — найдены CRITICAL/ERROR нарушения (или WARNING + --strict).
     """
     import yaml  # noqa: PLC0415
+
+    from src.backend.core.config.validator.profile_merge import (  # noqa: PLC0415
+        merge_profile_yaml,
+        validate_profile_config,
+    )
 
     profile_path = Path("config_profiles") / f"{env}.yml"
     if not profile_path.is_file():
@@ -422,14 +429,21 @@ def validate_profile(
         typer.echo(f"[ERROR] Profile {env} is empty (no overlay sections)", err=True)
         raise typer.Exit(code=1)
 
-    # ConfigValidator-инварианты применимы только для прод (validate-profile
-    # дополняет startup-gate, не заменяет полностью runtime валидацию).
+    # MERGED-конфиг (base.yml + overlay) — ровно то, что читает рантайм
+    # (YamlConfigSettingsLoader._deep_merge). Инварианты проверяются по
+    # нему, а не по overlay (ADR-0375, ЧАСТЬ B).
+    try:
+        merged = merge_profile_yaml(env)
+    except (FileNotFoundError, RuntimeError) as exc:
+        typer.echo(f"[ERROR] Cannot merge profile {env}: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    # Прод-инварианты поверх MERGED-конфига (не overlay): приложение
+    # читает base+overlay, поэтому проверять нужно эффективные значения.
     typer.echo(f"[OK] config_profiles/{env}.yml — syntax + schema valid")
     if env == "prod":
-        # Минимальная prod-проверка (без полного Settings-load, который
-        # требует Vault + env vars): проверка ключевых flags в overlay.
-        app_cfg = data.get("app") or {}
-        secure_cfg = data.get("secure") or {}
+        app_cfg = merged.get("app") or {}
+        secure_cfg = merged.get("security") or {}
         prod_issues: list[str] = []
         if app_cfg.get("debug") is True or app_cfg.get("debug_mode") is True:
             prod_issues.append("app.debug=true в prod-профиле (B-1 CRITICAL)")
@@ -440,11 +454,40 @@ def validate_profile(
         cors_origins = secure_cfg.get("cors_origins")
         if cors_origins == "*" or cors_origins == ["*"]:
             prod_issues.append("secure.cors_origins='*' в prod (B-2 CRITICAL)")
+        for issue in prod_issues:
+            typer.echo(f"[CRITICAL] {issue}", err=True)
         if prod_issues:
-            for issue in prod_issues:
-                typer.echo(f"[CRITICAL] {issue}", err=True)
             raise typer.Exit(code=1)
         typer.echo("[OK] prod profile invariants verified")
+
+    # ConfigValidator на MERGED-конфиге (base.yml + overlay) — единая точка
+    # правды об инвариантах, общая с runtime-валидацией (ADR-0375).
+    violations = validate_profile_config(env)
+    critical = [v for v in violations if v.severity == "critical"]
+    warnings = [v for v in violations if v.severity == "warning"]
+    for violation in violations:
+        typer.echo(
+            f"[{violation.severity.value.upper()}] {violation.code}: "
+            f"{violation.message} ({violation.field})",
+            err=True,
+        )
+    if critical:
+        typer.echo(
+            f"[ERROR] merged-конфиг {env}: {len(critical)} CRITICAL, "
+            f"{len(warnings)} WARNING",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+    typer.echo(
+        f"[OK] merged-конфиг {env} (base.yml + {env}.yml): "
+        f"0 CRITICAL, {len(warnings)} WARNING"
+    )
+    if warnings and strict:
+        typer.echo(
+            f"[ERROR] strict-mode: {len(warnings)} WARNING в merged-конфиге {env}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
     if strict and env in {"dev", "dev_light"}:
         typer.echo("[OK] strict-mode не применяет prod-инварианты для dev")
 
