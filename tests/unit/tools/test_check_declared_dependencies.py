@@ -155,8 +155,12 @@ class TestRealRepository:
         """Текущий долг — в allowlist, новых нарушений нет (exit 0)."""
         assert main([]) == 0
 
-    def test_allowlist_covers_clickhouse_connect(self) -> None:
-        """``clickhouse_connect`` зафиксирован в baseline долга."""
+    def test_allowlist_no_longer_covers_clickhouse_connect(self) -> None:
+        """``clickhouse_connect`` объявлен в extra → больше не в baseline долга.
+
+        Wave 13 Q2 (согласовано с владельцем): пакет добавлен в extra
+        ``db_drivers``, поэтому запись вынесена из allowlist'а.
+        """
         from tools.check_declared_dependencies import load_allowlist
 
-        assert "clickhouse_connect" in load_allowlist()
+        assert "clickhouse_connect" not in load_allowlist()

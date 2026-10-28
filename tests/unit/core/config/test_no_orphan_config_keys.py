@@ -32,6 +32,9 @@ pytestmark = pytest.mark.unit
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 PROFILES_DIR = REPO_ROOT / "config_profiles"
+# Пути фиксируем от репозитория, а не берём из модуля tools.config_audit:
+# константы модуля могут быть подменены другими тестами (order-dependent сбой).
+CONFIG_DIR = REPO_ROOT / "src" / "backend" / "core" / "config"
 
 # Мёртвые пути (dot-path) из волны 13 Q17: ключи, которые не читает ни одна
 # модель конфигурации. Путь через точку — вложенность YAML, без точки —
@@ -106,7 +109,7 @@ def _merged_profile(profile: str) -> dict[str, Any]:
     Returns:
         Итоговый конфиг после слияния.
     """
-    return config_audit._load_profile_yaml(profile)
+    return config_audit._load_profile_yaml(profile, PROFILES_DIR)
 
 
 @pytest.fixture(scope="module")
@@ -116,7 +119,7 @@ def settings_classes() -> dict[str, tuple[Any, dict[str, Any], str]]:
     Returns:
         Соответствие yaml-групп полям моделей ``src/backend/core/config``.
     """
-    registry = config_audit._parse_config_classes(config_audit.CONFIG_DIR)
+    registry = config_audit._parse_config_classes(CONFIG_DIR)
     return config_audit._settings_classes(registry)
 
 
@@ -125,7 +128,7 @@ def test_profile_has_no_orphan_groups(
     profile: str, settings_classes: dict[str, tuple[Any, dict[str, Any], str]]
 ) -> None:
     """В профиле нет top-level секций без соответствующего класса настроек."""
-    _, orphan_groups = config_audit._audit_profile(profile, settings_classes, set())
+    _, orphan_groups = config_audit._audit_profile(profile, settings_classes, set(), PROFILES_DIR)
     assert orphan_groups == [], (
         f"профиль {profile}: секции без модели (yaml_group): {orphan_groups}"
     )
@@ -136,7 +139,7 @@ def test_profile_has_no_orphan_keys(
     profile: str, settings_classes: dict[str, tuple[Any, dict[str, Any], str]]
 ) -> None:
     """В профиле нет ключей внутри секций, которым нет полей в модели."""
-    reports, _ = config_audit._audit_profile(profile, settings_classes, set())
+    reports, _ = config_audit._audit_profile(profile, settings_classes, set(), PROFILES_DIR)
     orphans = {r.group: r.orphan_keys for r in reports if r.orphan_keys}
     assert orphans == {}, f"профиль {profile}: orphan-ключи: {orphans}"
 

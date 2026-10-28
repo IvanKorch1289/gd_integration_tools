@@ -73,7 +73,7 @@ allowlist:
     added_at: "2026-09-24"
 
   - file: src/backend/infrastructure/clients/storage/sqlite_search.py
-    line: 96
+    line: 95
     reason: >
       ``d.get(id_field)`` в ``bulk_index()`` — извлечение значения из local
       Python dict по configurable field name. ``d`` — это dict literal
@@ -82,6 +82,8 @@ allowlist:
       НЕ persistence — pure local dict.get. v6 W3.1 classification
       (sqlite_search.py:96 as USER_DATA) был misclassification; runtime
       analysis shows no tenant context concern.
+      Wave 13 Q6: строка сдвинулась на 95 (рефакторинг _ensure_index на
+      канонический валидатор идентификаторов) — запись переехала вместе с кодом.
     owner: gd_integration_tools/infrastructure
     review_date: "2027-03-24"
     added_at: "2026-09-24"
