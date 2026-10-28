@@ -12,10 +12,30 @@ app:
   host: "0.0.0.0"
   port: 8000
   use_ssl: true
+  # ADR-0371 (cycle 172): staging — не однопроцессный dev-режим
+  # (в base.yml ``workers=1``). 2 воркера: меньше prod'а (4), но стенд
+  # всё равно должен воспроизводить многопроцессный режим.
+  workers: 2
+  granian_runtime_threads: 2
   opentelemetry_endpoint: "http://otel-collector:4317"
   telemetry_enabled: true
   admin_enabled: true
   monitoring_enabled: true
+  # ADR-0371 (cycle 172): API-документация в staging закрыта, как в prod
+  # (в base.yml было ``enable_swagger: true``).
+  enable_swagger: false
+  enable_redoc: false
+
+
+# ADR-0371 (cycle 172): интроспекция GraphQL выключена (см. base.yml).
+graphql:
+  enable_introspection: false
+
+
+# ADR-0371 (cycle 172): TLS-проверка исходящих запросов — как в prod
+# (в base.yml было ``ssl_verify: false``, сертификаты не проверялись).
+http:
+  ssl_verify: true
 
 
 security:
@@ -26,6 +46,30 @@ security:
     - "/metrics"
   allowed_hosts:
     - "*.staging.local"
+
+
+# ADR-0371 (cycle 172): feature-флаги объявлены явно — без этой секции
+# работали модельные дефолты ``lsp_server_strict=True`` и
+# ``ai_prompt_sweep_strict=True``, а ``ConfigValidator`` на merged-конфиге
+# staging давал два CRITICAL (``feature_flag.dependency_unmet``):
+# strict-флаги требуют несуществующих базовых флагов ``lsp_server`` /
+# ``ai_prompt_sweep`` (S46: documented no-ops).
+features:
+  lsp_server_strict: false
+  ai_prompt_sweep_strict: false
+  # ADR-0063 (Accepted) — Presidio + ru NER PII layer обязателен в prod;
+  # staging повторяет prod-конфигурацию.
+  presidio_pii_enabled: true
+
+
+# ADR-0371 (cycle 172): WAF в staging — strict, как в prod (в base.yml
+# секции ``waf:`` не было: ``strict=false`` + пустой allowlist → все
+# исходящие запросы проходили без фильтрации).
+# allow_hosts — тот же whitelist, что в prod (esbgreendata + loopback
+# sidecar'ы); owner-задача — заменить loopback на service-DNS имена.
+waf:
+  strict: true
+  allow_hosts: ["esbgreendata", "localhost", "127.0.0.1"]
 
 
 # B-12 fix (cycle 37) + cycle 38 Task #1: pre-production enforcement policy
@@ -142,6 +186,11 @@ log:
   # Wave 13 Q1: явный INFO — base.yml задаёт log.level=DEBUG для всех профилей,
   # без override staging логировался на DEBUG.
   level: "INFO"
+  # ADR-0371 (cycle 172): per-request body-логирование выключено, как в prod
+  # (в base.yml было ``log_requests: true``) — InnerRequestLoggingMiddleware
+  # буферизует и логирует body каждого response, это главный cost-contributor
+  # p99 на нагрузке.
+  log_requests: false
 
 
 fs:
@@ -176,3 +225,10 @@ cert_store:
   fallback_enabled: true
   watch_enabled: true
   watch_path: "/etc/certs"
+
+
+# ADR-0371 (cycle 172): durable WatermarkStore — как в prod. В base.yml стоял
+# ``backend: "memory"`` (in-process, теряется при рестарте/в multi-pod).
+watermark:
+  backend: "postgres"
+  persist_min_interval: 1.0

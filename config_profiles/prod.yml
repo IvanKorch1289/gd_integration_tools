@@ -12,6 +12,13 @@ app:
   host: "0.0.0.0"
   port: 8000
   use_ssl: true
+  # ADR-0371 (cycle 172): prod не должен оставаться однопроцессным
+  # dev-режимом (в base.yml ``workers=1``, ``granian_runtime_threads=1``).
+  # 4 воркера — совпадает с дефолтом ops/compose/docker-compose.prod.yml
+  # (``APP_WORKERS:-4``); 4 Rust-потока на воркер (используются в
+  # ``granian_runtime_mode`` auto/mt — см. src/backend/main.py::_run_granian).
+  workers: 4
+  granian_runtime_threads: 4
   opentelemetry_endpoint: "http://otel-collector:4317"
   telemetry_enabled: true
   admin_enabled: true
@@ -33,6 +40,18 @@ app:
 
 
 security:
+  # ADR-0371 (cycle 172): prod-лимиты отличаются от dev-значений из base.yml.
+  # ``rate_limit`` — лимит запросов в минуту на route+dependency
+  # (Redis-лимитер, entrypoints/dependencies/rate_limit.py): 1000 (dev) → 3000.
+  # ``request_timeout`` — глобальный fallback TimeoutMiddleware
+  # (entrypoints/middlewares/timeout.py): 20с (dev) → 30с (prod), чтобы
+  # длинные интеграционные операции (SKB, загрузка файлов) не отваливались
+  # по дефолтному таймауту.
+  # Про ``algorithm``: переход на RS256 требует RSA-keypair + JWKS/IdP —
+  # без этой инфраструктуры переключение ломает выпуск/проверку JWT,
+  # поэтому остаётся HS256 (секрет — из Vault). Owner-задача (ADR-0371).
+  rate_limit: 3000
+  request_timeout: 30.0
   # Локальный prod-drill: админ-доступ только с loopback; в реальном prod
   # инжектится env SEC_ADMIN_IPS (корпоративные CIDR).
   admin_ips: ["127.0.0.1/32", "::1/128"]
@@ -42,6 +61,20 @@ security:
     - "/metrics"
   allowed_hosts:
     - "*.prod.local"
+
+
+# ADR-0371 (cycle 172): интроспекция GraphQL выключена (см. base.yml).
+graphql:
+  enable_introspection: false
+
+
+# ADR-0371 (cycle 172): Vault в prod — не loopback-plaintext.
+# В base.yml стоял ``http://127.0.0.1:8200`` (dev-дефолт), и prod его
+# не переопределял → в проде секреты читались с loopback по HTTP.
+# Фактический адрес Vault задаётся env ``VAULT_ADDR`` (приоритет выше
+# YAML); значение ниже — безопасный fallback профиля.
+vault:
+  addr: "https://vault:8200"
 
 
 # Block 1.1 (gap-ai-1.1, ADR-0072): production-enforcement AI Safety flags.
@@ -149,8 +182,20 @@ mongo:
 waf:
   # Валидатор waf.strict_required_in_prod: permissive WAF в prod запрещён.
   # allow_hosts — явный whitelist (esbgreendata из base.yml + loopback).
+  # ADR-0371 (cycle 172): loopback в allowlist оставлен осознанно — реальные
+  # хосты локальных sidecar'ов (clamd/otel) без инфраструктуры вывести
+  # нельзя. Owner-задача: заменить на явные service-DNS имена.
   strict: true
   allow_hosts: ["esbgreendata", "localhost", "127.0.0.1"]
+
+
+# ADR-0371 (cycle 172): TLS-проверка и лимиты соединений — prod-уровня.
+# В base.yml было ``ssl_verify: false`` (сертификаты не проверялись) и
+# ``limit_per_host: 20`` (dev-значение) → в проде исходящие HTTPS-запросы
+# принимали любой сертификат, а пул на хост был ограничен dev-значением.
+http:
+  ssl_verify: true
+  limit_per_host: 50
 
 queue:
   enabled: true
@@ -237,3 +282,27 @@ cert_store:
   fallback_enabled: true
   watch_enabled: true
   watch_path: "/etc/certs"
+
+
+# ADR-0371 (cycle 172): локальный PG→SQLite snapshot в prod ВЫКЛЮЧЕН.
+# Файл ``var/db/snapshot.sqlite`` — per-pod: в multi-replica проде каждый под
+# держит свою копию (shared state между подами), а ``resilience.fallbacks.
+# db_main.chain`` с ``sqlite_ro`` рассчитан на локальный файл. Корректный
+# prod-fallback — read-replica PostgreSQL (``database.replica_dsn``, сейчас
+# ``null`` — owner-задача).
+snapshot:
+  enabled: false
+
+
+# ADR-0371 (cycle 172): ``open_webui`` исключён из fallback-цепочки AI.
+# Его ``base_url`` — ``http://localhost:3000`` (внутренний LLM-сервер), и в
+# проде откат с perplexity молча ушёл бы на localhost. Реальный host
+# OpenWebUI без инфраструктуры вывести нельзя — owner-задача.
+ai_providers:
+  fallback_chain:
+    - "perplexity"
+    - "huggingface"
+    - "openrouter"
+    - "nim"
+    - "openai"
+    - "minimax"

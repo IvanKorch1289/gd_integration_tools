@@ -117,6 +117,18 @@ grpc:
   max_workers: 20
 
 
+# ADR-0371 (cycle 172): GraphQL-интроспекция.
+#
+# До cycle 172 секции ``graphql:`` не было ни в одном профиле, а дефолт
+# модели (``GraphQLSettings.enable_introspection``) равен ``True`` — при
+# этом docstring модели прямо обещал «отключить в prod». Runtime-запрет
+# интроспекции вне development обеспечивает
+# ``entrypoints/graphql/graphql_guards.py`` (``NoIntrospectionRule``);
+# здесь фиксируется декларативное намерение профиля.
+graphql:
+  enable_introspection: false
+
+
 scheduler:
   default_jobstore_name: "default"
   backup_jobstore_name: "backup"
@@ -150,7 +162,15 @@ http:
   limit_per_host: 20
   ttl_dns_cache: 300
   force_close: false
-  ssl_verify: false
+  # ADR-0371 (cycle 172): проверка TLS-сертификатов ВКЛЮЧЕНА по умолчанию.
+  # До cycle 172 здесь стояло ``false``, и ни prod, ни staging его не
+  # переопределяли → в проде исходящие HTTPS-запросы принимали любой
+  # сертификат (риск MITM). Потребители значения:
+  #   infrastructure/clients/transport/http_httpx.py  → httpx verify=
+  #   infrastructure/clients/transport/http/session_mixin.py → httpx verify=
+  # Профили, которым нужен self-signed TLS (dev/dev_light), переопределяют
+  # значение в своих overlay-файлах.
+  ssl_verify: true
   waf_url: "esbgreendata"
   waf_route_header:
     x-api-key: "esbgreendata"
@@ -667,3 +687,14 @@ dsl:
     - "/data/exports"
     - "/tmp/dsl"
     - "/var/data"
+
+# Cycle 172 (ADR-0370): секция rpa: — только ЖИВЫЕ поля RPASettings
+# (src/backend/core/config/services/rpa.py). Мёртвые поля (desktop_*,
+# browser_viewport_*, ocr_*) удалены в ADR-0370 — ключ в YAML без поля
+# в модели = orphan-ключ, блокирующий tools/config_audit.py --scope orphans.
+# Env-префикс RPA_ (например RPA_BROWSER_POOL_SIZE) перекрывает значения.
+rpa:
+  browser_pool_size: 2                     # предсозданных Playwright-контекстов
+  browser_headless: true                   # false — только для локальной отладки
+  browser_launch_max_retries: 2            # повторов (не попыток) при transient-crash
+  browser_launch_retry_base_seconds: 0.5   # база exponential backoff
