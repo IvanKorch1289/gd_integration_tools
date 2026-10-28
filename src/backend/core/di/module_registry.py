@@ -353,7 +353,7 @@ def validate_modules() -> dict[str, str]:
         except (ImportError, ModuleNotFoundError, ValueError):
             # Родительский пакет может бросать ImportError из-за
             # отсутствующих в окружении тяжёлых зависимостей
-            # (psycopg2, faststream и т.п.). Считаем такой случай
+            # (psycopg, faststream и т.п.). Считаем такой случай
             # "не найден", чтобы оставаться без побочных эффектов.
             spec = None
         if spec is None:

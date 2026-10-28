@@ -111,9 +111,10 @@ class TestAlembicPgUpgrade:
                 )
 
             # Verify: должны быть core tables после upgrade.
-            import psycopg2
+            import psycopg
 
-            conn = psycopg2.connect(sync_url)
+            # strip driver prefix: psycopg.connect ждёт чистый postgresql://
+            conn = psycopg.connect(sync_url.replace("postgresql+psycopg2://", "postgresql://"))
             try:
                 with conn.cursor() as cur:
                     cur.execute(

@@ -77,7 +77,7 @@ external_databases:
       service_name: null
       db_name: "analytics"
       async_driver: "asyncpg"
-      sync_driver: "psycopg2"
+      sync_driver: "psycopg"
       schema: "public"
       ssl_mode: "prefer"
       enabled: true

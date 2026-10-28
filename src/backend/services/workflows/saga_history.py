@@ -35,28 +35,27 @@ class SagaHistoryRecord:
 
 
 async def _get_clickhouse_client(factory: Any | None = None) -> Any:
+    """Возвращает async-клиент ClickHouse (или результат инъецированной фабрики).
+
+    Args:
+        factory: Опциональная async-фабрика клиента (тесты/DI).
+
+    Returns:
+        Async-клиент ClickHouse.
+
+    Raises:
+        ClickHouseDriverError: Драйвер ``clickhouse_connect`` не установлен
+            (Wave 13 Q8: fail-loud — молчаливая потеря истории хуже явной
+            ошибки).
+
+    """
     if factory is not None:
         return await factory()
-    from clickhouse_connect import get_async_client
+    from src.backend.infrastructure.clients.storage.clickhouse_driver import (
+        create_clickhouse_async_client,
+    )
 
-    from src.backend.core.config import settings
-
-    host = (
-        getattr(settings.clickhouse, "host", "localhost")
-        if hasattr(settings, "clickhouse")
-        else "localhost"
-    )
-    port = (
-        getattr(settings.clickhouse, "port", 8123)
-        if hasattr(settings, "clickhouse")
-        else 8123
-    )
-    database = (
-        getattr(settings.clickhouse, "database", "default")
-        if hasattr(settings, "clickhouse")
-        else "default"
-    )
-    return await get_async_client(host=host, port=port, database=database)
+    return await create_clickhouse_async_client(required=True)
 
 
 async def get_saga_history(

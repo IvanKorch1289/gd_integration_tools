@@ -2,6 +2,7 @@ from urllib.parse import quote_plus
 
 from pydantic import Field, SecretStr, computed_field
 
+from src.backend.core.config.db_drivers import ensure_driver_available
 from src.backend.core.config.external_databases.item import ExternalDatabaseItemSettings
 from src.backend.core.enums.database import DatabaseTypeChoices
 
@@ -149,8 +150,14 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
         return self._build_dsn(is_async=False)
 
     def _build_dsn(self, is_async: bool) -> str:
-        """Внутренний метод генерации строки подключения."""
+        """Внутренний метод генерации строки подключения.
+
+        Wave 13 Q9: драйвер проверяется на объявленность/наличие до сборки
+        DSN — иначе необъявленный драйвер падал бы в рантайме как
+        ``ModuleNotFoundError`` внутри SQLAlchemy.
+        """
         driver = self.async_driver if is_async else self.sync_driver
+        ensure_driver_available(driver)
         username = quote_plus(self.username)
         password = quote_plus(self.password.get_secret_value())
 

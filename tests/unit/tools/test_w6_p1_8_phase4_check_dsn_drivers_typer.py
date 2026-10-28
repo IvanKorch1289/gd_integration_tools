@@ -67,7 +67,7 @@ class TestBackwardCompat:
     def test_main_ci(self) -> None:
         """main(['--ci']) → exit 1 если есть missing drivers."""
         rc = main(["--ci"])
-        # В CI/локально psycopg2/pyodbc/etc. могут быть missing → exit 1.
+        # В CI/локально pyodbc/ibm_db_sa/etc. могут быть missing → exit 1.
         # Тест resilient: принимает 0 или 1.
         assert rc in (0, 1)
 

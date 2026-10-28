@@ -1,0 +1,16 @@
+# Allowlist гейта объявления DSN-драйверов (tools/check_dsn_drivers.py).
+#
+# Формат: <driver_module> — по одному имени в строке; # — комментарий.
+#
+# Смысл: DSN-конструкторы (src/backend/core/config/database.py) упоминают
+# драйверы, которые НЕ объявлены ни в одном extra проекта. Раньше это
+# приводило к ModuleNotFoundError в рантайме; теперь рантайм-guard
+# (core/config/db_drivers.py) отвечает понятным сообщением, а этот гейт
+# не даёт добавить НОВЫЕ необъявленные драйверы.
+#
+# К закрытию: Sprint 36 (правка pyproject.toml + lock-файла) — перенести
+# драйверы в extra 'db_drivers'.
+#
+# Wave 13 (Q2, согласовано): clickhouse_connect и pyodbc объявлены в extra
+# 'db_drivers' — соответствующие записи сняты.
+ibm_db_sa     # DB2 sync: драйвер не объявлен в extras (проприетарный, требует ibm_db)

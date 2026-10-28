@@ -33,7 +33,7 @@ Output:
 Зависимости:
     - alembic (required для --metadata-only и DB mode);
     - SQLAlchemy (required, уже в стеке);
-    - asyncpg/psycopg2 (для production DB).
+    - asyncpg/psycopg (для production DB).
 
 Совместимость:
     Работает с async + sync SQLAlchemy через alembic script.

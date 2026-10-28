@@ -85,7 +85,7 @@ _IO_IMPORTS: dict[str, str] = {
     "requests": "HTTP I/O must be in Activity, not Workflow",
     "httpx": "HTTP I/O must be in Activity, not Workflow",
     "aiohttp": "HTTP I/O must be in Activity, not Workflow",
-    "psycopg2": "DB I/O must be in Activity, not Workflow",
+    "psycopg": "DB I/O must be in Activity, not Workflow",
     "asyncpg": "DB I/O must be in Activity, not Workflow",
     "sqlalchemy": "DB I/O must be in Activity, not Workflow",
 }

@@ -165,8 +165,10 @@ database:
   # профиля: async_driver=oracledb, sync_driver=oracledb (валидируется
   # в DatabaseConnectionSettings.validate_oracle_drivers).
   # SQLite-драйверы выбираются принудительно в _build_dsn (aiosqlite/pysqlite).
+  # sync_driver=psycopg (psycopg3): умеет и sync, и async; psycopg2 в проекте
+  # отсутствует — нет ни в одном extra, ни в lock-файле.
   async_driver: "asyncpg"
-  sync_driver: "psycopg2"
+  sync_driver: "psycopg"
   echo: false
   # Sprint 6 K2 (V15 R-V15-14): per-environment pool tuning матрица.
   # Базовые defaults подходят для staging; dev_light/dev/prod переопределяют

@@ -1,7 +1,7 @@
 """Performance invariants for Sprint 170 M2 Phase 4.
 
 Codifies:
-1. No blocking I/O in async context (requests, psycopg2 sync, time.sleep)
+1. No blocking I/O in async context (requests, psycopg sync, time.sleep)
 2. Connection pool sizes configured in base.yml
 3. Acceleration libs in use (orjson, uvloop, httpx)
 4. No sync wrappers around async libs in hot paths
@@ -19,7 +19,7 @@ from pathlib import Path
 def test_no_blocking_io_in_async():
     """Scan all async functions for blocking patterns."""
     issues = []
-    BLOCKING = ["requests.get", "requests.post", "psycopg2.connect", "time.sleep("]
+    BLOCKING = ["requests.get", "requests.post", "psycopg.connect", "time.sleep("]
     for root, _, files in os.walk("src/backend"):
         for f in files:
             if not f.endswith(".py"):

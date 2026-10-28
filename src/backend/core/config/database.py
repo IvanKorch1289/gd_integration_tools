@@ -7,6 +7,7 @@ from pydantic import Field, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.db_drivers import ensure_driver_available
 from src.backend.core.enums.database import DatabaseTypeChoices
 
 __all__ = ("DatabaseConnectionSettings", "db_connection_settings")
@@ -71,11 +72,13 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     )
 
     sync_driver: str = Field(
-        default="psycopg2",
+        default="psycopg",
         description=(
-            "Пакет синхронного драйвера. Для sqlite используется встроенный 'pysqlite'."
+            "Пакет синхронного драйвера. Для sqlite используется встроенный "
+            "'pysqlite'. По умолчанию — psycopg3 (psycopg): умеет и sync, "
+            "и async, в отличие от драйвера v2, которого нет в проекте."
         ),
-        examples=["psycopg2", "oracledb", "pysqlite"],
+        examples=["psycopg", "oracledb", "pysqlite"],
     )
 
     echo: bool = Field(default=False)
@@ -219,13 +222,20 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
             Для Oracle поле `name` трактуется как `service_name`.
             Для SQLite используется ``path`` (для ``:memory:`` префикс пустой).
             Для MSSQL/MySQL/DB2 — S104 W3 добавлена поддержка.
+
+        Wave 13 Q9: перед сборкой DSN драйвер проверяется на
+        объявленность/наличие (``ensure_driver_available``) — иначе
+        неразрешимый драйвер падал бы в рантайме как ``ModuleNotFoundError``
+        внутри SQLAlchemy.
         """
         if self.type == DatabaseTypeChoices.sqlite:
             driver = "aiosqlite" if is_async else "pysqlite"
+            ensure_driver_available(driver)
             target = self.path or ":memory:"
             return f"sqlite+{driver}:///{target}"
 
         driver = self.async_driver if is_async else self.sync_driver
+        ensure_driver_available(driver)
 
         # Cycle 172 (HIGH-13): логин и пароль интерполировались в DSN сырым.
         # Пароль с ``@ : / # ? %`` ломал строку подключения — SQLAlchemy
@@ -249,8 +259,10 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
 
         # S104 W3: MSSQL / MySQL / DB2 support (DEEP-RESEARCH D19).
         if self.type == DatabaseTypeChoices.mssql:
-            # pyodbc / aioodbc — ODBC driver. Требует ``pyodbc`` + ``aioodbc``
-            # (опциональные deps, см. pyproject.toml [project.optional-dependencies]).
+            # pyodbc / aioodbc — ODBC driver. ``aioodbc`` объявлен в extra
+            # ``db_drivers``; ``pyodbc`` (sync) в extras НЕ объявлен —
+            # сборка DSN с ним отвергается ``ensure_driver_available``
+            # (см. core/config/db_drivers.py и owner-задачу Sprint 36).
             mssql_driver = driver or ("aioodbc" if is_async else "pyodbc")
             return (
                 f"mssql+{mssql_driver}://{username}:{password}"
@@ -302,13 +314,13 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     def validate_oracle_drivers(self) -> DatabaseConnectionSettings:
         """Для Oracle драйверы PG-семейства не работают.
 
-        В ``base.yml`` зашиты PG-defaults ``asyncpg``/``psycopg2``. При
+        В ``base.yml`` зашиты PG-defaults ``asyncpg``/``psycopg``. При
         переключении профиля на Oracle их обязательно переопределить в
         overlay (``async_driver=oracledb``, ``sync_driver=oracledb``);
         иначе DSN строится с неверным префиксом и падает в рантайме.
         """
         if self.type == DatabaseTypeChoices.oracle:
-            invalid = {"asyncpg", "psycopg2", "psycopg"}
+            invalid = {"asyncpg", "psycopg"}
             if self.async_driver in invalid or self.sync_driver in invalid:
                 raise ValueError(
                     "Для type=oracle требуются драйверы oracledb-семейства; "

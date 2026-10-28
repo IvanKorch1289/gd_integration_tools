@@ -126,7 +126,7 @@ def _publish_metrics() -> None:
 def _build_pg_url() -> str:
     """Возвращает sync-DSN для PostgreSQL.
 
-    Для snapshot job'а используется SYNC engine (psycopg2): APScheduler
+    Для snapshot job'а используется SYNC engine (psycopg): APScheduler
     запускает job либо в threadpool, либо в asyncio-исполнителе; sync-
     логика проще и не блокирует event loop, если job уйдёт в threadpool.
 

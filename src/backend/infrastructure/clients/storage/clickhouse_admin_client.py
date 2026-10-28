@@ -10,7 +10,7 @@ HTTPX connection pool между requests.
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable
 from typing import Any, Protocol, cast
 
 from src.backend.core.logging import get_logger
@@ -36,36 +36,25 @@ async def get_admin_clickhouse_client() -> AdminClickHouseClient | None:
 
     ``clickhouse_connect`` has no stable exported client type, therefore the
     runtime object is narrowed to the query-only protocol used by admin pages.
+
+    Admin pages are a read-only UI path: if the optional
+    ``clickhouse_connect`` driver is missing (Wave 13 Q8 — the package is not
+    declared in the manifest yet) or ClickHouse is down, the helper degrades
+    to ``None`` with a warning instead of failing the request.
     """
     global _admin_client
     if _admin_client is not None:
         return _admin_client
 
     try:
-        from clickhouse_connect import get_async_client
+        from src.backend.infrastructure.clients.storage.clickhouse_driver import (
+            create_clickhouse_async_client,
+        )
 
-        from src.backend.core.config import settings
-
-        host = (
-            getattr(settings.clickhouse, "host", "localhost")
-            if hasattr(settings, "clickhouse")
-            else "localhost"
-        )
-        port = (
-            getattr(settings.clickhouse, "port", 8123)
-            if hasattr(settings, "clickhouse")
-            else 8123
-        )
-        database = (
-            getattr(settings.clickhouse, "database", "default")
-            if hasattr(settings, "clickhouse")
-            else "default"
-        )
-        factory = cast(Callable[..., Awaitable[Any]], get_async_client)
-        _admin_client = cast(
-            AdminClickHouseClient,
-            await factory(host=host, port=port, database=database),
-        )
+        client = await create_clickhouse_async_client(required=False)
+        if client is None:
+            return None
+        _admin_client = cast(AdminClickHouseClient, client)
         return _admin_client
     except Exception as exc:
         _logger.warning("ClickHouse admin client unavailable: %s", exc)

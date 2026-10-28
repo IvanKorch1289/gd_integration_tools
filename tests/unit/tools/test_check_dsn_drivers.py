@@ -110,8 +110,8 @@ def test_tool_runs_in_ci_mode() -> None:
         text=True,
         timeout=30,
     )
-    # В текущем venv: psycopg2, pyodbc, aioodbc, pymysql, aiomysql, ibm_db_sa,
-    # ibm_db, cx_Oracle, oracledb — все optional deps, не установлены.
+    # В текущем venv: pyodbc, aioodbc, ibm_db_sa, ibm_db, clickhouse_driver,
+    # asynch — optional deps, не установлены (psycopg/asyncpg/oracledb/pymysql — есть).
     # Expected: exit 1 (at least one missing)
     assert result.returncode == 1
     assert "MISSING drivers" in result.stdout or "missing" in result.stdout.lower()

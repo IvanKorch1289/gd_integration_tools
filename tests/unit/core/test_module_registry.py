@@ -42,7 +42,7 @@ class TestValidateModules:
 
     Используется :func:`importlib.util.find_spec` — он может бросать
     :class:`ImportError` при отсутствии тяжёлых пакетов в окружении
-    (psycopg2, faststream и т.п.). :func:`validate_modules` ловит
+    (psycopg, faststream и т.п.). :func:`validate_modules` ловит
     такие ошибки и возвращает соответствующий ключ как «отсутствующий».
 
     В CI-окружении dev_light часть модулей может действительно

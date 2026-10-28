@@ -2,6 +2,14 @@
 
 Verifies DSN format для новых database types в ``DatabaseConnectionSettings``.
 
+Wave 13 Q9: DSN-конструктор теперь fail-fast на драйверах, которые не
+объявлены ни в одном extra проекта (``core/config/db_drivers.py``):
+
+* ``pyodbc`` (MSSQL sync) и ``ibm_db_sa`` (DB2) не объявлены → понятная
+  ошибка ``DatabaseDriverError`` вместо ``ModuleNotFoundError`` в рантайме;
+* ``aioodbc`` (MSSQL async), ``aiomysql``/``pymysql`` (MySQL),
+  ``oracledb`` (Oracle) объявлены в extra ``db_drivers`` → DSN строится.
+
 Замечания по тестированию:
     * В активном профиле ``dev`` (``config_profiles/dev.yml``) блок
       ``database:`` содержит ``ssl_mode: "prefer"``. Поскольку модель
@@ -16,7 +24,10 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from src.backend.core.config.database import DatabaseConnectionSettings
+from src.backend.core.config.db_drivers import DatabaseDriverError
 from src.backend.core.enums.database import DatabaseTypeChoices
 
 # ──────────────────────────────────────────────────────────────────────
@@ -41,7 +52,7 @@ def _make_settings(**overrides: Any) -> DatabaseConnectionSettings:
         "port": 5432,
         "name": "mydb",
         "async_driver": "asyncpg",
-        "sync_driver": "psycopg2",
+        "sync_driver": "psycopg",
         "ssl_mode": None,
         "ca_bundle": None,
     }
@@ -67,7 +78,14 @@ def test_database_type_choices_has_new_types() -> None:
 
 
 def test_mssql_dsn_format_sync() -> None:
-    """MSSQL sync DSN: ``mssql+pyodbc://...?driver=ODBC+Driver+17+for+SQL+Server``."""
+    """MSSQL sync: ``pyodbc`` объявлен в extra ``db_drivers`` → DSN собирается.
+
+    Wave 13 Q9: драйвер не был объявлен ни в одном extra → конструктор
+    отвергал его понятным сообщением вместо позднего ``ModuleNotFoundError``.
+    Wave 13 Q2 (согласовано с владельцем): ``pyodbc`` объявлен в
+    ``db_drivers`` — DSN теперь собирается; пароль URL-кодируется
+    (``quote_plus``, коммит 8a0933cd3).
+    """
     s = _make_settings(
         type=DatabaseTypeChoices.mssql,
         username="sa",
@@ -79,9 +97,7 @@ def test_mssql_dsn_format_sync() -> None:
         sync_driver="pyodbc",
     )
     dsn = s.sync_connection_url
-    assert dsn.startswith("mssql+pyodbc://")
-    assert "sa:P@ssw0rd@mssql.example.com:1433/mydb" in dsn
-    assert "ODBC+Driver+17+for+SQL+Server" in dsn
+    assert dsn.startswith("mssql+pyodbc://sa:P%40ssw0rd@mssql.example.com:1433/mydb")
 
 
 def test_mssql_dsn_format_async() -> None:
@@ -146,7 +162,7 @@ def test_mysql_dsn_format_async() -> None:
 
 
 def test_db2_dsn_format_sync() -> None:
-    """DB2 sync DSN: ``db2+ibm_db_sa://``."""
+    """DB2 sync: ``ibm_db_sa`` не объявлен в extras → fail-fast (Wave 13 Q9)."""
     s = _make_settings(
         type=DatabaseTypeChoices.db2,
         username="db2inst1",
@@ -157,13 +173,13 @@ def test_db2_dsn_format_sync() -> None:
         async_driver="ibm_db_sa",
         sync_driver="ibm_db_sa",
     )
-    dsn = s.sync_connection_url
-    assert dsn.startswith("db2+ibm_db_sa://")
-    assert "db2inst1:pwd@db2.example.com:50000/mydb" in dsn
+    with pytest.raises(DatabaseDriverError) as exc_info:
+        _ = s.sync_connection_url
+    assert "ibm_db_sa" in str(exc_info.value)
 
 
 def test_db2_dsn_format_async() -> None:
-    """DB2 async DSN: ``db2+ibm_db_sa://`` (один драйвер на sync/async)."""
+    """DB2 async: тот же fail-fast для async-драйвера."""
     s = _make_settings(
         type=DatabaseTypeChoices.db2,
         username="db2inst1",
@@ -174,9 +190,8 @@ def test_db2_dsn_format_async() -> None:
         async_driver="ibm_db_sa",
         sync_driver="ibm_db_sa",
     )
-    dsn = s.async_connection_url
-    assert dsn.startswith("db2+ibm_db_sa://")
-    assert "db2inst1:pwd@db2.local:50000/db1" in dsn
+    with pytest.raises(DatabaseDriverError):
+        _ = s.async_connection_url
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -189,24 +204,28 @@ def test_postgres_dsn_still_works() -> None:
     s = _make_settings(
         type=DatabaseTypeChoices.postgresql,
         async_driver="asyncpg",
-        sync_driver="psycopg2",
+        sync_driver="psycopg",
     )
     dsn = s.async_connection_url
     assert dsn.startswith("postgresql+asyncpg://")
 
 
 def test_oracle_dsn_still_works() -> None:
-    """Oracle DSN НЕ regression."""
+    """Oracle DSN НЕ regression.
+
+    Wave 13 Q9: используется ``oracledb`` (объявлен в extra ``db_drivers``),
+    а не legacy ``cx_Oracle`` — тот в проекте не объявлен.
+    """
     s = _make_settings(
         type=DatabaseTypeChoices.oracle,
         host="oracle.example.com",
         port=1521,
         name="ORCLPDB1",
         async_driver="oracledb",
-        sync_driver="cx_Oracle",
+        sync_driver="oracledb",
     )
     dsn = s.sync_connection_url
-    assert dsn.startswith("oracle+cx_Oracle://")
+    assert dsn.startswith("oracle+oracledb://")
     assert "service_name=ORCLPDB1" in dsn
 
 

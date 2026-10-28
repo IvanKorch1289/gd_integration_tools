@@ -43,30 +43,27 @@ class CronDashboardService:
         self._ch_factory = clickhouse_client_factory
 
     async def _get_ch_client(self) -> Any | None:
+        """Возвращает async-клиент ClickHouse или ``None`` (деградация).
+
+        Дашборд — путь чтения для UI: при недоступном ClickHouse (в т. ч.
+        при неустановленном драйвере ``clickhouse_connect``) страница должна
+        жить, а не падать. Wave 13 Q8: единая точка импорта драйвера с
+        ``required=False`` — ``None`` + WARNING в лог.
+
+        Returns:
+            Async-клиент ClickHouse либо ``None``.
+
+        """
         try:
             if self._ch_factory is not None:
                 return await self._ch_factory()
-            from clickhouse_connect import get_async_client
+            from src.backend.infrastructure.clients.storage.clickhouse_driver import (
+                create_clickhouse_async_client,
+            )
 
-            from src.backend.core.config import settings
-
-            host = (
-                getattr(settings.clickhouse, "host", "localhost")
-                if hasattr(settings, "clickhouse")
-                else "localhost"
-            )
-            port = (
-                getattr(settings.clickhouse, "port", 8123)
-                if hasattr(settings, "clickhouse")
-                else 8123
-            )
-            database = (
-                getattr(settings.clickhouse, "database", "default")
-                if hasattr(settings, "clickhouse")
-                else "default"
-            )
-            return await get_async_client(host=host, port=port, database=database)
-        except Exception as _:
+            return await create_clickhouse_async_client(required=False)
+        except Exception as exc:
+            _logger.warning("CH client unavailable: %s", exc)
             return None
 
     async def list_scheduled(self) -> list[ScheduledWorkflowSummary]:

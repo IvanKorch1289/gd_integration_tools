@@ -213,6 +213,8 @@ db_drivers = [
     "oracledb>=2.5.0,<3.0.0",     # Oracle (CDC, external_db)
     "aioodbc>=0.5.0,<1.0.0",      # MSSQL (latest available is 0.5.0)
     "aiomysql>=0.2.0,<1.0.0",     # MySQL
+    "clickhouse-connect>=0.7.0,<1.0.0",
+    "pyodbc>=5.0.0,<6.0.0",
 ]
 # === K4 Sprint 24 W1 (ADR-NEW-16): Presidio + ru NER PII layer. ===
 # presidio-anonymizer — replace/redact/hash операторы для PII;

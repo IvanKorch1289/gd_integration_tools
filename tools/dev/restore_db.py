@@ -113,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: cannot import sync_engine: {exc}", file=sys.stderr)
         return 1
     if sync_engine is None:
-        print("ERROR: sync_engine is None (no psycopg2?)", file=sys.stderr)
+        print("ERROR: sync_engine is None (no psycopg?)", file=sys.stderr)
         return 1
 
     counts = restore_pg_from_sqlite(

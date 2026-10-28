@@ -65,11 +65,11 @@ class TestTestcontainersSmoke:
         with PostgresContainer("postgres:16-alpine") as pg:
             # get_connection_url() возвращает postgresql+psycopg2:// — для psycopg.
             url = pg.get_connection_url()
-            # strip driver prefix для psycopg2.connect
+            # strip driver prefix для psycopg.connect
             psycopg_url = url.replace("postgresql+psycopg2://", "postgresql://")
-            import psycopg2
+            import psycopg
 
-            conn = psycopg2.connect(psycopg_url)
+            conn = psycopg.connect(psycopg_url)
             try:
                 with conn.cursor() as cur:
                     cur.execute("SELECT 1 + 1 AS sum")

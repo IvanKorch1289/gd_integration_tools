@@ -107,7 +107,9 @@ class ClickHouseAuditService:
             Async-клиент ClickHouse.
 
         Raises:
-            RuntimeError: Если feature-flag выключен и клиент не предоставлен.
+            ClickHouseDriverError: Драйвер ``clickhouse_connect`` не
+                установлен (Wave 13 Q8: fail-loud — потеря audit-событий
+                недопустима; вызывающий код уводит событие в DLQ).
 
         """
         if self._client is not None:
@@ -115,30 +117,14 @@ class ClickHouseAuditService:
         async with self._lock:
             if self._client is not None:
                 return self._client
-            # Lazy-импорт тяжёлой зависимости только при включённом flag
-            from clickhouse_connect import get_async_client
-
-            from src.backend.core.config import settings
-
-            host = (
-                getattr(settings.clickhouse, "host", "localhost")
-                if hasattr(settings, "clickhouse")
-                else "localhost"
-            )
-            port = (
-                getattr(settings.clickhouse, "port", 8123)
-                if hasattr(settings, "clickhouse")
-                else 8123
-            )
-            database = (
-                getattr(settings.clickhouse, "database", "default")
-                if hasattr(settings, "clickhouse")
-                else "default"
+            # Lazy-импорт тяжёлой зависимости только при включённом flag.
+            # Wave 13 Q8: единая точка импорта драйвера — required=True
+            # даёт доменную ошибку вместо ModuleNotFoundError из ниоткуда.
+            from src.backend.infrastructure.clients.storage.clickhouse_driver import (
+                create_clickhouse_async_client,
             )
 
-            self._client = await get_async_client(
-                host=host, port=port, database=database
-            )
+            self._client = await create_clickhouse_async_client(required=True)
         return self._client
 
     def _get_dlq_backend(self) -> AuditBackend | None:

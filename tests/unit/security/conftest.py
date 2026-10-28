@@ -4,7 +4,7 @@
 ``tests/unit/conftest.py``. Здесь — только специфичные стабы:
 
 ``cert_store.py`` импортирует ``main_session_manager``, что тянет цепочку
-до ``psycopg2`` (опционален, обычно не установлен в dev). Для in-memory
+до ``psycopg`` (опционален, обычно не установлен в dev). Для in-memory
 тестов ``MemoryCertBackend`` подменяем ``session_manager`` и
 ``models.cert`` пустыми заглушками до их первого импорта.
 

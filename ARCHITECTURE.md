@@ -361,7 +361,10 @@ Rate Limiter построен по canonical 4-layer pattern:
 - **CertStore** — РЕАЛЬНЫЙ (`core/config/cert_store.py::CertStoreSettings`,
   `entrypoints/api/v1/endpoints/admin_certs.py::CertStore.from_settings`).
   Требует `CERT_STORE_*` env vars — НЕ stub, а config-driven.
-- `psycopg2` отсутствует в venv (используется asyncpg)
+- `psycopg2` отсутствует в venv (используется asyncpg); sync-драйвер
+  PostgreSQL по умолчанию — `psycopg` (psycopg3, extra `sources-cdc`),
+  DSN-конструктор fail-fast на не объявленных драйверах
+  (`core/config/db_drivers.py`)
 
 **Уточнение от ре-аудита 2026-08-20** (docs/audit/RE_AUDIT_2026-08-20.md):
 три пункта выше (Memcached, ClamAV, CertStore) были **FALSE CLAIM в предыдущем

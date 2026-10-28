@@ -25,7 +25,7 @@ Coverage-агрегация из REVIEW §10: ≈27 op-level + ≈114 router-lev
   должен иметь per-handler Depends, иначе FAIL.
 
 Graceful skip: ``create_app()`` падает на отсутствующих зависимостях
-(``psycopg2``, ``idempotency_header_middleware`` и т.п.) → fallback
+(``psycopg``, ``idempotency_header_middleware`` и т.п.) → fallback
 на минимальный app (admin + invocations) с явным middleware.
 
 Не измеряет
