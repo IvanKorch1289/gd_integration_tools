@@ -61,16 +61,37 @@ class PolicyChain:
     def cache_policy(
         self, *, ttl_seconds: int = 60, key: str | None = None, backend: str = "redis"
     ) -> RouteBuilder:
-        """Add cache policy (через CacheProcessor / Redis backend).
+        """Add cache policy (marker без реального кэша).
 
         Cycle 170 (ADR-0355): этот метод был переименован из ``cache()``
         чтобы избежать MRO collision с реальным
         :meth:`RouteBuilder.cache` (:class:`CacheProcessor`). Старое имя
         ``cache()`` остаётся как deprecated shim с ``DeprecationWarning``.
+
+        Этот метод добавляет только :class:`PolicyMarkerProcessor` —
+        реального кэша он НЕ создаёт (реализация отложена, см. ADR-0355
+        follow-up). Чтобы не вводить в заблуждение, вызов выдаёт
+        ``RuntimeWarning`` с указанием канонического пути для настоящего
+        кэша: ``RouteBuilder.cache(key_fn=..., ttl=...)``.
+
+        Raises:
+            RuntimeWarning: всегда — маркер не реализует кэширование.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
         """
-        return self._add_policy_processor(
-            "cache", ttl_seconds=ttl_seconds, key=key, backend=backend
+        import warnings
+
+        warnings.warn(
+            "PolicyMixin.cache_policy() is a marker only: it does NOT create "
+            "a real cache. For a real cache use "
+            "RouteBuilder.cache(key_fn=..., ttl=...) (CacheProcessor). "
+            "See ADR-0355.",
+            RuntimeWarning,
+            stacklevel=2,
         )
+        return self._cache_marker(ttl_seconds=ttl_seconds, key=key, backend=backend)
 
     def cache(  # type: ignore[override]
         self, *, ttl_seconds: int = 60, key: str | None = None, backend: str = "redis"
@@ -101,8 +122,22 @@ class PolicyChain:
             DeprecationWarning,
             stacklevel=2,
         )
-        return self.cache_policy(
-            ttl_seconds=ttl_seconds, key=key, backend=backend
+        return self._cache_marker(ttl_seconds=ttl_seconds, key=key, backend=backend)
+
+    def _cache_marker(
+        self, *, ttl_seconds: int, key: str | None, backend: str
+    ) -> RouteBuilder:
+        """Создать marker-процессор ``policy:cache`` (реального кэша нет).
+
+        Общий путь для :meth:`cache_policy` и deprecated-шима
+        :meth:`cache` — чтобы семантика маркера не расходилась.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
+        """
+        return self._add_policy_processor(
+            "cache", ttl_seconds=ttl_seconds, key=key, backend=backend
         )
 
     def circuit_breaker(

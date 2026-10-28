@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -34,9 +35,15 @@ class TestFileMoveProcessor:
     """Tests for FileMoveProcessor."""
 
     @pytest.mark.asyncio
-    async def test_process_moves_file(self) -> None:
+    async def test_process_moves_file(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         # S164 W1: updated to match actual FileMoveProcessor API (src/dst/mode).
-        processor = FileMoveProcessor(src="a.txt", dst="b.txt", mode="move")
+        # Wave 13 Q7: src/dst проверяются по path-allowlist → пути внутри tmp_path.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
+        processor = FileMoveProcessor(
+            src=str(tmp_path / "a.txt"), dst=str(tmp_path / "b.txt"), mode="move"
+        )
         _allow(processor)
         exchange = MagicMock(spec=Exchange)
         exchange.in_message = MagicMock()

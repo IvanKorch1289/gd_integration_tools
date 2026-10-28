@@ -28,11 +28,31 @@ class TestPolicyCacheMarker:
             RouteBuilder.from_("test", source="http:GET /test").policy.cache_policy(
                 ttl_seconds=60
             )
-        deprecations = [
-            w for w in caught if issubclass(w.category, DeprecationWarning)
-        ]
+        deprecations = [w for w in caught if issubclass(w.category, DeprecationWarning)]
         assert len(deprecations) == 0, (
             f"cache_policy() emitted DeprecationWarning: {deprecations[0].message}"
+        )
+
+    def test_cache_policy_emits_runtime_warning(self) -> None:
+        """``cache_policy()`` честно предупреждает, что это marker без кэша.
+
+        Вызов выглядит рабочим, но реального кэша нет — значит должен
+        быть явный ``RuntimeWarning`` с указанием канонического пути
+        для настоящего кэша (``RouteBuilder.cache(key_fn=..., ttl=...)``).
+        """
+        with pytest.warns(RuntimeWarning) as caught:
+            RouteBuilder.from_("test", source="http:GET /test").policy.cache_policy(
+                ttl_seconds=60
+            )
+        messages = [str(w.message) for w in caught]
+        assert any("marker" in m.lower() for m in messages), (
+            f"warning does not mention marker semantics: {messages}"
+        )
+        assert any("RouteBuilder.cache" in m for m in messages), (
+            f"warning does not name the real cache path: {messages}"
+        )
+        assert any("key_fn" in m for m in messages), (
+            f"warning does not mention the real cache signature: {messages}"
         )
 
     def test_cache_emits_deprecation_warning(self) -> None:
@@ -42,9 +62,7 @@ class TestPolicyCacheMarker:
             RouteBuilder.from_("test", source="http:GET /test").policy.cache(
                 ttl_seconds=60
             )
-        deprecations = [
-            w for w in caught if issubclass(w.category, DeprecationWarning)
-        ]
+        deprecations = [w for w in caught if issubclass(w.category, DeprecationWarning)]
         assert len(deprecations) >= 1
         assert "ADR-0355" in str(deprecations[0].message)
         assert "cache_policy" in str(deprecations[0].message)
