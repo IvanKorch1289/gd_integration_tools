@@ -9,7 +9,7 @@ authors = [
 ]
 dependencies = [
     "fastapi>=0.116.0,<1.0.0",
-    "sqlalchemy>=2.0.41,<3.0.0",
+    "sqlalchemy>=2.0.41,<2.1.0",
     # Аудит 2026-10-06: jsonschema и zstandard импортируются в рантайме
     # (dsl/engine/processors/generic.py, messaging/event_bus.py,
     # dsl/engine/processors/enrichment/compression.py и др.), были объявлены
@@ -254,14 +254,19 @@ auth-saml = [
 mcp = [
     # ADR-0070 §3 (S27 W4): FastMCP 3.2.4+ required для JWTAuthProvider
     # (JWTVerifier from fastmcp.server.auth.providers.jwt).
-    "fastmcp>=3.2.4"
+    "fastmcp>=3.4.10,<4.0.0"
 ]
 rpa = [
+    "jinja2>=3.1.6,<4.0.0",
     # K3 Sprint 8 [wave:s8/k3-rpa-universal-stage1]: patchright (anti-detection
     # форк playwright). Используется в RPA Universal Stage 1; подключён
     # параллельно с playwright (legacy), полная миграция — Sprint 9 K3.
     "patchright>=1.40.0,<2.0",
-    "playwright>=1.48.0"
+    "pdfplumber>=0.11.0,<1.0.0",
+    "pillow>=12.3.0,<13.0.0",
+    "playwright>=1.48.0,<2.0.0",
+    "pytesseract>=0.3.10,<1.0.0",
+    "watchdog>=6.0.0,<7.0.0",
 ]
 # S74 W1 (FINAL_REPORT_V2 #9, направление #1): parameterized notebook execution.
 # nbclient — local kernel execution (already used в NbClientExecutionBackend).
@@ -293,7 +298,7 @@ rpa-ocr = [
 # sidecar; на Linux/macOS sidecar возвращает 503.
 rpa-windows = [
     "pywinauto>=0.6.8,<1.0",
-    "pillow>=12.3.0,<13.0",  # SECURITY: memory corruption CVE fix (vulnerable < 12.2.0)
+    "pillow>=12.3.0,<13.0.0",  # SECURITY: memory corruption CVE fix (vulnerable < 12.2.0)
 ]
 # Sprint 8 — HTTP/3 + WebTransport opt-in.
 # aioquic — pure-Python QUIC/HTTP3 stack; cp314 wheels с 1.1.0 (cryptography>=42).
@@ -463,14 +468,14 @@ test-frontend = [
     # Streamlit + playwright для UI tests (selective).
     "pytest>=9.0.0,<10.0.0",
     "pytest-asyncio>=1.0.0,<2.0.0",
-    "playwright>=1.48.0",
+    "playwright>=1.48.0,<2.0.0",
 ]
 test-rpa = [
     # RPA tests — patchright + playwright (anti-detection).
     "pytest>=9.0.0,<10.0.0",
     "pytest-asyncio>=1.0.0,<2.0.0",
     "patchright>=1.40.0,<2.0",
-    "playwright>=1.48.0",
+    "playwright>=1.48.0,<2.0.0",
 ]
 test-all = [
     # Meta-extra для CI: устанавливает все test-* deps сразу.
@@ -485,7 +490,7 @@ test-all = [
     "sqlalchemy[asyncio]>=2.0.0,<3.0.0",
     "temporalio>=1.27.0,<2.0.0",
     "hypothesis>=6.0.0",
-    "playwright>=1.48.0",
+    "playwright>=1.48.0,<2.0.0",
     "patchright>=1.40.0,<2.0",
 ]
 dev-light = [
@@ -495,7 +500,7 @@ dev-light = [
     # Без этого — `import fastmcp` в compose-app-1 fails → /mcp 404.
     # Альтернатива: image rebuild с `[mcp]` extra, но это удваивает
     # image variants. Ponytail: одна light-stack должна покрывать core use cases.
-    "fastmcp>=3.2.4",
+    "fastmcp>=3.4.10,<4.0.0",
 ]
 sources-cdc = [
     "psycopg[binary]>=3.1,<4.0.0",

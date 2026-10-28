@@ -34,7 +34,6 @@ hdrh  # hdrhistogram (infrastructure/application/slo_tracker.py)
 hl7apy  # HL7-кодек (dsl/codec)
 influxdb_client  # InfluxDB-хранилище (dsl/engine/processors/storage_ext.py)
 iso8583  # ISO-8583-кодек (dsl/codec)
-jinja2  # шаблонизатор (dsl/builders/template_engine_mixin.py)
 joblib  # ML-модели (services/ai/ml/model_loader.py)
 jwt  # JWT-процессор (dsl/engine/processors/enrichment/jwt.py); pyjwt не объявлен
 kafka  # kafka-python в integration-тесте (в рантайме — aiokafka)
@@ -57,7 +56,6 @@ numpy  # ML-инференс; приходит транзитивно, но яв
 onnxruntime  # ONNX-инференс (dsl/engine/processors/ml_inference.py)
 packaging  # версии пакетов (core/plugin_runtime) — транзитивно, не объявлен
 pandas  # Streamlit-страницы; транзитивно, не объявлен
-pdfplumber  # PDF-парсер (dsl/engine/processors/rpa/documents.py)
 pika  # pika-python в integration-тесте (в рантайме — aio-pika)
 prometheus_client  # метрики (core/utils/metrics_registry.py) — не объявлен
 psutil  # мониторинг процессов (core/scaling, core/plugin_runtime)
@@ -78,7 +76,6 @@ tomli_w  # TOML-запись (dsl/engine/processors/format_convert)
 torch  # ML-инференс (dsl/engine/processors/ml_predict.py)
 typing_extensions  # typing-extensions (dsl/builders/infra_logging_mixin.py)
 vllm  # vLLM-батчинг (services/ai/llm)
-watchdog  # file-watcher (dsl/engine/processors/rpa/operations)
 websockets  # WS-сокеты/синьки (infrastructure/sinks, sources)
 whisper  # STT (services/ai/voice, services/ai/rag/whisper_stt.py)
 xxhash  # хеш для response-cache (entrypoints/middlewares)

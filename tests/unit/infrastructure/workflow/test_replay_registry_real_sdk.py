@@ -109,15 +109,17 @@ else:
 # === Tests ===
 
 
-def test_temporal_sdk_locked_version_is_1_32() -> None:
-    """Per audit: «закрыть тестом на locked version» — temporalio 1.32.0.
+def test_temporal_sdk_locked_version_is_1_34() -> None:
+    """Per audit: «закрыть тестом на locked version» — temporalio 1.34.x.
 
     Если SDK upgrade меняет marker name, contract-test ловит breakage.
+    Версия обновлена в волне 14 (ADR-0374): temporalio 1.32.0 → 1.34.0
+    (minor-обновление без CVE; pyproject: ``temporalio>=1.27.0,<2.0.0``).
     """
-    assert temporalio.__version__.startswith("1.32"), (
+    assert temporalio.__version__.startswith("1.34"), (
         f"Temporal SDK version changed: {temporalio.__version__}. "
         f"WorkflowRegistry может требовать обновления. "
-        f"Locked at 1.32.0 (audit 25.09.2026)."
+        f"Locked at 1.34.x (ADR-0374, wave 14)."
     )
 
 
