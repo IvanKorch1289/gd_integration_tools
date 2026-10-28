@@ -172,6 +172,9 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
         super().__init__(settings_cls)
         self.yaml_group = settings_cls.yaml_group  # type: ignore
         self.model_fields = settings_cls.model_fields.keys()
+        # Wave 13 Q16: флаг «уже предупреждали про неизвестные ключи»
+        # (одно WARNING на источник — без log spam при повторных вызовах).
+        self._unknown_keys_warned = False
 
     def get_field_value(
         self, field: FieldInfo, field_name: str
@@ -189,13 +192,46 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
             return {}
 
     def _filter_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
-        """Filter data using model fields."""
+        """Filter data using model fields.
+
+        Неизвестные ключи отбрасываются, но НЕ молча (Wave 13 Q16):
+        опечатка в имени YAML-ключа иначе приводит к тихой потере
+        настройки. ``extra="forbid"`` в моделях на YAML не действует —
+        фильтр отбрасывает ключ ДО валидации pydantic, поэтому опечатку
+        ловит только warning в логе (см. :meth:`_warn_unknown_keys`).
+        """
         if self.yaml_group:
             group_data = raw_data.get(self.yaml_group, {})
         else:
             group_data = raw_data
 
-        return {k: v for k, v in group_data.items() if k in self.model_fields}
+        filtered = {k: v for k, v in group_data.items() if k in self.model_fields}
+        self._warn_unknown_keys(group_data)
+        return filtered
+
+    def _warn_unknown_keys(self, group_data: dict[str, Any]) -> None:
+        """Логирует отброшенные неизвестные ключи (один WARNING на источник).
+
+        Рантайм-fail-loud сознательно НЕ вводится: падение старта из-за
+        лишнего ключа опаснее потери настройки. Вместо этого долг
+        фиксируется гейтом ``tools/config_audit.py`` (baseline + CI).
+
+        Args:
+            group_data: Данные секции источника (до фильтрации).
+
+        """
+        if self._unknown_keys_warned:
+            return
+        unknown = sorted(k for k in group_data if k not in self.model_fields)
+        if not unknown:
+            return
+        self._unknown_keys_warned = True
+        _logger().warning(
+            "Неизвестные ключи конфигурации отброшены (yaml_group=%s): %s. "
+            "Значения НЕ применяются — проверьте имена ключей в YAML.",
+            self.yaml_group or "<root>",
+            ", ".join(unknown),
+        )
 
     @abstractmethod
     def _load_data(self) -> dict[str, Any]:

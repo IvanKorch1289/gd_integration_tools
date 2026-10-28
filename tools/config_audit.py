@@ -1,4 +1,4 @@
-"""Двусторонний аудит конфигурации (W20.1+W20.2).
+"""Двусторонний аудит конфигурации (W20.1+W20.2) + CI-гейт (Wave 13 Q16).
 
 Сверяет YAML-конфигурацию (``config_profiles/base.yml`` + overlay активного
 профиля) с моделями ``BaseSettingsWithLoader`` из ``src/backend/core/config/``.
@@ -13,17 +13,46 @@
     * missing-secret: secret-поле (по имени или ``SecretStr``),
       отсутствующее в ``.env.example``.
 
+Зачем гейт (Wave 13 Q16)
+------------------------
+Механизм загрузки конфигурации ТИХО отбрасывает неизвестные YAML-ключи
+(``FilteredSettingsSource._filter_data``): опечатка в имени = тихая потеря
+настройки. Этот инструмент находит такие расхождения, но раньше не был
+подключён к CI и не покрыт тестами.
+
+Два класса расхождений
+----------------------
+* **orphan-класс** (``orphan-group`` / ``orphan-key``) — наш дефект: ключ
+  в YAML без поля в модели = опечатка = тихая потеря настройки. Это
+  блокирующий scope гейта (по умолчанию ``--scope orphans``).
+* **missing-класс** (``missing-secret`` / ``missing-non-secret``) — другой
+  дефект: переменные окружения из Settings-классов не документированы в
+  ``.env.example`` (общий разрыв проекта, отдельная owner-задача). Печатается
+  отдельной неблокирующей секцией; блокирует только при ``--scope all``.
+
+Известный долг зафиксирован в ``tools/config_audit_allowlist.txt`` (baseline
+по всем видам расхождений); гейт падает только на **новых** orphan-расхождениях.
+``--strict`` игнорирует baseline и падает на любых расхождениях (scope=all).
+
 Использование::
 
-    python tools/config_audit.py [--profile dev|dev_light|staging|prod] [--strict]
+    python tools/config_audit.py [--profile dev|dev_light|staging|prod]
+                                 [--scope orphans|all] [--strict]
+    python tools/config_audit.py --update-allowlist
+    python tools/config_audit.py --json
 
-При обнаружении любых проблем процесс завершается с кодом 1.
+Exit codes
+----------
+    0 — новых расхождений в scope нет (долг покрыт baseline).
+    1 — появились новые расхождения в scope (или ``--strict`` при любых issues).
+    2 — ошибка запуска (нет каталога моделей / каталога профилей).
 """
 
 from __future__ import annotations
 
 import argparse
 import ast
+import json
 import re
 import sys
 from dataclasses import dataclass, field
@@ -38,7 +67,32 @@ CONFIG_DIR = ROOT / "src" / "backend" / "core" / "config"
 PROFILES_DIR = ROOT / "config_profiles"
 ENV_EXAMPLE = ROOT / ".env.example"
 
+#: Baseline известного долга (Wave 13 Q16).
+ALLOWLIST_PATH = ROOT / "tools" / "config_audit_allowlist.txt"
+
 PROFILES: tuple[str, ...] = ("dev", "dev_light", "staging", "prod")
+
+#: Виды расхождений YAML ↔ модель настроек.
+KIND_ORPHAN_GROUP = "orphan-group"
+KIND_ORPHAN_KEY = "orphan-key"
+KIND_MISSING_NON_SECRET = "missing-non-secret"  # noqa: S105 — не пароль, а вид issue
+KIND_MISSING_SECRET = "missing-secret"  # noqa: S105 — не пароль, а вид issue
+
+#: Orphan-класс — наш дефект (опечатка в YAML-ключе = тихая потеря настройки).
+#: Блокирующий scope гейта по умолчанию.
+_ORPHAN_KINDS: tuple[str, ...] = (KIND_ORPHAN_GROUP, KIND_ORPHAN_KEY)
+
+#: Missing-класс — другой дефект (переменные окружения не документированы
+#: в ``.env.example``): общий разрыв проекта, отдельная owner-задача.
+_MISSING_KINDS: tuple[str, ...] = (KIND_MISSING_NON_SECRET, KIND_MISSING_SECRET)
+
+_ALL_KINDS: tuple[str, ...] = _ORPHAN_KINDS + _MISSING_KINDS
+
+#: Блокирующие scope гейта.
+SCOPE_ORPHANS = "orphans"
+SCOPE_ALL = "all"
+
+_DEFAULT_REASON = "известный долг конфига (baseline Wave 13 Q16)"
 
 SECRET_EXACT_NAMES: frozenset[str] = frozenset(
     {"password", "secret_key", "api_key", "access_key", "token", "username"}
@@ -315,17 +369,38 @@ def _deep_merge(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]
     return merged
 
 
-def _load_profile_yaml(profile: str) -> dict[str, Any]:
-    base = _read_yaml(PROFILES_DIR / "base.yml")
-    overlay = _read_yaml(PROFILES_DIR / f"{profile}.yml")
+def _load_profile_yaml(
+    profile: str, profiles_dir: Path = PROFILES_DIR
+) -> dict[str, Any]:
+    """Читает и мержит ``base.yml`` + overlay профиля.
+
+    Args:
+        profile: Имя профиля (``dev``, ``dev_light``, ``staging``, ``prod``).
+        profiles_dir: Каталог с YAML-профилями.
+
+    Returns:
+        Слитая конфигурация профиля.
+
+    """
+    base = _read_yaml(profiles_dir / "base.yml")
+    overlay = _read_yaml(profiles_dir / f"{profile}.yml")
     return _deep_merge(base, overlay)
 
 
-def _load_env_keys() -> set[str]:
-    if not ENV_EXAMPLE.is_file():
+def _load_env_keys(path: Path = ENV_EXAMPLE) -> set[str]:
+    """Собирает множество ключей из ``.env.example``.
+
+    Args:
+        path: Путь к файлу-шаблону окружения.
+
+    Returns:
+        Множество имён переменных окружения.
+
+    """
+    if not path.is_file():
         return set()
     keys: set[str] = set()
-    for raw in ENV_EXAMPLE.read_text(encoding="utf-8").splitlines():
+    for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
@@ -387,8 +462,21 @@ def _audit_profile(
     profile: str,
     classes: dict[str, tuple[ClassSpec, dict[str, FieldSpec], str]],
     env_keys: set[str],
+    profiles_dir: Path = PROFILES_DIR,
 ) -> tuple[list[GroupReport], list[str]]:
-    yaml_data = _load_profile_yaml(profile)
+    """Аудит одного профиля.
+
+    Args:
+        profile: Имя профиля.
+        classes: Найденные Settings-классы (``yaml_group → (spec, fields, prefix)``).
+        env_keys: Ключи из ``.env.example``.
+        profiles_dir: Каталог с YAML-профилями.
+
+    Returns:
+        Кортеж ``(отчёты по секциям, orphan-группы)``.
+
+    """
+    yaml_data = _load_profile_yaml(profile, profiles_dir)
     reports: list[GroupReport] = []
     orphan_groups: list[str] = []
     for top in yaml_data:
@@ -409,35 +497,193 @@ def _audit_profile(
 # ──────────────────── Reporting ────────────────────
 
 
+@dataclass(frozen=True, slots=True)
+class Finding:
+    """Одно расхождение между YAML-конфигом и моделями настроек.
+
+    Attributes:
+        kind: Вид расхождения (``orphan-group`` / ``orphan-key`` /
+            ``missing-non-secret`` / ``missing-secret``).
+        profile: Профиль, в котором обнаружено расхождение.
+        group: Секция YAML (пусто для ``orphan-group``).
+        name: Имя orphan-ключа / поля / переменной окружения.
+
+    """
+
+    kind: str
+    profile: str
+    group: str
+    name: str
+
+    @property
+    def key(self) -> str:
+        """Стабильный ключ расхождения (используется в allowlist)."""
+        if self.kind == KIND_ORPHAN_GROUP:
+            return f"{self.kind}:{self.profile}:{self.name}"
+        return f"{self.kind}:{self.profile}:{self.group}:{self.name}"
+
+    def as_dict(self) -> dict[str, str]:
+        """Представляет расхождение для JSON-вывода."""
+        return {
+            "kind": self.kind,
+            "profile": self.profile,
+            "group": self.group,
+            "name": self.name,
+            "key": self.key,
+        }
+
+
+def _collect_findings(
+    profile: str, reports: list[GroupReport], orphan_groups: list[str]
+) -> list[Finding]:
+    """Собирает плоский список расхождений по профилю.
+
+    Args:
+        profile: Имя профиля.
+        reports: Отчёты по секциям YAML.
+        orphan_groups: Секции YAML без соответствующего Settings-класса.
+
+    Returns:
+        Список расхождений, отсортированный по ключу.
+
+    """
+    findings: list[Finding] = [
+        Finding(kind=KIND_ORPHAN_GROUP, profile=profile, group="", name=group)
+        for group in orphan_groups
+    ]
+    for report in reports:
+        findings.extend(
+            Finding(kind=KIND_ORPHAN_KEY, profile=profile, group=report.group, name=key)
+            for key in report.orphan_keys
+        )
+        findings.extend(
+            Finding(
+                kind=KIND_MISSING_NON_SECRET,
+                profile=profile,
+                group=report.group,
+                name=name,
+            )
+            for name in report.missing_non_secret
+        )
+        findings.extend(
+            Finding(
+                kind=KIND_MISSING_SECRET, profile=profile, group=report.group, name=name
+            )
+            for name in report.missing_secret
+        )
+    return sorted(findings, key=lambda finding: finding.key)
+
+
+def load_allowlist(path: Path = ALLOWLIST_PATH) -> dict[str, str]:
+    """Читает allowlist (baseline известного долга).
+
+    Args:
+        path: Путь к allowlist-файлу.
+
+    Returns:
+        Словарь ``{ключ расхождения: inline-комментарий}``.
+
+    """
+    if not path.exists():
+        return {}
+    entries: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        key, _, comment = stripped.partition("#")
+        entries[key.strip()] = comment.strip()
+    return entries
+
+
+def save_allowlist(path: Path, findings: list[Finding]) -> None:
+    """Перегенерирует allowlist-файл текущим списком долга.
+
+    Args:
+        path: Путь к allowlist-файлу.
+        findings: Расхождения, включаемые в baseline.
+
+    """
+    existing = load_allowlist(path)
+    header = (
+        "# Baseline рассинхронизации YAML-конфига и моделей настроек "
+        "(Wave 13 Q16).\n"
+        "# Формат: <kind>:<profile>:<group>:<name>  # owner=<team> | reason=<note>\n"
+        "# Для orphan-группа формат короче: <kind>:<profile>:<section>\n"
+        "# kind ∈ {orphan-group, orphan-key, missing-non-secret, missing-secret}.\n"
+        "# Блокирующий scope гейта по умолчанию — orphan-класс\n"
+        "# (orphan-group / orphan-key): опечатка в YAML-ключе = тихая потеря\n"
+        "# настройки. missing-класс (переменные окружения не документированы\n"
+        "# в .env.example) — отдельный дефект, гейтом не блокируется.\n"
+        "# Каждая запись — известный долг; гейт падает только на НОВЫХ\n"
+        "# расхождениях (не из этого списка).\n"
+        "# Обновление: python tools/config_audit.py --update-allowlist\n"
+        "\n"
+    )
+    lines: list[str] = []
+    for finding in sorted(findings, key=lambda item: item.key):
+        comment = existing.get(finding.key) or f"owner=core | reason={_DEFAULT_REASON}"
+        lines.append(f"{finding.key}  # {comment}\n")
+    path.write_text(header + "".join(lines), encoding="utf-8")
+
+
 def _format_profile(
     profile: str, reports: list[GroupReport], orphan_groups: list[str]
 ) -> str:
+    """Форматирует отчёт по профилю.
+
+    Отчёт разделён на две секции: блокирующий orphan-класс и неблокирующий
+    missing-класс (другой дефект — переменные окружения не документированы
+    в ``.env.example``).
+
+    Args:
+        profile: Имя профиля.
+        reports: Отчёты по секциям YAML.
+        orphan_groups: Секции YAML без соответствующего Settings-класса.
+
+    Returns:
+        Текстовый отчёт по профилю.
+
+    """
     lines: list[str] = [f"## profile: {profile}"]
-    issue_count = 0
+
+    orphan_count = 0
     if orphan_groups:
         lines.append(f"  [ORPHAN-GROUP] {', '.join(orphan_groups)}")
-        issue_count += len(orphan_groups)
-    for r in reports:
-        if not r.has_issues():
+        orphan_count += len(orphan_groups)
+    for report in reports:
+        if not report.orphan_keys:
             continue
-        lines.append(f"  [{r.group}] ({r.class_name})")
-        for k in r.orphan_keys:
-            lines.append(f"    [orphan]            {k}")
-            issue_count += 1
-        for k in r.missing_non_secret:
-            lines.append(f"    [missing-non-secret] {k}")
-            issue_count += 1
-        for k in r.missing_secret:
-            lines.append(f"    [missing-secret]    {k}")
-            issue_count += 1
-    if issue_count == 0:
-        lines.append("  OK: 0 issues")
+        lines.append(f"  [{report.group}] ({report.class_name})")
+        for key in report.orphan_keys:
+            lines.append(f"    [orphan]            {key}")
+            orphan_count += 1
+    if orphan_count:
+        lines.append(f"  TOTAL ORPHAN ISSUES: {orphan_count}")
     else:
-        lines.append(f"  TOTAL ISSUES: {issue_count}")
+        lines.append("  OK: 0 orphan issues")
+
+    missing_count = 0
+    for report in reports:
+        if not (report.missing_non_secret or report.missing_secret):
+            continue
+        lines.append(f"  [{report.group}] ({report.class_name})")
+        for key in report.missing_non_secret:
+            lines.append(f"    [missing-non-secret] {key}")
+            missing_count += 1
+        for key in report.missing_secret:
+            lines.append(f"    [missing-secret]    {key}")
+            missing_count += 1
+    if missing_count:
+        lines.append(
+            f"  NON-BLOCKING (missing-*): {missing_count} "
+            "(отдельный дефект: переменные не документированы в .env.example)"
+        )
     return "\n".join(lines)
 
 
 def _build_argparser() -> argparse.ArgumentParser:
+    """Собирает CLI-парсер гейта."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--profile",
@@ -447,39 +693,198 @@ def _build_argparser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Совместимый алиас: всегда возвращает exit 1 при любых issues.",
+        help="Игнорировать baseline: всегда exit 1 при любых issues (scope=all).",
+    )
+    parser.add_argument(
+        "--scope",
+        choices=(SCOPE_ORPHANS, SCOPE_ALL),
+        default=SCOPE_ORPHANS,
+        help=(
+            "Что блокирует гейт: 'orphans' (только опечатки в YAML — "
+            "наш дефект, по умолчанию) или 'all' (включая missing-*). "
+        ),
+    )
+    parser.add_argument(
+        "--config-dir",
+        default=str(CONFIG_DIR),
+        help="Каталог с моделями настроек (по умолчанию: src/backend/core/config).",
+    )
+    parser.add_argument(
+        "--profiles-dir",
+        default=str(PROFILES_DIR),
+        help="Каталог с YAML-профилями (по умолчанию: config_profiles).",
+    )
+    parser.add_argument(
+        "--env-example",
+        default=str(ENV_EXAMPLE),
+        help="Файл-шаблон окружения (по умолчанию: .env.example).",
+    )
+    parser.add_argument(
+        "--allowlist",
+        default=str(ALLOWLIST_PATH),
+        help="Путь к allowlist-файлу (baseline известного долга).",
+    )
+    parser.add_argument(
+        "--update-allowlist",
+        action="store_true",
+        help="Перегенерировать allowlist текущим списком долга.",
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="JSON-вывод (для CI-интеграции)."
     )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = _build_argparser().parse_args(argv)
-    registry = _parse_config_classes(CONFIG_DIR)
-    classes = _settings_classes(registry)
-    env_keys = _load_env_keys()
+    """Точка входа гейта.
 
-    profiles = (args.profile,) if args.profile else PROFILES
+    Args:
+        argv: Аргументы CLI (по умолчанию — ``sys.argv[1:]``).
+
+    Returns:
+        0 — новых расхождений нет; 1 — новые расхождения (или ``--strict``
+        при любых issues); 2 — ошибка запуска.
+
+    """
+    args = _build_argparser().parse_args(argv)
+
+    config_dir = Path(args.config_dir)
+    profiles_dir = Path(args.profiles_dir)
+    env_example = Path(args.env_example)
+    allowlist_path = Path(args.allowlist)
+
+    missing = [
+        path.as_posix() for path in (config_dir, profiles_dir) if not path.is_dir()
+    ]
+    if missing:
+        print(
+            "[config_audit] каталоги не найдены: " + ", ".join(missing), file=sys.stderr
+        )
+        return 2
+
+    registry = _parse_config_classes(config_dir)
+    classes = _settings_classes(registry)
+    env_keys = _load_env_keys(env_example)
+
+    # Аудит всегда идёт по всем профилям: baseline (allowlist) хранит ключи
+    # с профилем, поэтому «stale» нельзя считать по одному профилю.
+    reports_by_profile: dict[str, tuple[list[GroupReport], list[str]]] = {}
+    findings_by_profile: dict[str, list[Finding]] = {}
+    for profile in PROFILES:
+        reports, orphan_groups = _audit_profile(
+            profile, classes, env_keys, profiles_dir=profiles_dir
+        )
+        reports_by_profile[profile] = (reports, orphan_groups)
+        findings_by_profile[profile] = _collect_findings(
+            profile, reports, orphan_groups
+        )
+
+    all_findings = [f for profile in PROFILES for f in findings_by_profile[profile]]
+    selected = (args.profile,) if args.profile else PROFILES
+    selected_findings = [
+        f for profile in selected for f in findings_by_profile[profile]
+    ]
+
+    # Блокирующий scope: orphan-класс (наш дефект) по умолчанию; missing-класс
+    # (переменные окружения не документированы) — отдельная owner-задача.
+    scope = SCOPE_ALL if args.strict else args.scope
+    scope_kinds = _ALL_KINDS if scope == SCOPE_ALL else _ORPHAN_KINDS
+    blocking = [f for f in selected_findings if f.kind in scope_kinds]
+    non_blocking = [f for f in selected_findings if f.kind not in scope_kinds]
+
+    allowlist = load_allowlist(allowlist_path)
+    scoped_allowlist = {
+        key: comment
+        for key, comment in allowlist.items()
+        if key.split(":", 1)[0] in scope_kinds
+    }
+    if args.strict:
+        # ``--strict`` игнорирует baseline: любое расхождение в scope → падение.
+        new_findings = list(blocking)
+        stale: list[str] = []
+    else:
+        new_findings = [f for f in blocking if f.key not in scoped_allowlist]
+        current_keys = {
+            finding.key
+            for profile in PROFILES
+            for finding in findings_by_profile[profile]
+            if finding.kind in scope_kinds
+        }
+        stale = sorted(set(scoped_allowlist) - current_keys)
+
+    if args.update_allowlist:
+        save_allowlist(allowlist_path, all_findings)
+        print(f"Allowlist обновлён: {len(all_findings)} запис(и/ей) → {allowlist_path}")
+        return 0
+
+    if args.json:
+        payload = {
+            "scope": scope,
+            "total_findings": len(selected_findings),
+            "blocking_findings": len(blocking),
+            "new_violations": [finding.as_dict() for finding in new_findings],
+            "non_blocking": [finding.as_dict() for finding in non_blocking],
+            "allowlisted": sorted({f.key for f in blocking} & set(scoped_allowlist)),
+            "stale_allowlist": stale,
+        }
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 1 if new_findings else 0
 
     print(
         f"Discovered {len(classes)} settings classes "
-        f"in {CONFIG_DIR.relative_to(ROOT)}; "
-        f"{len(env_keys)} keys in .env.example."
+        f"in {_display_dir(config_dir)}; "
+        f"{len(env_keys)} keys in {env_example.name}."
     )
     print()
 
-    has_issues = False
-    for profile in profiles:
-        reports, orphan_groups = _audit_profile(profile, classes, env_keys)
+    for profile in selected:
+        reports, orphan_groups = reports_by_profile[profile]
         print(_format_profile(profile, reports, orphan_groups))
         print()
-        if orphan_groups or any(r.has_issues() for r in reports):
-            has_issues = True
 
-    if has_issues:
-        print("FAIL: конфигурация рассинхронизирована с моделями.")
+    if args.strict:
+        if blocking:
+            print(f"FAIL (strict): расхождений конфигурации — {len(blocking)}.")
+            return 1
+        print("OK: конфигурация полностью синхронизирована.")
+        return 0
+
+    if new_findings:
+        print(f"НОВЫЕ расхождения конфигурации (scope={scope}): {len(new_findings)}")
+        for finding in new_findings:
+            print(f"  {finding.key}")
+        print(
+            "\nИсправьте YAML/модель либо внесите известный долг в baseline:\n"
+            "  python tools/config_audit.py --update-allowlist"
+        )
         return 1
-    print("OK: конфигурация полностью синхронизирована.")
+
+    if stale:
+        print(
+            f"СТЕЙЛ записи в allowlist: {len(stale)} "
+            "(расхождение исправлено — обновите allowlist)"
+        )
+        for key in stale[:10]:
+            print(f"  {key}")
+        if len(stale) > 10:
+            print(f"  ... и ещё {len(stale) - 10}")
+
+    print(
+        f"Расхождений конфигурации: 0 новых "
+        f"(scope={scope}; всего в долге: {len(selected_findings)}; "
+        f"в scope: {len(blocking)}; неблокирующих: {len(non_blocking)}; "
+        f"allowlist в scope: {len(scoped_allowlist)}; "
+        f"allowlist всего: {len(allowlist)})"
+    )
     return 0
+
+
+def _display_dir(path: Path) -> str:
+    """Возвращает путь относительно корня репозитория (для вывода)."""
+    try:
+        return path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 if __name__ == "__main__":
