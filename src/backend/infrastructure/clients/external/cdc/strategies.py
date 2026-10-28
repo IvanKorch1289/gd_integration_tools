@@ -1,4 +1,7 @@
-# ruff: noqa: S608 — false positive (controlled pattern)
+# ruff: noqa: S608 — SQL собирается f-string, но все идентификаторы
+# (table / timestamp_column) проходят allowlist-валидацию
+# (см. ``_identifiers.py``, ADR-0112); значения передаются
+# bind-параметрами (``:last``, ``:limit``, ``:last_scn``).
 
 """S60 W2 — strategies.py part of cdc decomp.
 
@@ -16,6 +19,10 @@ from datetime import UTC, datetime
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.external.cdc._identifiers import (
+    escape_sql_literal,
+    validate_subscription_identifiers,
+)
 from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,  # S60 W2: cross-import
     CDCSubscription,  # S60 W2: cross-import
@@ -96,7 +103,14 @@ class _PollingStrategy(_CDCStrategy):
             sub: Подписка CDC (profile, tables, timestamp_column, batch_size).
             dispatch: Callback для отправки каждого CDC-события.
 
+        Raises:
+            ValueError: Если имена таблиц/колонок не проходят allowlist.
+
         """
+        # S-17: fail-fast валидация идентификаторов до обращения к БД —
+        # недоверенное имя не должно доходить до SQL (f-string).
+        validate_subscription_identifiers(sub)
+
         try:
             from sqlalchemy import text
 
@@ -123,8 +137,11 @@ class _PollingStrategy(_CDCStrategy):
 
                 try:
                     async with engine.connect() as conn:
+                        # S-17: table/timestamp_column валидированы
+                        # allowlist-ом (см. ``_identifiers.py``) — в SQL
+                        # попадают только безопасные идентификаторы.
                         query = text(
-                            f"SELECT * FROM {table} "  # table/timestamp_column — DSL/config параметры подписки, не runtime user input  # internal query with controlled parameters
+                            f"SELECT * FROM {table} "
                             f"WHERE {sub.timestamp_column} > :last "
                             f"ORDER BY {sub.timestamp_column} "
                             f"LIMIT :limit"
@@ -298,10 +315,17 @@ class _LogMinerStrategy(_CDCStrategy):
             sub: Подписка CDC (profile, tables, batch_size).
             dispatch: Callback для отправки каждого CDC-события.
 
+        Raises:
+            ValueError: Если имена таблиц не проходят allowlist.
+
         Note:
             Требует привилегии SELECT ANY TRANSACTION, EXECUTE_CATALOG_ROLE.
 
         """
+        # S-17: fail-fast валидация идентификаторов до обращения к БД —
+        # имена таблиц подставляются в строковые литералы SQL.
+        validate_subscription_identifiers(sub)
+
         try:
             from sqlalchemy import text
 
@@ -320,7 +344,8 @@ class _LogMinerStrategy(_CDCStrategy):
             return
 
         engine = initializer.get_async_engine()
-        table_list = ", ".join(f"'{t.upper()}'" for t in sub.tables)
+        # S-17: имена таблиц провалидированы allowlist-ом; escape — второй слой.
+        table_list = ", ".join(f"'{escape_sql_literal(t.upper())}'" for t in sub.tables)
 
         while sub.active:
             last_scn = self._last_scn.get(sub.profile, 0)
@@ -335,7 +360,7 @@ class _LogMinerStrategy(_CDCStrategy):
                           AND OPERATION IN ('INSERT', 'UPDATE', 'DELETE')
                         ORDER BY SCN
                         FETCH FIRST :limit ROWS ONLY
-                    """)  # table_list собран из sub.tables (DSL config), upper-cased  # internal query with controlled parameters
+                    """)  # table_list — валидированные (allowlist) имена таблиц, upper-cased
                     result = await conn.execute(
                         query, {"last_scn": last_scn, "limit": sub.batch_size}
                     )

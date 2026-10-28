@@ -23,6 +23,9 @@ from typing import Any, Awaitable, Callable, Literal
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
 from src.backend.core.logging import get_logger
+from src.backend.infrastructure.clients.external.cdc._identifiers import (
+    validate_identifier,
+)
 
 __all__ = ("PollCDCBackend",)
 
@@ -93,7 +96,19 @@ class PollCDCBackend(CDCSource):
 
         Polling mode (scaffold): heartbeat-cursor advance, события
         не генерируются (production — Wave R3).
+
+        Raises:
+            ValueError: Если имя таблицы или timestamp-колонки не проходит
+                allowlist-валидацию SQL-идентификатора.
         """
+        target_table = self._default_table or (tables[0] if tables else "_unknown")
+        validate_identifier(target_table, context="cdc.poll_backend.table")
+        validate_identifier(
+            self._timestamp_column, context="cdc.poll_backend.timestamp_column"
+        )
+        for index, table in enumerate(tables):
+            validate_identifier(table, context=f"cdc.poll_backend.tables[{index}]")
+
         _logger.info(
             "PollCDCBackend started: profile=%s tables=%s interval_s=%.1f mode=%s",
             self._profile,
@@ -130,12 +145,11 @@ class PollCDCBackend(CDCSource):
             return
 
         # Polling mode (scaffold).
-        target_table = self._default_table or (tables[0] if tables else "_unknown")
         while not self._stopped.is_set():
             if self._sql_executor is not None:
                 # Sprint 12 P1-4: real SQL polling via executor.
-                # `table` and `timestamp_column` are validated identifiers
-                # (constructor params), not user input. f-string safe.
+                # `target_table` and `timestamp_column` passed the identifier
+                # allowlist before this f-string interpolation.
                 sql = (
                     f"SELECT * FROM {target_table} "  # noqa: S608 — identifiers
                     f"WHERE {self._timestamp_column} > %s "

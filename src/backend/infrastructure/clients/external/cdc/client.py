@@ -16,6 +16,9 @@ from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.clients.external.cdc._dlq_writer_guard import (
     mark_cdc_dlq_writer_wired,  # B-17 fix (cycle 37): fail-loud DLQ wiring
 )
+from src.backend.infrastructure.clients.external.cdc._identifiers import (
+    validate_subscription_identifiers,  # S-17: allowlist для SQL-идентификаторов
+)
 from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,  # S60 W2: cross-import
     CDCSubscription,  # S60 W2: cross-import
@@ -130,6 +133,10 @@ class CDCClient:
         Returns:
             ID подписки.
 
+        Raises:
+            ValueError: Если стратегия неизвестна либо имена таблиц/колонок
+                не проходят allowlist-валидацию (S-17).
+
         """
         if strategy not in self._STRATEGIES:
             raise ValueError(
@@ -147,6 +154,10 @@ class CDCClient:
             callback=callback,
             target_action=target_action,
         )
+        # S-17: fail-fast валидация идентификаторов на этапе подписки —
+        # недоверенное имя таблицы/колонки отклоняется сразу, а не
+        # в середине polling-цикла (там имена попадают в SQL через f-string).
+        validate_subscription_identifiers(sub)
         self._subscriptions[sub.id] = sub
 
         strategy_impl = self._STRATEGIES[strategy]()
