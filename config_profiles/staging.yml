@@ -139,6 +139,9 @@ log:
   port: 9000
   use_tls: true
   ca_bundle: null
+  # Wave 13 Q1: явный INFO — base.yml задаёт log.level=DEBUG для всех профилей,
+  # без override staging логировался на DEBUG.
+  level: "INFO"
 
 
 fs:

@@ -195,6 +195,7 @@ def init_application_logging(
     graylog_protocol: str | None = None,
     graylog_use_tls: bool | None = None,
     graylog_ca_bundle: str | None = None,
+    required_fields: list[str] | None = None,
     use_settings: bool = True,
 ) -> BaseLoggerBackend:
     """Единая точка инициализации всего logging-стека приложения.
@@ -226,6 +227,9 @@ def init_application_logging(
         graylog_port: Graylog GELF port. Если ``None`` — ``settings.logging.port``.
         graylog_protocol: ``"udp"`` / ``"tcp"`` для GELF. Если ``None`` —
             ``"tcp"`` если ``settings.logging.use_tls`` else ``"udp"``.
+        required_fields: Поля, обязательные в каждом log-event (дозаполняются
+            ``"unknown"``, если отсутствуют). Если ``None`` и
+            ``use_settings=True`` — из ``settings.logging.required_fields``.
         use_settings: Если ``True`` (default) — все ``None``-параметры читаются
             из ``settings``. Это рекомендуемый режим (centralized config).
 
@@ -281,6 +285,10 @@ def init_application_logging(
                 graylog_use_tls = bool(getattr(_settings.logging, "use_tls", False))
             if graylog_ca_bundle is None:
                 graylog_ca_bundle = getattr(_settings.logging, "ca_bundle", None)
+            if required_fields is None:
+                required_fields = list(
+                    getattr(_settings.logging, "required_fields", None) or []
+                )
         except (ImportError, AttributeError):
             # settings не доступны (например, в unit-test минимальном окружении) —
             # используем явные defaults. Backend уже инициализирован с ними.
@@ -291,6 +299,7 @@ def init_application_logging(
         backend="auto",
         level=level,
         environment=environment,
+        required_fields=required_fields,
     )
 
     # Step 2: init_log_sinks с profile-based router.

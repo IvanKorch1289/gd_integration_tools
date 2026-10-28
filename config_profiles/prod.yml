@@ -175,6 +175,9 @@ log:
   port: 9000
   use_tls: true
   ca_bundle: null
+  # Wave 13 Q1: явный INFO — base.yml задаёт log.level=DEBUG для всех профилей,
+  # без override prod/staging логировались на DEBUG.
+  level: "INFO"
   # R4.LOAD OPT-1 (load-test agent, 2026-09-08): disable per-request body
   # logging в prod profile. InnerRequestLoggingMiddleware буферит и логирует
   # body каждого response — главный cost-contributor p99 440ms @ 300VU push.

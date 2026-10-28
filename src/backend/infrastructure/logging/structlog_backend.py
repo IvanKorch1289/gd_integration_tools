@@ -203,9 +203,17 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         log_dir: str | None = None,
         debug: bool = False,
         logger_names: list[str] | None = None,
+        required_fields: list[str] | None = None,
         **_extra: Any,
     ) -> None:
-        """Настраивает structlog + stdlib logging бэкенды."""
+        """Настраивает structlog + stdlib logging бэкенды.
+
+        Args:
+            required_fields: Поля, обязательные в каждом log-event.
+                Отсутствующие дозаполняются значением ``"unknown"``
+                (семантика legacy ``SafeFormatter``). Если ``None`` —
+                берётся из ``settings.logging.required_fields``.
+        """
         # Use settings defaults if not provided.
         # Lazy + failure-tolerant (fix circular import, 2026-09-23): при
         # инициализации из config_loader → core.logging → structlog_backend
@@ -216,6 +224,8 @@ class StructlogGraylogBackend(BaseLoggerBackend):
 
             if port is None:
                 port = log_settings.port
+            if required_fields is None:
+                required_fields = list(log_settings.required_fields)
         except ImportError:
             if port is None:
                 port = 514  # syslog UDP default; переопределяется настройками
@@ -347,8 +357,26 @@ class StructlogGraylogBackend(BaseLoggerBackend):
 
             return mask_pii(logger, method_name, event_dict)
 
+        # Wave 13 Q2 — required_fields: каждый log-event обязан содержать все
+        # поля, объявленные в конфиге (``log.required_fields``). Отсутствующие
+        # дозаполняются ``"unknown"`` — та же семантика, что и в legacy-пути
+        # (``external_apis/logging_service.SafeFormatter``).
+        required = list(required_fields or [])
+
+        def _ensure_required_fields(
+            logger: Any, method_name: str, event_dict: dict[str, Any]
+        ) -> dict[str, Any]:
+            """Дозаполняет отсутствующие обязательные поля значением ``"unknown"``."""
+            for field in required:
+                event_dict.setdefault(field, "unknown")
+            return event_dict
+
         shared_processors: list[Any] = [
             structlog.contextvars.merge_contextvars,
+            # После merge_contextvars: значения, привязанные через
+            # bind_contextvars (environment/hostname), уже в event_dict и
+            # не должны затираться дефолтом.
+            *([_ensure_required_fields] if required else []),
             _inject_correlation,
             structlog.stdlib.add_logger_name,
             structlog.stdlib.add_log_level,
