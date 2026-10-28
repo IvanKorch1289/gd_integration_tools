@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from re import sub
+from typing import Final
 
 from pydantic import (
     BaseModel,
@@ -13,7 +14,20 @@ from pydantic import (
 
 from src.backend.core.enums.database import DatabaseTypeChoices
 
-__all__ = ("ExternalDatabaseItemSettings",)
+__all__ = ("SUPPORTED_EXTERNAL_DATABASE_TYPES", "ExternalDatabaseItemSettings")
+
+# Типы СУБД, реализованные во внешнем контуре (dispatch + DSN + ssl_mode).
+#
+# ВНИМАНИЕ: enum `DatabaseTypeChoices` общий для внутренней и внешней БД,
+# поэтому он содержит 7 типов (sqlite/mssql/mysql/db2/clickhouse и др.).
+# Внутренняя БД (`core/config/database.py`) поддерживает их все (ADR-0189),
+# внешний контур — только PostgreSQL и Oracle. Неподдерживаемый тип должен
+# отвергаться на этапе валидации конфигурации (fail-fast), а не в момент
+# подключения.
+SUPPORTED_EXTERNAL_DATABASE_TYPES: Final = (
+    DatabaseTypeChoices.postgresql,
+    DatabaseTypeChoices.oracle,
+)
 
 
 class ExternalDatabaseItemSettings(BaseModel):
@@ -108,7 +122,7 @@ class ExternalDatabaseItemSettings(BaseModel):
         title="Синхронный драйвер",
         min_length=1,
         description="Пакет, используемый для синхронного подключения",
-        examples=["psycopg2", "oracledb"],
+        examples=["psycopg", "oracledb"],
     )
 
     db_schema: str = Field(
@@ -259,7 +273,22 @@ class ExternalDatabaseItemSettings(BaseModel):
 
     @model_validator(mode="after")
     def validate_database_target(self) -> ExternalDatabaseItemSettings:
-        """Проверяет обязательные поля для конкретного типа СУБД."""
+        """Проверяет обязательные поля для конкретного типа СУБД.
+
+        Неподдерживаемые внешним контуром типы (mssql/mysql/db2/clickhouse/
+        sqlite) отвергаются здесь — на этапе валидации конфигурации, а не в
+        момент подключения.
+        """
+        if self.type not in SUPPORTED_EXTERNAL_DATABASE_TYPES:
+            supported = ", ".join(
+                db_type.value for db_type in SUPPORTED_EXTERNAL_DATABASE_TYPES
+            )
+            raise ValueError(
+                f"Внешний контур поддерживает только {supported}; "
+                f"тип '{self.type.value}' доступен лишь во внутренней БД "
+                f"(core/config/database.py)"
+            )
+
         if self.type == DatabaseTypeChoices.oracle:
             if not self.sid and not self.service_name:
                 raise ValueError("Для Oracle необходимо указать sid или service_name")

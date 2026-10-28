@@ -18,6 +18,18 @@ app:
   monitoring_enabled: true
   enable_swagger: false
   enable_redoc: false
+  # PERF-6.6 Sprint P3: Brotli compression для JSON responses.
+  # -60% bandwidth vs GZIP. Клиенты с Accept-Encoding: br получат brotli,
+  # остальные GZIP fallback (per middleware chain). Lazy-import brotli pkg.
+  # Wave 13 Q17: перенесено из секции `log:` — эти поля принадлежат группе
+  # `app` (compression-middleware читает settings.app.*).
+  compression_brotli: true
+  # PERF-6.6 P15: gzip level 9 → 6 (default base=9). level 6 — CPU/Ratio
+  # sweet-spot (level 9 — 2-3x slower CPU при лишь ~3-5% лучшем ratio).
+  # Brotli покрывает primary compression path; gzip fallback для legacy
+  # clients должен быть CPU-efficient, не storage-efficient.
+  gzip_minimum_size: 512
+  gzip_compresslevel: 6
 
 
 security:
@@ -184,16 +196,6 @@ log:
   # Body-logging остаётся доступным в dev/dev_light (debugging), но OFF в prod
   # для throughput. Structured request_id propagation (X-Request-ID) сохранён.
   log_requests: false
-  # PERF-6.6 Sprint P3: Brotli compression для JSON responses.
-  # -60% bandwidth vs GZIP. Клиенты с Accept-Encoding: br получат brotli,
-  # остальные GZIP fallback (per middleware chain). Lazy-import brotli pkg.
-  compression_brotli: true
-  gzip_minimum_size: 512
-  # PERF-6.6 P15: gzip level 9 → 6 (default base=9). level 6 — CPU/Ratio
-  # sweet-spot (level 9 — 2-3x slower CPU при лишь ~3-5% лучшем ratio).
-  # Brotli покрывает primary compression path; gzip fallback для legacy
-  # clients должен быть CPU-efficient, не storage-efficient.
-  gzip_compresslevel: 6
 
 
 fs:

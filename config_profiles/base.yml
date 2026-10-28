@@ -33,6 +33,14 @@ app:
   gzip_compresslevel: 9
   enable_swagger: true
   enable_redoc: true
+  # Sprint 8: HTTP/3 + WebTransport opt-in (aioquic). Сервер запускается
+  # отдельно от granian: `python manage.py http3-serve`; требует extra
+  # `http3` и валидные TLS-сертификаты (ALPN h3).
+  # Раньше эти настройки жили в отдельной секции `http3:` — она была
+  # «призраком»: модели с yaml_group="http3" в проекте нет, поэтому ключи
+  # молча отбрасывались загрузчиком (Wave 13 Q17).
+  http3_enabled: false
+  http3_port: 8443
 
 
 security:
@@ -262,6 +270,11 @@ queue:
   timeout: 60
   reconnect_interval: 30
   max_consumers: 20
+  # S90 M5-#5: backpressure на MQ (RabbitMQ prefetch_count / Kafka
+  # max_poll_records). Раньше ключ висел на верхнем уровне файла
+  # (`queue_consumer_max_prefetch`) и не читался ни одной моделью —
+  # перенесён в секцию queue (Wave 13 Q17).
+  consumer_max_prefetch: 10
   graceful_timeout: 30
   use_ssl: false
   queues:
@@ -623,29 +636,29 @@ resilience:
 
 # Sprint 35 P1 #8: explicit MCP defaults (was missing from base, Python pydantic
 # defaults used instead). Per multi-sprint plan: align config with Python defaults.
+# Wave 13 Q17: ключи приведены к полям модели McpSettings. `http_path` →
+# `bind_path` (реальное имя поля); `sse_enabled`/`stdio_enabled`/`bind_host`/
+# `bind_port` удалены — в модели их нет, MCP-transport монтируется FastAPI-
+# приложением (bind_path) и не имеет собственного host/port.
 mcp:
   http_enabled: false                # Was default-on in code; off in dev per D-AUDIT-20810
-  http_path: /mcp                   # default
-  sse_enabled: false               # default
-  stdio_enabled: false              # default (clients opt-in)
-  bind_host: 127.0.0.1             # Sprint 34 P0: bind to localhost (not 0.0.0.0)
-  bind_port: 8765                  # default
-  tool_allowlist: []               # Sprint 34: ALREADY fail-closed (empty = deny-all)
+  bind_path: /mcp                    # default (Sprint 35 P1 #8)
+  tool_allowlist: []                # Sprint 34: ALREADY fail-closed (empty = deny-all)
 
 # Sprint 35 P1 #6: MQTT defaults (was missing from base, Python defaults used).
+# Wave 13 Q17: `require_client_auth`/`bind_host`/`bind_port` удалены — в модели
+# MqttSettings их нет. MQTT здесь — КЛИЕНТ: он подключается к брокеру, а не
+# слушает порт, поэтому bind_* для него бессмысленно (в отличие от gRPC).
+# Auth/TLS брокера задаётся через username/password/tls_enabled (env).
 mqtt:
-  require_client_auth: true         # Sprint 35 P1 #6: auth required by default
-  bind_host: 127.0.0.1
-  bind_port: 1883
+  broker_host: "localhost"           # default
+  broker_port: 1883                  # default
 
-# Sprint 35 P1 #6: HTTP3 defaults (was missing from base, Python defaults used).
-http3:
-  require_client_auth: true         # Sprint 35 P1 #6: auth required by default
-  bind_host: 127.0.0.1
-  bind_port: 8443
-
-# S90 M5-#5: backpressure на MQ
-queue_consumer_max_prefetch: 10
+# Wave 13 Q7 (A): allowlist файловых путей для DSL-процессоров.
+# Источник истины для path-traversal guard (``validate_path``):
+# FileRead/FileWrite/FileWatch/FileDelete/DirectoryScan читают и сканируют
+# ТОЛЬКО каталоги из этого списка. Env DSL_ALLOWED_PATHS (разделитель ":")
+# перекрывает значение (override для нестандартного размещения).
 dsl:
   allowed_paths:
     - "/data/uploads"
