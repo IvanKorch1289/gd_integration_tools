@@ -68,7 +68,18 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
         self.timeout_seconds = timeout_seconds
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Метод process (см. signature)."""
+        """Отсканировать директорию и записать список файлов в target.
+
+        Async-safe сканирование директории с фильтрами, cap и timeout.
+        Выполняет glob-сканирование в thread (``asyncio.to_thread``) с защитой
+        по timeout (``asyncio.wait_for``). Применяет фильтры: min/max size,
+        modified_after. Safety cap — ``max_results`` (предотвращает OOM/hang
+        на больших деревьях).
+
+        Args:
+            exchange: Текущий exchange; результат — в target (default: ``body.files``).
+            context: Контекст выполнения маршрута.
+        """
         if not await self.auth_check(exchange, action="read"):
             return
         # Второй независимый барьер безопасности: capability
@@ -84,18 +95,6 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
         except PathTraversalError as exc:
             exchange.fail(f"directory_scan blocked: {exc}")
             return
-
-        """Async-safe сканирование директории с фильтрами, cap и timeout.
-
-        Выполняет glob-сканирование в thread (``asyncio.to_thread``) с защитой
-        по timeout (``asyncio.wait_for``). Применяет фильтры: min/max size,
-        modified_after. Safety cap — ``max_results`` (предотвращает OOM/hang
-        на больших деревьях).
-
-        Args:
-            exchange: Текущий exchange; результат — в target (default: ``body.files``).
-            context: Контекст выполнения маршрута.
-        """
 
         def _scan(root_dir: str) -> list[str]:
             root = Path(root_dir)
@@ -142,10 +141,10 @@ class FilteredDirectoryScanProcessor(BaseProcessor):
                         "directory_scan skipped: deadline budget exhausted dir=%s",
                         self.directory,
                     )
-                    files = []
-                    exchange.set_property(
-                        self.target, {"files": [], "deadline_exhausted": True}
-                    )
+                    # ADR-0369: target — это тело (``body.files``), а не
+                    # property. Флаг «бюджет исчерпан» — отдельный property.
+                    self.set_result(exchange, self.target, [])
+                    exchange.set_property("directory_scan.deadline_exhausted", True)
                     return
                 effective_timeout = min(self.timeout_seconds, remaining)
         except DeadlineExpiredError:

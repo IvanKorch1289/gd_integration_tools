@@ -10,6 +10,10 @@
 и выводит количество экспортированных схем.
 
 Используется в ``make schemas`` (CI gate, ADR-0058).
+
+ADR-0369: реестр ``@processor`` наполняется **на этапе импорта** модулей
+процессоров, поэтому CLI сначала импортирует пакет процессоров — иначе
+экспортировалось 0 схем.
 """
 
 from __future__ import annotations
@@ -18,6 +22,27 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+
+
+def _ensure_processors_imported() -> int:
+    """Наполнить реестр процессоров импортом пакета ``engine.processors``.
+
+    Реестр ``@processor`` заполняется декоратором на этапе импорта модулей.
+    Без явного импорта CLI экспортировал 0 схем (ADR-0369).
+
+    Returns:
+        Количество зарегистрированных процессоров.
+
+    Raises:
+        ImportError: Пакет процессоров не импортируется (например, отсутствует
+            optional-зависимость). CLI обязан завершиться кодом 1 с понятным
+            сообщением, а не traceback'ом.
+
+    """
+    import src.backend.dsl.engine.processors  # noqa: F401  — side-effect import
+    from src.backend.dsl.registry.processor import get_processor_registry
+
+    return len(get_processor_registry())
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -75,13 +100,23 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ОШИБКА импорта: {exc}", file=sys.stderr)
         return 1
 
+    # ADR-0369: реестр наполняется импортом модулей процессоров.
+    try:
+        registered = _ensure_processors_imported()
+    except ImportError as exc:
+        print(f"ОШИБКА импорта процессоров: {exc}", file=sys.stderr)
+        return 1
+
     try:
         count = export_processors_schema(args.output)
     except OSError as exc:
         print(f"ОШИБКА записи файлов: {exc}", file=sys.stderr)
         return 1
 
-    print(f"Экспортировано {count} JSON-Schema процессоров → {args.output}")
+    print(
+        f"Экспортировано {count} JSON-Schema процессоров → {args.output} "
+        f"(в реестре: {registered})"
+    )
     return 0
 
 

@@ -19,7 +19,8 @@ _rpa_logger = get_logger("dsl.rpa")
 class ImageOcrProcessor(BaseProcessor):
     """OCR — извлечение текста с изображений через Tesseract.
 
-    Body: bytes (изображение). Результат: {"text": "...", "confidence": float}
+    Body: bytes (изображение). Результат: ``{"text": "...", "lang": "eng+rus"}``
+    (ключи ``text`` и ``lang``).
     """
 
     required_capability: ClassVar[str | None] = "rpa.image.ocr"
@@ -35,6 +36,10 @@ class ImageOcrProcessor(BaseProcessor):
             return
         import io
 
+        body = exchange.in_message.body
+        if not isinstance(body, bytes):
+            exchange.fail("ocr expects image bytes")
+            return
         try:
             import pytesseract
             from PIL import Image
@@ -43,18 +48,23 @@ class ImageOcrProcessor(BaseProcessor):
                 "pytesseract/Pillow not installed: pip install pytesseract Pillow"
             )
             return
-        body = exchange.in_message.body
-        if not isinstance(body, bytes):
-            exchange.fail("ocr expects image bytes")
-            return
         # ``with Image.open(...)`` гарантирует .close() даже при
         # исключении в pytesseract.image_to_string. PIL держит
         # reference на underlying file пока Image жив; без ``with``
         # это приводит к file-descriptor leak (Sprint 83 W3).
-        with Image.open(io.BytesIO(body)) as img:
-            text = await asyncio.to_thread(
-                pytesseract.image_to_string, img, lang=self._lang
+        try:
+            with Image.open(io.BytesIO(body)) as img:
+                text = await asyncio.to_thread(
+                    pytesseract.image_to_string, img, lang=self._lang
+                )
+        except pytesseract.TesseractNotFoundError:
+            # Бинарник tesseract не установлен → это конфигурация стенда,
+            # а не ошибка маршрута: fail-closed через exchange.fail.
+            exchange.fail(
+                "tesseract executable not found: install tesseract-ocr "
+                "and the language packs"
             )
+            return
         exchange.set_out(
             body={"text": text.strip(), "lang": self._lang},
             headers=dict(exchange.in_message.headers),

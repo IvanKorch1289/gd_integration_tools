@@ -8,6 +8,16 @@
 - Keystroke recording/playback
 
 Все опциональные зависимости проверяются на импорте; ясные ошибки в __init__.
+
+**Заглушки (ADR-0369, решение владельца D4/«находки follow-up»).** Все 5
+классов модуля — заглушки: за ними НЕТ работающих бэкендов (citrix,
+3270-эмулятор, appium, IMAP-драйвер, pyautogui). ``process()`` лишь
+фиксирует намерение в ``exchange.properties`` (``rpa_backend`` /
+``rpa_operation`` / ``rpa_action``) и НЕ выполняет никакого внешнего
+действия. Реальные клиенты живут в сервисах (``services/rpa/*``) и должны
+подключаться через DI-провайдер; до их появления вызов соответствующего
+шага из YAML — no-op. Классы НЕ удалены намеренно: они держат контракт
+(capability + audit-event) для будущей интеграции.
 """
 
 from __future__ import annotations
@@ -32,6 +42,11 @@ class CitrixSessionProcessor(BaseProcessor):
 
     Процессор только сохраняет операцию в property для делегирования в сервис,
     чтобы не тянуть pywinauto в основной поток.
+
+    **Заглушка:** citrix-бэкенда в проекте нет — ``process()`` не открывает
+    сессию, а лишь пишет ``rpa_backend="citrix"`` / ``rpa_operation`` /
+    ``rpa_session_id`` в properties. Фактическое действие появится после
+    подключения citrix-клиента через DI-провайдер.
 
     S202 audit fix: required_capability + auth_check для enforce.
     """
@@ -72,6 +87,10 @@ class TerminalEmulator3270Processor(BaseProcessor):
 
     Для интеграции с легаси мейнфрейм-системами (COBOL-back-office).
 
+    **Заглушка:** 3270-бэкенда (x3270/py3270) в проекте нет — ``process()``
+    не подключается к мейнфрейму, а лишь фиксирует ``rpa_backend="3270"`` /
+    ``rpa_host`` / ``rpa_port`` в properties.
+
     S202 audit fix: required_capability + auth_check для enforce.
     """
 
@@ -111,6 +130,10 @@ class AppiumMobileProcessor(BaseProcessor):
 
     Используется только для внутренних сценариев (тест-кабинеты, партнёрские
     приложения с контрактом). НЕ для обхода защиты боевых приложений.
+
+    **Заглушка:** appium-бэкенда в проекте нет — ``process()`` не запускает
+    приложение, а лишь фиксирует ``rpa_backend="appium"`` / ``appium_platform``
+    / ``appium_app`` / ``rpa_operation`` в properties.
 
     S202 audit fix: required_capability + auth_check для enforce.
     """
@@ -153,6 +176,11 @@ class EmailDrivenProcessor(BaseProcessor):
     IMAP-клиент парсит письма, извлекает структурированные данные
     (table/CSV/PDF attachment) и кладёт в exchange.out_message.body.
     Реальный IMAP-клиент — в сервисе email_driven.
+
+    **Заглушка:** сам IMAP-клиент в этом классе отсутствует — ``process()``
+    не читает почту, а лишь фиксирует ``email_mailbox`` /
+    ``email_subject_filter`` / ``email_extract`` / ``rpa_action`` в
+    properties; чтение выполняет сервисный клиент.
 
     S202 audit fix: required_capability + auth_check для enforce.
     """
@@ -197,6 +225,10 @@ class KeystrokeReplayProcessor(BaseProcessor):
 
     Сценарий хранится в YAML: [{action: type, text: "..."}, {action: click, x: 100}].
     Для legacy-приложений без скриптинга.
+
+    **Заглушка:** pyautogui-бэкенда в проекте нет — ``process()`` не
+    воспроизводит сценарий, а лишь фиксирует ``rpa_backend="keystroke"`` /
+    ``keystroke_script`` в properties.
 
     S202 audit fix: required_capability + auth_check для enforce.
     """

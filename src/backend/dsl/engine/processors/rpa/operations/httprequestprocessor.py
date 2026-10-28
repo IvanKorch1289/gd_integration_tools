@@ -90,12 +90,15 @@ class HttpRequestProcessor(BaseProcessor):
             self.url,
             response.status_code,
         )
-        self.set_result(
-            exchange,
-            self.target,
-            {
-                "status": response.status_code,
-                "headers": dict(response.headers),
-                "data": data,
-            },
-        )
+        payload: dict[str, Any] = {
+            "status": response.status_code,
+            "headers": dict(response.headers),
+            "data": data,
+        }
+        if self.target == "body":
+            # ``BaseProcessor.set_result`` трактует ``"body"`` как имя property
+            # (``set_property("body", ...)``) → payload терялся для маршрута.
+            # ADR-0369: target ``"body"`` = само тело exchange.
+            exchange.in_message.body = payload
+            return
+        self.set_result(exchange, self.target, payload)

@@ -7,7 +7,9 @@ restore_pii / get_feedback_examples / publish_event / load_memory /
 save_memory; banking AI (kyc_aml_verify / antifraud_score /
 credit_scoring_rag / customer_chatbot / appeal_ai / tx_categorize /
 findoc_ocr_llm); RPA (navigate / click / fill_form / extract /
-screenshot / run_scenario / citrix / terminal_3270 / appium_mobile /
+screenshot / browser_launch / wait_for_selector / print_pdf / run_scenario /
+csv_read / csv_write / file_delete / file_list / ftp_upload / http_request /
+email_read / terminal_exec / citrix / terminal_3270 / appium_mobile /
 email_driven / keystroke_replay / scrape / paginate / api_proxy).
 
 Stateless — см. контракт в ``base.py``.
@@ -15,6 +17,7 @@ Stateless — см. контракт в ``base.py``.
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
@@ -22,6 +25,30 @@ from src.backend.dsl.engine.exchange import Exchange
 
 if TYPE_CHECKING:
     from src.backend.dsl.builder import RouteBuilder
+
+_PROD_ENV_NAMES = frozenset({"prod", "production"})
+
+
+def _dev_only_password(password: str | None, *, field: str) -> str:
+    """Отклонить plaintext-пароль в prod (секрет — только из Vault).
+
+    Args:
+        password: Значение пароля (``None``/``""`` — не задан).
+        field: Имя DSL-шага для сообщения об ошибке.
+
+    Returns:
+        Пустая строка, если пароль не задан; иначе сам пароль.
+
+    Raises:
+        ValueError: В prod передан непустой plaintext-пароль.
+
+    """
+    if password and os.environ.get("APP_ENV", "").lower() in _PROD_ENV_NAMES:
+        raise ValueError(
+            f"{field}: plaintext password is dev-only; "
+            "in prod read the secret from Vault (vault_read) — prod — Vault"
+        )
+    return password or ""
 
 
 class RPAMixin:
@@ -137,40 +164,72 @@ class RPAMixin:
             "src.backend.dsl.engine.processors.rpa_browser", "ScreenshotProcessor"
         )
 
-    def browser_launch(self, *, headless: bool = True) -> RouteBuilder:
-        """Запустить browser сессию через Playwright pool (P3 gap closure).
+    def browser_launch(self, *, url: str | None = None) -> RouteBuilder:
+        """Запустить browser-сессию через Playwright pool (P3 gap closure).
 
-        Cycle 30 P3: добавлен builder method для BrowserLaunchProcessor.
+        Args:
+            url: Опциональный URL — перейти сразу после старта сессии.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa_browser",
             "BrowserLaunchProcessor",
-            headless=headless,
+            url=url,
         )
 
     def wait_for_selector(
-        self, selector: str, *, timeout_s: float = 30.0
+        self,
+        selector: str | None = None,
+        *,
+        state: str = "load",
+        timeout: float = 30.0,
     ) -> RouteBuilder:
-        """Ждать появления элемента на странице (P3 gap closure).
+        """Ждать селектор или load-state страницы (P3 gap closure).
 
-        Cycle 30 P3: добавлен builder method для WaitForProcessor.
+        Args:
+            selector: CSS/XPath-селектор; если не задан — ждём ``state``.
+            state: ``load`` / ``domcontentloaded`` / ``networkidle``.
+            timeout: Таймаут ожидания в секундах.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa_browser",
             "WaitForProcessor",
             selector=selector,
-            timeout_s=timeout_s,
+            state=state,
+            timeout=timeout,
         )
 
-    def print_pdf(self, *, format: str = "A4") -> RouteBuilder:
+    def print_pdf(
+        self,
+        *,
+        format: str = "A4",
+        path: str | None = None,
+        landscape: bool = False,
+    ) -> RouteBuilder:
         """Сохранить текущую страницу как PDF (P3 gap closure).
 
-        Cycle 30 P3: добавлен builder method для PdfProcessor.
+        Args:
+            format: Размер страницы PDF (``"A4"`` по умолчанию).
+            path: Куда сохранить файл; ``None`` — в property ``rpa.pdf``.
+            landscape: Альбомная ориентация.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.rpa_browser",
             "PdfProcessor",
             format=format,
+            path=path,
+            landscape=landscape,
         )
 
     # P4 (cycle 15, production-grade plan): 5 missing builder methods для
@@ -416,4 +475,263 @@ class RPAMixin:
             width=width,
             height=height,
             output_format=output_format,
+        )
+
+    # --- RPA-шаги, недостижимые из YAML до ADR-0369 (решение D6) ---
+
+    def csv_read(
+        self,
+        *,
+        src: str | None = None,
+        content: str | None = None,
+        delimiter: str = ",",
+        to: str = "body.rows",
+    ) -> RouteBuilder:
+        """Прочитать CSV (файл или inline-контент) → ``body.rows``.
+
+        Args:
+            src: Путь к CSV-файлу.
+            content: Inline CSV-строка (альтернатива ``src``).
+            delimiter: Разделитель CSV (по умолчанию ``","``).
+            to: Куда записать rows.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
+        Raises:
+            ValueError: Не задан ни ``src``, ни ``content``.
+
+        """
+        if src is None and content is None:
+            raise ValueError("csv_read: требуется src или content")
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa.operations.csvreadprocessor",
+            "CsvReadProcessor",
+            src=src,
+            content=content,
+            delimiter=delimiter,
+            to=to,
+        )
+
+    def csv_write(
+        self,
+        *,
+        dst: str,
+        rows: list[dict[str, Any]],
+        delimiter: str = ",",
+    ) -> RouteBuilder:
+        """Записать список dict → CSV-файл.
+
+        Args:
+            dst: Путь output-файла.
+            rows: Строки (header = ключи первого dict).
+            delimiter: Разделитель CSV (по умолчанию ``","``).
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor",
+            "CsvWriteProcessor",
+            dst=dst,
+            rows=rows,
+            delimiter=delimiter,
+        )
+
+    def file_delete(
+        self, *, path: str | None = None, missing_ok: bool = True
+    ) -> RouteBuilder:
+        """Удалить файл или директорию (recursive).
+
+        Args:
+            path: Путь к файлу/директории; ``None`` — взять из ``body.path``.
+            missing_ok: Не падать, если пути нет (по умолчанию ``True``).
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa.operations.filedeleteprocessor",
+            "FileDeleteProcessor",
+            path=path,
+            missing_ok=missing_ok,
+        )
+
+    def file_list(
+        self,
+        *,
+        pattern: str | None = None,
+        recursive: bool = False,
+        to: str = "body.files",
+    ) -> RouteBuilder:
+        """Список файлов по glob-паттерну.
+
+        Args:
+            pattern: Glob-паттерн (например ``"/tmp/*.txt"``); ``None`` —
+                взять из ``body.pattern``.
+            recursive: Рекурсивный поиск (``**``).
+            to: Куда записать список.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa.operations.filelistprocessor",
+            "FileListProcessor",
+            pattern=pattern,
+            recursive=recursive,
+            to=to,
+        )
+
+    def ftp_upload(
+        self,
+        *,
+        host: str,
+        local_path: str,
+        remote_path: str,
+        port: int = 21,
+        user: str = "",
+        password: str | None = None,
+        allow_insecure_ftp: bool = False,
+    ) -> RouteBuilder:
+        """Загрузить локальный файл на FTP/SFTP-сервер.
+
+        Args:
+            host: FTP-хост.
+            local_path: Путь к локальному файлу.
+            remote_path: Путь на сервере.
+            port: FTP-порт (по умолчанию ``21``).
+            user: Пользователь.
+            password: Пароль — **только dev**. В prod пароль обязателен
+                из Vault (``prod — Vault``): plaintext-пароль в prod
+                отклоняется, секрет читается через ``vault_read(...)``.
+            allow_insecure_ftp: Разрешить plaintext-FTP (нужны также
+                ``FTP_INSECURE_OK=1`` в env и не-prod профиль).
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
+        Raises:
+            ValueError: В prod передан plaintext-пароль.
+
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa.operations.ftpuploadprocessor",
+            "FtpUploadProcessor",
+            host=host,
+            port=port,
+            user=user,
+            password=_dev_only_password(password, field="ftp_upload"),
+            local_path=local_path,
+            remote_path=remote_path,
+            allow_insecure_ftp=allow_insecure_ftp,
+        )
+
+    def http_request(
+        self,
+        *,
+        url: str,
+        method: str = "GET",
+        headers: dict[str, str] | None = None,
+        body: Any = None,
+        timeout: float = 30.0,
+        to: str = "body",
+    ) -> RouteBuilder:
+        """Асинхронный HTTP-запрос (GET/POST/PUT/DELETE/PATCH).
+
+        Args:
+            url: Target URL.
+            method: HTTP-метод.
+            headers: Заголовки запроса.
+            body: Тело запроса (dict/list → JSON, str → raw).
+            timeout: Таймаут в секундах.
+            to: Куда записать ``{status, headers, data}``; ``"body"`` —
+                само тело exchange.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa.operations.httprequestprocessor",
+            "HttpRequestProcessor",
+            method=method,
+            url=url,
+            headers=headers,
+            body=body,
+            timeout=timeout,
+            to=to,
+        )
+
+    def email_read(
+        self,
+        *,
+        host: str,
+        port: int = 993,
+        user: str = "",
+        password: str | None = None,
+        folder: str = "INBOX",
+        to: str = "body.emails",
+    ) -> RouteBuilder:
+        """Прочитать письма IMAP-папки → ``body.emails``.
+
+        Args:
+            host: IMAP-хост.
+            port: IMAP-порт (по умолчанию ``993``).
+            user: Пользователь.
+            password: Пароль — **только dev**. В prod пароль обязателен
+                из Vault (``prod — Vault``): plaintext-пароль в prod
+                отклоняется, секрет читается через ``vault_read(...)``.
+            folder: Папка IMAP (по умолчанию ``"INBOX"``).
+            to: Куда записать письма.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
+        Raises:
+            ValueError: В prod передан plaintext-пароль.
+
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa.system",
+            "EmailReadProcessor",
+            host=host,
+            port=port,
+            user=user,
+            password=_dev_only_password(password, field="email_read"),
+            folder=folder,
+            to=to,
+        )
+
+    def terminal_exec(
+        self,
+        *,
+        command: str,
+        timeout: float = 30.0,
+        to: str = "body.output",
+        shell: bool = False,
+    ) -> RouteBuilder:
+        """Выполнить команду терминала (async subprocess).
+
+        Args:
+            command: Команда.
+            timeout: Таймаут в секундах.
+            to: Куда записать stdout.
+            shell: ``True`` — ``/bin/sh -c`` (по умолчанию выключено:
+                shell-метасимволы не интерпретируются).
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.rpa.system",
+            "TerminalExecProcessor",
+            command=command,
+            timeout=timeout,
+            to=to,
+            shell=shell,
         )

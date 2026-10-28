@@ -307,8 +307,8 @@ class RouteBuilder:
         """Batch UPDATE через SQLAlchemy core."""
         ...
 
-    def browser_launch(self, *, headless: bool = ...) -> RouteBuilder:
-        """Запустить browser сессию через Playwright pool (P3 gap closure)."""
+    def browser_launch(self, *, url: Union[str, None] = ...) -> RouteBuilder:
+        """Запустить browser-сессию через Playwright pool (P3 gap closure)."""
         ...
 
     def build(self, *, validate_actions: bool = ...) -> Pipeline:
@@ -530,7 +530,12 @@ class RouteBuilder:
         ...
 
     def crud_create(
-        self, entity: str, *, payload_from: str = ..., result_property: str = ...
+        self,
+        entity: str,
+        *,
+        payload_from: str = ...,
+        body: Union[str, None] = ...,
+        result_property: str = ...,
     ) -> RouteBuilder:
         """Алиас к :meth:`entity_create` (R-V15-12 / 80/20 YAML)."""
         ...
@@ -565,9 +570,27 @@ class RouteBuilder:
         *,
         id_from: str = ...,
         payload_from: str = ...,
+        body: Union[str, None] = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
         """Алиас к :meth:`entity_update` (R-V15-12)."""
+        ...
+
+    def csv_read(
+        self,
+        *,
+        src: Union[str, None] = ...,
+        content: Union[str, None] = ...,
+        delimiter: str = ...,
+        to: str = ...,
+    ) -> RouteBuilder:
+        """Прочитать CSV (файл или inline-контент) → ``body.rows``."""
+        ...
+
+    def csv_write(
+        self, *, dst: str, rows: list[dict[str, Any]], delimiter: str = ...
+    ) -> RouteBuilder:
+        """Записать список dict → CSV-файл."""
         ...
 
     def customer_chatbot(self, channel: str = ...) -> RouteBuilder:
@@ -600,7 +623,7 @@ class RouteBuilder:
         schema: str = ...,
         params_from: str = ...,
         result_property: str = ...,
-        dialect: str = ...,
+        dialect: Union[str, None] = ...,
     ) -> RouteBuilder:
         """K3 S5 W8 — вызвать stored procedure через ExternalDatabaseRegistry."""
         ...
@@ -768,6 +791,19 @@ class RouteBuilder:
         extract: str = ...,
     ) -> RouteBuilder:
         """IMAP → structured data pipeline."""
+        ...
+
+    def email_read(
+        self,
+        *,
+        host: str,
+        port: int = ...,
+        user: str = ...,
+        password: Union[str, None] = ...,
+        folder: str = ...,
+        to: str = ...,
+    ) -> RouteBuilder:
+        """Прочитать письма IMAP-папки → ``body.emails``."""
         ...
 
     def encrypt(self, key: str) -> RouteBuilder:
@@ -1011,6 +1047,18 @@ class RouteBuilder:
         resolver: Callable[[str], bool] | None = ...,
     ) -> Self:
         """Выполняет ветку процессоров только при включённом feature flag."""
+        ...
+
+    def file_delete(
+        self, *, path: Union[str, None] = ..., missing_ok: bool = ...
+    ) -> RouteBuilder:
+        """Удалить файл или директорию (recursive)."""
+        ...
+
+    def file_list(
+        self, *, pattern: Union[str, None] = ..., recursive: bool = ..., to: str = ...
+    ) -> RouteBuilder:
+        """Список файлов по glob-паттерну."""
         ...
 
     def file_move(
@@ -1479,6 +1527,20 @@ class RouteBuilder:
         """Parse YAML → ``dict``/``list``."""
         ...
 
+    def ftp_upload(
+        self,
+        *,
+        host: str,
+        local_path: str,
+        remote_path: str,
+        port: int = ...,
+        user: str = ...,
+        password: Union[str, None] = ...,
+        allow_insecure_ftp: bool = ...,
+    ) -> RouteBuilder:
+        """Загрузить локальный файл на FTP/SFTP-сервер."""
+        ...
+
     def geo(
         self,
         mode: str,
@@ -1612,6 +1674,19 @@ class RouteBuilder:
         """HTTP client: GET/POST/PUT/DELETE с таймаутом и headers."""
         ...
 
+    def http_request(
+        self,
+        *,
+        url: str,
+        method: str = ...,
+        headers: Union[dict[str, str], None] = ...,
+        body: Any = ...,
+        timeout: float = ...,
+        to: str = ...,
+    ) -> RouteBuilder:
+        """Асинхронный HTTP-запрос (GET/POST/PUT/DELETE/PATCH)."""
+        ...
+
     def ics_calendar(
         self, mode: str, *, source: str = ..., to: str = ...
     ) -> RouteBuilder:
@@ -1636,6 +1711,16 @@ class RouteBuilder:
 
     def include(self, other: Pipeline) -> Self:
         """Включает все процессоры из другого Pipeline (композиция)."""
+        ...
+
+    def infra_db_query(
+        self, sql: str, *, to: str = ..., params: Union[dict[str, Any], None] = ...
+    ) -> RouteBuilder:
+        """SQL-запрос через инфраструктурный facade session manager."""
+        ...
+
+    def infra_log_write(self, level: str, message: str) -> Any:
+        """Add :class:`InfraLogWriteProcessor` в pipeline."""
         ...
 
     def ingest_file(
@@ -1822,7 +1907,7 @@ class RouteBuilder:
         """Загрузка conversation/facts из AgentMemory (Redis)."""
         ...
 
-    def log(self, level: str = ...) -> Self:
+    def log(self, level: str = ..., message: str = ...) -> Self:
         """Логирование текущего состояния Exchange (для отладки)."""
         ...
 
@@ -2173,7 +2258,9 @@ class RouteBuilder:
         """Periodically вызывает action, результат → body."""
         ...
 
-    def print_pdf(self, *, format: str = ...) -> RouteBuilder:
+    def print_pdf(
+        self, *, format: str = ..., path: Union[str, None] = ..., landscape: bool = ...
+    ) -> RouteBuilder:
         """Сохранить текущую страницу как PDF (P3 gap closure)."""
         ...
 
@@ -2531,6 +2618,28 @@ class RouteBuilder:
 
     def run_scenario(self, steps: Union[list[dict], None] = ...) -> RouteBuilder:
         """Multi-step web сценарий (navigate/click/fill/extract)."""
+        ...
+
+    def s3_delete(self, *, key_from: str = ...) -> RouteBuilder:
+        """Удалить объект по ключу из ``key_from``."""
+        ...
+
+    def s3_get(
+        self, *, key_from: str = ..., result_property: str = ...
+    ) -> RouteBuilder:
+        """Скачать объект S3; содержимое → ``result_property``."""
+        ...
+
+    def s3_list(
+        self, *, prefix_from: Union[str, None] = ..., result_property: str = ...
+    ) -> RouteBuilder:
+        """Получить список ключей с optional prefix → ``result_property``."""
+        ...
+
+    def s3_presign(
+        self, *, key_from: str = ..., expires_in: int = ..., result_property: str = ...
+    ) -> RouteBuilder:
+        """Сформировать presigned-URL; ссылка → ``result_property``."""
         ...
 
     def saga(self, steps: list[SagaStep]) -> RouteBuilder:
@@ -3095,6 +3204,12 @@ class RouteBuilder:
         """IBM 3270 терминал-эмулятор (мейнфрейм)."""
         ...
 
+    def terminal_exec(
+        self, *, command: str, timeout: float = ..., to: str = ..., shell: bool = ...
+    ) -> RouteBuilder:
+        """Выполнить команду терминала (async subprocess)."""
+        ...
+
     def throttle(self, rate: float, *, burst: int = ...) -> RouteBuilder:
         """Throttler: rate-limit N сообщений/сек (token bucket)."""
         ...
@@ -3211,6 +3326,17 @@ class RouteBuilder:
         """Вызов другого зарегистрированного DSL-маршрута."""
         ...
 
+    def to_s3(
+        self,
+        *,
+        data_property: str = ...,
+        key_from: str = ...,
+        content_type_from: Union[str, None] = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Загрузить данные в S3; фактический ключ → ``result_property``."""
+        ...
+
     def to_toml(self) -> RouteBuilder:
         """Convert ``dict`` → TOML string (``tomli_w``)."""
         ...
@@ -3313,9 +3439,13 @@ class RouteBuilder:
         ...
 
     def wait_for_selector(
-        self, selector: str, *, timeout_s: float = ...
+        self,
+        selector: Union[str, None] = ...,
+        *,
+        state: str = ...,
+        timeout: float = ...,
     ) -> RouteBuilder:
-        """Ждать появления элемента на странице (P3 gap closure)."""
+        """Ждать селектор или load-state страницы (P3 gap closure)."""
         ...
 
     def watch_files(
