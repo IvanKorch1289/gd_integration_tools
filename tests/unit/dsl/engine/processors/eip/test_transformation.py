@@ -68,21 +68,90 @@ def mock_s3(monkeypatch):
     return client
 
 
+def _patch_capability_gate(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    allowed: bool = True,
+    reason: str = "granted",
+    capture: dict[str, Any] | None = None,
+) -> None:
+    """Подменить оба seam'а capability-гейта (ADR-0366).
+
+    :meth:`BaseProcessor.auth_check` проверяет capability двумя путями:
+
+    * legacy — ``connector_auth.check_source_capability`` (async → bool);
+    * runtime-резолвер — ``capabilities.runtime_resolver.check``
+      (sync → :class:`runtime_resolver.CapabilityDecision`).
+
+    Подменяются оба, иначе тесты зависят от feature-флага
+    ``dsl_capability_gate_enabled`` (ON → runtime-резолвер, OFF → legacy).
+
+    Args:
+        monkeypatch: pytest-fixture для подмены атрибутов модулей.
+        allowed: Разрешить (``True``) или запретить (``False``) capability.
+        reason: Machine-readable причина решения (используется при DENY).
+        capture: Optional dict, куда пишутся нормализованные аргументы
+            проверки: ``capability`` / ``action`` / ``tenant_id`` /
+            ``extra_ctx`` / ``request``.
+
+    """
+    from src.backend.core.security.capabilities import runtime_resolver
+
+    async def _legacy_check(*args: Any, **kwargs: Any) -> bool:
+        if capture is not None:
+            extra_ctx = dict(kwargs.get("extra_ctx") or {})
+            capture.update(
+                capability=args[0] if args else kwargs.get("capability"),
+                action=kwargs.get("action"),
+                tenant_id=extra_ctx.get("tenant_id"),
+                extra_ctx=extra_ctx,
+                request=None,
+            )
+        return allowed
+
+    def _runtime_check(
+        request: runtime_resolver.CapabilityRequest,
+        *,
+        principal: str | None = None,
+        gate: Any = None,
+    ) -> runtime_resolver.CapabilityDecision:
+        if capture is not None:
+            capture.update(
+                capability=request.capability,
+                action=request.action,
+                tenant_id=request.tenant,
+                extra_ctx={},
+                request=request,
+            )
+        plugin = request.plugin if isinstance(request.plugin, str) else "test"
+        return runtime_resolver.CapabilityDecision(
+            allowed=allowed,
+            plugin=plugin,
+            reason=reason,
+            capability=request.capability,
+            tenant=request.tenant,
+        )
+
+    monkeypatch.setattr(
+        "src.backend.core.security.connector_auth.check_source_capability",
+        _legacy_check,
+    )
+    monkeypatch.setattr(
+        "src.backend.core.security.capabilities.runtime_resolver.check",
+        _runtime_check,
+    )
+
+
 @pytest.fixture(autouse=True)
 def _allow_claim_check_capability(monkeypatch):
     """P3 S172 W2 — claim-check требует capability (default-deny).
 
-    Backward-compatible: existing tests patches ``check_source_capability``
-    чтобы auth_check возвращал True. Реальный auth-gate покрыт тестами
+    Подменяются оба seam'а capability-гейта (legacy + runtime-резолвер
+    ADR-0366), чтобы auth_check возвращал True независимо от feature-флага
+    ``dsl_capability_gate_enabled``. Реальный auth-gate покрыт тестами
     ниже (TestClaimCheckCapabilityGating).
     """
-
-    async def _allow(*args, **kwargs):
-        return True
-
-    monkeypatch.setattr(
-        "src.backend.core.security.connector_auth.check_source_capability", _allow
-    )
+    _patch_capability_gate(monkeypatch, allowed=True)
 
 
 # =============================================================================
@@ -256,16 +325,7 @@ def test_claim_check_mode_specific_capability_override() -> None:
 @pytest.mark.asyncio
 async def test_claim_check_auth_denied_short_circuits(monkeypatch, mock_redis) -> None:
     """Если capability denied → process() возвращается без side-effect."""
-    from src.backend.core.security.connector_auth import check_source_capability
-
-    async def _deny(*args, **kwargs):
-        return False
-
-    monkeypatch.setattr(check_source_capability, "__call__", _deny, raising=False)
-    # Patch at the call site used by BaseProcessor.auth_check.
-    monkeypatch.setattr(
-        "src.backend.core.security.connector_auth.check_source_capability", _deny
-    )
+    _patch_capability_gate(monkeypatch, allowed=False, reason="denied by test")
 
     proc = ClaimCheckProcessor(mode="store", store="redis")
     exchange = _ex({"hello": "world"})
@@ -282,18 +342,8 @@ async def test_claim_check_capability_invoked_with_mode(
     monkeypatch, mock_redis
 ) -> None:
     """auth_check вызывается с action=self._mode (store/retrieve)."""
-    captured: dict[str, str] = {}
-
-    async def _capture(
-        capability, *, action="read", principal="anonymous", extra_ctx=None
-    ):
-        captured["capability"] = capability
-        captured["action"] = action
-        return True
-
-    monkeypatch.setattr(
-        "src.backend.core.security.connector_auth.check_source_capability", _capture
-    )
+    captured: dict[str, Any] = {}
+    _patch_capability_gate(monkeypatch, allowed=True, capture=captured)
 
     proc = ClaimCheckProcessor(mode="store")
     await proc.process(_ex({"x": 1}), None)  # type: ignore[arg-type]
@@ -311,25 +361,20 @@ async def test_claim_check_capability_uses_tenant_from_exchange(
     monkeypatch, mock_redis
 ) -> None:
     """tenant_id из exchange.meta пробрасывается в capability-check context."""
-    captured_extra: dict[str, Any] = {}
-
-    async def _capture(
-        capability, *, action="read", principal="anonymous", extra_ctx=None
-    ):
-        captured_extra.update(extra_ctx or {})
-        return True
-
-    monkeypatch.setattr(
-        "src.backend.core.security.connector_auth.check_source_capability", _capture
-    )
+    captured: dict[str, Any] = {}
+    _patch_capability_gate(monkeypatch, allowed=True, capture=captured)
 
     proc = ClaimCheckProcessor(mode="store")
     ex = _ex({"x": 1})
     ex.meta.tenant_id = "tenant-42"
     await proc.process(ex, None)  # type: ignore[arg-type]
 
-    assert captured_extra.get("tenant_id") == "tenant-42"
-    assert captured_extra.get("processor_class") == "ClaimCheckProcessor"
+    assert captured["tenant_id"] == "tenant-42"
+    assert captured["capability"] == "message.claim_check.store"
+    # processor_class передаётся только в legacy extra_ctx: runtime-резолвер
+    # (ADR-0366) получает CapabilityRequest без processor-контекста.
+    if captured.get("extra_ctx"):
+        assert captured["extra_ctx"].get("processor_class") == "ClaimCheckProcessor"
 
 
 # =============================================================================

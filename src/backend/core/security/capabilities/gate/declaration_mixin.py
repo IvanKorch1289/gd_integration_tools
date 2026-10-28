@@ -74,6 +74,23 @@ class DeclarationMixin(_CapabilityGateProtocol):
         self._declarations.pop(plugin, None)
         self._invalidate_plugin(plugin)
 
+    def has_declaration(self, plugin: str, capability: str) -> bool:
+        """Объявлена ли capability для плагина/route'а.
+
+        Используется runtime-резолвером (ADR-0366) для выбора namespace'а:
+        если у роута есть декларация capability — работает роут, иначе
+        доступен только явно открытый core-baseline.
+
+        Args:
+            plugin: Имя плагина / route'а (namespace).
+            capability: Имя capability.
+
+        Returns:
+            ``True`` если capability объявлена для ``plugin``.
+
+        """
+        return capability in self._declarations.get(plugin, {})
+
     def declare_tenant(
         self, capability: CapabilityRef, tenant: str, principal: str
     ) -> None:

@@ -44,6 +44,8 @@ created = "2026-09-22"
 "discard" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
 "distributed_rl_redis_cluster" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
 "dlq_unified_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"dsl_capability_core_baseline_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2027-04-19", reason = "Cycle 172 / ADR-0366: явное открытие core-baseline capability-гейта (default-OFF)" }
+"dsl_capability_gate_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2027-04-19", reason = "Cycle 172 / ADR-0366: runtime-enforcement capability-гейта DSL-процессоров (default-OFF, rollout dev → staging → prod)" }
 "dsl_linter_strict" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
 "dsl_usage_audit_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
 "dspy_eval_pipeline_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }

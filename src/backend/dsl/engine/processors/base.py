@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.exchange import Exchange
 
@@ -21,6 +22,25 @@ __all__ = (
 
 ProcessorCallable = Callable[[Exchange[Any], "ExecutionContext"], Any | Awaitable[Any]]
 
+_logger = get_logger(__name__)
+
+
+def _capability_gate_enabled() -> bool:
+    """Feature-flag ``dsl_capability_gate_enabled`` (ADR-0366).
+
+    Returns:
+        ``True`` — capability-гейт проверяется через runtime-резолвер;
+        ``False`` — legacy-путь (поведение до ADR-0366).
+
+    """
+    try:
+        from src.backend.core.config.features import feature_flags
+
+        return bool(feature_flags.dsl_capability_gate_enabled)
+    except Exception as exc:  # pragma: no cover — default-OFF (legacy-путь)
+        _logger.debug("base_processor.capability_gate_flag_unavailable: %s", exc)
+        return False
+
 
 class BaseProcessor(ABC):
     """Базовый класс для всех DSL-процессоров.
@@ -36,7 +56,7 @@ class BaseProcessor(ABC):
             процессор без compensatable.
         required_capability: Имя capability для auth-gate (``"rpa.file.list"``).
             Если задано — ``auth_check`` (helper) делает
-            capability-check через :class:`AuthorizationFacade` перед
+            capability-check через runtime-резолвер (ADR-0366) перед
             выполнением. Если ``None`` — auth-check пропускается.
             (S172 Wave S2 — connector authorization.)
     """
@@ -76,22 +96,34 @@ class BaseProcessor(ABC):
         exchange: Exchange[Any],
         *,
         action: str = "execute",
-        principal: str = "anonymous",
+        principal: str | None = None,
     ) -> bool:
-        """Capability-gate для процессора (S172 Wave S2).
+        """Capability-gate для процессора (ADR-0366).
 
         Если процессор определяет :attr:`required_capability` — проверяет
-        его через :class:`AuthorizationFacade`. Наследники вызывают этот
-        метод в начале :meth:`process` для per-step authorization.
+        его. Наследники вызывают этот метод в начале :meth:`process` для
+        per-step authorization.
+
+        Два пути (feature-flag ``dsl_capability_gate_enabled``):
+
+        * **включён** — runtime-резолвер
+          (:mod:`src.backend.core.security.capabilities.runtime_resolver`):
+          namespace = ``route_id`` роута → ``"core"`` (baseline) →
+          fail-closed DENY; principal берётся из ``exchange.meta.principal``
+          и **не** используется как namespace (ADR-0361);
+        * **выключен** — legacy-путь
+          (:func:`src.backend.core.security.connector_auth.check_source_capability`),
+          поведение не меняется (rollout-рычаг).
 
         При denied — записывает ошибку в exchange и возвращает ``False``.
         Caller (subclass ``process()``) должен проверить return value
         и прервать выполнение (``return`` / ``exchange.stop()``).
 
         Args:
-            exchange: DSL Exchange (для tenant_id + audit).
+            exchange: DSL Exchange (для tenant_id + principal + audit).
             action: Действие (``"read"`` / ``"write"`` / ``"execute"``).
-            principal: Caller identity (default ``"anonymous"``).
+            principal: Caller identity. По умолчанию — ``exchange.meta.principal``,
+                иначе ``"anonymous"``.
 
         Returns:
             ``True`` если доступ разрешён (или capability не задана),
@@ -101,48 +133,112 @@ class BaseProcessor(ABC):
         if self.required_capability is None:
             return True
 
+        capability = self.required_capability
+        meta_principal = getattr(exchange.meta, "principal", None)
+        resolved_principal = (
+            principal
+            or (meta_principal if isinstance(meta_principal, str) else None)
+            or "anonymous"
+        )
+        meta_tenant = getattr(exchange.meta, "tenant_id", None)
+        tenant_id = meta_tenant if isinstance(meta_tenant, str) else None
+
         try:
-            from src.backend.core.security.connector_auth import check_source_capability
-
-            tenant_id: str | None = None
-            try:
-                meta = getattr(exchange, "meta", None)
-                if meta is not None:
-                    tenant_id = getattr(meta, "tenant_id", None)
-            except (AttributeError, TypeError) as meta_exc:  # pragma: no cover
-                # cycle-9/D-AUDIT-946: narrow exceptions + observability.
-                # AttributeError — meta missing/None, TypeError — meta has
-                # wrong type. Bare `except Exception` маскировал unrelated
-                # runtime errors (KeyError, ValueError).
-                import logging
-
-                logging.getLogger(__name__).debug(
-                    "base_processor.meta_access_failed",
-                    extra={"error": str(meta_exc), "processor": self.name},
+            if _capability_gate_enabled():
+                allowed, reason = self._check_via_runtime_resolver(
+                    exchange,
+                    capability=capability,
+                    action=action,
+                    principal=resolved_principal,
+                    tenant_id=tenant_id,
                 )
-                tenant_id = None
-
-            allowed = await check_source_capability(
-                self.required_capability,
-                action=action,
-                principal=principal,
-                extra_ctx={
-                    "tenant_id": tenant_id,
-                    "processor": self.name,
-                    "processor_class": type(self).__name__,
-                },
-            )
-            if not allowed:
-                exchange.set_error(
-                    f"{self.name}: capability '{self.required_capability}' denied"
+            else:
+                allowed = await self._check_via_legacy_gateway(
+                    capability=capability,
+                    action=action,
+                    principal=resolved_principal,
+                    tenant_id=tenant_id,
                 )
-                exchange.stop()
-                return False
-            return True
+                reason = ""
         except Exception as exc:  # pragma: no cover — fail-closed
             exchange.set_error(f"{self.name}: auth_check error: {exc}")
             exchange.stop()
             return False
+
+        if not allowed:
+            suffix = f" ({reason})" if reason else ""
+            exchange.set_error(
+                f"{self.name}: capability '{capability}' denied{suffix}"
+            )
+            exchange.stop()
+            return False
+        return True
+
+    def _check_via_runtime_resolver(
+        self,
+        exchange: Exchange[Any],
+        *,
+        capability: str,
+        action: str,
+        principal: str,
+        tenant_id: str | None,
+    ) -> tuple[bool, str]:
+        """Проверка capability через runtime-резолвер (ADR-0366).
+
+        Returns:
+            Кортеж ``(allowed, reason)``.
+        """
+        from src.backend.core.security.capabilities import runtime_resolver
+        from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID
+
+        request = runtime_resolver.CapabilityRequest(
+            capability=capability,
+            action=action,
+            plugin=self._capability_namespace(exchange),
+            scope=self._capability_scope(exchange),
+            tenant=tenant_id or SYSTEM_TENANT_ID,
+        )
+        decision = runtime_resolver.check(request, principal=principal)
+        return decision.allowed, decision.reason
+
+    async def _check_via_legacy_gateway(
+        self,
+        *,
+        capability: str,
+        action: str,
+        principal: str,
+        tenant_id: str | None,
+    ) -> bool:
+        """Legacy-проверка через ``AuthorizationGateway`` (до ADR-0366)."""
+        from src.backend.core.security.connector_auth import check_source_capability
+
+        return await check_source_capability(
+            capability,
+            action=action,
+            principal=principal,
+            extra_ctx={
+                "tenant_id": tenant_id,
+                "processor": self.name,
+                "processor_class": type(self).__name__,
+            },
+        )
+
+    def _capability_namespace(self, exchange: Exchange[Any]) -> str | None:
+        """Namespace для capability-гейта — plugin роута (``route_id``).
+
+        Наследник может переопределить (например, ``agent_dsl`` →
+        ``"core"``). ``principal`` namespace'ом **не** является никогда.
+        """
+        return getattr(exchange.meta, "route_id", None)
+
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
+        """Scope для capability-проверки (по умолчанию — не уточнён).
+
+        Наследник переопределяет для динамического scope (например,
+        ``workflow_id`` из properties).
+        """
+        del exchange
+        return None
 
     @abstractmethod
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:

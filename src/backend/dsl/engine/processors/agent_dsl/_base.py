@@ -108,7 +108,7 @@ class BaseAIProcessor(BaseProcessor):
 
         scope = self._capability_scope(exchange)
         try:
-            self._check_capability(scope=scope)
+            self._check_capability(exchange, scope=scope)
         except Exception as exc:
             exchange.set_error(f"{self.name}: capability denied ({exc})")
             exchange.stop()
@@ -145,6 +145,16 @@ class BaseAIProcessor(BaseProcessor):
         del exchange
         return None
 
+    def _capability_namespace(self, exchange: Exchange[Any]) -> str | None:
+        """Namespace AI-процессоров — ``"core"`` (baseline capability ядра).
+
+        ADR-0366: AI-процессоры работают в core-контексте, а не в
+        контексте конкретного роута, поэтому namespace'ом является
+        ``core``, а не ``route_id`` и тем более не principal.
+        """
+        del exchange
+        return self._plugin_name()
+
     def _check_feature_flag(self) -> bool:
         """Проверить feature-flag через :data:`feature_flags`.
 
@@ -165,10 +175,14 @@ class BaseAIProcessor(BaseProcessor):
             )
             return False
 
-    def _check_capability(self, *, scope: str | None) -> None:
-        """Capability-gate через DI.
+    def _check_capability(self, exchange: Exchange[Any], *, scope: str | None) -> None:
+        """Capability-gate через общий runtime-резолвер (ADR-0366).
+
+        Namespace — ``core`` (см. :meth:`_capability_namespace`); principal
+        берётся из ``exchange.meta.principal`` и namespace'ом не является.
 
         Args:
+            exchange: DSL Exchange (tenant + principal).
             scope: Динамический scope (например ``"credit_check"``
                 для capability ``"ai.invoke"``).
 
@@ -178,17 +192,29 @@ class BaseAIProcessor(BaseProcessor):
         """
         if self.required_capability is None:
             return
-        gate = self._resolve_capability_gate()
-        if gate is None:
-            return
-        check = getattr(gate, "check", None)
-        if check is None:
-            return
-        plugin = self._plugin_name()
-        try:
-            check(plugin, self.required_capability, scope)
-        except TypeError:
-            check(self.required_capability)
+        from src.backend.core.security.capabilities import runtime_resolver
+        from src.backend.core.security.capabilities.errors import CapabilityDeniedError
+        from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID
+
+        tenant_id = getattr(exchange.meta, "tenant_id", None) or SYSTEM_TENANT_ID
+        principal = getattr(exchange.meta, "principal", None)
+        request = runtime_resolver.CapabilityRequest(
+            capability=self.required_capability,
+            action="execute",
+            plugin=self._plugin_name(),
+            scope=scope,
+            tenant=tenant_id,
+        )
+        decision = runtime_resolver.check(request, principal=principal)
+        if not decision.allowed:
+            raise CapabilityDeniedError(
+                plugin=decision.plugin or self._plugin_name(),
+                capability=self.required_capability,
+                requested_scope=scope,
+                declared_scope=None,
+                tenant=tenant_id,
+                principal=principal,
+            )
 
     def _plugin_name(self) -> str:
         """Имя плагина / route'а для capability check.
@@ -198,28 +224,6 @@ class BaseAIProcessor(BaseProcessor):
         baseline core capabilities).
         """
         return "core"
-
-    @staticmethod
-    def _resolve_capability_gate() -> Any | None:
-        """Lazy-резолв :class:`CapabilityGate` через DI singleton."""
-        try:
-            from src.backend.core.security.capabilities.gate import (  # type: ignore[attr-defined]
-                get_capability_gate,
-            )
-
-            return get_capability_gate()
-        except ImportError as exc:
-            # D-AUDIT-13901 fix (cycle 139): narrow от bare
-            # 'except Exception: _' (swallow'ил SystemExit/KeyboardInterrupt)
-            # до конкретного ImportError. Soft-fail behavior сохранён
-            # (return None → caller continues without capability gate).
-            _logger.debug(
-                "agent_dsl._base: capability_gate import failed "
-                "(exc_type=%s exc_msg=%s) — gate=None",
-                type(exc).__name__,
-                exc,
-            )
-            return None
 
     async def _audit_safe_emit(
         self,

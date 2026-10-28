@@ -209,9 +209,14 @@ invoker:
   streaming_chunk_buffer_size: 16
 
 # S46: documented no-ops — same as dev.yml
+#
+# Cycle 172 / ADR-0366: runtime-enforcement capability-гейта DSL-процессоров.
+# Rollout: dev → staging (после миграции route.toml) → prod.
+# Namespace = route_id роута → "core" (baseline, флаг выключен) → fail-closed DENY.
 features:
   lsp_server_strict: false
   ai_prompt_sweep_strict: false
+  dsl_capability_gate_enabled: true
 
 
 # P2-2 (cycle 241): route-loader fix. Default `routes_dir=dsl_routes/` (empty)

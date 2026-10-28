@@ -14,6 +14,8 @@
 - email_imap_source (K3 W5)
 - notification_dsl_enabled (K3 W1)
 - infra_db_query_enabled (Wave 13 / Q13 — fail-closed для infra_db_query)
+- dsl_capability_gate_enabled (Cycle 172 / ADR-0366 — runtime capability-гейт)
+- dsl_capability_core_baseline_enabled (Cycle 172 / ADR-0366 — core-baseline)
 
 Future T1.3.8.5+ extensions (Sprint 5/6/7 K3 DSL sections, ~60 fields).
 """
@@ -190,6 +192,37 @@ class DSLFlags(BaseSettings):
             "(multi-statement и DDL/GRANT/REVOKE запрещены) и bind-параметры "
             "(text() + params). Capability-барьер (required_capability) НЕ задан "
             "намеренно: capability-путь сейчас deny-all — отдельная ADR-задача."
+        ),
+    )
+
+    dsl_capability_gate_enabled: bool = Field(
+        default=False,
+        title="Cycle 172 / ADR-0366: runtime-enforcement capability-гейта DSL-процессоров",
+        description=(
+            "Cycle 172 (Wave 14, D1), ADR-0366. Owner: K1 Security. "
+            "Включает runtime-проверку required_capability у DSL-процессоров "
+            "через namespace-резолвер "
+            "(core/security/capabilities/runtime_resolver.py): кандидат "
+            "namespace = route_id роута (если capability им объявлена) → "
+            "'core' (baseline) → fail-closed DENY. principal НИКОГДА не "
+            "используется как namespace (риск ADR-0361). "
+            "При False сохраняется legacy-путь (sync AuthorizationGateway.check), "
+            "который отказывает по любой capability (ADR-0361, §Фактический путь). "
+            "default-OFF: включать после миграции route.toml под новый namespace."
+        ),
+    )
+
+    dsl_capability_core_baseline_enabled: bool = Field(
+        default=False,
+        title="Cycle 172 / ADR-0366: core-baseline capability-гейта для DSL-процессоров",
+        description=(
+            "Cycle 172 (Wave 14, D1), ADR-0366. Owner: K1 Security. "
+            "Разрешает fallback-namespace 'core' для capability из "
+            "CORE_CAPABILITIES, когда роут capability не объявил. "
+            "Baseline открывается ЯВНО (default-OFF): роут без декларации → "
+            "fail-closed DENY. Включать только на время миграции route.toml; "
+            "после миграции — выключить, чтобы доступ определялся декларациями "
+            "роутов (least privilege)."
         ),
     )
 

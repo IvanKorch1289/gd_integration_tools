@@ -109,6 +109,9 @@ class ExchangeMeta(BaseModel):
         tenant_id: Идентификатор тенанта (K-ARCH-4, S17). Устанавливается
             ExecutionEngine для pipeline'ов с ``tenant_aware=True`` из
             RequestContext или TenantContext.
+        principal: Идентификатор исполнителя (ADR-0366). Пробрасывается в
+            capability-гейт для аудита; **никогда** не используется как
+            namespace доступа (риск ADR-0361).
 
     """
 
@@ -128,6 +131,7 @@ class ExchangeMeta(BaseModel):
     protocol: ProtocolType | None = None
     protocol_attrs: dict[str, Any] = Field(default_factory=dict)
     tenant_id: str | None = None
+    principal: str | None = None
 
 
 class Exchange[T](BaseModel):

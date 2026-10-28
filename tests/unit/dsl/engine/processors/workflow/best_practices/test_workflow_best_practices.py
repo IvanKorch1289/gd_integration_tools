@@ -2,26 +2,96 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+
+
+def _patch_capability_gate(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    allowed: bool = True,
+    reason: str = "granted",
+    capture: dict[str, Any] | None = None,
+) -> None:
+    """Подменить оба seam'а capability-гейта (ADR-0366).
+
+    :meth:`BaseProcessor.auth_check` проверяет capability двумя путями:
+
+    * legacy — ``connector_auth.check_source_capability`` (async → bool);
+    * runtime-резолвер — ``capabilities.runtime_resolver.check``
+      (sync → :class:`runtime_resolver.CapabilityDecision`).
+
+    Подменяются оба, иначе тесты зависят от feature-флага
+    ``dsl_capability_gate_enabled`` (ON → runtime-резолвер, OFF → legacy).
+
+    Args:
+        monkeypatch: pytest-fixture для подмены атрибутов модулей.
+        allowed: Разрешить (``True``) или запретить (``False``) capability.
+        reason: Machine-readable причина решения (используется при DENY).
+        capture: Optional dict, куда пишутся нормализованные аргументы
+            проверки: ``capability`` / ``action`` / ``tenant_id`` /
+            ``extra_ctx`` / ``request``.
+
+    """
+    from src.backend.core.security.capabilities import runtime_resolver
+
+    async def _legacy_check(*args: Any, **kwargs: Any) -> bool:
+        if capture is not None:
+            extra_ctx = dict(kwargs.get("extra_ctx") or {})
+            capture.update(
+                capability=args[0] if args else kwargs.get("capability"),
+                action=kwargs.get("action"),
+                tenant_id=extra_ctx.get("tenant_id"),
+                extra_ctx=extra_ctx,
+                request=None,
+            )
+        return allowed
+
+    def _runtime_check(
+        request: runtime_resolver.CapabilityRequest,
+        *,
+        principal: str | None = None,
+        gate: Any = None,
+    ) -> runtime_resolver.CapabilityDecision:
+        if capture is not None:
+            capture.update(
+                capability=request.capability,
+                action=request.action,
+                tenant_id=request.tenant,
+                extra_ctx={},
+                request=request,
+            )
+        plugin = request.plugin if isinstance(request.plugin, str) else "test"
+        return runtime_resolver.CapabilityDecision(
+            allowed=allowed,
+            plugin=plugin,
+            reason=reason,
+            capability=request.capability,
+            tenant=request.tenant,
+        )
+
+    monkeypatch.setattr(
+        "src.backend.core.security.connector_auth.check_source_capability",
+        _legacy_check,
+    )
+    monkeypatch.setattr(
+        "src.backend.core.security.capabilities.runtime_resolver.check",
+        _runtime_check,
+    )
 
 
 @pytest.fixture(autouse=True)
 def _allow_workflow_capability(monkeypatch):
     """P3 S172 W2 — workflow best_practices требует capability (default-deny).
 
-    Backward-compatible: existing tests patches ``check_source_capability``
-    чтобы auth_check возвращал True. Реальный auth-gate покрыт тестами
+    Подменяются оба seam'а capability-гейта (legacy + runtime-резолвер
+    ADR-0366), чтобы auth_check возвращал True независимо от feature-флага
+    ``dsl_capability_gate_enabled``. Реальный auth-gate покрыт тестами
     ниже (TestWorkflowCapabilityGating).
     """
-
-    async def _allow(*args, **kwargs):
-        return True
-
-    monkeypatch.setattr(
-        "src.backend.core.security.connector_auth.check_source_capability", _allow
-    )
+    _patch_capability_gate(monkeypatch, allowed=True)
 
 
 class TestWorkflowContinueAsNewProcessor:
@@ -337,13 +407,7 @@ class TestWorkflowCapabilityGating:
         self, monkeypatch
     ) -> None:
         """Denied capability → process() возвращается без payload token."""
-
-        async def _deny(*args, **kwargs):
-            return False
-
-        monkeypatch.setattr(
-            "src.backend.core.security.connector_auth.check_source_capability", _deny
-        )
+        _patch_capability_gate(monkeypatch, allowed=False, reason="denied by test")
 
         from src.backend.dsl.engine.processors.workflow.best_practices.claim_check import (
             WorkflowClaimCheckProcessor,
