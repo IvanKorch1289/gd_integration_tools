@@ -59,7 +59,8 @@ if not feature_flags.lazy_processor_loading:
 
 ### Option C: capability-only access
 Если процессор используется только для capability check (без exec) —
-`lazy.capabilities_for(fqn)` не делает import.
+`lazy.list_lazy_refs()` отдаёт `LazyProcessorRef.capabilities` без import
+(метод `capabilities_for()` удалён как мёртвый код — ADR-0100).
 
 ## Verification
 

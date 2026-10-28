@@ -123,19 +123,6 @@ class LazyProcessorRegistry:
                 ref for fqn, ref in self._lazy_refs.items() if fqn not in self._resolved
             ]
 
-    def capabilities_for(self, fqn: str) -> tuple[str, ...]:
-        """Capabilities процессора без полного импорта (policy-gate)."""
-        with self._lock:
-            ref = self._lazy_refs.get(fqn)
-            if ref is None:
-                # Возможно уже зарегистрирован в base
-                try:
-                    spec = self._base.get(fqn)
-                    return tuple(spec.capabilities)
-                except ProcessorNotFoundError:
-                    return ()
-            return ref.capabilities
-
     def resolve(self, fqn: str) -> Any:
         """Полная резолюция: import + регистрация в base.
 

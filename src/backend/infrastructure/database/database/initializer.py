@@ -13,13 +13,13 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import sessionmaker
 
 from src.backend.core.config.database import DatabaseConnectionSettings
+from src.backend.core.config.db_drivers import DatabaseDriverError
 from src.backend.core.config.external_databases import (
     ExternalDatabaseConnectionSettings,
 )
 from src.backend.core.enums.database import DatabaseTypeChoices
 from src.backend.core.errors import DatabaseError
 from src.backend.core.logging import get_logger
-from src.backend.core.resilience.connector_resilience import resilient
 from src.backend.infrastructure.database.database.bundle import DatabaseBundle
 from src.backend.infrastructure.database.listeners import DatabaseListener
 
@@ -77,6 +77,9 @@ class DatabaseInitializer:
         # (psycopg/oracledb/pysqlite) не установлен, не валим старт; вместо
         # этого пишем warning и оставляем None. Потребители (APScheduler
         # SQLAlchemyJobStore) обязаны иметь fallback.
+        # Wave 13 Q9: DatabaseDriverError — драйвер не объявлен в проекте
+        # либо не установлен (core/config/db_drivers.py); тот же контракт
+        # graceful-degradation, но с понятным сообщением.
         self.sync_engine: Engine | None
         self.sync_session_maker: sessionmaker | None
         try:
@@ -84,7 +87,7 @@ class DatabaseInitializer:
             self.sync_session_maker = sessionmaker(
                 bind=self.sync_engine, autoflush=False, expire_on_commit=False
             )
-        except ModuleNotFoundError as exc:
+        except (ModuleNotFoundError, DatabaseDriverError) as exc:
             self.logger.warning(
                 "Sync-драйвер для БД '%s' недоступен (%s); sync_engine=None. "
                 "Async-путь продолжит работу; durable APScheduler jobstore "
@@ -133,10 +136,10 @@ class DatabaseInitializer:
         """
         kwargs: dict[str, Any] = {
             "echo": self.settings.echo,
-            # connect_args зависят от драйвера: asyncpg и psycopg2 имеют
-            # РАЗНЫЕ имена таймаут-опций (найдено prod-drill 2026-09-29:
-            # psycopg2 отвергает asyncpg-овский command_timeout как
-            # «invalid connection option»).
+            # connect_args зависят от драйвера: asyncpg и psycopg (v3)
+            # имеют РАЗНЫЕ имена таймаут-опций (найдено prod-drill
+            # 2026-09-29: sync-драйвер отвергает asyncpg-овский
+            # command_timeout как «invalid connection option»).
             "connect_args": self._get_connect_args(is_async=is_async),
         }
         if self.settings.type != DatabaseTypeChoices.sqlite:
@@ -173,7 +176,7 @@ class DatabaseInitializer:
         """Генерирует driver-level параметры подключения.
 
         Опции зависят от драйвера: asyncpg принимает ``command_timeout`` /
-        ``timeout`` (секунды); psycopg2 — ``connect_timeout`` (секунды) и
+        ``timeout`` (секунды); psycopg (v3) — ``connect_timeout`` (секунды) и
         statement_timeout через ``options='-c statement_timeout=...'``.
         """
         connect_args: dict[str, Any] = {}
@@ -268,23 +271,6 @@ class DatabaseInitializer:
         finally:
             for conn in connections:
                 await conn.close()
-
-    @resilient(name="postgres_query", max_attempts=3)
-    async def execute_with_resilience(
-        self, query: Any, params: dict[str, Any] | None = None
-    ) -> Any:
-        """Execute raw SQL query с CB + Retry (S182 I-4.5).
-
-        Args:
-            query: SQL statement.
-            params: Optional bind parameters.
-
-        Returns:
-            Query result.
-
-        """
-        async with self.async_engine.begin() as conn:
-            return await conn.execute(query, params or {})
 
     def get_async_engine(self) -> AsyncEngine:
         """Возвращает асинхронный engine."""

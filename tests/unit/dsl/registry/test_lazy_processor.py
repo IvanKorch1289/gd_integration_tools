@@ -45,27 +45,6 @@ def test_register_lazy_does_not_import() -> None:
     assert lazy.list_unresolved() == [ref]
 
 
-def test_capabilities_for_lazy_ref() -> None:
-    base = _FakeBaseRegistry()
-    lazy = LazyProcessorRegistry(base=base)
-    lazy.register_lazy(
-        name="y", namespace="core", module_path="m:Y", capabilities=("cap.x", "cap.y")
-    )
-    assert lazy.capabilities_for("core:y") == ("cap.x", "cap.y")
-
-
-def test_capabilities_fallback_to_base() -> None:
-    base = _FakeBaseRegistry()
-    base.register(_FakeSpec("core:z", capabilities=("base.cap",)))
-    lazy = LazyProcessorRegistry(base=base)
-    assert lazy.capabilities_for("core:z") == ("base.cap",)
-
-
-def test_capabilities_returns_empty_when_unknown() -> None:
-    lazy = LazyProcessorRegistry(base=_FakeBaseRegistry())
-    assert lazy.capabilities_for("core:unknown") == ()
-
-
 def test_resolve_returns_base_spec_if_already_registered() -> None:
     base = _FakeBaseRegistry()
     base.register(_FakeSpec("core:already"))
