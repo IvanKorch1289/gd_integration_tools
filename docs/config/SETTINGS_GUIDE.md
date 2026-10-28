@@ -19,7 +19,7 @@
 ```
 
 **Слои:**
-1. **YAML profiles** — `config_profiles/{base,dev,dev_light,prod,staging}.yml` (1274 lines, 38 top-level keys)
+1. **YAML profiles** — `config_profiles/{base,dev,dev_light,prod,staging}.yml` (1939 lines, 148 top-level keys)
 2. **ConfigLoader** — loads + merges base + env-specific
 3. **pydantic-settings** — 30+ typed `*Settings` classes (`BaseSettings`)
 4. **Singleton** — `@lru_cache` for each settings class
@@ -63,6 +63,9 @@
   - `DEFAULT_RETRY_BACKOFF_MULTIPLIER`, `DEFAULT_RETRY_JITTER`
 
 **Ponytail rule**: параметры processors (timeout, max_iterations) имеют sensible defaults в kwarg, не магические числа из constants.
+
+Значения, которые действительно требуют настройки (retry/CB-пороги,
+интервалы), вынесены в YAML — см. «Константы как конфигурация (ADR-0375)».
 
 ## Приоритет источников (ADR-0372)
 
@@ -154,13 +157,69 @@ YAML-кэш и кэш секретов Vault, пересоздаёт вложе�
 ## YAML config profiles
 
 `config_profiles/`:
-- `base.yml` (595 lines, 37 top-level keys) — defaults для всех
-- `dev.yml` (193 lines, 15 keys) — dev environment overrides
-- `dev_light.yml` (212 lines, 22 keys) — sqlite/aiosqlite dev mode
-- `staging.yml` (126 lines, 13 keys) — staging-specific
-- `prod.yml` (148 lines, 15 keys) — production overrides
+- `base.yml` (973 lines, 67 top-level keys) — defaults для всех
+- `dev.yml` (198 lines, 15 keys) — dev environment overrides
+- `dev_light.yml` (226 lines, 23 keys) — sqlite/aiosqlite dev mode
+- `staging.yml` (234 lines, 20 keys) — staging-specific
+- `prod.yml` (308 lines, 23 keys) — production overrides
 
 **Inheritance**: env-specific profile накладывается поверх `base.yml`. Документировано в начале каждого профиля.
+
+### Покрытие yaml-групп (ADR-0375)
+
+Каждая из 70 yaml-групп (`yaml_group: ClassVar[str]`) обязана иметь
+секцию в `base.yml` **или** быть перечислена в
+`tests/unit/core/config/yaml_group_allowlist.txt` с явной причиной:
+
+| Исключение | Причина |
+|---|---|
+| `features` | `profile-overlay-only` — 262 feature-флага задаются per-профиль |
+| `workflow` | `runtime-only` — модель без полей (extension point) |
+
+Секции в `base.yml` содержат **только несекретные поля**; значения равны
+дефолтам моделей (поведение не меняется — параметр становится
+конфигурируемым). Гейт: `tests/unit/core/config/test_yaml_group_coverage.py`
+(плюс `tools/config_audit.py --scope orphans` → 0).
+
+### Merged-валидация профиля (ADR-0375)
+
+`python manage.py validate-profile <env>` валидирует **слиянный** конфиг
+(`base.yml` + overlay), а не только overlay:
+
+1. синтаксис overlay-файла;
+2. merge base + overlay (`core/config/validator/profile_merge.py`);
+3. prod-инварианты по merged-значениям;
+4. `ConfigValidator` по merged-конфигу → CRITICAL = exit 1,
+   WARNING = exit 1 при `--strict`.
+
+CLI не требует секретов: секции собираются через `model_construct`.
+
+## Константы как конфигурация (ADR-0375)
+
+`src/backend/core/config/constants_settings.py` — `ConstantsSettings`
+(`yaml_group="constants"`): те же значения, что у `consts`
+(`INITIAL_DELAY`, `RETRY_DELAY`, `MAX_RESULT_ATTEMPTS`, `DEFAULT_CB_*`,
+`DEFAULT_RETRY_*`), но в секции `constants:` файла `base.yml`.
+
+* значения YAML применяются к **инстансу** `consts` (мутация) — потребители
+  `consts.X` видят новое значение без правки вызовов;
+* hot-reload: `Settings.reload()` пересоздаёт модульный синглтон →
+  `model_post_init` переприменяет значения → правка YAML меняет константы
+  в рантайме;
+* Consul для констант **не используется** (его роль — DSL-переменные и
+  cert_store), секретов в группе нет.
+
+Предел: значения, схваченные как default поля dataclass'а на импорте
+(`BreakerConfig.failure_threshold = consts.DEFAULT_CB_FAILURE_THRESHOLD`),
+обновляются только после перезапуска процесса.
+
+## Секреты (ADR-0373 / ADR-0375)
+
+Секретные поля конфигурации типизированы как `SecretStr`: значение
+маскируется в `repr()` и в логах. Читателям, которым нужна строка,
+помогает `core/config/secret.py::secret_value` (терпим к `SecretStr`,
+`str`, `None`). Публичные контракты не сломаны: `AuthConfig.api_key`,
+`redis_url`, HTTP-заголовки и параметры SDK остаются строками.
 
 ## D-rules (Configuration)
 
@@ -173,6 +232,10 @@ YAML-кэш и кэш секретов Vault, пересоздаёт вложе�
 
 - `src/backend/core/config/` — all settings classes
 - `src/backend/core/config/constants.py` — Constants + re-exports
+- `src/backend/core/config/constants_settings.py` — константы из YAML (ADR-0375)
+- `src/backend/core/config/secret.py` — извлечение значения секрета (ADR-0375)
+- `src/backend/core/config/validator/profile_merge.py` — merged-валидация профиля (ADR-0375)
 - `src/backend/core/config/hot_reload.py` — hot-reload mechanism
 - `src/backend/core/config/config_loader.py` — multi-source loader
 - `src/backend/infrastructure/security/cert_store/backend_consul.py` — Consul cert backend
+- `docs/adr/0375-settings-coverage-merged-validation-constants-and-secret-typing.md`
