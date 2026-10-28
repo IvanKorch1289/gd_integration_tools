@@ -11,6 +11,7 @@ import asyncio
 from collections.abc import Sequence
 from typing import Any
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.logging import get_logger
 from src.backend.services.auth.ad_directory_client.state import (
     AdAuthError,
@@ -155,7 +156,8 @@ class AdDirectoryClient:
         """Sync search через ldap3 (для use через ``asyncio.to_thread``)."""
         if self._connection_factory is not None:
             conn = self._connection_factory(
-                user_dn=self._config.bind_dn, password=self._config.bind_password
+                user_dn=self._config.bind_dn,
+                password=secret_value(self._config.bind_password),
             )
         else:
             from ldap3 import Connection, Server
@@ -168,7 +170,7 @@ class AdDirectoryClient:
             conn = Connection(
                 srv,
                 user=self._config.bind_dn,
-                password=self._config.bind_password,
+                password=secret_value(self._config.bind_password),
                 auto_bind=True,
             )
 

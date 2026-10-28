@@ -71,12 +71,12 @@ class ConnectionMixin(BaseModel):
         examples=["app_user"],
     )
 
-    password: SecretStr = Field(
-        default=SecretStr(""), description="Пароль (хранится как SecretStr)."
+    password: SecretStr | None = Field(
+        default=None, description="Пароль (хранится как SecretStr)."
     )
 
-    api_key: SecretStr = Field(
-        default=SecretStr(""), description="API-ключ сервиса (хранится как SecretStr)."
+    api_key: SecretStr | None = Field(
+        default=None, description="API-ключ сервиса (хранится как SecretStr)."
     )
 
     ca_bundle: str | None = Field(

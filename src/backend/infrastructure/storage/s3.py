@@ -43,6 +43,7 @@ from typing import Any, Literal
 from botocore.config import Config as BotoConfig
 from botocore.exceptions import BotoCoreError, ClientError
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.config.services.storage import FileStorageSettings
 from src.backend.core.errors import ServiceError
 from src.backend.core.interfaces.storage import ObjectStorage
@@ -228,8 +229,8 @@ class S3ObjectStorage(ObjectStorage):
         return {
             "service_name": "s3",
             "endpoint_url": self._settings.endpoint,
-            "aws_access_key_id": self._settings.access_key,
-            "aws_secret_access_key": self._settings.secret_key,
+            "aws_access_key_id": secret_value(self._settings.access_key),
+            "aws_secret_access_key": secret_value(self._settings.secret_key),
             "config": self._boto_config(),
             "use_ssl": self._settings.use_ssl,
             "verify": self._settings.verify,

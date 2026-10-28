@@ -19,6 +19,7 @@ from email.message import EmailMessage
 from pathlib import Path
 from typing import Any
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.logging import get_logger
 
 __all__ = ("SmtpSendCallable", "build_smtp_fallbacks", "build_smtp_primary")
@@ -43,7 +44,9 @@ async def _smtp_send(message: dict[str, Any]) -> None:
     await smtp.connect()
     try:
         if settings.mail.username:
-            await smtp.login(settings.mail.username, settings.mail.password)
+            await smtp.login(
+                settings.mail.username, secret_value(settings.mail.password)
+            )
         await smtp.send_message(msg)
     finally:
         await smtp.quit()

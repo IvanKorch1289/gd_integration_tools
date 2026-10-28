@@ -28,6 +28,7 @@ from re import compile
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.backend.core.auth import AuthContext, AuthMethod
+from src.backend.core.config.secret import secret_value
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
 from src.backend.core.tenancy import bind_tenant_from_metadata, unbind_tenant
@@ -107,7 +108,7 @@ class APIKeyMiddleware:
         # Валидируем API-ключ через constant-time compare.
         import secrets as _secrets
 
-        if not _secrets.compare_digest(api_key, settings.secure.api_key):
+        if not _secrets.compare_digest(api_key, secret_value(settings.secure.api_key)):
             # Cycle 161 audit: invalid API-key попытки должны логироваться для
             # brute-force detection. Логируем только первые 8 символов для
             # корреляции + ничего больше.

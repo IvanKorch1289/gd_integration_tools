@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import ClassVar, Literal
 
-from pydantic import Field, computed_field, field_validator, model_validator
+from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.secret import secret_value
 
 
 class RedisSettings(BaseSettingsWithLoader):
@@ -36,7 +37,7 @@ class RedisSettings(BaseSettingsWithLoader):
         description="Порт сервера Redis",
         json_schema_extra={"example": 6379},
     )
-    password: str | None = Field(
+    password: SecretStr | None = Field(
         default=None,
         description="Пароль для аутентификации в Redis (None = без auth); "
         "обязателен в проде — валидируется при подключении",
@@ -257,7 +258,7 @@ class RedisSettings(BaseSettingsWithLoader):
         ),
         json_schema_extra={"example": "gd-mobile-redis"},
     )
-    sentinel_password: str | None = Field(
+    sentinel_password: SecretStr | None = Field(
         default=None,
         description=(
             "S59 W2: пароль для аутентификации в Sentinel (если требуется). "
@@ -390,11 +391,14 @@ class RedisSettings(BaseSettingsWithLoader):
             )
         return self
 
-    @computed_field(description="Создает URL подключения к Redis")
+    # repr=False: URL содержит пароль — в repr модели он попадать не должен
+    # (тот же приём, что в database.py/mongo.py — ADR-0373).
+    @computed_field(repr=False, description="Создает URL подключения к Redis")
     def redis_url(self) -> str:
         """Создает URL подключения к Redis."""
         protocol = "rediss" if self.use_ssl else "redis"
-        auth = f":{self.password}@" if self.password else ""
+        password = secret_value(self.password)
+        auth = f":{password}@" if password else ""
         return f"{protocol}://{auth}{self.host}:{self.port}"
 
     @field_validator("port", "db_cache", "db_queue", "db_limits", "db_tasks")

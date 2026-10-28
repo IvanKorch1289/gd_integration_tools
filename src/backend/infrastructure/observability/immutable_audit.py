@@ -55,6 +55,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.codec.json import canonical_json_bytes, dumps_str
+from src.backend.core.config.secret import secret_value
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.sql_identifiers import validate_identifier
 
@@ -131,14 +132,13 @@ class ImmutableAuditStore:
             from src.backend.core.config.settings import settings  # local import
 
             fallback = getattr(settings.secure, "secret_key", None)
-            if fallback:
+            fallback_value = secret_value(fallback) if fallback else ""
+            if fallback_value:
                 logger.warning(
                     "AUDIT_SECRET_KEY не задан — использую secure.secret_key "
                     "как fallback. Рекомендуется выделить отдельный ключ."
                 )
-                return (
-                    fallback.encode("utf-8") if isinstance(fallback, str) else fallback
-                )
+                return fallback_value.encode("utf-8")
         except Exception as exc:
             logger.error("Не удалось прочитать fallback secret_key: %s", exc)
         # Dev-only bypass: позволяет запустить инстанс без секретного ключа

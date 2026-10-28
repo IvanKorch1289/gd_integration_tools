@@ -43,14 +43,18 @@ def _extract_processor_source(cli_scaffold: Any, tmp_path: Path) -> str:
     monkey_target = tmp_path / "src" / "backend" / "dsl" / "engine" / "processors"
     monkey_target.mkdir(parents=True, exist_ok=True)
 
-    original = Path.cwd
+    # Pre-existing bug: ``original = Path.cwd`` (метод, а не значение) →
+    # ``original()`` в finally вычислялся УЖЕ после chdir(tmp_path) → CWD
+    # оставался в tmp_path и ломал последующие тесты, читающие файлы
+    # относительным путём.
+    original = Path.cwd()
     try:
         import os
 
         os.chdir(tmp_path)
         cli_scaffold.scaffold_processor("demo_thing")
     finally:
-        os.chdir(original())
+        os.chdir(original)
 
     generated = monkey_target / "demo_thing.py"
     assert generated.exists(), f"процессор не создан: {generated}"
@@ -138,11 +142,15 @@ class TestCliRouteTemplate:
     def _generate(self, cli_scaffold: Any, tmp_path: Path, name: str) -> Path:
         import os
 
+        # Pre-existing bug: ``os.chdir(Path.cwd())`` в finally вычислялся
+        # УЖЕ после chdir(tmp_path) → CWD оставался в tmp_path и ломал
+        # последующие тесты, читающие файлы относительным путём.
+        original = Path.cwd()
         try:
             os.chdir(tmp_path)
             cli_scaffold.scaffold_route(name, source="http:POST /api/demo")
         finally:
-            os.chdir(Path.cwd())
+            os.chdir(original)
         return tmp_path
 
     def test_route_not_written_to_legacy_dsl_routes(

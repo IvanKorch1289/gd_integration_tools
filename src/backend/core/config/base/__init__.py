@@ -16,6 +16,19 @@ from src.backend.core.config.base.scheduler import (
     SchedulerSettings,  # S65 W3: re-export
 )
 
+# ADR-0375: константы runtime-кода как конфигурация. Импорт здесь (а не в
+# ``core/config/__init__.py``) — потому что ``core/config/__init__.py``
+# выполняется до инициализации ``core.logging``, а создание настроек в этот
+# момент тянет логирование (циклический импорт). Здесь уже создаются
+# ``app_base_settings``/``scheduler_settings`` — тот же профиль риска.
+# Модуль обязан быть в ``sys.modules``: ``Settings.reload()`` пересобирает
+# модульные синглтоны только импортированных модулей пакета — так
+# hot-reload обновляет значения констант (ADR-0375, ЧАСТЬ C).
+from src.backend.core.config.constants_settings import (  # noqa: F401
+    ConstantsSettings,
+    constants_settings,
+)
+
 __all__ = ("AppBaseSettings", "SchedulerSettings")
 
 app_base_settings: AppBaseSettings = AppBaseSettings()

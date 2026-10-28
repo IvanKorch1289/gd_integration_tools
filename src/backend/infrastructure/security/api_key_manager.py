@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.auth.api_key_backend import APIKeyAuth, is_argon2_hash
+from src.backend.core.config.secret import secret_value
 from src.backend.core.logging import get_logger
 
 __all__ = ("APIKeyInfo", "APIKeyManager", "get_api_key_manager")
@@ -92,7 +93,9 @@ class APIKeyManager:
         if self._global_key_hash is None:
             from src.backend.core.config.settings import settings
 
-            self._global_key_hash = self._hasher.hash_key(settings.secure.api_key)
+            self._global_key_hash = self._hasher.hash_key(
+                secret_value(settings.secure.api_key)
+            )
 
     def _hash_key(self, key: str) -> str:
         """Хеширует через :class:`APIKeyAuth` (Argon2id primary)."""

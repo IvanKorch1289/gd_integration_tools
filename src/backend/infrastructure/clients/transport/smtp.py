@@ -8,6 +8,7 @@ from typing import Any
 
 from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPException
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.config.settings import MailSettings, settings
 from src.backend.core.resilience.breaker import (
     BreakerSpec,
@@ -147,8 +148,10 @@ class SmtpClient(BaseSmtpClient):
                 )
                 await smtp.connect()
 
-                if self.settings.username and self.settings.password:
-                    await smtp.login(self.settings.username, self.settings.password)
+                if self.settings.username and secret_value(self.settings.password):
+                    await smtp.login(
+                        self.settings.username, secret_value(self.settings.password)
+                    )
                 return smtp
         except builtins.TimeoutError as exc:
             self.logger.error(

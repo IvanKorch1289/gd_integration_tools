@@ -11,6 +11,7 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from functools import wraps
 from typing import Any, Literal, ParamSpec, TypeVar
 
+from src.backend.core.config.secret import secret_value
 from src.backend.infrastructure.clients.storage.s3_pool.base import BaseS3Client
 
 try:
@@ -138,8 +139,8 @@ class S3Client(BaseS3Client):
                     self._session.create_client(
                         service_name="s3",
                         endpoint_url=self._settings.endpoint,
-                        aws_access_key_id=self._settings.access_key,
-                        aws_secret_access_key=self._settings.secret_key,
+                        aws_access_key_id=secret_value(self._settings.access_key),
+                        aws_secret_access_key=secret_value(self._settings.secret_key),
                         config=self._config,
                         use_ssl=self._settings.use_ssl,
                     )

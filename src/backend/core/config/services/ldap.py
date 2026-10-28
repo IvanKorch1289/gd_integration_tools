@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -59,8 +59,8 @@ class LdapSettings(BaseSettingsWithLoader):
         ),
         json_schema_extra={"example": "CN=svc-saml,OU=Service,DC=example,DC=com"},
     )
-    bind_password: str = Field(
-        default="",
+    bind_password: SecretStr | None = Field(
+        default=None,
         description=(
             "Пароль service-account. В production брать из SecretBroker "
             "(HashiCorp Vault / sealed-secrets), НЕ из env vars."

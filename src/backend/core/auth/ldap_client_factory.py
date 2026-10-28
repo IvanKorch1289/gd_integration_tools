@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.logging import get_logger
 
 if TYPE_CHECKING:
@@ -113,7 +114,7 @@ def get_ad_client(
         config = AdServerConfig(
             server_uri=settings.server_uri,
             bind_dn=settings.bind_dn,
-            bind_password=settings.bind_password,
+            bind_password=secret_value(settings.bind_password),
             search_base=settings.search_base,
             use_ssl=settings.use_ssl,
             timeout_seconds=settings.timeout_seconds,

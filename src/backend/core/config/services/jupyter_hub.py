@@ -20,7 +20,7 @@ Env-префикс: ``JUPYTER_HUB_`` (env vars → ``JUPYTER_HUB_BASE_URL=...``)
 
 from typing import ClassVar
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -57,8 +57,8 @@ class JupyterHubSettings(BaseSettingsWithLoader):
         examples=["http://localhost:8000", "https://jupyter.corp.example.ru"],
     )
 
-    api_token: str = Field(
-        default="",
+    api_token: SecretStr | None = Field(
+        default=None,
         description=(
             "JupyterHub API token (service или user). "
             "В production — из Vault / sealed-secrets."

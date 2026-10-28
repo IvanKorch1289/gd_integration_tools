@@ -2,7 +2,7 @@
 
 from typing import ClassVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -107,7 +107,7 @@ class RAGSettings(BaseSettingsWithLoader):
     qdrant_collection: str = Field(
         "gd_rag", description="Коллекция Qdrant по умолчанию."
     )
-    qdrant_api_key: str | None = Field(
+    qdrant_api_key: SecretStr | None = Field(
         None, description="API-ключ Qdrant Cloud (опционально)."
     )
     # Chroma (fallback / legacy)
@@ -135,7 +135,7 @@ class RAGSettings(BaseSettingsWithLoader):
             "Для sentence-transformers и fastembed не используется."
         ),
     )
-    embedding_api_key: str | None = Field(
+    embedding_api_key: SecretStr | None = Field(
         None, description="API-ключ для openai-совместимого endpoint."
     )
 

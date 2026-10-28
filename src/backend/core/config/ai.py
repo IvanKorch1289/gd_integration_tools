@@ -13,7 +13,7 @@
 from pathlib import Path
 from typing import ClassVar, Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -49,7 +49,9 @@ class PerplexitySettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "perplexity"
     model_config = SettingsConfigDict(env_prefix="PERPLEXITY_", extra="forbid")
 
-    api_key: str = Field(default="", description="API-ключ Perplexity")
+    api_key: SecretStr | None = Field(
+        default=None, description="API-ключ Perplexity"
+    )
 
     model: str = Field(
         default="sonar",
@@ -78,7 +80,9 @@ class HuggingFaceSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "huggingface"
     model_config = SettingsConfigDict(env_prefix="HUGGINGFACE_", extra="forbid")
 
-    api_key: str = Field(default="", description="HuggingFace API токен")
+    api_key: SecretStr | None = Field(
+        default=None, description="HuggingFace API токен"
+    )
 
     model: str = Field(
         default="mistralai/Mixtral-8x7B-Instruct-v0.1",
@@ -110,7 +114,9 @@ class OpenWebUISettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "open_webui"
     model_config = SettingsConfigDict(env_prefix="OPEN_WEBUI_", extra="forbid")
 
-    api_key: str = Field(default="", description="API-ключ OpenWebUI")
+    api_key: SecretStr | None = Field(
+        default=None, description="API-ключ OpenWebUI"
+    )
 
     model: str = Field(
         default="llama3",
@@ -145,7 +151,9 @@ class OpenRouterSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "openrouter"
     model_config = SettingsConfigDict(env_prefix="OPENROUTER_", extra="forbid")
 
-    api_key: str = Field(default="", description="API-ключ OpenRouter")
+    api_key: SecretStr | None = Field(
+        default=None, description="API-ключ OpenRouter"
+    )
     model: str = Field(
         default="openrouter/auto",
         description="Slug модели (см. https://openrouter.ai/models).",
@@ -165,7 +173,9 @@ class NimSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "nim"
     model_config = SettingsConfigDict(env_prefix="NIM_", extra="forbid")
 
-    api_key: str = Field(default="", description="API-ключ build.nvidia.com")
+    api_key: SecretStr | None = Field(
+        default=None, description="API-ключ build.nvidia.com"
+    )
     model: str = Field(
         default="meta/llama-3.1-70b-instruct", description="Слаг модели в каталоге NIM."
     )
@@ -187,7 +197,9 @@ class OpenAISettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "openai"
     model_config = SettingsConfigDict(env_prefix="OPENAI_", extra="forbid")
 
-    api_key: str = Field(default="", description="API-ключ провайдера.")
+    api_key: SecretStr | None = Field(
+        default=None, description="API-ключ провайдера."
+    )
     model: str = Field(
         default="gpt-4o-mini", description="Имя/slug модели у выбранного провайдера."
     )
@@ -216,8 +228,9 @@ class MiniMaxSettings(
     yaml_group: ClassVar[str] = "minimax"
     model_config = SettingsConfigDict(env_prefix="MINIMAX_", extra="forbid")
 
-    # override defaults (type=str для совместимости с _build_auth_headers)
-    api_key: str = Field(default="", description="MiniMax API-ключ")
+    # ADR-0375: секрет типизирован как SecretStr (читатели извлекают
+    # значение через core.config.secret.secret_value).
+    api_key: SecretStr | None = Field(default=None, description="MiniMax API-ключ")
     model: str = Field(
         default="MiniMax-Text-01",
         description="Слаг модели (MiniMax-Text-01, minimax-m2, minimax-m2.5, etc).",
@@ -395,8 +408,8 @@ class YandexGPTSettings(BaseSettingsWithLoader, LLMModelMixin):
     yaml_group: ClassVar[str] = "yandexgpt"
     model_config = SettingsConfigDict(env_prefix="YANDEXGPT_", extra="forbid")
 
-    api_key: str = Field(
-        default="", description="Yandex Cloud API-key (или IAM-token)."
+    api_key: SecretStr | None = Field(
+        default=None, description="Yandex Cloud API-key (или IAM-token)."
     )
     folder_id: str = Field(
         default="", description="Yandex Cloud folder_id (required для YandexGPT API)."
@@ -424,8 +437,8 @@ class GigaChatSettings(BaseSettingsWithLoader, LLMModelMixin):
     yaml_group: ClassVar[str] = "gigachat"
     model_config = SettingsConfigDict(env_prefix="GIGACHAT_", extra="forbid")
 
-    credentials: str = Field(
-        default="",
+    credentials: SecretStr | None = Field(
+        default=None,
         description="GigaChat API credentials (OAuth2 client_id:client_secret или API-key).",
     )
     scope: Literal["GIGACHAT_API_PERS", "GIGACHAT_API_CORP"] = Field(
@@ -454,8 +467,8 @@ class SaluteSpeechSettings(BaseSettingsWithLoader, LLMModelMixin):
     yaml_group: ClassVar[str] = "salute_speech"
     model_config = SettingsConfigDict(env_prefix="SALUTE_SPEECH_", extra="forbid")
 
-    credentials: str = Field(
-        default="", description="SaluteSpeech API credentials (OAuth2)."
+    credentials: SecretStr | None = Field(
+        default=None, description="SaluteSpeech API credentials (OAuth2)."
     )
     scope: Literal["SALUTE_SPEECH_PERS", "SALUTE_SPEECH_CORP"] = Field(
         default="SALUTE_SPEECH_PERS", description="OAuth2 scope."

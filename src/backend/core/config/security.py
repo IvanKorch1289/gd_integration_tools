@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any, ClassVar, Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -36,7 +36,7 @@ class SecureSettings(BaseSettingsWithLoader):
     )
 
     # Алгоритмы и криптография
-    secret_key: str = Field(
+    secret_key: SecretStr = Field(
         ...,
         min_length=32,
         description="Секретный ключ для подписи токенов (минимум 32 символа)",
@@ -77,8 +77,10 @@ class SecureSettings(BaseSettingsWithLoader):
     jwt_blacklist_enabled: bool = Field(default=False)
 
     # API-безопасность
-    api_key: str = Field(
-        ..., description="Основной API-ключ приложения", examples=["your_api_key_123"]
+    api_key: SecretStr = Field(
+        ...,
+        description="Основной API-ключ приложения",
+        examples=["your_api_key_123"],
     )
     allowed_hosts: list[str] = Field(
         ...,

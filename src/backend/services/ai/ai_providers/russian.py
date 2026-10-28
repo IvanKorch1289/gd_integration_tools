@@ -16,6 +16,7 @@ YandexGPT, GigaChat, SaluteSpeech — все три российских про�
 
 from __future__ import annotations
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.logging import get_logger
 
 _logger = get_logger(__name__)
@@ -136,7 +137,7 @@ class YandexGPTProvider(_BaseRussianProvider):
     name = "yandexgpt"
 
     def _default_api_key(self) -> str:
-        return yandexgpt_settings.api_key
+        return secret_value(yandexgpt_settings.api_key)
 
     def _default_model(self) -> str:
         return yandexgpt_settings.model
@@ -162,7 +163,7 @@ class GigaChatProvider(_BaseRussianProvider):
     name = "gigachat"
 
     def _default_api_key(self) -> str:
-        return gigachat_settings.credentials  # OAuth2 creds
+        return secret_value(gigachat_settings.credentials)  # OAuth2 creds
 
     def _default_model(self) -> str:
         return gigachat_settings.model
@@ -180,7 +181,7 @@ class SaluteSpeechProvider(_BaseRussianProvider):
     name = "salute_speech"
 
     def _default_api_key(self) -> str:
-        return salute_speech_settings.credentials  # OAuth2 creds
+        return secret_value(salute_speech_settings.credentials)  # OAuth2 creds
 
     def _default_model(self) -> str:
         return salute_speech_settings.model

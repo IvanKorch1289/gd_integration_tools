@@ -33,6 +33,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.config.services.jupyter_hub import JupyterHubSettings
 from src.backend.core.logging import get_logger
 from src.backend.core.net.outbound_http import OutboundHttpClient
@@ -156,7 +157,7 @@ class JupyterHubClient:
         policy = WafPolicy(verify_ssl=self._settings.ssl_verify)  # type: ignore[call-arg]  # R2.MYPY: WafPolicy signature doesn't include verify_ssl; runtime arg via kwargs
         return OutboundHttpClient(  # type: ignore[call-arg]  # R2.MYPY: headers/max_retries kwargs accepted at runtime; signature is keyword-only
             base_url=self._settings.base_url.rstrip("/"),
-            headers={"Authorization": f"token {self._settings.api_token}"},
+            headers={"Authorization": f"token {secret_value(self._settings.api_token)}"},
             policy=policy,
             max_retries=self._settings.max_retries,
             timeout=self._settings.timeout_seconds,  # type: ignore[arg-type]  # R2.MYPY: float→Timeout

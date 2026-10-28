@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -36,7 +36,7 @@ class LineageSettings(BaseSettingsWithLoader):
         ge=1,
         description="Максимальный размер in-memory очереди событий.",
     )
-    auth_token: str | None = Field(
+    auth_token: SecretStr | None = Field(
         default=None, description="Опциональный Bearer-токен для авторизации."
     )
 

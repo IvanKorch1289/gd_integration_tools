@@ -6,6 +6,7 @@ backend'а (OpenAI, vLLM, LocalAI, OpenRouter, MiniMax, и т.д.).
 
 from __future__ import annotations
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.logging import get_logger
 
 _logger = get_logger(__name__)
@@ -35,7 +36,7 @@ class OpenAIProvider:
         model: str = "gpt-4o-mini",
         base_url: str | None = None,
     ) -> None:
-        self.api_key = api_key or openai_settings.api_key
+        self.api_key = api_key or secret_value(openai_settings.api_key)
         self.model = model
         self.base_url = (base_url or openai_settings.base_url).rstrip("/")
 

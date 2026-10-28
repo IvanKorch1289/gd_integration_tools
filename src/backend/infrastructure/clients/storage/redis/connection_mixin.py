@@ -5,6 +5,7 @@ from typing import Literal
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.storage.redis._protocol import (
     _RedisClientProtocol,
@@ -42,7 +43,7 @@ class ConnectionMixin(_RedisClientProtocol):
             )
             return RedisCluster(
                 startup_nodes=startup_nodes,
-                password=self.settings.password or None,
+                password=secret_value(self.settings.password) or None,
                 encoding=self.settings.encoding,
                 socket_timeout=self.settings.socket_timeout,
                 socket_connect_timeout=self.settings.socket_connect_timeout,
@@ -75,7 +76,7 @@ class ConnectionMixin(_RedisClientProtocol):
             )
             sentinel = Sentinel(
                 sentinel_endpoints,
-                password=self.settings.sentinel_password or None,
+                password=secret_value(self.settings.sentinel_password) or None,
                 ssl=self.settings.use_ssl,
                 ssl_ca_certs=self.settings.ca_bundle,
                 socket_timeout=self.settings.socket_timeout,
@@ -85,7 +86,7 @@ class ConnectionMixin(_RedisClientProtocol):
             return sentinel.master_for(
                 service_name=self.settings.sentinel_service_name,
                 db=self._db_for_kind(kind),
-                password=self.settings.password or None,
+                password=secret_value(self.settings.password) or None,
                 encoding=self.settings.encoding,
                 socket_timeout=self.settings.socket_timeout,
                 socket_connect_timeout=self.settings.socket_connect_timeout,

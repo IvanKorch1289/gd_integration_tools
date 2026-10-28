@@ -71,17 +71,12 @@ def build_auth_config(
     if express is None:
         from src.backend.core.config.express import express_settings as express
 
-    secret = secure.secret_key
-    secret_value = (
-        secret.get_secret_value()
-        if hasattr(secret, "get_secret_value")
-        else str(secret)
-    )
+    from src.backend.core.config.secret import secret_value as _secret_value
 
     return AuthConfig(
-        api_key=secure.api_key,
+        api_key=_secret_value(secure.api_key),
         jwt=JwtConfig(
-            secret_key=secret_value,
+            secret_key=_secret_value(secure.secret_key),
             algorithm=secure.algorithm,
             token_lifetime=secure.token_lifetime,
         ),

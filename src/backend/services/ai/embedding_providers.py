@@ -24,6 +24,7 @@ import asyncio
 import sys
 from typing import Any, Protocol, runtime_checkable
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.logging import get_logger
 
 __all__ = (
@@ -230,7 +231,7 @@ def get_embedding_provider() -> EmbeddingProvider:
             return OpenAIEmbeddingProvider(
                 model_name=model,
                 base_url=rag_settings.embedding_endpoint,
-                api_key=rag_settings.embedding_api_key,
+                api_key=secret_value(rag_settings.embedding_api_key),
             )
         case _:
             raise ValueError(

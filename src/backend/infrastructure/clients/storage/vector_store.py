@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.interfaces.vector_store import BaseVectorStore
 from src.backend.core.logging import get_logger
 
@@ -51,7 +52,9 @@ def get_vector_store(backend: str | None = None, **kwargs: Any) -> BaseVectorSto
                 collection_name=kwargs.get(
                     "collection_name", rag_settings.qdrant_collection
                 ),
-                api_key=kwargs.get("api_key", rag_settings.qdrant_api_key),
+                api_key=secret_value(
+                    kwargs.get("api_key", rag_settings.qdrant_api_key)
+                ),
                 vector_size=kwargs.get("vector_size", 384),
             )
         case "chroma":

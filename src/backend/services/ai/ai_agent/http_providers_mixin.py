@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from pydantic import SecretStr
+
+from src.backend.core.config.secret import secret_value
+
 if TYPE_CHECKING:
     from src.backend.core.interfaces.ai_clients import AISanitizerProtocol
 
@@ -47,15 +51,16 @@ class HttpProvidersMixin:
         )
 
     def _build_auth_headers(
-        self, api_key: str | None, *, use_waf: bool = False
+        self, api_key: SecretStr | str | None, *, use_waf: bool = False
     ) -> dict[str, str]:
         """Формирует Content-Type + Authorization (с WAF-перекрытием при необходимости)."""
         headers: dict[str, str] = {}
         if use_waf:
             headers.update(self._waf_headers)
         headers["Content-Type"] = "application/json"
-        if not use_waf and api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
+        key = secret_value(api_key)
+        if not use_waf and key:
+            headers["Authorization"] = f"Bearer {key}"
         return headers
 
     async def _call_perplexity(

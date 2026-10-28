@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, ClassVar
 
-from pydantic import Field, computed_field, field_validator
+from pydantic import Field, SecretStr, computed_field, field_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -53,8 +53,8 @@ class MailSettings(BaseSettingsWithLoader):
         "проверяют непустоту перед login)",
         json_schema_extra={"example": "user@example.com"},
     )
-    password: str = Field(
-        default="",
+    password: SecretStr | None = Field(
+        default=None,
         description="Пароль SMTP (пусто = без auth)",
         json_schema_extra={"example": "securepassword123"},
     )

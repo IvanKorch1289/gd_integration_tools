@@ -35,6 +35,7 @@ from typing import Any
 
 import orjson
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.logging import get_logger
 from src.backend.services.lineage.lineage_emitter import (
     InMemoryLineageEmitter,
@@ -179,8 +180,8 @@ class OpenLineageHttpEmitter(InMemoryLineageEmitter):
                 "Accept": "application/json",
                 "User-Agent": f"gd-integration-tools-lineage/1.0 (ns={self._config.namespace})",
                 **(
-                    {"Authorization": f"Bearer {self._config.auth_token}"}
-                    if self._config.auth_token
+                    {"Authorization": f"Bearer {secret_value(self._config.auth_token)}"}
+                    if secret_value(self._config.auth_token)
                     else {}
                 ),
             },

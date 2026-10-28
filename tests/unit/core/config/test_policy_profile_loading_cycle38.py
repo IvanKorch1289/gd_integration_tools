@@ -118,15 +118,18 @@ class TestPolicyYamlSourceDeclarations:
         )
 
     def test_base_yml_does_not_force_engine_enabled(self) -> None:
-        """``base.yml`` НЕ должен включать policy (dev/dev_light default OFF)."""
-        src = Path("config_profiles/base.yml").read_text()
-        # base.yml может содержать ``policy:`` для других целей, но не должен
-        # форсить engine_enabled=true.
-        if "policy:" in src:
-            assert "engine_enabled: true" not in src, (
-                "Cycle 38: base.yml НЕ должен форсить engine_enabled=true — "
-                "это сломает dev/dev_light default OFF"
-            )
+        """``base.yml`` НЕ должен включать policy (dev/dev_light default OFF).
+
+        Проверка по СЕКЦИИ ``policy:``, а не grep'ом по всему файлу: в
+        base.yml есть одноимённое поле ``engine_enabled`` у других групп
+        (например ``markitdown.engine_enabled``) — grep давал false-positive.
+        """
+        data = yaml.safe_load(Path("config_profiles/base.yml").read_text()) or {}
+        policy = data.get("policy") or {}
+        assert policy.get("engine_enabled") is not True, (
+            "Cycle 38: base.yml НЕ должен форсить policy.engine_enabled=true — "
+            "это сломает dev/dev_light default OFF"
+        )
 
     def test_dev_yml_does_not_override_engine_enabled(self) -> None:
         """``dev.yml`` НЕ должен включать policy.engine_enabled."""

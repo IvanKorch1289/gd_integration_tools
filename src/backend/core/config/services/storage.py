@@ -1,10 +1,11 @@
 from pathlib import Path
 from typing import ClassVar, Literal
 
-from pydantic import Field, computed_field
+from pydantic import Field, SecretStr, computed_field
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.secret import secret_value
 
 
 class FileStorageSettings(BaseSettingsWithLoader):
@@ -43,11 +44,11 @@ class FileStorageSettings(BaseSettingsWithLoader):
         description="Имя корзины по умолчанию",
         json_schema_extra={"example": "my-bucket"},
     )
-    access_key: str = Field(
-        "", description="Ключ доступа к хранилищу (пусто = anonymous)"
+    access_key: SecretStr | None = Field(
+        None, description="Ключ доступа к хранилищу (пусто = anonymous)"
     )
-    secret_key: str = Field(
-        "", description="Секретный ключ (пусто = anonymous/public bucket)"
+    secret_key: SecretStr | None = Field(
+        None, description="Секретный ключ (пусто = anonymous/public bucket)"
     )
     endpoint: str = Field(
         ...,
@@ -120,7 +121,9 @@ class FileStorageSettings(BaseSettingsWithLoader):
         что опечатка в ``FS_ACCESS_KEY`` тихо превращала клиент в anonymous,
         и деплой при этом выглядел здоровым. Теперь это проверяемо явно.
         """
-        return bool(self.access_key.strip()) and bool(self.secret_key.strip())
+        return bool(secret_value(self.access_key)) and bool(
+            secret_value(self.secret_key)
+        )
 
     def requires_credentials(self) -> bool:
         """True, если провайдеру действительно нужны credential'ы.
