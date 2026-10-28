@@ -2,6 +2,9 @@
 
 Async CSV read via :mod:`csv` + :func:`asyncio.to_thread`.
 Capability: rpa.file.csv.read (low risk, read-only).
+
+ADR-0367: ``src`` проверяется по path-allowlist (``validate_path``) —
+иначе процессор читал произвольный файл ФС.
 """
 
 from __future__ import annotations
@@ -57,9 +60,22 @@ class CsvReadProcessor(BaseProcessor):
         if self.content is not None:
             text = self.content
         elif self.src:
+            # Второй независимый барьер безопасности: capability ограничивает
+            # факт вызова, allowlist — путь (иначе читается любой файл ФС).
+            from src.backend.dsl.engine.processors._path_safety import (
+                PathTraversalError,
+                validate_path,
+            )
+
+            try:
+                safe_src = validate_path(self.src)
+            except PathTraversalError as exc:
+                exchange.fail(f"csv_read blocked: {exc}")
+                return
+
             import aiofiles
 
-            async with aiofiles.open(self.src, encoding="utf-8") as f:
+            async with aiofiles.open(safe_src, encoding="utf-8") as f:
                 text = await f.read()
         else:
             raise ValueError("CsvReadProcessor: укажите src или content")

@@ -50,7 +50,10 @@ class FileDeleteProcessor(BaseProcessor):
         """Метод process (см. signature)."""
         if not await self.auth_check(exchange, action="write"):
             return
-        path = self.path or exchange.in_message.body.get("path")  # type: ignore[union-attr]
+        # ADR-0367: body может быть не-dict (str/bytes/None) → isinstance-проверка
+        # (образец — FileMoveProcessor), иначе AttributeError на .get().
+        body = exchange.in_message.body
+        path = self.path or (body.get("path") if isinstance(body, dict) else None)
         if not path:
             raise ValueError("FileDeleteProcessor: path обязателен")
         # Bug fix (cycle 33): Path-traversal guard before deletion.

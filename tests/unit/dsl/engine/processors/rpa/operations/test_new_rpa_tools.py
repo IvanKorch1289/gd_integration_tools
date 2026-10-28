@@ -20,21 +20,20 @@ import pytest
 
 class TestFileDeleteProcessor:
     @pytest.mark.asyncio
-    async def test_deletes_file(self, tmp_path: Path) -> None:
-        # Cycle 33 DS2: FileDeleteProcessor now enforces path-traversal
-        # guard via _path_safety.validate_path. pytest's default tmp_path
-        # is /tmp/pytest-of-user/... which is NOT in allowed prefixes.
-        # Use /tmp/dsl/ prefix or set DSL_ALLOWED_PATHS env var.
-        import os
-
+    async def test_deletes_file(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Cycle 33 DS2: FileDeleteProcessor enforces path-traversal guard via
+        # _path_safety.validate_path; pytest's tmp_path is NOT in the default
+        # allowlist → разрешаем его через DSL_ALLOWED_PATHS.
+        # Cycle 172 (C5): было — запись в общий /tmp/dsl (гонки при -n auto,
+        # мусор на машине); стало — изолированный tmp_path.
         from src.backend.dsl.engine.processors.rpa.operations.filedeleteprocessor import (
             FileDeleteProcessor,
         )
 
-        allowed_dir = "/tmp/dsl"
-        os.makedirs(allowed_dir, exist_ok=True)
-        target_path = os.path.join(allowed_dir, "delete_me.txt")
-        target = Path(target_path)
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
+        target = tmp_path / "delete_me.txt"
         target.write_text("data")
         p = FileDeleteProcessor(path=str(target))
         p.auth_check = AsyncMock(return_value=True)
@@ -45,6 +44,56 @@ class TestFileDeleteProcessor:
         ex.set_error = MagicMock()
         ex.stop = MagicMock()
         await p.process(ex, MagicMock())
+        assert not target.exists()
+        assert ex.in_message.body.get("deleted") is True
+
+    @pytest.mark.asyncio
+    async def test_non_dict_body_does_not_raise_attribute_error(self) -> None:
+        """ADR-0367: body не-dict → понятная ошибка, а не ``AttributeError``.
+
+        Раньше: ``exchange.in_message.body.get("path")`` падал с
+        ``AttributeError: 'str' object has no attribute 'get'``.
+        """
+        from src.backend.dsl.engine.processors.rpa.operations.filedeleteprocessor import (
+            FileDeleteProcessor,
+        )
+
+        p = FileDeleteProcessor()
+        p.auth_check = AsyncMock(return_value=True)
+        ex = MagicMock()
+        ex.in_message = MagicMock()
+        ex.in_message.body = "not-a-dict"
+        ex.set_property = MagicMock()
+        ex.set_error = MagicMock()
+        ex.stop = MagicMock()
+
+        with pytest.raises(ValueError, match="path"):
+            await p.process(ex, MagicMock())
+
+    @pytest.mark.asyncio
+    async def test_dict_body_path_is_used(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Путь из тела запроса (dict) — рабочий сценарий."""
+        from src.backend.dsl.engine.processors.rpa.operations.filedeleteprocessor import (
+            FileDeleteProcessor,
+        )
+
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
+        target = tmp_path / "delete_me.txt"
+        target.write_text("data")
+
+        p = FileDeleteProcessor()
+        p.auth_check = AsyncMock(return_value=True)
+        ex = MagicMock()
+        ex.in_message = MagicMock()
+        ex.in_message.body = {"path": str(target)}
+        ex.set_property = MagicMock()
+        ex.set_error = MagicMock()
+        ex.stop = MagicMock()
+
+        await p.process(ex, MagicMock())
+
         assert not target.exists()
         assert ex.in_message.body.get("deleted") is True
 

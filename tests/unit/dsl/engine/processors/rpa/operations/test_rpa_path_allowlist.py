@@ -16,6 +16,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+from src.backend.dsl.engine.processors.rpa.operations.csvreadprocessor import (
+    CsvReadProcessor,
+)
+from src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor import (
+    CsvWriteProcessor,
+)
 from src.backend.dsl.engine.processors.rpa.operations.filelistprocessor import (
     FileListProcessor,
 )
@@ -364,3 +370,245 @@ class TestFtpUploadPathAllowlist:
         assert ex.status != ExchangeStatus.failed
         assert stored == [("STOR /r.txt", b"hello")]
         assert _body(ex).get("uploaded") is True
+
+
+class TestCsvReadPathAllowlist:
+    """CsvReadProcessor — исходный CSV-файл."""
+
+    @pytest.mark.asyncio
+    async def test_src_outside_allowlist_is_blocked(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path / "allowed"))
+        secret = tmp_path / "secret.csv"
+        secret.write_text("name,ssn\nAlice,123-45-6789\n")
+
+        proc = CsvReadProcessor(src=str(secret), to="body.rows")
+        _allow(proc)
+        ex = _exchange()
+
+        with patch("aiofiles.open") as mock_open:
+            await proc.process(ex, MagicMock())
+
+        assert ex.status == ExchangeStatus.failed
+        assert "outside allowed" in (ex.error or "")
+        mock_open.assert_not_called()
+        assert not _body(ex).get("rows")
+
+    @pytest.mark.asyncio
+    async def test_src_inside_allowlist_is_read(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        allowed = tmp_path / "allowed"
+        allowed.mkdir()
+        src = allowed / "data.csv"
+        src.write_text("name,age\nAlice,30\n")
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(allowed))
+
+        proc = CsvReadProcessor(src=str(src), to="body.rows")
+        _allow(proc)
+        ex = _exchange()
+
+        await proc.process(ex, MagicMock())
+
+        assert ex.status != ExchangeStatus.failed
+        assert ex.error is None
+        assert _body(ex).get("rows") == [{"name": "Alice", "age": "30"}]
+
+    @pytest.mark.asyncio
+    async def test_traversal_src_is_blocked(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path / "allowed"))
+
+        proc = CsvReadProcessor(
+            src=str(tmp_path / ".." / ".." / "etc" / "passwd.csv"), to="body.rows"
+        )
+        _allow(proc)
+        ex = _exchange()
+
+        with patch("aiofiles.open") as mock_open:
+            await proc.process(ex, MagicMock())
+
+        assert ex.status == ExchangeStatus.failed
+        assert "traversal" in (ex.error or "")
+        mock_open.assert_not_called()
+
+
+class TestCsvWritePathAllowlist:
+    """CsvWriteProcessor — целевой CSV-файл."""
+
+    @pytest.mark.asyncio
+    async def test_dst_outside_allowlist_is_blocked(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path / "allowed"))
+        dst = tmp_path / "out.csv"
+
+        proc = CsvWriteProcessor(dst=str(dst), rows=[{"a": "1"}])
+        _allow(proc)
+        ex = _exchange()
+
+        await proc.process(ex, MagicMock())
+
+        assert ex.status == ExchangeStatus.failed
+        assert "outside allowed" in (ex.error or "")
+        assert not dst.exists()
+
+    @pytest.mark.asyncio
+    async def test_dst_outside_allowlist_is_blocked_for_empty_rows(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Пустой список rows тоже пишет файл — путь должен быть проверен."""
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path / "allowed"))
+        dst = tmp_path / "empty.csv"
+
+        proc = CsvWriteProcessor(dst=str(dst), rows=[])
+        _allow(proc)
+        ex = _exchange()
+
+        await proc.process(ex, MagicMock())
+
+        assert ex.status == ExchangeStatus.failed
+        assert not dst.exists()
+
+    @pytest.mark.asyncio
+    async def test_dst_inside_allowlist_is_written(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        allowed = tmp_path / "allowed"
+        allowed.mkdir()
+        dst = allowed / "out.csv"
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(allowed))
+
+        proc = CsvWriteProcessor(dst=str(dst), rows=[{"a": "1"}])
+        _allow(proc)
+        ex = _exchange()
+
+        await proc.process(ex, MagicMock())
+
+        assert ex.status != ExchangeStatus.failed
+        assert ex.error is None
+        assert dst.exists()
+        assert "a" in dst.read_text()
+
+
+class TestDocumentProcessorsPathAllowlist:
+    """PDF/Word/Excel — путь из тела запроса (недоверенный ввод).
+
+    Bytes-ветки (загрузка файла из памяти) allowlist не требуют —
+    файловой системы они не касаются.
+    """
+
+    @pytest.mark.asyncio
+    async def test_pdf_read_path_outside_allowlist_is_blocked(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from src.backend.dsl.engine.processors.rpa.documents import PdfReadProcessor
+
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path / "allowed"))
+        secret = tmp_path / "secret.pdf"
+        secret.write_bytes(b"%PDF-1.4 PII")
+
+        proc = PdfReadProcessor()
+        _allow(proc)
+        ex = _exchange(str(secret))
+
+        with patch("src.backend.utilities.pdf_reader.read_pdf") as mock_read:
+            await proc.process(ex, MagicMock())
+
+        assert ex.status == ExchangeStatus.failed
+        assert "outside allowed" in (ex.error or "")
+        mock_read.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_word_read_path_outside_allowlist_is_blocked(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from src.backend.dsl.engine.processors.rpa.documents import WordReadProcessor
+
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path / "allowed"))
+        secret = tmp_path / "secret.docx"
+        secret.write_bytes(b"PK PII")
+
+        proc = WordReadProcessor()
+        _allow(proc)
+        ex = _exchange(str(secret))
+
+        with patch("docx.Document") as mock_doc:
+            await proc.process(ex, MagicMock())
+
+        assert ex.status == ExchangeStatus.failed
+        assert "outside allowed" in (ex.error or "")
+        mock_doc.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_excel_read_path_outside_allowlist_is_blocked(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Эксфильтрация PII: body='/tmp/rpa_secret.xlsx' не должен читаться."""
+        from src.backend.dsl.engine.processors.rpa.documents import ExcelReadProcessor
+
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path / "allowed"))
+        secret = tmp_path / "rpa_secret.xlsx"
+        secret.write_bytes(b"PK secret")
+
+        proc = ExcelReadProcessor()
+        _allow(proc)
+        ex = _exchange(str(secret))
+
+        with patch("openpyxl.load_workbook") as mock_wb:
+            await proc.process(ex, MagicMock())
+
+        assert ex.status == ExchangeStatus.failed
+        assert "outside allowed" in (ex.error or "")
+        mock_wb.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_excel_read_bytes_body_is_not_path_checked(self) -> None:
+        """Bytes-ветка allowlist не требует — файловой системы она не касается."""
+        from src.backend.dsl.engine.processors.rpa.documents import ExcelReadProcessor
+
+        proc = ExcelReadProcessor()
+        _allow(proc)
+        ex = _exchange(b"fake-xlsx")
+
+        with patch("openpyxl.load_workbook") as mock_wb:
+            mock_book = MagicMock()
+            mock_sheet = MagicMock()
+            mock_sheet.iter_rows.return_value = [["col1"], ["v1"]]
+            mock_book.active = mock_sheet
+            mock_wb.return_value = mock_book
+            await proc.process(ex, MagicMock())
+
+        assert ex.status != ExchangeStatus.failed
+        assert ex.error is None
+        mock_wb.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_excel_read_path_inside_allowlist_is_read(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from src.backend.dsl.engine.processors.rpa.documents import ExcelReadProcessor
+
+        allowed = tmp_path / "allowed"
+        allowed.mkdir()
+        src = allowed / "book.xlsx"
+        src.write_bytes(b"PK data")
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(allowed))
+
+        proc = ExcelReadProcessor()
+        _allow(proc)
+        ex = _exchange(str(src))
+
+        with patch("openpyxl.load_workbook") as mock_wb:
+            mock_book = MagicMock()
+            mock_sheet = MagicMock()
+            mock_sheet.iter_rows.return_value = [["col1"], ["v1"]]
+            mock_book.active = mock_sheet
+            mock_wb.return_value = mock_book
+            await proc.process(ex, MagicMock())
+
+        assert ex.status != ExchangeStatus.failed
+        assert ex.error is None
+        mock_wb.assert_called_once()

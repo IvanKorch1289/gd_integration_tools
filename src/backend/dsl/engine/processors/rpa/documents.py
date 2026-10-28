@@ -9,6 +9,10 @@ Categories:
 - Files: move/copy, archive ZIP/TAR, image OCR/resize
 - Text: regex extract/replace, Jinja2 templates, hash, encrypt/decrypt
 - System: shell exec, email compose+send
+
+ADR-0367: пути, приходящие из тела запроса, проверяются по path-allowlist
+(``validate_path``) — иначе процессор читал произвольный файл ФС (эксфильтрация
+PII). Bytes-ветки (файл из памяти) allowlist не требуют.
 """
 
 from __future__ import annotations
@@ -22,6 +26,33 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _rpa_logger = get_logger("dsl.rpa")
+
+
+def _safe_body_path(exchange: Exchange[Any], body: Any, *, label: str) -> str | None:
+    """Провалидировать путь из тела запроса по path-allowlist.
+
+    Единая точка для PDF/Word/Excel-процессоров: путь из тела запроса —
+    недоверенный ввод, capability-гейт ограничивает только факт вызова.
+
+    Args:
+        exchange: Текущий exchange (при нарушении — ``exchange.fail``).
+        body: Значение body (ожидается str-путь к файлу).
+        label: Префикс сообщения об ошибке (имя процессора).
+
+    Returns:
+        Нормализованный абсолютный путь либо ``None`` (exchange помечен failed).
+
+    """
+    from src.backend.dsl.engine.processors._path_safety import (
+        PathTraversalError,
+        validate_path,
+    )
+
+    try:
+        return validate_path(body)
+    except PathTraversalError as exc:
+        exchange.fail(f"{label} blocked: {exc}")
+        return None
 
 
 class PdfReadProcessor(BaseProcessor):
@@ -53,6 +84,11 @@ class PdfReadProcessor(BaseProcessor):
         from src.backend.utilities.pdf_reader import read_pdf
 
         body = exchange.in_message.body
+        if isinstance(body, str):
+            safe_body = _safe_body_path(exchange, body, label="pdf_read")
+            if safe_body is None:
+                return
+            body = safe_body
         try:
             text = await asyncio.to_thread(read_pdf, body)  # type: ignore[arg-type]
         except Exception as exc:
@@ -166,6 +202,11 @@ class WordReadProcessor(BaseProcessor):
             exchange.fail("python-docx not installed: pip install python-docx")
             return
         body = exchange.in_message.body
+        if isinstance(body, str):
+            safe_body = _safe_body_path(exchange, body, label="word_read")
+            if safe_body is None:
+                return
+            body = safe_body
 
         def _read() -> dict[str, Any]:
             if isinstance(body, bytes):
@@ -274,6 +315,11 @@ class ExcelReadProcessor(BaseProcessor):
             exchange.fail("openpyxl not installed: pip install openpyxl")
             return
         body = exchange.in_message.body
+        if isinstance(body, str):
+            safe_body = _safe_body_path(exchange, body, label="excel_read")
+            if safe_body is None:
+                return
+            body = safe_body
 
         def _read() -> list[dict[str, Any]]:
             if isinstance(body, bytes):

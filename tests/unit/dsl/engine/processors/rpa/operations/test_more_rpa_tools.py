@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import csv
 import ssl
 from pathlib import Path
 from typing import Any
@@ -20,11 +21,15 @@ import pytest
 
 class TestCsvReadProcessor:
     @pytest.mark.asyncio
-    async def test_reads_csv_file(self, tmp_path: Path) -> None:
+    async def test_reads_csv_file(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from src.backend.dsl.engine.processors.rpa.operations.csvreadprocessor import (
             CsvReadProcessor,
         )
 
+        # ADR-0367: src проверяется по path-allowlist → tmp_path вне дефолта.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
         csv_file = tmp_path / "data.csv"
         csv_file.write_text("name,age\nAlice,30\nBob,25\n")
         p = CsvReadProcessor(src=str(csv_file), delimiter=",", to="body.rows")
@@ -61,11 +66,15 @@ class TestCsvReadProcessor:
 
 class TestCsvWriteProcessor:
     @pytest.mark.asyncio
-    async def test_writes_csv_file(self, tmp_path: Path) -> None:
+    async def test_writes_csv_file(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor import (
             CsvWriteProcessor,
         )
 
+        # ADR-0367: dst проверяется по path-allowlist → tmp_path вне дефолта.
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
         out = tmp_path / "out.csv"
         p = CsvWriteProcessor(
             dst=str(out), rows=[{"a": "1", "b": "2"}, {"a": "3", "b": "4"}]
@@ -82,6 +91,151 @@ class TestCsvWriteProcessor:
         content = out.read_text()
         assert "a,b" in content
         assert "1,2" in content
+
+    @pytest.mark.asyncio
+    async def test_neutralizes_formula_injection(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """CSV formula-инъекция: ``=``/``+``/``-``/``@`` нейтрализуются ``'``."""
+        from src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor import (
+            CsvWriteProcessor,
+        )
+
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
+        out = tmp_path / "out.csv"
+        p = CsvWriteProcessor(
+            dst=str(out),
+            rows=[
+                {"payload": "=cmd|'/c calc'!A0"},
+                {"payload": "+1+1"},
+                {"payload": "-2+3"},
+                {"payload": "@SUM(A1:A2)"},
+            ],
+        )
+        p.auth_check = AsyncMock(return_value=True)
+        ex = MagicMock()
+        ex.in_message = MagicMock()
+        ex.in_message.body = {}
+        await p.process(ex, MagicMock())
+
+        rows = list(csv.reader(out.read_text().splitlines()))
+        assert rows[0] == ["payload"]
+        for cell in rows[1:]:
+            assert cell[0].startswith("'"), cell
+        assert rows[1][0] == "'=cmd|'/c calc'!A0"
+
+    @pytest.mark.asyncio
+    async def test_numbers_are_not_neutralized(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Числа (в т.ч. отрицательные) не получают префикс ``'``."""
+        from src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor import (
+            CsvWriteProcessor,
+        )
+
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
+        out = tmp_path / "out.csv"
+        p = CsvWriteProcessor(
+            dst=str(out), rows=[{"n": 30, "f": -1.5, "z": 0}, {"n": 7, "f": 0.25, "z": 0}]
+        )
+        p.auth_check = AsyncMock(return_value=True)
+        ex = MagicMock()
+        ex.in_message = MagicMock()
+        ex.in_message.body = {}
+        await p.process(ex, MagicMock())
+
+        rows = list(csv.reader(out.read_text().splitlines()))
+        assert rows[1] == ["30", "-1.5", "0"]
+        assert rows[2] == ["7", "0.25", "0"]
+
+    @pytest.mark.asyncio
+    async def test_heterogeneous_keys_are_supported(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Разнородные ключи → union колонок, без ``ValueError``."""
+        from src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor import (
+            CsvWriteProcessor,
+        )
+
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
+        out = tmp_path / "out.csv"
+        p = CsvWriteProcessor(
+            dst=str(out), rows=[{"a": "1"}, {"b": "2"}, {"a": "3", "c": "4"}]
+        )
+        p.auth_check = AsyncMock(return_value=True)
+        ex = MagicMock()
+        ex.in_message = MagicMock()
+        ex.in_message.body = {}
+        await p.process(ex, MagicMock())
+
+        rows = list(csv.reader(out.read_text().splitlines()))
+        assert rows[0] == ["a", "b", "c"]
+        assert rows[1] == ["1", "", ""]
+        assert rows[2] == ["", "2", ""]
+        assert rows[3] == ["3", "", "4"]
+
+    @pytest.mark.asyncio
+    async def test_neutralizes_formula_in_column_name(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Header — тоже ячейка: имя колонки нейтрализуется."""
+        from src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor import (
+            CsvWriteProcessor,
+        )
+
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
+        out = tmp_path / "out.csv"
+        p = CsvWriteProcessor(dst=str(out), rows=[{"=cmd|'/c calc'!A0": "1"}])
+        p.auth_check = AsyncMock(return_value=True)
+        ex = MagicMock()
+        ex.in_message = MagicMock()
+        ex.in_message.body = {}
+        await p.process(ex, MagicMock())
+
+        rows = list(csv.reader(out.read_text().splitlines()))
+        assert rows[0] == ["'=cmd|'/c calc'!A0"]
+        assert rows[1] == ["1"]
+
+    @pytest.mark.asyncio
+    async def test_colliding_column_names_raise_clear_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Совпадение имён после нейтрализации → ошибка, а не тихая порча данных."""
+        from src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor import (
+            CsvWriteProcessor,
+        )
+
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
+        p = CsvWriteProcessor(
+            dst=str(tmp_path / "out.csv"),
+            rows=[{"=x": "1", "'=x": "2"}],
+        )
+        p.auth_check = AsyncMock(return_value=True)
+        ex = MagicMock()
+        ex.in_message = MagicMock()
+        ex.in_message.body = {}
+
+        with pytest.raises(ValueError, match="collide"):
+            await p.process(ex, MagicMock())
+
+    @pytest.mark.asyncio
+    async def test_non_mapping_row_raises_clear_error(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Не-Mapping строка → понятная ошибка, а не ``AttributeError``."""
+        from src.backend.dsl.engine.processors.rpa.operations.csvwriteprocessor import (
+            CsvWriteProcessor,
+        )
+
+        monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
+        p = CsvWriteProcessor(dst=str(tmp_path / "out.csv"), rows=[123])  # type: ignore[list-item]
+        p.auth_check = AsyncMock(return_value=True)
+        ex = MagicMock()
+        ex.in_message = MagicMock()
+        ex.in_message.body = {}
+
+        with pytest.raises(ValueError, match="mapping"):
+            await p.process(ex, MagicMock())
 
 
 class TestEmailReadProcessor:
@@ -234,8 +388,11 @@ class TestFtpUploadProcessor:
         # Also intercept the in-function ``from ftplib import FTP_TLS``.
         import ftplib as real_ftplib
 
-        real_ftplib.FTP_TLS = _StubFTP  # type: ignore[attr-defined]
-        real_ftplib.FTP = _StubFTP  # type: ignore[attr-defined]
+        # ponytail: monkeypatch, а не присваивание — мутация глобального
+        # модуля ftplib переживала тест и ломала соседние FTP-тесты
+        # в параллельном прогоне (pytest -n auto).
+        monkeypatch.setattr(real_ftplib, "FTP_TLS", _StubFTP)
+        monkeypatch.setattr(real_ftplib, "FTP", _StubFTP)
 
         ex = MagicMock()
         ex.in_message = MagicMock()
@@ -298,8 +455,9 @@ class TestFtpUploadProcessor:
 
         import ftplib as real_ftplib
 
-        real_ftplib.FTP = _StubFTP  # type: ignore[attr-defined]
-        real_ftplib.FTP_TLS = _StubFTP  # type: ignore[attr-defined]
+        # ponytail: monkeypatch, а не присваивание — см. комментарий выше.
+        monkeypatch.setattr(real_ftplib, "FTP", _StubFTP)
+        monkeypatch.setattr(real_ftplib, "FTP_TLS", _StubFTP)
         monkeypatch.setattr(ftp_mod, "ftplib", real_ftplib, raising=False)
 
         ex = MagicMock()
@@ -316,6 +474,12 @@ class TestFtpUploadProcessor:
 class TestHttpRequestProcessor:
     @pytest.mark.asyncio
     async def test_get_request(self) -> None:
+        """``to="body"`` (default) → payload пишется в ``in_message.body``.
+
+        Регресс C4 (ADR-0369): раньше ``set_result(exchange, "body", ...)``
+        попадал в ``set_property("body", ...)`` → ``in_message.body`` оставался
+        пустым, и ответ терялся для маршрута.
+        """
         from src.backend.dsl.engine.processors.rpa.operations.httprequestprocessor import (
             HttpRequestProcessor,
         )
@@ -351,9 +515,9 @@ class TestHttpRequestProcessor:
         ):
             await p.process(ex, MagicMock())
 
-        assert ex.set_property.called
-        call_args = ex.set_property.call_args_list[-1]
-        target, value = call_args[0]
-        assert target == "body"
-        assert value["status"] == 200
-        assert value["data"] == {"ok": True}
+        payload = ex.in_message.body
+        assert isinstance(payload, dict), f"body должен быть dict, got {type(payload)!r}"
+        assert payload["status"] == 200
+        assert payload["data"] == {"ok": True}
+        # target == "body" → payload НЕ должен уходить в property.
+        ex.set_property.assert_not_called()
