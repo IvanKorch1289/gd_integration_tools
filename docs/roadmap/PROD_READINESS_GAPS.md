@@ -150,6 +150,60 @@
   create_task-контракт в этой сессии).
 - **Срок**: 2-3 спринта.
 
+## G11. DSN-драйверы вне extras: `pyodbc` (MSSQL sync), `ibm_db_sa` (DB2)
+
+- **Тип**: dependency. **Owner**: platform-team.
+- **Статус**: 🟡 ЧАСТИЧНО ЗАКРЫТ (2026-10-28, гриллинг раунд 2, Q2 —
+  согласовано владельцем, lock-чанж выполнен).
+- **Причина**: DSN-конструкторы (`core/config/database.py`) упоминали
+  `pyodbc` и `ibm_db_sa`, но они не были объявлены ни в `[project.dependencies]`,
+  ни в одном extra — сборка DSN падала бы в рантайме как
+  `ModuleNotFoundError` внутри SQLAlchemy. Дополнительно: `psycopg`
+  (новый дефолт sync-драйвера PostgreSQL) объявлен в extra `sources-cdc`,
+  а не в `db_drivers`; `aiosqlite` — в `dev-light`/test-extra'ах, не в core.
+- **Закрыто**: `clickhouse-connect>=0.7.0,<1.0.0` и `pyodbc>=5.0.0,<6.0.0`
+  объявлены в extra `db_drivers` (`pyproject.toml:216-217`), lock обновлён
+  (`uv lock` → 681 пакет, `uv lock --check` — зелёный); allowlist'ы очищены
+  (`check_declared_dependencies` 78 → 77 записей, `check_dsn_drivers` — только
+  `ibm_db_sa`); `DB_DRIVER_DECLARATIONS` дополнен `pyodbc`/`clickhouse_connect`;
+  DSN MSSQL sync теперь собирается: `mssql+pyodbc://sa:P%40ssw0rd@host:1433/db`.
+  Гейт `tools/check_dsn_drivers.py` получил разделение scope: в CI блокирует
+  только класс «драйвер не объявлен» (`--scope declarations`), availability
+  требует установленных extras и не блокирует.
+- **Осталось**: `ibm_db_sa` — проприетарный пакет (требует установки IBM DB2),
+  в публичных extras недоступен → остаётся в allowlist. `psycopg[binary]`
+  объявлен в `sources-cdc`, а не в `db_drivers`: prod-образ без этого extra
+  деградирует sync-движок в `None` + warning; перенос — отдельное решение
+  (увеличивает образ).
+- **Риск**: MSSQL/DB2 нельзя сконфигурировать без ручной установки драйвера;
+  в compose-образе (`--extra dev-light`) `oracledb`/`aioodbc`/`aiomysql`
+  тоже отсутствуют.
+- **Срок**: закрыто для `pyodbc`/`clickhouse-connect`; `ibm_db_sa` — Sprint 36+.
+
+---
+
+## G12. Capability-декларации процессоров не проверяются в рантайме
+
+- **Тип**: security-архитектура. **Owner**: platform-team + владелец
+  авторизации.
+- **Статус**: 🟡 ЗАФИКСИРОВАН, ПОЧИНКА ОТЛОЖЕНА (ADR-0361, гриллинг раунды 1–2).
+- **Причина**: `BaseProcessor.auth_check` ведёт в синхронный
+  `AuthorizationGateway.check`, где единственный allow-источник — exact
+  in-memory policy (в проде пусто), sync-хуки Casbin/OPA отсутствуют (есть
+  только async `casbin_step`/`opa_step`), а `CapabilityGate.check` в этом пути
+  не вызывается → **deny для любого** `required_capability` (41+ процессоров).
+  Runtime-проверка: `allowed=False, reason='policy denied: read'`; контрольный
+  эксперимент — после `add_policy("anonymous","read","rpa.file.list","allow")`
+  → allow.
+- **Что сделано в Wave 13**: capability-охват НЕ расширялся (добавление
+  `required_capability` сломало бы процессор); риски закрыты доменными
+  guard'ами (ADR-0359) и path-allowlist (ADR-0358); декларативность
+  зафиксирована гейтом `tools/check_decorative_capabilities.py` (baseline 45).
+- **Шаг (отдельный ADR + владелец)**: кандидаты — единый app-level gateway с
+  OPA/Casbin в processor-пути; либо sync-реализация `_casbin_check`/`_opa_check`;
+  маппинг principal→plugin НЕ рекомендуется (открывает 71 core-capability для
+  `principal=anonymous`).
+
 ---
 
 ## Обновление 2026-09-14 (волны 6–9)

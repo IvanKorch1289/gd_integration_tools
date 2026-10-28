@@ -144,9 +144,18 @@
 | [ADR-0348](0348-services-to-dsl-dependency.md) | Разрешение зависимости `services → dsl` | Draft |
 | [ADR-0349](0349-dsl-response-binding-to.md) | Response-binding (`to:`) в DSL-роутах | Draft |
 | [ADR-0350](0350-remove-dead-code-rate-limiter-cache-keys.md) | Удаление мёртвого кода: `core/rate_limiter/` и `core/utils/cache_keys.py` | Draft |
+| [ADR-0357](0357-storage-presign-capability.md) | Отдельная capability `storage.presign` для presigned-URL (cycle 172) | Accepted |
+| [ADR-0358](0358-dsl-path-allowlist-config.md) | Allowlist файловых путей в конфиг-системе и единый path-барьер DSL (cycle 172) | Accepted |
+| [ADR-0359](0359-dsl-sql-guard-and-infra-db-flag.md) | Канонический SQL-guard для DSL и fail-closed flag для `infra_db_query` (cycle 172) | Accepted |
+| [ADR-0360](0360-cdc-identifier-validation.md) | Allowlist-валидация идентификаторов в CDC (cycle 172) | Accepted |
+| [ADR-0361](0361-capability-enforcement-required-capability-semantics.md) | Семантика `required_capability` у DSL-процессоров: фактический deny-all и план починки | ACCEPTED |
+| [ADR-0362](0362-config-audit-orphan-vs-missing.md) | Двусторонний аудит конфигурации: разделение orphan- и missing-классов, подключение гейта | ACCEPTED |
+| [ADR-0363](0363-db-driver-declarations-and-dependency-gate.md) | Драйверы БД: psycopg3 как sync-дефолт, fail-fast на необъявленный драйвер, гейт объявленных зависимостей | ACCEPTED |
+| [ADR-0364](0364-remove-dead-code-wave13.md) | Удаление мёртвого кода, найденного в Wave 13 | Accepted |
+| [ADR-0365](0365-canonical-sql-identifier-validation.md) | Единый канон валидации SQL-идентификаторов | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 142 ADRs.
+**Total:** 151 ADRs.
 
