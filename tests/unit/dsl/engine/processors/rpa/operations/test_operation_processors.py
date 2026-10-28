@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -52,9 +53,19 @@ class TestFileMoveProcessor:
 
         with patch("shutil.move") as mock_move:
             await processor.process(exchange, MagicMock())
-            mock_move.assert_called_once()
+            mock_move.assert_called_once_with(
+                str(Path(tmp_path / "a.txt").resolve()),
+                str(Path(tmp_path / "b.txt").resolve()),
+            )
 
-        exchange.set_property.assert_called()
+        exchange.set_property.assert_called_once_with(
+            "file_operation",
+            {
+                "mode": "move",
+                "src": str(Path(tmp_path / "a.txt").resolve()),
+                "dst": str(Path(tmp_path / "b.txt").resolve()),
+            },
+        )
 
 
 class TestRegexProcessor:
@@ -71,7 +82,7 @@ class TestRegexProcessor:
 
         await processor.process(exchange, MagicMock())
 
-        exchange.set_property.assert_called()
+        exchange.set_property.assert_called_once_with("result", ["123", "456"])
 
 
 class TestTemplateRenderProcessor:
@@ -88,7 +99,8 @@ class TestTemplateRenderProcessor:
 
         await processor.process(exchange, MagicMock())
 
-        exchange.set_property.assert_called()
+        exchange.set_out.assert_called_once_with(body="Hello World", headers={})
+        exchange.set_property.assert_called_once_with("template_rendered", True)
 
 
 class TestHashProcessor:
@@ -105,7 +117,9 @@ class TestHashProcessor:
 
         await processor.process(exchange, MagicMock())
 
-        exchange.set_property.assert_called()
+        expected = hashlib.sha256(b"test data").hexdigest()
+        exchange.set_property.assert_any_call("hash", expected)
+        exchange.set_property.assert_any_call("hash_algorithm", "sha256")
 
 
 class TestEncryptProcessor:
@@ -128,7 +142,11 @@ class TestEncryptProcessor:
             mock_fernet.return_value = mock_instance
             await processor.process(exchange, MagicMock())
 
-        exchange.set_property.assert_called()
+        # Ключ и данные передаются в Fernet — иначе тест проходит
+        # даже при шифровании неверного payload.
+        mock_fernet.assert_called_once_with(b"secret-key-1234567890123456")
+        mock_instance.encrypt.assert_called_once_with(b"sensitive data")
+        exchange.set_property.assert_called_once_with("encrypted", b"encrypted")
 
 
 class TestDecryptProcessor:
@@ -151,4 +169,6 @@ class TestDecryptProcessor:
             mock_fernet.return_value = mock_instance
             await processor.process(exchange, MagicMock())
 
-        exchange.set_property.assert_called()
+        mock_fernet.assert_called_once_with(b"secret-key-1234567890123456")
+        mock_instance.decrypt.assert_called_once_with(b"encrypted data")
+        exchange.set_property.assert_called_once_with("decrypted", b"decrypted")
