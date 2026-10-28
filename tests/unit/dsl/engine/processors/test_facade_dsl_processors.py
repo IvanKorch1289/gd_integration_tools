@@ -244,22 +244,25 @@ class TestInfraDbQueryProcessor:
         assert p.sql == "SELECT 1"
 
     @pytest.mark.asyncio
-    async def test_executes_sql_query(self) -> None:
+    async def test_executes_sql_query(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from src.backend.core.config.features import feature_flags
         from src.backend.dsl.engine.processors.infra_db import InfraDbQueryProcessor
 
+        # infra_db_query за feature-флагом (default-OFF, Wave 13/Q13).
+        monkeypatch.setattr(feature_flags, "infra_db_query_enabled", True)
         p = InfraDbQueryProcessor(sql="SELECT 1", to="body.result")
         ex = MagicMock()
         body = {}
         ex.in_message.body = body
         ex.set_property = MagicMock()
         ctx = MagicMock()
-        # Mock session manager
+        # Mock session manager (DatabaseSessionManager.create_session)
         session = MagicMock()
         session.execute = AsyncMock(return_value=[{"?column?": 1}])
         sm = MagicMock()
-        sm.session = MagicMock()
-        sm.session.return_value.__aenter__ = AsyncMock(return_value=session)
-        sm.session.return_value.__aexit__ = AsyncMock(return_value=None)
+        sm.create_session = MagicMock()
+        sm.create_session.return_value.__aenter__ = AsyncMock(return_value=session)
+        sm.create_session.return_value.__aexit__ = AsyncMock(return_value=None)
         get_sm = MagicMock(return_value=sm)
         with patch(
             "src.backend.core.di.providers.infrastructure_locator.get_main_session_manager_getter",

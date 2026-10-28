@@ -9,6 +9,10 @@
 * SQL передаётся через ``sqlalchemy.text`` с bind-параметрами;
 * identifier-инъекция невозможна, т.к. динамика идёт только через
   bind-параметры (никакого f-string SQL);
+* SQL проходит общий guard :func:`validate_sql`
+  (``src.backend.dsl.engine.processors._sql_validation``) — multi-statement и
+  DDL/privilege команды (``DROP``/``ALTER``/``TRUNCATE``/``CREATE``/``GRANT``/
+  ``REVOKE``) запрещены;
 * для жёстких whitelist-сценариев см. ``ExternalDatabaseService``.
 
 Контракт DSL::
@@ -28,6 +32,7 @@ from typing import Any, ClassVar
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors._sql_validation import validate_sql
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = ("ExternalDbQueryProcessor",)
@@ -100,8 +105,21 @@ class ExternalDbQueryProcessor(BaseProcessor):
 
         from src.backend.core.di.providers import get_external_session_manager_provider
 
-        # S202 fix: внешний SQL требует capability (DB access — read/write).
+        # NOTE (Wave 13 / Q14): ``required_capability`` намеренно НЕ задан
+        # (в отличие от S202-фиксов в ``export``/``vault_secret``).
+        # В текущем рантайме ``BaseProcessor.auth_check`` для ЛЮБОГО
+        # ``required_capability`` возвращает deny (sync-политики
+        # ``AuthorizationGateway.check`` — пустые in-memory, Casbin/OPA
+        # sync-хуки отсутствуют) → процессор был бы заблокирован целиком.
+        # Capability-барьер — отдельная задача (ADR); здесь SQL-guard
+        # (см. ``validate_sql``) — независимый слой защиты.
         if not await self.auth_check(exchange, action="query"):
+            return
+
+        try:
+            validate_sql(self._sql)
+        except ValueError as exc:
+            exchange.fail(f"SQL validation failed: {exc}")
             return
 
         params = self._collect_params(exchange)

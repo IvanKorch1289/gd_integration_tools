@@ -58,6 +58,7 @@ created = "2026-09-22"
 "flagsmith_provider" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
 "frontend_action_bus_ui" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
 "frontend_workflow_logs_page" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
+"infra_db_query_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2027-04-19", reason = "Wave 13/Q13: fail-closed для DSL-шага infra_db_query (S-27), default-OFF" }
 "granian_rsgi_mode_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
 "guardrails_per_tenant" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }
 "hitl_panel_enabled" = { owner = "TBD@bank.local", issue = "https://github.com/bank/platform/issues/TBD", expires = "2026-10-22", reason = "auto-extracted, awaiting owner registration" }

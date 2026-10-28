@@ -14,8 +14,11 @@ import pytest
 
 
 class TestInfraClickHouseQueryProcessor:
+    """Тесты процессора аналитического ClickHouse-запроса."""
+
     @pytest.mark.asyncio
     async def test_processor_exists(self) -> None:
+        """Проверяет создание процессора."""
         from src.backend.dsl.engine.processors.infra_clickhouse import (
             InfraClickHouseQueryProcessor,
         )
@@ -25,13 +28,13 @@ class TestInfraClickHouseQueryProcessor:
 
     @pytest.mark.asyncio
     async def test_executes_clickhouse_query(self) -> None:
+        """Проверяет выполнение SELECT через ClickHouse-клиент."""
         from src.backend.dsl.engine.processors.infra_clickhouse import (
             InfraClickHouseQueryProcessor,
         )
 
-        p = InfraClickHouseQueryProcessor(
-            sql="SELECT count() FROM events", to="body.result"
-        )
+        sql = "SELECT count() FROM events"
+        p = InfraClickHouseQueryProcessor(sql=sql, to="body.result")
         ex = MagicMock()
         body = {}
         ex.in_message.body = body
@@ -47,11 +50,65 @@ class TestInfraClickHouseQueryProcessor:
         ):
             await p.process(ex, ctx)
         assert body.get("result") == [{"count": 42}]
+        client.query.assert_awaited_once_with(sql)
+
+    @pytest.mark.asyncio
+    async def test_rejects_ddl_without_querying_clickhouse(self) -> None:
+        """DDL отклоняется до обращения к ClickHouse."""
+        from src.backend.dsl.engine.processors.infra_clickhouse import (
+            InfraClickHouseQueryProcessor,
+        )
+
+        p = InfraClickHouseQueryProcessor(sql="DROP TABLE events")
+        ex = MagicMock()
+        ctx = MagicMock()
+        client = MagicMock()
+        client.query = AsyncMock()
+        ch_class = MagicMock(return_value=client)
+        with patch(
+            "src.backend.core.di.providers.infrastructure_locator.get_clickhouse_client_class",
+            return_value=ch_class,
+        ):
+            await p.process(ex, ctx)
+
+        ex.fail.assert_called_once_with(
+            "SQL validation failed: SQL command 'DROP' is not allowed"
+        )
+        ch_class.assert_not_called()
+        client.query.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_rejects_multi_statement_without_querying_clickhouse(self) -> None:
+        """Multi-statement отклоняется до обращения к ClickHouse."""
+        from src.backend.dsl.engine.processors.infra_clickhouse import (
+            InfraClickHouseQueryProcessor,
+        )
+
+        p = InfraClickHouseQueryProcessor(sql="SELECT 1; SELECT 2")
+        ex = MagicMock()
+        ctx = MagicMock()
+        client = MagicMock()
+        client.query = AsyncMock()
+        ch_class = MagicMock(return_value=client)
+        with patch(
+            "src.backend.core.di.providers.infrastructure_locator.get_clickhouse_client_class",
+            return_value=ch_class,
+        ):
+            await p.process(ex, ctx)
+
+        ex.fail.assert_called_once_with(
+            "SQL validation failed: Multi-statement SQL is not allowed"
+        )
+        ch_class.assert_not_called()
+        client.query.assert_not_awaited()
 
 
 class TestInfraMongoDBFindProcessor:
+    """Тесты процессора поиска документов MongoDB."""
+
     @pytest.mark.asyncio
     async def test_processor_exists(self) -> None:
+        """Проверяет создание процессора."""
         from src.backend.dsl.engine.processors.infra_mongodb import (
             InfraMongoDBFindProcessor,
         )
@@ -64,6 +121,7 @@ class TestInfraMongoDBFindProcessor:
 
     @pytest.mark.asyncio
     async def test_executes_mongodb_find(self) -> None:
+        """Проверяет выполнение поиска через MongoDB-клиент."""
         from src.backend.dsl.engine.processors.infra_mongodb import (
             InfraMongoDBFindProcessor,
         )
@@ -91,8 +149,11 @@ class TestInfraMongoDBFindProcessor:
 
 
 class TestInfraKafkaProduceProcessor:
+    """Тесты процессора отправки сообщения в Kafka."""
+
     @pytest.mark.asyncio
     async def test_processor_exists(self) -> None:
+        """Проверяет создание процессора."""
         from src.backend.dsl.engine.processors.infra_kafka import (
             InfraKafkaProduceProcessor,
         )
@@ -102,6 +163,7 @@ class TestInfraKafkaProduceProcessor:
 
     @pytest.mark.asyncio
     async def test_produces_kafka_message(self) -> None:
+        """Проверяет отправку сообщения через Kafka-продюсер."""
         from src.backend.dsl.engine.processors.infra_kafka import (
             InfraKafkaProduceProcessor,
         )

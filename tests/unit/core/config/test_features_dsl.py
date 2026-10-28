@@ -44,8 +44,13 @@ class TestDSLFlagsClass:
     def test_dsl_field_count(self) -> None:
         fields = DSLFlags.model_fields
         names = list(fields.keys())
-        # 12 K5 DSL + K3 sources fields
-        assert len(names) == 12
+        # 13 K5 DSL + K3 sources fields
+        assert len(names) == 13
+
+    def test_infra_db_query_flag_is_default_off(self) -> None:
+        """infra_db_query — fail-closed по умолчанию (Wave 13/Q13, S-27)."""
+        flags = DSLFlags()
+        assert flags.infra_db_query_enabled is False
 
 
 class TestDSLFlagsComposition:
@@ -58,6 +63,7 @@ class TestDSLFlagsComposition:
             "graphql_subscription_source",
             "email_imap_source",
             "notification_dsl_enabled",
+            "infra_db_query_enabled",
         ):
             assert hasattr(feature_flags, f), f"feature_flags missing {f}"
 

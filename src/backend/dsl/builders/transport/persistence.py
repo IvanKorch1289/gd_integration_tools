@@ -279,10 +279,7 @@ class PersistenceMixin:
         )
 
     def infra_db_query(
-        self,
-        sql: str,
-        *,
-        to: str = "body.result",
+        self, sql: str, *, to: str = "body.result", params: dict[str, Any] | None = None
     ) -> RouteBuilder:
         """SQL-запрос через инфраструктурный facade session manager.
 
@@ -291,12 +288,18 @@ class PersistenceMixin:
         падал с ``ValueError: Unknown or forbidden processor 'infra_db_query'``.
         Тем самым заявленная в документации возможность была недостижима из
         маршрута.
+
+        Wave 13/Q13 (S-27): шаг за feature-флагом
+        ``feature_flags.infra_db_query_enabled`` (default-OFF) — без флага
+        шаг fail-closed. ``params`` — bind-параметры для ``:name``-
+        плейсхолдеров (значения не конкатенируются в SQL).
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.infra_db",
             "InfraDbQueryProcessor",
             sql=sql,
             to=to,
+            params=params,
         )
 
     def db_query_external(

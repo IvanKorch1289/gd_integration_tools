@@ -30,6 +30,10 @@ from sqlalchemy import text
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors._sql_validation import (
+    FORBIDDEN_SQL,
+    validate_sql,
+)
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 if TYPE_CHECKING:
@@ -57,9 +61,7 @@ class JdbcQueryProcessor(BaseProcessor):
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL
     compensatable: ClassVar[bool] = True
 
-    _FORBIDDEN_SQL: ClassVar[frozenset[str]] = frozenset(
-        {"DROP", "ALTER", "TRUNCATE", "CREATE", "GRANT", "REVOKE"}
-    )
+    _FORBIDDEN_SQL: ClassVar[frozenset[str]] = FORBIDDEN_SQL
 
     def __init__(
         self,
@@ -82,13 +84,13 @@ class JdbcQueryProcessor(BaseProcessor):
 
     @staticmethod
     def _validate_sql(sql: str) -> None:
-        """Block dangerous SQL: multi-statement, DDL, privilege commands."""
-        stripped = sql.strip().rstrip(";")
-        if ";" in stripped:
-            raise ValueError("Multi-statement SQL is not allowed")
-        first_word = stripped.split()[0].upper() if stripped else ""
-        if first_word in JdbcQueryProcessor._FORBIDDEN_SQL:
-            raise ValueError(f"SQL command '{first_word}' is not allowed")
+        """Block dangerous SQL: multi-statement, DDL, privilege commands.
+
+        Delegated в общий helper (Wave 13/Q13) — канонизация копий
+        ``_validate_sql`` из ``jdbc_query`` / ``databasequeryprocessor`` /
+        ``infra_db`` в один модуль.
+        """
+        validate_sql(sql)
 
     def _collect_params(self, exchange: Exchange[Any]) -> dict[str, Any]:
         """Collect bind-parameters from the configured source."""

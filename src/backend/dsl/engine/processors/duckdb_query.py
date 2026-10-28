@@ -14,6 +14,13 @@ SQL над body / lookup-таблицами без поднятия отдель
 DuckDB соединение — in-process (default). Опция ``persistent_path``
 открывает файл-БД (с auto-checkpoint).
 
+Безопасность: SQL проходит общий guard :func:`validate_sql`
+(``src.backend.dsl.engine.processors._sql_validation``) — multi-statement и
+DDL/privilege-команды (``DROP``/``ALTER``/``TRUNCATE``/``CREATE``/``GRANT``/
+``REVOKE``) запрещены. Embedded-движок не значит «безопасно»: при
+``persistent_path`` данные переживают перезапуск, а DuckDB даёт доступ к
+файловой системе (``read_csv``/``COPY TO``).
+
 Все процессоры — pure-аналитика (``side_effect=PURE``).
 """
 
@@ -24,6 +31,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
+from src.backend.dsl.engine.processors._sql_validation import validate_sql
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:
@@ -80,6 +88,12 @@ class DuckDbQueryProcessor(BaseProcessor):
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет SQL и кладёт результат в body как list[dict]."""
+        try:
+            validate_sql(self._sql)
+        except ValueError as exc:
+            exchange.fail(f"SQL validation failed: {exc}")
+            return
+
         try:
             # Optional dependency is resolved lazily; its runtime API is exercised
             # through DuckDB's own connection object, so no package-wide stub is needed.

@@ -1,6 +1,6 @@
 """DSL feature-flags (T1.3.8 split from core.config.features.__init__).
 
-Извлечено 12 flags из K5 — DSL + K3 — sources (S38 P1.1 epic, T1.3.8 PR):
+Извлечено 13 flags из K5 — DSL + K3 — sources (S38 P1.1 epic, T1.3.8 PR):
 - frontend_schema_registry_ui (K5 W1)
 - frontend_action_bus_ui (K5 W2)
 - dsl_processor_registry_strict (K5 W3)
@@ -13,6 +13,7 @@
 - graphql_subscription_source (K3 W5)
 - email_imap_source (K3 W5)
 - notification_dsl_enabled (K3 W1)
+- infra_db_query_enabled (Wave 13 / Q13 — fail-closed для infra_db_query)
 
 Future T1.3.8.5+ extensions (Sprint 5/6/7 K3 DSL sections, ~60 fields).
 """
@@ -173,6 +174,22 @@ class DSLFlags(BaseSettings):
             "Активирует AppriseNotificationService и DSL-процессор notify_apprise. "
             "100+ backends: Slack/Telegram/Discord/Email/SMS и др. "
             "default-OFF до установки 'apprise>=1.9.0' в S3 cutover и staging-smoke."
+        ),
+    )
+
+    infra_db_query_enabled: bool = Field(
+        default=False,
+        title="Wave 13/Q13: DSL-шаг infra_db_query (произвольный SQL к внутренней БД)",
+        description=(
+            "Wave 13 (Q13), аудит S-27. Owner: K3 DSL. "
+            "Активирует DSL-процессор infra_db_query — произвольный SQL "
+            "(SELECT/DML) к ВНУТРЕННЕЙ БД через инфраструктурный session manager. "
+            "Тот же класс риска, что и отключённый script_runner (RCE), поэтому "
+            "default-OFF: при выключенном флаге шаг fail-closed — понятная ошибка "
+            "и НОЛЬ SQL-вызовов. При включении дополнительно работает SQL-валидация "
+            "(multi-statement и DDL/GRANT/REVOKE запрещены) и bind-параметры "
+            "(text() + params). Capability-барьер (required_capability) НЕ задан "
+            "намеренно: capability-путь сейчас deny-all — отдельная ADR-задача."
         ),
     )
 

@@ -5,12 +5,16 @@ ClickHouse analytical queries через facade::
     - infra_clickhouse_query:
         sql: "SELECT count() FROM events WHERE ts > now() - 3600"
         to: body.result
+
+SQL проходит канонический guard: multi-statement и DDL/privilege-команды
+запрещены.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from src.backend.dsl.engine.processors._sql_validation import validate_sql
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
 
@@ -39,7 +43,13 @@ class InfraClickHouseQueryProcessor(BaseProcessor):
         self.target = to
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Метод process (см. signature)."""
+        """Выполняет валидированный SQL-запрос к ClickHouse."""
+        try:
+            validate_sql(self.sql)
+        except ValueError as exc:
+            exchange.fail(f"SQL validation failed: {exc}")
+            return
+
         from src.backend.core.di.providers.infrastructure_locator import (
             get_clickhouse_client_class,
         )

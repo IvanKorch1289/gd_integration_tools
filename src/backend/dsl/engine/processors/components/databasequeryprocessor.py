@@ -10,6 +10,10 @@ from typing import Any
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.processors._sql_validation import (
+    FORBIDDEN_SQL,
+    validate_sql,
+)
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _comp_logger = get_logger("dsl.components")
@@ -41,17 +45,17 @@ class DatabaseQueryProcessor(BaseProcessor):
         self._params = dict(params) if params is not None else None
         self._result_property = result_property
 
-    _FORBIDDEN_SQL = {"DROP", "ALTER", "TRUNCATE", "CREATE", "GRANT", "REVOKE"}
+    _FORBIDDEN_SQL = FORBIDDEN_SQL
 
     @staticmethod
     def _validate_sql(sql: str) -> None:
-        """Block dangerous SQL: multi-statement, DDL, privilege commands."""
-        stripped = sql.strip().rstrip(";")
-        if ";" in stripped:
-            raise ValueError("Multi-statement SQL is not allowed")
-        first_word = stripped.split()[0].upper() if stripped else ""
-        if first_word in DatabaseQueryProcessor._FORBIDDEN_SQL:
-            raise ValueError(f"SQL command '{first_word}' is not allowed")
+        """Block dangerous SQL: multi-statement, DDL, privilege commands.
+
+        Delegated в общий helper (Wave 13/Q13) — канонизация копий
+        ``_validate_sql`` из ``jdbc_query`` / ``databasequeryprocessor`` /
+        ``infra_db`` в один модуль.
+        """
+        validate_sql(sql)
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Выполняет параметризованный SQL-запрос с валидацией и пишет результат в exchange."""
