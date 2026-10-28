@@ -117,6 +117,40 @@ class TestQuotaResetWithoutRedis:
         assert await mgr.reset_tenant("acme") is False
 
 
+class _ClusterStrictRedis:
+    """Redis-заглушка, имитирующая RedisCluster: multi-key ``DEL`` → CROSSSLOT.
+
+    ``delete`` с более чем одним ключом бросает ``RuntimeError`` (как реальный
+    RedisCluster) и запоминает вызов — тест может проверить, что multi-key
+    ``DEL`` вообще не отправлялся.
+    """
+
+    def __init__(self) -> None:
+        self.delete_calls: list[tuple[str, ...]] = []
+
+    async def delete(self, *keys: str) -> int:
+        """Удаляет ключи; multi-key вызов → CROSSSLOT-ошибка."""
+        self.delete_calls.append(keys)
+        if len(keys) > 1:
+            raise RuntimeError("CROSSSLOT Keys in request don't hash to the same slot")
+        return len(keys)
+
+
+class TestQuotaResetClusterSafe:
+    """``reset_tenant`` удаляет ключи по одному (RedisCluster CROSSSLOT)."""
+
+    async def test_reset_tenant_deletes_keys_individually(self) -> None:
+        """Ни один DEL не содержит больше одного ключа — иначе CROSSSLOT."""
+        redis_client = _ClusterStrictRedis()
+        mgr = TenantFileQuotaManager(redis_client=redis_client)
+
+        assert await mgr.reset_tenant("acme") is True
+        assert redis_client.delete_calls == [
+            ("gd:tenant_file_count:acme",),
+            ("gd:tenant_file_bytes:acme",),
+        ]
+
+
 class TestQuotaCheckResult:
     """Tests for :class:`QuotaCheckResult` serialization."""
 

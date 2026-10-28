@@ -8,6 +8,7 @@ S3 (ledger, 2026-09-05): выделение зон ответственност�
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from cachetools import TTLCache
@@ -205,7 +206,21 @@ class JwtBlacklistMixin:
                         cursor, match=pattern, count=100
                     )
                     if keys:
-                        await self._jwt_blacklist._redis.delete(*keys)  # type: ignore[attr-defined]
+                        # Cluster-safe: каждый ключ — ОТДЕЛЬНЫМ одноключевым DEL.
+                        # Ключи из SCAN лежат в разных hash-слотах, поэтому один
+                        # multi-key DEL упал бы с CROSSSLOT на RedisCluster.
+                        # ponytail: потолок решения — до N round-trip'ов (по
+                        # одному на ключ) вместо одного multi-key DEL; это
+                        # осознанный компромисс в пользу cluster-корректности.
+                        # Апгрейд при большом N — pipeline с per-key командами
+                        # (``pipe.delete(key)`` для каждого ключа): pipeline
+                        # разбрасывает команды по нодам, CROSSSLOT не возникает.
+                        await asyncio.gather(
+                            *(
+                                self._jwt_blacklist._redis.delete(key)  # type: ignore[attr-defined]
+                                for key in keys
+                            )
+                        )
                     if cursor == 0:
                         break
             else:

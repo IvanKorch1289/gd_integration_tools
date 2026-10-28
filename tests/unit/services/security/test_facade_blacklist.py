@@ -33,6 +33,32 @@ def _redis_like_mock() -> MagicMock:
     return mock
 
 
+class _ClusterStrictRedis:
+    """Redis-заглушка, имитирующая RedisCluster: multi-key ``DEL`` → CROSSSLOT.
+
+    ``delete`` с более чем одним ключом бросает ``RuntimeError`` (как реальный
+    RedisCluster) и запоминает вызов — тест может проверить, что multi-key
+    ``DEL`` вообще не отправлялся.
+    """
+
+    def __init__(self, pages: list[tuple[int, list[bytes]]]) -> None:
+        self._pages = list(pages)
+        self.delete_calls: list[tuple[bytes, ...]] = []
+
+    async def scan(
+        self, cursor: int, *, match: str | None = None, count: int | None = None
+    ) -> tuple[int, list[bytes]]:
+        """Отдаёт следующую страницу SCAN-выборки."""
+        return self._pages.pop(0)
+
+    async def delete(self, *keys: bytes) -> int:
+        """Удаляет ключи; multi-key вызов → CROSSSLOT-ошибка."""
+        self.delete_calls.append(keys)
+        if len(keys) > 1:
+            raise RuntimeError("CROSSSLOT Keys in request don't hash to the same slot")
+        return len(keys)
+
+
 # ── no-op методы in-memory fallback ─────────────────────────────────
 
 
@@ -122,7 +148,26 @@ async def test_clear_blacklist_redis_scan_pagination() -> None:
     redis_like._redis.scan = AsyncMock(side_effect=[(5, [b"bl:a", b"bl:b"]), (0, [])])
     facade = _facade_with_blacklist(redis_like)
     await facade.clear_blacklist()
-    redis_like._redis.delete.assert_any_await(b"bl:a", b"bl:b")
+    # Каждый ключ — ОТДЕЛЬНЫМ одноключевым DEL (multi-key DEL → CROSSSLOT).
+    calls = redis_like._redis.delete.await_args_list
+    assert [c.args for c in calls] == [(b"bl:a",), (b"bl:b",)]
+
+
+@pytest.mark.asyncio
+async def test_clear_blacklist_deletes_keys_individually() -> None:
+    """Ключи из SCAN удаляются по одному — multi-key DEL недопустим в cluster.
+
+    Ключи из SCAN-выборки лежат в РАЗНЫХ hash-слотах, поэтому один
+    multi-key ``DEL`` упал бы с CROSSSLOT на RedisCluster.
+    """
+    redis_client = _ClusterStrictRedis([(5, [b"bl:a", b"bl:b"]), (0, [])])
+    blacklist = MagicMock(spec=RedisJwtBlacklist)
+    blacklist._redis = redis_client
+    blacklist._key = MagicMock(side_effect=lambda jti: f"bl:{jti}")
+    blacklist._prefix = "bl:"
+    facade = _facade_with_blacklist(blacklist)
+    await facade.clear_blacklist()
+    assert redis_client.delete_calls == [(b"bl:a",), (b"bl:b",)]
 
 
 @pytest.mark.asyncio

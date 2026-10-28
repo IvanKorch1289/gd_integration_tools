@@ -79,6 +79,20 @@ class _HealthyRedis:
         return removed
 
 
+class _ClusterStrictRedis:
+    """Redis-заглушка, имитирующая RedisCluster: multi-key ``DEL`` → CROSSSLOT."""
+
+    def __init__(self) -> None:
+        self.delete_calls: list[tuple[str, ...]] = []
+
+    async def delete(self, *keys: str) -> int:
+        """Удаляет ключи; multi-key вызов → CROSSSLOT-ошибка."""
+        self.delete_calls.append(keys)
+        if len(keys) > 1:
+            raise RuntimeError("CROSSSLOT Keys in request don't hash to the same slot")
+        return len(keys)
+
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -181,6 +195,33 @@ async def test_proxy_delete_returns_zero_on_redis_down() -> None:
     result = await proxy.delete("any:key")
 
     assert result == 0
+
+
+@pytest.mark.asyncio
+async def test_proxy_delete_never_sends_multi_key_del() -> None:
+    """Proxy не отправляет multi-key ``DEL`` (CROSSSLOT в RedisCluster).
+
+    ``_LazyRedisProxy.delete`` — varargs-passthrough в сырой redis-клиент,
+    поэтому каждый ключ удаляется ОТДЕЛЬНЫМ одноключевым DEL.
+    """
+    client = _ClusterStrictRedis()
+    proxy = _LazyRedisProxy(resolver=lambda: client)
+
+    removed = await proxy.delete("idem:pending:a", "idem:pending:b")
+
+    assert client.delete_calls == [("idem:pending:a",), ("idem:pending:b",)]
+    assert removed == 2
+
+
+@pytest.mark.asyncio
+async def test_backend_clear_idempotency_key_sends_single_key_del() -> None:
+    """``clear_idempotency_key`` удаляет ровно один pending-ключ (один DEL)."""
+    client = _ClusterStrictRedis()
+    backend = RedisNxBackend(_LazyRedisProxy(resolver=lambda: client))
+
+    await backend.clear_idempotency_key("abc")
+
+    assert client.delete_calls == [("idem:pending:abc",)]
 
 
 # ---------------------------------------------------------------------------

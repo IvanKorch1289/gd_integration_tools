@@ -92,9 +92,26 @@ async def test_delete_single_key(backend: RedisBackend, client: AsyncMock) -> No
 
 
 async def test_delete_multiple_keys(backend: RedisBackend, client: AsyncMock) -> None:
-    """``delete`` для нескольких ключей передаёт все аргументы за один вызов."""
+    """``delete`` для нескольких ключей удаляет каждый ключ ОТДЕЛЬНЫМ вызовом.
+
+    Multi-key ``DEL`` в RedisCluster даёт CROSSSLOT, если ключи попали в
+    разные hash-слоты, поэтому каждый ключ удаляется одним одноключевым DEL.
+    """
     await backend.delete("a", "b", "c")
-    client.delete.assert_awaited_once_with("a", "b", "c")
+    calls = client.delete.await_args_list
+    assert [c.args for c in calls] == [("a",), ("b",), ("c",)]
+
+
+async def test_delete_multiple_keys_never_sends_multi_key_del(
+    backend: RedisBackend, client: AsyncMock
+) -> None:
+    """Ни один DEL не содержит больше одного ключа (cluster-safe)."""
+    await backend.delete("a", "b", "c")
+    calls = client.delete.await_args_list
+    assert calls
+    assert all(len(c.args) == 1 for c in calls), (
+        f"multi-key DEL недопустим в cluster-режиме: {[c.args for c in calls]}"
+    )
 
 
 async def test_delete_no_keys_skips_call(
@@ -159,19 +176,19 @@ async def test_delete_by_tag_removes_all_tagged_keys(
 
     assert removed == 2
     client.smembers.assert_awaited_once_with("__cache_tag:entity:orders")
-    # delete(*keys) — один вызов с двумя str-аргументами, затем DEL tag-index
-    assert client.delete.await_count == 2
-    # Проверяем структуру: первая DEL — ключи (str, порядок не определён),
-    # вторая DEL — tag-index
-    calls = client.delete.call_args_list
-    # Tag-index DEL — всегда str, без __cache_tag: префикса в начале
-    tag_del = [c for c in calls if c.args and c.args[0] == "__cache_tag:entity:orders"]
-    key_del = [c for c in calls if c.args and c.args[0] != "__cache_tag:entity:orders"]
+    # Каждый теговый ключ — отдельный одноключевой DEL, плюс отдельный
+    # DEL tag-index. Итого 3 вызова.
+    assert client.delete.await_count == 3
+    calls = client.delete.await_args_list
+    tag_del = [c for c in calls if c.args == ("__cache_tag:entity:orders",)]
+    key_del = [c for c in calls if c.args != ("__cache_tag:entity:orders",)]
     assert len(tag_del) == 1
-    assert len(key_del) == 1
-    # Ключи — str, два аргумента
-    assert len(key_del[0].args) == 2
-    assert all(isinstance(k, str) for k in key_del[0].args)
+    # Два теговых ключа удалены ОТДЕЛЬНЫМИ одноключевыми DEL
+    assert len(key_del) == 2
+    assert all(len(c.args) == 1 for c in key_del)
+    # Ключи — str (bytes декодированы)
+    assert all(isinstance(c.args[0], str) for c in key_del)
+    assert {c.args[0] for c in key_del} == {"orders:1", "orders:2"}
 
 
 async def test_delete_by_tag_empty_returns_zero(
@@ -193,14 +210,34 @@ async def test_delete_by_tag_decodes_bytes_keys(
     await backend.delete_by_tag("table:orders")
 
     # Проверяем что DEL вызван с str-ключами (bytes декодированы)
-    calls = client.delete.call_args_list
-    assert len(calls) == 2
-    # Первый вызов: delete(key1, key2) — ключи декодированы в str
-    key_call_args = calls[0].args
+    calls = client.delete.await_args_list
+    assert len(calls) == 3
+    # Два теговых ключа — ОТДЕЛЬНЫМИ одноключевыми DEL
+    key_call_args = [
+        c.args[0] for c in calls if c.args != ("__cache_tag:table:orders",)
+    ]
     assert all(isinstance(k, str) for k in key_call_args)
     assert set(key_call_args) == {"cache:key:1", "cache:key:2"}
-    # Второй вызов: DEL tag-index
-    assert calls[1].args == ("__cache_tag:table:orders",)
+    # Отдельный вызов: DEL tag-index
+    assert calls[-1].args == ("__cache_tag:table:orders",)
+
+
+async def test_delete_by_tag_deletes_index_key_separately(
+    backend: RedisBackend, client: AsyncMock
+) -> None:
+    """Индексный ключ тега удаляется ОТДЕЛЬНЫМ одноключевым DEL."""
+    client.smembers.return_value = {b"orders:1", b"orders:2"}
+    await backend.delete_by_tag("entity:orders")
+
+    calls = client.delete.await_args_list
+    index_calls = [c for c in calls if c.args == ("__cache_tag:entity:orders",)]
+    key_calls = [c for c in calls if c.args != ("__cache_tag:entity:orders",)]
+    assert len(index_calls) == 1
+    assert len(key_calls) == 2
+    # Ни один вызов не multi-key — иначе CROSSSLOT в cluster-режиме
+    assert all(len(c.args) == 1 for c in calls), (
+        f"multi-key DEL недопустим в cluster-режиме: {[c.args for c in calls]}"
+    )
 
 
 async def test_delete_by_pattern_returns_count(

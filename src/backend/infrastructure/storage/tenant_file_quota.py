@@ -53,6 +53,7 @@ Refs:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from typing import Any
@@ -342,7 +343,15 @@ class TenantFileQuotaManager:
             return False
         try:
             keys = [f"{COUNT_KEY_PREFIX}{tenant_id}", f"{BYTES_KEY_PREFIX}{tenant_id}"]
-            await self._redis.delete(*keys)
+            # Cluster-safe: каждый ключ — ОТДЕЛЬНЫМ одноключевым DEL.
+            # Multi-key DEL в RedisCluster падает с CROSSSLOT, если ключи
+            # попали в разные hash-слоты.
+            # ponytail: потолок решения — до N round-trip'ов (по одному на
+            # ключ) вместо одного multi-key DEL; осознанный компромисс в пользу
+            # cluster-корректности. Апгрейд при большом N — pipeline с per-key
+            # командами (``pipe.delete(key)`` для каждого ключа): pipeline
+            # разбрасывает команды по нодам и CROSSSLOT не возникает.
+            await asyncio.gather(*(self._redis.delete(key) for key in keys))
             _logger.info("tenant file quota reset: tenant=%s", tenant_id)
             return True
         except Exception as exc:

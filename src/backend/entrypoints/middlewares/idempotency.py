@@ -232,8 +232,29 @@ class _LazyRedisProxy:
             return True
 
     async def delete(self, *keys: str) -> int:
+        """Удаляет ключи, каждый — ОТДЕЛЬНЫМ одноключевым DEL.
+
+        Cluster-safe: multi-key ``DEL`` в RedisCluster падает с CROSSSLOT,
+        если ключи попали в разные hash-слоты.
+
+        ponytail: потолок решения — до N round-trip'ов (по одному на ключ)
+        вместо одного multi-key DEL; это осознанный компромисс в пользу
+        cluster-корректности. Апгрейд при большом N — pipeline с per-key
+        командами (``pipe.delete(key)`` для каждого ключа): pipeline
+        разбрасывает команды по нодам и CROSSSLOT не возникает.
+
+        Args:
+            keys: Ключи для удаления.
+
+        Returns:
+            Число удалённых ключей (0 — если Redis недоступен).
+        """
         try:
-            return await self._client().delete(*keys)
+            client = self._client()
+            removed = 0
+            for key in keys:
+                removed += await client.delete(key)
+            return removed
         except _REDIS_DOWN_EXC as exc:
             _logger.warning(
                 "IdempotencyMiddleware: Redis недоступен (delete keys=%s), degraded: %s",

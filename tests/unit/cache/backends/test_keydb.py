@@ -85,9 +85,14 @@ async def test_set_without_ttl(backend: KeyDBBackend, client: AsyncMock) -> None
 
 
 async def test_delete_multiple(backend: KeyDBBackend, client: AsyncMock) -> None:
-    """``delete`` нескольких ключей — один вызов client.delete."""
+    """``delete`` нескольких ключей — по одному вызову client.delete на ключ.
+
+    Multi-key DEL в cluster-режиме → CROSSSLOT, поэтому наследуется
+    поведение ``RedisBackend.delete``.
+    """
     await backend.delete("a", "b")
-    client.delete.assert_awaited_once_with("a", "b")
+    calls = client.delete.await_args_list
+    assert [c.args for c in calls] == [("a",), ("b",)]
 
 
 async def test_delete_no_keys(backend: KeyDBBackend, client: AsyncMock) -> None:

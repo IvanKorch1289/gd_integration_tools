@@ -17,6 +17,7 @@ Tag-index (Wave 2.3): добавлены ``bind_key_to_tag`` и ``delete_by_tag`
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 from src.backend.core.interfaces.cache import CacheBackend
@@ -64,12 +65,23 @@ class RedisBackend(CacheBackend):
     async def delete(self, *keys: str) -> None:
         """Delete values from Redis cache.
 
+        Каждый ключ удаляется ОТДЕЛЬНЫМ одноключевым ``DEL``: multi-key
+        ``DEL`` в RedisCluster падает с ``CROSSSLOT``, если ключи попали в
+        разные hash-слоты.
+
+        ponytail: потолок решения — до N round-trip'ов (по одному на ключ)
+        вместо одного multi-key DEL; это осознанный компромисс в пользу
+        cluster-корректности. Апгрейд при большом N — pipeline с per-key
+        командами (``pipe.delete(key)`` для каждого ключа): pipeline
+        разбрасывает команды по нодам и CROSSSLOT не возникает.
+
         Args:
             keys: Cache keys to delete.
 
         """
-        if keys:
-            await self._client.delete(*keys)
+        if not keys:
+            return
+        await asyncio.gather(*(self._client.delete(key) for key in keys))
 
     async def delete_pattern(self, pattern: str) -> None:
         """Delete values matching pattern using SCAN.
@@ -109,8 +121,9 @@ class RedisBackend(CacheBackend):
 
         Алгоритм:
         1. SMEMBERS — получить все ключи с этим тегом
-        2. DEL — удалить каждый ключ
-        3. DEL tag-index — удалить сам SET
+        2. DEL — удалить каждый ключ ОТДЕЛЬНЫМ одноключевым вызовом
+           (multi-key DEL → CROSSSLOT в RedisCluster)
+        3. DEL tag-index — отдельный одноключевой вызов
 
         Args:
             tag: Имя тега (без префикса ``__cache_tag:``).
@@ -120,14 +133,16 @@ class RedisBackend(CacheBackend):
 
         """
         index_key = self._tag_index_key(tag)
-        # SMEMBERS + pipeline DEL
+        # SMEMBERS + индивидуальные DEL
         keys = await self._client.smembers(index_key)  # type: ignore[misc]
         if not keys:
             return 0
         # Декодируем bytes-ключи из SET в str
         str_keys = [k.decode() if isinstance(k, bytes) else k for k in keys]
         if str_keys:
-            await self._client.delete(*str_keys)
+            # Cluster-safe: по одному ключу за вызов (см. RedisBackend.delete).
+            await self.delete(*str_keys)
+        # Tag-index — отдельный одноключевой DEL.
         await self._client.delete(index_key)
         return len(str_keys)
 
