@@ -14,19 +14,33 @@ def test_base_yml_exists():
 
 
 def test_critical_env_vars_documented():
-    """Critical env vars must be in .env.example."""
+    """Критичные СЕКРЕТЫ должны быть в .env.example (ADR-0373).
+
+    Несекретные переменные (APP_ENV, ENVIRONMENT, JUPYTER_BACKEND,
+    DSL_YAML_STORE_DIR, SEARXNG_BASE_URL) в ``.env.example`` запрещены —
+    они живут в ``config_profiles/{profile}.yml``.
+    """
     env_example = Path(".env.example").read_text()
     critical = [
-        "APP_ENV",
-        "ENVIRONMENT",
-        "JUPYTER_BACKEND",
         "AUDIT_SECRET_KEY",
-        "DSL_YAML_STORE_DIR",
         "E2B_API_KEY",
-        "SEARXNG_BASE_URL",
+        "SEC_SECRET_KEY",
+        "SEC_API_KEY",
+        "DB_PASSWORD",
     ]
     missing = [v for v in critical if v not in env_example]
     assert not missing, f"Missing in .env.example: {missing}"
+
+    non_secret = [
+        "APP_ENV",
+        "APP_PROFILE",
+        "ENVIRONMENT",
+        "JUPYTER_BACKEND",
+        "DSL_YAML_STORE_DIR",
+        "SEARXNG_BASE_URL",
+    ]
+    leaked = [v for v in non_secret if f"\n{v}=" in f"\n{env_example}"]
+    assert not leaked, f"Non-secret vars must not be in .env.example: {leaked}"
 
 
 def test_yml_pool_sizes_present():

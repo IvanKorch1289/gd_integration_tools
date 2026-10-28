@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import ClassVar
 from urllib.parse import quote_plus
 
-from pydantic import Field, computed_field, model_validator
+from pydantic import Field, SecretStr, computed_field, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -90,8 +90,8 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         examples=["app_user"],
     )
 
-    password: str = Field(
-        default="",
+    password: SecretStr | None = Field(
+        default=None,
         title="Пароль",
         description="Пароль пользователя базы данных. Игнорируется для sqlite.",
         examples=["Str0ngPa$$w0rd"],
@@ -205,12 +205,12 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         examples=["postgresql+asyncpg://user:pwd@replica.db:5432/app"],
     )
 
-    @computed_field(description="URL асинхронного подключения")
+    @computed_field(repr=False, description="URL асинхронного подключения")
     def async_connection_url(self) -> str:
         """Формирует DSN для асинхронного драйвера."""
         return self._build_dsn(is_async=True)
 
-    @computed_field(description="URL синхронного подключения")
+    @computed_field(repr=False, description="URL синхронного подключения")
     def sync_connection_url(self) -> str:
         """Формирует DSN для синхронного драйвера."""
         return self._build_dsn(is_async=False)
@@ -243,7 +243,8 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         # ``quote_plus`` (``external_databases/connection.py``) — основной
         # теперь приведён к тому же поведению.
         username = quote_plus(self.username)
-        password = quote_plus(self.password)
+        secret = self.password.get_secret_value() if self.password else ""
+        password = quote_plus(secret)
 
         if self.type == DatabaseTypeChoices.postgresql:
             return (
@@ -297,7 +298,8 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
             # placeholder URL: не используется SQLAlchemy, но сигнализирует
             # ``is_async=True`` для downstream dialector.
             return (
-                f"clickhouse://{quote_plus(self.username)}:{quote_plus(self.password)}"
+                f"clickhouse://{quote_plus(self.username)}:"
+                f"{quote_plus(secret)}"
                 f"@{self.host}:{self.port}/{self.name}"
             )
 

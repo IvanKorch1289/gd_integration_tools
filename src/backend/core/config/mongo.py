@@ -6,7 +6,7 @@
 
 from typing import ClassVar
 
-from pydantic import Field, computed_field
+from pydantic import Field, SecretStr, computed_field
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -38,7 +38,7 @@ class MongoConnectionSettings(BaseSettingsWithLoader):
         examples=["mongo_admin"],
     )
 
-    password: str = Field(
+    password: SecretStr = Field(
         ...,
         title="Пароль",
         min_length=8,
@@ -91,11 +91,11 @@ class MongoConnectionSettings(BaseSettingsWithLoader):
         examples=[5000],
     )
 
-    @computed_field(description="Строка подключения MongoDB")
+    @computed_field(repr=False, description="Строка подключения MongoDB")
     def connection_string(self) -> str:
         """Формирует полную строку подключения с аутентификацией."""
         return (
-            f"mongodb://{self.username}:{self.password}@"
+            f"mongodb://{self.username}:{self.password.get_secret_value()}@"
             f"{self.host}:{self.port}/{self.name}?authSource=admin"
         )
 

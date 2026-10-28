@@ -123,9 +123,20 @@ jobs:
         # Wave 13 Q16: YAML-конфиг ↔ модели настроек. Неизвестные YAML-ключи
         # (опечатки) и секции без Settings-класса = тихая потеря настройки.
         # Блокирующий scope — только orphan-класс (--scope orphans);
-        # missing-secret (переменные не в .env.example) — отдельный дефект,
-        # печатается неблокирующей секцией.
+        # missing-secret (переменные не в .env.example) блокируется
+        # отдельным scope `missing` (ADR-0373, следующий шаг).
         run: uv run python tools/config_audit.py --scope orphans
+
+      - name: Config audit gate — missing secrets (config_audit --scope missing)
+        # ADR-0373: секретное поле Settings, не документированное в
+        # .env.example, = риск bootstrap-fallback. С 2026-10-28 —
+        # блокирующий scope (baseline очищен, гейт ловит новые расхождения).
+        run: uv run python tools/config_audit.py --scope missing
+
+      - name: Env example secrets-only gate (check_env_example)
+        # ADR-0373: в .env.example — ТОЛЬКО секреты и ТОЛЬКО с пустыми
+        # значениями. Несекретный ключ или непустой секрет = ошибка.
+        run: uv run python tools/check_env_example.py --secrets-only
 
       - name: DSN driver declarations gate (check_dsn_drivers)
         # Wave 13 Q9/Q2: драйверы из DSN-конструкторов должны быть объявлены

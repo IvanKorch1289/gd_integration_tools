@@ -179,6 +179,16 @@ check-config-audit: check-env ## Wave 13 Q16: гейт orphan-ключей YAML 
 	@$(UV_RUN) python tools/config_audit.py --scope orphans
 	@$(SUCCESS) "Config audit check passed!"
 
+check-config-audit-missing: check-env ## ADR-0373: гейт недокументированных секретов (scope missing)
+	@$(INFO) "Checking config audit (missing secrets ↔ .env.example)..."
+	@$(UV_RUN) python tools/config_audit.py --scope missing
+	@$(SUCCESS) "Config audit (missing secrets) check passed!"
+
+check-env-example: check-env ## ADR-0373: .env.example — только секреты с пустыми значениями
+	@$(INFO) "Checking .env.example (secrets-only rule)..."
+	@$(UV_RUN) python tools/check_env_example.py --secrets-only
+	@$(SUCCESS) "Env example check passed!"
+
 check-config-audit-full: check-env ## Wave 13 Q16: полный аудит конфига (включая missing-secret, не блокирует)
 	@$(INFO) "Checking full config audit (orphans + missing)..."
 	@$(UV_RUN) python tools/config_audit.py --scope all

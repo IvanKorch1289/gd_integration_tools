@@ -22,6 +22,8 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from tools.config_secret_rules import is_secret_name
+
 _TOOLS_PATH = Path(__file__).resolve().parents[3] / "tools" / "check_env_example.py"
 _spec = importlib.util.spec_from_file_location("tools.check_env_example", _TOOLS_PATH)
 module = importlib.util.module_from_spec(_spec)
@@ -199,29 +201,16 @@ class TestCollectRequiredSecretEnvVars:
             assert "_" in v, f"{v} не содержит underscore"
 
     def test_only_secret_named_fields(self) -> None:
-        """В результат попадают ТОЛЬКО поля с secret-именами."""
+        """В результат попадают ТОЛЬКО поля с secret-именами.
+
+        Cycle 172 (ADR-0373): эвристика унифицирована — используется
+        канонический модуль ``tools/config_secret_rules.py`` (общий для
+        ``check_env_example`` и ``config_audit``).
+        """
         required_secrets = collect_required_secret_env_vars()
-        # Все должны иметь в имени хотя бы один secret-pattern
-        # (lowercase, т.к. имена полей после upper() содержат secret-pattern
-        # в виде password/api_key/etc.)
-        secret_keywords = {
-            "password",
-            "secret",
-            "api_key",
-            "apikey",
-            "token",
-            "auth_token",
-            "api_token",
-            "access_key",
-            "client_secret",
-            "private_key",
-            "bind_password",
-        }
         for v in required_secrets:
-            # Проверяем что хотя бы одно secret-keyword в lowercase-имени
-            lower = v.lower()
-            assert any(kw in lower for kw in secret_keywords), (
-                f"{v} не похоже на secret var (нет keyword)"
+            assert is_secret_name(v.lower()), (
+                f"{v} не похоже на secret var (нет канонического маркера)"
             )
 
 

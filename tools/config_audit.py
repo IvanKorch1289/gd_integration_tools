@@ -25,19 +25,22 @@
 * **orphan-класс** (``orphan-group`` / ``orphan-key``) — наш дефект: ключ
   в YAML без поля в модели = опечатка = тихая потеря настройки. Это
   блокирующий scope гейта (по умолчанию ``--scope orphans``).
-* **missing-класс** (``missing-secret`` / ``missing-non-secret``) — другой
-  дефект: переменные окружения из Settings-классов не документированы в
-  ``.env.example`` (общий разрыв проекта, отдельная owner-задача). Печатается
-  отдельной неблокирующей секцией; блокирует только при ``--scope all``.
+* **missing-класс** (``missing-secret`` / ``missing-non-secret``) — дефект
+  другого рода: переменные окружения из Settings-классов не документированы
+  в ``.env.example``. Секреты (``missing-secret``) блокируют гейт в scope
+  ``--scope missing`` (ADR-0373: «в .env только секреты» — недокументированный
+  секрет = риск bootstrap-fallback). ``missing-non-secret`` (поле не задано
+  в YAML) остаётся неблокирующим и печатается отдельной секцией.
 
 Известный долг зафиксирован в ``tools/config_audit_allowlist.txt`` (baseline
-по всем видам расхождений); гейт падает только на **новых** orphan-расхождениях.
-``--strict`` игнорирует baseline и падает на любых расхождениях (scope=all).
+по всем видам расхождений); гейт падает только на **новых** расхождениях
+в scope. ``--strict`` игнорирует baseline и падает на любых расхождениях
+(scope=all).
 
 Использование::
 
     python tools/config_audit.py [--profile dev|dev_light|staging|prod]
-                                 [--scope orphans|all] [--strict]
+                                 [--scope orphans|missing|all] [--strict]
     python tools/config_audit.py --update-allowlist
     python tools/config_audit.py --json
 
@@ -53,7 +56,6 @@ from __future__ import annotations
 import argparse
 import ast
 import json
-import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -66,6 +68,17 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_DIR = ROOT / "src" / "backend" / "core" / "config"
 PROFILES_DIR = ROOT / "config_profiles"
 ENV_EXAMPLE = ROOT / ".env.example"
+
+# Канонические правила распознавания секретов (ADR-0373) — общие для
+# ``config_audit`` и ``check_env_example``. ``sys.path`` дополняется, чтобы
+# скрипт работал и как ``python tools/config_audit.py``.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.config_secret_rules import (  # noqa: E402
+    NON_SECRET_TYPE_HINTS,  # noqa: F401 — re-export для обратной совместимости
+    is_secret_field,
+)
 
 #: Baseline известного долга (Wave 13 Q16).
 ALLOWLIST_PATH = ROOT / "tools" / "config_audit_allowlist.txt"
@@ -82,18 +95,26 @@ KIND_MISSING_SECRET = "missing-secret"  # noqa: S105 — не пароль, а �
 #: Блокирующий scope гейта по умолчанию.
 _ORPHAN_KINDS: tuple[str, ...] = (KIND_ORPHAN_GROUP, KIND_ORPHAN_KEY)
 
-#: Missing-класс — другой дефект (переменные окружения не документированы
-#: в ``.env.example``): общий разрыв проекта, отдельная owner-задача.
+#: Missing-класс — переменные окружения не документированы в ``.env.example``.
+#: ``missing-secret`` блокирует гейт в scope ``missing`` (ADR-0373).
 _MISSING_KINDS: tuple[str, ...] = (KIND_MISSING_NON_SECRET, KIND_MISSING_SECRET)
+
+#: Блокирующие виды расхождений scope ``missing`` — секрет не документирован.
+_MISSING_SECRET_KINDS: tuple[str, ...] = (KIND_MISSING_SECRET,)
 
 _ALL_KINDS: tuple[str, ...] = _ORPHAN_KINDS + _MISSING_KINDS
 
 #: Блокирующие scope гейта.
 SCOPE_ORPHANS = "orphans"
+SCOPE_MISSING = "missing"
 SCOPE_ALL = "all"
 
 _DEFAULT_REASON = "известный долг конфига (baseline Wave 13 Q16)"
 
+#: Имена полей-секретов и эвристика их распознавания вынесены в
+#: ``tools/config_secret_rules.py`` (ADR-0373) — общий источник правды для
+#: этого гейта и ``tools/check_env_example.py``. Здесь остаётся re-export
+#: для обратной совместимости импортов.
 SECRET_EXACT_NAMES: frozenset[str] = frozenset(
     {"password", "secret_key", "api_key", "access_key", "token", "username"}
 )
@@ -110,19 +131,9 @@ SECRET_SUFFIXES: tuple[str, ...] = (
     "token",
 )
 
-# Если annotation содержит один из этих корней — поле точно НЕ секрет:
-# списки/словари/счётчики/флаги/литералы не могут хранить чувствительные
-# текстовые значения.
-NON_SECRET_TYPE_HINTS: tuple[str, ...] = (
-    "int",
-    "float",
-    "bool",
-    "list",
-    "dict",
-    "set",
-    "Literal",
-    "Path",
-)
+#: Типы, которые физически не могут хранить чувствительное значение
+#: (списки/словари/счётчики/флаги/литералы/пути) — re-export из
+#: ``tools/config_secret_rules.py`` (импорт выше).
 
 
 # ──────────────────── Models ────────────────────
@@ -139,16 +150,8 @@ class FieldSpec:
 
     @property
     def is_secret(self) -> bool:
-        ann = self.annotation
-        if "SecretStr" in ann:
-            return True
-        if any(re.search(rf"\b{t}\b", ann) for t in NON_SECRET_TYPE_HINTS):
-            return False
-        if self.name in SECRET_EXACT_NAMES:
-            return True
-        return any(
-            self.name == s or self.name.endswith(f"_{s}") for s in SECRET_SUFFIXES
-        )
+        """Считается ли поле секретом (канонические правила ADR-0373)."""
+        return is_secret_field(self.name, self.annotation)
 
 
 @dataclass(slots=True)
@@ -417,6 +420,18 @@ def _load_env_keys(path: Path = ENV_EXAMPLE) -> set[str]:
 
 @dataclass(slots=True)
 class GroupReport:
+    """Отчёт аудита по одной YAML-секции.
+
+    Attributes:
+        group: Имя YAML-секции (``security``).
+        class_name: Имя Settings-класса, которому соответствует секция.
+        orphan_keys: YAML-ключи без поля в модели.
+        missing_non_secret: Обязательные несекретные поля, которых нет в YAML.
+        missing_secret: Секретные env-переменные, не документированные
+            в ``.env.example``.
+
+    """
+
     group: str
     class_name: str
     orphan_keys: list[str] = field(default_factory=list)
@@ -424,6 +439,7 @@ class GroupReport:
     missing_secret: list[str] = field(default_factory=list)
 
     def has_issues(self) -> bool:
+        """Есть ли в секции хотя бы одно расхождение."""
         return bool(self.orphan_keys or self.missing_non_secret or self.missing_secret)
 
 
@@ -613,8 +629,9 @@ def save_allowlist(path: Path, findings: list[Finding]) -> None:
         "# kind ∈ {orphan-group, orphan-key, missing-non-secret, missing-secret}.\n"
         "# Блокирующий scope гейта по умолчанию — orphan-класс\n"
         "# (orphan-group / orphan-key): опечатка в YAML-ключе = тихая потеря\n"
-        "# настройки. missing-класс (переменные окружения не документированы\n"
-        "# в .env.example) — отдельный дефект, гейтом не блокируется.\n"
+        "# настройки. Scope 'missing' блокирует missing-secret (секрет не\n"
+        "# документирован в .env.example) — ADR-0373. missing-non-secret\n"
+        "# (поле не задано в YAML) остаётся неблокирующим.\n"
         "# Каждая запись — известный долг; гейт падает только на НОВЫХ\n"
         "# расхождениях (не из этого списка).\n"
         "# Обновление: python tools/config_audit.py --update-allowlist\n"
@@ -628,18 +645,22 @@ def save_allowlist(path: Path, findings: list[Finding]) -> None:
 
 
 def _format_profile(
-    profile: str, reports: list[GroupReport], orphan_groups: list[str]
+    profile: str,
+    reports: list[GroupReport],
+    orphan_groups: list[str],
+    scope: str = SCOPE_ORPHANS,
 ) -> str:
     """Форматирует отчёт по профилю.
 
-    Отчёт разделён на две секции: блокирующий orphan-класс и неблокирующий
-    missing-класс (другой дефект — переменные окружения не документированы
-    в ``.env.example``).
+    Отчёт разделён на две секции: блокирующий orphan-класс и missing-класс
+    (переменные окружения не документированы в ``.env.example`` / поля не
+    заданы в YAML).
 
     Args:
         profile: Имя профиля.
         reports: Отчёты по секциям YAML.
         orphan_groups: Секции YAML без соответствующего Settings-класса.
+        scope: Активный scope гейта (влияет на подпись missing-секции).
 
     Returns:
         Текстовый отчёт по профилю.
@@ -675,9 +696,14 @@ def _format_profile(
             lines.append(f"    [missing-secret]    {key}")
             missing_count += 1
     if missing_count:
+        label = (
+            "BLOCKING (missing-secret)"
+            if scope == SCOPE_MISSING
+            else "NON-BLOCKING (missing-*)"
+        )
         lines.append(
-            f"  NON-BLOCKING (missing-*): {missing_count} "
-            "(отдельный дефект: переменные не документированы в .env.example)"
+            f"  {label}: {missing_count} "
+            "(переменные не документированы в .env.example / поля не заданы в YAML)"
         )
     return "\n".join(lines)
 
@@ -697,11 +723,12 @@ def _build_argparser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--scope",
-        choices=(SCOPE_ORPHANS, SCOPE_ALL),
+        choices=(SCOPE_ORPHANS, SCOPE_MISSING, SCOPE_ALL),
         default=SCOPE_ORPHANS,
         help=(
             "Что блокирует гейт: 'orphans' (только опечатки в YAML — "
-            "наш дефект, по умолчанию) или 'all' (включая missing-*). "
+            "наш дефект, по умолчанию), 'missing' (секреты не документированы "
+            "в .env.example — ADR-0373) или 'all' (включая missing-*). "
         ),
     )
     parser.add_argument(
@@ -785,10 +812,15 @@ def main(argv: list[str] | None = None) -> int:
         f for profile in selected for f in findings_by_profile[profile]
     ]
 
-    # Блокирующий scope: orphan-класс (наш дефект) по умолчанию; missing-класс
-    # (переменные окружения не документированы) — отдельная owner-задача.
+    # Блокирующий scope: orphan-класс (наш дефект) по умолчанию; scope
+    # ``missing`` блокирует недокументированные секреты (ADR-0373).
     scope = SCOPE_ALL if args.strict else args.scope
-    scope_kinds = _ALL_KINDS if scope == SCOPE_ALL else _ORPHAN_KINDS
+    if scope == SCOPE_ALL:
+        scope_kinds = _ALL_KINDS
+    elif scope == SCOPE_MISSING:
+        scope_kinds = _MISSING_SECRET_KINDS
+    else:
+        scope_kinds = _ORPHAN_KINDS
     blocking = [f for f in selected_findings if f.kind in scope_kinds]
     non_blocking = [f for f in selected_findings if f.kind not in scope_kinds]
 
@@ -839,7 +871,7 @@ def main(argv: list[str] | None = None) -> int:
 
     for profile in selected:
         reports, orphan_groups = reports_by_profile[profile]
-        print(_format_profile(profile, reports, orphan_groups))
+        print(_format_profile(profile, reports, orphan_groups, scope=scope))
         print()
 
     if args.strict:
