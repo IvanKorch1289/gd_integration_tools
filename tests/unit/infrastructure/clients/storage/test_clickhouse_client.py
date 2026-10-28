@@ -150,6 +150,84 @@ async def test_chunking_covers_all_rows_without_duplicates() -> None:
     assert seen_ids == set(range(10))
 
 
+# ── S-30 (Wave 13, Q18): allowlist-валидация имени таблицы в insert() ──
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "bad_table",
+    [
+        "events; DROP TABLE x",
+        "events' OR '1'='1",
+        'events" ; DELETE FROM orders; --',
+        "events events2",
+        "1events",
+        "events\n",
+        "",
+    ],
+)
+async def test_insert_rejects_injection_in_table(bad_table: str) -> None:
+    """insert(): невалидное имя таблицы → ValueError, HTTP-запрос не уходит.
+
+    Имя таблицы попадает в SQL через f-string (bind-параметры применимы
+    только к значениям) → allowlist-валидация обязательна.
+    """
+    client = ClickHouseClient()
+    fake_http = AsyncMock()
+    fake_http.post = AsyncMock(return_value=MagicMock(status_code=200))
+    with patch.object(client, "_ensure_client", return_value=fake_http):
+        with pytest.raises(ValueError, match="identifier"):
+            await client.insert(bad_table, [{"a": 1}])
+    fake_http.post.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_insert_accepts_valid_table_name() -> None:
+    """Валидное имя таблицы → INSERT уходит в БД как раньше."""
+    client = ClickHouseClient()
+    fake_http = AsyncMock()
+    fake_http.post = AsyncMock(return_value=MagicMock(status_code=200))
+    with patch.object(client, "_ensure_client", return_value=fake_http):
+        n = await client.insert("audit_events", [{"a": 1}])
+    assert n == 1
+    query = fake_http.post.await_args.kwargs["params"]["query"]
+    assert query == "INSERT INTO audit_events FORMAT JSONEachRow"
+
+
+# ── Q6: aggregate() валидирует имена по канону core.utils.sql_identifiers ──
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "bad_table",
+    ["db.events", "events; DROP TABLE x", "1events", "events\n", ""],
+)
+async def test_aggregate_rejects_invalid_table_identifier(bad_table: str) -> None:
+    """aggregate(): невалидное имя таблицы → ValueError, запрос не уходит.
+
+    Dotted-имена (``db.events``) в репозитории не используются — валидатор
+    взят из канона ``core.utils.sql_identifiers`` (одиночный identifier).
+    """
+    client = ClickHouseClient()
+    with patch.object(client, "query", new=AsyncMock()) as mock_query:
+        with pytest.raises(ValueError, match="invalid table identifier"):
+            await client.aggregate(bad_table, "count", "id")
+    mock_query.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_aggregate_builds_query_for_valid_identifiers() -> None:
+    """aggregate(): валидные имена → SQL собирается как раньше."""
+    client = ClickHouseClient()
+    mock_query = AsyncMock(return_value=[{"value": 1}])
+    with patch.object(client, "query", new=mock_query):
+        result = await client.aggregate("events", "count", "id", group_by="day")
+
+    assert result == [{"value": 1}]
+    sql = mock_query.await_args.args[0]
+    assert sql == "SELECT day, count(id) as value FROM events GROUP BY day"
+
+
 # ── Sprint 3.6: ping() / pre-ping не должны пробрасывать httpx.HTTPError ──
 # ── когда CH down: httpx.ConnectError/ConnectTimeout НЕ являются ──
 # ── наследниками (ConnectionError, TimeoutError, OSError) stdlib'а. ──

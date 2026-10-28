@@ -25,6 +25,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from src.backend.core.utils.sql_identifiers import validate_identifier
+
 __all__ = ("ClickHouseQueryBuilder", "Condition")
 
 
@@ -111,7 +113,25 @@ class ClickHouseQueryBuilder:
         return self
 
     def from_(self, table: str, alias: str | None = None) -> ClickHouseQueryBuilder:
-        """FROM clause: ``FROM <table> [AS <alias>]``."""
+        """FROM clause: ``FROM <table> [AS <alias>]``.
+
+        Args:
+            table: Имя таблицы (валидный SQL-идентификатор).
+            alias: Опциональный alias таблицы (валидный SQL-идентификатор).
+
+        Returns:
+            Self for chaining.
+
+        Raises:
+            ValueError: Если ``table``/``alias`` — не валидные
+                SQL-идентификаторы (S-30, Wave 13 Q18).
+
+        """
+        # S-30 (Wave 13, Q18): FROM/alias попадают в SQL через f-string —
+        # валидируем allowlist'ом на границе (до похода в БД).
+        validate_identifier(table, context="clickhouse_query_builder.from.table")
+        if alias is not None:
+            validate_identifier(alias, context="clickhouse_query_builder.from.alias")
         self._from = table
         self._from_alias = alias
         return self
@@ -119,7 +139,21 @@ class ClickHouseQueryBuilder:
     def with_cte(
         self, name: str, query: ClickHouseQueryBuilder | str
     ) -> ClickHouseQueryBuilder:
-        """WITH clause: добавить CTE ``name AS <query>``."""
+        """WITH clause: добавить CTE ``name AS <query>``.
+
+        Args:
+            name: Имя CTE (валидный SQL-идентификатор).
+            query: Подзапрос (builder или raw SQL).
+
+        Returns:
+            Self for chaining.
+
+        Raises:
+            ValueError: Если ``name`` — не валидный SQL-идентификатор
+                (S-30, Wave 13 Q18).
+
+        """
+        validate_identifier(name, context="clickhouse_query_builder.cte.name")
         self._ctes.append((name, query))
         return self
 
@@ -166,12 +200,20 @@ class ClickHouseQueryBuilder:
         """GROUP BY clause.
 
         Args:
-            cols: Columns to group by.
+            cols: Columns to group by (валидные SQL-идентификаторы).
 
         Returns:
             Self for chaining.
 
+        Raises:
+            ValueError: Если колонка — не валидный SQL-идентификатор
+                (S-30, Wave 13 Q18).
+
         """
+        # S-30 (Wave 13, Q18): GROUP BY попадает в SQL через f-string —
+        # валидируем allowlist'ом на границе (до похода в БД).
+        for col in cols:
+            validate_identifier(col, context="clickhouse_query_builder.group_by.column")
         self._group_by.extend(cols)
         return self
 

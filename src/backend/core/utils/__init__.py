@@ -9,6 +9,7 @@
 - ``metrics_registry`` — idempotent Prometheus factory;
 - ``redis_fallback`` — Redis → TTLCache fallback (с periodic re-probe);
 - ``route_timeout`` — ``RouteTimeoutSpec`` frozen dataclass;
+- ``sql_identifiers`` — allowlist-валидация SQL-идентификаторов (ADR-0112);
 - ``task_registry`` — централизованный реестр фоновых ``asyncio.Task``
   (V15 R-V15-11);
 - ``watchdog`` — deadline-эскалация для long-running async-задач.
@@ -33,6 +34,10 @@ from src.backend.core.utils.redis_fallback import (
     RedisLike,
 )
 from src.backend.core.utils.route_timeout import RouteTimeoutSpec
+from src.backend.core.utils.sql_identifiers import (
+    validate_identifier,
+    validate_path_key,
+)
 from src.backend.core.utils.task_registry import (
     TaskRegistry,
     get_task_registry,
@@ -61,4 +66,6 @@ __all__ = (
     "parse_dt",
     "reset_task_registry",
     "utc_now",
+    "validate_identifier",
+    "validate_path_key",
 )

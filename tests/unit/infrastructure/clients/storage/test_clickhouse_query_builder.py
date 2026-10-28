@@ -171,3 +171,47 @@ async def test_execute_passes_params() -> None:
     assert "WHERE y = %s" in args[0]
     assert kwargs["params"] == [42]
     assert rows == [{"x": 1}]
+
+
+# ── S-30 (Wave 13, Q18): allowlist-валидация идентификаторов билдера ──
+# FROM/GROUP BY/CTE/alias попадают в SQL через f-string → валидируем
+# на границе (в setter'ах билдера), т.е. до похода в БД.
+
+
+def test_from_rejects_injection_in_table() -> None:
+    """from_(): невалидное имя таблицы → ValueError."""
+    with pytest.raises(ValueError, match="identifier"):
+        ClickHouseQueryBuilder().select("*").from_("users; DROP TABLE x")
+
+
+def test_from_rejects_injection_in_alias() -> None:
+    """from_(): невалидный alias → ValueError."""
+    with pytest.raises(ValueError, match="identifier"):
+        ClickHouseQueryBuilder().select("*").from_("users", "u; DROP TABLE x")
+
+
+def test_with_cte_rejects_injection_in_name() -> None:
+    """with_cte(): невалидное имя CTE → ValueError."""
+    with pytest.raises(ValueError, match="identifier"):
+        ClickHouseQueryBuilder().with_cte("cte; DROP TABLE x", "SELECT 1")
+
+
+def test_group_by_rejects_injection_in_column() -> None:
+    """group_by(): невалидное имя колонки → ValueError."""
+    with pytest.raises(ValueError, match="identifier"):
+        ClickHouseQueryBuilder().select("*").from_("t").group_by("evt; DROP TABLE x")
+
+
+def test_valid_identifiers_still_build() -> None:
+    """Валидные идентификаторы → SQL собирается как раньше."""
+    sql, _ = (
+        ClickHouseQueryBuilder()
+        .select("event_type", "count(*) AS cnt")
+        .from_("audit_log", "a")
+        .with_cte("user_counts", "SELECT 1")
+        .group_by("event_type")
+        .build()
+    )
+    assert "FROM audit_log AS a" in sql
+    assert "WITH user_counts AS (SELECT 1)" in sql
+    assert "GROUP BY event_type" in sql

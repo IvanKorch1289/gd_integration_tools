@@ -119,3 +119,36 @@ async def test_writer_start_idempotent() -> None:
     await writer.start()
     await writer.start()  # second call — no-op
     await writer.aclose()
+
+
+# ── S-30 (Wave 13, Q18): allowlist-валидация имени таблицы ──
+
+
+@pytest.mark.unit
+def test_writer_rejects_injection_in_table() -> None:
+    """Невалидное имя таблицы → ValueError в конструкторе, INSERT не уходит.
+
+    Имя таблицы уходит в ``client.insert(table, rows)`` → в SQL через
+    f-string. Валидируем fail-fast, до старта фонового flusher'а.
+    """
+    client = _FakeClient()
+
+    with pytest.raises(ValueError, match="identifier"):
+        ClickHouseBulkWriter(client=client, table="audit; DROP TABLE x")
+
+    assert client.calls == []
+
+
+@pytest.mark.asyncio
+async def test_writer_accepts_valid_table() -> None:
+    """Валидное имя таблицы → flush работает как раньше."""
+    client = _FakeClient()
+    writer = ClickHouseBulkWriter(
+        client=client, table="audit_events", flush_interval_seconds=10.0
+    )
+    await writer.start()
+    await writer.add({"id": 1})
+    await writer.flush_now()
+    await writer.aclose()
+
+    assert client.calls[0][0] == "audit_events"

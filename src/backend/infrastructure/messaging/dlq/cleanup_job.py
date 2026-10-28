@@ -1,5 +1,3 @@
-# ruff: noqa: S608 — false positive (controlled pattern)
-
 """Periodic DLQ cleanup job — удаляет старые записи по policy (S13 K3 W4).
 
 Запускается через APScheduler / TaskRegistry: scan DLQ ClickHouse table,
@@ -17,6 +15,7 @@ from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.sql_identifiers import validate_identifier
 
 if TYPE_CHECKING:
     from src.backend.core.messaging.dlq_policy import DLQPolicyRegistry
@@ -72,6 +71,10 @@ class DLQCleanupJob:
         table_name: имя DLQ-таблицы (default ``dlq_events``).
         clock: функция текущего времени (для тестов).
 
+    Raises:
+        ValueError: Если ``table_name`` — не валидный SQL-идентификатор
+            (S-30, Wave 13 Q18 — fail-fast на старте).
+
     """
 
     def __init__(
@@ -84,7 +87,10 @@ class DLQCleanupJob:
     ) -> None:
         self._client = ch_client
         self._registry = registry
-        self._table = table_name
+        # S-30 (Wave 13, Q18): имя таблицы подставляется в SQL
+        # (ALTER TABLE ... DROP PARTITION / SELECT count() FROM ...) через
+        # f-string — bind-параметры применимы только к значениям.
+        self._table = validate_identifier(table_name, context="dlq.cleanup_job.table")
         self._clock = clock or (lambda: datetime.now(UTC))
 
     async def run(self) -> DLQCleanupStats:
@@ -100,7 +106,7 @@ class DLQCleanupJob:
         for policy in self._registry.list_all():
             cutoff = now - timedelta(days=policy.retention_days)
             cutoff_partition = _iso_to_yyyymm(cutoff.isoformat())
-            # table_name контролируется конструктором (не user input);
+            # table_name провалидирован allowlist'ом в __init__;
             # partition suffix вычисляется из cutoff (controlled).
             sql = f"ALTER TABLE {self._table} DROP PARTITION ID '{cutoff_partition}'"
             try:
@@ -140,7 +146,7 @@ class DLQCleanupJob:
         COUNT перед DELETE для approximate stats. На production может
         быть заменено на ``OPTIMIZE TABLE ... FINAL DEDUPLICATE`` метрику.
         """
-        sql = f"SELECT count() FROM {self._table} WHERE dlq_class = %s AND created_at < %s"  # internal query with controlled parameters
+        sql = f"SELECT count() FROM {self._table} WHERE dlq_class = %s AND created_at < %s"  # noqa: S608  # nosec B608 — table: allowlist (validate_identifier в __init__), значения: bind-параметры
         try:
             rows = await self._client.execute(
                 sql, params=[class_name, cutoff.isoformat()]

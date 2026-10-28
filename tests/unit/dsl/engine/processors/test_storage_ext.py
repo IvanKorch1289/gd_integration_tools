@@ -172,6 +172,32 @@ class TestTimeSeriesWriteProcessorInit:
         with pytest.raises(ValueError, match="Invalid table name"):
             TimeSeriesWriteProcessor(table="metrics;drop", tags=[])
 
+    # ── S-30 (Wave 13, Q18): allowlist-валидация SQL-идентификаторов ──
+
+    def test_table_name_starting_with_digit_raises(self) -> None:
+        """Слабая проверка ``isalnum`` пропускала имена с цифры в начале."""
+        with pytest.raises(ValueError, match="Invalid table name"):
+            TimeSeriesWriteProcessor(table="1metrics", tags=[])
+
+    def test_invalid_tag_raises(self) -> None:
+        """tag → имя колонки в INSERT — валидируется allowlist'ом."""
+        with pytest.raises(ValueError, match="identifier"):
+            TimeSeriesWriteProcessor(table="metrics", tags=["env; DROP TABLE x"])
+
+    def test_invalid_field_raises(self) -> None:
+        """field → имя колонки в INSERT — валидируется allowlist'ом."""
+        with pytest.raises(ValueError, match="identifier"):
+            TimeSeriesWriteProcessor(
+                table="metrics", tags=["env"], field="value; DROP TABLE x"
+            )
+
+    def test_invalid_timestamp_field_raises(self) -> None:
+        """timestamp_field — тоже SQL-идентификатор."""
+        with pytest.raises(ValueError, match="identifier"):
+            TimeSeriesWriteProcessor(
+                table="metrics", tags=["env"], timestamp_field="ts; DROP TABLE x"
+            )
+
 
 @pytest.mark.asyncio
 class TestTimeSeriesWriteProcess:

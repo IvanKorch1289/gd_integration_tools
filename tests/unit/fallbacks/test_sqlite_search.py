@@ -68,6 +68,14 @@ async def test_invalid_index_name_rejected(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_index_name_with_trailing_newline_rejected(tmp_path):
+    """Trailing newline запрещён: канон использует ``\\Z``, а не ``$``."""
+    search = SqliteFTS5Search(tmp_path / "fts.sqlite3")
+    with pytest.raises(ValueError, match="Некорректное имя индекса"):
+        await search.index_document("docs\n", {"x": 1})
+
+
+@pytest.mark.asyncio
 async def test_create_index_creates_empty_table(tmp_path):
     search = SqliteFTS5Search(tmp_path / "fts.sqlite3")
     await search.create_index("empty")

@@ -1,6 +1,3 @@
-# ruff: noqa: S608 — false positive (controlled pattern)
-# bandit: noqa: B608 — false positive (controlled pattern: identifiers validated, values via ? placeholders)
-
 """``SqliteDocStore`` — SQLite-based fallback DocStoreBackend (Wave 21.3c).
 
 Структура таблицы (одна на namespace, создаётся лениво):
@@ -12,11 +9,16 @@
 
 Фильтры применяются на python-стороне (для простоты — на dev-объёмах
 до 10^4 документов это нормально). Для production остаются Mongo-репы.
+
+S-30 (Wave 13, Q18): имена, подставляемые в SQL, валидируются allowlist'ом.
+Имя namespace — по канону ``core.utils.sql_identifiers.validate_identifier``
+(ADR-0112), ключ фильтра — ``validate_path_key`` (JSON-путь
+``parent.child``), т.к. bind-параметры применимы только к значениям, но не
+к JSON-пути.
 """
 
 from __future__ import annotations
 
-import re
 import uuid
 from pathlib import Path
 from typing import Any
@@ -25,10 +27,12 @@ import aiosqlite
 import orjson
 
 from src.backend.core.interfaces.doc_store import DocStoreBackend
+from src.backend.core.utils.sql_identifiers import (
+    validate_identifier,
+    validate_path_key,
+)
 
 __all__ = ("SqliteDocStore",)
-
-_NAMESPACE_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
 class SqliteDocStore(DocStoreBackend):
@@ -63,7 +67,7 @@ class SqliteDocStore(DocStoreBackend):
         # SQL-injection невозможен (S608 — false positive).
         async with aiosqlite.connect(self._path) as db:
             await db.execute(
-                f"INSERT OR REPLACE INTO {table} (doc_id, body) VALUES (?, ?)",  # internal query with controlled parameters
+                f"INSERT OR REPLACE INTO {table} (doc_id, body) VALUES (?, ?)",  # noqa: S608  # nosec B608 — table: allowlist (_ensure_namespace), значения: bind-параметры
                 (doc_id, body),
             )
             await db.commit()
@@ -83,7 +87,7 @@ class SqliteDocStore(DocStoreBackend):
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
-                f"SELECT body FROM {table} WHERE doc_id = ?",  # internal query with controlled parameters
+                f"SELECT body FROM {table} WHERE doc_id = ?",  # noqa: S608  # nosec B608 — table: allowlist (_ensure_namespace), значения: bind-параметры
                 (doc_id,),
             )
             row = await cursor.fetchone()
@@ -122,7 +126,7 @@ class SqliteDocStore(DocStoreBackend):
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
             cursor = await db.execute(
-                f"DELETE FROM {table} WHERE doc_id = ?",  # internal query with controlled parameters
+                f"DELETE FROM {table} WHERE doc_id = ?",  # noqa: S608  # nosec B608 — table: allowlist (_ensure_namespace), значения: bind-параметры
                 (doc_id,),
             )
             await db.commit()
@@ -144,27 +148,41 @@ class SqliteDocStore(DocStoreBackend):
 
         Args:
             namespace: Document namespace.
-            filters: Optional field filters.
+            filters: Optional field filters (ключ — JSON-путь ``parent.child``).
             limit: Maximum results.
             offset: Results offset.
 
         Returns:
             List of matching documents.
 
+        Raises:
+            ValueError: Если ключ фильтра не является валидным JSON-путём.
+
         """
+        # S-30 (Wave 13, Q18): ключ фильтра подставляется в JSON-путь
+        # ('$.<key>') — bind-параметры к пути неприменимы, поэтому
+        # allowlist-валидация ДО построения where_clause и до запроса.
+        validated_filters = (
+            [
+                (validate_path_key(key, context="sqlite_doc_store.filters"), value)
+                for key, value in filters.items()
+            ]
+            if filters
+            else []
+        )
         table = await self._ensure_namespace(namespace)
         async with aiosqlite.connect(self._path) as db:
-            if filters:
-                conditions, params = zip(*filters.items())
+            if validated_filters:
+                conditions, params = zip(*validated_filters)
                 where_clause = " AND ".join(
                     f"json_extract(body, '$.{key}') = ?" for key in conditions
                 )
-                sql = f"SELECT body FROM {table} WHERE {where_clause} ORDER BY doc_id LIMIT ? OFFSET ?"  # table name allowlisted via _ensure_namespace
+                sql = f"SELECT body FROM {table} WHERE {where_clause} ORDER BY doc_id LIMIT ? OFFSET ?"  # noqa: S608  # nosec B608 — table: allowlist (_ensure_namespace), ключ: allowlist (validate_path_key), значения: bind-параметры
                 query_params = (*params, limit, offset)
                 cursor = await db.execute(sql, query_params)
             else:
                 cursor = await db.execute(
-                    f"SELECT body FROM {table} ORDER BY doc_id LIMIT ? OFFSET ?",  # table name allowlisted via _ensure_namespace
+                    f"SELECT body FROM {table} ORDER BY doc_id LIMIT ? OFFSET ?",  # noqa: S608  # nosec B608 — table: allowlist (_ensure_namespace), значения: bind-параметры
                     (limit, offset),
                 )
             rows = await cursor.fetchall()
@@ -185,8 +203,8 @@ class SqliteDocStore(DocStoreBackend):
             table = await self._ensure_namespace(namespace)
             async with aiosqlite.connect(self._path) as db:
                 cursor = await db.execute(
-                    f"SELECT COUNT(*) FROM {table}"
-                )  # internal query with controlled parameters
+                    f"SELECT COUNT(*) FROM {table}"  # noqa: S608  # nosec B608 — table: allowlist (_ensure_namespace)
+                )
                 row = await cursor.fetchone()
             return int(row[0]) if row else 0
         # С фильтрами — линейный подсчёт через find().
@@ -196,10 +214,13 @@ class SqliteDocStore(DocStoreBackend):
 
     async def _ensure_namespace(self, namespace: str) -> str:
         # Защита от SQL-injection через имя namespace: жёсткий whitelist.
-        if not _NAMESPACE_RE.match(namespace):
+        # Правило имени — канон ``core.utils.sql_identifiers`` (ADR-0112).
+        try:
+            validate_identifier(namespace, context="sqlite_doc_store.namespace")
+        except ValueError:
             raise ValueError(
                 f"Некорректный namespace '{namespace}': допустимы [A-Za-z_][A-Za-z0-9_]*"
-            )
+            ) from None
         table = f"doc_{namespace}"
         if table in self._known_namespaces:
             return table

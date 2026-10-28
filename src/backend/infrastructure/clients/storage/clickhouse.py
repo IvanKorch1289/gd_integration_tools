@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-import re
 import time
 from typing import Any, Literal
 
@@ -27,6 +26,7 @@ import httpx
 from src.backend.core.di import app_state_singleton
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.connector_resilience import resilient
+from src.backend.core.utils.sql_identifiers import validate_identifier
 
 __all__ = ("MAX_INSERT_ROWS", "ClickHouseClient", "get_clickhouse_client")
 
@@ -34,14 +34,34 @@ __all__ = ("MAX_INSERT_ROWS", "ClickHouseClient", "get_clickhouse_client")
 MAX_INSERT_ROWS = 100_000
 
 # S204 retro-audit C-NEW-9: SQL-identifier allowlist для ``aggregate()``.
-# Разрешаем только ``[A-Za-z_][A-Za-z0-9_]*`` (опционально с точкой для
-# ``db.table`` / ``table.column``). Любой иной символ → ValueError.
-# Защищает от f-string injection: ранее ``table``/``column``/``agg_func``
-# подставлялись в SQL raw без валидации.
-_IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
+# Правило имени — канон ``core.utils.sql_identifiers.validate_identifier``
+# (одиночный идентификатор ``[A-Za-z_][A-Za-z0-9_]*``). Dotted-имена
+# (``db.table``) в репозитории не используются — см. отчёт Q6.
 _ALLOWED_AGG = frozenset(
     {"count", "sum", "avg", "min", "max", "uniq", "uniqExact", "median", "quantile"}
 )
+
+
+def _validate_agg_identifier(value: str, *, label: str) -> str:
+    """Проверить SQL-идентификатор агрегации по канону.
+
+    Args:
+        value: Проверяемое имя (таблица / колонка / group_by).
+        label: Имя роли в сообщении об ошибке (``table`` / ``column`` / ``group_by``).
+
+    Returns:
+        То же значение ``value``.
+
+    Raises:
+        ValueError: Если значение — не валидный SQL-идентификатор.
+
+    """
+    try:
+        return validate_identifier(value, context=f"clickhouse.aggregate.{label}")
+    except ValueError:
+        raise ValueError(
+            f"aggregate: invalid {label} identifier: {value!r}"
+        ) from None
 
 logger = get_logger(__name__)
 
@@ -234,7 +254,26 @@ class ClickHouseClient:
     async def insert(
         self, table: str, rows: list[dict[str, Any]], *, batch_size: int | None = None
     ) -> int:
-        """Batch INSERT with a configurable chunk size and hard row cap."""
+        """Batch INSERT with a configurable chunk size and hard row cap.
+
+        Args:
+            table: имя ClickHouse-таблицы (валидный SQL-идентификатор).
+            rows: строки для вставки (dict → JSONEachRow).
+            batch_size: размер чанка; ``None`` → ``max_batch_size`` клиента.
+
+        Returns:
+            Число вставленных строк.
+
+        Raises:
+            ValueError: Если ``table`` — не валидный SQL-идентификатор
+                (S-30, Wave 13 Q18), превышен ``MAX_INSERT_ROWS`` или
+                ``batch_size <= 0``.
+
+        """
+        # S-30 (Wave 13, Q18): имя таблицы подставляется в SQL через
+        # f-string — bind-параметры применимы только к значениям.
+        # Allowlist-валидация выполняется ДО похода в БД (fail-fast).
+        validate_identifier(table, context="clickhouse.insert.table")
         import orjson
 
         if len(rows) > MAX_INSERT_ROWS:
@@ -280,20 +319,19 @@ class ClickHouseClient:
         """Агрегация — count, sum, avg, min, max.
 
         S204 retro-audit C-NEW-9: ``table``/``column``/``group_by`` —
-        SQL-identifiers, валидируются через ``_IDENT_RE``. ``agg_func``
+        SQL-identifiers, валидируются по канону
+        ``core.utils.sql_identifiers.validate_identifier``. ``agg_func``
         выбирается из frozen allowlist. ``where`` передаётся как raw SQL
         (caller responsibility — для bound params используйте ``query()``).
         """
-        if not _IDENT_RE.match(table):
-            raise ValueError(f"aggregate: invalid table identifier: {table!r}")
+        _validate_agg_identifier(table, label="table")
         if agg_func not in _ALLOWED_AGG:
             raise ValueError(
                 f"aggregate: agg_func must be one of {sorted(_ALLOWED_AGG)}, got {agg_func!r}"
             )
-        if not _IDENT_RE.match(column):
-            raise ValueError(f"aggregate: invalid column identifier: {column!r}")
-        if group_by is not None and not _IDENT_RE.match(group_by):
-            raise ValueError(f"aggregate: invalid group_by identifier: {group_by!r}")
+        _validate_agg_identifier(column, label="column")
+        if group_by is not None:
+            _validate_agg_identifier(group_by, label="group_by")
 
         parts = [f"SELECT {agg_func}({column}) as value"]
         if group_by:

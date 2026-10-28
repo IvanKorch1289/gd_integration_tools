@@ -1,6 +1,3 @@
-# ruff: noqa: S608 — false positive (controlled pattern)
-# bandit: noqa: B608 — false positive (controlled pattern: identifiers validated, values via ? placeholders)
-
 """Immutable append-only audit log с HMAC-chain (IL-SEC2).
 
 Каждое событие содержит:
@@ -59,6 +56,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.codec.json import canonical_json_bytes, dumps_str
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.sql_identifiers import validate_identifier
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -97,6 +95,11 @@ class ImmutableAuditStore:
         secret_key: HMAC-ключ (bytes/str). Если None — читается из
             ``AUDIT_SECRET_KEY``, затем из ``settings.secure.secret_key``.
         table_name: имя таблицы (default ``audit_log_immutable``).
+
+    Raises:
+        ValueError: Если ``table_name`` не является валидным
+            SQL-идентификатором (S-30, Wave 13 Q18 — fail-fast на старте).
+
     """
 
     def __init__(
@@ -107,7 +110,10 @@ class ImmutableAuditStore:
         table_name: str = _TABLE,
     ) -> None:
         self._session_factory = session_factory
-        self._table = table_name
+        # S-30 (Wave 13, Q18): имя таблицы подставляется в SQL как
+        # идентификатор — bind-параметры неприменимы, валидируем allowlist'ом
+        # ДО любых запросов (fail-fast на старте).
+        self._table = validate_identifier(table_name, context="immutable_audit.table")
         self._secret = self._resolve_secret(secret_key)
 
     # ------------------------------------------------------------------ utils
@@ -227,7 +233,7 @@ class ImmutableAuditStore:
             prev_row = (
                 await session.execute(
                     text(
-                        f"SELECT event_hash FROM {self._table} "  # self._table — ctor-parameter, не user input  # internal query with controlled parameters
+                        f"SELECT event_hash FROM {self._table} "  # noqa: S608  # nosec B608 — table: allowlist (validate_identifier в __init__)
                         f"ORDER BY seq DESC LIMIT 1"
                     )
                 )
@@ -237,7 +243,7 @@ class ImmutableAuditStore:
 
             await session.execute(
                 text(
-                    f"INSERT INTO {self._table} "  # self._table — ctor-parameter, не user input  # internal query with controlled parameters
+                    f"INSERT INTO {self._table} "  # noqa: S608  # nosec B608 — table: allowlist (validate_identifier в __init__)
                     f"(actor, action, resource, outcome, metadata, "
                     f" tenant_id, correlation_id, prev_hash, event_hash, "
                     f" occurred_at) "
@@ -279,7 +285,7 @@ class ImmutableAuditStore:
         from sqlalchemy import text
 
         sql = (
-            f"SELECT seq, actor, action, resource, outcome, metadata, "  # self._table — ctor-parameter, не user input  # internal query with controlled parameters
+            f"SELECT seq, actor, action, resource, outcome, metadata, "  # noqa: S608  # nosec B608 — table: allowlist (validate_identifier в __init__)
             f" tenant_id, correlation_id, prev_hash, event_hash, occurred_at "
             f"FROM {self._table} "
             f"WHERE seq >= :from_seq "
@@ -309,8 +315,8 @@ class ImmutableAuditStore:
                 anchor_row = (
                     await session.execute(
                         text(
-                            f"SELECT event_hash FROM {self._table} WHERE seq = :s"  # internal query with controlled parameters
-                        ),  # self._table — ctor-parameter, не user input
+                            f"SELECT event_hash FROM {self._table} WHERE seq = :s"  # noqa: S608  # nosec B608 — table: allowlist (validate_identifier в __init__)
+                        ),
                         {"s": int(first[0]) - 1},
                     )
                 ).first()

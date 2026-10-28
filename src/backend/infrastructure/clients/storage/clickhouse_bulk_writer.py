@@ -34,6 +34,7 @@ import time
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.sql_identifiers import validate_identifier
 
 __all__ = ("BulkWriterStats", "ClickHouseBulkWriter")
 
@@ -71,11 +72,15 @@ class ClickHouseBulkWriter:
 
     Args:
         client: ClickHouse-клиент с ``insert(table, rows) -> int``.
-        table: имя ClickHouse таблицы.
+        table: имя ClickHouse таблицы (валидный SQL-идентификатор).
         max_buffer_size: размер буфера до forced flush (default 1000).
         flush_interval_seconds: timer-flush период (default 1.0s).
         queue_max_size: capacity ``asyncio.Queue`` (default 10000).
         on_failure: опц. callback при flush failure (envelope → DLQ).
+
+    Raises:
+        ValueError: Если ``table`` — не валидный SQL-идентификатор
+            (S-30, Wave 13 Q18 — fail-fast до старта фонового flusher'а).
 
     """
 
@@ -90,7 +95,9 @@ class ClickHouseBulkWriter:
         on_failure: Any = None,
     ) -> None:
         self._client = client
-        self._table = table
+        # S-30 (Wave 13, Q18): имя таблицы уходит в ``client.insert(table)``
+        # → в SQL через f-string. Allowlist-валидация — fail-fast.
+        self._table = validate_identifier(table, context="clickhouse_bulk_writer.table")
         self._max_buffer_size = max_buffer_size
         self._flush_interval = flush_interval_seconds
         self._queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(

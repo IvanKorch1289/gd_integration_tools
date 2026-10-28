@@ -109,3 +109,40 @@ async def test_run_uses_custom_clock(
     # cutoff for class_a (7 days) and class_b (30 days)
     assert "2023-12-25T00:00:00+00:00" in flat
     assert "2023-12-02T00:00:00+00:00" in flat
+
+
+# ── S-30 (Wave 13, Q18): allowlist-валидация имени таблицы ──
+
+
+@pytest.mark.unit
+def test_cleanup_job_rejects_injection_in_table_name(
+    fake_registry: _FakeRegistry, fake_client: MagicMock
+) -> None:
+    """Невалидное имя таблицы → ValueError в конструкторе, SQL не уходит.
+
+    Имя таблицы подставляется в ``ALTER TABLE ... DROP PARTITION`` и
+    ``SELECT count() FROM ...`` через f-string.
+    """
+    with pytest.raises(ValueError, match="identifier"):
+        DLQCleanupJob(
+            ch_client=fake_client,
+            registry=fake_registry,
+            table_name="dlq_events; DROP TABLE x",
+        )
+
+    fake_client.execute.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_cleanup_job_accepts_valid_table_name(
+    fake_registry: _FakeRegistry, fake_client: MagicMock
+) -> None:
+    """Валидное имя таблицы → cleanup работает как раньше."""
+    job = DLQCleanupJob(
+        ch_client=fake_client, registry=fake_registry, table_name="dlq_events"
+    )
+
+    stats = await job.run()
+
+    assert stats.total_deleted >= 0
+    assert fake_client.execute.await_count == 4  # 2 DROP PARTITION + 2 COUNT

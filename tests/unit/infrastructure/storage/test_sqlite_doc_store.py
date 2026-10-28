@@ -110,7 +110,59 @@ async def test_ensure_namespace_invalid_name(doc_store: SqliteDocStore) -> None:
 
 
 @pytest.mark.asyncio
+async def test_ensure_namespace_trailing_newline_rejected(
+    doc_store: SqliteDocStore,
+) -> None:
+    """Trailing newline запрещён: канон использует ``\\Z``, а не ``$``."""
+    with pytest.raises(ValueError, match="Некорректный namespace"):
+        await doc_store._ensure_namespace("ns1\n")
+
+
+@pytest.mark.asyncio
 async def test_ensure_namespace_known_cache(doc_store: SqliteDocStore) -> None:
     table1 = await doc_store._ensure_namespace("ns1")
     table2 = await doc_store._ensure_namespace("ns1")
     assert table1 == table2
+
+
+# ─────────────────── S-30 (Wave 13, Q18): SQL-инъекция через ключ фильтра ───────────────────
+
+
+@pytest.mark.asyncio
+async def test_find_rejects_injected_filter_key(doc_store: SqliteDocStore) -> None:
+    """Ключ фильтра с SQL-инъекцией → ValueError (SQL не исполняется)."""
+    await doc_store.insert("ns1", {"t": "a"})
+    with pytest.raises(ValueError, match="Недопустимый ключ фильтра"):
+        await doc_store.find("ns1", filters={"t') OR 1=1 OR ('1'='1": "a"}, limit=10)
+
+
+@pytest.mark.asyncio
+async def test_find_injection_does_not_leak_rows(doc_store: SqliteDocStore) -> None:
+    """Инъекция не возвращает «все строки» — запрос отклонён до выполнения."""
+    await doc_store.insert("ns1", {"t": "a"})
+    await doc_store.insert("ns1", {"t": "b"})
+    with pytest.raises(ValueError):
+        await doc_store.find("ns1", filters={"t') OR 1=1 --": "a"}, limit=10)
+    # Данные не пострадали, обычный запрос возвращает ровно оба документа.
+    docs = await doc_store.find("ns1", limit=10)
+    assert len(docs) == 2
+
+
+@pytest.mark.asyncio
+async def test_find_rejects_non_identifier_filter_keys(
+    doc_store: SqliteDocStore,
+) -> None:
+    """Пробелы, кавычки и спецсимволы в ключе фильтра запрещены."""
+    for bad_key in ("t; DROP TABLE doc_ns1", "t name", "t'name", "1t", ""):
+        with pytest.raises(ValueError, match="Недопустимый ключ фильтра"):
+            await doc_store.find("ns1", filters={bad_key: "a"}, limit=10)
+
+
+@pytest.mark.asyncio
+async def test_find_allows_nested_json_path_filter(doc_store: SqliteDocStore) -> None:
+    """Точка в ключе допустима — это вложенный JSON-путь (``$.meta.v``)."""
+    await doc_store.insert("ns1", {"meta": {"v": 1}})
+    await doc_store.insert("ns1", {"meta": {"v": 2}})
+    docs = await doc_store.find("ns1", filters={"meta.v": 2}, limit=10)
+    assert len(docs) == 1
+    assert docs[0]["meta"] == {"v": 2}

@@ -26,15 +26,14 @@
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 from typing import Any
 
 import aiosqlite
 
-__all__ = ("SqliteFTS5Search",)
+from src.backend.core.utils.sql_identifiers import validate_identifier
 
-_INDEX_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+__all__ = ("SqliteFTS5Search",)
 
 
 class SqliteFTS5Search:
@@ -213,10 +212,14 @@ class SqliteFTS5Search:
     # ─────────────────────── Internals ───────────────────────
 
     async def _ensure_index(self, index: str) -> str:
-        if not _INDEX_RE.match(index):
+        # Имя индекса — SQL-идентификатор: правило берётся из канона
+        # ``core.utils.sql_identifiers`` (ADR-0112).
+        try:
+            validate_identifier(index, context="sqlite_search.index")
+        except ValueError:
             raise ValueError(
                 f"Некорректное имя индекса '{index}': допустимы [A-Za-z_][A-Za-z0-9_]*"
-            )
+            ) from None
         table = f"idx_{index}"
         if table in self._known:
             return table

@@ -1,5 +1,3 @@
-# ruff: noqa: S608 — false positive (controlled pattern)
-
 """Wiring W26.4: Elasticsearch → SQLite FTS5.
 
 Контракт callable: ``async def search(index: str, query: str, *, limit: int = 20) -> list[dict]``.
@@ -8,6 +6,11 @@ SQLite-FTS5 fallback ведёт минимальный snapshot-индекс. Sc
 автогенерируется при первом обращении (CREATE VIRTUAL TABLE ... USING
 fts5). Стриминг-индексирование документов — отдельный background-job
 (вне scope W26).
+
+S-30 (Wave 13, Q18): ``index`` подставляется и в имя файла БД, и в имя
+виртуальной таблицы FTS5 — bind-параметры к идентификаторам неприменимы,
+поэтому имя валидируется allowlist-регексом ``validate_identifier``
+ДО создания файла/таблицы.
 """
 
 from __future__ import annotations
@@ -17,6 +20,8 @@ import sqlite3
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
+
+from src.backend.core.utils.sql_identifiers import validate_identifier
 
 __all__ = ("SearchCallable", "build_search_fallbacks", "build_search_primary")
 
@@ -41,7 +46,22 @@ async def _es_search(
 async def _sqlite_fts5_search(
     index: str, query: str, *, limit: int = 20
 ) -> list[dict[str, Any]]:
-    """SQLite FTS5 fallback. Использует один файл per-index."""
+    """SQLite FTS5 fallback. Использует один файл per-index.
+
+    Args:
+        index: Имя индекса (allowlist-идентификатор).
+        query: FTS5 MATCH-запрос (bind-параметр).
+        limit: Максимум результатов.
+
+    Returns:
+        Список найденных документов.
+
+    Raises:
+        ValueError: Если ``index`` не является валидным SQL-идентификатором.
+
+    """
+    # S-30 (Wave 13, Q18): валидация ДО создания файла/таблицы.
+    validate_identifier(index, context="search_chain.sqlite_fts5.index")
     db_path = Path("var/db/search") / f"{index}.sqlite"
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -50,11 +70,11 @@ async def _sqlite_fts5_search(
         conn.row_factory = sqlite3.Row
         try:
             conn.execute(
-                f"CREATE VIRTUAL TABLE IF NOT EXISTS {index}_fts "
+                f"CREATE VIRTUAL TABLE IF NOT EXISTS {index}_fts "  # noqa: S608  # nosec B608 — index: allowlist (validate_identifier)
                 "USING fts5(doc_id, content)"
             )
             cursor = conn.execute(
-                f"SELECT doc_id, content, rank FROM {index}_fts "  # internal query with controlled parameters
+                f"SELECT doc_id, content, rank FROM {index}_fts "  # noqa: S608  # nosec B608 — index: allowlist (validate_identifier), значения: bind-параметры
                 f"WHERE {index}_fts MATCH ? ORDER BY rank LIMIT ?",
                 (query, limit),
             )

@@ -1,5 +1,3 @@
-# ruff: noqa: S608 — false positive (controlled pattern)
-
 """Storage extensions — Graph DB (Neo4j), Time Series (InfluxDB), Priority Queue.
 
 Все клиенты lazy-imported. Graceful fallback если библиотеки не установлены.
@@ -9,6 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.backend.core.utils.sql_identifiers import validate_identifier
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -104,6 +103,11 @@ class TimeSeriesWriteProcessor(BaseProcessor):
 
     Usage::
         .timeseries_write(table="metrics", tags=["service", "env"], field="value")
+
+    Raises:
+        ValueError: Если ``table``/``tags``/``field``/``timestamp_field`` —
+            не валидные SQL-идентификаторы (S-30, Wave 13 Q18).
+
     """
 
     def __init__(
@@ -123,8 +127,21 @@ class TimeSeriesWriteProcessor(BaseProcessor):
         self._timestamp_field = timestamp_field
         self._backend = backend
 
-        if not table.replace("_", "").isalnum():
-            raise ValueError(f"Invalid table name: {table}")
+        # S-30 (Wave 13, Q18): table/tags/field/timestamp_field попадают
+        # в SQL как идентификаторы (bind-параметры применимы только к
+        # значениям) → allowlist-валидация fail-fast в конструкторе.
+        try:
+            validate_identifier(table, context="storage_ext.timeseries.table")
+        except ValueError as exc:
+            # Сохраняем прежний текст ошибки (контракт логов/тестов).
+            raise ValueError(f"Invalid table name: {table}") from exc
+        for tag in tags:
+            validate_identifier(tag, context="storage_ext.timeseries.tags")
+        validate_identifier(field, context="storage_ext.timeseries.field")
+        if timestamp_field is not None:
+            validate_identifier(
+                timestamp_field, context="storage_ext.timeseries.timestamp_field"
+            )
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
@@ -165,7 +182,7 @@ class TimeSeriesWriteProcessor(BaseProcessor):
         columns = ["timestamp", *self._tags, self._field]
         placeholders = ", ".join(f":{c}" for c in columns)
         col_names = ", ".join(columns)
-        sql = f"INSERT INTO {self._table} ({col_names}) VALUES ({placeholders})"  # _table/_tags/_field — DSL-config параметры, не runtime input  # internal query with controlled parameters
+        sql = f"INSERT INTO {self._table} ({col_names}) VALUES ({placeholders})"  # noqa: S608  # nosec B608 — table/tags/field: allowlist (validate_identifier в __init__), значения: bind-параметры
 
         rows: list[dict[str, Any]] = []
         for point in points:
