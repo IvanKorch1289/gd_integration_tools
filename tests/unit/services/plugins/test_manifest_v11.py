@@ -67,7 +67,8 @@ class TestCapabilityRef:
             "db..read",  # пустая часть
             "1db.read",  # начинается с цифры
             "db read",  # пробел
-            "db.read.write",  # три сегмента
+            "db.read.",  # пустой последний сегмент
+            "db.1read",  # сегмент начинается с цифры
         ],
     )
     def test_invalid_name_grammar(self, bad_name: str) -> None:
@@ -77,6 +78,26 @@ class TestCapabilityRef:
             CAPABILITY_NAME_PATTERN in str(exc_info.value)
             or "match" in str(exc_info.value).lower()
         )
+
+    @pytest.mark.parametrize(
+        "good_name",
+        [
+            "db.read",
+            # Cycle 172 (Wave 5): 3+ сегмента разрешены — в коде уже
+            # используются rpa.file.list, ai.memory.read,
+            # message.claim_check.store, pii.tokenize.reversible.
+            "rpa.file.list",
+            "rpa.directory.scan",
+            "ai.memory.read",
+            "message.claim_check.store",
+            "pii.tokenize.reversible.agent_tools",
+        ],
+    )
+    def test_valid_name_multi_segment(self, good_name: str) -> None:
+        """Имена из 3+ сегментов валидны (Cycle 172, Wave 5)."""
+        ref = CapabilityRef(name=good_name)
+        assert ref.name == good_name
+        assert ref.scope is None
 
     def test_empty_scope_string_rejected(self) -> None:
         with pytest.raises(ValidationError):

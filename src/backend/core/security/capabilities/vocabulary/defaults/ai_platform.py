@@ -53,6 +53,28 @@ def register(vocab: CapabilityVocabulary) -> None:
     )
     vocab.register(
         CapabilityDef(
+            name="pii.tokenize.reversible.agent_actions",
+            matcher=dot_glob,
+            description=(
+                "PII-токенизация параметров tool/action-вызовов агента "
+                "(AgentDictPIIMaskProcessor в режиме agent_actions); scope = "
+                "domain-id (banking, hr, medical) или '*' (Cycle 172, Wave 5)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="pii.tokenize.reversible.agent_tools",
+            matcher=dot_glob,
+            description=(
+                "PII-токенизация аргументов tool-вызовов агента "
+                "(AgentDictPIIMaskProcessor в режиме agent_tools); scope = "
+                "domain-id (banking, hr, medical) или '*' (Cycle 172, Wave 5)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
             name="mcp.gateway.invoke",
             matcher=dot_glob,
             description=(

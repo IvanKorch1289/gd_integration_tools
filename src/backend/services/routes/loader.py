@@ -477,6 +477,21 @@ class RouteLoader:
             )
             return
 
+        # ── Alias-декларация под фактический route_id (Cycle 172, Wave 7a)
+        #
+        # Capability роута декларируются под ``manifest.name`` (TOML
+        # ``name``), но runtime-проверка идёт под ``pipeline.route_id``
+        # (YAML ``route_id``) — эти строки могут различаться:
+        #
+        #   routes/composition_demo:  name="composition_demo" / route_id="composition.demo"
+        #   routes/jupyter_hub_run:   name="jupyter_hub_run"  / route_id="jupyter_hub_run_file"
+        #
+        # Без алиаса DSL-шаги (S3, cache) получали бы CapabilityDeniedError
+        # для capability, которую роут объявил, т.к. декларация была под
+        # другим ключом. Алиас дублирует ту же декларацию (с тем же scope)
+        # под runtime-идентификатором — право роута не расширяется.
+        self._declare_route_id_aliases(manifest, manifest_path, registered)
+
         # ── Per-route IP restriction (security.ip_restriction)
         if manifest.security and manifest.security.ip_restriction:
             ipr = manifest.security.ip_restriction
@@ -503,6 +518,75 @@ class RouteLoader:
             len(registered),
             "" if len(registered) == 1 else "s",
         )
+
+    def _declare_route_id_aliases(
+        self,
+        manifest: RouteManifest,
+        manifest_path: Path,
+        registered: list[Path],
+    ) -> None:
+        """Дублирует декларацию capability роута под его YAML ``route_id``.
+
+        Cycle 172 (Wave 7a). Декларация capability роута делается под
+        ``manifest.name`` (TOML ``name``), а runtime-проверка идёт под
+        ``pipeline.route_id`` (YAML ``route_id``). Для большинства роутов
+        строки совпадают, но не для всех:
+
+        - ``routes/composition_demo``: ``name="composition_demo"``,
+          YAML ``route_id: composition.demo``;
+        - ``routes/jupyter_hub_run``: ``name="jupyter_hub_run"``, а
+          fragment'ы ``run_file``/``run_inline`` имеют свои
+          ``route_id`` (``jupyter_hub_run_file`` / ``jupyter_hub_run_inline``).
+
+        Без алиаса DSL-шаги (S3, cache) в таких роутах получали бы
+        ``CapabilityDeniedError`` на capability, которую роут объявил и
+        которой владеет по праву. Алиас копирует **ту же** декларацию
+        (тот же scope) под runtime-идентификатор — право роута не
+        расширяется, scope остаётся ограниченным.
+
+        Ошибка алиаса не должна ломать загрузку роута: основная
+        декларация уже выполнена, а отсутствие алиаса приведёт к
+        fail-closed (DENY) на конкретном шаге, что видно в логах.
+        """
+        if not manifest.capabilities:
+            return
+
+        for pipeline_path in registered:
+            route_id = self._read_pipeline_route_id(pipeline_path)
+            if route_id is None or route_id == manifest.name:
+                continue
+            try:
+                self._gate.declare(route_id, manifest.capabilities)
+            except (CapabilityError, ValueError) as exc:
+                _logger.warning(
+                    "Route %s: capability alias for route_id=%r not declared: %s",
+                    manifest.name,
+                    route_id,
+                    exc,
+                )
+
+    @staticmethod
+    def _read_pipeline_route_id(pipeline_path: Path) -> str | None:
+        """Читает верхнеуровневый ``route_id`` из YAML-pipeline.
+
+        Читается только ключ верхнего уровня (без резолва ``include``/
+        ``extends``): этого достаточно, чтобы понять runtime-идентификатор
+        pipeline. Любая ошибка разбора → ``None`` (алиас не создаётся,
+        runtime-путь получает fail-closed DENY с логом).
+        """
+        try:
+            import yaml
+
+            data = yaml.safe_load(pipeline_path.read_text(encoding="utf-8"))
+        except Exception as exc:  # noqa: BLE001 — файл может быть не-YAML
+            _logger.debug("Route %s: cannot read route_id: %s", pipeline_path, exc)
+            return None
+        if not isinstance(data, dict):
+            return None
+        route_id = data.get("route_id")
+        if isinstance(route_id, str) and route_id.strip():
+            return route_id.strip()
+        return None
 
     def _resolve_feature_flag(self, flag: str | bool | None) -> bool:
         """Резолвит ``manifest.feature_flag`` в bool.

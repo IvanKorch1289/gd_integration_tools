@@ -153,16 +153,57 @@ def register(vocab: CapabilityVocabulary) -> None:
     )
     vocab.register(
         CapabilityDef(
+            name="fs.watch",
+            matcher=path_glob,
+            description=(
+                "Наблюдение за файловой системой (watchdog) через "
+                "FSFacade / FileWatchProcessor; scope = glob по пути "
+                "наблюдаемого каталога (Cycle 172, Wave 5)."
+            ),
+        )
+    )
+    vocab.register(
+        CapabilityDef(
             name="storage.read",
             matcher=path_glob,
             description="Чтение из объектного хранилища через StorageFacade (key/prefix).",
+            # Cycle 172 (Wave 7a): public по аналогии с net.outbound /
+            # audit.write (решение владельца 2026-10-06). StorageFacade —
+            # core-фича S3-шагов DSL; без public роут не может объявить
+            # capability в route.toml, а check_capabilities_subset отклоняет
+            # такой роут с CapabilitySupersetError.
+            #
+            # Что снимает public: проверку «назван ли плагин, который
+            # декларирует эту capability» в check_capabilities_subset.
+            # Что НЕ снимает: рантайм-контроль — scope по-прежнему
+            # сверяется (matcher=path_glob, scope=key/prefix).
+            public=True,
         )
     )
     vocab.register(
         CapabilityDef(
             name="storage.write",
             matcher=path_glob,
-            description="Запись/удаление в объектном хранилище через StorageFacade (key).",
+            description="Запись/удаление в объектное хранилище через StorageFacade (key).",
+            # Cycle 172 (Wave 7a): public по аналогии с storage.read.
+            public=True,
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="storage.presign",
+            matcher=path_glob,
+            description=(
+                "Выдача presigned-ссылки на объектное хранилище через "
+                "StorageFacade (key). Ссылка даёт клиенту прямой доступ "
+                "к бакету, поэтому выдаётся по отдельной capability, "
+                "а не по storage.read."
+            ),
+            # Wave 13 (Q6): public по аналогии с storage.read/storage.write —
+            # presign используют core-шаги DSL (s3_presign) без plugin-владельца.
+            # Публичность снимает только declaration-time проверку манифеста
+            # роута; рантайм-контроль (scope=key) сохраняется.
+            public=True,
         )
     )
     vocab.register(

@@ -15,8 +15,21 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 __all__ = ("CAPABILITY_NAME_PATTERN", "DEFAULT_CAPABILITY_CATALOG", "CapabilityRef")
 
-CAPABILITY_NAME_PATTERN: Final[str] = r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$"
-"""Грамматика имени capability: ``<resource>.<verb>``."""
+CAPABILITY_NAME_PATTERN: Final[str] = r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$"
+"""Грамматика имени capability: ``<resource>[.<subresource>].<verb>``.
+
+Cycle 172 (Wave 5): раньше паттерн допускал ровно 2 сегмента
+(``<resource>.<verb>``). Но в коде уже массово используются
+3-сегментные имена — ``rpa.file.list``, ``rpa.directory.scan``,
+``ai.memory.read``, ``message.claim_check.store`` и ещё ~50.
+Из-за запрета 3 сегментов такие capability нельзя было объявить
+ни в ``route.toml``, ни в ``plugin.toml`` (validator режет по
+грамматике), хотя vocabulary их уже содержит.
+
+Теперь допускается 2 и более сегментов; каждый сегмент — lowercase
+слова/цифры/underscore. Префикс ``rpa.``/``ai.``/``message.``
+трактуется как namespace ресурса, последний сегмент — verb.
+"""
 
 _CAPABILITY_NAME_RE: Final[re.Pattern[str]] = re.compile(CAPABILITY_NAME_PATTERN)
 

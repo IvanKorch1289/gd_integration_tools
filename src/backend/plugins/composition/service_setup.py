@@ -84,6 +84,36 @@ def register_secrets_backend() -> None:
     _logger.info("SecretsBackend registered: kind=%s", backend_kind)
 
 
+def _register_capability_gate() -> None:
+    """Регистрирует singleton ``CapabilityGate`` в svcs_registry.
+
+    Cycle 172 (Wave 7a). Без регистрации ``has_service(CapabilityGate)``
+    возвращал ``False``, и потребители, создававшие capability-checked
+    фасады (StorageFacade, DSL-шаги S3), получали ``capability_check=None``
+    → проверка capability **молча пропускалась**, то есть S3-шаги
+    работали в обход ADR-044/V11.1.
+
+    Регистрируется именно ``get_capability_gate()`` — тот же
+    process-wide singleton, который используют ``agent_dsl``,
+    ``CapabilityFacade`` и ``plugin_loader``. Иначе декларации роутов
+    и плагинов попали бы в другой экземпляр гейта и снова стали бы
+    невидимы для runtime-проверок.
+    """
+    from src.backend.core.security.capabilities.gate import CapabilityGate
+    from src.backend.core.svcs_registry import has_service, register_factory
+
+    if has_service(CapabilityGate):
+        return
+
+    def _factory() -> CapabilityGate:
+        from src.backend.core.security.capabilities.gate import get_capability_gate
+
+        return get_capability_gate()
+
+    register_factory(CapabilityGate, _factory)
+    _logger.info("CapabilityGate registered (singleton, Wave 7a)")
+
+
 def _register_storage_facade() -> None:
     """Регистрирует ``StorageFacade`` в svcs с capability-check."""
     from src.backend.core.svcs_registry import has_service, register_factory
@@ -277,6 +307,19 @@ def register_all_services() -> None:
 
     # P1: ExternalDatabaseFacade (S133 W4).
     _register_external_database_facade()
+
+    # Cycle 172 (Wave 7a): CapabilityGate в svcs_registry.
+    #
+    # Без этой регистрации ``has_service(CapabilityGate)`` → False, и
+    # StorageFacade/DSL-шаги S3 создавались с ``capability_check=None``
+    # → ``_assert_read/_assert_write`` молча ничего не делали, т.е.
+    # **все S3-шаги обходили capability-gate** (V11.1). Проверено
+    # runtime: ``to_s3`` отрабатывал без единой проверки.
+    #
+    # Регистрируется **тот же** singleton-гейт, что и у agent_dsl,
+    # CapabilityFacade и plugin_loader — иначе декларации роутов
+    # снова окажутся в другом экземпляре.
+    _register_capability_gate()
 
     # W14.1.C: встроенные middleware action-диспетчера.
     register_default_action_middlewares()

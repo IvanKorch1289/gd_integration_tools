@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Callable as Callable
 from collections.abc import Iterable as Iterable
+from functools import lru_cache
 from threading import Lock as Lock
 from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Final as Final
@@ -57,6 +58,7 @@ __all__ = (
     "CheckTenantMixin",
     "CacheMixin",
     "DeclarationMixin",
+    "get_capability_gate",
 )
 
 
@@ -112,6 +114,61 @@ class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
     def policy(self) -> CapabilityPolicy | None:
         """Опц. policy, интегрированная в gate (``None`` → no policy)."""
         return self._policy
+
+
+@lru_cache(maxsize=1)
+def get_capability_gate() -> CapabilityGate:
+    """Вернуть process-wide singleton :class:`CapabilityGate`.
+
+    Cycle 172 (Wave 5): функцию импортировал
+    ``src/backend/dsl/engine/processors/agent_dsl/_base.py:207``, но её
+    **не существовало** → ``ImportError`` → ``_resolve_capability_gate()``
+    возвращал ``None`` → ``_check_capability()`` молча пропускал
+    проверку. То есть 12 agent_dsl-процессоров (ai.invoke,
+    ai.memory.read/write, pii.tokenize.reversible, skill.invoke,
+    agent.run, mcp.call, ai.tool.dispatch) работали **без**
+    capability-контроля — fail-open в обход ADR-044.
+
+    Теперь singleton существует и отдаёт гейт с дефолтным
+    vocabulary. Проверка становится fail-closed: capability, которую
+    никто не задекларировал, будет отклонена.
+
+    Гейт — **единственный** на процесс: в нём живут и baseline-декларации
+    ядра (:mod:`core_declarations`), и декларации роутов/плагинов,
+    которые добавляют ``plugin_loader`` и ``RouteLoader``. Раньше
+    экземпляров было три (loader / facade / ai-provider), поэтому
+    декларации роутов не были видны runtime-проверкам вообще.
+
+    Returns:
+        Процессный singleton-гейт.
+    """
+    from src.backend.core.security.capabilities.core_declarations import (
+        core_capability_refs,
+    )
+
+    gate = CapabilityGate(vocabulary=build_default_vocabulary())
+    gate.declare("core", core_capability_refs())
+    # Cycle 172 (Wave 7a): production StorageFacade создаётся с
+    # plugin="system" (composition root, service_setup._register_storage_facade),
+    # а DSL-шаги S3 — с plugin=route_id. Без декларации для "system"
+    # и для роутов реальный capability-gate превратил бы S3 в
+    # blanket-deny (после того, как раньше он молча обходил gate).
+    gate.declare("system", core_capability_refs())
+    # "ai-agent" — plugin AI-слоя (core/ai/fs_facade.py:56,
+    # core/ai/skill_registry.py, infrastructure/ai/e2b_sandbox.py:49).
+    #
+    # Оба — плагины ядра/инфраструктуры, а не пользовательские расширения:
+    # их capability объявляет сама платформа. Пользовательские плагины
+    # (extensions/*) по-прежнему обязаны объявлять свои capability
+    # в plugin.toml — это не обход контроля, а baseline для
+    # инфраструктурных capability.
+    #
+    # "extension" намеренно НЕ входит в baseline: изолированные инстансы
+    # UnifiedCacheFacade с plugin="extension" создаются без capability_check
+    # (services/cache/__init__.py:100-103), а фасады, которые его всё же
+    # получают, обязаны объявить capability в plugin.toml.
+    gate.declare("ai-agent", core_capability_refs())
+    return gate
 
 
 def check_capabilities_subset(

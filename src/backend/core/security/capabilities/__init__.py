@@ -19,6 +19,7 @@ from src.backend.core.security.capabilities.gate import (
     AuditCallback,
     CapabilityGate,
     check_capabilities_subset,
+    get_capability_gate,
 )
 from src.backend.core.security.capabilities.matchers import (
     ExactAliasMatcher,
@@ -75,5 +76,6 @@ __all__ = (
     "URISchemeMatcher",
     "build_default_vocabulary",
     "check_capabilities_subset",
+    "get_capability_gate",
     "log_capability_event",
 )

@@ -70,13 +70,46 @@ class AuthorizationFacade:
 
     @property
     def gateway(self) -> Any:
-        """Lazy accessor для AuthorizationGateway."""
+        """Lazy accessor для AuthorizationGateway.
+
+        Cycle 172 (Wave 5): раньше здесь возвращался **класс**
+        ``AuthorizationGateway``, а не инстанс. Класс — ``Protocol``,
+        поэтому ``self.gateway.check(subject, action, resource, ...)``
+        уходил в unbound-вызов и падал с
+        ``TypeError: AuthorizationGateway.check() missing 1 required
+        positional argument: 'resource'``.
+
+        ``AuthorizationFacade.check()`` глотал это исключение и
+        возвращал ``False`` → **deny для ВСЕХ capability-проверок**:
+        41 processor c ``required_capability`` (RPA, export,
+        vault_secret, rpa_browser, ...) и 16 sink'ов/source'ов с
+        ``@require_capability`` (http.send, s3.write, mqtt.write, ...).
+
+        Теперь создаётся настоящий инстанс. Capability-гейт внутри
+        подключается через :class:`FacadeCapabilityAdapter` — тот же
+        адаптер, что и в composition root (``di.py``), поэтому
+        проверки vocabulary/declarations работают одинаково в обоих
+        путях. OPA/Casbin-политики сюда не подключаются: sync-путь
+        ``AuthorizationGateway.check`` их не использует (это policy
+        fallback-цепочка), а async-``authorize()`` — использует.
+        """
         if self._gateway is None:
             from src.backend.core.security.authorization_gateway import (
                 AuthorizationGateway,
             )
+            from src.backend.services.admin._capability_adapter import (
+                FacadeCapabilityAdapter,
+            )
+            from src.backend.services.capabilities.facade import get_capability_facade
 
-            self._gateway = AuthorizationGateway
+            self._gateway = AuthorizationGateway(
+                # Тот же ignore, что и в composition root (di.py:222) —
+                # FacadeCapabilityAdapter намеренно реализует только
+                # check()/check_tenant(), а протокол шире.
+                capability_gateway=FacadeCapabilityAdapter(  # type: ignore[arg-type]
+                    get_capability_facade()
+                ),
+            )
         return self._gateway
 
     @property

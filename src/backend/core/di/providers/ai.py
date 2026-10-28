@@ -49,14 +49,7 @@ def get_ai_gateway_provider() -> AIGateway:
 def _build_ai_gateway_singleton() -> AIGateway:
     """Внутренний builder для :func:`get_ai_gateway_provider` (мемоизация)."""
     from src.backend.core.ai import AIGateway
-    from src.backend.core.config.settings import settings as app_settings
-    from src.backend.core.security.capabilities import (
-        CapabilityGate,
-        build_default_vocabulary,
-    )
     from src.backend.services.ai.gateway_adapter import adapt_capability_gate
-
-    environment = getattr(getattr(app_settings, "app", None), "environment", "")
 
     policy_resolver: PolicyResolver | None = None
     try:
@@ -68,13 +61,12 @@ def _build_ai_gateway_singleton() -> AIGateway:
 
     capability_gate_obj: object | None = None
     try:
-        gate = CapabilityGate(vocabulary=build_default_vocabulary())
-        if environment == "production":
-            from src.backend.core.security.capabilities import CapabilityRef
+        from src.backend.core.security.capabilities.gate import get_capability_gate
 
-            # ponytail: минимальная декларация ядра — production-плагины
-            # обязаны переобъявить свой scope через loader.
-            gate.declare("core", (CapabilityRef(name="ai.invoke", scope="*"),))
+        # Cycle 172 (Wave 5): общий process-wide singleton. Раньше
+        # создавался отдельный CapabilityGate → декларации роутов
+        # (plugin_loader) были не видны AI-пути, и наоборот.
+        gate = get_capability_gate()
         capability_gate_obj = adapt_capability_gate(gate)
     except Exception:
         capability_gate_obj = None

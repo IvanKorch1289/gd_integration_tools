@@ -75,7 +75,10 @@ class TerminalEmulator3270Processor(BaseProcessor):
     S202 audit fix: required_capability + auth_check для enforce.
     """
 
-    required_capability: ClassVar[str | None] = "rpa.3270.invoke"
+    # Cycle 172 (Wave 5): переименовано из ``rpa.3270.invoke`` —
+    # сегмент не может начинаться с цифры (грамматика ADR-044:
+    # ``<resource>.<verb>``, каждый сегмент — ``[a-z][a-z0-9_]*``).
+    required_capability: ClassVar[str | None] = "rpa.terminal3270.invoke"
     audit_event: ClassVar[str | None] = "rpa.3270.invoked"
 
     def __init__(self, host: str, port: int = 23, action: str = "query") -> None:

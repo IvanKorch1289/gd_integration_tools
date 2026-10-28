@@ -40,11 +40,18 @@ class CapabilityFacade:
 
     @property
     def gate(self) -> Any:
-        """Lazy accessor для CapabilityGate singleton."""
-        if self._gate is None:
-            from src.backend.core.security.capabilities import CapabilityGate
+        """Lazy accessor для CapabilityGate singleton.
 
-            self._gate = CapabilityGate()
+        Cycle 172 (Wave 5): раньше создавался **свой** экземпляр
+        ``CapabilityGate()``, не тот же, в который loader'ы декларируют
+        capability роутов/плагинов. Из-за split-brain декларации
+        роутов не были видны runtime-проверкам вообще. Теперь —
+        общий process-wide singleton.
+        """
+        if self._gate is None:
+            from src.backend.core.security.capabilities.gate import get_capability_gate
+
+            self._gate = get_capability_gate()
         return self._gate
 
     def check(self, plugin: str, capability: str, scope: str | None = None) -> bool:

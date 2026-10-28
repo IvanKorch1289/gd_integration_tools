@@ -162,6 +162,29 @@ class CheckMixin(_CapabilityGateProtocol):
             return
 
         if requested_scope is None:
+            # Cycle 172 (Wave 5): scope не указан, но capability объявлена
+            # с wildcard-scope (``**`` = «любой scope»). Раньше этот случай
+            # доходил сюда только через fail-open баг (agent_dsl-гейт не
+            # резолвился → проверка пропускалась). Теперь проверка
+            # fail-closed, поэтому wildcard-объявление должно пропускать
+            # неуказанный scope.
+            #
+            # Проверка идёт через сам matcher с пустым scope: это
+            # семантически «неуказанный scope внутри объявленного».
+            # Для ``**`` → совпадение; для ``*.foo`` / ``vault://...`` —
+            # не совпадение, т.е. scope по-прежнему обязателен.
+            if declared.scope is not None and definition.matcher.match(
+                "", declared.scope
+            ):
+                self._cache_granted(cache_key)
+                self._emit_audit(
+                    plugin=plugin,
+                    capability=capability,
+                    requested_scope=None,
+                    declared_scope=declared.scope,
+                    outcome="granted",
+                )
+                return
             self._emit_audit(
                 plugin=plugin,
                 capability=capability,

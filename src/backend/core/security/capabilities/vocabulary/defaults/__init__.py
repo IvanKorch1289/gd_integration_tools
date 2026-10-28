@@ -16,6 +16,7 @@ from src.backend.core.security.capabilities.vocabulary.defaults import (
     ai_rag,
     ai_safety,
     base,
+    rpa_fs,
 )
 from src.backend.core.security.capabilities.vocabulary.vocabulary import (
     CapabilityVocabulary,
@@ -38,6 +39,7 @@ def build_default_vocabulary() -> CapabilityVocabulary:
     ai_rag.register(vocab)
     ai_safety.register(vocab)
     ai_platform.register(vocab)
+    rpa_fs.register(vocab)
 
     return vocab
 

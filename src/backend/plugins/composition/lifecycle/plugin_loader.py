@@ -49,7 +49,7 @@ async def bootstrap_v11_plugin_loader(app: FastAPI) -> None:
         return
 
     try:
-        from src.backend.core.security.capabilities import CapabilityGate
+        from src.backend.core.security.capabilities.gate import get_capability_gate
         from src.backend.dsl.commands.action_registry import action_handler_registry
         from src.backend.dsl.engine.plugin_registry import get_processor_plugin_registry
         from src.backend.services.plugins.loader import PluginLoader
@@ -59,7 +59,7 @@ async def bootstrap_v11_plugin_loader(app: FastAPI) -> None:
             get_repository_hook_registry,
         )
 
-        gate = CapabilityGate()
+        gate = get_capability_gate()
         loader = PluginLoader(
             extensions_dir=app_settings.v11.extensions_dir,
             capability_gate=gate,
@@ -99,9 +99,9 @@ async def bootstrap_v11_route_loader(app: FastAPI) -> None:
     if gate is None:
         # RouteLoader без gate работать не может; используем чистый
         # gate (route может не использовать capabilities).
-        from src.backend.core.security.capabilities import CapabilityGate
+        from src.backend.core.security.capabilities.gate import get_capability_gate
 
-        gate = CapabilityGate()
+        gate = get_capability_gate()
         app.state.capability_gate = gate
 
     try:

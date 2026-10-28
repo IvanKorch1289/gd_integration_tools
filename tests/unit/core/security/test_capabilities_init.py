@@ -7,10 +7,11 @@ from __future__ import annotations
 
 
 def test_capabilities_dunder_all_count() -> None:
-    """__all__ содержит 27 публичных symbols."""
+    """__all__ содержит 28 публичных symbols."""
     import src.backend.core.security.capabilities as mod
 
-    assert len(mod.__all__) == 27
+    # Cycle 172 (Wave 5): 27 → 28 (+get_capability_gate).
+    assert len(mod.__all__) == 28
 
 
 def test_capabilities_dunder_all_specific_names() -> None:
@@ -44,6 +45,8 @@ def test_capabilities_dunder_all_specific_names() -> None:
         "URISchemeMatcher",
         "build_default_vocabulary",
         "check_capabilities_subset",
+        # Cycle 172 (Wave 5): единый process-wide гейт.
+        "get_capability_gate",
         "log_capability_event",
     )
     assert mod.__all__ == expected

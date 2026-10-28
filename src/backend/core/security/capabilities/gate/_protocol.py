@@ -33,7 +33,28 @@ class _CapabilityGateProtocol(Protocol):
     # (dict read + LRU pop + write), so contention is negligible.
     _lock: Lock
 
-    def _emit_audit(self, event: dict[str, object]) -> None: ...
+    def _emit_audit(
+        self,
+        *,
+        plugin: str,
+        capability: str,
+        requested_scope: str | None,
+        declared_scope: str | None,
+        outcome: str,
+        tenant: str | None = None,
+        reason: str | None = None,
+        event: str = "capability.check",
+    ) -> None: ...
+    """Emission capability-audit события.
+
+    Cycle 172 (Wave 5): сигнатура приведена в соответствие с
+    фактической реализацией :class:`AuditMixin._emit_audit` — раньше
+    протокол объявлял ``_emit_audit(self, event: dict)``, хотя все
+    17+ вызовов в миксинах передают keyword-аргументы
+    (``plugin``/``capability``/``requested_scope``/...). Из-за
+    расхождения статический анализатор (pyright) считал корректные
+    вызовы ошибочными.
+    """
 
     def _cache_granted(self, key: tuple[str, str, str | None]) -> None: ...
 

@@ -62,6 +62,7 @@ class TestCapabilityVocabulary:
             "fs.create_new",
             "storage.read",
             "storage.write",
+            "storage.presign",
             "code.execute",
             "mq.publish",
             "mq.consume",
@@ -76,25 +77,57 @@ class TestCapabilityVocabulary:
             # их нельзя было ни сделать публичными, ни покрыть плагином.
             "audit.write",
             "jupyter.hub",
+            # Cycle 172 (Wave 5): RPA/FS + connector-сегмент.
+            "fs.watch",
+            "rpa.file.list",
+            "rpa.directory.scan",
+            "rpa.file.watch",
+            "data.export",
+            "secret.read",
+            "event.publish",
+            "llm.stream",
+            "mcp.call",
+            "agent.run",
+            "ai.tool.dispatch",
+            # Per-instance capability AgentDictPIIMaskProcessor.
+            "pii.tokenize.reversible.agent_actions",
+            "pii.tokenize.reversible.agent_tools",
         ):
             assert v.has(name), f"missing {name}"
-        assert len(v.all()) == 51  # 2026-10-06: +audit.write, +jupyter.hub (было 49)
+        # Cycle 172 (Wave 5): 51 → 107 (RPA/FS + connector-сегмент,
+        # multi-segment pii.* и fs.watch); Wave 13 (Q6): 107 → 108
+        # (storage.presign).
+        assert len(v.all()) == 108
 
     def test_net_capabilities_are_public(self) -> None:
-        """Публичный набор: net.inbound, net.outbound + audit.write.
+        """Публичный набор: net.*, audit.write, storage.*.
 
         Публичность снимает только declaration-time проверку манифеста роута.
         Рантайм-контроль (CapabilityGate.check через OutboundHttpClient и
         external_database_facade) public НЕ читает и scope по-прежнему
-        сверяет — здесь это зафиксировано, чтобы регрессия была видна.
+        сверяется — здесь это зафиксировано, чтобы регрессия была видна.
 
         ``audit.write`` сделан публичным 2026-10-06: audit-sink пишет
         append-only лог, не даёт доступа к данным, плагина-владельца не
         имеет, а шаг ``audit:`` нужен почти каждому маршруту.
+
+        ``storage.read`` / ``storage.write`` — Cycle 172 (Wave 7a):
+        S3-шаги DSL — core-фича без plugin-владельца (как и audit.write).
+        Без public роут не может объявить capability в route.toml, а
+        ``check_capabilities_subset`` отклоняет такой роут с
+        CapabilitySupersetError. Рантайм-контроль при этом сохраняется:
+        scope=key/prefix по-прежнему сверяется matcher'ем path_glob.
         """
         v = build_default_vocabulary()
         public_names = {d.name for d in v.public_capabilities()}
-        assert public_names == {"net.inbound", "net.outbound", "audit.write"}
+        assert public_names == {
+            "net.inbound",
+            "net.outbound",
+            "audit.write",
+            "storage.read",
+            "storage.write",
+            "storage.presign",
+        }
         # Доменные и привилегированные capability остаются непубличными —
         # расширять набор молча нельзя.
         for name in ("db.read", "db.write", "ai.invoke", "secrets.read"):
