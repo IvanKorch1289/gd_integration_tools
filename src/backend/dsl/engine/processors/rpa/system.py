@@ -29,6 +29,9 @@ class ShellExecProcessor(BaseProcessor):
 
     БЕЗОПАСНОСТЬ: только команды из whitelist, timeout, без shell=True.
 
+    ADR-0368 (решение D2): whitelist обязателен — без ``allowed_commands``
+    команда не выполняется (fail-closed), exchange получает понятную ошибку.
+
     Usage::
 
         .shell("ls", args=["-la", "/data"], allowed_commands=["ls", "cat", "wc"])
@@ -62,11 +65,6 @@ class ShellExecProcessor(BaseProcessor):
             return
         import asyncio
 
-        if self._allowed and self._command not in self._allowed:
-            exchange.fail(
-                f"Command '{self._command}' not in whitelist: {self._allowed}"
-            )
-            return
         # ADR-0305: narrow shell timeout by remaining deadline budget.
         effective_timeout: float = self._timeout
         try:
@@ -92,6 +90,23 @@ class ShellExecProcessor(BaseProcessor):
             # Не ломаем shell при недоступности RequestContext.
             pass
 
+        # ADR-0368 (решение D2): whitelist fail-closed — без явного
+        # allowlist команда не выполняется. Проверка идёт ПОСЛЕ
+        # admission-контроля deadline, чтобы сохранить диагностику
+        # «budget exhausted» (см. test_wait_for_deadline_focused.py).
+        if self._allowed is None:
+            exchange.fail(
+                f"Shell command '{self._command}' rejected: allowed_commands "
+                f"whitelist is not configured (fail-closed, ADR-0368)"
+            )
+            return
+        if self._command not in self._allowed:
+            exchange.fail(
+                f"Command '{self._command}' not in whitelist: {self._allowed}"
+            )
+            return
+
+        proc: Any = None
         try:
             proc = await asyncio.create_subprocess_exec(
                 self._command,
@@ -116,7 +131,12 @@ class ShellExecProcessor(BaseProcessor):
             if proc.returncode != 0:
                 exchange.set_property("shell_error", True)
         except TimeoutError:
-            exchange.fail(f"Shell command timed out after {self._timeout}s")
+            # ADR-0368: таймаут обязан убить потомка, иначе он живёт
+            # вечно (zombie-процессы RPA-агента).
+            if proc is not None:
+                proc.kill()
+                await proc.wait()
+            exchange.fail(f"Shell command timed out after {effective_timeout}s")
         except (FileNotFoundError, PermissionError) as exc:
             exchange.fail(f"Shell exec failed: {exc}")
 
@@ -304,6 +324,7 @@ class EmailReadProcessor(BaseProcessor):
         password: Password.
         folder: Mailbox folder (default ``"INBOX"``).
         to: Куда записать emails (default ``"body.emails"``).
+        timeout: Таймаут IMAP-сокета и всей операции чтения (default 30.0).
 
     """
 
@@ -319,6 +340,7 @@ class EmailReadProcessor(BaseProcessor):
         password: str = "",
         folder: str = "INBOX",
         to: str = "body.emails",
+        timeout: float = 30.0,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"email_read:{host}")
@@ -328,6 +350,7 @@ class EmailReadProcessor(BaseProcessor):
         self.password = password
         self.folder = folder
         self.target = to
+        self.timeout = timeout
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Подключается к IMAP-серверу, читает все письма из папки и пишет их в target."""
@@ -336,7 +359,9 @@ class EmailReadProcessor(BaseProcessor):
         import imaplib
 
         def _fetch() -> list[dict[str, str]]:
-            conn = imaplib.IMAP4_SSL(self.host, self.port)
+            # ADR-0368: socket-timeout обязателен — иначе зависший IMAP
+            # держит поток executor'а бесконечно.
+            conn = imaplib.IMAP4_SSL(self.host, self.port, timeout=self.timeout)
             try:
                 if self.user:
                     conn.login(self.user, self.password)
@@ -370,7 +395,16 @@ class EmailReadProcessor(BaseProcessor):
                         extra={"error": str(logout_exc)},
                     )
 
-        emails = await asyncio.to_thread(_fetch)
+        try:
+            # ADR-0368: внешний wait_for ограничивает всю операцию.
+            # Потолок: отмена wait_for не прерывает поток executor'а —
+            # IMAP-сокет закрывается по socket-timeout (см. ADR-0368).
+            emails = await asyncio.wait_for(
+                asyncio.to_thread(_fetch), timeout=self.timeout
+            )
+        except TimeoutError:
+            exchange.fail(f"Email read timed out after {self.timeout}s")
+            return
         _rpa_logger.info(
             "email_read host=%s folder=%s count=%d", self.host, self.folder, len(emails)
         )

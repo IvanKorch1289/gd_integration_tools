@@ -199,35 +199,36 @@ class DesktopRPASessionPool:
         from src.backend.core.resilience.breaker import CircuitOpen
 
         breaker = _get_pool_breaker()
-        breaker_guard = breaker.guard()
-        await breaker_guard.__aenter__()
         try:
-            async with self._lock:
-                session = await self._get_or_create(app_name)
-                session.in_use = True
-            try:
-                yield session.client
-            except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
-                # Stale handle — закрыть и пометить для reconnect на следующий acquire
-                _logger.warning(
-                    "desktop_rpa_pool: stale connection для %s — reconnect (%s)",
-                    app_name,
-                    exc,
-                )
+            # ADR-0368: исключение из тела обязано пройти через guard —
+            # иначе breaker считает запрос успешным и никогда не открывается.
+            async with breaker.guard():
+                async with self._lock:
+                    session = await self._get_or_create(app_name)
+                    session.in_use = True
                 try:
-                    await session.client.aclose()
-                except Exception as exc:
-                    _logger.debug(
-                        "desktop_rpa_pool: stale session aclose failed: %s", exc
+                    yield session.client
+                except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
+                    # Stale handle — закрыть и пометить для reconnect на следующий acquire
+                    _logger.warning(
+                        "desktop_rpa_pool: stale connection для %s — reconnect (%s)",
+                        app_name,
+                        exc,
                     )
-                async with self._lock:
-                    self._sessions.pop(app_name, None)
-                raise
-            finally:
-                async with self._lock:
-                    if app_name in self._sessions:
-                        self._sessions[app_name].in_use = False
-                        self._sessions[app_name].last_used_at = time.monotonic()
+                    try:
+                        await session.client.aclose()
+                    except Exception as exc:
+                        _logger.debug(
+                            "desktop_rpa_pool: stale session aclose failed: %s", exc
+                        )
+                    async with self._lock:
+                        self._sessions.pop(app_name, None)
+                    raise
+                finally:
+                    async with self._lock:
+                        if app_name in self._sessions:
+                            self._sessions[app_name].in_use = False
+                            self._sessions[app_name].last_used_at = time.monotonic()
         except CircuitOpen as exc:
             _logger.warning(
                 "desktop_rpa_pool: breaker open, refusing acquire(%s): %s",
@@ -235,8 +236,6 @@ class DesktopRPASessionPool:
                 exc,
             )
             raise
-        finally:
-            await breaker_guard.__aexit__(None, None, None)
 
     async def healthcheck(self, app_name: str = "default") -> bool:
         """S164 W2: lightweight healthcheck via sidecar ``GET /health``.

@@ -27,22 +27,39 @@ class _ChangeCollector:
     Cycle 34 audit (DS3): pattern was declared but never applied —
     handler added every changed file regardless of configured glob.
     Filter now applied at add() time via :func:`fnmatch.fnmatch`.
+
+    ADR-0368: пути дедуплицируются (create + modify одного файла — один
+    элемент результата).
     """
 
     def __init__(self, pattern: str) -> None:
         self.changes: list[str] = []
         self._pattern = pattern
         self._lock = threading.Lock()
+        self._seen: set[str] = set()
 
-    def add(self, path: str) -> None:
+    def add(self, path: str) -> bool:
+        """Добавить путь в результат (если он подходит под pattern и новый).
+
+        Args:
+            path: Путь из watchdog-события.
+
+        Returns:
+            ``True`` если путь добавлен (новый + подходит под pattern).
+
+        """
         # Cycle 34: apply pattern filter to basename.
         import os
 
         basename = os.path.basename(path)
         if not fnmatch.fnmatch(basename, self._pattern):
-            return
+            return False
         with self._lock:
+            if path in self._seen:
+                return False
+            self._seen.add(path)
             self.changes.append(path)
+        return True
 
 
 class FileWatchProcessor(BaseProcessor):
@@ -92,6 +109,16 @@ class FileWatchProcessor(BaseProcessor):
             return
 
         """Блокирует выполнение до появления файлов в директории (watchdog, синхронно)."""
+        # ADR-0368: несуществующая директория → понятный failure вместо
+        # необработанного FileNotFoundError из watchdog-потока.
+        import os
+
+        if not await asyncio.to_thread(os.path.isdir, safe_directory):
+            exchange.fail(
+                f"file_watch failed: directory does not exist: {safe_directory}"
+            )
+            return
+
         try:
             from watchdog.events import FileSystemEventHandler
             from watchdog.observers import Observer
@@ -99,28 +126,43 @@ class FileWatchProcessor(BaseProcessor):
             raise RuntimeError("watchdog required: uv add watchdog") from exc
 
         collector = _ChangeCollector(self.pattern)
+        loop = asyncio.get_running_loop()
+        first_change = asyncio.Event()
+
+        def _notify(path: str) -> None:
+            """Событие watchdog-потока → collector + сигнал раннего выхода."""
+            if collector.add(path):
+                loop.call_soon_threadsafe(first_change.set)
 
         class _Handler(FileSystemEventHandler):
             def on_created(self, event):  # type: ignore[override]
                 if not event.is_directory:
-                    collector.add(str(event.src_path))
+                    _notify(str(event.src_path))
 
             def on_modified(self, event):  # type: ignore[override]
                 if not event.is_directory:
-                    collector.add(str(event.src_path))
+                    _notify(str(event.src_path))
 
             def on_deleted(self, event):  # type: ignore[override]
                 if not event.is_directory:
-                    collector.add(str(event.src_path))
+                    _notify(str(event.src_path))
 
         observer = Observer()
-        observer.schedule(_Handler(), safe_directory, recursive=False)
-        observer.start()
         try:
-            await asyncio.sleep(self.timeout)
+            observer.schedule(_Handler(), safe_directory, recursive=False)
+            observer.start()
+        except OSError as exc:
+            exchange.fail(f"file_watch failed: observer start error: {exc}")
+            return
+        try:
+            # ADR-0368: ранний выход по первому подходящему изменению
+            # (иначе всегда ждём полный timeout).
+            await asyncio.wait_for(first_change.wait(), timeout=self.timeout)
+        except TimeoutError:
+            pass
         finally:
             observer.stop()
-            observer.join(timeout=2.0)
+            await asyncio.to_thread(observer.join, 2.0)
 
         _rpa_logger.info(
             "file_watch dir=%s pattern=%s changes=%d",

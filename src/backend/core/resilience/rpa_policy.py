@@ -215,6 +215,11 @@ class RPACallPolicy:
             ctx.attempts = attempt + 1
             try:
                 result = await coro_factory()
+            except asyncio.CancelledError:
+                # ADR-0368: отмена задачи — не «отказ вызова». Проброс
+                # наверх без retry/DLQ (иначе отмена превращалась в
+                # RPACallExhausted + ложная запись в DLQ).
+                raise
             except BaseException as exc:
                 ctx.last_error = exc
                 now = time.monotonic()

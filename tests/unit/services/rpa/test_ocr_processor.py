@@ -103,7 +103,10 @@ async def test_pytesseract_recognize_offloads_to_thread_pool() -> None:
     """
     call_log: list[str] = []
 
-    def fake_image_to_string(path: str, lang: str = "eng") -> str:
+    def fake_image_to_string(
+        path: str, lang: str = "eng", timeout: float = 0.0
+    ) -> str:
+        # ADR-0368: recognize() передаёт timeout в pytesseract.
         call_log.append(f"sync:{path}:{lang}")
         return "recognised text"
 
@@ -143,7 +146,9 @@ async def test_recognize_lang_param_passed_through() -> None:
     """Параметр lang пробрасывается в pytesseract.image_to_string."""
     captured: dict[str, object] = {}
 
-    def fake_image_to_string(path: str, lang: str = "eng") -> str:
+    def fake_image_to_string(
+        path: str, lang: str = "eng", timeout: float = 0.0
+    ) -> str:
         captured["lang"] = lang
         return ""
 

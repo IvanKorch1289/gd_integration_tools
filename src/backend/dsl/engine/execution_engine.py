@@ -1,3 +1,4 @@
+import asyncio
 import time
 from typing import Any, Callable, cast
 
@@ -21,6 +22,10 @@ from src.backend.infrastructure.observability.tracing import TracingMiddleware
 
 _logger = get_logger(__name__)
 __all__ = ("ExecutionEngine",)
+
+# ADR-0368: таймаут выполнения finalizers exchange. Cleanup не должен
+# держать маршрут вечно (browser-контекст возвращается в пул).
+_FINALIZER_TIMEOUT_SECONDS = 5.0
 
 
 def _resolve_tenant_id() -> str | None:
@@ -287,6 +292,29 @@ class ExecutionEngine:
                 extra={"route_id": pipeline.route_id},
             )
 
+    @staticmethod
+    async def _run_finalizers(exchange: Exchange[Any]) -> None:
+        """Выполнить finalizers exchange (best-effort, с таймаутом).
+
+        ADR-0368: без вызова ``run_finalizers`` движок оставлял
+        browser/desktop-контексты в пуле — семафор пула исчерпывался
+        навсегда. Cleanup выполняется shielded-таймаутом: отмена маршрута
+        не должна прерывать освобождение ресурса.
+
+        Args:
+            exchange: Exchange с зарегистрированными finalizers.
+
+        """
+        try:
+            await asyncio.wait_for(
+                asyncio.shield(exchange.run_finalizers()),
+                timeout=_FINALIZER_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            _logger.warning("exchange_finalizers_timeout")
+        except Exception as exc:
+            _logger.warning("exchange_finalizers_failed: %s", exc)
+
     async def execute(
         self,
         pipeline: Pipeline,
@@ -348,48 +376,53 @@ class ExecutionEngine:
         middleware_chain = self._build_chain(pipeline)
         timeout_mw = self._find_timeout_middleware_in(middleware_chain)
 
-        for processor in pipeline.processors:
-            if (
-                current_exchange.status == ExchangeStatus.failed
-                or current_exchange.stopped
-            ):
-                break
+        try:
+            for processor in pipeline.processors:
+                if (
+                    current_exchange.status == ExchangeStatus.failed
+                    or current_exchange.stopped
+                ):
+                    break
 
-            try:
-                entry = await self._execute_processor(
-                    processor,
-                    current_exchange,
-                    runtime_context,
-                    pipeline.route_id,
-                    tracer,
-                    middleware_chain,
-                    timeout_mw,
-                )
-                trace_log.append(entry)
-            except Exception as exc:
-                duration_ms = (time.monotonic() - pipeline_start) * 1000
-                if runtime_context.logger is not None:
-                    runtime_context.logger.exception(
-                        "Processor '%s' failed in route '%s'",
-                        processor.name,
+                try:
+                    entry = await self._execute_processor(
+                        processor,
+                        current_exchange,
+                        runtime_context,
                         pipeline.route_id,
+                        tracer,
+                        middleware_chain,
+                        timeout_mw,
                     )
-                trace_log.append(
-                    {
-                        "processor": processor.name,
-                        "type": type(processor).__name__,
-                        "duration_ms": duration_ms,
-                        "status": "error",
-                        "error": str(exc),
-                    }
-                )
-                current_exchange.fail(str(exc))
-                break
+                    trace_log.append(entry)
+                except Exception as exc:
+                    duration_ms = (time.monotonic() - pipeline_start) * 1000
+                    if runtime_context.logger is not None:
+                        runtime_context.logger.exception(
+                            "Processor '%s' failed in route '%s'",
+                            processor.name,
+                            pipeline.route_id,
+                        )
+                    trace_log.append(
+                        {
+                            "processor": processor.name,
+                            "type": type(processor).__name__,
+                            "duration_ms": duration_ms,
+                            "status": "error",
+                            "error": str(exc),
+                        }
+                    )
+                    current_exchange.fail(str(exc))
+                    break
 
-        current_exchange.set_property("_trace", trace_log)
-        self._finalize(
-            current_exchange, pipeline, (time.monotonic() - pipeline_start) * 1000
-        )
+            current_exchange.set_property("_trace", trace_log)
+            self._finalize(
+                current_exchange, pipeline, (time.monotonic() - pipeline_start) * 1000
+            )
+        finally:
+            # ADR-0368: finalizers выполняются всегда (в т.ч. после падения
+            # процессора) — иначе ресурсы пула не возвращаются.
+            await self._run_finalizers(current_exchange)
         return current_exchange
 
     async def execute_parallel(
@@ -428,20 +461,24 @@ class ExecutionEngine:
         )
         runtime_context = context or ExecutionContext()
 
-        trace_log = await self._pool.execute_parallel(
-            processors, current_exchange, runtime_context, timeout=timeout
-        )
+        try:
+            trace_log = await self._pool.execute_parallel(
+                processors, current_exchange, runtime_context, timeout=timeout
+            )
 
-        current_exchange.set_property("_trace", trace_log)
+            current_exchange.set_property("_trace", trace_log)
 
-        if any(entry.get("status") == "error" for entry in trace_log):
-            errors = [
-                e.get("error", "Unknown")
-                for e in trace_log
-                if e.get("status") == "error"
-            ]
-            current_exchange.fail("; ".join(errors))
-        else:
-            current_exchange.status = ExchangeStatus.completed
+            if any(entry.get("status") == "error" for entry in trace_log):
+                errors = [
+                    e.get("error", "Unknown")
+                    for e in trace_log
+                    if e.get("status") == "error"
+                ]
+                current_exchange.fail("; ".join(errors))
+            else:
+                current_exchange.status = ExchangeStatus.completed
+        finally:
+            # ADR-0368: finalizers выполняются всегда (в т.ч. после падения).
+            await self._run_finalizers(current_exchange)
 
         return current_exchange

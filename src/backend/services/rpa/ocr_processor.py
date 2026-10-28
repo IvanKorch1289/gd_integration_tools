@@ -31,6 +31,10 @@ __all__ = ("NoOpOCRProcessor", "OCRProcessor", "PytesseractOCRProcessor")
 
 _logger = get_logger("services.rpa.ocr_processor")
 
+# ADR-0368: предел ожидания OCR (секунды). Tesseract без timeout hang'ит
+# вызов RPA навсегда.
+_DEFAULT_OCR_TIMEOUT_SECONDS = 30.0
+
 
 @runtime_checkable
 class OCRProcessor(Protocol):
@@ -44,12 +48,19 @@ class OCRProcessor(Protocol):
     event loop).
     """
 
-    async def recognize(self, image_path: str | Path, *, lang: str = "eng") -> str:
+    async def recognize(
+        self,
+        image_path: str | Path,
+        *,
+        lang: str = "eng",
+        timeout: float = _DEFAULT_OCR_TIMEOUT_SECONDS,
+    ) -> str:
         """Распознать текст в изображении.
 
         Args:
             image_path: Путь к файлу (PNG/JPG/PDF-страница).
             lang: Код языка Tesseract (``eng``, ``rus``, ``eng+rus``).
+            timeout: Предел ожидания OCR в секундах (default 30.0).
 
         Returns:
             Распознанный текст (пустая строка при сбое или NoOp).
@@ -85,18 +96,30 @@ class PytesseractOCRProcessor:
             return False
         return True
 
-    async def recognize(self, image_path: str | Path, *, lang: str = "eng") -> str:
+    async def recognize(
+        self,
+        image_path: str | Path,
+        *,
+        lang: str = "eng",
+        timeout: float = _DEFAULT_OCR_TIMEOUT_SECONDS,
+    ) -> str:
         """Распознать текст в изображении (async).
 
         Args:
             image_path: Путь к файлу.
             lang: Код языка Tesseract.
+            timeout: Предел ожидания OCR в секундах (default 30.0).
 
         Returns:
             Распознанный текст или пустая строка при сбое.
 
         S164 W3: pytesseract.image_to_string — sync, offloaded в thread pool
         через asyncio.to_thread (не блокирует event loop).
+
+        ADR-0368: двойной предел ожидания — socket/process-timeout внутри
+        pytesseract и внешний ``asyncio.wait_for``. Потолок: отмена
+        ``wait_for`` не прерывает поток executor'а, но tesseract-process
+        завершается по собственному timeout.
 
         """
         try:
@@ -106,10 +129,19 @@ class PytesseractOCRProcessor:
             return ""
         try:
             return str(
-                await asyncio.to_thread(
-                    pytesseract.image_to_string, str(image_path), lang=lang
+                await asyncio.wait_for(
+                    asyncio.to_thread(
+                        pytesseract.image_to_string,
+                        str(image_path),
+                        lang=lang,
+                        timeout=timeout,
+                    ),
+                    timeout=timeout,
                 )
             )
+        except TimeoutError:
+            _logger.warning("pytesseract recognize timed out after %.1fs", timeout)
+            return ""
         except Exception as exc:  # tesseract error, env error, etc.
             _logger.warning("pytesseract recognize failed: %s", exc)
             return ""
@@ -129,7 +161,13 @@ class NoOpOCRProcessor:
         r"""NoOp всегда ``available`` в смысле \"не падает\"."""
         return True
 
-    async def recognize(self, image_path: str | Path, *, lang: str = "eng") -> str:
+    async def recognize(
+        self,
+        image_path: str | Path,
+        *,
+        lang: str = "eng",
+        timeout: float = _DEFAULT_OCR_TIMEOUT_SECONDS,
+    ) -> str:
         """Записать warning и вернуть пустую строку."""
         _logger.warning(
             "OCR requested for %s (lang=%s) but no backend configured; "
