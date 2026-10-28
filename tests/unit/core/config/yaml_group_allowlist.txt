@@ -1,0 +1,18 @@
+# Группы yaml-конфигурации, для которых в config_profiles/base.yml НЕТ секции.
+#
+# Формат строки: <yaml_group>: <причина>
+# Пустые строки и строки с '#' — комментарии.
+#
+# Секция в base.yml обязательна для КАЖДОЙ yaml-группы, кроме перечисленных
+# здесь. Причина исключения — одна из двух (ADR-0375):
+#
+#   * profile-overlay-only — значения задаются per-профиль
+#     (dev/dev_light/staging/prod), базовый набор не имеет смысла;
+#   * runtime-only — у модели нет полей (extension point) либо группа
+#     настраивается только через env/секреты.
+#
+# ВАЖНО: allowlist — не «список невыполненной работы». Новая группа без
+# секции в base.yml обязана попасть сюда с явной причиной, иначе падает
+# tests/unit/core/config/test_yaml_group_coverage.py.
+features: profile-overlay-only — 262 feature-флага задаются per-профиль (dev/dev_light/staging/prod); базовый набор не имеет смысла.
+workflow: runtime-only — WorkflowSettings пока без полей (extension point, D-AUDIT-A8-05).

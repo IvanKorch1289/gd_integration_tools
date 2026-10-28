@@ -161,9 +161,10 @@
 | [ADR-0371](0371-profile-hardening-and-invariants.md) | Харденинг prod/staging-профилей и инварианты профилей | Accepted |
 | [ADR-0372](0372-settings-sources-priority-and-hot-reload.md) | Приоритет источников конфигурации и рабочий hot-reload | Accepted |
 | [ADR-0373](0373-env-secrets-only-rule-and-gates.md) | Правило «в `.env` только секреты» и гейты конфигурации | Accepted |
+| [ADR-0375](0375-settings-coverage-merged-validation-constants-and-secret-typing.md) | Полнота покрытия настроек, merged-валидация профиля, константы из YAML, типизация секретов | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 159 ADRs.
+**Total:** 160 ADRs.
 

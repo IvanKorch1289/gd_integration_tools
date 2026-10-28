@@ -698,3 +698,271 @@ rpa:
   browser_headless: true                   # false — только для локальной отладки
   browser_launch_max_retries: 2            # повторов (не попыток) при transient-crash
   browser_launch_retry_base_seconds: 0.5   # база exponential backoff
+
+# ──────────────────────────────────────────────────────────────────────
+# ADR-0375 (wave 14, ЧАСТЬ A) — секции для yaml-групп, которым раньше
+# не досталось места в base.yml.
+#
+# Правила:
+#   * в секции — ТОЛЬКО несекретные поля; секреты остаются в env/Vault;
+#   * значения РАВНЫ дефолтам моделей → поведение при загрузке не
+#     меняется, параметр просто становится конфигурируемым;
+#   * поля, дефолт которых — loopback (influxdb.url, policy.opa_url,
+#     websocket.allowed_origins), намеренно НЕ вынесены: иначе merged
+#     prod/staging унаследовал бы dev-host (ADR-0371 loopback-гейт).
+#     Их настройка — env (INFLUXDB_URL / POLICY_OPA_URL / WS_ALLOWED_ORIGINS).
+#
+# Группы вне этого блока: features (per-profile overlay) и workflow
+# (модель без полей) — см. tests/unit/core/config/yaml_group_allowlist.txt.
+
+# AI-агент: policy-gate перед каждым LLM-вызовом (fail-closed).
+ai_agent:
+  policy_gate_enabled: true
+
+# AI-workspace: изоляция файлов AI-плагинов + TTL/quota-уборка.
+ai_workspace:
+  workspace_root: "var/ai_workspace"
+  workspace_ttl_seconds: 604800
+  workspace_quota_bytes: 524288000
+  workspace_cleanup_interval_s: 21600
+  default_agent_sandbox: "process_pool"
+
+# BGE-M3: dense-embeddings + cross-encoder reranker.
+bge:
+  enabled: false
+  embedding_model: "BAAI/bge-m3"
+  reranker_enabled: true
+  reranker_model: "BAAI/bge-reranker-v2-m3"
+  reranker_use_fp16: true
+  cache_dir: "./var/bge_cache"
+  use_fp16: true
+
+# DLQ: периодическая очистка мёртвых событий (outbox/inbox).
+dlq:
+  enabled: true
+  interval_hours: 24.0
+  table_name: "dlq_events"
+
+# GigaChat (российский LLM, OAuth2). credentials — секрет (env).
+gigachat:
+  model: "GigaChat:latest"
+  max_tokens: 2000
+  temperature: 0.6
+  scope: "GIGACHAT_API_PERS"
+  base_url: "https://gigachat.devices.sberbank.ru/api/v1"
+  use_waf: false
+
+# InfluxDB (метрики). token — секрет (env); url оставлен вне YAML (loopback).
+influxdb:
+  org: "default"
+  bucket: "metrics"
+
+# LangFuse: cost-tracking LLM-вызовов. secret_key — секрет (env).
+langfuse:
+  enabled: false
+  host: ""
+  public_key: ""
+  flush_at: 15
+  deep_link_base: ""
+  sanitize_traces: true
+
+# LangMem: long-term memory (episodic/semantic/procedural).
+langmem:
+  enabled: false
+  pg_dsn: ""
+  qdrant_collection: "langmem_semantic"
+  consolidation_batch_size: 50
+  consolidation_schedule_cron: ""
+  consolidation_min_cluster_size: 3
+  consolidation_confidence_threshold: 0.7
+  rlm_enabled: false
+  rlm_boost_factor: 0.1
+  rlm_reindex_threshold: 3
+
+# LDAP/AD: bind + поиск пользователей. bind_password — секрет (env).
+ldap:
+  server_uri: ""
+  bind_dn: ""
+  search_base: ""
+  use_ssl: true
+  timeout_seconds: 10.0
+  user_id_attribute: "userPrincipalName"
+  group_attribute: "memberOf"
+
+# Lineage (Marquez): эмиттер событий происхождения данных.
+# auth_token — секрет (env).
+lineage:
+  url: "http://marquez:5000"
+  namespace: "gd_integration_tools"
+  timeout_s: 5.0
+  batch_size: 100
+  max_queue: 10000
+
+# LiteLLM-шлюз: единая точка входа к LLM-провайдерам + cost-callback.
+litellm_gateway:
+  enabled: false
+  default_model: "gpt-4o-mini"
+  fallback_models: []
+  cost_tracking: true
+  num_retries: 2
+  request_timeout: 60.0
+  langfuse_callback: false
+
+# Базовые параметры LLM-клиента (модель/timeout/retry/cb/budget).
+llm:
+  default_model: "gpt-4o-mini"
+  default_timeout: 60.0
+  default_max_tokens: 1024
+  retry_max_attempts: 3
+  retry_initial_backoff: 1.0
+  retry_max_backoff: 8.0
+  cb_failure_threshold: 5
+  cb_recovery_seconds: 30.0
+  tgi_concurrency: 10
+  tgi_timeout: 60.0
+  cost_tracking_enabled: true
+  cost_budget_usd_per_hour: null
+
+# markitdown: конвертация документов в Markdown (network_mode=off — без сети).
+markitdown:
+  engine_enabled: true
+  timeout_s: 30
+  max_bytes: 25000000
+  network_mode: "off"
+
+# MiniMax (OpenAI-совместимый). username/password/api_key — секреты (env).
+minimax:
+  host: ""
+  port: 0
+  base_url: "https://api.minimax.chat/v1"
+  connect_timeout: 10.0
+  read_timeout: 60.0
+  ca_bundle: null
+  model: "MiniMax-Text-01"
+  max_tokens: 4096
+  temperature: 0.7
+  timeout: 30.0
+  max_retries: 3
+  retry_delay: 0.5
+  circuit_breaker_max_failures: 5
+  circuit_breaker_reset_timeout: 60.0
+
+# Outbox: transactional outbox + дедупликация в Redis.
+outbox:
+  enabled: true
+  use_redis_dedupe: true
+  poll_interval_seconds: 1.0
+  batch_size: 100
+  max_retries: 5
+  retry_backoff_seconds: 2.0
+  shutdown_timeout_seconds: 10.0
+
+# Policy-движки (OPA + Casbin). opa_url оставлен вне YAML (loopback).
+policy:
+  engine_enabled: false
+  opa_policy_name: "authz/default"
+  casbin_model_path: null
+  casbin_policy_path: null
+
+# RAG-кэш: L1 exact / L2 semantic / L3 retrieval.
+rag_cache:
+  l1_enabled: true
+  l1_ttl: 3600
+  l2_enabled: false
+  l2_threshold: 0.92
+  l2_collection: "rag_cache_l2"
+  l3_enabled: true
+  l3_ttl: 600
+  invalidation_channel: "rag:invalidation"
+  warm_on_ingest: false
+
+# RAG ingest: отложенная обработка, PII-маскирование (fail-closed).
+rag_ingest:
+  deferred: false
+  state_backend: "memory"
+  chunker_fingerprint_version: 1
+  state_ttl_seconds: 86400
+  pii_mask_on_ingest: true
+  pii_fail_open: false
+
+# SaluteSpeech (STT/TTS, OAuth2). credentials — секрет (env).
+salute_speech:
+  model: "salute-speech/latest"
+  max_tokens: 2000
+  temperature: 0.6
+  scope: "SALUTE_SPEECH_PERS"
+  base_url: "https://salute.online.sberbank.ru:8000/v1"
+  use_waf: false
+
+# SMS-шлюзы (MTS / Megafon / SMS.ru).
+sms:
+  mts_url: "https://api.mts.ru/sms/v1/send"
+  megafon_url: "https://a2p-api.megafon.ru/sms/send"
+  smsru_url: "https://sms.ru/sms/send"
+
+# Token-level стриминг LLM (SSE / WS / Webhook).
+streaming_llm:
+  chunk_size: 1
+  cancel_on_disconnect: true
+  webhook_chunk_timeout: 5.0
+
+# V11: PluginLoader + RouteLoader.
+v11:
+  plugin_loader_enabled: false
+  route_loader_enabled: true
+  extensions_dir: "extensions"
+  routes_dir: "routes"
+  core_version: "0.20.0"
+  hot_reload_enabled: false
+  hot_reload_debounce_ms: 500
+
+# WAF: outbound-политика (allow/deny hosts, strict, ClamAV).
+waf:
+  allow_hosts: []
+  deny_hosts: []
+  strict: false
+  max_payload_bytes: 10485760
+  outbound_via_facade: true
+  clamav_enabled: true
+  clamav_host: "127.0.0.1"
+  clamav_port: 3310
+  clamav_timeout: 30.0
+  clamav_fail_open: true
+
+# WebSocket: pool/heartbeat/лимиты. allowed_origins оставлен вне YAML (loopback).
+websocket:
+  max_connections: 1000
+  message_timeout_s: 30.0
+  heartbeat_interval_s: 30.0
+  max_message_size: 65536
+  rate_limit_per_minute: 600
+  rate_limit_burst: 10
+  require_auth: true
+  allow_query_token: false
+  allow_cookies: true
+
+# YandexGPT (OpenAI-совместимый). api_key — секрет (env).
+yandexgpt:
+  model: "yandexgpt/latest"
+  max_tokens: 2000
+  temperature: 0.6
+  folder_id: ""
+  base_url: "https://llm.api.cloud.yandex.net/v1"
+  use_waf: false
+
+# ──────────────────────────────────────────────────────────────────────
+# ADR-0375 (wave 14, ЧАСТЬ C) — константы runtime-кода как конфигурация.
+#
+constants:
+  initial_delay: 3600
+  retry_delay: 1800
+  max_result_attempts: 4
+  default_cb_failure_threshold: 5
+  default_cb_recovery_seconds: 30.0
+  default_cb_fast_failure_threshold: 3
+  default_cb_fast_recovery_seconds: 15.0
+  default_retry_max_attempts: 3
+  default_retry_initial_backoff: 0.5
+  default_retry_max_backoff: 10.0
+  default_retry_backoff_multiplier: 2.0
+  default_retry_jitter: 0.5
