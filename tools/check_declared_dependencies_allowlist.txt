@@ -1,0 +1,84 @@
+# Baseline необъявленных зависимостей (Wave 13 Q8).
+# Формат: <import_name>  # комментарий
+# Каждая запись — известный долг манифеста: пакет импортируется в коде,
+# но не объявлен в [project].dependencies / [project.optional-dependencies].
+# Гейт падает только на НОВЫХ пакетах (не из этого списка).
+# Обновление: python tools/check_declared_dependencies.py --update-allowlist
+
+TTS  # Coqui TTS (services/ai/voice) — ai-voice extra не объявлен
+advanced_alchemy  # ORM для langmem-backend'ов (services/ai/memory)
+aioftp  # FTP-транспорт (infrastructure/clients/transport/ftp.py)
+aiohttp  # только в тестах; основной HTTP-клиент проекта — httpx
+aiomcache  # Memcached-бэкенд кэша (infrastructure/cache/backends)
+alpha  # тест-фикстура: динамически созданный пакет в tmp_path (не third-party)
+anyio  # MCP-реестр; приходит транзитивно (httpx/starlette)
+apprise  # сервис нотификаций (services/notifications)
+asyncssh  # SSH/SFTP-процессоры DSL + транспорт
+boto3  # AWS-бэкенд secrets (core/secrets_sources.py)
+bravo  # тест-фикстура: динамически созданный пакет в tmp_path (не third-party)
+catboost  # ML-модель (services/ai/ml/model_loader.py)
+colpali_engine  # multimodal-rag embedder (services/ai/rag/multimodal)
+consul  # Consul-конфигурация (opt-in, core/config/consul_config.py)
+datasets  # AI/eval-датасеты (services/ai/eval)
+defusedxml  # безопасный XML-парсер (core/auth, dsl/eip, bpmn)
+dspy  # dspy-ai (services/ai/dspy) — extra ai-eval не покрывает dspy
+faiss  # FAISS-векторное хранилище (infrastructure/clients/storage)
+fakeredis  # тестовый Redis-backend (tests/unit)
+fastembed  # эмбеддинги (services/ai/embedding_providers.py)
+geoip2  # GeoIP-провайдер (dsl/engine/processors/enrichment/geo_ip.py)
+good_plugin  # тест-фикстура: динамически созданный пакет в tmp_path (не third-party)
+gql  # GraphQL-подписки (infrastructure/sources/graphql_subscription.py)
+graphql  # graphql-core (entrypoints/graphql)
+graypy  # Graylog-логгер (infrastructure/clients/external/logger.py)
+hdrh  # hdrhistogram (infrastructure/application/slo_tracker.py)
+hl7apy  # HL7-кодек (dsl/codec)
+influxdb_client  # InfluxDB-хранилище (dsl/engine/processors/storage_ext.py)
+iso8583  # ISO-8583-кодек (dsl/codec)
+jinja2  # шаблонизатор (dsl/builders/template_engine_mixin.py)
+joblib  # ML-модели (services/ai/ml/model_loader.py)
+jwt  # JWT-процессор (dsl/engine/processors/enrichment/jwt.py); pyjwt не объявлен
+kafka  # kafka-python в integration-тесте (в рантайме — aiokafka)
+keyring  # keyring-бэкенд secrets-chain (infrastructure/resilience)
+langchain_community  # langchain-community (services/ai/ai_graph.py)
+langchain_core  # langchain-core (core/ai, services/ai)
+langchain_litellm  # langchain-litellm (services/ai/ai_graph.py)
+libcst  # кодогенерация (tests/unit/codegen)
+lightgbm  # ML-модель (services/ai/ml/model_loader.py)
+lsprotocol  # LSP-сервер (dsl/cli/lsp_server.py); extra lsp его не покрывает
+markdown_it  # markdown-it-py (dsl/codec/format_converters)
+markdownify  # HTML→Markdown (dsl/codec/format_converters)
+mcp  # MCP-клиент (infrastructure/clients/external/mcp_local_client.py)
+migrate_api_keys_to_argon2  # локальный скрипт tools/migrations (не third-party)
+migrate_dlq_partition  # локальный скрипт tools/migrations (не third-party)
+motor  # MongoDB-драйвер (mongodb объявлен, motor — нет)
+nemoguardrails  # AI-guardrails (services/ai/guardrails/nemo_client.py)
+neo4j  # Neo4j-хранилище (dsl/engine/processors/storage_ext.py)
+numpy  # ML-инференс; приходит транзитивно, но явно не объявлен
+onnxruntime  # ONNX-инференс (dsl/engine/processors/ml_inference.py)
+packaging  # версии пакетов (core/plugin_runtime) — транзитивно, не объявлен
+pandas  # Streamlit-страницы; транзитивно, не объявлен
+pdfplumber  # PDF-парсер (dsl/engine/processors/rpa/documents.py)
+pika  # pika-python в integration-тесте (в рантайме — aio-pika)
+prometheus_client  # метрики (core/utils/metrics_registry.py) — не объявлен
+psutil  # мониторинг процессов (core/scaling, core/plugin_runtime)
+pyautogui  # RPA desktop (dsl/engine/processors/desktop_pyautogui.py)
+pybotx  # Express-бот (infrastructure/clients/external/express.py)
+pyrate_limiter  # rate limiter (core/resilience/_pyrate_compat.py)
+ragas  # RAG-оценка (services/ai/eval, ai_moderation)
+rapidfuzz  # fuzzy-поиск (processors_catalog, template_registry)
+requests  # sync HTTP (core/config/config_loader.py)
+ruamel  # ruamel.yaml (dsl/workflow/yaml_io.py)
+selectolax  # HTML-парсер (dsl/engine/processors/converters.py)
+simpleeval  # safe-выражения (dsl/engine/processors/eip)
+st_aggrid  # streamlit-aggrid (frontend)
+swiftmt  # SWIFT MT-кодек (dsl/codec)
+tiktoken  # подсчёт токенов (core/ai, dsl/ai)
+tomli  # TOML-парсер (py<3.11) — транзитивно
+tomli_w  # TOML-запись (dsl/engine/processors/format_convert)
+torch  # ML-инференс (dsl/engine/processors/ml_predict.py)
+typing_extensions  # typing-extensions (dsl/builders/infra_logging_mixin.py)
+vllm  # vLLM-батчинг (services/ai/llm)
+watchdog  # file-watcher (dsl/engine/processors/rpa/operations)
+websockets  # WS-сокеты/синьки (infrastructure/sinks, sources)
+whisper  # STT (services/ai/voice, services/ai/rag/whisper_stt.py)
+xxhash  # хеш для response-cache (entrypoints/middlewares)

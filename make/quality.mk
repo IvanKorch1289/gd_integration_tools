@@ -151,6 +151,42 @@ deps-check: check-env ## Check for unused dependencies with Creosote
 	fi
 	@$(SUCCESS) "Dependencies check complete!"
 
+deps-declared: check-env ## Wave 13 Q8: гейт объявленных зависимостей (AST vs pyproject)
+	@$(INFO) "Checking declared dependencies..."
+	@$(UV_RUN) python tools/check_declared_dependencies.py
+	@$(SUCCESS) "Declared dependencies check passed!"
+
+deps-declared-update: check-env ## Обновить baseline необъявленных зависимостей
+	@$(INFO) "Updating declared-dependencies allowlist..."
+	@$(UV_RUN) python tools/check_declared_dependencies.py --update-allowlist
+
+check-decorative-capabilities: check-env ## Wave 13 Q15: гейт декоративных capability-деклараций процессоров
+	@$(INFO) "Checking decorative processor capabilities..."
+	@$(UV_RUN) python tools/check_decorative_capabilities.py --ci
+	@$(SUCCESS) "Decorative capabilities check passed!"
+
+check-dsn-drivers: check-env ## Wave 13 Q9/Q2: гейт объявления DSN-драйверов (блокирующий scope)
+	@$(INFO) "Checking DSN driver declarations..."
+	@$(UV_RUN) python tools/check_dsn_drivers.py --ci --scope declarations
+	@$(SUCCESS) "DSN driver declarations check passed!"
+
+check-dsn-drivers-all: check-env ## Wave 13 Q9: полная проверка доступности DSN-драйверов (требует extras, не блокирует)
+	@$(INFO) "Checking DSN driver availability..."
+	@$(UV_RUN) python tools/check_dsn_drivers.py --ci --scope availability
+
+check-config-audit: check-env ## Wave 13 Q16: гейт orphan-ключей YAML (опечатки = тихая потеря настройки)
+	@$(INFO) "Checking config audit (orphan YAML keys ↔ settings models)..."
+	@$(UV_RUN) python tools/config_audit.py --scope orphans
+	@$(SUCCESS) "Config audit check passed!"
+
+check-config-audit-full: check-env ## Wave 13 Q16: полный аудит конфига (включая missing-secret, не блокирует)
+	@$(INFO) "Checking full config audit (orphans + missing)..."
+	@$(UV_RUN) python tools/config_audit.py --scope all
+
+check-config-audit-update: check-env ## Обновить baseline рассинхронизации конфигурации
+	@$(INFO) "Updating config-audit allowlist..."
+	@$(UV_RUN) python tools/config_audit.py --update-allowlist
+
 deps-check-strict: check-env ## Strict dependency check with Creosote
 	@$(INFO) "Running strict dependency checks..."
 	@if $(UV_RUN) creosote --version >/dev/null 2>&1; then \

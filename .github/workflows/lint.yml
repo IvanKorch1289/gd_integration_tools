@@ -109,6 +109,30 @@ jobs:
         # tools/check_layers.py лежит плоско в tools/, без подкаталога checks/.
         run: uv run python tools/check_layers.py
 
+      - name: Declared dependencies gate (check_declared_dependencies)
+        # Wave 13 Q8: third-party импорты должны быть объявлены в pyproject.
+        # Baseline долга — tools/check_declared_dependencies_allowlist.txt.
+        run: uv run python tools/check_declared_dependencies.py
+
+      - name: Decorative processor capabilities gate (check_decorative_capabilities)
+        # Wave 13 Q15: capabilities= в @processor должны сопровождаться
+        # работающим required_capability; baseline долга — allowlist рядом.
+        run: uv run python tools/check_decorative_capabilities.py --ci
+
+      - name: Config audit gate (config_audit)
+        # Wave 13 Q16: YAML-конфиг ↔ модели настроек. Неизвестные YAML-ключи
+        # (опечатки) и секции без Settings-класса = тихая потеря настройки.
+        # Блокирующий scope — только orphan-класс (--scope orphans);
+        # missing-secret (переменные не в .env.example) — отдельный дефект,
+        # печатается неблокирующей секцией.
+        run: uv run python tools/config_audit.py --scope orphans
+
+      - name: DSN driver declarations gate (check_dsn_drivers)
+        # Wave 13 Q9/Q2: драйверы из DSN-конструкторов должны быть объявлены
+        # в extra проекта. Блокирующий scope — только declarations;
+        # availability требует установленных extras и в CI не проверяется.
+        run: uv run python tools/check_dsn_drivers.py --ci --scope declarations
+
       - name: ADR slot collision check
         # Sprint 23 P2 fix (fresh-angle agent): блокирующий CI шаг.
         # До этого был только в `make checks`, не в CI. Теперь в lint.yml.

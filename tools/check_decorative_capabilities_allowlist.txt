@@ -1,0 +1,52 @@
+# Baseline декоративных capability-деклараций процессоров (Wave 13 Q15).
+# Формат: <path>::<ClassName>  # owner=<team> | reason=<note>
+# Каждая запись — известный долг: capabilities есть в метаданных,
+# но required_capability не включает runtime capability-gate.
+# Гейт падает только на НОВЫХ декларациях (не из этого списка).
+# Обновление: python tools/check_decorative_capabilities.py --update-allowlist
+
+src/backend/dsl/engine/processors/agent_dsl/agent_branch.py::AgentBranchProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/agent_dsl/agent_loop.py::AgentLoopProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/agent_dsl/agent_parallel.py::AgentParallelProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/agent_dsl/agent_security_check.py::AgentSecurityCheckProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/agent_dsl/guardrails_apply.py::GuardrailsApplyProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/agent_dsl/optimize_prompt.py::OptimizePromptProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/db_call_procedure.py::DbCallProcedureProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/eip/flow_control/throttler.py::ThrottlerProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/eip/reliability/redelivery_policy.py::RedeliveryPolicyProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/eip/resilience.py::CircuitBreakerProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/eip/resilience.py::DeadLetterProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/eip/resilience.py::FallbackChainProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/eip/resilience.py::TimeoutProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/eip/routing_slip.py::RoutingSlipProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/facade_get_health.py::FacadeGetHealthProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/file_watch.py::FileWatchProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/function_call.py::CallFunctionProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/geo.py::GeoProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/get_setting.py::GetSettingProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/graphql_query.py::GraphQLQueryProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/infra_clickhouse.py::InfraClickHouseQueryProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/infra_db.py::InfraDbQueryProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/infra_elasticsearch.py::InfraElasticsearchIndexProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/infra_elasticsearch.py::InfraElasticsearchSearchProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/infra_kafka.py::InfraKafkaProduceProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/infra_log.py::InfraLogWriteProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/infra_mongodb.py::InfraMongoDBFindProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/infra_redis.py::InfraRedisGetProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/infra_s3.py::InfraS3GetProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/ingest_file.py::IngestFileProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/integration_send.py::IntegrationSendProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/ldap_query.py::LdapQueryProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/llm_structured/__init__.py::LLMStructuredProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/notebook_dsl.py::NotebookDSLProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/notebook_execute.py::NotebookExecuteProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/notebook_export.py::NotebookExportProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/rate_convert.py::RateConvertProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/storage/s3.py::FromS3Processor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/storage/s3.py::S3DeleteProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/storage/s3.py::S3ListProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/storage/s3.py::S3PresignProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/storage/s3.py::ToS3Processor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/web_search.py::WebSearchProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/webdav_io.py::WebDavProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
+src/backend/dsl/engine/processors/webhook_signature.py::WebhookSignatureProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
