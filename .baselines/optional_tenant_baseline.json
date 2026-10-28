@@ -388,7 +388,7 @@
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/infrastructure/observability/immutable_audit.py",
-    "line": 181,
+    "line": 187,
     "qualified_name": "ImmutableAuditStore.append"
   },
   {
@@ -619,7 +619,7 @@
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/services/workflows/hitl_history.py",
-    "line": 85,
+    "line": 81,
     "qualified_name": "HitlHistoryService.get_history"
   },
   {
@@ -717,7 +717,7 @@
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/services/workflows/saga_history.py",
-    "line": 113,
+    "line": 112,
     "qualified_name": "aggregate_saga_stats"
   },
   {
