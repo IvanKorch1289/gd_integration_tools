@@ -13,7 +13,8 @@ app:
   port: 8000
   use_ssl: true
   # ADR-0371 (cycle 172): prod не должен оставаться однопроцессным
-  # dev-режимом (в base.yml ``workers=1``, ``granian_runtime_threads=1``).
+  # dev-режимом (дефолт модели ``AppBaseSettings.workers=1`` и
+  # ``granian_runtime_threads=1``; в ``base.yml`` эти ключи не объявлены).
   # 4 воркера — совпадает с дефолтом ops/compose/docker-compose.prod.yml
   # (``APP_WORKERS:-4``); 4 Rust-потока на воркер (используются в
   # ``granian_runtime_mode`` auto/mt — см. src/backend/main.py::_run_granian).
@@ -93,15 +94,22 @@ features:
 # engines (OPA + Casbin). engine_enabled=True обязывает composition root
 # инстанцировать runtime policy-цепочку и пробрасывать её в
 # AuthorizationGateway. default OFF в base.yml → dev/dev_light не дёргают
-# OPA/Casbin вообще (никаких сетевых вызовов при разработке). URLs берутся
-# из env с fallback на prod-стандартный k8s-адрес opa:8181; casbin_model_path
-# маунтится через Secret в /etc/casbin/. POLICY_* env-vars имеют приоритет.
+# OPA/Casbin вообще (никаких сетевых вызовов при разработке).
+#
+# ADR-0377: здесь — ТОЛЬКО литералы. YAML-загрузчик не подставляет
+# переменные окружения (а Helm эти файлы не шаблонизирует), поэтому
+# плейсхолдер вида ${OPA_URL:-...} попадал в рантайм как есть: OPA-клиент
+# получал невалидный URL (все решения — deny), Casbin — FileNotFoundError.
+# Переопределение — через env (приоритет выше YAML, ADR-0372):
+#   POLICY_OPA_URL, POLICY_CASBIN_MODEL_PATH, POLICY_CASBIN_POLICY_PATH
+# (префикс POLICY_ — см. core/config/services/policy.py::PolicySettings).
+# casbin_model_path маунтится через Secret в /etc/casbin/.
 policy:
   engine_enabled: true
-  opa_url: "${OPA_URL:-http://opa:8181}"
+  opa_url: "http://opa:8181"
   opa_policy_name: "authz/default"
-  casbin_model_path: "${CASBIN_MODEL_PATH:-/etc/casbin/model.conf}"
-  casbin_policy_path: "${CASBIN_POLICY_PATH:-/etc/casbin/policies.csv}"
+  casbin_model_path: "/etc/casbin/model.conf"
+  casbin_policy_path: "/etc/casbin/policies.csv"
 
 
 database:
@@ -126,8 +134,9 @@ database:
   # null = «реплики нет, весь трафик идёт на primary» (поведение по
   # умолчанию). Чтобы включить — укажите async-DSN реплики, например:
   #   replica_dsn: "postgresql+asyncpg://user:pwd@pg-replica:5432/main_db"
-  # ВНИМАНИЕ: конфиги не поддерживают env-подстановку вида ${VAR:-default} —
-  # значение подставляется деплой-уровнем (Helm), а не Python-загрузчиком.
+  # ВНИМАНИЕ (ADR-0377): YAML-конфиги не поддерживают env-подстановку вида
+  # ${VAR:-default} — значение задаётся литералом в профиле или через
+  # одноимённую env-переменную (DB_REPLICA_DSN), а не шаблоном.
   replica_dsn: null
 
 
@@ -185,8 +194,21 @@ waf:
   # ADR-0371 (cycle 172): loopback в allowlist оставлен осознанно — реальные
   # хосты локальных sidecar'ов (clamd/otel) без инфраструктуры вывести
   # нельзя. Owner-задача: заменить на явные service-DNS имена.
+  #
+  # ADR-0377: добавлены хосты ВНЕШНИХ интеграций
+  # (src/backend/services/integrations/**): при strict=true исходящий запрос
+  # к хосту вне allowlist'а блокировался (WafBypassError) — в prod запросы
+  # к СКБ-Техно и DaData идут напрямую (минуя WAF-шлюз http.waf_url),
+  # поэтому интеграции были полностью сломаны.
   strict: true
-  allow_hosts: ["esbgreendata", "localhost", "127.0.0.1"]
+  allow_hosts:
+    - "esbgreendata"
+    - "localhost"
+    - "127.0.0.1"
+    # СКБ-Техно (services/integrations/skb.py → skb.prod_url)
+    - "api.skb-techno.ru"
+    # DaData (services/integrations/dadata.py → dadata.base_url)
+    - "suggestions.dadata.ru"
 
 
 # ADR-0371 (cycle 172): TLS-проверка и лимиты соединений — prod-уровня.

@@ -7,7 +7,8 @@
 - ``APP_PROFILE_ENV = 'APP_PROFILE'`` — env-var name.
 - ``AppProfileChoices(StrEnum)`` — 4 профиля: dev_light/dev/staging/prod.
 - ``DEFAULT_PROFILE = AppProfileChoices.dev``.
-- ``get_active_profile()`` — читает env, default при unset/invalid.
+- ``get_active_profile()`` — читает env; unset/пусто → default,
+  НЕИЗВЕСТНОЕ значение → ``ValueError`` (fail-closed, ADR-0379).
 """
 
 from __future__ import annotations
@@ -136,15 +137,36 @@ class TestGetActiveProfile:
         os.environ[APP_PROFILE_ENV] = "  dev  "
         assert get_active_profile() == AppProfileChoices.dev
 
-    def test_invalid_value_returns_default(self) -> None:
-        """``APP_PROFILE='unknown'`` → ``DEFAULT_PROFILE`` (ValueError caught)."""
-        os.environ[APP_PROFILE_ENV] = "unknown_profile"
-        assert get_active_profile() == DEFAULT_PROFILE
+    def test_invalid_value_raises(self) -> None:
+        """``APP_PROFILE='unknown'`` → ошибка (fail-closed), а не тихий dev.
 
-    def test_partial_invalid_value_returns_default(self) -> None:
-        """``APP_PROFILE='devx'`` → ``DEFAULT_PROFILE`` (close but not match)."""
+        ADR-0379: опечатка в профиле молча давала ``dev`` (с
+        ``app.debug_mode=True``) — fail-open. Теперь значение отвергается.
+        """
+        os.environ[APP_PROFILE_ENV] = "unknown_profile"
+        with pytest.raises(ValueError, match="APP_PROFILE"):
+            get_active_profile()
+
+    def test_partial_invalid_value_raises(self) -> None:
+        """``APP_PROFILE='devx'`` (близко, но не совпадает) → ошибка."""
         os.environ[APP_PROFILE_ENV] = "devx"
-        assert get_active_profile() == DEFAULT_PROFILE
+        with pytest.raises(ValueError, match="APP_PROFILE"):
+            get_active_profile()
+
+    def test_invalid_value_lists_allowed_profiles(self) -> None:
+        """В сообщении об ошибке перечислены допустимые профили."""
+        os.environ[APP_PROFILE_ENV] = "prodd"
+        with pytest.raises(ValueError) as exc_info:
+            get_active_profile()
+        message = str(exc_info.value)
+        for profile in AppProfileChoices:
+            assert profile.value in message
+
+    def test_valid_profiles_do_not_raise(self) -> None:
+        """Валидные значения (в т.ч. ``dev`` и ``dev_light``) работают."""
+        for profile in AppProfileChoices:
+            os.environ[APP_PROFILE_ENV] = profile.value
+            assert get_active_profile() == profile
 
     def test_empty_after_strip_returns_default(self) -> None:
         """``APP_PROFILE='   '`` (whitespace only) → ``DEFAULT_PROFILE``."""

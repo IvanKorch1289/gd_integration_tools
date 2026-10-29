@@ -19,7 +19,7 @@
 ```
 
 **Слои:**
-1. **YAML profiles** — `config_profiles/{base,dev,dev_light,prod,staging}.yml` (1939 lines, 148 top-level keys)
+1. **YAML profiles** — `config_profiles/{base,dev,dev_light,prod,staging}.yml` (2025 lines, 152 top-level keys)
 2. **ConfigLoader** — loads + merges base + env-specific
 3. **pydantic-settings** — 30+ typed `*Settings` classes (`BaseSettings`)
 4. **Singleton** — `@lru_cache` for each settings class
@@ -157,11 +157,11 @@ YAML-кэш и кэш секретов Vault, пересоздаёт вложе�
 ## YAML config profiles
 
 `config_profiles/`:
-- `base.yml` (973 lines, 67 top-level keys) — defaults для всех
+- `base.yml` (994 lines, 69 top-level keys) — defaults для всех
 - `dev.yml` (198 lines, 15 keys) — dev environment overrides
 - `dev_light.yml` (226 lines, 23 keys) — sqlite/aiosqlite dev mode
-- `staging.yml` (234 lines, 20 keys) — staging-specific
-- `prod.yml` (308 lines, 23 keys) — production overrides
+- `staging.yml` (277 lines, 22 keys) — staging-specific
+- `prod.yml` (330 lines, 23 keys) — production overrides
 
 **Inheritance**: env-specific profile накладывается поверх `base.yml`. Документировано в начале каждого профиля.
 
@@ -190,9 +190,73 @@ YAML-кэш и кэш секретов Vault, пересоздаёт вложе�
 2. merge base + overlay (`core/config/validator/profile_merge.py`);
 3. prod-инварианты по merged-значениям;
 4. `ConfigValidator` по merged-конфигу → CRITICAL = exit 1,
-   WARNING = exit 1 при `--strict`.
+   WARNING = exit 1 при `--strict`;
+5. секция `constants` — ограничения полей (`ge=0` / `gt=0`) → CRITICAL
+   = exit 1 (ADR-0377).
 
 CLI не требует секретов: секции собираются через `model_construct`.
+
+### Профили без env-плейсхолдеров (ADR-0377)
+
+**YAML-профили не поддерживают подстановку `${VAR:-default}`.** Загрузчик
+(`core/config/config_loader.py`) читает YAML как есть, а Helm эти файлы не
+шаблонизирует — плейсхолдер попадал в рантайм как есть:
+
+* `policy.opa_url = "${OPA_URL:-http://opa:8181}"` → OPA-клиент получал
+  невалидный URL, все решения становились `deny` (`opa_unavailable`);
+* `policy.casbin_model_path = "${CASBIN_MODEL_PATH:-...}"` →
+  `FileNotFoundError: '${CASBIN_MODEL_PATH:-/etc/casbin/model.conf}'`.
+
+Правило: **в YAML — только литералы**, переопределение — через env
+(приоритет env выше YAML, ADR-0372). Для policy-движков префикс —
+`POLICY_` (`core/config/services/policy.py::PolicySettings`):
+
+| YAML-ключ | env-переменная |
+|---|---|
+| `policy.opa_url` | `POLICY_OPA_URL` |
+| `policy.opa_policy_name` | `POLICY_OPA_POLICY_NAME` |
+| `policy.casbin_model_path` | `POLICY_CASBIN_MODEL_PATH` |
+| `policy.casbin_policy_path` | `POLICY_CASBIN_POLICY_PATH` |
+| `policy.engine_enabled` | `POLICY_ENGINE_ENABLED` |
+
+Гейт: `tests/unit/core/config/test_profile_invariants.py` — в строковых
+значениях всех YAML-профилей нет `${...}`.
+
+### WAF allowlist и внешние интеграции (ADR-0377)
+
+При `waf.strict=true` исходящий запрос к хосту вне `waf.allow_hosts`
+блокируется (`core/net/waf.py` → `WafBypassError`). Поэтому в prod/staging
+allowlist обязан содержать хосты внешних интеграций
+(`src/backend/services/integrations/**`):
+
+| Интеграция | YAML-ключ | Хост в allowlist |
+|---|---|---|
+| СКБ-Техно | `skb.prod_url` | `api.skb-techno.ru` |
+| DaData | `dadata.base_url` | `suggestions.dadata.ru` |
+
+Запросы этих интеграций идут **напрямую** (минуя WAF-шлюз
+`http.waf_url`) — без allowlist'а они полностью не работали.
+Webhook-relay (`services/integrations/webhook_relay.py`) в allowlist не
+входит: цели задаются динамически, per-webhook.
+
+Гейт: `test_profile_invariants.py` — allowlist prod/staging покрывает
+хосты интеграций, и проба `WafPolicy.evaluate(url)` даёт `allowed`.
+
+### Секция `constants` (ADR-0377)
+
+Значения секции `constants` применяются к глобальному синглтону `consts`
+при создании `ConstantsSettings` — невалидное значение роняет **старт**
+процесса (`ValidationError`). Поэтому `validate-profile` проверяет секцию
+явно (CRITICAL при нарушении ограничения), а валидация не трогает
+рантайм-состояние: значения применяются к `consts` только при реальной
+загрузке настроек, не в CLI-отчёте.
+
+### Секция `granian` (ADR-0377)
+
+`src/backend/core/scaling/granian_tuning.py` (`yaml_group="granian"`) живёт
+вне каталога `core/config` — секция `granian:` в `base.yml` (ADR-0377)
+возвращает эти 10 полей в зону yaml-конфигурации. Значения равны дефолтам
+модели; env-префикс — `GRANIAN_`.
 
 ## Константы как конфигурация (ADR-0375)
 
@@ -237,5 +301,7 @@ CLI не требует секретов: секции собираются че
 - `src/backend/core/config/validator/profile_merge.py` — merged-валидация профиля (ADR-0375)
 - `src/backend/core/config/hot_reload.py` — hot-reload mechanism
 - `src/backend/core/config/config_loader.py` — multi-source loader
+- `src/backend/core/scaling/granian_tuning.py` — Granian RSGI tuning (ADR-0059)
 - `src/backend/infrastructure/security/cert_store/backend_consul.py` — Consul cert backend
 - `docs/adr/0375-settings-coverage-merged-validation-constants-and-secret-typing.md`
+- `docs/adr/0377-profile-placeholders-waf-allowlist-and-validation.md`

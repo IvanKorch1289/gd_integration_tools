@@ -390,7 +390,10 @@ def validate_profile(
         * ConfigValidator-инварианты на **слиянном** конфиге
           (``base.yml`` + overlay) — раньше проверялся только overlay,
           и инварианты prod из base.yml (ssl_verify, vault.addr,
-          graphql.introspection) были не видны.
+          graphql.introspection) были не видны;
+        * секцию ``constants`` — ограничения полей (``ge=0``/``gt=0``)
+          проверяются явно (ADR-0377): невалидное значение применялось к
+          синглтону ``consts`` и роняло старт процесса.
 
     Exit codes:
         * 0 — без нарушений.

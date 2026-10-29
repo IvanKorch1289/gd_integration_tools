@@ -34,11 +34,20 @@ graphql:
 
 # ADR-0371 (cycle 172): TLS-проверка исходящих запросов — как в prod
 # (в base.yml было ``ssl_verify: false``, сертификаты не проверялись).
+#
+# ADR-0377: limit_per_host приведён к prod-уровню (в base.yml осталось
+# dev-значение 20 — пул соединений на внешний хост был dev-ограничен).
 http:
   ssl_verify: true
+  limit_per_host: 50
 
 
 security:
+  # ADR-0377: rate_limit / request_timeout — prod-уровень (в base.yml
+  # остались dev-значения 1000 / 20.0): стенд должен воспроизводить
+  # prod-нагрузку, иначе отказы внешних интеграций не воспроизводятся.
+  rate_limit: 3000
+  request_timeout: 30.0
   admin_ips: []
   admin_routes:
     - "/admin"
@@ -46,6 +55,13 @@ security:
     - "/metrics"
   allowed_hosts:
     - "*.staging.local"
+
+
+# ADR-0377: Vault в staging больше не наследует loopback-plaintext из
+# base.yml (``http://127.0.0.1:8200``) — как в prod, но со staging-DNS.
+# Реальный адрес задаётся env ``VAULT_ADDR`` (приоритет выше YAML).
+vault:
+  addr: "https://vault-staging:8200"
 
 
 # ADR-0371 (cycle 172): feature-флаги объявлены явно — без этой секции
@@ -67,23 +83,41 @@ features:
 # исходящие запросы проходили без фильтрации).
 # allow_hosts — тот же whitelist, что в prod (esbgreendata + loopback
 # sidecar'ы); owner-задача — заменить loopback на service-DNS имена.
+#
+# ADR-0377: добавлены хосты ВНЕШНИХ интеграций
+# (src/backend/services/integrations/**): при strict=true исходящий запрос
+# к хосту вне allowlist'а блокировался (WafBypassError) — запросы к
+# СКБ-Техно и DaData идут напрямую (минуя WAF-шлюз http.waf_url).
 waf:
   strict: true
-  allow_hosts: ["esbgreendata", "localhost", "127.0.0.1"]
+  allow_hosts:
+    - "esbgreendata"
+    - "localhost"
+    - "127.0.0.1"
+    # СКБ-Техно (services/integrations/skb.py → skb.prod_url)
+    - "api.skb-techno.ru"
+    # DaData (services/integrations/dadata.py → dadata.base_url)
+    - "suggestions.dadata.ru"
 
 
 # B-12 fix (cycle 37) + cycle 38 Task #1: pre-production enforcement policy
 # engines (OPA + Casbin). engine_enabled=True обязывает composition root
 # инстанцировать runtime policy-цепочку. На staging это позволяет заранее
 # валидировать rego-пакеты и Casbin-модель до prod-релиза. dev/dev_light
-# остаются выключенными (default OFF в base.yml). URLs — из env, чтобы
-# тестовая конфигурация k8s-Namespace отличалась от prod.
+# остаются выключенными (default OFF в base.yml).
+#
+# ADR-0377: здесь — ТОЛЬКО литералы. YAML-загрузчик не подставляет
+# переменные окружения (Helm эти файлы не шаблонизирует), поэтому
+# плейсхолдер ${OPA_URL:-...} попадал в рантайм как есть. Переопределение —
+# через env (приоритет выше YAML, ADR-0372):
+#   POLICY_OPA_URL, POLICY_CASBIN_MODEL_PATH, POLICY_CASBIN_POLICY_PATH
+# (префикс POLICY_ — см. core/config/services/policy.py::PolicySettings).
 policy:
   engine_enabled: true
-  opa_url: "${OPA_URL:-http://opa-staging:8181}"
+  opa_url: "http://opa-staging:8181"
   opa_policy_name: "authz/default"
-  casbin_model_path: "${CASBIN_MODEL_PATH:-/etc/casbin/model.conf}"
-  casbin_policy_path: "${CASBIN_POLICY_PATH:-/etc/casbin/policies.csv}"
+  casbin_model_path: "/etc/casbin/model.conf"
+  casbin_policy_path: "/etc/casbin/policies.csv"
 
 
 database:
@@ -232,3 +266,12 @@ cert_store:
 watermark:
   backend: "postgres"
   persist_min_interval: 1.0
+
+
+# ADR-0377: локальный PG→SQLite snapshot в staging ВЫКЛЮЧЕН (в base.yml
+# осталось ``enabled: true``). Файл ``var/db/snapshot.sqlite`` — per-pod:
+# в multi-replica окружении каждый под держит свою копию (shared state
+# между подами), а ``resilience.fallbacks.db_main.chain`` с ``sqlite_ro``
+# рассчитан на локальный файл. Как в prod.
+snapshot:
+  enabled: false

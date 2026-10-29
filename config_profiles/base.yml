@@ -168,8 +168,10 @@ http:
   # сертификат (риск MITM). Потребители значения:
   #   infrastructure/clients/transport/http_httpx.py  → httpx verify=
   #   infrastructure/clients/transport/http/session_mixin.py → httpx verify=
-  # Профили, которым нужен self-signed TLS (dev/dev_light), переопределяют
-  # значение в своих overlay-файлах.
+  # dev/dev_light наследуют это значение (self-signed TLS не выключен ни в
+  # одном профиле) — если локально нужен нестрогая проверка, переопределяйте
+  # через env HTTP_SSL_VERIFY=false (префикс HTTP_ — см. core/config/
+  # http_base.py::HttpBaseSettings), а не правкой YAML.
   ssl_verify: true
   waf_url: "esbgreendata"
   waf_route_header:
@@ -452,7 +454,7 @@ rag:
       num_reformulations: 5
       rrf_k: 60
       parallel: true
-      prompt_template: "Переформулируй следующий запрос {n} различными способами. Каждая реформализация должна раскрывать разный аспект или использовать синонимы. Верни только список реформализаций, по одной на строку. Оригинальный запрос: {query}"
+      prompt_template: "Переформулируй следующий запрос {n} различными способами. Каждая реформализация должна раскрывать разный аспект или использовать синонимы. Верни только список реформализаций, по одной на строке. Оригинальный запрос: {query}"
     # Параметры для Hybrid.
     hybrid:
       rrf_k: 60
@@ -743,6 +745,25 @@ dlq:
   interval_hours: 24.0
   table_name: "dlq_events"
 
+# ADR-0377: Granian RSGI production-tuning (ADR-0059). Модель живёт в
+# src/backend/core/scaling/granian_tuning.py (yaml_group="granian") — вне
+# каталога core/config, поэтому секция не попадала в yaml-группы
+# core/config и настраивалась ТОЛЬКО через env (GRANIAN_*).
+# Значения == дефолтам модели: поведение при загрузке не меняется,
+# параметр просто становится конфигурируемым через YAML-профиль.
+# Env-префикс GRANIAN_ (приоритет выше YAML, ADR-0372) сохранён.
+granian:
+  workers: "auto"
+  max_workers: 16
+  blocking_threads: "auto"
+  loop: "uvloop"
+  interface: "rsgi"
+  http: "auto"
+  log_level: "info"
+  access_log: true
+  backlog: 2048
+  granian_kill_timeout: 30
+
 # GigaChat (российский LLM, OAuth2). credentials — секрет (env).
 gigachat:
   model: "GigaChat:latest"
@@ -964,8 +985,6 @@ constants:
   max_result_attempts: 4
   default_cb_failure_threshold: 5
   default_cb_recovery_seconds: 30.0
-  default_cb_fast_failure_threshold: 3
-  default_cb_fast_recovery_seconds: 15.0
   default_retry_max_attempts: 3
   default_retry_initial_backoff: 0.5
   default_retry_max_backoff: 10.0

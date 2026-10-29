@@ -19,7 +19,10 @@
   модели; ``model_construct`` не валидирует, поэтому ``ValidationError``
   из-за отсутствующих ``password``/``secret_key`` не возникает;
 * ``features`` — отдельная группа (в корневом ``Settings`` её нет),
-  поэтому контейнер настроек профиля объявляет её явно.
+  поэтому контейнер настроек профиля объявляет её явно;
+* секция ``constants`` проверяется ОТДЕЛЬНО (ADR-0377): у неё нет
+  ограничений уровня «контейнера» — значения применяются к глобальному
+  синглтону ``consts``, поэтому невалидное значение роняет старт.
 """
 
 from __future__ import annotations
@@ -27,10 +30,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel, ConfigDict, ValidationError, create_model
 from pydantic_settings import BaseSettings
 
 from src.backend.core.config.base import AppBaseSettings
 from src.backend.core.config.config_loader import _deep_merge, repo_root
+from src.backend.core.config.constants_settings import ConstantsSettings
 from src.backend.core.config.database import DatabaseConnectionSettings
 from src.backend.core.config.features import FeatureFlags
 from src.backend.core.config.security import SecureSettings
@@ -46,6 +51,24 @@ __all__ = (
     "merge_profile_yaml",
     "validate_profile_config",
 )
+
+_CONSTANTS_PROBE: type[BaseModel] = create_model(
+    "ConstantsProbe",
+    __config__=ConfigDict(extra="ignore"),
+    **{
+        name: (field.annotation, field)
+        for name, field in ConstantsSettings.model_fields.items()
+    },
+)
+"""Модель-зонд для секции ``constants`` (ADR-0377).
+
+Отдельная модель — намеренно: у :class:`ConstantsSettings` есть
+``model_post_init``, который применяет значения к глобальному синглтону
+``consts``. Валидатор профиля не имеет права менять рантайм-состояние,
+поэтому зонд собран из тех же полей (с теми же ограничениями), но без
+post-init. ``extra="ignore"`` повторяет поведение YAML-источника:
+неизвестные ключи отбрасываются с warning'ом, а не роняют валидацию.
+"""
 
 
 class ProfileSettings(BaseSettings):
@@ -107,7 +130,9 @@ def load_profile_yaml(profile: str, profiles_dir: Path | None = None) -> dict[st
     return data
 
 
-def merge_profile_yaml(profile: str, profiles_dir: Path | None = None) -> dict[str, Any]:
+def merge_profile_yaml(
+    profile: str, profiles_dir: Path | None = None
+) -> dict[str, Any]:
     """Сливает ``base.yml`` + overlay профиля (как в ``config_loader``).
 
     Args:
@@ -172,6 +197,60 @@ def build_profile_settings(merged: dict[str, Any]) -> ProfileSettings:
     )
 
 
+def _validate_constants_section(section: dict[str, Any]) -> tuple[ConfigViolation, ...]:
+    """Валидирует секцию ``constants`` merged-конфига.
+
+    Ограничения полей (``ge=0``, ``gt=0.0``, …) проверяются моделью
+    :class:`ConstantsSettings`; рантайм применяет эти значения к
+    синглтону ``consts`` при создании модели, поэтому невалидное
+    значение роняет старт процесса — валидатор профиля обязан ловить
+    его ДО деплоя (ADR-0377).
+
+    Args:
+        section: Секция ``constants`` merged-конфига (может быть пустой).
+
+    Returns:
+        Кортеж нарушений (по одному на ошибочное поле).
+
+    """
+    if not section:
+        return ()
+    try:
+        _CONSTANTS_PROBE.model_validate(section)
+    except ValidationError as exc:
+        return tuple(
+            ConfigViolation(
+                severity=ConfigSeverity.CRITICAL,
+                code="constants.invalid",
+                message=(
+                    "Некорректное значение в секции constants: "
+                    f"{_field_path(error['loc'])} — {error['msg']}"
+                ),
+                field=f"constants.{_field_path(error['loc'])}",
+                recommendation=(
+                    "Исправить значение в секции constants файла "
+                    "config_profiles/base.yml."
+                ),
+                context={"input": error.get("input")},
+            )
+            for error in exc.errors()
+        )
+    return ()
+
+
+def _field_path(location: tuple[Any, ...]) -> str:
+    """Собирает dot-path из ``loc`` ошибки pydantic-валидации.
+
+    Args:
+        location: Кортеж частей пути из ``ValidationError.errors()``.
+
+    Returns:
+        Dot-path вида ``field`` / ``section.field``.
+
+    """
+    return ".".join(str(part) for part in location)
+
+
 def validate_profile_config(
     profile: str, profiles_dir: Path | None = None
 ) -> tuple[ConfigViolation, ...]:
@@ -192,7 +271,7 @@ def validate_profile_config(
     settings = build_profile_settings(merged)
     waf = _construct(WafSettings, merged.get("waf"))
     try:
-        violations = ConfigValidator().validate(settings, waf)
+        violations = list(ConfigValidator().validate(settings, waf))
     except AttributeError as exc:
         # Профиль неполон: обязательное поле отсутствует в YAML (например,
         # ``app.enable_swagger``). Это дефект конфигурации, а не сбой CLI —
@@ -202,8 +281,7 @@ def validate_profile_config(
                 severity=ConfigSeverity.CRITICAL,
                 code="profile.incomplete",
                 message=(
-                    f"Профиль {profile} неполон: отсутствует обязательное поле "
-                    f"({exc})."
+                    f"Профиль {profile} неполон: отсутствует обязательное поле ({exc})."
                 ),
                 field=str(exc),
                 recommendation=(
@@ -212,6 +290,7 @@ def validate_profile_config(
                 ),
             ),
         )
+    violations.extend(_validate_constants_section(merged.get("constants") or {}))
     return tuple(
         sorted(
             violations,

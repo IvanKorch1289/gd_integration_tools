@@ -109,9 +109,7 @@ class TestManageCommandValidatesMerged:
     def test_command_exits_zero(self, runner: CliRunner, profile: str) -> None:
         """Для prod/staging команда завершается с кодом 0."""
         result = runner.invoke(app, ["validate-profile", profile])
-        assert result.exit_code == 0, (
-            f"{profile}: {result.stdout} {result.stderr}"
-        )
+        assert result.exit_code == 0, f"{profile}: {result.stdout} {result.stderr}"
 
     @pytest.mark.parametrize("profile", PROD_LIKE_PROFILES)
     def test_command_reports_merged_config(
@@ -146,9 +144,9 @@ class TestManageCommandValidatesMerged:
             base=_prod_like_base_without_waf(),
             overlay="{}\n",
         )
-        overlay: dict[str, Any] = yaml.safe_load(
-            (profiles / "prod.yml").read_text()
-        ) or {}
+        overlay: dict[str, Any] = (
+            yaml.safe_load((profiles / "prod.yml").read_text()) or {}
+        )
         # Старая проверка смотрела только в overlay — секции waf там нет,
         # поэтому permissive-WAF в production был не виден.
         assert "waf" not in overlay
@@ -166,3 +164,77 @@ class TestManageCommandValidatesMerged:
         )
         violations = validate_profile_config("prod", profiles)
         assert any(violation.code == "profile.incomplete" for violation in violations)
+
+
+class TestConstantsSectionValidated:
+    """Секция ``constants`` валидируется merged-валидатором (ADR-0377).
+
+    Дефект (до фикса): секция ``constants`` собиралась через
+    ``model_construct`` (без валидации) — ``initial_delay: -5`` проходил
+    ``manage.py validate-profile`` насквозь и ронял старт процесса
+    (``ValidationError`` при создании ``ConstantsSettings``).
+    """
+
+    def test_negative_initial_delay_is_critical(self, tmp_path: Path) -> None:
+        """Отрицательный ``initial_delay`` — CRITICAL-нарушение."""
+        profiles = _write_profiles(
+            tmp_path / "config_profiles",
+            base=_prod_like_base_without_waf(),
+            overlay="constants:\n  initial_delay: -5\n",
+        )
+        violations = validate_profile_config("prod", profiles)
+        critical = [
+            violation.code
+            for violation in violations
+            if violation.severity == ConfigSeverity.CRITICAL
+        ]
+        assert "constants.invalid" in critical
+
+    def test_zero_recovery_seconds_is_critical(self, tmp_path: Path) -> None:
+        """Нулевой ``default_cb_recovery_seconds`` — CRITICAL (gt=0)."""
+        profiles = _write_profiles(
+            tmp_path / "config_profiles",
+            base=_prod_like_base_without_waf(),
+            overlay="constants:\n  default_cb_recovery_seconds: 0\n",
+        )
+        violations = validate_profile_config("prod", profiles)
+        assert any(violation.code == "constants.invalid" for violation in violations), (
+            "нарушение ограничения constants должно ловиться"
+        )
+
+    def test_valid_constants_produce_no_violation(self, tmp_path: Path) -> None:
+        """Валидные значения constants не дают нарушений."""
+        profiles = _write_profiles(
+            tmp_path / "config_profiles",
+            base=_prod_like_base_without_waf(),
+            overlay="constants:\n  initial_delay: 10\n  retry_delay: 5\n",
+        )
+        violations = validate_profile_config("prod", profiles)
+        assert not [
+            violation
+            for violation in violations
+            if violation.code == "constants.invalid"
+        ]
+
+    def test_validation_does_not_mutate_global_constants(self, tmp_path: Path) -> None:
+        """Валидация не применяет YAML-значения к синглтону ``consts``."""
+        from src.backend.core.config.constants import consts
+
+        before = consts.INITIAL_DELAY
+        profiles = _write_profiles(
+            tmp_path / "config_profiles",
+            base=_prod_like_base_without_waf(),
+            overlay="constants:\n  initial_delay: 42\n",
+        )
+        validate_profile_config("prod", profiles)
+        assert consts.INITIAL_DELAY == before
+
+    @pytest.mark.parametrize("profile", PROD_LIKE_PROFILES)
+    def test_repo_profiles_have_valid_constants(self, profile: str) -> None:
+        """Секция ``constants`` в реальных профилях валидна."""
+        violations = validate_profile_config(profile)
+        assert not [
+            violation
+            for violation in violations
+            if violation.code == "constants.invalid"
+        ]
