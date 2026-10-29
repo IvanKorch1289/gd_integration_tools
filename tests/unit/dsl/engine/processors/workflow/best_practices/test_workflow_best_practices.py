@@ -7,6 +7,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# ADR-0393: этот модуль проверяет РЕАЛЬНЫЙ capability-гейт — autouse-фикстура
+# ``tests/unit/dsl/engine/processors/conftest.py`` (разрешает capability для тестов
+# поведения БД) здесь отключается.
+REAL_CAPABILITY_GATE = True
+
+
 
 def _patch_capability_gate(
     monkeypatch: pytest.MonkeyPatch,
@@ -424,8 +430,12 @@ class TestWorkflowCapabilityGating:
         ex.in_message.body = {"payload": {"large": "x" * 1000}}
         ex.set_property = MagicMock()
         ex.set_error = MagicMock()
+        ex.fail = MagicMock()
         ex.stop = MagicMock()
         await p.process(ex, MagicMock())
         # Body не модифицирован.
         assert ex.in_message.body.get("payload_claim") is None
-        ex.set_error.assert_called_once()
+        # ADR-0393: отказ capability-гейта переводит exchange в ``failed``
+        # (``fail``), а не «ошибка без статуса» (``set_error`` + ``stop``) —
+        # иначе движок завершал маршрут как успешный и клиент получал 200.
+        ex.fail.assert_called_once()

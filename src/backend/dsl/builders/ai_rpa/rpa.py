@@ -29,6 +29,36 @@ if TYPE_CHECKING:
 _PROD_ENV_NAMES = frozenset({"prod", "production"})
 
 
+def _guard_last_processor(
+    builder: Any, capability: str, *, action: str = "invoke"
+) -> Any:
+    """Обернуть последний добавленный процессор capability-гейтом (ADR-0393).
+
+    Legacy-процессоры (``processors/web.py``) не проверяют capability сами,
+    поэтому шаг без обёртки был обходом гейта (волна 18, дефект «обход
+    гейта RPA»).
+
+    Args:
+        builder: ``RouteBuilder``, в который добавлен процессор.
+        capability: Имя требуемой capability.
+        action: Действие capability-гейта (``"invoke"`` / ``"read"``).
+
+    Returns:
+        Тот же builder (для fluent-цепочки).
+
+    """
+    from src.backend.dsl.engine.processors.base import CapabilityGuardedProcessor
+
+    processors = getattr(builder, "_processors", None)
+    if not processors:
+        return builder
+    inner = processors[-1]
+    processors[-1] = CapabilityGuardedProcessor(
+        inner, capability, action=action, name=f"guarded:{inner.name}"
+    )
+    return builder
+
+
 def _dev_only_password(password: str | None, *, field: str) -> str:
     """Отклонить plaintext-пароль в prod (секрет — только из Vault).
 
@@ -104,14 +134,21 @@ class RPAMixin:
         Cycle 29: остаётся на web.py (FillFormProcessor — единственный
         multi-field form processor в legacy module). Playwright-based
         multi-field эквивалент — Sprint 180+ migration.
+
+        ADR-0393 (волна 18): legacy-процессор сам capability не проверял
+        (в ``processors/web.py`` нет ``required_capability``/``auth_check``)
+        → шаг был обходом гейта. Поэтому он оборачивается в
+        :class:`~src.backend.dsl.engine.processors.base.CapabilityGuardedProcessor`
+        с capability ``rpa.browser.fill``.
         """
-        return self._add_lazy(  # type: ignore[attr-defined]
+        builder = self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web",
             "FillFormProcessor",
             url=url,
             fields=fields,
             submit=submit,
         )
+        return _guard_last_processor(builder, "rpa.browser.fill", action="invoke")
 
     def extract(
         self, selector: str, url: str | None = None, output_property: str = "extracted"
@@ -181,11 +218,7 @@ class RPAMixin:
         )
 
     def wait_for_selector(
-        self,
-        selector: str | None = None,
-        *,
-        state: str = "load",
-        timeout: float = 30.0,
+        self, selector: str | None = None, *, state: str = "load", timeout: float = 30.0
     ) -> RouteBuilder:
         """Ждать селектор или load-state страницы (P3 gap closure).
 
@@ -207,11 +240,7 @@ class RPAMixin:
         )
 
     def print_pdf(
-        self,
-        *,
-        format: str = "A4",
-        path: str | None = None,
-        landscape: bool = False,
+        self, *, format: str = "A4", path: str | None = None, landscape: bool = False
     ) -> RouteBuilder:
         """Сохранить текущую страницу как PDF (P3 gap closure).
 
@@ -291,10 +320,17 @@ class RPAMixin:
         )
 
     def run_scenario(self, steps: list[dict] | None = None) -> RouteBuilder:
-        """Multi-step web сценарий (navigate/click/fill/extract)."""
-        return self._add_lazy(  # type: ignore[attr-defined]
+        """Multi-step web сценарий (navigate/click/fill/extract).
+
+        ADR-0393 (волна 18): capability-гейт обязателен — legacy-шаг
+        оборачивается в ``CapabilityGuardedProcessor`` с capability
+        ``rpa.browser.navigate`` (сценарий начинается с навигации; полный
+        набор capability сценария описывает его шаги).
+        """
+        builder = self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.web", "RunScenarioProcessor", steps=steps
         )
+        return _guard_last_processor(builder, "rpa.browser.navigate", action="invoke")
 
     def call_llm_with_fallback(
         self, providers: list[str], *, model: str = "default"
@@ -514,11 +550,7 @@ class RPAMixin:
         )
 
     def csv_write(
-        self,
-        *,
-        dst: str,
-        rows: list[dict[str, Any]],
-        delimiter: str = ",",
+        self, *, dst: str, rows: list[dict[str, Any]], delimiter: str = ","
     ) -> RouteBuilder:
         """Записать список dict → CSV-файл.
 
@@ -734,4 +766,98 @@ class RPAMixin:
             timeout=timeout,
             to=to,
             shell=shell,
+        )
+
+    def desktop_rpa(
+        self,
+        *,
+        app: str,
+        action: str,
+        params: dict[str, Any] | None = None,
+        to: str = "property:rpa.desktop_result",
+    ) -> RouteBuilder:
+        """Desktop UI-автоматизация через windows-worker sidecar.
+
+        ADR-0393 (волна 18): процессор ``desktop_rpa`` документировал
+        YAML-использование, но был недостижим из YAML — YAML-loader
+        принимает только публичные методы ``RouteBuilder`` (ADR-0369),
+        а метода ``desktop_rpa`` в билдере не было. Теперь метод есть,
+        и шаг достижим из YAML:
+
+        .. code-block:: yaml
+
+            - desktop_rpa:
+                app: "C:/Program Files/MyApp/app.exe"
+                action: click
+                params:
+                  selector: {title: "OK"}
+                to: property:rpa.desktop_result
+
+        Args:
+            app: Путь к exe или PID процесса.
+            action: ``click`` / ``type`` / ``screenshot``.
+            params: Параметры action (selector / text / backend / timeout).
+            to: Куда положить ответ ответа sidecar'а.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.desktop_rpa",
+            "DesktopRpaProcessor",
+            app=app,
+            action=action,
+            params=params,
+            to=to,
+        )
+
+    def desktop_pyautogui(
+        self,
+        *,
+        action: str,
+        x: int | None = None,
+        y: int | None = None,
+        text: str | None = None,
+        key: str | None = None,
+        duration: float = 0.25,
+        result_property: str = "desktop_result",
+    ) -> RouteBuilder:
+        """Desktop-автоматизация через pyautogui (Linux/macOS).
+
+        ADR-0393 (волна 18): тот же недостижимый-YAML дефект, что и у
+        ``desktop_rpa`` (ADR-0369) — метод добавлен в билдер, поэтому шаг
+        доступен из YAML:
+
+        .. code-block:: yaml
+
+            - desktop_pyautogui:
+                action: click
+                x: 100
+                y: 200
+
+        Args:
+            action: ``screenshot`` / ``click`` / ``type_text`` /
+                ``press_key`` / ``move``.
+            x: Координата X (для ``click`` / ``move``).
+            y: Координата Y (для ``click`` / ``move``).
+            text: Текст (для ``type_text``).
+            key: Клавиша (для ``press_key``).
+            duration: Длительность действия в секундах.
+            result_property: Ключ свойства с результатом.
+
+        Returns:
+            ``RouteBuilder`` для chaining.
+
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.desktop_pyautogui",
+            "DesktopPyAutoGUIProcessor",
+            action=action,
+            x=x,
+            y=y,
+            text=text,
+            key=key,
+            duration=duration,
+            result_property=result_property,
         )

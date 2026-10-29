@@ -395,6 +395,8 @@ def test_processor_upsert_mysql_dialect_uses_duplicate_key() -> None:
     """MySQL dialect проводят SQL через DbCrudProcessor до DatabaseQueryProcessor."""
     from unittest.mock import AsyncMock, patch
 
+    from src.backend.core.tenancy import TenantContext, bind_tenant, unbind_tenant
+
     proc = DbCrudProcessor(
         operation="UPSERT",
         table="users",
@@ -419,7 +421,13 @@ def test_processor_upsert_mysql_dialect_uses_duplicate_key() -> None:
         # применит MySQL UPSERT builder.
         import asyncio
 
-        asyncio.run(proc.process(ex, None))  # type: ignore[arg-type]
+        # ADR-0393: таблица ``users`` — tenant-aware, поэтому CRUD требует
+        # tenant-контекста (fail-closed). Привязываем его явно.
+        token = bind_tenant(TenantContext(tenant_id="tenant-a"))
+        try:
+            asyncio.run(proc.process(ex, None))  # type: ignore[arg-type]
+        finally:
+            unbind_tenant(token)
     assert mock_proc.await_count == 1
 
 

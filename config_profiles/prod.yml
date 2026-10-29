@@ -88,6 +88,29 @@ features:
   ai_prompt_sweep_strict: false
   # ADR-0063 (Accepted) — Presidio + ru NER PII layer обязателен в prod.
   presidio_pii_enabled: true
+  # ADR-0393 (волна 18) — ЯВНАЯ политика capability-гейта.
+  #
+  # Раньше в prod флаг не был объявлен → действовал default-OFF → DSL-шаги
+  # уходили в legacy-путь (sync AuthorizationGateway), который отказывает по
+  # любой capability без внятной причины: отказ выглядел как «шаг сломан»,
+  # а не как «доступ запрещён политикой». Одновременно БД-шаги вообще не
+  # имели ``required_capability`` → любой DSL-роут читал и писал любую БД.
+  #
+  # Теперь:
+  # * ``dsl_capability_gate_enabled: true`` — runtime-резолвер (ADR-0366):
+  #   namespace = route_id роута (если capability им объявлена) →
+  #   fail-closed DENY с machine-readable причиной;
+  # * ``dsl_capability_core_baseline_enabled: false`` — core-baseline
+  #   выключен: доступ определяется ТОЛЬКО декларациями роутов/плагинов
+  #   (least privilege). Пока baseline включён, любая capability с
+  #   glob-matcher'ом (``rpa.*``) выдаётся всем роутам подряд.
+  #
+  # Следствие (осознанное): capability ``rpa.*`` не публична и не
+  # принадлежит ни одному плагину → RPA-шаги в prod отклоняются
+  # fail-closed, пока роут не объявит их через плагина-владельца.
+  # Это явная политика, а не случайность (ADR-0393, «Политика»).
+  dsl_capability_gate_enabled: true
+  dsl_capability_core_baseline_enabled: false
 
 
 # B-12 fix (cycle 37) + cycle 38 Task #1: production-enforcement policy

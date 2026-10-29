@@ -21,6 +21,14 @@
   откатывался (тихая потеря данных);
 * ``commit=True`` / ``commit=False`` — явный opt-in / opt-out.
 
+ADR-0393 (волна 18):
+* **Capability-гейт** — ``required_capability`` = ``db.read`` / ``db.write``
+  (по виду запроса) + ``auth_check``. Scope — алиас внешнего профиля БД
+  (тот же convention, что у ``ExternalDatabaseFacade``: ``db.read`` +
+  scope=profile). Раньше capability не проверялась вовсе;
+* **Лимит выборки** (``max_rows``) — ``mappings().all()`` без ограничения;
+* **Audit-событие** доступа к данным (без значений данных).
+
 Контракт DSL::
 
     .db_query_external(
@@ -35,21 +43,31 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors._sql_validation import (
+    MAX_RESULT_ROWS,
+    db_capability_for_sql,
+    limit_rows,
     needs_commit,
     result_returns_rows,
     sql_statement_kind,
     validate_sql,
 )
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.dsl.engine.processors.base import (
+    BaseProcessor,
+    emit_data_access_audit,
+    handle_processor_error,
+)
 
 __all__ = ("ExternalDbQueryProcessor",)
 
 
 _ALLOWED_PARAM_SOURCES = {"body", "properties", "headers", "none"}
+
+_logger = get_logger("dsl.db_query_external")
 
 
 class ExternalDbQueryProcessor(BaseProcessor):
@@ -77,6 +95,7 @@ class ExternalDbQueryProcessor(BaseProcessor):
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL
     compensatable: ClassVar[bool] = True
+    required_capability: ClassVar[str | None] = "db.read"
 
     def __init__(
         self,
@@ -87,6 +106,7 @@ class ExternalDbQueryProcessor(BaseProcessor):
         result_property: str = "db_result",
         fetch: str = "all",
         commit: bool | None = None,
+        max_rows: int = MAX_RESULT_ROWS,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"db_query_external:{profile}")
@@ -105,12 +125,28 @@ class ExternalDbQueryProcessor(BaseProcessor):
         self._result_property = result_property
         self._fetch = fetch
         self._commit = commit
+        self._max_rows = max_rows
+        # ADR-0393: capability зависит от вида запроса (read / write).
+        self.__dict__["required_capability"] = db_capability_for_sql(sql)
         # Если коммит — это наблюдаемый внешний эффект, помечаем как SIDE_EFFECTING.
         # Запись идёт в instance __dict__, а не перезаписывает ClassVar.
         # ADR-0382: DML по умолчанию коммитится → такой же side-effect.
         if commit is True or sql_statement_kind(sql) == "dml":
             self.__dict__["side_effect"] = SideEffectKind.SIDE_EFFECTING
             self.__dict__["compensatable"] = False
+
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
+        """Scope capability-гейта — алиас внешнего профиля БД (ADR-0393).
+
+        Args:
+            exchange: Текущий Exchange (не используется).
+
+        Returns:
+            Имя профиля внешней БД.
+
+        """
+        del exchange
+        return self._profile
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
@@ -119,15 +155,8 @@ class ExternalDbQueryProcessor(BaseProcessor):
 
         from src.backend.core.di.providers import get_external_session_manager_provider
 
-        # NOTE (Wave 13 / Q14): ``required_capability`` намеренно НЕ задан
-        # (в отличие от S202-фиксов в ``export``/``vault_secret``).
-        # В текущем рантайме ``BaseProcessor.auth_check`` для ЛЮБОГО
-        # ``required_capability`` возвращает deny (sync-политики
-        # ``AuthorizationGateway.check`` — пустые in-memory, Casbin/OPA
-        # sync-хуки отсутствуют) → процессор был бы заблокирован целиком.
-        # Capability-барьер — отдельная задача (ADR); здесь SQL-guard
-        # (см. ``validate_sql``) — независимый слой защиты.
-        if not await self.auth_check(exchange, action="query"):
+        # ADR-0393: capability-гейт до любого обращения к БД.
+        if not await self.auth_check(exchange, action=self._action()):
             return
 
         try:
@@ -159,6 +188,18 @@ class ExternalDbQueryProcessor(BaseProcessor):
 
         exchange.set_property(self._result_property, payload)
         exchange.set_out(body=payload, headers=dict(exchange.in_message.headers))
+
+        emit_data_access_audit(
+            exchange,
+            event=str(self.required_capability),
+            capability=str(self.required_capability),
+            action=self._action(),
+            target=self._profile,
+        )
+
+    def _action(self) -> str:
+        """Действие capability-гейта (``read`` / ``write``)."""
+        return "read" if self.required_capability == "db.read" else "write"
 
     def _collect_params(self, exchange: Exchange[Any]) -> dict[str, Any]:
         """Собирает bind-параметры из указанного источника."""
@@ -211,8 +252,17 @@ class ExternalDbQueryProcessor(BaseProcessor):
             return {"rowcount": rowcount}
         match self._fetch:
             case "all":
-                rows = result.mappings().all()
-                return [dict(row) for row in rows]
+                rows = [dict(row) for row in result.mappings().all()]
+                # ADR-0393: лимит выборки (без него ``SELECT *`` вытягивал
+                # в память весь результат).
+                rows, truncated = limit_rows(rows, limit=self._max_rows)
+                if truncated:
+                    _logger.warning(
+                        "db_query_external result truncated: profile=%s limit=%s",
+                        self._profile,
+                        self._max_rows,
+                    )
+                return rows
             case "one":
                 row = result.mappings().first()
                 return dict(row) if row is not None else None

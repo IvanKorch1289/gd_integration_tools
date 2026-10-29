@@ -149,13 +149,6 @@
   {
     "annotation": "str | None",
     "arg": "tenant_id",
-    "file": "src/backend/core/tenancy/cache.py",
-    "line": 32,
-    "qualified_name": "build_tenant_key"
-  },
-  {
-    "annotation": "str | None",
-    "arg": "tenant_id",
     "file": "src/backend/core/canary_deploy/controller.py",
     "line": 106,
     "qualified_name": "CanaryController.get_split"

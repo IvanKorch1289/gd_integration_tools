@@ -51,11 +51,22 @@ from typing import Any, Final
 __all__ = (
     "FORBIDDEN_FUNCTIONS",
     "FORBIDDEN_SQL",
+    "MAX_RESULT_ROWS",
+    "db_capability_for_sql",
+    "limit_rows",
     "needs_commit",
     "result_returns_rows",
+    "sql_capability_scope",
     "sql_statement_kind",
     "validate_sql",
 )
+
+#: Максимум строк, возвращаемых DSL-процессорами БД (ADR-0393).
+#:
+#: Раньше шаги делали ``fetchall()`` / ``mappings().all()`` без ограничения:
+#: один ``SELECT * FROM big_table`` вытягивал в память процесса весь
+#: результат — DoS через DSL-роут (и «съедание» памяти воркера).
+MAX_RESULT_ROWS: int = 1000
 
 #: SQL-команды, запрещённые для DSL-процессоров (DDL + privilege-management
 #: + файловые/загрузочные команды).
@@ -80,14 +91,7 @@ FORBIDDEN_SQL: frozenset[str] = frozenset(
 
 #: Файловые функции DuckDB/PostgreSQL — чтение произвольных файлов из SQL.
 FORBIDDEN_FUNCTIONS: frozenset[str] = frozenset(
-    {
-        "read_csv",
-        "read_csv_auto",
-        "read_parquet",
-        "read_json",
-        "read_json_auto",
-        "glob",
-    }
+    {"read_csv", "read_csv_auto", "read_parquet", "read_json", "read_json_auto", "glob"}
 )
 
 # Строковые литералы ('...', "...", `...`, $tag$...$tag$) — вырезаются
@@ -153,7 +157,72 @@ def validate_sql(sql: str) -> None:
         raise ValueError(f"SQL command '{command.group(0).upper()}' is not allowed")
     function = _FORBIDDEN_FUNCTION_RE.search(sanitized)
     if function is not None:
-        raise ValueError(f"SQL function '{function.group(0).split('(')[0].lower()}' is not allowed")
+        raise ValueError(
+            f"SQL function '{function.group(0).split('(')[0].lower()}' is not allowed"
+        )
+
+
+def db_capability_for_sql(sql: str) -> str:
+    """Capability, требуемая для SQL-запроса (ADR-0393).
+
+    Читающий запрос → ``db.read``; всё остальное (DML и неопознанные
+    команды) → ``db.write``. Неопознанное трактуется как запись
+    (fail-closed): подтверждённого чтения — меньше привилегий.
+
+    Args:
+        sql: Текст SQL-запроса.
+
+    Returns:
+        Имя capability (``"db.read"`` / ``"db.write"``).
+
+    """
+    return "db.read" if sql_statement_kind(sql) == "read" else "db.write"
+
+
+def sql_capability_scope(sql: str) -> str | None:
+    """Scope (алиас ресурса) для capability-запроса по SQL (ADR-0393).
+
+    Scope = имя таблицы, к которой обращается запрос: capability
+    ``db.read``/``db.write`` в модели ADR-044 использует
+    :class:`ExactAliasMatcher` — scope совпадает с именем ресурса
+    (``orders``, ``users``, ``files`` — те же алиасы, что объявляют
+    плагины в ``plugin.toml``).
+
+    Если запрос обращается к нескольким таблицам, scope не выводится
+    (``None``): одна capability может нести только один scope, поэтому
+    такой запрос fail-closed не пройдёт — разбивайте запрос на шаги.
+
+    Args:
+        sql: Текст SQL-запроса.
+
+    Returns:
+        Имя таблицы (алиас ресурса) либо ``None``.
+
+    """
+    from src.backend.core.tenancy.sqlalchemy_filter import referenced_tables
+
+    tables = referenced_tables(sql)
+    if len(tables) != 1:
+        return None
+    return next(iter(tables))
+
+
+def limit_rows(
+    rows: list[Any], *, limit: int = MAX_RESULT_ROWS
+) -> tuple[list[Any], bool]:
+    """Ограничить выборку по числу строк (ADR-0393).
+
+    Args:
+        rows: Полученные строки.
+        limit: Максимум строк (``<= 0`` — без ограничения).
+
+    Returns:
+        Кортеж ``(строки, обрезано_ли)``.
+
+    """
+    if limit <= 0 or len(rows) <= limit:
+        return rows, False
+    return rows[:limit], True
 
 
 #: SQL-команды, изменяющие данные (нужен ``commit``).

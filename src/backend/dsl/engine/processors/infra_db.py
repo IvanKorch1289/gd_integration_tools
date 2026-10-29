@@ -26,12 +26,12 @@ Security (Wave 13 / Q13, аудит S-27 — критическая находк
 Результат: ``SELECT`` → ``list[dict]`` в ``to``-target; DML → коммит и
 ``[{"rowcount": <int>}]`` в ``to``-target.
 
-NOTE (capability-барьер): ``required_capability`` намеренно **не** задан.
-Capability-путь (``BaseProcessor.auth_check`` → ``AuthorizationFacade`` →
-Casbin/OPA) сейчас deny-all в проде (in-memory policies пусты, sync-хуков
-нет) → любой ``required_capability`` сделал бы шаг недоступным для всех.
-Capability-барьер — отдельная ADR-задача; декларация
-``capabilities=("db.read",)`` в реестре процессоров остаётся метаданными.
+NOTE (ADR-0393, волна 18): capability-барьер больше не «отложен на
+потом» — ``required_capability`` задан (``db.read`` / ``db.write``), а
+enforcement включается флагом ``dsl_capability_gate_enabled`` (ADR-0366),
+который в prod/staging включён явно. Scope — алиас таблицы из SQL.
+Также добавлены лимит выборки (``max_rows``) и audit-событие доступа
+к данным (без значений данных).
 """
 
 from __future__ import annotations
@@ -41,11 +41,15 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors._sql_validation import (
+    MAX_RESULT_ROWS,
+    db_capability_for_sql,
+    limit_rows,
     needs_commit,
     result_returns_rows,
+    sql_capability_scope,
     validate_sql,
 )
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.base import BaseProcessor, emit_data_access_audit
 from src.backend.dsl.registry import processor
 
 if TYPE_CHECKING:
@@ -84,14 +88,40 @@ class InfraDbQueryProcessor(BaseProcessor):
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL
     compensatable: ClassVar[bool] = False
+    required_capability: ClassVar[str | None] = "db.read"
 
     def __init__(
-        self, sql: str, *, to: str = "body.result", params: dict[str, Any] | None = None
+        self,
+        sql: str,
+        *,
+        to: str = "body.result",
+        params: dict[str, Any] | None = None,
+        max_rows: int = MAX_RESULT_ROWS,
     ) -> None:
         super().__init__(name="infra_db_query")
         self.sql = sql
         self.target = to
         self._params: dict[str, Any] = dict(params) if params else {}
+        self._max_rows = max_rows
+        # ADR-0393: capability зависит от вида запроса (read / write).
+        self.__dict__["required_capability"] = db_capability_for_sql(sql)
+
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
+        """Scope capability-гейта — алиас таблицы из SQL (ADR-0393).
+
+        Args:
+            exchange: Текущий Exchange (не используется).
+
+        Returns:
+            Имя таблицы из SQL либо ``None``.
+
+        """
+        del exchange
+        return sql_capability_scope(self.sql)
+
+    def _action(self) -> str:
+        """Действие capability-гейта (``read`` / ``write``)."""
+        return "read" if self.required_capability == "db.read" else "write"
 
     @staticmethod
     def _flag_enabled() -> bool:
@@ -144,6 +174,11 @@ class InfraDbQueryProcessor(BaseProcessor):
             exchange.fail(f"SQL validation failed: {exc}")
             return
 
+        # ADR-0393: capability-гейт (после feature-флага: выключенный флаг
+        # даёт более понятную ошибку, чем отказ capability).
+        if not await self.auth_check(exchange, action=self._action()):
+            return
+
         from sqlalchemy import text
 
         from src.backend.core.di.providers.infrastructure_locator import (
@@ -161,6 +196,20 @@ class InfraDbQueryProcessor(BaseProcessor):
                 await session.commit()
             if returns_rows:
                 rows = [self._row_to_dict(row) for row in result]
+                # ADR-0393: лимит выборки.
+                rows, truncated = limit_rows(rows, limit=self._max_rows)
+                if truncated:
+                    _logger.warning(
+                        "infra_db_query result truncated: limit=%s", self._max_rows
+                    )
             else:
                 rows = [{"rowcount": rowcount}]
         self.set_result(exchange, self.target, rows)
+
+        emit_data_access_audit(
+            exchange,
+            event=str(self.required_capability),
+            capability=str(self.required_capability),
+            action=self._action(),
+            target=self._capability_scope(exchange) or "internal",
+        )

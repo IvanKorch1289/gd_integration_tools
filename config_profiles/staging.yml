@@ -76,6 +76,28 @@ features:
   # ADR-0063 (Accepted) — Presidio + ru NER PII layer обязателен в prod;
   # staging повторяет prod-конфигурацию.
   presidio_pii_enabled: true
+  # ADR-0393 (волна 18) — ЯВНАЯ политика capability-гейта.
+  #
+  # Раньше в staging флаг не был объявлен → действовал default-OFF →
+  # DSL-шаги уходили в legacy-путь (sync AuthorizationGateway), который
+  # отказывает по любой capability без внятной причины. Отказ выглядел
+  # как «шаг сломан», а не как «доступ запрещён политикой».
+  #
+  # Теперь:
+  # * ``dsl_capability_gate_enabled: true`` — runtime-резолвер
+  #   (ADR-0366): namespace = route_id роута (если capability им объявлена)
+  #   → fail-closed DENY с machine-readable причиной;
+  # * ``dsl_capability_core_baseline_enabled: false`` — core-baseline
+  #   выключен: доступ определяется ТОЛЬКО декларациями роутов/плагинов
+  #   (least privilege). Пока baseline включён, любая capability с
+  #   glob-matcher'ом (``rpa.*``) выдаётся всем роутам подряд.
+  #
+  # Следствие (осознанное): capability ``rpa.*`` не публична и не
+  # принадлежит ни одному плагину → RPA-шаги в staging отклоняются
+  # fail-closed, пока роут не объявит их через плагина-владельца.
+  # Это явная политика, а не случайность (ADR-0393, «Политика»).
+  dsl_capability_gate_enabled: true
+  dsl_capability_core_baseline_enabled: false
 
 
 # ADR-0371 (cycle 172): WAF в staging — strict, как в prod (в base.yml

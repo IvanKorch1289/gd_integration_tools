@@ -35,6 +35,11 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 pytestmark = pytest.mark.unit
 
+# ADR-0393: этот модуль проверяет РЕАЛЬНЫЙ capability-гейт — autouse-фикстура
+# ``tests/unit/dsl/engine/processors/conftest.py`` (которая разрешает capability
+# для тестов поведения БД) здесь отключается.
+REAL_CAPABILITY_GATE = True
+
 
 class _GateProcessor(BaseProcessor):
     """Процессор с одной декларированной capability."""

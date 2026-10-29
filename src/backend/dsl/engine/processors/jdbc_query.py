@@ -19,6 +19,10 @@ DSL contract::
 
 SELECT → sets ``exchange.properties[result_property]`` to list[dict]
 INSERT/UPDATE/DELETE → sets ``exchange.properties[result_property]`` to int (affected count)
+
+ADR-0393 (волна 18): capability-гейт (``db.read`` / ``db.write``, scope —
+алиас профиля внешней БД), лимит выборки (``max_rows``) и audit-событие
+доступа к данным (без значений данных).
 """
 
 from __future__ import annotations
@@ -27,22 +31,32 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from sqlalchemy import text
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors._sql_validation import (
     FORBIDDEN_SQL,
+    MAX_RESULT_ROWS,
+    db_capability_for_sql,
+    limit_rows,
     needs_commit,
     result_returns_rows,
     validate_sql,
 )
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.dsl.engine.processors.base import (
+    BaseProcessor,
+    emit_data_access_audit,
+    handle_processor_error,
+)
 
 if TYPE_CHECKING:
     pass
 
 
 __all__ = ("JdbcQueryProcessor",)
+
+_logger = get_logger("dsl.jdbc_query")
 
 
 class JdbcQueryProcessor(BaseProcessor):
@@ -62,6 +76,7 @@ class JdbcQueryProcessor(BaseProcessor):
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.STATEFUL
     compensatable: ClassVar[bool] = True
+    required_capability: ClassVar[str | None] = "db.read"
 
     _FORBIDDEN_SQL: ClassVar[frozenset[str]] = FORBIDDEN_SQL
 
@@ -72,6 +87,7 @@ class JdbcQueryProcessor(BaseProcessor):
         *,
         params_from: str = "body",
         result_property: str = "jdbc_result",
+        max_rows: int = MAX_RESULT_ROWS,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"jdbc_query:{sql[:30]}")
@@ -83,6 +99,26 @@ class JdbcQueryProcessor(BaseProcessor):
         self._profile = profile
         self._params_from = params_from
         self._result_property = result_property
+        self._max_rows = max_rows
+        # ADR-0393: capability зависит от вида запроса (read / write).
+        self.__dict__["required_capability"] = db_capability_for_sql(sql)
+
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
+        """Scope capability-гейта — алиас внешнего профиля БД (ADR-0393).
+
+        Args:
+            exchange: Текущий Exchange (не используется).
+
+        Returns:
+            Имя профиля внешней БД.
+
+        """
+        del exchange
+        return self._profile
+
+    def _action(self) -> str:
+        """Действие capability-гейта (``read`` / ``write``)."""
+        return "read" if self.required_capability == "db.read" else "write"
 
     @staticmethod
     def _validate_sql(sql: str) -> None:
@@ -114,6 +150,10 @@ class JdbcQueryProcessor(BaseProcessor):
         """Execute SQL against the external database profile and set result property."""
         from src.backend.core.di.providers import get_external_session_manager_provider
 
+        # ADR-0393: capability-гейт до любого обращения к БД.
+        if not await self.auth_check(exchange, action=self._action()):
+            return
+
         try:
             self._validate_sql(self._sql)
         except ValueError as exc:
@@ -137,6 +177,14 @@ class JdbcQueryProcessor(BaseProcessor):
 
             if returns_rows:
                 rows = [dict(row._mapping) for row in result.fetchall()]
+                # ADR-0393: лимит выборки.
+                rows, truncated = limit_rows(rows, limit=self._max_rows)
+                if truncated:
+                    _logger.warning(
+                        "jdbc_query result truncated: profile=%s limit=%s",
+                        self._profile,
+                        self._max_rows,
+                    )
                 exchange.set_property(self._result_property, rows)
                 exchange.set_out(body=rows, headers=dict(exchange.in_message.headers))
             else:
@@ -145,6 +193,14 @@ class JdbcQueryProcessor(BaseProcessor):
                     body={"affected_count": rowcount},
                     headers=dict(exchange.in_message.headers),
                 )
+
+        emit_data_access_audit(
+            exchange,
+            event=str(self.required_capability),
+            capability=str(self.required_capability),
+            action=self._action(),
+            target=self._profile,
+        )
 
     def to_spec(self) -> dict[str, Any] | None:
         """Return round-trip DSL spec ``{"jdbc_query": {...}}``."""

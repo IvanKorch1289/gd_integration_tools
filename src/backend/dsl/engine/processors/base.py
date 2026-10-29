@@ -15,8 +15,10 @@ if TYPE_CHECKING:
 __all__ = (
     "BaseProcessor",
     "CallableProcessor",
+    "CapabilityGuardedProcessor",
     "ProcessorCallable",
     "SubPipelineExecutor",
+    "emit_data_access_audit",
     "run_sub_processors",
 )
 
@@ -115,9 +117,17 @@ class BaseProcessor(ABC):
           (:func:`src.backend.core.security.connector_auth.check_source_capability`),
           поведение не меняется (rollout-рычаг).
 
-        При denied — записывает ошибку в exchange и возвращает ``False``.
-        Caller (subclass ``process()``) должен проверить return value
-        и прервать выполнение (``return`` / ``exchange.stop()``).
+        При denied — exchange переводится в ``failed`` (ADR-0393) и
+        возвращается ``False``. Caller (subclass ``process()``) должен
+        проверить return value и прервать выполнение (``return``).
+
+        Почему именно ``failed``, а не ``stopped`` (ADR-0393, волна 18):
+        раньше отказ записывался через ``set_error`` + ``stop()``, из-за
+        чего статус exchange оставался ``processing``/``completed``:
+        ``ExecutionEngine._finalize`` вызывал ``exchange.complete()``,
+        который **обнулял** ``error`` → клиент получал «успех» (200),
+        а SLO-метрика считала запрос ``is_error=False``. Отказ
+        capability-гейта — это отказ авторизации, а не «успешный» маршрут.
 
         Args:
             exchange: DSL Exchange (для tenant_id + principal + audit).
@@ -161,15 +171,13 @@ class BaseProcessor(ABC):
                 )
                 reason = ""
         except Exception as exc:  # pragma: no cover — fail-closed
-            exchange.set_error(f"{self.name}: auth_check error: {exc}")
+            exchange.fail(f"{self.name}: auth_check error: {exc}")
             exchange.stop()
             return False
 
         if not allowed:
             suffix = f" ({reason})" if reason else ""
-            exchange.set_error(
-                f"{self.name}: capability '{capability}' denied{suffix}"
-            )
+            exchange.fail(f"{self.name}: capability '{capability}' denied{suffix}")
             exchange.stop()
             return False
         return True
@@ -202,12 +210,7 @@ class BaseProcessor(ABC):
         return decision.allowed, decision.reason
 
     async def _check_via_legacy_gateway(
-        self,
-        *,
-        capability: str,
-        action: str,
-        principal: str,
-        tenant_id: str | None,
+        self, *, capability: str, action: str, principal: str, tenant_id: str | None
     ) -> bool:
         """Legacy-проверка через ``AuthorizationGateway`` (до ADR-0366)."""
         from src.backend.core.security.connector_auth import check_source_capability
@@ -268,6 +271,97 @@ class CallableProcessor(BaseProcessor):
         result = self._func(exchange, context)
         if inspect.isawaitable(result):
             await result
+
+
+class CapabilityGuardedProcessor(BaseProcessor):
+    """Обёртка: capability-гейт перед делегированием legacy-процессору.
+
+    Используется для шагов, чей процессор живёт в legacy-модуле и сам
+    не проверяет ``required_capability`` (ADR-0393, волна 18 — дефект
+    «обход гейта RPA»): ``fill_form`` / ``run_scenario`` из
+    :mod:`src.backend.dsl.builders.ai_rpa.rpa` вели прямо в
+    ``processors/web.py`` без какого-либо контроля доступа.
+
+    Attributes:
+        inner: Делегируемый процессор (legacy).
+        action: Действие capability-гейта (``"invoke"`` / ``"read"``).
+
+    """
+
+    def __init__(
+        self,
+        inner: BaseProcessor,
+        capability: str,
+        *,
+        action: str = "invoke",
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name=name or f"guarded:{inner.name}")
+        self._inner = inner
+        self._action = action
+        # Инстансный override (ClassVar ``required_capability`` перекрывается
+        # через ``__dict__`` — тот же механизм, что в ``eip/transformation.py``).
+        self.__dict__["required_capability"] = capability
+
+    async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
+        """Проверяет capability и делегирует внутреннему процессору.
+
+        Args:
+            exchange: Текущий Exchange.
+            context: Контекст исполнения DSL-маршрута.
+
+        """
+        if not await self.auth_check(exchange, action=self._action):
+            return
+        await self._inner.process(exchange, context)
+
+
+def emit_data_access_audit(
+    exchange: Exchange[Any],
+    *,
+    event: str,
+    capability: str,
+    action: str,
+    target: str,
+    outcome: str = "granted",
+) -> None:
+    """Эмитит audit-событие доступа к данным (ADR-0393, дефект «аудит не пишется»).
+
+    Событие **не содержит значений данных** — только метаданные доступа:
+    capability, действие, цель (профиль БД / таблица) и tenant. Это
+    позволяет построить журнал «кто к какой БД обращался», не превращая
+    audit-лог в копию данных.
+
+    Args:
+        exchange: Текущий Exchange (источник tenant/principal/route).
+        event: Имя audit-события (``"db.read"`` / ``"db.write"``).
+        capability: Проверенная capability.
+        action: Действие (``"read"`` / ``"write"``).
+        target: Цель доступа (алиас ресурса: профиль БД или таблица).
+        outcome: Итог (``"granted"`` / ``"denied"``).
+
+    """
+    details: dict[str, Any] = {
+        "capability": capability,
+        "action": action,
+        "target": target,
+        "route_id": exchange.meta.route_id,
+    }
+    if exchange.meta.tenant_id:
+        details["tenant"] = exchange.meta.tenant_id
+    try:
+        from src.backend.core.audit.facade import emit_audit
+
+        emit_audit(
+            event=event,
+            actor=exchange.meta.principal or exchange.meta.route_id or "system",
+            resource=target,
+            action=action,
+            outcome=outcome,
+            details=details,
+        )
+    except Exception as exc:  # pragma: no cover — аудит не должен ронять шаг
+        _logger.debug("data_access_audit_failed: %s", exc)
 
 
 class SubPipelineExecutor:

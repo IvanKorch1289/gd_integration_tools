@@ -21,6 +21,12 @@ from src.backend.dsl.engine.processors.eip.transformation import (
     SplitterProcessor,
 )
 
+# ADR-0393: этот модуль проверяет РЕАЛЬНЫЙ capability-гейт — autouse-фикстура
+# ``tests/unit/dsl/engine/processors/conftest.py`` (разрешает capability для тестов
+# поведения БД) здесь отключается.
+REAL_CAPABILITY_GATE = True
+
+
 
 def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any]:
     return Exchange(in_message=Message(body=body, headers=headers or {}))

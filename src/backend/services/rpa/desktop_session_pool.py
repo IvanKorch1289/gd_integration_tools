@@ -41,11 +41,21 @@ from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registr
 __all__ = (
     "DesktopRPASessionPool",
     "DesktopRPASessionStats",
+    "PoolCapacityError",
     "get_desktop_rpa_pool",
     "set_desktop_rpa_pool",
 )
 
 _logger = get_logger(__name__)
+
+
+class PoolCapacityError(RuntimeError):
+    """Пул desktop-RPA исчерпал лимит сессий (ADR-0393).
+
+    Возникает, когда ``max_sessions`` достигнут и **все** сессии активны:
+    вытеснять нечего, а молча превышать лимит нельзя (иначе пул растёт
+    бесконечно и выдавливает клиентов из-под активных пользователей).
+    """
 
 
 # S164 W2: shared Circuit Breaker для pool (lazy-init для
@@ -70,6 +80,11 @@ class _PooledSession:
     last_used_at: float = 0.0
     in_use: bool = False
     reconnect_count: int = 0
+    #: Счётчик активных пользователей (ADR-0393). ``in_use`` — флаг
+    #: «сейчас выдан», но один и тот же ``app_name`` может быть выдан
+    #: нескольким вызывающим: eviction не должен закрывать клиент под
+    #: активным пользователем.
+    active_users: int = 0
 
 
 @dataclass(slots=True, frozen=True)
@@ -160,21 +175,7 @@ class DesktopRPASessionPool:
                     )
                 session = None
         if session is None:
-            if len(self._sessions) >= self._max_sessions:
-                # Простая eviction policy: убрать самую старую idle session
-                oldest_app, oldest = min(
-                    ((a, s) for a, s in self._sessions.items() if not s.in_use),
-                    key=lambda kv: kv[1].last_used_at,
-                    default=(None, None),
-                )
-                if oldest_app is not None and oldest is not None:
-                    try:
-                        await oldest.client.aclose()
-                    except Exception as exc:
-                        _logger.debug(
-                            "desktop_rpa_pool: oldest session aclose failed: %s", exc
-                        )
-                    self._sessions.pop(oldest_app, None)
+            await self._evict_if_needed(app_name)
             session = _PooledSession(
                 app_name=app_name,
                 client=self._make_client(),
@@ -183,6 +184,47 @@ class DesktopRPASessionPool:
             )
             self._sessions[app_name] = session
         return session
+
+    async def _evict_if_needed(self, app_name: str) -> None:
+        """Освободить место под новую session (ADR-0393 — лимит ``max_sessions``).
+
+        Раньше лимит **не enforced**: пул рос бесконечно (``total=3`` при
+        ``max_sessions=2``), а eviction выбирал «самую старую idle-сессию» —
+        в том числе ту, за которой стоит активный пользователь (проба:
+        ``appA-evicted``), что рвало чужую сессию.
+
+        Правила (fail-closed):
+
+        * активные сессии (``active_users > 0``) **не выбрасываются** никогда;
+        * если все сессии активны — новая session не создаётся, вызывающий
+          получает ``PoolCapacityError`` (лимит — это ограничение, а не
+          повод молча превысить его);
+        * вытесняется самая давно использованная **idle**-сессия.
+        """
+        if len(self._sessions) < self._max_sessions:
+            return
+        idle = [
+            (name, sess)
+            for name, sess in self._sessions.items()
+            if sess.active_users <= 0
+        ]
+        if not idle:
+            raise PoolCapacityError(
+                f"desktop_rpa_pool: достигнут лимит сессий "
+                f"(max_sessions={self._max_sessions}), все сессии активны — "
+                f"новую сессию '{app_name}' создать нельзя"
+            )
+        oldest_app, oldest = min(idle, key=lambda kv: kv[1].last_used_at)
+        _logger.info(
+            "desktop_rpa_pool: evict idle session %s (limit=%s reached)",
+            oldest_app,
+            self._max_sessions,
+        )
+        try:
+            await oldest.client.aclose()
+        except Exception as exc:
+            _logger.debug("desktop_rpa_pool: oldest session aclose failed: %s", exc)
+        self._sessions.pop(oldest_app, None)
 
     @asynccontextmanager
     async def acquire(self, app_name: str) -> AsyncIterator[httpx.AsyncClient]:
@@ -206,6 +248,9 @@ class DesktopRPASessionPool:
                 async with self._lock:
                     session = await self._get_or_create(app_name)
                     session.in_use = True
+                    # ADR-0393: учёт активных пользователей — eviction не
+                    # должна закрывать клиент под активным пользователем.
+                    session.active_users += 1
                 try:
                     yield session.client
                 except (httpx.ConnectError, httpx.RemoteProtocolError) as exc:
@@ -226,9 +271,11 @@ class DesktopRPASessionPool:
                     raise
                 finally:
                     async with self._lock:
-                        if app_name in self._sessions:
-                            self._sessions[app_name].in_use = False
-                            self._sessions[app_name].last_used_at = time.monotonic()
+                        current = self._sessions.get(app_name)
+                        if current is not None:
+                            current.active_users = max(0, current.active_users - 1)
+                            current.in_use = current.active_users > 0
+                            current.last_used_at = time.monotonic()
         except CircuitOpen as exc:
             _logger.warning(
                 "desktop_rpa_pool: breaker open, refusing acquire(%s): %s",
@@ -285,6 +332,7 @@ class DesktopRPASessionPool:
             by_app = {
                 name: {
                     "in_use": s.in_use,
+                    "active_users": s.active_users,
                     "reconnect_count": s.reconnect_count,
                     "age_seconds": time.monotonic() - s.created_at,
                     "idle_seconds": (

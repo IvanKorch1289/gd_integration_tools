@@ -29,6 +29,18 @@ parameterized SQL из dict-входа:
 
 Использует :class:`DatabaseQueryProcessor` для actual execution (connection
 pool, retry policy, observability). В ``DbCrudProcessor`` только SQL build.
+
+ADR-0393 (волна 18):
+
+* **Capability-гейт** — ``required_capability = "db.write"`` + ``auth_check``
+  (раньше шаг не проверял capability вовсе: любой DSL-роут писал в любую
+  таблицу);
+* **Tenant-скоуп** — CRUD идёт через Core ``Connection``, то есть мимо
+  ORM-фильтра и raw-SQL guard'а сессии. Поэтому для tenant-aware таблиц
+  ``tenant_id`` добавляется в ``WHERE`` (UPDATE/DELETE) либо в ``data``
+  (INSERT/UPSERT) автоматически; без tenant-контекста шаг падает
+  fail-closed. Без этого ``.db_delete("workflow_instances", {...})``
+  удалял чужой tenant.
 """
 
 from __future__ import annotations
@@ -37,6 +49,7 @@ from functools import lru_cache
 from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
+from src.backend.core.tenancy.sqlalchemy_filter import TenantIsolationError
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.core.utils.sql_identifiers import validate_identifier
 from src.backend.dsl.engine.context import ExecutionContext
@@ -225,9 +238,7 @@ def build_delete_sql(
     for col in where:
         _quote_identifier(col, dialect)
     table_q = _quote_identifier(table, dialect)
-    conditions = " AND ".join(
-        f"{_quote_identifier(c, dialect)} = :{c}" for c in where
-    )
+    conditions = " AND ".join(f"{_quote_identifier(c, dialect)} = :{c}" for c in where)
     sql = f"DELETE FROM {table_q} WHERE {conditions}"
     return sql, dict(where)
 
@@ -264,9 +275,7 @@ def build_update_sql(
     for col in list(data.keys()) + list(where.keys()):
         _quote_identifier(col, dialect)
     table_q = _quote_identifier(table, dialect)
-    set_clause = ", ".join(
-        f"{_quote_identifier(c, dialect)} = :set_{c}" for c in data
-    )
+    set_clause = ", ".join(f"{_quote_identifier(c, dialect)} = :set_{c}" for c in data)
     conditions = " AND ".join(
         f"{_quote_identifier(c, dialect)} = :where_{c}" for c in where
     )
@@ -463,6 +472,7 @@ class DbCrudProcessor(BaseProcessor):
     )
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.SIDE_EFFECTING
+    required_capability: ClassVar[str | None] = "db.write"
 
     def __init__(
         self,
@@ -531,6 +541,10 @@ class DbCrudProcessor(BaseProcessor):
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Метод process (см. signature)."""
+        # ADR-0393: capability-гейт до любого обращения к БД.
+        if not await self.auth_check(exchange, action="write"):
+            return
+
         # 1. Build SQL
         # Cycle 172 (CRITICAL-08): параметры больше не выбрасываются. Раньше
         # они писались в ``_params`` и терялись, а ``DatabaseQueryProcessor``
@@ -550,6 +564,11 @@ class DbCrudProcessor(BaseProcessor):
         else:  # DELETE
             sql, params = build_delete_sql(self._table, self._where, dialect=dialect)
 
+        # ADR-0393: tenant-скоуп. CRUD идёт через Core Connection — мимо
+        # ORM-фильтра и raw-SQL guard'а сессии, поэтому tenant-предикат
+        # добавляется явно (иначе шаг удалял/менял чужой tenant).
+        sql, params = self._apply_tenant_scope(exchange, sql, params, dialect=dialect)
+
         _logger.info(
             "db_crud: op=%s dialect=%s table=%s sql=%s",
             self._operation,
@@ -564,6 +583,69 @@ class DbCrudProcessor(BaseProcessor):
         )
 
         query_proc = DatabaseQueryProcessor(
-            sql=sql, params=params, result_property=self._result_property
+            sql=sql,
+            params=params,
+            result_property=self._result_property,
+            capability_scope=self._table,
         )
         await query_proc.process(exchange, context)
+
+    def _apply_tenant_scope(
+        self, exchange: Exchange[Any], sql: str, params: dict[str, Any], *, dialect: str
+    ) -> tuple[str, dict[str, Any]]:
+        """Добавить tenant-предикат к tenant-aware таблице (ADR-0393).
+
+        Для tenant-aware таблиц ``tenant_id`` попадает в ``WHERE``
+        (UPDATE/DELETE) либо в ``data`` (INSERT/UPSERT). Если tenant-контекста
+        нет — шаг падает fail-closed с понятной ошибкой.
+
+        Args:
+            exchange: Текущий Exchange (источник tenant-контекста).
+            sql: Собранный SQL.
+            params: Bind-параметры SQL.
+            dialect: Диалект целевой СУБД.
+
+        Returns:
+            Кортеж ``(sql, params)`` с tenant-скоупом.
+
+        Raises:
+            TenantIsolationError: Если tenant-контекст не привязан.
+
+        """
+        from src.backend.core.tenancy import get_tenant_id
+        from src.backend.core.tenancy.sqlalchemy_filter import tenant_aware_tables
+
+        if self._table.lower() not in tenant_aware_tables():
+            return sql, params
+
+        tenant_id = get_tenant_id()
+        if not tenant_id:
+            raise TenantIsolationError(
+                message=(
+                    f"db_crud: таблица '{self._table}' — tenant-aware, но "
+                    "tenant-контекст не привязан (ADR-0393). Операция отклонена: "
+                    "tenant-скоуп неизвестен."
+                ),
+                sql=sql,
+            )
+
+        if self._operation in ("INSERT", "UPSERT"):
+            data = dict(self._data)
+            data.setdefault("tenant_id", tenant_id)
+            if self._operation == "INSERT":
+                sql, params = build_insert_sql(self._table, data, dialect=dialect)
+            else:
+                sql, params = build_upsert_sql_dialect(
+                    dialect, self._table, data, self._conflict_keys
+                )
+            return sql, params
+
+        where = dict(self._where)
+        where.setdefault("tenant_id", tenant_id)
+        if self._operation == "UPDATE":
+            sql, params = build_update_sql(
+                self._table, self._data, where, dialect=dialect
+            )
+        else:
+            sql, params = build_delete_sql(self._table, where, dialect=dialect)
+        return sql, params
