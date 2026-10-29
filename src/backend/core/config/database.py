@@ -8,7 +8,11 @@ from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.base import mask_url_password
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
-from src.backend.core.config.db_drivers import ensure_driver_available
+from src.backend.core.config.db_drivers import (
+    ensure_db_type_supported,
+    ensure_driver_available,
+    ensure_driver_pair_supported,
+)
 from src.backend.core.enums.database import DatabaseTypeChoices
 
 __all__ = ("DatabaseConnectionSettings", "db_connection_settings")
@@ -66,8 +70,11 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     async_driver: str = Field(
         default="asyncpg",
         description=(
-            "Пакет асинхронного драйвера. Для sqlite по умолчанию используется "
-            "'aiosqlite' (если значение оставлено для PG)."
+            "Пакет асинхронного драйвера. Допустимые значения зависят от "
+            "типа СУБД (ADR-0381): postgresql — asyncpg/psycopg, "
+            "oracle — oracledb, mssql — aioodbc, mysql — aiomysql. "
+            "Для sqlite по умолчанию используется 'aiosqlite' (если значение "
+            "оставлено для PG)."
         ),
         examples=["asyncpg", "oracledb_async", "aiosqlite"],
     )
@@ -75,9 +82,11 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     sync_driver: str = Field(
         default="psycopg",
         description=(
-            "Пакет синхронного драйвера. Для sqlite используется встроенный "
-            "'pysqlite'. По умолчанию — psycopg3 (psycopg): умеет и sync, "
-            "и async, в отличие от драйвера v2, которого нет в проекте."
+            "Пакет синхронного драйвера. Допустимые значения зависят от "
+            "типа СУБД (ADR-0381): postgresql — psycopg, oracle — oracledb, "
+            "mssql — pyodbc, mysql — pymysql. Для sqlite используется "
+            "встроенный 'pysqlite'. По умолчанию — psycopg3 (psycopg): умеет "
+            "и sync, и async, в отличие от драйвера v2, которого нет в проекте."
         ),
         examples=["psycopg", "oracledb", "pysqlite"],
     )
@@ -194,14 +203,16 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         examples=[0.5],
     )
 
-    replica_dsn: str | None = Field(
+    replica_dsn: SecretStr | None = Field(
         default=None,
         title="DSN read-replica",
         description=(
             "S11 K2 W2: явный async DSN для read-only replica. Если задан, "
             ":class:`SmartSessionManager` направляет read-only сессии сюда, "
             "снижая нагрузку на primary в 2–3x для read-heavy workload. "
-            "Если None, replica-роутинг отключён и все запросы идут на primary."
+            "Если None, replica-роутинг отключён и все запросы идут на primary. "
+            "ADR-0381: DSN содержит пароль → типизирован SecretStr, в дампах "
+            "пароль маскируется (ADR-0378)."
         ),
         examples=["postgresql+asyncpg://user:pwd@replica.db:5432/app"],
     )
@@ -227,18 +238,37 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
         """
         return mask_url_password(value)
 
+    @field_serializer("replica_dsn")
+    def _serialize_replica_dsn(self, value: SecretStr | None) -> str | None:
+        """Маскирует пароль в DSN реплики (ADR-0378, ADR-0381).
+
+        DSN реплики содержит пароль в userinfo-части, поэтому в дампах
+        модели он заменяется на ``***``. Рабочее значение доступно через
+        ``replica_dsn.get_secret_value()`` — его использует инициализатор
+        для создания replica-engine.
+        """
+        if value is None:
+            return None
+        return mask_url_password(value.get_secret_value())
+
     def _build_dsn(self, is_async: bool) -> str:
         """Внутренний метод генерации строки подключения.
 
         Примечание:
             Для Oracle поле `name` трактуется как `service_name`.
             Для SQLite используется ``path`` (для ``:memory:`` префикс пустой).
-            Для MSSQL/MySQL/DB2 — S104 W3 добавлена поддержка.
 
         Wave 13 Q9: перед сборкой DSN драйвер проверяется на
         объявленность/наличие (``ensure_driver_available``) — иначе
         неразрешимый драйвер падал бы в рантайме как ``ModuleNotFoundError``
         внутри SQLAlchemy.
+
+        ADR-0381: дополнительно проверяется **совместимость** пары
+        (тип СУБД, драйвер) — ``ensure_driver_pair_supported``. Без неё
+        MSSQL/MySQL наследовали PG-драйверы и давали невалидный DSN
+        (``mssql+asyncpg://`` → ``NoSuchModuleError`` уже в рантайме).
+        Типы, недостижимые через SQLAlchemy DSN (DB2, ClickHouse),
+        отвергаются той же проверкой.
         """
         if self.type == DatabaseTypeChoices.sqlite:
             driver = "aiosqlite" if is_async else "pysqlite"
@@ -247,7 +277,9 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
             return f"sqlite+{driver}:///{target}"
 
         driver = self.async_driver if is_async else self.sync_driver
+        ensure_db_type_supported(self.type.value)
         ensure_driver_available(driver)
+        ensure_driver_pair_supported(self.type.value, is_async=is_async, driver=driver)
 
         # Cycle 172 (HIGH-13): логин и пароль интерполировались в DSN сырым.
         # Пароль с ``@ : / # ? %`` ломал строку подключения — SQLAlchemy
@@ -270,50 +302,29 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
                 f"@{self.host}:{self.port}/?service_name={self.name}"
             )
 
-        # S104 W3: MSSQL / MySQL / DB2 support (DEEP-RESEARCH D19).
+        # S104 W3: MSSQL / MySQL support (DEEP-RESEARCH D19).
         if self.type == DatabaseTypeChoices.mssql:
-            # pyodbc / aioodbc — ODBC driver. ``aioodbc`` объявлен в extra
-            # ``db_drivers``; ``pyodbc`` (sync) в extras НЕ объявлен —
-            # сборка DSN с ним отвергается ``ensure_driver_available``
-            # (см. core/config/db_drivers.py и owner-задачу Sprint 36).
-            mssql_driver = driver or ("aioodbc" if is_async else "pyodbc")
+            # pyodbc (sync) / aioodbc (async) — ODBC-драйверы, оба объявлены
+            # в extra ``db_drivers``. Совместимость пары (тип, драйвер)
+            # проверена выше — ``ensure_driver_pair_supported``.
             return (
-                f"mssql+{mssql_driver}://{username}:{password}"
+                f"mssql+{driver}://{username}:{password}"
                 f"@{self.host}:{self.port}/{self.name}"
                 f"?driver=ODBC+Driver+17+for+SQL+Server"
             )
 
         if self.type == DatabaseTypeChoices.mysql:
-            # aiomysql / pymysql. Требует ``aiomysql`` (async) или ``pymysql`` (sync).
-            mysql_driver = driver or ("aiomysql" if is_async else "pymysql")
+            # aiomysql (async) / pymysql (sync) — extra ``db_drivers``.
             return (
-                f"mysql+{mysql_driver}://{username}:{password}"
+                f"mysql+{driver}://{username}:{password}"
                 f"@{self.host}:{self.port}/{self.name}"
             )
 
-        if self.type == DatabaseTypeChoices.db2:
-            # ibm_db / ibm_db_sa. Требует ``ibm_db`` или ``ibm_db_sa``.
-            db2_driver = driver or "ibm_db_sa"
-            return (
-                f"db2+{db2_driver}://{username}:{password}"
-                f"@{self.host}:{self.port}/{self.name}"
-            )
-
-        # S168 W10 P1-8: ClickHouse support (analytics path).
-        # ClickHouse НЕ использует SQLAlchemy ORM fabric — он
-        # аналитическая column-store с другим protocol (HTTP/TCP).
-        # ``clickhouse_connect`` предоставляет async client напрямую
-        # (см. infrastructure/clients/storage/clickhouse.py).
-        # Здесь мы только сигнализируем support: factory/dialect
-        # роутинг отделён, реальная интеграция — отдельный WIP.
-        if self.type == DatabaseTypeChoices.clickhouse:
-            # placeholder URL: не используется SQLAlchemy, но сигнализирует
-            # ``is_async=True`` для downstream dialector.
-            return (
-                f"clickhouse://{quote_plus(self.username)}:"
-                f"{quote_plus(secret)}"
-                f"@{self.host}:{self.port}/{self.name}"
-            )
+        # ADR-0381: DB2 и ClickHouse отвергаются выше
+        # (``ensure_driver_pair_supported``): DB2 недостижим (диалект
+        # sqlalchemy.dialects.db2 удалён в SQLAlchemy 2.0), ClickHouse живёт
+        # отдельным клиентом (infrastructure/clients/storage/clickhouse.py)
+        # и не имеет SQLAlchemy-диалекта.
 
         raise NotImplementedError(f"Поддержка СУБД '{self.type}' не реализована")
 

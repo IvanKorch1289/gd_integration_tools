@@ -3,6 +3,7 @@ from __future__ import annotations
 import ssl
 from typing import Any
 
+from pydantic import SecretStr
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -29,6 +30,20 @@ db_logger = get_logger("database")
 type DatabaseSettings = DatabaseConnectionSettings | ExternalDatabaseConnectionSettings
 
 
+def _reveal_dsn(value: str | SecretStr | None) -> str | None:
+    """Возвращает рабочее значение DSN (SecretStr → plain str).
+
+    Main-БД типизирует ``replica_dsn`` как ``SecretStr`` (ADR-0381), внешний
+    контур — как обычную строку. Движок реплики должен получить настоящий
+    DSN с паролем; маскирование применяется только в дампах модели.
+    """
+    if value is None:
+        return None
+    if isinstance(value, SecretStr):
+        return value.get_secret_value()
+    return value
+
+
 class DatabaseInitializer:
     """Универсальный инициализатор подключения к БД.
 
@@ -50,12 +65,15 @@ class DatabaseInitializer:
         # S11 K2 W2: опциональная read-replica. ``replica_dsn`` определён
         # в :class:`DatabaseConnectionSettings`; для external БД поля нет
         # → ``getattr`` отдаёт ``None`` и replica-роутинг выключен.
+        # ADR-0381: DSN реплики — секрет (SecretStr); движок получает
+        # рабочее (незамаскированное) значение, маскирование живёт только
+        # в дампах модели.
         self.replica_engine: AsyncEngine | None = None
         self.replica_session_maker: async_sessionmaker[AsyncSession] | None = None
-        replica_dsn = getattr(self.settings, "replica_dsn", None)
-        if replica_dsn:
+        replica_url = _reveal_dsn(getattr(self.settings, "replica_dsn", None))
+        if replica_url:
             self.replica_engine = create_async_engine(
-                url=replica_dsn, **self._engine_kwargs(is_async=True)
+                url=replica_url, **self._engine_kwargs(is_async=True)
             )
             self.replica_session_maker = async_sessionmaker(
                 bind=self.replica_engine, autoflush=False, expire_on_commit=False
@@ -131,8 +149,12 @@ class DatabaseInitializer:
     def _engine_kwargs(self, *, is_async: bool) -> dict[str, Any]:
         """Базовые kwargs для create_engine / create_async_engine.
 
-        Для SQLite отключается pool — у него нет параметров pool_size/recycle,
-        и SQLAlchemy ругается на их передачу с дефолтным NullPool.
+        Для SQLite pool-параметры **не применяются** (ADR-0381): у
+        ``:memory:`` SQLAlchemy использует ``StaticPool``, который не
+        принимает ``pool_size``/``max_overflow``/``pool_timeout``
+        (``TypeError``), а пул файловой SQLite-БД блокирует записи на
+        уровне файла. Значения ``pool_size``/``max_overflow``/``pool_recycle``
+        из конфигурации к SQLite не применяются намеренно.
         """
         kwargs: dict[str, Any] = {
             "echo": self.settings.echo,
@@ -175,14 +197,23 @@ class DatabaseInitializer:
     def _get_connect_args(self, *, is_async: bool) -> dict[str, Any]:
         """Генерирует driver-level параметры подключения.
 
-        Опции зависят от драйвера: asyncpg принимает ``command_timeout`` /
-        ``timeout`` (секунды); psycopg (v3) — ``connect_timeout`` (секунды) и
-        statement_timeout через ``options='-c statement_timeout=...'``.
+        Опции зависят от **драйвера**, а не от режима engine (ADR-0381):
+
+        * ``asyncpg`` — ``command_timeout`` / ``timeout`` (секунды);
+        * ``psycopg`` (v3, libpq) — ``connect_timeout`` (секунды) и
+          statement_timeout через ``options='-c statement_timeout=...'``.
+
+        Раньше ветка выбиралась по ``is_async``, из-за чего async-движок с
+        драйвером psycopg получал asyncpg-опции и падал с
+        ``psycopg.ProgrammingError: invalid connection option
+        "command_timeout"``.
         """
         connect_args: dict[str, Any] = {}
 
+        driver = self.settings.async_driver if is_async else self.settings.sync_driver
+
         if self.settings.type == DatabaseTypeChoices.postgresql:
-            if is_async:
+            if driver == "asyncpg":
                 connect_args.update(
                     {
                         "command_timeout": self.settings.command_timeout,
@@ -190,6 +221,7 @@ class DatabaseInitializer:
                     }
                 )
             else:
+                # psycopg (v3) — libpq-драйвер: своих опций asyncpg не знает.
                 connect_args["connect_timeout"] = self.settings.connect_timeout
                 if self.settings.command_timeout:
                     connect_args["options"] = (

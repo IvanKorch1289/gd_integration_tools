@@ -128,15 +128,24 @@ class TestUndeclaredDriverRejected:
         assert settings.sync_connection_url.startswith("mssql+pyodbc://")
 
     def test_ibm_db_sa_rejected(self) -> None:
-        """DB2 (``ibm_db_sa``) не объявлен ни в одном extra → отказ."""
+        """DB2 недостижим → fail-fast с объяснением (ADR-0381).
+
+        Диалект ``sqlalchemy.dialects.db2`` удалён в SQLAlchemy 2.0, а
+        ``ibm_db_sa`` не объявлен ни в одном extra. Тип отвергается до
+        сборки DSN — понятным сообщением вместо ``NoSuchModuleError``.
+        """
         settings = _make_settings(
             type=DatabaseTypeChoices.db2,
             port=50000,
             async_driver="ibm_db_sa",
             sync_driver="ibm_db_sa",
         )
-        with pytest.raises(DatabaseDriverError):
+        with pytest.raises(DatabaseDriverError) as exc_info:
             _ = settings.sync_connection_url
+
+        message = str(exc_info.value)
+        assert "DB2" in message
+        assert "не поддерживается" in message
 
     def test_async_driver_also_validated(self) -> None:
         """Async-драйвер проверяется так же, как sync."""
@@ -217,7 +226,7 @@ class TestDeclaredDriversStillWork:
             type=DatabaseTypeChoices.mssql,
             port=1433,
             async_driver="aioodbc",
-            sync_driver="aioodbc",
+            sync_driver="pyodbc",
         )
         assert settings.async_connection_url.startswith("mssql+aioodbc://")
 
@@ -239,3 +248,18 @@ class TestDeclarationRegistry:
     def test_psycopg2_is_not_in_registry(self) -> None:
         """``psycopg2`` отсутствует в реестре объявленных драйверов."""
         assert "psycopg2" not in DB_DRIVER_DECLARATIONS
+
+    def test_psycopg_extra_is_installed_in_compose_image(self) -> None:
+        """Образ compose ставит extra, в котором живёт ``psycopg`` (ADR-0381).
+
+        ``psycopg`` объявлен в extra ``sources-cdc``; Dockerfile ставил только
+        ``dev-light`` → в контейнере не было драйвера по умолчанию для
+        PostgreSQL.
+        """
+        dockerfile = (_REPO_ROOT / "ops" / "compose" / "Dockerfile").read_text(
+            encoding="utf-8"
+        )
+        extra = DB_DRIVER_DECLARATIONS["psycopg"].extra
+        assert f"--extra {extra}" in dockerfile, (
+            f"Dockerfile должен ставить extra '{extra}' (psycopg)"
+        )

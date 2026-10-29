@@ -5,10 +5,15 @@ Verifies DSN format для новых database types в ``DatabaseConnectionSett
 Wave 13 Q9: DSN-конструктор теперь fail-fast на драйверах, которые не
 объявлены ни в одном extra проекта (``core/config/db_drivers.py``):
 
-* ``pyodbc`` (MSSQL sync) и ``ibm_db_sa`` (DB2) не объявлены → понятная
-  ошибка ``DatabaseDriverError`` вместо ``ModuleNotFoundError`` в рантайме;
 * ``aioodbc`` (MSSQL async), ``aiomysql``/``pymysql`` (MySQL),
   ``oracledb`` (Oracle) объявлены в extra ``db_drivers`` → DSN строится.
+
+ADR-0381 (волна 16, кластер X2):
+
+* проверяется **пара** (тип СУБД, драйвер): MSSQL/MySQL больше не
+  наследуют PG-драйверы (``asyncpg``) → невалидный ``mssql+asyncpg://``;
+* DB2 недостижим (диалект ``sqlalchemy.dialects.db2`` удалён в SQLAlchemy
+  2.0, ``ibm_db_sa`` не объявлен) → fail-fast с объяснением.
 
 Замечания по тестированию:
     * В активном профиле ``dev`` (``config_profiles/dev.yml``) блок
@@ -66,7 +71,12 @@ def _make_settings(**overrides: Any) -> DatabaseConnectionSettings:
 
 
 def test_database_type_choices_has_new_types() -> None:
-    """``DatabaseTypeChoices`` имеет mssql / mysql / db2 (S104 W3)."""
+    """``DatabaseTypeChoices`` имеет mssql / mysql / db2 (S104 W3).
+
+    ADR-0381: значение ``db2`` остаётся в enum (на него ссылается внешний
+    контур), но тип **недостижим** через SQLAlchemy DSN — отвергается
+    fail-fast с понятным сообщением.
+    """
     assert DatabaseTypeChoices.mssql.value == "mssql"
     assert DatabaseTypeChoices.mysql.value == "mysql"
     assert DatabaseTypeChoices.db2.value == "db2"
@@ -162,7 +172,11 @@ def test_mysql_dsn_format_async() -> None:
 
 
 def test_db2_dsn_format_sync() -> None:
-    """DB2 sync: ``ibm_db_sa`` не объявлен в extras → fail-fast (Wave 13 Q9)."""
+    """DB2 sync: тип недостижим через SQLAlchemy DSN → fail-fast (ADR-0381).
+
+    Диалект ``sqlalchemy.dialects.db2`` удалён в SQLAlchemy 2.0, драйвер
+    ``ibm_db_sa`` не объявлен ни в одном extra.
+    """
     s = _make_settings(
         type=DatabaseTypeChoices.db2,
         username="db2inst1",
@@ -175,7 +189,7 @@ def test_db2_dsn_format_sync() -> None:
     )
     with pytest.raises(DatabaseDriverError) as exc_info:
         _ = s.sync_connection_url
-    assert "ibm_db_sa" in str(exc_info.value)
+    assert "DB2" in str(exc_info.value)
 
 
 def test_db2_dsn_format_async() -> None:

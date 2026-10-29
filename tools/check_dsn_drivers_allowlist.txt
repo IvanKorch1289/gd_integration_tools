@@ -13,4 +13,9 @@
 #
 # Wave 13 (Q2, согласовано): clickhouse_connect и pyodbc объявлены в extra
 # 'db_drivers' — соответствующие записи сняты.
-ibm_db_sa     # DB2 sync: драйвер не объявлен в extras (проприетарный, требует ibm_db)
+#
+# ADR-0381: запись ibm_db_sa снята — DB2 больше не упоминается в
+# DSN-конструкторах (core/config/database.py): диалект
+# sqlalchemy.dialects.db2 удалён в SQLAlchemy 2.0, поэтому тип отвергается
+# fail-fast с понятным сообщением (core/config/db_drivers.py).
+# Allowlist пуст — гейт не даёт добавить НОВЫЕ необъявленные драйверы.

@@ -30,8 +30,12 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 COPY pyproject.toml uv.lock ./
 
 # Установка только runtime-зависимостей (без dev-группы) в /app/.venv.
+# ADR-0381: кроме dev-light (aiosqlite/fastmcp) нужен extra sources-cdc —
+# в нём psycopg3 (sync/async-драйвер PostgreSQL по умолчанию, ADR-0363).
+# Без него образ стартует, но любой sync-движок БД падает на отсутствии
+# драйвера, а контейнер с Oracle/MSSQL/MySQL — на том же.
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-project --extra dev-light && \
+    uv sync --frozen --no-dev --no-install-project --extra dev-light --extra sources-cdc && \
     uv pip install ruamel-yaml
 
 COPY src ./src

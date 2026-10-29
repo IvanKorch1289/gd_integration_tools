@@ -203,7 +203,11 @@ database:
   pool_use_lifo: true
   connect_timeout: 10
   command_timeout: 30
-  max_retries: 0
+  # ADR-0381: повтор при установлении соединения (session_manager.py:
+  # ``max_attempts = max_retries + 1``). Было 0 во всех профилях — настройка
+  # была мёртвой: ни одной попытки повтора. Теперь 3 повтора при падении
+  # соединения (OperationalError/InterfaceError).
+  max_retries: 3
   circuit_breaker_max_failures: 10
   circuit_breaker_reset_timeout: 30
   slow_query_threshold: 1.0
