@@ -166,9 +166,15 @@
 | [ADR-0377](0377-profile-placeholders-waf-allowlist-and-validation.md) | Профили без env-плейсхолдеров, WAF-allowlist интеграций и валидация секции constants | Accepted |
 | [ADR-0378](0378-secret-masking-and-undeclared-env-secrets.md) | Маскирование секретов в дампах/логах и необъявленные env-секреты | Accepted |
 | [ADR-0379](0379-hot-reload-honesty-profile-validation-and-env-priority.md) | Честный hot-reload, валидация профиля и приоритет env над .env | Accepted |
+| [ADR-0380](0380-db-call-procedure-injection-and-fail-closed.md) | SQL-инъекция и fail-open в `db_call_procedure` | Accepted |
+| [ADR-0381](0381-db-driver-dsn-compatibility.md) | Драйверы и DSN: совместимость пар (тип СУБД, драйвер), driver-specific connect_args, fail-fast для недостижимых типов | Accepted |
+| [ADR-0382](0382-dsl-db-data-loss-and-dialect-correctness.md) | Потеря данных и диалекты в DSL-БД | Accepted |
+| [ADR-0383](0383-tenant-isolation-raw-sql-and-error-sanitization.md) | Tenant-изоляция raw SQL, санитизация PII в ошибках БД и breaker | Accepted |
+| [ADR-0384](0384-cdc-batch-boundary-dialects-and-dsl-path.md) | CDC: граница батча, диалекты и рабочий DSL-путь | Accepted |
+| [ADR-0385](0385-open-tasks-env-vault-waf-and-db-settings.md) | Открытые задачи A1–A11: env-гейт, Vault-refresher, WAF, внешние БД и валидация профиля | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 164 ADRs.
+**Total:** 170 ADRs.
 
