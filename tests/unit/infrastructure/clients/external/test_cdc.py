@@ -33,6 +33,10 @@ from src.backend.infrastructure.clients.external.cdc import (
     _LogMinerStrategy,
     _PollingStrategy,
 )
+from src.backend.infrastructure.clients.external.cdc._cursor import (
+    PollCursor,
+    encode_cursor,
+)
 
 # ── CDCEvent dataclass ──────────────────────────────────────────────
 
@@ -516,7 +520,7 @@ async def test_cdc_polling_get_cursor_falls_back_to_local_on_redis_failure() -> 
     ``_advance_cursor``); when the key is missing the default is returned.
     """
     strategy = _PollingStrategy()
-    default = datetime(2026, 1, 1, tzinfo=UTC)
+    default = PollCursor(ts=datetime(2026, 1, 1, tzinfo=UTC))
 
     with patch(
         "src.backend.infrastructure.clients.storage.redis_coordinator.RedisCursor",
@@ -532,9 +536,35 @@ async def test_cdc_polling_get_cursor_falls_back_to_local_on_redis_failure() -> 
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_cdc_polling_get_cursor_uses_redis_when_available() -> None:
-    """When Redis returns a stored ISO timestamp, _get_cursor parses and returns it."""
+    """Redis-курсор (составной ``ts|PK``) парсится в :class:`PollCursor`.
+
+    ADR-0384: курсор — пара ``(timestamp, PK)``, а не одиночный timestamp.
+    """
     strategy = _PollingStrategy()
-    default = datetime(2026, 1, 1, tzinfo=UTC)
+    default = PollCursor(ts=datetime(2026, 1, 1, tzinfo=UTC))
+    stored = encode_cursor(datetime(2026, 5, 15, 10, 30, tzinfo=UTC), 42)
+
+    fake_cursor = AsyncMock()
+    fake_cursor.get_or_init = AsyncMock(return_value=stored)
+    fake_cursor_ctor = MagicMock(return_value=fake_cursor)
+
+    with patch(
+        "src.backend.infrastructure.clients.storage.redis_coordinator.RedisCursor",
+        fake_cursor_ctor,
+    ):
+        result = await strategy._get_cursor("oracle_1:orders", default)
+
+    assert result.ts == datetime.fromisoformat("2026-05-15T10:30:00+00:00")
+    assert result.pk == 42
+    fake_cursor_ctor.assert_called_once_with("cdc:cursor:oracle_1:orders")
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_cdc_polling_get_cursor_supports_legacy_iso_cursor() -> None:
+    """Legacy-курсор (ISO-строка без PK) не сбрасывает позицию polling'а."""
+    strategy = _PollingStrategy()
+    default = PollCursor(ts=datetime(2026, 1, 1, tzinfo=UTC))
     stored_iso = "2026-05-15T10:30:00+00:00"
 
     fake_cursor = AsyncMock()
@@ -547,8 +577,8 @@ async def test_cdc_polling_get_cursor_uses_redis_when_available() -> None:
     ):
         result = await strategy._get_cursor("oracle_1:orders", default)
 
-    assert result == datetime.fromisoformat(stored_iso)
-    fake_cursor_ctor.assert_called_once_with("cdc:cursor:oracle_1:orders")
+    assert result.ts == datetime.fromisoformat(stored_iso)
+    assert result.pk is None
 
 
 # ════════════════════════════════════════════════════════════════════

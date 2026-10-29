@@ -6,6 +6,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from pydantic import ValidationError
 
 from src.backend.core.di.providers import db
 from src.backend.entrypoints.cdc.cdc_routes import (
@@ -42,7 +43,14 @@ class TestCreateSubscription:
         assert response.tables == ["users", "orders"]
         assert response.target_action == "cdc.handler"
         mock_client.subscribe.assert_awaited_once_with(
-            profile="pg-prod", tables=["users", "orders"], target_action="cdc.handler"
+            profile="pg-prod",
+            tables=["users", "orders"],
+            strategy="polling",
+            interval=5.0,
+            batch_size=100,
+            timestamp_column="updated_at",
+            channel=None,
+            target_action="cdc.handler",
         )
 
     @pytest.mark.asyncio
@@ -57,8 +65,70 @@ class TestCreateSubscription:
         assert response.subscription_id == "sub-456"
         assert response.target_action is None
         mock_client.subscribe.assert_awaited_once_with(
-            profile="pg-dev", tables=["logs"], target_action=None
+            profile="pg-dev",
+            tables=["logs"],
+            strategy="polling",
+            interval=5.0,
+            batch_size=100,
+            timestamp_column="updated_at",
+            channel=None,
+            target_action=None,
         )
+
+    @pytest.mark.asyncio
+    async def test_strategy_is_forwarded_to_client(self) -> None:
+        """ADR-0384: REST позволяет выбрать стратегию CDC."""
+        mock_client = MagicMock()
+        mock_client.subscribe = AsyncMock(return_value="sub-777")
+        db.set_cdc_client_provider(mock_client)
+
+        request = CDCSubscribeRequest(
+            profile="pg-dev",
+            tables=["logs"],
+            strategy="kafka",
+            interval=15.0,
+            batch_size=50,
+            channel="cdc_logs",
+        )
+        await create_subscription(request)
+
+        kwargs = mock_client.subscribe.await_args.kwargs
+        assert kwargs["strategy"] == "kafka"
+        assert kwargs["interval"] == 15.0
+        assert kwargs["batch_size"] == 50
+        assert kwargs["channel"] == "cdc_logs"
+
+
+class TestCreateSubscriptionValidation:
+    """ADR-0384: валидация параметров подписки на REST-границе."""
+
+    def test_tables_must_not_be_empty(self) -> None:
+        """Пустой список таблиц отклоняется (было: подписка без таблиц)."""
+        with pytest.raises(ValidationError):
+            CDCSubscribeRequest(profile="pg-dev", tables=[])
+
+    def test_tables_is_required(self) -> None:
+        """tables — обязательное поле."""
+        with pytest.raises(ValidationError):
+            CDCSubscribeRequest(profile="pg-dev")
+
+    def test_unknown_strategy_rejected(self) -> None:
+        """Неизвестная стратегия отклоняется."""
+        with pytest.raises(ValidationError):
+            CDCSubscribeRequest(profile="pg-dev", tables=["logs"], strategy="nope")
+
+    def test_interval_must_be_positive(self) -> None:
+        """Неположительный интервал отклоняется."""
+        with pytest.raises(ValidationError):
+            CDCSubscribeRequest(profile="pg-dev", tables=["logs"], interval=0)
+
+    @pytest.mark.parametrize("batch_size", [0, -1, 10_000_000])
+    def test_batch_size_bounds(self, batch_size: int) -> None:
+        """batch_size вне диапазона отклоняется."""
+        with pytest.raises(ValidationError):
+            CDCSubscribeRequest(
+                profile="pg-dev", tables=["logs"], batch_size=batch_size
+            )
 
 
 class TestDeleteSubscription:
