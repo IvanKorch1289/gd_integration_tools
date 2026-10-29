@@ -9,6 +9,7 @@ import asyncio
 from typing import Any, ClassVar
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.image_safety import UnsafeImageError, open_image
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -44,22 +45,20 @@ class ImageResizeProcessor(BaseProcessor):
             return
         import io
 
-        try:
-            from PIL import Image
-        except ImportError:
-            exchange.fail("Pillow not installed: pip install Pillow")
-            return
         body = exchange.in_message.body
         if not isinstance(body, bytes):
             exchange.fail("image_resize expects bytes")
             return
 
         def _resize() -> bytes:
-            # ``with Image.open(...)`` гарантирует .close() даже при
-            # исключении в resize/save. PIL держит reference на
-            # underlying file пока Image жив; при больших batch'ах это
-            # приводит к file-descriptor leak (Sprint 83 W3).
-            with Image.open(io.BytesIO(body)) as src:
+            # Единая безопасная точка загрузки изображения (ADR-0388):
+            # лимит пикселей, allowlist растровых форматов и понятная
+            # доменная ошибка вместо traceback'а Pillow.
+            # ``open_image`` гарантирует .close() даже при исключении в
+            # resize/save. PIL держит reference на underlying file пока
+            # Image жив; при больших batch'ах это приводит к
+            # file-descriptor leak (Sprint 83 W3).
+            with open_image(body) as src:
                 if self._width and self._height:
                     resized = src.resize((self._width, self._height))
                 elif self._width:
@@ -74,7 +73,16 @@ class ImageResizeProcessor(BaseProcessor):
                 resized.save(buf, format=self._format)
             return buf.getvalue()
 
-        result = await asyncio.to_thread(_resize)
+        try:
+            result = await asyncio.to_thread(_resize)
+        except UnsafeImageError as exc:
+            # Отклонено политикой безопасной загрузки (ADR-0388):
+            # понятная ошибка шага вместо «хиры»-трассировки.
+            exchange.fail(str(exc))
+            return
+        except ImportError:
+            exchange.fail("Pillow not installed: pip install Pillow")
+            return
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
         # W34: observability trace.
         exchange.set_property("image_resized", True)

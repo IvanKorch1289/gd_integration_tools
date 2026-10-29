@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.image_safety import open_image
 
 __all__ = ("BLIP2Captioner", "CaptionResult")
 
@@ -99,22 +100,21 @@ class BLIP2Captioner:
         Raises:
             RuntimeError: Если transformers/torch не установлены и нет
                 fallback'а для текущего окружения.
+            UnsafeImageError: Если изображение отклонено политикой
+                безопасной загрузки (ADR-0388).
 
         """
         self._load()
 
-        # PIL импортируется лениво — он входит в transformers transitive deps.
-        from io import BytesIO
-
+        # Единая безопасная точка загрузки изображения (ADR-0388): лимит
+        # пикселей + allowlist растровых форматов.
         try:
-            from PIL import Image
+            with open_image(image_bytes) as img:
+                image = img.convert("RGB")
         except ImportError as exc:
             raise RuntimeError(
                 "BLIP2 requires Pillow — install [multimodal-rag] extra"
             ) from exc
-
-        with Image.open(BytesIO(image_bytes)) as img:
-            image = img.convert("RGB")
         inputs = self._processor(images=image, return_tensors="pt")
         if self._device != "cpu":
             inputs = {k: v.to(self._device) for k, v in inputs.items()}

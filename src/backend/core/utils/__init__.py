@@ -5,6 +5,7 @@
 - ``async_helpers`` — async iterator (``AsyncChunkIterator``);
 - ``cache_keys`` — детерминированные ключи кэша;
 - ``datetime_utils`` — pendulum/stdlib datetime хелперы (S57 W1);
+- ``image_safety`` — безопасная загрузка изображений (ADR-0388);
 - ``json_utils`` — orjson-based JSON serialization;
 - ``metrics_registry`` — idempotent Prometheus factory;
 - ``redis_fallback`` — Redis → TTLCache fallback (с periodic re-probe);
@@ -26,6 +27,12 @@ from src.backend.core.utils.datetime_utils import (
     parse_dt,
     utc_now,
 )
+from src.backend.core.utils.image_safety import (
+    ALLOWED_IMAGE_FORMATS,
+    MAX_IMAGE_PIXELS,
+    UnsafeImageError,
+    open_image,
+)
 from src.backend.core.utils.json_utils import dumps_bytes, dumps_str, loads
 from src.backend.core.utils.metrics_registry import MetricsRegistry, metrics_registry
 from src.backend.core.utils.redis_fallback import (
@@ -46,6 +53,8 @@ from src.backend.core.utils.task_registry import (
 from src.backend.core.utils.watchdog import Watchdog
 
 __all__ = (
+    "ALLOWED_IMAGE_FORMATS",
+    "MAX_IMAGE_PIXELS",
     "AsyncChunkIterator",
     "FallbackCache",
     "MetricsRegistry",
@@ -53,6 +62,7 @@ __all__ = (
     "RedisLike",
     "RouteTimeoutSpec",
     "TaskRegistry",
+    "UnsafeImageError",
     "Watchdog",
     "async_chunk_iterator",
     "build_cache_key",
@@ -63,6 +73,7 @@ __all__ = (
     "humanize_delta",
     "loads",
     "metrics_registry",
+    "open_image",
     "parse_dt",
     "reset_task_registry",
     "utc_now",

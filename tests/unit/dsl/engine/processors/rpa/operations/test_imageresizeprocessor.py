@@ -137,6 +137,90 @@ def test_image_resize_to_spec_omits_default_png() -> None:
     assert "output_format" not in spec["image_resize"]
 
 
+# ─── Безопасная загрузка изображения (ADR-0388) ─────────────────────────────
+
+
+def _oversize_png(width: int = 10_000, height: int = 10_000) -> bytes:
+    """PNG с заявленными размерами (пиксели не декодируются).
+
+    Достаточно заголовка: Pillow читает размер на этапе ``Image.open``,
+    поэтому гигабайтная картинка не создаётся.
+    """
+    import struct
+    import zlib
+
+    def _chunk(tag: bytes, data: bytes) -> bytes:
+        crc = zlib.crc32(tag + data) & 0xFFFFFFFF
+        return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", crc)
+
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    idat = zlib.compress(b"\x00" * (1 + width * 3))
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + _chunk(b"IHDR", ihdr)
+        + _chunk(b"IDAT", idat)
+        + _chunk(b"IEND", b"")
+    )
+
+
+def _svg_bytes() -> bytes:
+    """Минимальный SVG-документ (векторный «враппер»)."""
+    return (
+        b'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">'
+        b"<rect width='10' height='10'/></svg>"
+    )
+
+
+@pytest.mark.asyncio
+async def test_image_resize_fails_on_oversize_image() -> None:
+    """oversize-изображение → понятная ошибка шага, а не traceback."""
+    proc = ImageResizeProcessor(width=50, height=50)
+    _allow(proc)
+    ex = _exchange_with(_oversize_png())
+
+    await proc.process(ex, context=MagicMock())
+
+    assert ex.status == ExchangeStatus.failed
+    error = ex.error or ""
+    assert "too large" in error
+    assert "50000000" in error
+
+
+@pytest.mark.asyncio
+async def test_image_resize_fails_on_svg() -> None:
+    """SVG отклоняется политикой безопасной загрузки."""
+    proc = ImageResizeProcessor(width=50, height=50)
+    _allow(proc)
+    ex = _exchange_with(_svg_bytes())
+
+    await proc.process(ex, context=MagicMock())
+
+    assert ex.status == ExchangeStatus.failed
+    assert "unsupported" in (ex.error or "")
+
+
+@pytest.mark.asyncio
+async def test_image_resize_fails_on_format_outside_allowlist() -> None:
+    """Формат вне allowlist'а (PPM) → понятная ошибка шага."""
+    import io
+
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (2, 2), "white").save(buffer, format="PPM")
+
+    proc = ImageResizeProcessor(width=50, height=50)
+    _allow(proc)
+    ex = _exchange_with(buffer.getvalue())
+
+    await proc.process(ex, context=MagicMock())
+
+    assert ex.status == ExchangeStatus.failed
+    error = ex.error or ""
+    assert "unsupported image format" in error
+    assert "PPM" in error
+
+
 # ─── PIL resource cleanup (S83 W3 leak fix) ────────────────────────────────
 
 

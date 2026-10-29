@@ -125,3 +125,35 @@ async def test_image_ingester_caption_provider_failure() -> None:
     assert "caption" not in chunk.metadata
     warnings = chunk.metadata.get("warnings", [])
     assert any("caption_failed" in w for w in warnings)
+
+
+# ─── Тест 6: oversize-изображение отклоняется политикой (ADR-0388) ─────────
+
+
+@pytest.mark.asyncio
+async def test_image_ingester_rejects_oversize_image() -> None:
+    """oversize-изображение → warning в metadata, ChunkDoc создан."""
+    import struct
+    import zlib
+
+    def _chunk(tag: bytes, data: bytes) -> bytes:
+        crc = zlib.crc32(tag + data) & 0xFFFFFFFF
+        return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", crc)
+
+    width = height = 10_000
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    idat = zlib.compress(b"\x00" * (1 + width * 3))
+    png = (
+        b"\x89PNG\r\n\x1a\n"
+        + _chunk(b"IHDR", ihdr)
+        + _chunk(b"IDAT", idat)
+        + _chunk(b"IEND", b"")
+    )
+
+    ingester = ImageIngester(extract_exif=False)
+    chunk = await ingester.ingest(png)
+
+    assert chunk.kind == "image"
+    warnings = chunk.metadata.get("warnings", [])
+    assert any("image_rejected" in w for w in warnings)
+    assert any("too large" in w for w in warnings)

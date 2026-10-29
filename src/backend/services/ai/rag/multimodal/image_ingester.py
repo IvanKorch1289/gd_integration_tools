@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import io
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.image_safety import UnsafeImageError, open_image
 from src.backend.services.ai.rag.multimodal.types import ChunkDoc
 
 logger = get_logger(__name__)
@@ -96,6 +96,11 @@ class ImageIngester:
         except ImportError:
             logger.warning("ImageIngester: Pillow не установлен — метаданные пропущены")
             meta["warnings"] = ["pillow_not_installed"]
+        except UnsafeImageError as exc:
+            # Отклонено политикой безопасной загрузки (ADR-0388) —
+            # ingestion продолжается, но метаданные помечаются warning'ом.
+            logger.warning("ImageIngester: изображение отклонено: %s", exc)
+            meta["warnings"] = [f"image_rejected: {exc}"]
         except Exception as exc:
             logger.warning("ImageIngester: ошибка чтения metadata: %s", exc)
             meta["warnings"] = [f"pil_failed: {exc}"]
@@ -125,11 +130,14 @@ class ImageIngester:
         Returns:
             ``{format, mime, width, height, mode, exif?}``.
 
-        """
-        from PIL import Image  # lazy-import (Pillow в base deps)
+        Raises:
+            UnsafeImageError: Изображение отклонено политикой безопасной
+                загрузки (ADR-0388): слишком большое или неподдерживаемый
+                формат.
 
+        """
         meta: dict[str, Any] = {}
-        with Image.open(io.BytesIO(content)) as img:
+        with open_image(content) as img:
             meta["format"] = img.format
             meta["mime"] = _PIL_FORMAT_TO_MIME.get(
                 img.format or "", "application/octet-stream"

@@ -13,8 +13,9 @@ Lazy-import гарантирует, что unit-тесты без torch/sentence
 from __future__ import annotations
 
 import asyncio
-import io
 from typing import Any
+
+from src.backend.core.utils.image_safety import UnsafeImageError, open_image
 
 __all__ = ("CLIPEmbedder", "ColpaliEmbedder", "LazyImportError")
 
@@ -104,22 +105,28 @@ class CLIPEmbedder:
 
         Raises:
             ValueError: Если bytes не парсятся как изображение.
+            UnsafeImageError: Если изображение отклонено политикой
+                безопасной загрузки (ADR-0388).
+            LazyImportError: Если Pillow не установлен.
 
         """
         if isinstance(content, str):
             vec = model.encode(content, convert_to_numpy=True)
         elif isinstance(content, (bytes, bytearray)):
+            # Единая безопасная точка загрузки изображения (ADR-0388):
+            # лимит пикселей + allowlist растровых форматов.
             try:
-                from PIL import Image
+                with open_image(content) as img:
+                    img.load()
+                    vec = model.encode(img, convert_to_numpy=True)
+            except UnsafeImageError:
+                # Отклонено политикой безопасной загрузки — сообщение
+                # доменное, без traceback'а Pillow.
+                raise
             except ImportError as exc:
                 raise LazyImportError(
                     "Pillow не установлен — обработка изображений недоступна."
                 ) from exc
-
-            try:
-                with Image.open(io.BytesIO(content)) as img:
-                    img.load()
-                    vec = model.encode(img, convert_to_numpy=True)
             except Exception as exc:
                 raise ValueError(f"не удалось распарсить изображение: {exc}") from exc
         else:
