@@ -172,9 +172,17 @@
 | [ADR-0383](0383-tenant-isolation-raw-sql-and-error-sanitization.md) | Tenant-изоляция raw SQL, санитизация PII в ошибках БД и breaker | Accepted |
 | [ADR-0384](0384-cdc-batch-boundary-dialects-and-dsl-path.md) | CDC: граница батча, диалекты и рабочий DSL-путь | Accepted |
 | [ADR-0385](0385-open-tasks-env-vault-waf-and-db-settings.md) | Открытые задачи A1–A11: env-гейт, Vault-refresher, WAF, внешние БД и валидация профиля | Accepted |
+| [ADR-0386](0386-tenant-guard-for-connection-and-rls-coverage.md) | Tenant-guard для `Connection.execute` и RLS на всех tenant-таблицах | Accepted |
+| [ADR-0387](0387-db-pool-degradation-and-dead-cache-removal.md) | Деградация пула при старте и удаление мёртвого `QueryResultCache` | Accepted |
+| [ADR-0388](0388-pillow-12-risk-mitigation.md) | Pillow 12.x: снижение риска без обновления (Pillow <13 из-за streamlit) | Accepted |
+| [ADR-0389](0389-db-call-procedure-flag-semantics.md) | Семантика флага `db_call_procedure_enabled`: отключение должно быть явным | Accepted |
+| [ADR-0390](0390-storage-production-guard-and-file-limits.md) | Production-guard хранилища, пути/файлы и лимиты (волна 18, G1) | Accepted |
+| [ADR-0391](0391-cache-primary-tier-and-tenant-keys.md) | Primary cache-тир, tenant-ключи и деградация кэша (волна 18, кластер G2) | Accepted |
+| [ADR-0392](0392-logging-redos-sync-audit-and-request-logging.md) | Логирование: ReDoS в PII-регексе, доставка audit-событий, structlog-стек, дефолты конфигурации | Accepted |
+| [ADR-0393](0393-db-capability-gate-and-rpa-authorization.md) | DB-capability-гейт, tenant-изоляция DSL-SQL и авторизация RPA | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 170 ADRs.
+**Total:** 178 ADRs.
 

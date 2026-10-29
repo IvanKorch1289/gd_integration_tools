@@ -10,6 +10,12 @@ DEPRECATED (S107 W1, TD-002 residual): canonical path —
 
     # legacy (deprecated, will be removed в S109+):
     from src.backend.infrastructure.database.tenant_filter import TenantMixin  # noqa: DEPRECATED
+
+Session-event (ORM-фильтр + RLS scope) живёт в canonical-модуле:
+``do_orm_execute`` фильтрует ORM/raw-SQL запросы по ``tenant_id``,
+``after_begin`` выставляет ``app.tenant_id`` из tenant-контекста для
+PostgreSQL RLS-политик (ADR-0386). Этот shim только ре-экспортирует
+публичный API — своих listeners не регистрирует.
 """
 
 from __future__ import annotations
