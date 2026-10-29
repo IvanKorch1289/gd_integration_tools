@@ -15,6 +15,12 @@
 
 При отсутствии ``capability_check`` (unit-тесты) — capability-проверка
 пропускается.
+
+ADR-0390: фасад также ведёт **учёт usage** пер-тенантных квот —
+``record_upload`` после успешной записи и ``record_delete`` после удаления
+(раньше эти методы не вызывались нигде, поэтому счётчики квот всегда были
+нулевыми, а ``check_can_upload`` разрешал запись даже при
+``enforce_quota=True``).
 """
 
 from __future__ import annotations
@@ -46,6 +52,30 @@ def _record_quota_violation(plugin: str, key: str) -> None:
         _logger.debug("storage.quota_metric_failed", exc_info=True)
 
 
+def _default_quota_manager() -> Any:
+    """Quota-manager по умолчанию (best-effort, без Redis → fail-OPEN).
+
+    ADR-0390: ``record_upload``/``record_delete`` не вызывались нигде —
+    счётчики квот всегда были нулевыми, поэтому ``check_can_upload``
+    разрешал запись даже при ``enforce_quota=True``. Фасад, созданный без
+    явного ``quota_manager`` (например, через DI-провайдер), тоже должен
+    писать usage — иначе квоты обходились именно этим путём.
+
+    Returns:
+        Экземпляр ``TenantFileQuotaManager`` (без Redis, если он недоступен).
+
+    """
+    try:
+        from src.backend.infrastructure.storage.tenant_file_quota import (
+            get_tenant_file_quota_manager,
+        )
+
+        return get_tenant_file_quota_manager()
+    except Exception:  # pragma: no cover - quota не должна ронять запись
+        _logger.debug("storage.quota_manager_unavailable", exc_info=True)
+        return None
+
+
 class StorageFacade:
     """Capability-checked фасад объектного хранилища для extensions.
 
@@ -71,6 +101,96 @@ class StorageFacade:
         self._plugin = plugin
         self._quota = quota_manager
         self._enforce_quota = enforce_quota
+        self._fallback_quota: Any | None = None
+        """Лениво созданный quota-manager для фасадов без явного (ADR-0390)."""
+
+    def _quota_manager(self) -> Any | None:
+        """Вернуть quota-manager (явный или лениво созданный по умолчанию)."""
+        if self._quota is not None:
+            return self._quota
+        if self._fallback_quota is None:
+            self._fallback_quota = _default_quota_manager()
+        return self._fallback_quota
+
+    @staticmethod
+    def _tenant_id() -> str | None:
+        """Tenant-id текущего контекста (``None`` — system uploads)."""
+        from src.backend.core.tenancy import current_tenant
+
+        tenant = current_tenant()
+        return getattr(tenant, "tenant_id", None) if tenant else None
+
+    async def _record_upload(self, key: str, size_bytes: int) -> None:
+        """Записать usage после успешной загрузки (ADR-0390).
+
+        Args:
+            key: Ключ объекта.
+            size_bytes: Размер записанных данных.
+
+        """
+        quota = self._quota_manager()
+        if quota is None:
+            return
+        tenant_id = self._tenant_id()
+        if not tenant_id:
+            return
+        try:
+            await quota.record_upload(tenant_id, size_bytes)
+        except Exception as exc:
+            # Учёт usage не должен ронять запись (fail-open с видимым логом).
+            _logger.warning(
+                "storage.quota_record_upload_failed tenant=%s key=%s: %s",
+                tenant_id,
+                key,
+                exc,
+            )
+
+    async def _record_delete(self, key: str, size_bytes: int) -> None:
+        """Записать usage после успешного удаления (ADR-0390).
+
+        Args:
+            key: Ключ объекта.
+            size_bytes: Размер удалённых данных (0 — размер неизвестен).
+
+        """
+        quota = self._quota_manager()
+        if quota is None:
+            return
+        tenant_id = self._tenant_id()
+        if not tenant_id:
+            return
+        try:
+            await quota.record_delete(tenant_id, size_bytes)
+        except Exception as exc:
+            _logger.warning(
+                "storage.quota_record_delete_failed tenant=%s key=%s: %s",
+                tenant_id,
+                key,
+                exc,
+            )
+
+    async def _object_size(self, key: str) -> int:
+        """Best-effort размер объекта (для корректного учёта квот).
+
+        Backend может отдавать размер через duck-typed метод ``size()``
+        (LocalFS — ``stat().st_size``); если метода нет — размер неизвестен
+        (``0``), и уменьшается только счётчик файлов.
+
+        Args:
+            key: Ключ объекта.
+
+        Returns:
+            Размер объекта в байтах (``0`` — неизвестно/отсутствует).
+
+        """
+        size_fn = getattr(self._storage, "size", None)
+        if not callable(size_fn):
+            return 0
+        try:
+            return int(await size_fn(key))
+        except Exception as exc:
+            _logger.debug("storage.object_size_failed key=%s: %s", key, exc)
+            return 0
 
     def _assert_read(self, key: str) -> None:
         if self._check is not None:
@@ -156,10 +276,15 @@ class StorageFacade:
         self._assert_write(key)
         await self._check_quota(key, len(data or b""))
         try:
-            return await self._storage.upload(key, data, content_type=content_type)
+            location = await self._storage.upload(key, data, content_type=content_type)
         except Exception as exc:
             _logger.warning("StorageFacade upload failed key=%s: %s", key, exc)
             raise ServiceError(f"storage upload failed: {exc}") from exc
+        # ADR-0390: usage фиксируется после успешной записи — иначе
+        # счётчики квот оставались нулевыми и ``check_can_upload`` всегда
+        # разрешал запись (даже при enforce_quota=True).
+        await self._record_upload(key, len(data or b""))
+        return location
 
     async def upload_stream(
         self, key: str, data: Any, *, content_type: str | None = None
@@ -182,32 +307,39 @@ class StorageFacade:
         self._assert_write(key)
         # Размер известен только для bytes; для потока квота не проверяется
         # (поток может быть безлимитным — считать байты заранее нельзя).
+        known_size: int | None = None
         if isinstance(data, (bytes, bytearray, str)):
-            await self._check_quota(
-                key,
-                len(data.encode("utf-8")) if isinstance(data, str) else len(data),
+            known_size = (
+                len(data.encode("utf-8")) if isinstance(data, str) else len(data)
             )
+            await self._check_quota(key, known_size)
         try:
             # Если есть async-stream API — используем напрямую
             if hasattr(self._storage, "upload_stream"):
-                return await self._storage.upload_stream(
+                location = await self._storage.upload_stream(
                     key, data, content_type=content_type
                 )
             # Fallback — bytes path (для backends без upload_stream)
-            if isinstance(data, str):
-                data = data.encode("utf-8")
-            if hasattr(data, "__aiter__"):
-                # Собрать async-stream в bytes (для backends без streaming)
-                chunks: list[bytes] = []
-                async for chunk in data:
-                    chunks.append(chunk if isinstance(chunk, bytes) else chunk.encode())
-                data = b"".join(chunks)
-            return await self._storage.upload(
-                key, bytes(data), content_type=content_type
-            )
+            else:
+                if isinstance(data, str):
+                    data = data.encode("utf-8")
+                if hasattr(data, "__aiter__"):
+                    # Собрать async-stream в bytes (для backends без streaming)
+                    chunks: list[bytes] = []
+                    async for chunk in data:
+                        chunks.append(chunk if isinstance(chunk, bytes) else chunk.encode())
+                    data = b"".join(chunks)
+                location = await self._storage.upload(
+                    key, bytes(data), content_type=content_type
+                )
         except Exception as exc:
             _logger.warning("StorageFacade upload_stream failed key=%s: %s", key, exc)
             raise ServiceError(f"storage upload_stream failed: {exc}") from exc
+        # ADR-0390: usage фиксируется и здесь (размер известен только для
+        # bytes-стрима; для потока без размера — только pre-check).
+        if known_size is not None:
+            await self._record_upload(key, known_size)
+        return location
 
     async def download(self, key: str) -> bytes:
         """Скачать объект."""
@@ -221,11 +353,14 @@ class StorageFacade:
     async def delete(self, key: str) -> None:
         """Удалить объект."""
         self._assert_write(key)
+        size = await self._object_size(key)
         try:
             await self._storage.delete(key)
         except Exception as exc:
             _logger.warning("StorageFacade delete failed key=%s: %s", key, exc)
             raise ServiceError(f"storage delete failed: {exc}") from exc
+        # ADR-0390: usage уменьшается после успешного удаления.
+        await self._record_delete(key, size)
 
     async def exists(self, key: str) -> bool:
         """Проверить существование объекта."""

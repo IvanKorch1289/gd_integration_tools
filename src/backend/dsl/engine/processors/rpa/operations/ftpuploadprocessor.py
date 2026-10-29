@@ -10,6 +10,10 @@ bind password and the file contents on the wire. Legacy plaintext mode is
 only allowed when ``allow_insecure_ftp=True`` AND the process is run
 with an explicit dev/test profile (enforced via ``require_insecure_flag``).
 Default = strict TLS with cert verification.
+
+ADR-0390: production определяется по каноническому ``settings.app.environment``
+(раньше читался deprecated ``APP_ENV`` — гейт plaintext-режима fail-open'ил
+в production).
 """
 
 from __future__ import annotations
@@ -31,6 +35,33 @@ _rpa_logger = get_logger("dsl.rpa")
 # Honor ``FTP_INSECURE_OK`` for dev/test only. Production must never see
 # this env var. The same flag is mirrored in the constructor arg.
 _INSECURE_ENV = "FTP_INSECURE_OK"
+
+
+def _is_production_environment() -> bool:
+    """True, если приложение запущено в production (канонический источник).
+
+    ADR-0390: раньше читался deprecated ``APP_ENV`` — при каноническом
+    ``APP_ENVIRONMENT=production`` (или YAML-профиле ``prod``) гейт
+    plaintext-FTP fail-open'ил, и пароль/содержимое файла уходили по сети
+    открытым текстом. Теперь источник — ``settings.app.environment``.
+
+    Fail-closed: если окружение определить не удалось — считаем, что это
+    production, и plaintext-режим не включаем.
+
+    Returns:
+        ``True`` — production-окружение (или окружение неизвестно).
+
+    """
+    try:
+        from src.backend.core.config.settings import settings
+
+        environment = getattr(getattr(settings, "app", None), "environment", None)
+    except Exception:
+        return True
+    if environment not in {"development", "staging"}:
+        # Неизвестное окружение (None/новое значение) → fail-closed.
+        return True
+    return environment == "production"
 
 
 class FtpUploadProcessor(BaseProcessor):
@@ -72,7 +103,7 @@ class FtpUploadProcessor(BaseProcessor):
         # flag AND the env var (default-off). The env var is what
         # ops/production can revoke centrally via deployment manifests.
         env_insecure = os.environ.get(_INSECURE_ENV) == "1"
-        production = os.environ.get("APP_ENV", "").lower() in {"prod", "production"}
+        production = _is_production_environment()
         self._allow_insecure = allow_insecure_ftp and env_insecure and not production
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:

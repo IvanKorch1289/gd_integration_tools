@@ -16,6 +16,10 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _comp_logger = get_logger("dsl.components")
 
+#: Максимальный размер записываемого файла (байт) — защита от записи
+#: неограниченного payload'а на диск (ADR-0390).
+_MAX_FILE_WRITE_BYTES = 64 * 1024 * 1024
+
 
 class FileWriteProcessor(BaseProcessor):
     """Camel File Component (write) — write exchange body to local file."""
@@ -42,6 +46,10 @@ class FileWriteProcessor(BaseProcessor):
         определяется автоматически по расширению (``.json``, ``.csv``) или
         явно через ``self._format``. Перед записью путь проходит
         path-traversal валидацию.
+
+        CSV-ветка нейтрализует formula-инъекцию (ADR-0390, канон —
+        ``processors/_csv_safety.py``), размер payload'а ограничен
+        ``_MAX_FILE_WRITE_BYTES``.
 
         Args:
             exchange: Текущий exchange; body используется как содержимое файла.
@@ -85,6 +93,12 @@ class FileWriteProcessor(BaseProcessor):
         try:
             if fmt == "json":
                 content = orjson.dumps(body, default=str, option=orjson.OPT_INDENT_2)
+                if len(content) > _MAX_FILE_WRITE_BYTES:
+                    exchange.fail(
+                        f"File write blocked: payload exceeds "
+                        f"{_MAX_FILE_WRITE_BYTES} bytes"
+                    )
+                    return
                 async with aiofiles.open(path, "wb") as f:
                     await f.write(content)
             elif (
@@ -96,18 +110,54 @@ class FileWriteProcessor(BaseProcessor):
                 import csv
                 import io
 
+                from src.backend.dsl.engine.processors._csv_safety import (
+                    neutralize_formula,
+                )
+
+                # ADR-0390: CSV-ветка нейтрализует formula-инъекцию
+                # (канон — processors/_csv_safety.py, ADR-0367). Раньше
+                # значения и заголовки писались «как есть» — Excel
+                # исполнял их как формулы.
+                keys = list(body[0].keys())
+                header = [neutralize_formula(k) for k in keys]
                 buf = io.StringIO()
-                writer = csv.DictWriter(buf, fieldnames=body[0].keys())
+                writer = csv.DictWriter(buf, fieldnames=header)
                 writer.writeheader()
-                writer.writerows(body)
-                async with aiofiles.open(path, "w", encoding=self._encoding) as f:
-                    await f.write(buf.getvalue())
+                for row in body:
+                    writer.writerow(
+                        {
+                            name: neutralize_formula(row.get(key, ""))
+                            for name, key in zip(header, keys, strict=False)
+                        }
+                    )
+                payload = buf.getvalue().encode(self._encoding)
+                if len(payload) > _MAX_FILE_WRITE_BYTES:
+                    exchange.fail(
+                        f"File write blocked: payload exceeds "
+                        f"{_MAX_FILE_WRITE_BYTES} bytes"
+                    )
+                    return
+                async with aiofiles.open(path, "wb") as f:
+                    await f.write(payload)
             elif isinstance(body, bytes):
+                if len(body) > _MAX_FILE_WRITE_BYTES:
+                    exchange.fail(
+                        f"File write blocked: payload exceeds "
+                        f"{_MAX_FILE_WRITE_BYTES} bytes"
+                    )
+                    return
                 async with aiofiles.open(path, "wb") as f:
                     await f.write(body)
             else:
-                async with aiofiles.open(path, "w", encoding=self._encoding) as f:
-                    await f.write(str(body))
+                payload = str(body).encode(self._encoding)
+                if len(payload) > _MAX_FILE_WRITE_BYTES:
+                    exchange.fail(
+                        f"File write blocked: payload exceeds "
+                        f"{_MAX_FILE_WRITE_BYTES} bytes"
+                    )
+                    return
+                async with aiofiles.open(path, "wb") as f:
+                    await f.write(payload)
 
             exchange.set_property("file_written", path)
             exchange.in_message.set_header("CamelFileName", path)

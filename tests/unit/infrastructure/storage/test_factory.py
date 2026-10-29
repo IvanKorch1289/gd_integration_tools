@@ -83,12 +83,20 @@ def test_get_local_fs_storage_fallback_on_exception(
 
 
 def test_get_object_storage_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``provider='local'`` → LocalFS под tenant-обёрткой (ADR-0390).
+
+    Раньше возвращался bare ``LocalFSStorage`` — ключи шли без
+    tenant-префикса, и пер-тенантные квоты обходились.
+    """
+    from src.backend.infrastructure.storage.tenant_wrapper import TenantObjectStorage
+
     monkeypatch.setattr(
         "src.backend.core.config.settings.settings", _FakeSettings(), raising=False
     )
     get_object_storage.cache_clear()
     storage = get_object_storage()
-    assert isinstance(storage, LocalFSStorage)
+    assert isinstance(storage, TenantObjectStorage)
+    assert isinstance(storage.wrapped, LocalFSStorage)
 
 
 def test_get_object_storage_non_local_fallback_and_warns(
@@ -116,7 +124,7 @@ def test_get_object_storage_non_local_fallback_and_warns(
     get_object_storage.cache_clear()
     with caplog.at_level("WARNING"):
         storage = get_object_storage()
-    assert isinstance(storage, LocalFSStorage)
+    assert isinstance(storage.wrapped, LocalFSStorage)
     assert "fallback" in caplog.text.lower() or "Wave 2.4" in caplog.text
 
 
@@ -128,7 +136,7 @@ def test_get_object_storage_exception_fallback(monkeypatch: pytest.MonkeyPatch) 
     )
     get_object_storage.cache_clear()
     storage = get_object_storage()
-    assert isinstance(storage, LocalFSStorage)
+    assert isinstance(storage.wrapped, LocalFSStorage)
 
 
 # === S131 W1: FallbackObjectStorage wrapping in factory ===
@@ -197,11 +205,14 @@ def test_get_object_storage_s3_returns_fallback_wrapper(
 def test_get_object_storage_s3_init_failure_returns_bare_local(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """S131 W1: provider='s3' + S3 init raises Exception → bare LocalFS (НЕ wrapper).
+    """S131 W1: provider='s3' + S3 init raises Exception → LocalFS-fallback.
 
     Pre-existing test ``test_get_object_storage_non_local_fallback_and_warns``
     покрывает ImportError path. Этот test — generic Exception path
     (e.g. aioboto3 credentials/network).
+
+    ADR-0390: fallback тоже оборачивается в tenant-слой (иначе квоты
+    обходятся bare-ключом).
     """
     import sys
     import types
@@ -222,9 +233,9 @@ def test_get_object_storage_s3_init_failure_returns_bare_local(
     with caplog.at_level("WARNING"):
         storage = get_object_storage()
 
-    # Bare LocalFS, no wrapper
-    assert isinstance(storage, LocalFSStorage), (
-        f"expected bare LocalFSStorage on init failure, got {type(storage).__name__}"
+    # LocalFS-fallback под tenant-обёрткой.
+    assert isinstance(storage.wrapped, LocalFSStorage), (
+        f"expected LocalFSStorage inside, got {type(storage.wrapped).__name__}"
     )
     assert "S3ObjectStorage init failed" in caplog.text
 
@@ -346,20 +357,23 @@ def test_get_object_storage_raises_in_production_when_s3_fallback_to_local(
     assert "S3ObjectStorage init failed" in caplog.text
 
 
-def test_get_object_storage_raises_in_production_when_s3_success_with_local_secondary(
+def test_get_object_storage_succeeds_in_production_with_local_secondary(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Sprint 3.2: ``provider='s3'`` + aioboto3 init success в production →
-    fail-stop (НЕ FallbackObjectStorage с unsafe LocalFS secondary).
+    """ADR-0390: ``provider='s3'`` + успешный init S3 в production → РАБОТАЕТ.
 
-    Production-окружение не должно собирать chain S3→LocalFS — даже
-    как fallback, потому что LocalFS сам по себе небезопасен. Guard
-    срабатывает явно перед :class:`FallbackObjectStorage` обёрткой.
+    Раньше guard вызывался безусловно перед сборкой цепочки ``S3→LocalFS``
+    и поднимал ``ProductionConfigError`` — в production storage не
+    инициализировался ВООБЩЕ (падали все DSL-шаги ``to_s3``/``from_s3``).
+
+    Теперь guard срабатывает только когда LocalFS — **фактический** backend;
+    LocalFS-secondary — буфер runtime-fallback, а не рабочий backend.
     """
     import sys
     import types
 
     from src.backend.infrastructure.storage.fallback import FallbackObjectStorage
+    from src.backend.infrastructure.storage.tenant_wrapper import TenantObjectStorage
 
     class _FakeS3ObjectStorage:
         def __init__(self, settings: object) -> None:
@@ -377,11 +391,10 @@ def test_get_object_storage_raises_in_production_when_s3_success_with_local_seco
     get_local_fs_storage.cache_clear()
 
     with caplog.at_level("INFO"):
-        with pytest.raises(ProductionConfigError) as excinfo:
-            get_object_storage()
+        storage = get_object_storage()
 
-    assert excinfo.value.violations[0].code == "storage.local_in_prod"
-    # Wrapper НЕ должен быть собран — guard срабатывает раньше.
-    # Sanity: FallbackObjectStorage импортирован, чтобы guard был
-    # триггерирован ДО попытки его инстанциировать.
-    assert FallbackObjectStorage is not None
+    assert isinstance(storage, TenantObjectStorage)
+    chain = storage.wrapped
+    assert isinstance(chain, FallbackObjectStorage)
+    assert isinstance(chain._primary, _FakeS3ObjectStorage)
+    assert isinstance(chain._secondary, LocalFSStorage)

@@ -17,21 +17,32 @@
 **Composition root fail-stop (Sprint 3.2)**: factory.py — единственная
 точка входа storage из lifespan'а (``composition.service_setup.register_all_services``).
 При ``settings.app.environment == "production"`` и попытке инстанциировать
-LocalFS (прямо или через fallback) поднимается
+LocalFS **как фактический backend** поднимается
 :class:`core.config.validator.ProductionConfigError` ещё до того, как
 первый storage-вызов попадёт в hot-path. Раньше тот же check жил в
 ``LocalFSStorage.__init__`` через ``warnings.warn`` — оператор мог
 пропустить warning, а сам warning срабатывал при первом instantiate,
 а не при старте приложения.
+
+**ADR-0390 (волна 18)**: guard срабатывает ТОЛЬКО когда LocalFS — фактический
+backend (``provider=local`` или fallback после отказа S3). LocalFS в роли
+*secondary* (цепочка ``S3→LocalFS``) guard'ом не блокируется: это не рабочий
+backend, а буфер для runtime-fallback. Раньше guard вызывался безусловно
+перед сборкой цепочки — в production storage не инициализировался ВООБЩЕ
+(даже при ``provider=aws``), и все DSL-шаги ``to_s3``/``from_s3`` падали.
 """
 
 from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.logging import get_logger
+
+if TYPE_CHECKING:
+    from src.backend.infrastructure.storage.local_fs import LocalFSStorage
 
 __all__ = ("get_local_fs_storage", "get_object_storage")
 
@@ -104,17 +115,21 @@ def _enforce_local_fs_safe_in_prod() -> None:
     raise ProductionConfigError((violation,))
 
 
-@lru_cache(maxsize=1)
-def get_local_fs_storage() -> ObjectStorage:
-    """LocalFS-backend singleton.
+def _local_fs_instance() -> LocalFSStorage:
+    """Создать LocalFS-backend без prod-guard.
 
-    Путь берётся из ``settings.storage.local_storage_path`` если задан;
-    иначе — ``var/storage``.
+    Используется в двух ролях:
+
+    * ``get_local_fs_storage()`` — LocalFS как **фактический** backend
+      (prod-guard вызывается ДО этого вызова; кэширование — на
+      :func:`get_local_fs_storage`);
+    * secondary в цепочке ``S3→LocalFS`` — буфер runtime-fallback, а не
+      рабочий backend (ADR-0390) → guard не применяется.
+
+    Returns:
+        Новый экземпляр :class:`LocalFSStorage`.
+
     """
-    # Composition root fail-stop guard: блокирует LocalFS в production.
-    # В dev/staging — no-op (см. _enforce_local_fs_safe_in_prod).
-    _enforce_local_fs_safe_in_prod()
-
     from src.backend.infrastructure.storage.local_fs import LocalFSStorage
 
     base_path: Path
@@ -123,41 +138,68 @@ def get_local_fs_storage() -> ObjectStorage:
 
         configured = getattr(settings.storage, "local_storage_path", None)
         base_path = Path(configured) if configured else Path("var/storage")
-    except Exception as _:
+    except Exception:
         base_path = Path("var/storage")
     return LocalFSStorage(base_path=base_path)
+
+
+@lru_cache(maxsize=1)
+def get_local_fs_storage() -> ObjectStorage:
+    """LocalFS-backend singleton (production-guarded).
+
+    Путь берётся из ``settings.storage.local_storage_path`` если задан;
+    иначе — ``var/storage``.
+
+    В production вызов поднимает :class:`ProductionConfigError` — здесь
+    LocalFS является **фактическим** backend'ом (ADR-0390). Для secondary
+    в цепочке ``S3→LocalFS`` используется :func:`_local_fs_instance` без
+    guard'а.
+    """
+    # Composition root fail-stop guard: блокирует LocalFS в production.
+    # В dev/staging — no-op (см. _enforce_local_fs_safe_in_prod).
+    _enforce_local_fs_safe_in_prod()
+
+    return _local_fs_instance()
 
 
 @lru_cache(maxsize=1)
 def get_object_storage() -> ObjectStorage:
     """Возвращает ``ObjectStorage`` по ``settings.storage.provider``.
 
-    * ``"local"`` → :class:`LocalFSStorage` (bare, без wrapper).
+    * ``"local"`` → :class:`LocalFSStorage`, обёрнутый в
+      :class:`TenantObjectStorage` (ADR-0390: tenant-префикс обязателен
+      и для local — иначе квоты тенанта обходились bare-ключом).
     * любой другой (``"s3"`` / ``"minio"`` / ``"aws"``) →
       :class:`S3ObjectStorage` поверх aiobotocore, **wrapped в
       :class:`FallbackObjectStorage` с LocalFS secondary** (S131 W1).
       Runtime try-S3-then-fallback per
       ``resilience.fallbacks.minio: {chain: ["local_fs"]}`` (W26).
       При отсутствии aiobotocore или ошибке инициализации — fallback
-      на bare LocalFS с warning (чтобы dev_light не падал на свежей
+      на LocalFS с warning (чтобы dev_light не падал на свежей
       инсталляции без [sources-cdc]).
 
     Singleton via ``lru_cache`` — wrapper переиспользуется между вызовами.
 
-    В production-окружении попытка получить bare LocalFS или упасть
-    на LocalFS-fallback поднимает :class:`ProductionConfigError` через
-    :func:`_enforce_local_fs_safe_in_prod` — guard срабатывает на уровне
-    composition root, до первого hot-path вызова.
+    **Prod-guard (ADR-0390)**: :class:`ProductionConfigError` поднимается
+    только когда LocalFS становится **фактическим** backend'ом
+    (``provider=local`` или fallback после отказа S3). LocalFS-secondary
+    в цепочке ``S3→LocalFS`` guard'ом не блокируется — иначе storage не
+    инициализировался бы в production вообще (все ``to_s3``/``from_s3``
+    падали бы на старте).
     """
     try:
         from src.backend.core.config.settings import settings
 
         provider = (getattr(settings.storage, "provider", "local") or "local").lower()
-    except Exception as _:
+    except Exception:
         provider = "local"
 
+    from src.backend.infrastructure.storage.tenant_wrapper import TenantObjectStorage
+
     if provider == "local":
-        return get_local_fs_storage()
+        # LocalFS — фактический backend → prod-guard внутри
+        # get_local_fs_storage(); tenant-префикс — как и для S3 (ADR-0390).
+        return TenantObjectStorage(get_local_fs_storage())
 
     try:
         from src.backend.core.config.services.storage import fs_settings
@@ -186,20 +228,20 @@ def get_object_storage() -> ObjectStorage:
             provider,
             exc,
         )
-        return get_local_fs_storage()
+        return TenantObjectStorage(get_local_fs_storage())
     except Exception as exc:
         logger.warning(
             "S3ObjectStorage init failed provider=%r; fallback на LocalFS. cause=%s",
             provider,
             exc,
         )
-        return get_local_fs_storage()
+        return TenantObjectStorage(get_local_fs_storage())
 
     # S131 W1: wrap S3 → FallbackObjectStorage с LocalFS secondary.
     # Runtime try-S3-then-fallback согласован с
     # resilience.fallbacks.minio: {chain: ["local_fs"]} (W26).
-    # Guard для secondary LocalFS (composition root fail-stop в prod).
-    _enforce_local_fs_safe_in_prod()
+    # ADR-0390: LocalFS здесь — secondary (буфер runtime-fallback), а не
+    # фактический backend → prod-guard НЕ применяется.
     from src.backend.infrastructure.storage.fallback import FallbackObjectStorage
 
     logger.info(
@@ -209,7 +251,7 @@ def get_object_storage() -> ObjectStorage:
     )
     chain = FallbackObjectStorage(
         primary=primary,
-        secondary=get_local_fs_storage(),
+        secondary=_local_fs_instance(),
         name=f"storage.{provider}→local_fs",
     )
     # Cycle 271 (CRITICAL-03): tenant-изоляция ключей. Раньше S3ObjectStorage
@@ -217,6 +259,4 @@ def get_object_storage() -> ObjectStorage:
     # key_prefix в конструкторе (s3.py:109, «для tenant-изоляции») сюда не
     # передавался. Wrapper добавляет tenants/{tenant_id}/ ко всем ключам.
     # Дёшево и слоисто: cache делает ровно то же через TenantCacheBackend.
-    from src.backend.infrastructure.storage.tenant_wrapper import TenantObjectStorage
-
     return TenantObjectStorage(chain)

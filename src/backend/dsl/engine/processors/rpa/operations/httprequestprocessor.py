@@ -4,6 +4,9 @@ Async HTTP request через :mod:`httpx` (modern async HTTP client,
 уже в pyproject deps). Заменяет aiohttp — меньше deps, лучше type hints.
 
 Capability: rpa.http.request (medium risk — network egress).
+
+ADR-0390: размер ответа ограничен (``_MAX_HTTP_RESPONSE_BYTES``) — ответ
+целиком попадал в тело exchange'а (и в память процесса).
 """
 
 from __future__ import annotations
@@ -19,6 +22,9 @@ if TYPE_CHECKING:
     from src.backend.dsl.engine.exchange import Exchange
 
 _rpa_logger = get_logger("dsl.rpa")
+
+#: Максимальный размер тела ответа (байт) — ADR-0390.
+_MAX_HTTP_RESPONSE_BYTES = 32 * 1024 * 1024
 
 
 class HttpRequestProcessor(BaseProcessor):
@@ -77,22 +83,24 @@ class HttpRequestProcessor(BaseProcessor):
         async with make_http_client(
             timeout=self.timeout, plugin="rpa.httprequestprocessor"
         ) as client:
-            response = await client.request(self.method, self.url, **request_kwargs)
+            fetched = await self._fetch(client, request_kwargs)
 
-        try:
-            data = response.json()
-        except (json.JSONDecodeError, ValueError):
-            data = response.text
+        if fetched is None:
+            # Превышен лимит ответа — понятная ошибка, ничего не пишем.
+            exchange.fail(
+                f"http_request blocked: response exceeds "
+                f"{_MAX_HTTP_RESPONSE_BYTES} bytes"
+            )
+            return
+
+        status, response_headers, data = fetched
 
         _rpa_logger.info(
-            "http_request method=%s url=%s status=%d",
-            self.method,
-            self.url,
-            response.status_code,
+            "http_request method=%s url=%s status=%d", self.method, self.url, status
         )
         payload: dict[str, Any] = {
-            "status": response.status_code,
-            "headers": dict(response.headers),
+            "status": status,
+            "headers": response_headers,
             "data": data,
         }
         if self.target == "body":
@@ -102,3 +110,67 @@ class HttpRequestProcessor(BaseProcessor):
             exchange.in_message.body = payload
             return
         self.set_result(exchange, self.target, payload)
+
+    async def _fetch(
+        self, client: Any, request_kwargs: dict[str, Any]
+    ) -> tuple[int, dict[str, str], Any] | None:
+        """Выполнить запрос и прочитать тело ответа с лимитом размера.
+
+        Для запросов без тела используется streaming-режим клиента — лимит
+        проверяется **по ходу** чтения, поэтому oversized-ответ не
+        раздувает память процесса. Если клиент не поддерживает streaming
+        (legacy/mock) — используется обычный ``request`` с проверкой
+        размера после чтения.
+
+        Args:
+            client: HTTP-клиент из :func:`make_http_client`.
+            request_kwargs: Параметры запроса.
+
+        Returns:
+            Кортеж ``(status, headers, data)`` либо ``None``, если размер
+            ответа превысил лимит.
+
+        """
+        stream_factory = getattr(client, "stream", None)
+        if self.body is None and callable(stream_factory):
+            async with stream_factory(
+                self.method, self.url, headers=self.headers, timeout=self.timeout
+            ) as response:
+                chunks = bytearray()
+                async for chunk in response.aiter_bytes():
+                    chunks.extend(chunk)
+                    if len(chunks) > _MAX_HTTP_RESPONSE_BYTES:
+                        return None
+                return (
+                    response.status_code,
+                    dict(response.headers),
+                    self._parse_body(bytes(chunks)),
+                )
+
+        response = await client.request(self.method, self.url, **request_kwargs)
+        content = response.content
+        if isinstance(content, (bytes, bytearray)) and len(content) > (
+            _MAX_HTTP_RESPONSE_BYTES
+        ):
+            return None
+        try:
+            data = response.json()
+        except json.JSONDecodeError, ValueError:
+            data = response.text
+        return response.status_code, dict(response.headers), data
+
+    @staticmethod
+    def _parse_body(raw: bytes) -> Any:
+        """Разобрать тело ответа: JSON → объект, иначе текст.
+
+        Args:
+            raw: Сырые байты ответа.
+
+        Returns:
+            Распарсенный JSON либо декодированный текст.
+
+        """
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError, ValueError:
+            return raw.decode("utf-8", errors="replace")

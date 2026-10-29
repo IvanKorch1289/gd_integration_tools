@@ -22,6 +22,17 @@ class FileStorageSettings(BaseSettingsWithLoader):
         ),
     )
 
+    enforce_quota: bool = Field(
+        default=False,
+        description=(
+            "Включить enforcement пер-тенантных квот файлов. ``False`` — "
+            "alert-only: превышение лимита логируется (ERROR) и считается "
+            "метрикой, но запись разрешена. ``True`` — запись блокируется "
+            "(ADR-0390: без записи usage счётчики квот оставались нулевыми, "
+            "и лимиты не срабатывали никогда)."
+        ),
+    )
+
     # Основные параметры подключения
     provider: Literal["minio", "aws", "other", "local"] = Field(
         ...,

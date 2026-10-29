@@ -14,6 +14,10 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _comp_logger = get_logger("dsl.components")
 
+#: Максимальный размер читаемого файла (байт). Файл целиком грузится в
+#: память exchange'а — без лимита это вектор OOM (ADR-0390).
+_MAX_FILE_READ_BYTES = 64 * 1024 * 1024
+
 
 class FileReadProcessor(BaseProcessor):
     """Camel File Component (read) — read local file into exchange body."""
@@ -34,7 +38,15 @@ class FileReadProcessor(BaseProcessor):
         self._binary = binary
 
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Читает файл с диска (текстовый или бинарный) с проверкой path-traversal и записывает содержимое в exchange."""
+        """Читает файл с диска (текстовый или бинарный) с проверкой path-traversal и записывает содержимое в exchange.
+
+        Размер файла проверяется ДО чтения (``_MAX_FILE_READ_BYTES``) —
+        файл целиком попадает в память exchange'а, поэтому неограниченный
+        размер — вектор OOM (ADR-0390).
+        """
+        import asyncio
+        import os
+
         import aiofiles
 
         from src.backend.dsl.engine.processors._path_safety import (
@@ -57,6 +69,19 @@ class FileReadProcessor(BaseProcessor):
             path = validate_path(path)
         except PathTraversalError as exc:
             exchange.fail(f"File read blocked: {exc}")
+            return
+
+        try:
+            size = await asyncio.to_thread(os.path.getsize, path)
+        except OSError as exc:
+            exchange.fail(f"File read failed: {exc}")
+            return
+
+        if size > _MAX_FILE_READ_BYTES:
+            exchange.fail(
+                f"File read blocked: file exceeds {_MAX_FILE_READ_BYTES} bytes "
+                f"(size={size})"
+            )
             return
 
         try:

@@ -27,6 +27,11 @@ from src.backend.dsl.engine.processors.base import BaseProcessor
 
 _rpa_logger = get_logger("dsl.rpa")
 
+#: Максимальное количество строк, читаемых из Excel-файла (ADR-0390).
+#: ``openpyxl`` в read-only-режиме всё равно держит разобранную книгу в
+#: памяти — без лимита «жирный» xlsx съедал память процесса.
+_MAX_EXCEL_ROWS = 100_000
+
 
 def _safe_body_path(exchange: Exchange[Any], body: Any, *, label: str) -> str | None:
     """Провалидировать путь из тела запроса по path-allowlist.
@@ -328,9 +333,17 @@ class ExcelReadProcessor(BaseProcessor):
                 wb = load_workbook(body, read_only=True, data_only=True)
             else:
                 raise ValueError("excel_read expects bytes or file path")
-            ws = wb[self._sheet] if self._sheet else wb.active
-            rows = list(ws.iter_rows(values_only=True))  # type: ignore[union-attr]
-            wb.close()
+            try:
+                ws = wb[self._sheet] if self._sheet else wb.active
+                rows: list[tuple[Any, ...]] = []
+                for row in ws.iter_rows(values_only=True):  # type: ignore[union-attr]
+                    if len(rows) > _MAX_EXCEL_ROWS:
+                        raise ValueError(
+                            f"excel_read: лист содержит больше {_MAX_EXCEL_ROWS} строк"
+                        )
+                    rows.append(row)
+            finally:
+                wb.close()
             if not rows:
                 return []
             headers = [str(h) if h else f"col_{i}" for i, h in enumerate(rows[0])]

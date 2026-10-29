@@ -16,17 +16,24 @@ instantiate, а не до старта приложения).
 
 Особенности:
 
-* ``upload`` пишет файл атомарно (через временный файл + rename);
+* ``upload`` пишет файл атомарно (через временный файл + rename); имя
+  временного файла уникально (``uuid4``), а сам он удаляется в ``finally``
+  (ADR-0390 — раньше имя ``<name>.tmp`` было предсказуемым: конкурентные
+  записи одного ключа падали с ``FileNotFoundError``, а ``.tmp`` оставался
+  в каталоге навсегда);
 * ``presigned_url`` отдаёт ``file://...`` URL — действующая ссылка только
   локально, годится для smoke-тестов и dev-фронтенда;
 * ``list_keys`` обходит дерево рекурсивно (``rglob``);
-* безопасность путей — отсев ``..``, абсолютные ключи отклоняются.
+* безопасность путей — отсев ``..``, абсолютные ключи отклоняются, выход
+  за пределы ``base_path`` проверяется через ``Path.is_relative_to``
+  (ADR-0390: prefix-check без разделителя принимал ``<base>_evil/...``).
 """
 
 from __future__ import annotations
 
 import asyncio
 import os
+import uuid
 from pathlib import Path
 from typing import Any, Literal
 
@@ -99,9 +106,40 @@ class LocalFSStorage(ObjectStorage):
         if not key or key.startswith("/") or ".." in key.split("/"):
             raise ValueError(f"Небезопасный ключ объекта: {key!r}")
         path = (self._base / key).resolve()
-        if not str(path).startswith(str(self._base)):
+        # ADR-0390: prefix-check без разделителя (``str.startswith``) принимал
+        # ключи вида ``<base>_evil/pwned.txt`` — соседний каталог с тем же
+        # префиксом. ``is_relative_to`` проверяет границу каталога корректно.
+        if not path.is_relative_to(self._base):
             raise ValueError(f"Ключ выходит за пределы base_path: {key!r}")
         return path
+
+    @staticmethod
+    def _tmp_path(path: Path) -> Path:
+        """Уникальный путь временного файла рядом с целевым (ADR-0390).
+
+        Раньше имя было предсказуемым (``<name>.tmp``): конкурентные
+        upload'ы одного ключа затирали временный файл друг друга (3 из 4
+        падали с ``FileNotFoundError``), а при ошибке записи ``.tmp`` оставался
+        в каталоге навсегда. Теперь имя уникально (uuid4) и удаляется в
+        ``finally``.
+
+        Args:
+            path: Целевой путь файла.
+
+        Returns:
+            Путь временного файла в том же каталоге (тот же FS → атомарный
+            ``os.replace``).
+
+        """
+        return path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+
+    @staticmethod
+    async def _cleanup_tmp(tmp: Path) -> None:
+        """Удалить временный файл, если он ещё существует (best-effort)."""
+        try:
+            await aiofiles.os.remove(str(tmp))
+        except OSError:
+            pass
 
     async def upload(
         self, key: str, data: bytes, content_type: str | None = None
@@ -119,10 +157,13 @@ class LocalFSStorage(ObjectStorage):
         """
         path = self._safe_path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix(path.suffix + ".tmp")
-        async with aiofiles.open(tmp, "wb") as fh:
-            await fh.write(data)
-        await aiofiles.os.replace(str(tmp), str(path))
+        tmp = self._tmp_path(path)
+        try:
+            async with aiofiles.open(tmp, "wb") as fh:
+                await fh.write(data)
+            await aiofiles.os.replace(str(tmp), str(path))
+        finally:
+            await self._cleanup_tmp(tmp)
         return str(path)
 
     async def download(self, key: str) -> bytes:
@@ -216,19 +257,43 @@ class LocalFSStorage(ObjectStorage):
 
         path = self._safe_path(key)
         path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix(path.suffix + ".tmp")
-        async with aiofiles.open(tmp, "wb") as fh:
-            if isinstance(stream, AsyncIterable):
-                async for chunk in stream:
-                    await fh.write(chunk)
-            else:
-                # Sync-итератор: fh (aiofiles) уже async — каждый chunk
-                # пишется без блокировки loop; to_thread здесь создавал
-                # никогда не awaiting coroutine (запись не выполнялась).
-                for chunk in stream:
-                    await fh.write(chunk)
-        await aiofiles.os.replace(str(tmp), str(path))
+        tmp = self._tmp_path(path)
+        try:
+            async with aiofiles.open(tmp, "wb") as fh:
+                if isinstance(stream, AsyncIterable):
+                    async for chunk in stream:
+                        await fh.write(chunk)
+                else:
+                    # Sync-итератор: fh (aiofiles) уже async — каждый chunk
+                    # пишется без блокировки loop; to_thread здесь создавал
+                    # никогда не awaiting coroutine (запись не выполнялась).
+                    for chunk in stream:
+                        await fh.write(chunk)
+            await aiofiles.os.replace(str(tmp), str(path))
+        finally:
+            await self._cleanup_tmp(tmp)
         return str(path)
+
+    async def size(self, key: str) -> int:
+        """Размер объекта в байтах (``0`` — если объекта нет).
+
+        Не входит в ABC :class:`ObjectStorage` (там только CRUD-операции).
+        Используется фасадом хранилища для корректного учёта пер-тенантных
+        квот при удалении объекта (ADR-0390): без размера счётчик байтов
+        расходился бы с фактическим потреблением.
+
+        Args:
+            key: Object key (relative path).
+
+        Returns:
+            Размер файла в байтах или ``0``, если объект отсутствует.
+
+        """
+        path = self._safe_path(key)
+        try:
+            return await asyncio.to_thread(lambda: path.stat().st_size)
+        except OSError:
+            return 0
 
     async def health(self, mode: Literal["fast", "deep"] = "fast") -> HealthResult:
         """Проверяет доступность base_path (readable + writable)."""

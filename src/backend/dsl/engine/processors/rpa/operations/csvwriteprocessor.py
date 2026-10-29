@@ -17,6 +17,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
+from src.backend.dsl.engine.processors._csv_safety import neutralize_formula
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 if TYPE_CHECKING:
@@ -25,27 +26,10 @@ if TYPE_CHECKING:
 
 _rpa_logger = get_logger("dsl.rpa")
 
-# ADR-0367: префиксы, которые Excel/LibreOffice трактуют как формулу.
-_FORMULA_PREFIXES = ("=", "+", "-", "@")
-
-
-def _neutralize_formula(value: Any) -> Any:
-    """Нейтрализовать CSV formula-инъекцию (OWASP CSV Injection).
-
-    Строковое значение, начинающееся с ``=``/``+``/``-``/``@``, получает
-    префикс ``'`` — иначе при открытии файла в Excel/LibreOffice ячейка
-    исполняется как формула. Числа и прочие типы не изменяются.
-
-    Args:
-        value: Значение ячейки (или имя колонки).
-
-    Returns:
-        Безопасное значение ячейки.
-
-    """
-    if isinstance(value, str) and value.startswith(_FORMULA_PREFIXES):
-        return "'" + value
-    return value
+# ADR-0367/ADR-0390: канон нейтрализации вынесен в
+# ``processors/_csv_safety.py`` (общий для CsvWrite/FileWrite).
+# Алиас оставлен для обратной совместимости внутренних импортов.
+_neutralize_formula = neutralize_formula
 
 
 def _collect_fieldnames(rows: list[Any]) -> list[Any]:

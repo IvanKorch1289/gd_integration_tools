@@ -13,10 +13,10 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from typing import ClassVar
+from typing import Annotated, ClassVar
 
-from pydantic import Field
-from pydantic_settings import SettingsConfigDict
+from pydantic import Field, field_validator
+from pydantic_settings import NoDecode, SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
@@ -73,7 +73,7 @@ class DSLSettings(BaseSettingsWithLoader):
         title="Провайдеры курсов валют",
         description="Словарь name → URL-шаблон для RateConvertProcessor.",
     )
-    allowed_paths: list[str] = Field(
+    allowed_paths: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: [
             "/data/uploads",
             "/data/exports",
@@ -86,6 +86,29 @@ class DSLSettings(BaseSettingsWithLoader):
             "файлы. Перекрывается env DSL_ALLOWED_PATHS (разделитель ':')."
         ),
     )
+
+    @field_validator("allowed_paths", mode="before")
+    @classmethod
+    def _parse_allowed_paths(cls, value: object) -> object:
+        """Разобрать env-строку ``DSL_ALLOWED_PATHS`` (разделитель ``:``).
+
+        ADR-0390: pydantic-settings для ``list[str]`` требует JSON — строка
+        ``/data/uploads:/tmp/dsl`` роняла сборку Settings
+        (``SettingsError: error parsing value for field "allowed_paths"``),
+        и приложение не стартовало (терялись audit-события). ``NoDecode``
+        отключает JSON-декодирование для этого поля, а валидатор разбирает
+        colon-separated список. YAML-профиль (список) проходит без изменений.
+
+        Args:
+            value: Значение из источника (env-строка или список).
+
+        Returns:
+            Список путей (env-строка разбита по ``:``).
+
+        """
+        if isinstance(value, str):
+            return [part.strip() for part in value.split(":") if part.strip()]
+        return value
 
 
 dsl_settings: DSLSettings = DSLSettings()

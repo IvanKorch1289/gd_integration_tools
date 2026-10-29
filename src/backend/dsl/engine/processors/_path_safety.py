@@ -17,7 +17,7 @@ import os
 import tempfile
 from pathlib import Path
 
-__all__ = ("PathTraversalError", "validate_path")
+__all__ = ("PathTraversalError", "is_path_allowed", "validate_path")
 
 
 class PathTraversalError(ValueError):
@@ -109,3 +109,27 @@ def validate_path(path: str) -> str:
         f"Path '{path}' is outside allowed directories. "
         f"Allowed prefixes: {', '.join(allowed)}"
     )
+
+
+def is_path_allowed(path: str) -> bool:
+    """True, если путь проходит allowlist (без исключения).
+
+    Используется там, где нужно **отфильтровать** результат (например,
+    glob-матчи :class:`FileListProcessor`), а не упасть с ошибкой.
+
+    ADR-0390: проверка каждого найденного файла — второй барьер; раньше
+    проверялся только статический префикс паттерна, и результат мог
+    оказаться вне allowlist (symlink/``..`` внутри паттерна).
+
+    Args:
+        path: Путь для проверки.
+
+    Returns:
+        ``True`` — путь внутри allowlist, ``False`` — нет.
+
+    """
+    try:
+        validate_path(path)
+    except PathTraversalError:
+        return False
+    return True
