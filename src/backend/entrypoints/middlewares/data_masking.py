@@ -37,8 +37,8 @@ from src.backend.core.logging import get_logger
 #
 # Формат вывода остаётся локальным (``a***b@host`` / ``+***1234``) —
 # здесь меняется только источник паттерна.
-from src.backend.core.security.pii_patterns import EMAIL as _EMAIL_RE
 from src.backend.core.security.pii_patterns import PHONE as _PHONE_RE
+from src.backend.core.security.pii_patterns import sub_email as _sub_email
 
 _logger = get_logger(__name__)
 
@@ -261,7 +261,10 @@ class DataMaskingMiddleware:
         if isinstance(obj, list):
             return [self._mask_value(item) for item in obj]
         if isinstance(obj, str):
-            result = _EMAIL_RE.sub(self._mask_email, obj)
+            # ADR-0392: fast-path — без ``@`` email невозможен, regex не
+            # запускается (иначе длинные строки без ``@`` давали
+            # квадратичный бэктрекинг и stall на каждом ответе).
+            result = _sub_email(self._mask_email, obj)
             return _PHONE_RE.sub(self._mask_phone, result)
         return obj
 

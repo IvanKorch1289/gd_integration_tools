@@ -22,7 +22,9 @@ event_dict во все настроенные backend-sinks (console / disk / Gr
 from __future__ import annotations
 
 import asyncio
+import atexit
 import logging
+import queue
 import threading
 from collections.abc import Iterable
 from typing import Any
@@ -64,6 +66,100 @@ class RouterLike:
 
 
 _INTERNAL_LOG = logging.getLogger("logging.router")
+
+# ─────────────── sync-диспатчер: один writer-поток + очередь ───────────────
+#
+# ADR-0392 (волна 18, кластер G3 — логирование): раньше каждый sync-вызов
+# ``route_to_sinks`` порождал СВОЙ поток (``threading.Thread(...).start()``) —
+# проба аудита: 50 вызовов → 50 потоков (CLI, воркеры, threadpool).
+#
+# Теперь записи складываются в bounded-очередь, а разбирает их ОДИН фоновый
+# writer-поток (по образцу ``batching_router``). Переполнение очереди →
+# drop со счётчиком (логгер никогда не блокируется).
+SYNC_WRITER_THREAD_NAME = "log-sink-writer"
+_SYNC_QUEUE_MAXSIZE = 10_000
+_sync_queue: queue.Queue[dict[str, Any] | None] = queue.Queue(
+    maxsize=_SYNC_QUEUE_MAXSIZE
+)
+_sync_writer: threading.Thread | None = None
+_sync_writer_lock = threading.Lock()
+_sync_dropped = 0
+
+
+def _sync_writer_loop() -> None:
+    """Фоновый writer: разбирает очередь и диспатчит записи в sinks.
+
+    Диспатч выполняется в отдельном event loop (как и раньше — поток на
+    запись), но поток теперь ОДИН на все записи. ``None`` в очереди —
+    sentinel остановки writer'а.
+    """
+    while True:
+        record = _sync_queue.get()
+        try:
+            if record is None:
+                return
+            router = get_router()
+            asyncio.run(router.dispatch(record))
+        except Exception:
+            _INTERNAL_LOG.exception("sync log dispatch failed")
+        finally:
+            _sync_queue.task_done()
+
+
+def _ensure_sync_writer() -> threading.Thread:
+    """Лениво создать единственный writer-поток для sync-контекста.
+
+    Returns:
+        Живой writer-поток.
+
+    """
+    global _sync_writer
+    with _sync_writer_lock:
+        if _sync_writer is not None and _sync_writer.is_alive():
+            return _sync_writer
+        thread = threading.Thread(
+            target=_sync_writer_loop, name=SYNC_WRITER_THREAD_NAME, daemon=True
+        )
+        thread.start()
+        _sync_writer = thread
+        return thread
+
+
+def _enqueue_sync_dispatch(record: dict[str, Any]) -> None:
+    """Поставить запись в очередь writer'а (non-blocking).
+
+    Args:
+        record: Копия event_dict для доставки в sinks.
+
+    """
+    global _sync_dropped
+    _ensure_sync_writer()
+    try:
+        _sync_queue.put_nowait(record)
+    except queue.Full:
+        _sync_dropped += 1
+        if _sync_dropped % 1000 == 1:
+            _INTERNAL_LOG.warning(
+                "log sync queue full — dropped %d records (total)", _sync_dropped
+            )
+
+
+def _shutdown_sync_writer() -> None:
+    """Остановить writer-поток (вызывается на выходе процесса)."""
+    global _sync_writer
+    with _sync_writer_lock:
+        thread = _sync_writer
+        _sync_writer = None
+    if thread is None:
+        return
+    try:
+        _sync_queue.put_nowait(None)
+    except queue.Full:
+        return
+    thread.join(timeout=5.0)
+
+
+atexit.register(_shutdown_sync_writer)
 
 
 # ---------------------------------------------------------------------- factory
@@ -289,9 +385,9 @@ def route_to_sinks(
        :class:`asyncio.Task` (fire-and-forget); запись попадёт в sinks
        на ближайшей итерации loop.
     2. Если loop не запущен (например, на старте приложения или в
-       sync-контексте) — запускаем ``router.dispatch`` в отдельном
-       потоке через ``asyncio.run``; это блокирует только worker-thread,
-       не event loop.
+       sync-контексте) — запись ставится в очередь, которую разбирает
+       ОДИН фоновый writer-поток (ADR-0392); раньше на каждый вызов
+       создавался отдельный поток.
 
     Processor возвращает ``event_dict`` без изменений — он не должен
     мешать дальнейшему рендерингу.
@@ -317,10 +413,7 @@ def route_to_sinks(
             router.dispatch(snapshot), name="log-sink-dispatch", deadline_seconds=10.0
         )
     else:
-        threading.Thread(
-            target=lambda: asyncio.run(router.dispatch(snapshot)),
-            name="log-sink-dispatch",
-            daemon=True,
-        ).start()
+        # ADR-0392: один writer-поток + очередь вместо потока на вызов.
+        _enqueue_sync_dispatch(snapshot)
 
     return event_dict

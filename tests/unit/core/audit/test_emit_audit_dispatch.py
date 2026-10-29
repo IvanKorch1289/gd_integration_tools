@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import gc
+import time
 import warnings
 from typing import Any
 
@@ -100,10 +101,15 @@ def test_emit_capability_check_sync_context_has_no_never_awaited_warning(
     assert never_awaited == []
 
 
-def test_emit_audit_sync_context_drops_event_without_running_loop(
+def test_emit_audit_sync_context_delivers_event_without_running_loop(
     recording_service: _RecordingAuditService,
 ) -> None:
-    """Sync-контекст: событие не доставляется, но и не теряется молча."""
+    """Sync-контекст: событие ДОСТАВЛЯЕТСЯ (ADR-0392), а не теряется.
+
+    Раньше корутина закрывалась (``coro.close()``) и событие уничтожалось
+    (``audit.emit.dropped_no_event_loop``) — страдали FastAPI sync-эндпоинты
+    (threadpool), ``asyncio.to_thread`` и CLI.
+    """
     result = base_module.emit_audit(
         event="capability.check",
         actor="core",
@@ -113,5 +119,14 @@ def test_emit_audit_sync_context_drops_event_without_running_loop(
         details={"capability": "db.read"},
     )
 
-    assert result is None
-    assert recording_service.calls == []
+    assert result is not None
+
+    deadline = time.monotonic() + 10.0
+    while not recording_service.calls and time.monotonic() < deadline:
+        time.sleep(0.005)
+
+    assert len(recording_service.calls) == 1
+    call = recording_service.calls[0]
+    assert call["event"] == "capability.check"
+    assert call["outcome"] == "denied"
+    assert call["details"]["capability"] == "db.read"

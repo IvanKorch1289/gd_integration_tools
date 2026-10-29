@@ -37,7 +37,7 @@ def test_get_unified_audit_service_identity() -> None:
 
 def test_emit_audit_calls_service() -> None:
     """``emit_audit()`` — sync wrapper вызывает ``AuditService.emit()``."""
-    # Should not raise (returns coroutine or None depending on backend)
+    # Should not raise (returns delivery handle or None depending on backend)
     result = emit_audit(
         "test.event",
         actor="test:user",
@@ -46,11 +46,12 @@ def test_emit_audit_calls_service() -> None:
         outcome="success",
         details={"key": "value"},
     )
-    # result is either None (sync) or coroutine (async backend)
-    assert result is None or hasattr(result, "__await__")
+    # result is either None (доставка невозможна), awaitable (async-контекст)
+    # или Future фоновой доставки (sync-контекст, ADR-0392).
+    assert result is None or hasattr(result, "__await__") or hasattr(result, "result")
 
 
 def test_emit_audit_with_minimal_args() -> None:
     """``emit_audit()`` — defaults работают (actor='system', outcome='success')."""
     result = emit_audit("test.minimal")
-    assert result is None or hasattr(result, "__await__")
+    assert result is None or hasattr(result, "__await__") or hasattr(result, "result")

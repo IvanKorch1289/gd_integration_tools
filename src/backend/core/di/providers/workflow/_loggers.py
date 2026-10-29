@@ -25,9 +25,16 @@ register(_overrides)  # aggregate back-compat (providers.workflow._overrides)
 
 
 def get_app_logger_provider() -> Any:
-    """Возвращает singleton ``app_logger`` (структурированный logger).
+    """Возвращает singleton ``app_logger`` (legacy stdlib-логгер).
 
-    Используется в audit_log / request_log / timeout middlewares.
+    Используется в audit_log / timeout middlewares.
+
+    ВНИМАНИЕ (ADR-0392): это legacy-логгер из
+    ``external_apis.logging_service`` — ``propagate=False`` + ``QueueHandler``,
+    поэтому записи НЕ доходят до root-handler'а и выходят plain-text'ом
+    (без JSON, ``correlation_id`` и PII-маскирования). Новый код должен
+    брать логгер через ``src.backend.core.logging.get_logger``.
+    ``InnerRequestLoggingMiddleware`` мигрирован на structlog-стек.
     """
     if "app_logger" in _overrides:
         return _overrides["app_logger"]

@@ -77,14 +77,15 @@ class TestInnerRequestLoggingMiddleware:
         send = AsyncMock()
         await middleware(_make_scope("GET", "/path"), _make_receive(), send)
 
-        # Logged: request line.
+        # Logged: request event (структурированный, ADR-0392).
         assert any(
-            "Запрос: GET /path" in str(call)
+            "http.request" in str(call)
             for call in middleware.logger.info.call_args_list
         )
-        # Logged: response line.
+        # Logged: response event.
         assert any(
-            "Ответ: 200" in str(call) for call in middleware.logger.info.call_args_list
+            "http.response" in str(call)
+            for call in middleware.logger.info.call_args_list
         )
 
     @pytest.mark.asyncio
@@ -111,7 +112,7 @@ class TestInnerRequestLoggingMiddleware:
 
         # log_body=True → _get_request_body вызван.
         assert any(
-            "Тело запроса" in str(call)
+            "http.request_body" in str(call)
             for call in middleware.logger.debug.call_args_list
         )
 
@@ -194,7 +195,7 @@ class TestInnerRequestLoggingMiddleware:
 
         # Cached body использован.
         assert any(
-            "Тело запроса: cached" in str(call)
+            "cached" in str(call) and "http.request_body" in str(call)
             for call in middleware.logger.debug.call_args_list
         )
 
@@ -239,9 +240,9 @@ class TestInnerRequestLoggingMiddleware:
         send = AsyncMock()
         await middleware(_make_scope("GET", "/path"), _make_receive(), send)
 
-        # log_body=True → "Тело ответа" в debug log.
+        # log_body=True → "http.response_body" в debug log.
         assert any(
-            "Тело ответа" in str(call)
+            "http.response_body" in str(call)
             for call in middleware.logger.debug.call_args_list
         )
 
@@ -295,7 +296,8 @@ class TestInnerRequestLoggingMiddlewarePureASGI:
 
         # Response log содержит 500.
         assert any(
-            "Ответ: 500" in str(call) for call in middleware.logger.info.call_args_list
+            "500" in str(call) and "http.response" in str(call)
+            for call in middleware.logger.info.call_args_list
         )
 
     @pytest.mark.asyncio
@@ -315,10 +317,9 @@ class TestInnerRequestLoggingMiddlewarePureASGI:
         send = AsyncMock()
         await middleware(_make_scope("GET", "/path"), _make_receive(), send)
 
-        # Duration в формате "обработан за X.XX мс".
+        # Duration — структурированное поле duration_ms.
         assert any(
-            "обработан за" in str(call)
-            for call in middleware.logger.info.call_args_list
+            "duration_ms" in str(call) for call in middleware.logger.info.call_args_list
         )
 
     @pytest.mark.asyncio
@@ -336,9 +337,9 @@ class TestInnerRequestLoggingMiddlewarePureASGI:
             _make_scope("POST", "/path", state={"body": b"any"}), _make_receive(), send
         )
 
-        # Нет "Тело запроса" / "Тело ответа" в logs.
+        # Нет событий тела запроса/ответа в logs.
         all_logs = " ".join(
             str(call) for call in middleware.logger.debug.call_args_list
         )
-        assert "Тело запроса" not in all_logs
-        assert "Тело ответа" not in all_logs
+        assert "http.request_body" not in all_logs
+        assert "http.response_body" not in all_logs

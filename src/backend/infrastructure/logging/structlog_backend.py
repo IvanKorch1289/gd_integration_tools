@@ -24,6 +24,44 @@ from src.backend.infrastructure.logging.base import BaseLoggerBackend, LoggerPro
 __all__ = ("StructlogGraylogBackend",)
 
 
+def _resolve_default_environment() -> str:
+    """Окружение по умолчанию для lazy-инициализации logging-стека.
+
+    ADR-0392: дефолт ``"production"`` в lazy-пути (``get_logger()`` без
+    ``init_application_logging`` — CLI, воркеры, тесты) означал, что
+    окружение профиля игнорировалось. Теперь берётся
+    ``settings.app.environment``.
+
+    Импорт ленивый и защищён try/except: при cold-start
+    (``config_loader`` → ``core.logging`` → ``structlog_backend``) пакет
+    настроек может быть ещё не инициализирован — тогда используется
+    безопасный фоллбэк.
+
+    Returns:
+        Имя окружения (``"development"`` / ``"staging"`` / ``"production"``).
+
+    """
+    try:
+        from src.backend.core.config.settings import settings
+
+        value = settings.app.environment
+        if isinstance(value, str) and value:
+            return value
+    except (ImportError, AttributeError, RuntimeError, ValueError):
+        # settings недоступны на этом этапе загрузки — пробуем лёгкий
+        # источник (тот же singleton ``app_base_settings``).
+        pass
+    try:
+        from src.backend.core.config.base.app_base import app_base_settings
+
+        value = app_base_settings.environment
+        if isinstance(value, str) and value:
+            return value
+    except (ImportError, AttributeError, RuntimeError, ValueError):
+        pass
+    return "production"
+
+
 class StructlogLogger(LoggerProtocol):
     """Обёртка structlog.BoundLogger под LoggerProtocol.
 
@@ -198,7 +236,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
         use_tls: bool = False,
         ca_bundle: str | None = None,
         level: str = "INFO",
-        environment: str = "production",
+        environment: str | None = None,
         log_file: str | None = None,
         log_dir: str | None = None,
         debug: bool = False,
@@ -213,7 +251,13 @@ class StructlogGraylogBackend(BaseLoggerBackend):
                 Отсутствующие дозаполняются значением ``"unknown"``
                 (семантика legacy ``SafeFormatter``). Если ``None`` —
                 берётся из ``settings.logging.required_fields``.
+            environment: Имя окружения. Если ``None`` — берётся из
+                ``settings.app.environment`` (ADR-0392); при недоступных
+                настройках — ``"production"``.
         """
+        # ADR-0392: окружение по умолчанию — из профиля, а не константа.
+        if environment is None:
+            environment = _resolve_default_environment()
         # Use settings defaults if not provided.
         # Lazy + failure-tolerant (fix circular import, 2026-09-23): при
         # инициализации из config_loader → core.logging → structlog_backend

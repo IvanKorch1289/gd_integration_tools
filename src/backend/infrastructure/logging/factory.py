@@ -186,10 +186,11 @@ async def shutdown_log_sinks() -> None:
 
 
 def init_application_logging(
-    level: str = "INFO",
-    environment: str = "production",
+    level: str | None = None,
+    environment: str | None = None,
     profile: AppProfileChoices | str | None = None,
     log_dir: str | None = None,
+    log_filename: str | None = None,
     graylog_host: str | None = None,
     graylog_port: int | None = None,
     graylog_protocol: str | None = None,
@@ -217,12 +218,19 @@ def init_application_logging(
     Args:
         level: ``DEBUG`` / ``INFO`` / ``WARNING`` / ``ERROR`` / ``CRITICAL``.
             Если ``None`` и ``use_settings=True`` — берётся из ``settings.logging.level``.
+            Явное значение ВСЕГДА уважается (ADR-0392: раньше sentinel
+            ``if level == "INFO"`` подменял явно переданный ``"INFO"``
+            значением из settings).
         environment: Имя окружения (``"production"``, ``"dev"``, ``"ci"``).
             Если ``None`` и ``use_settings=True`` — из ``settings.app.environment``.
         profile: ``AppProfileChoices.dev_light`` / ``.dev`` / ``.prod``.
             Если ``None`` и ``use_settings=True`` — из ``get_active_profile()``.
         log_dir: Директория для DiskRotatingLogSink. Если ``None`` —
             ``settings.logging.dir_log_name``.
+        log_filename: Имя файла disk-sink'а. Если ``None`` —
+            ``settings.logging.name_log_file`` (ADR-0392: раньше имя файла
+            было захардкожено ``"app.jsonl"``, и ключ конфигурации
+            ``log.name_log_file`` не применялся).
         graylog_host: Graylog GELF host. Если ``None`` — ``settings.logging.host``.
         graylog_port: Graylog GELF port. Если ``None`` — ``settings.logging.port``.
         graylog_protocol: ``"udp"`` / ``"tcp"`` для GELF. Если ``None`` —
@@ -267,14 +275,19 @@ def init_application_logging(
             from src.backend.core.config.profile import get_active_profile
             from src.backend.core.config.settings import settings as _settings
 
-            if level == "INFO":  # default
+            # ADR-0392: дефолт определяется ТОЛЬКО через ``None``.
+            # Раньше sentinel ``if level == "INFO"`` подменял явно
+            # переданный ``level="INFO"`` значением из settings.
+            if level is None:
                 level = _settings.logging.level
-            if environment == "production":  # default
+            if environment is None:
                 environment = _settings.app.environment
             if profile is None:
                 profile = get_active_profile()
             if log_dir is None:
                 log_dir = _settings.logging.dir_log_name
+            if log_filename is None:
+                log_filename = _settings.logging.name_log_file
             if graylog_host is None:
                 graylog_host = _settings.logging.host
             if graylog_port is None:
@@ -294,11 +307,16 @@ def init_application_logging(
             # используем явные defaults. Backend уже инициализирован с ними.
             pass
 
+    # Фоллбэк для недоступных settings (или ``use_settings=False``):
+    # безопасные значения по умолчанию.
+    resolved_level = level or "INFO"
+    resolved_environment = environment or "production"
+
     # Step 1: configure_logging с явными параметрами (level, environment).
     backend = configure_logging(
         backend="auto",
-        level=level,
-        environment=environment,
+        level=resolved_level,
+        environment=resolved_environment,
         required_fields=required_fields,
     )
 
@@ -316,10 +334,14 @@ def init_application_logging(
     if log_dir is not None:
         # build_sinks_for_profile ожидает disk_path (полный путь к файлу),
         # а не директорию. Settings даёт имя директории — компонуем путь.
-        disk_filename = "app.jsonl"
+        # ADR-0392: имя файла берётся из ``log.name_log_file`` (раньше было
+        # захардкожено ``"app.jsonl"``, и ключ конфигурации не применялся).
+        disk_filename = log_filename or "app.jsonl"
         if log_dir and not log_dir.endswith("/"):
             log_dir = log_dir + "/"
-        sinks_kwargs["disk_path"] = f"{log_dir}{disk_filename}" if log_dir else "logs/app.jsonl"
+        sinks_kwargs["disk_path"] = (
+            f"{log_dir}{disk_filename}" if log_dir else f"logs/{disk_filename}"
+        )
     if graylog_host is not None:
         sinks_kwargs["graylog_host"] = graylog_host
     if graylog_port is not None:

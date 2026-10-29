@@ -29,7 +29,7 @@ class TestPiiPatternsAll:
     """``__all__`` содержит все 6 patterns."""
 
     def test_all_exports(self) -> None:
-        """6 patterns экспортируются через __all__."""
+        """6 patterns + fast-path helper экспортируются через __all__."""
         from src.backend.core.security import pii_patterns
 
         assert set(pii_patterns.__all__) == {
@@ -39,6 +39,7 @@ class TestPiiPatternsAll:
             "PHONE",
             "RU_PASSPORT",
             "SNILS",
+            "sub_email",
         }
 
     def test_all_are_compiled_regex(self) -> None:
