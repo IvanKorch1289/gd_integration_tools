@@ -14,5 +14,5 @@
 # ВАЖНО: allowlist — не «список невыполненной работы». Новая группа без
 # секции в base.yml обязана попасть сюда с явной причиной, иначе падает
 # tests/unit/core/config/test_yaml_group_coverage.py.
-features: profile-overlay-only — 262 feature-флага задаются per-профиль (dev/dev_light/staging/prod); базовый набор не имеет смысла.
+features: profile-overlay-only — из 262 feature-флагов в overlay-профилях заданы только 3 (dsl_capability_gate_enabled и др.); остальные доступны через env FEATURE_*; базовый набор не имеет смысла.
 workflow: runtime-only — WorkflowSettings пока без полей (extension point, D-AUDIT-A8-05).

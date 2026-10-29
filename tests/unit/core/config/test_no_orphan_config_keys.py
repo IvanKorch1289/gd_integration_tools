@@ -34,7 +34,8 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 PROFILES_DIR = REPO_ROOT / "config_profiles"
 # Пути фиксируем от репозитория, а не берём из модуля tools.config_audit:
 # константы модуля могут быть подменены другими тестами (order-dependent сбой).
-CONFIG_DIR = REPO_ROOT / "src" / "backend" / "core" / "config"
+# Тот же корень, что у tools/config_audit.py: yaml-модели есть и вне core/config
+CONFIG_DIR = REPO_ROOT / "src" / "backend" / "core"
 
 # Мёртвые пути (dot-path) из волны 13 Q17: ключи, которые не читает ни одна
 # модель конфигурации. Путь через точку — вложенность YAML, без точки —

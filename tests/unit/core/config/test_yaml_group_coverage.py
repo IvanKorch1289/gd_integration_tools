@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
 from src.backend.core.config.ai import (
@@ -46,6 +47,7 @@ from src.backend.core.config.ai_stack import (
 from src.backend.core.config.influxdb import InfluxDBSettings
 from src.backend.core.config.lineage import LineageSettings
 from src.backend.core.config.plugin_loader import PluginLoaderSettings
+from src.backend.core.config.rag import RAGSettings
 from src.backend.core.config.services.dlq import DLQCleanupSettings
 from src.backend.core.config.services.ldap import LdapSettings
 from src.backend.core.config.services.llm import LLMSettings
@@ -62,11 +64,14 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 PROFILES_DIR = REPO_ROOT / "config_profiles"
 BASE_YML = PROFILES_DIR / "base.yml"
 ALLOWLIST_FILE = Path(__file__).with_name("yaml_group_allowlist.txt")
-CONFIG_DIR = REPO_ROOT / "src" / "backend" / "core" / "config"
+# Тот же корень, что у tools/config_audit.py: yaml-модели есть и вне core/config
+CONFIG_DIR = REPO_ROOT / "src" / "backend" / "core"
 
-#: Группы, добавленные в ``base.yml`` этой волной (ADR-0375, ЧАСТЬ A).
-#: Для них значения YAML обязаны совпадать с дефолтами моделей.
-NEW_YAML_GROUPS: tuple[str, ...] = (
+#: Группы, для которых значения YAML обязаны совпадать с дефолтами
+#: моделей (подключение YAML не меняет поведение). ADR-0375 (ЧАСТЬ A) —
+#: новые секции; ADR-0379 — ``rag`` (вложенная pydantic-модель
+#: ``AdaptiveRAGSettings``, которую нужно разворачивать при сравнении).
+YAML_GROUPS_MATCHING_DEFAULTS: tuple[str, ...] = (
     "ai_agent",
     "ai_workspace",
     "bge",
@@ -83,6 +88,7 @@ NEW_YAML_GROUPS: tuple[str, ...] = (
     "minimax",
     "outbox",
     "policy",
+    "rag",
     "rag_cache",
     "rag_ingest",
     "salute_speech",
@@ -112,6 +118,7 @@ GROUP_MODELS: dict[str, type[BaseSettings]] = {
     "minimax": MiniMaxSettings,
     "outbox": OutboxSettings,
     "policy": PolicySettings,
+    "rag": RAGSettings,
     "rag_cache": RagCacheSettings,
     "rag_ingest": RagIngestSettings,
     "salute_speech": SaluteSpeechSettings,
@@ -165,7 +172,11 @@ def _all_yaml_groups() -> set[str]:
 
 
 def _normalize(value: Any) -> Any:
-    """Приводит значение к сравнимому виду (Path → str, tuple → list).
+    """Приводит значение к сравнимому виду.
+
+    Разворачивает вложенные pydantic-модели (``BaseModel``) в mapping'и:
+    иначе секция с вложенной моделью (например ``rag.adaptive``) всегда
+    «расходилась» с дефолтом — dict из YAML против экземпляра модели.
 
     Args:
         value: Исходное значение (дефолт модели или YAML).
@@ -175,6 +186,8 @@ def _normalize(value: Any) -> Any:
     """
     if isinstance(value, Path):
         return str(value)
+    if isinstance(value, BaseModel):
+        return _normalize(value.model_dump())
     if isinstance(value, (list, tuple)):
         return [_normalize(item) for item in value]
     if isinstance(value, dict):
@@ -243,12 +256,12 @@ class TestYamlGroupCoverage:
 class TestNewSectionsMatchModelDefaults:
     """Новые секции ``base.yml`` равны дефолтам моделей (поведение не меняется)."""
 
-    @pytest.mark.parametrize("group", NEW_YAML_GROUPS)
+    @pytest.mark.parametrize("group", YAML_GROUPS_MATCHING_DEFAULTS)
     def test_section_exists(self, group: str) -> None:
         """Секция группы присутствует в ``base.yml``."""
         assert group in _load_base(), f"в base.yml нет секции {group!r}"
 
-    @pytest.mark.parametrize("group", NEW_YAML_GROUPS)
+    @pytest.mark.parametrize("group", YAML_GROUPS_MATCHING_DEFAULTS)
     def test_values_equal_model_defaults(self, group: str) -> None:
         """Значения YAML равны дефолтам модели (ничего не поменялось)."""
         model_cls = GROUP_MODELS[group]
@@ -263,7 +276,7 @@ class TestNewSectionsMatchModelDefaults:
                 mismatches[key] = (value, defaults[key])
         assert mismatches == {}, f"{group}: значения YAML != дефолты модели: {mismatches}"
 
-    @pytest.mark.parametrize("group", NEW_YAML_GROUPS)
+    @pytest.mark.parametrize("group", YAML_GROUPS_MATCHING_DEFAULTS)
     def test_section_keys_are_model_fields(self, group: str) -> None:
         """В секции нет ключей, отсутствующих в модели (иначе — orphan-ключ)."""
         model_cls = GROUP_MODELS[group]
@@ -278,7 +291,7 @@ class TestNoSecretsInBaseSections:
         """Ни одна новая секция не содержит секретного поля модели."""
         base = _load_base()
         offenders: dict[str, list[str]] = {}
-        for group in NEW_YAML_GROUPS:
+        for group in YAML_GROUPS_MATCHING_DEFAULTS:
             model_cls = GROUP_MODELS[group]
             secret_names = {
                 name

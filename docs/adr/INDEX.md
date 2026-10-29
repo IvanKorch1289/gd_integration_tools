@@ -162,9 +162,13 @@
 | [ADR-0372](0372-settings-sources-priority-and-hot-reload.md) | Приоритет источников конфигурации и рабочий hot-reload | Accepted |
 | [ADR-0373](0373-env-secrets-only-rule-and-gates.md) | Правило «в `.env` только секреты» и гейты конфигурации | Accepted |
 | [ADR-0375](0375-settings-coverage-merged-validation-constants-and-secret-typing.md) | Полнота покрытия настроек, merged-валидация профиля, константы из YAML, типизация секретов | Accepted |
+| [ADR-0376](0376-vault-consul-payload-and-endpoint-resolution.md) | Формат payload Vault/Consul и единое разрешение endpoint Vault | Accepted |
+| [ADR-0377](0377-profile-placeholders-waf-allowlist-and-validation.md) | Профили без env-плейсхолдеров, WAF-allowlist интеграций и валидация секции constants | Accepted |
+| [ADR-0378](0378-secret-masking-and-undeclared-env-secrets.md) | Маскирование секретов в дампах/логах и необъявленные env-секреты | Accepted |
+| [ADR-0379](0379-hot-reload-honesty-profile-validation-and-env-priority.md) | Честный hot-reload, валидация профиля и приоритет env над .env | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 160 ADRs.
+**Total:** 164 ADRs.
 

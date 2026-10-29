@@ -65,7 +65,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 # cycle-7/D-AUDIT-701 fix: real path is src/backend/core/config/ (was src/core/config/)
-CONFIG_DIR = ROOT / "src" / "backend" / "core" / "config"
+# Сканируем весь core: yaml-модели лежат не только в core/config
+# (например core/scaling/granian_tuning.py → группа "granian").
+CONFIG_DIR = ROOT / "src" / "backend" / "core"
 PROFILES_DIR = ROOT / "config_profiles"
 ENV_EXAMPLE = ROOT / ".env.example"
 
