@@ -22,12 +22,14 @@ Hot-reload callback в ``lifecycle.py`` регистрировался, но
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, ClassVar
 
 import pytest
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from src.backend.core.config import config_loader as cl
 from src.backend.core.config.config_loader import (
     BaseSettingsWithLoader,
     YamlConfigSettingsLoader,
@@ -276,3 +278,98 @@ class TestWatcherPaths:
         root = repo_root()
         assert (root / "config_profiles").is_dir()
         assert root.is_absolute()
+
+
+class TestBrokenYamlIsAnError:
+    """Битый YAML → ошибка перезагрузки, а не ложный успех (ADR-0379)."""
+
+    @pytest.fixture
+    def broken_profiles(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> Iterator[Path]:
+        """Подменяет профили на битый YAML (файлы репозитория не трогаем).
+
+        Args:
+            tmp_path: Временный каталог pytest.
+            monkeypatch: Фикстура monkeypatch pytest.
+
+        Yields:
+            Путь к каталогу с битым ``base.yml``.
+
+        """
+        profiles_dir = tmp_path / "config_profiles"
+        profiles_dir.mkdir()
+        (profiles_dir / "base.yml").write_text("app: [broken\n  yaml: :\n")
+        (profiles_dir / f"{get_active_profile().value}.yml").write_text("{}\n")
+        monkeypatch.setattr(cl, "_REPO_ROOT", tmp_path)
+        cl.clear_yaml_cache()
+        yield profiles_dir
+        cl.clear_yaml_cache()
+
+    def test_reload_reports_failed_models(self, broken_profiles: Path) -> None:
+        """``settings.reload()`` честно сообщает о моделях, которые не собрались."""
+        report = settings.reload()
+
+        assert report["failed"], "Битый YAML обязан попасть в failed"
+        assert all("error" in item for item in report["failed"])
+
+    @pytest.mark.asyncio
+    async def test_hot_reload_reports_failure(self, broken_profiles: Path) -> None:
+        """Hot-reload отдаёт ``ok=False`` и перечень сломанных моделей."""
+        from src.backend.core.config.hot_reload import register_settings_reload_callback
+
+        reloader = ConfigHotReloader()
+        register_settings_reload_callback(reloader)
+
+        report = await reloader.trigger_reload(reason="test")
+
+        assert report["ok"] is False
+        assert report["succeeded"] == 0
+        assert report["failed"], "Ошибка перезагрузки обязана попасть в failed"
+        assert report["failed"][0]["failed"], "Список сломанных моделей не пуст"
+
+    @pytest.mark.asyncio
+    async def test_admin_endpoint_returns_500(
+        self, broken_profiles: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """``POST /admin/config/reload`` отвечает 500, а не ложным ``ok=True``."""
+        from fastapi import HTTPException
+
+        from src.backend.core.config import hot_reload as hot_reload_mod
+        from src.backend.entrypoints.api.v1.endpoints.admin import _reload_config
+
+        reloader = ConfigHotReloader()
+        hot_reload_mod.register_settings_reload_callback(reloader)
+        monkeypatch.setattr(hot_reload_mod, "get_hot_reloader", lambda: reloader)
+
+        with pytest.raises(HTTPException) as exc_info:
+            await _reload_config()
+
+        assert exc_info.value.status_code == 500
+        detail = exc_info.value.detail
+        assert isinstance(detail, dict)
+        assert detail["ok"] is False
+        assert detail["failed"], "Ответ 500 обязан содержать перечень failed"
+
+
+class TestModuleSingletonsReload:
+    """Модульные синглтоны пакета конфигурации перезагружаются (ADR-0379)."""
+
+    def test_mqtt_settings_is_reloaded(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """``MqttSettings`` — модульный синглтон, он тоже перезагружается.
+
+        Регрессия: инстанс создавался через module-level ``__getattr__`` и
+        не попадал в перебор модульных синглтонов → ``broker_port`` не
+        менялся при reload.
+        """
+        from src.backend.core.config.services import mqtt
+
+        instance = mqtt.get_mqtt_settings()
+        before = instance.broker_port
+
+        monkeypatch.setenv("MQTT_BROKER_PORT", "1999")
+        settings.reload()
+
+        assert instance.broker_port == 1999, (
+            f"MqttSettings не перезагрузился (было {before}, ожидалось 1999)"
+        )

@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -38,6 +39,39 @@ pytestmark = pytest.mark.unit
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 BASE_YML = REPO_ROOT / "config_profiles" / "base.yml"
+
+#: Каталоги, в которых ищем потребителей констант.
+CONSUMER_ROOTS: tuple[Path, ...] = (REPO_ROOT / "src", REPO_ROOT / "extensions")
+
+#: Файлы-определения: в них имя константы встречается как объявление,
+#: а не как использование (``consts.X``).
+DEFINITION_FILES: frozenset[Path] = frozenset(
+    {
+        REPO_ROOT / "src" / "backend" / "core" / "config" / "constants.py",
+        REPO_ROOT / "src" / "backend" / "core" / "config" / "_resilience_consts.py",
+        REPO_ROOT / "src" / "backend" / "core" / "config" / "constants_settings.py",
+    }
+)
+
+
+def _constant_consumers() -> set[str]:
+    """Имена констант, которые реально читаются кодом (``consts.<ИМЯ>``).
+
+    Returns:
+        Множество имён констант с хотя бы одним использованием.
+
+    """
+    consumers: set[str] = set()
+    for root in CONSUMER_ROOTS:
+        for path in root.rglob("*.py"):
+            if path in DEFINITION_FILES:
+                continue
+            try:
+                text = path.read_text(encoding="utf-8")
+            except OSError:  # pragma: no cover — нечитаемый файл
+                continue
+            consumers.update(re.findall(r"\bconsts\.([A-Z][A-Z0-9_]+)\b", text))
+    return consumers
 
 
 @pytest.fixture(autouse=True)
@@ -108,6 +142,26 @@ class TestDefaultsMatchCode:
     def test_no_secrets_in_constants_section(self) -> None:
         """В секции ``constants`` нет секретных полей."""
         assert not [key for key in _base_section() if "secret" in key or "token" in key]
+
+    def test_every_constants_key_has_a_consumer(self) -> None:
+        """У каждого ключа секции ``constants`` есть потребитель в коде.
+
+        Регрессия (ADR-0379): часть ключей секции ``constants`` была
+        инертной — значение менялось в YAML, но никто его не читал
+        (иллюзия настраиваемости). Ключ без потребителя удаляется из
+        YAML и из ``FIELD_TO_CONSTANT``.
+        """
+        consumers = _constant_consumers()
+        inert = sorted(
+            constant_name
+            for constant_name in FIELD_TO_CONSTANT.values()
+            if constant_name not in consumers
+        )
+        assert inert == [], (
+            "Ключи конфигурации без потребителя в коде (инертные): "
+            f"{inert}. Уберите их из base.yml и FIELD_TO_CONSTANT "
+            "или начните использовать."
+        )
 
 
 class TestApplyToSingleton:

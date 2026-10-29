@@ -77,8 +77,22 @@ from functools import lru_cache
 
 @lru_cache(maxsize=1)
 def get_mqtt_settings() -> MqttSettings:
-    """Возвращает singleton MqttSettings (lazy, не падает при import)."""
-    return MqttSettings()
+    """Возвращает singleton MqttSettings (lazy, не падает при import).
+
+    ADR-0379: инстанс дополнительно регистрируется в ``globals()``
+    модуля — иначе он не попадал в перебор модульных синглтонов
+    (``config_loader._iter_settings_singletons``) и НЕ перезагружался
+    при hot-reload (например, ``broker_port`` не менялся).
+
+    Returns:
+        Единственный экземпляр ``MqttSettings``.
+
+    """
+    instance = MqttSettings()
+    # Регистраем синглтон как атрибут модуля — hot-reload обновляет
+    # его in-place (ссылки потребителей остаются валидными).
+    globals()["mqtt_settings"] = instance
+    return instance
 
 
 def __getattr__(name: str) -> Any:  # type: ignore[misc]

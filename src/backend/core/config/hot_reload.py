@@ -24,11 +24,36 @@ from typing import Any
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
 
-__all__ = ("ConfigHotReloader", "get_hot_reloader")
+__all__ = ("ConfigHotReloader", "ConfigReloadError", "get_hot_reloader")
 
 logger = get_logger("config.hot_reload")
 
 ReloadCallback = Callable[[], Awaitable[None] | None]
+
+#: Период опроса файловой системы (``watchfiles.awatch(step=...)``), мс.
+#: Это НЕ окно группировки изменений — за него отвечает ``debounce``.
+_WATCH_STEP_MS: int = 50
+
+
+class ConfigReloadError(RuntimeError):
+    """Ошибка перезагрузки конфигурации: часть моделей не собралась.
+
+    ADR-0379: ``settings.reload()`` возвращает отчёт
+    ``{"reloaded": [...], "failed": [...]}``. Раньше отчёт игнорировался,
+    и битый YAML давал ложный успех ``ok=True`` в
+    ``POST /admin/config/reload``.
+    """
+
+    def __init__(self, failed: list[dict[str, str]]) -> None:
+        """Создаёт ошибку с перечнем не перезагруженных настроек.
+
+        Args:
+            failed: Список ``{"name": ..., "error": ...}`` из отчёта reload.
+
+        """
+        self.failed = failed
+        names = ", ".join(str(item.get("name", "?")) for item in failed[:5])
+        super().__init__(f"Не удалось перезагрузить {len(failed)} настроек: {names}")
 
 
 class ConfigHotReloader:
@@ -46,7 +71,17 @@ class ConfigHotReloader:
     callback'и будут вызваны (по порядку регистрации).
     """
 
-    def __init__(self, *, debounce_ms: int = 500) -> None:
+    def __init__(self, *, debounce_ms: int = 1600) -> None:
+        """Создаёт watcher конфигурации.
+
+        Args:
+            debounce_ms: Окно группировки изменений ФС в миллисекундах
+                (параметр ``debounce`` в ``watchfiles.awatch``). ADR-0379:
+                раньше это значение передавалось в ``step`` (период
+                опроса), а ``debounce`` оставался 1600 мс — имя
+                параметра не соответствовало поведению.
+
+        """
         self._paths: set[Path] = set()
         self._callbacks: list[ReloadCallback] = []
         self._task: asyncio.Task[None] | None = None
@@ -117,9 +152,13 @@ class ConfigHotReloader:
                     await result
                 ok += 1
             except Exception as exc:
-                failed.append(
-                    {"callback": getattr(cb, "__name__", repr(cb)), "error": str(exc)}
-                )
+                entry: dict[str, Any] = {
+                    "callback": getattr(cb, "__name__", repr(cb)),
+                    "error": str(exc),
+                }
+                if isinstance(exc, ConfigReloadError):
+                    entry["failed"] = exc.failed
+                failed.append(entry)
                 logger.error("Hot-reload callback failed: %s", exc)
         logger.info("Config reloaded (%s): %d OK, %d failed", reason, ok, len(failed))
         return {
@@ -152,6 +191,10 @@ class ConfigHotReloader:
         self._task = get_task_registry().create_task(
             self._watch_loop(), name="config-hot-reload"
         )
+        # ADR-0379: дать watcher'у подписаться на ФС ДО возврата из start().
+        # create_task только планирует запуск — без yield событие, случившееся
+        # в том же тике (запись файла сразу после start()), терялось.
+        await asyncio.sleep(0)
         logger.info("Config hot-reload started, watching %d paths", len(self._paths))
 
     async def stop(self) -> None:
@@ -177,11 +220,15 @@ class ConfigHotReloader:
             logger.warning("Hot-reload: нет существующих путей для наблюдения")
             return
 
-        # step=debounce_ms собирает пакет изменений за интервал — избегает
+        # debounce=debounce_ms собирает пакет изменений за интервал — избегает
         # множественных срабатываний при сохранении редактором (который
-        # обычно создаёт tmp-файл и затем переименовывает).
+        # обычно создаёт tmp-файл и затем переименовывает). step — период
+        # опроса ФС (ADR-0379: раньше сюда попадало значение debounce).
         async for _changes in awatch(
-            *paths, step=self._debounce_ms, stop_event=self._stop_event
+            *paths,
+            step=_WATCH_STEP_MS,
+            debounce=self._debounce_ms,
+            stop_event=self._stop_event,
         ):
             await self.trigger_reload(reason="file-change")
 
@@ -206,6 +253,11 @@ def register_settings_reload_callback(reloader: ConfigHotReloader) -> None:
     ``POST /admin/config/reload`` отвечал ложным успехом
     ``{"succeeded": 1, "failed": []}``.
 
+    ADR-0379: отчёт ``settings.reload()`` больше не игнорируется —
+    непустой ``failed`` (например, битый YAML) превращается в
+    :class:`ConfigReloadError`, поэтому админ-эндпоинт отвечает ошибкой,
+    а не ``ok=True``.
+
     Args:
         reloader: Hot-reloader, в который регистрируется callback.
 
@@ -216,7 +268,13 @@ def register_settings_reload_callback(reloader: ConfigHotReloader) -> None:
     from src.backend.core.config.settings import settings
 
     async def _reload_settings() -> None:
-        """Перечитывает конфигурацию и обновляет настройки in-place."""
+        """Перечитывает конфигурацию и обновляет настройки in-place.
+
+        Raises:
+            RuntimeError: Если ``settings.reload()`` недоступен.
+            ConfigReloadError: Если часть настроек не перезагрузилась.
+
+        """
         reload_fn = getattr(settings, "reload", None)
         if not callable(reload_fn):
             raise RuntimeError(
@@ -224,6 +282,9 @@ def register_settings_reload_callback(reloader: ConfigHotReloader) -> None:
             )
         result = reload_fn()
         if asyncio.iscoroutine(result):
-            await result
+            result = await result
+        failed = list((result or {}).get("failed") or [])
+        if failed:
+            raise ConfigReloadError(failed)
 
     reloader.on_reload(_reload_settings)

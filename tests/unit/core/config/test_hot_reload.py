@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import sys
+from collections.abc import AsyncIterator
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -169,3 +173,169 @@ class TestGetHotReloader:
         r1 = get_hot_reloader()
         r2 = get_hot_reloader()
         assert r1 is r2
+
+
+class _FakeAwatch:
+    """Имитация ``watchfiles.awatch`` с честной семантикой «потери событий».
+
+    Событие, случившееся ДО того как watch « armed» (генератор запущен и
+    OS-подписка установлена), теряется — как в реальном ``watchfiles``:
+    rust-notify не видит изменений, произошедших до установки подписки.
+    """
+
+    def __init__(self) -> None:
+        self.armed = False
+        self.lost: list[set[str]] = []
+        self.seen: list[set[str]] = []
+        self._pending: list[set[str]] = []
+        self.kwargs: dict[str, Any] = {}
+
+    def emit(self, event: set[str]) -> None:
+        """Эмулирует изменение в файловой системе.
+
+        Args:
+            event: Набор изменений (как отдаёт ``watchfiles``).
+
+        Returns:
+            None.
+
+        """
+        if not self.armed:
+            self.lost.append(event)
+            return
+        self._pending.append(event)
+
+    def __call__(self, *paths: str, **kwargs: Any) -> AsyncIterator[set[str]]:
+        """Возвращает async-генератор с событиями (как ``awatch``)."""
+        self.kwargs = kwargs
+
+        async def _gen() -> AsyncIterator[set[str]]:
+            self.armed = True
+            while True:
+                await asyncio.sleep(0.01)
+                if self._pending:
+                    batch = self._pending.pop(0)
+                    self.seen.append(batch)
+                    yield batch
+
+        return _gen()
+
+
+class TestWatcherArming:
+    """Watcher подписывается на ФС до возврата из ``start()`` (ADR-0379)."""
+
+    @pytest.mark.asyncio
+    async def test_change_right_after_start_is_not_lost(self, tmp_path: Path) -> None:
+        """Изменение в том же тике, что и ``start()``, не должно теряться.
+
+        Регрессия: ``create_task`` не запускает watcher немедленно, поэтому
+        запись в файл сразу после ``start()`` попадала в никуда
+        (events=0). Фикс — ``await asyncio.sleep(0)`` в ``start()``.
+        """
+        fake = _FakeAwatch()
+        reloader = ConfigHotReloader()
+        reloader.watch(tmp_path)
+
+        with patch.dict(sys.modules, {"watchfiles": SimpleNamespace(awatch=fake)}):
+            await reloader.start()
+            fake.emit({("config.yml", "modify")})
+            for _ in range(100):
+                await asyncio.sleep(0.01)
+                if fake.seen:
+                    break
+            await reloader.stop()
+
+        assert fake.lost == [], (
+            "Событие потеряно: watcher не успел подписаться на ФС к моменту "
+            "возврата из start()"
+        )
+        assert fake.seen, "Watcher не увидел изменение файла"
+
+    @pytest.mark.asyncio
+    async def test_watchfiles_receives_debounce_and_step(self, tmp_path: Path) -> None:
+        """``debounce_ms`` управляет ОКНОМ группировки, а не периодом опроса.
+
+        Регрессия: значение передавалось в ``step`` watchfiles, а
+        ``debounce`` оставался 1600 мс — имя параметра не соответствовало
+        поведению.
+        """
+        fake = _FakeAwatch()
+        reloader = ConfigHotReloader(debounce_ms=750)
+        reloader.watch(tmp_path)
+
+        with patch.dict(sys.modules, {"watchfiles": SimpleNamespace(awatch=fake)}):
+            await reloader.start()
+            await asyncio.sleep(0)
+            await reloader.stop()
+
+        assert fake.kwargs.get("debounce") == 750
+        assert fake.kwargs.get("step") is not None
+        assert fake.kwargs["step"] != 750
+
+
+class TestReloadReportHonesty:
+    """Отчёт ``settings.reload()`` с ``failed`` — это ОШИБКА (ADR-0379)."""
+
+    @pytest.mark.asyncio
+    async def test_callback_fails_when_reload_report_has_failures(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """``failed`` из ``settings.reload()`` попадает в ``failed`` отчёта."""
+        from src.backend.core.config import settings as settings_mod
+        from src.backend.core.config.hot_reload import register_settings_reload_callback
+
+        class _FakeSettings:
+            """Настройки, у которых reload сообщает об ошибке."""
+
+            def reload(self) -> dict[str, Any]:
+                """Возвращает отчёт с ошибкой перезагрузки.
+
+                Returns:
+                    Отчёт ``reloaded``/``failed`` с одной ошибкой.
+
+                """
+                return {
+                    "reloaded": [],
+                    "failed": [{"name": "app", "error": "broken yaml"}],
+                }
+
+        monkeypatch.setattr(settings_mod, "settings", _FakeSettings())
+
+        reloader = ConfigHotReloader()
+        register_settings_reload_callback(reloader)
+        report = await reloader.trigger_reload(reason="test")
+
+        assert report["ok"] is False
+        assert report["succeeded"] == 0
+        assert report["failed"], "Непустой failed из reload() — это ошибка"
+        assert report["failed"][0]["failed"][0]["name"] == "app"
+
+    @pytest.mark.asyncio
+    async def test_callback_succeeds_on_clean_report(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Пустой ``failed`` — успех (регрессия-контроль к fail-closed)."""
+        from src.backend.core.config import settings as settings_mod
+        from src.backend.core.config.hot_reload import register_settings_reload_callback
+
+        class _FakeSettings:
+            """Настройки, у которых reload проходит без ошибок."""
+
+            def reload(self) -> dict[str, Any]:
+                """Возвращает успешный отчёт перезагрузки.
+
+                Returns:
+                    Отчёт без ошибок.
+
+                """
+                return {"reloaded": ["app"], "failed": []}
+
+        monkeypatch.setattr(settings_mod, "settings", _FakeSettings())
+
+        reloader = ConfigHotReloader()
+        register_settings_reload_callback(reloader)
+        report = await reloader.trigger_reload(reason="test")
+
+        assert report["ok"] is True
+        assert report["succeeded"] == 1
+        assert report["failed"] == []

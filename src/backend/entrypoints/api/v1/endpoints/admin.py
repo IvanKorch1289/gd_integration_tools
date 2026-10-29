@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from extensions.core_admin.schemas.route import (
     AdminCacheInvalidatePatternSchema,
@@ -188,10 +188,21 @@ async def _reload_config() -> dict[str, object]:
     ADR-0372: отчёт честный — ``failed`` непустой означает, что
     конфигурация НЕ перезагружена (раньше отсутствие ``settings.reload()``
     давало ложный ``{"succeeded": 1, "failed": []}``).
+
+    ADR-0379: непустой ``failed`` (например, битый YAML) — это ошибка:
+    отвечаем HTTP 500 с перечнем не перезагруженных настроек, а не
+    ложным ``ok=True``.
+
+    Raises:
+        HTTPException: 500 с отчётом о неудачной перезагрузке.
+
     """
     from src.backend.core.config.hot_reload import get_hot_reloader
 
-    return await get_hot_reloader().trigger_reload(reason="api-request")
+    report = await get_hot_reloader().trigger_reload(reason="api-request")
+    if not report.get("ok", False):
+        raise HTTPException(status_code=500, detail=report)
+    return report
 
 
 router.add_api_route(
@@ -202,7 +213,7 @@ router.add_api_route(
     description=(
         "Вручную запускает все зарегистрированные config-reload колбеки "
         "(без рестарта процесса). Используйте когда FS watcher недоступен. "
-        "Поле failed в ответе непусто → перезагрузка не удалась."
+        "Если перезагрузка не удалась — HTTP 500 с перечнем failed."
     ),
     name="reload_config",
 )

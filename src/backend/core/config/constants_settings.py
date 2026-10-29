@@ -72,14 +72,18 @@ def _code_default(constant_name: str) -> Any:
 
 
 #: Соответствие «поле настроек → атрибут синглтона ``consts``».
+#:
+#: ADR-0379: в маппинге нет констант без потребителя (инертных ключей
+#: конфигурации). ``DEFAULT_CB_FAST_FAILURE_THRESHOLD`` /
+#: ``DEFAULT_CB_FAST_RECOVERY_SECONDS`` были объявлены в YAML, но их
+#: никто не читал (fast-circuit-breaker'а в проекте нет) — они убраны
+#: из конфигурации; кодовые дефолты остались в ``constants.py``.
 FIELD_TO_CONSTANT: Final[dict[str, str]] = {
     "initial_delay": "INITIAL_DELAY",
     "retry_delay": "RETRY_DELAY",
     "max_result_attempts": "MAX_RESULT_ATTEMPTS",
     "default_cb_failure_threshold": "DEFAULT_CB_FAILURE_THRESHOLD",
     "default_cb_recovery_seconds": "DEFAULT_CB_RECOVERY_SECONDS",
-    "default_cb_fast_failure_threshold": "DEFAULT_CB_FAST_FAILURE_THRESHOLD",
-    "default_cb_fast_recovery_seconds": "DEFAULT_CB_FAST_RECOVERY_SECONDS",
     "default_retry_max_attempts": "DEFAULT_RETRY_MAX_ATTEMPTS",
     "default_retry_initial_backoff": "DEFAULT_RETRY_INITIAL_BACKOFF",
     "default_retry_max_backoff": "DEFAULT_RETRY_MAX_BACKOFF",
@@ -127,16 +131,6 @@ class ConstantsSettings(BaseSettingsWithLoader):
         default=_code_default("DEFAULT_CB_RECOVERY_SECONDS"),
         gt=0.0,
         description="Таймаут восстановления circuit-breaker'а (секунды).",
-    )
-    default_cb_fast_failure_threshold: int = Field(
-        default=_code_default("DEFAULT_CB_FAST_FAILURE_THRESHOLD"),
-        ge=1,
-        description="Порог отказа fast-circuit-breaker'а.",
-    )
-    default_cb_fast_recovery_seconds: float = Field(
-        default=_code_default("DEFAULT_CB_FAST_RECOVERY_SECONDS"),
-        gt=0.0,
-        description="Таймаут восстановления fast-circuit-breaker'а (секунды).",
     )
     default_retry_max_attempts: int = Field(
         default=_code_default("DEFAULT_RETRY_MAX_ATTEMPTS"),
