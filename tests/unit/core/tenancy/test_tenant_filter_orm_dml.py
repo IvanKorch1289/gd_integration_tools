@@ -107,10 +107,17 @@ def _raw_orders(session: Session) -> list[tuple[object, ...]]:
     Returns:
         Все строки ``orders`` как кортежи.
     """
-    return [
-        tuple(row)
-        for row in session.execute(text("SELECT id, name, tenant_id FROM am_orders"))
-    ]
+    # Чтение идёт через Connection, а не через Session: Session-level
+    # guard (ADR-0383) блокирует raw SQL по tenant-aware таблице без
+    # явного tenant-предиката. Инспекция состояния таблицы — привилегированная
+    # операция (как в БД-консоли), а не прикладное чтение.
+    with session.get_bind().connect() as conn:
+        return [
+            tuple(row)
+            for row in conn.execute(
+                text("SELECT id, name, tenant_id FROM am_orders")
+            )
+        ]
 
 
 # ── F-AM.1: DML ────────────────────────────────────────────────────────

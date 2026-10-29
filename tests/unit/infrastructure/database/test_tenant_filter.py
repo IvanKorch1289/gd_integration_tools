@@ -67,7 +67,10 @@ def test_apply_tenant_filter_registers_listeners() -> None:
     session_factory = MagicMock()
     with patch(f"{CANONICAL}.event.listens_for") as mock_listen:
         apply_tenant_filter(session_factory)
-        assert mock_listen.call_count == 2
+        # 3 listener'а: do_orm_execute (ORM-фильтр + raw-SQL guard),
+        # before_flush (tenant_id для новых объектов) и mapper_configured
+        # (реестр tenant-aware таблиц — ADR-0383).
+        assert mock_listen.call_count == 3
 
 
 def test_filter_by_tenant_handles_dml() -> None:

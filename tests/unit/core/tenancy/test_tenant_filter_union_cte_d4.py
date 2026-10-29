@@ -100,13 +100,19 @@ def _raw_all(session: Session) -> int:
         Суммарное число строк без учёта tenant'а.
 
     """
-    return int(
-        session.execute(
-            text(
-                "SELECT (SELECT COUNT(*) FROM d4_orders) + (SELECT COUNT(*) FROM d4_users)"
-            )
-        ).scalar()
-    )
+    # Чтение идёт через Connection, а не через Session: Session-level
+    # guard (ADR-0383) блокирует raw SQL по tenant-aware таблице без
+    # явного tenant-предиката. Инспекция состояния — привилегированная
+    # операция вне tenant-контекста.
+    with session.get_bind().connect() as conn:
+        return int(
+            conn.execute(
+                text(
+                    "SELECT (SELECT COUNT(*) FROM d4_orders) "
+                    "+ (SELECT COUNT(*) FROM d4_users)"
+                )
+            ).scalar()
+        )
 
 
 class TestPlainSelectStillFiltered:

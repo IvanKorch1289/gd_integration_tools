@@ -7,7 +7,8 @@
 * сериализацию через pickle/json/orjson;
 * инвалидацию по таблицам (reverse-index в том же бэкенде);
 * TTL per-key;
-* tenant-agnostic (tenant должен быть частью ``profile``).
+* tenant-aware: ``tenant_id`` активного контекста входит в ключ
+  (ADR-0383) — на shared-бэкенде кэш не смешивает tenant'ов.
 
 Пример::
 
@@ -29,6 +30,7 @@ import orjson
 
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.logging import get_logger
+from src.backend.core.tenancy import get_tenant_id
 from src.backend.core.utils.json_utils import dumps_bytes, loads
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 
@@ -228,10 +230,14 @@ class QueryResultCache:
                 default=str,
             )
         ).hexdigest()[:16]
+        # Wave 16 / X4 (ADR-0383): tenant_id — часть ключа. На shared-бэкенде
+        # (Redis/KeyDB) запрос одного tenant'а иначе получал закэшированные
+        # строки другого.
+        tenant_id = get_tenant_id() or "-"
         digest = hashlib.sha256(
-            f"{profile}:{normalized}:{param_hash}".encode()
+            f"{profile}:{tenant_id}:{normalized}:{param_hash}".encode()
         ).hexdigest()[:32]
-        return f"{self._prefix}:{profile}:{digest}"
+        return f"{self._prefix}:{profile}:{tenant_id}:{digest}"
 
     def _index_key(self, profile: str, table: str) -> str:
         return f"{self._prefix}:idx:{profile}:{table}"

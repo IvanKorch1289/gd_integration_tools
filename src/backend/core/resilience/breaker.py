@@ -141,11 +141,17 @@ class Breaker:
         При open breaker сразу бросает ``CircuitOpen``; при exception внутри
         блока purgatory сам инкрементит failure-counter; при выходе без
         исключения — recovery.
+
+        ``BreakerSpec.excluded_exceptions`` передаются в purgatory как
+        ``exclude``: такие исключения не считаются отказами (бизнес-ошибки
+        вроде ``NotFoundError`` не должны открывать breaker — ADR-0383).
+        Раньше поле объявлялось, но игнорировалось.
         """
         async with await self._factory.get_breaker(
             self.name,
             threshold=self._spec.failure_threshold,
             ttl=self._spec.recovery_timeout,
+            exclude=list(self._spec.excluded_exceptions),
         ):
             yield
 

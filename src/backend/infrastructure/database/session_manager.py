@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from functools import lru_cache, wraps
 from typing import ParamSpec, TypeVar
 
-from sqlalchemy.exc import InterfaceError, OperationalError
+from sqlalchemy.exc import IntegrityError, InterfaceError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.backend.core.config.settings import settings
@@ -28,6 +28,10 @@ from src.backend.core.tenancy.sqlalchemy_filter import apply_tenant_filter
 # подхватится независимо от того, какой объект модуля лежит в sys.modules.
 from src.backend.infrastructure.database import database as _database_pkg
 from src.backend.infrastructure.database.database import get_db_initializer
+from src.backend.infrastructure.database.listeners import (
+    sanitize_db_error_text,
+    sanitized_exc_info,
+)
 
 db_logger = get_logger("database")
 
@@ -60,6 +64,43 @@ _RETRYABLE_CONNECT_ERRORS: tuple[type[BaseException], ...] = (
     InterfaceError,
 )
 
+#: Ошибки, которые НЕ считаются отказом БД (Wave 16 / X4, ADR-0383).
+#:
+#: ``NotFoundError`` — ожидаемый исход поиска, ``IntegrityError`` —
+#: ожидаемый исход записи (дубликат ключа). Раньше они проходили через
+#: ``self._breaker.guard()``, и десять «не найдено» подряд открывали
+#: breaker ``db:<name>`` на 30 с, глуша весь DB-трафик (воспроизведено:
+#: ``OpenedState``). Настоящие отказы (``OperationalError`` и прочие)
+#: breaker по-прежнему открывают.
+_BREAKER_EXCLUDED_ERRORS: tuple[type[BaseException], ...] = (
+    NotFoundError,
+    IntegrityError,
+)
+
+
+def _sanitized_integrity_error(exc: IntegrityError) -> IntegrityError:
+    """Пересоздать ``IntegrityError`` без значений bind-параметров.
+
+    SQLAlchemy печатает в тексте исключения фактические значения
+    параметров (``[parameters: ('ivan@example.com',)]``). Конструктор с
+    ``hide_parameters=True`` убирает этот блок, сохраняя SQL и текст
+    драйвера — диагностика не теряется, PII не утекает (ADR-0383).
+
+    Args:
+        exc: Исходное исключение SQLAlchemy.
+
+    Returns:
+        ``IntegrityError`` с очищенным текстом.
+    """
+    return IntegrityError(
+        exc.statement,
+        exc.params,
+        exc.orig,
+        hide_parameters=True,
+        code=exc.code,
+        ismulti=exc.ismulti,
+    )
+
 
 class DatabaseSessionManager:
     """Менеджер асинхронных сессий SQLAlchemy.
@@ -86,6 +127,7 @@ class DatabaseSessionManager:
             BreakerSpec(
                 failure_threshold=settings.database.circuit_breaker_max_failures,
                 recovery_timeout=float(settings.database.circuit_breaker_reset_timeout),
+                excluded_exceptions=_BREAKER_EXCLUDED_ERRORS,
             ),
         )
 
@@ -136,12 +178,26 @@ class DatabaseSessionManager:
             session = await self._acquire_session()
             try:
                 yield session
+            except NotFoundError:
+                # Бизнес-ошибка: не маскируется под DatabaseError и не
+                # считается отказом БД (ADR-0383).
+                raise
+            except IntegrityError as exc:
+                # Дубликат ключа — бизнес-ошибка, а не отказ БД: пробрасывается
+                # как IntegrityError (исключён из breaker'а), но без PII.
+                self.logger.error(
+                    "Ошибка целостности данных в БД '%s': %s",
+                    self.db_name,
+                    sanitize_db_error_text(str(exc)),
+                    exc_info=sanitized_exc_info(exc),
+                )
+                raise _sanitized_integrity_error(exc) from None
             except Exception as exc:
                 self.logger.error(
                     "Ошибка при работе с сессией БД '%s': %s",
                     self.db_name,
-                    str(exc),
-                    exc_info=True,
+                    sanitize_db_error_text(str(exc)),
+                    exc_info=sanitized_exc_info(exc),
                 )
                 raise DatabaseError(
                     message=f"Failed to create database session for '{self.db_name}'"
@@ -158,7 +214,10 @@ class DatabaseSessionManager:
         except Exception as exc:
             await session.rollback()
             self.logger.error(
-                "Ошибка транзакции в БД '%s': %s", self.db_name, str(exc), exc_info=True
+                "Ошибка транзакции в БД '%s': %s",
+                self.db_name,
+                sanitize_db_error_text(str(exc)),
+                exc_info=sanitized_exc_info(exc),
             )
             raise DatabaseError(
                 message=f"Transaction failed for '{self.db_name}'"
@@ -233,6 +292,20 @@ class DatabaseSessionManager:
 
                         except NotFoundError:
                             raise
+                        except IntegrityError as exc:
+                            # Дубликат ключа — бизнес-ошибка, а не отказ БД:
+                            # пробрасывается как IntegrityError (исключён из
+                            # breaker'а — ADR-0383), но без значений параметров.
+                            if session.in_transaction():
+                                await session.rollback()
+
+                            self.logger.error(
+                                "Ошибка целостности данных в БД '%s': %s",
+                                self.db_name,
+                                sanitize_db_error_text(str(exc)),
+                                exc_info=sanitized_exc_info(exc),
+                            )
+                            raise _sanitized_integrity_error(exc) from None
                         except Exception as exc:
                             if session.in_transaction():
                                 await session.rollback()
@@ -240,13 +313,14 @@ class DatabaseSessionManager:
                             self.logger.error(
                                 "Ошибка при выполнении транзакции в БД '%s': %s",
                                 self.db_name,
-                                str(exc),
-                                exc_info=True,
+                                sanitize_db_error_text(str(exc)),
+                                exc_info=sanitized_exc_info(exc),
                             )
                             raise DatabaseError(
                                 message=(
                                     f"Ошибка при выполнении транзакции "
-                                    f"в БД '{self.db_name}' - {exc!s}"
+                                    f"в БД '{self.db_name}' - "
+                                    f"{sanitize_db_error_text(str(exc))}"
                                 )
                             ) from exc
 
