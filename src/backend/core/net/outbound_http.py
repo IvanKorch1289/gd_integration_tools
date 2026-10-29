@@ -42,6 +42,40 @@ raise при denied. Ставится :class:`CapabilityGate` или fake в т�
 """
 
 
+def _policy_from_settings() -> WafPolicy:
+    """Собрать WAF-policy из настроек ``waf_settings``.
+
+    A3 (ADR-0385): раньше дефолтом была пустая permissive-policy
+    (``policy or WafPolicy()``) — deny-list, strict-allowlist и
+    payload-limit из конфигурации не действовали для вызывающих, которые
+    не передавали policy явно (``make_http_client``, прямые
+    ``OutboundHttpClient(...)`` в gemini/claude/http_sink/webhook_sink/
+    search_providers). В prod это означало обход WAF-контура.
+
+    Настройки опциональны: если конфигурация недоступна — используется
+    прежняя permissive-policy (fail-open к дефолту, без падения клиента).
+    """
+    try:
+        from src.backend.core.config.waf import waf_settings
+
+        if waf_settings is None:
+            return WafPolicy()
+        return WafPolicy(
+            allow_hosts=frozenset(waf_settings.allow_hosts),
+            deny_hosts=frozenset(waf_settings.deny_hosts),
+            max_payload_bytes=waf_settings.max_payload_bytes or None,
+            strict=waf_settings.strict,
+        )
+    except Exception as settings_exc:  # noqa: BLE001 — конфиг опционален
+        from src.backend.core.logging import get_logger
+
+        get_logger("net.outbound").debug(
+            "WAF settings unavailable — permissive policy used",
+            extra={"error": str(settings_exc)},
+        )
+        return WafPolicy()
+
+
 _DEFAULT_LIMITS: httpx.Limits = httpx.Limits(
     max_connections=100, max_keepalive_connections=20, keepalive_expiry=15.0
 )
@@ -54,8 +88,9 @@ class OutboundHttpClient:
     """Async HTTP-клиент с обязательной WAF-фильтрацией исходящих запросов.
 
     Args:
-        policy: WAF-policy; если ``None`` — пустая permissive (deny-list
-            пустой, payload-limit не задан).
+        policy: WAF-policy; если ``None`` — собирается из настроек
+            ``waf_settings`` (allow/deny-списки, strict, payload-limit),
+            при недоступности конфигурации — permissive-policy.
         capability_check: Функция, валидирующая capability запроса
             (обычно ``CapabilityGate.check``). Если ``None`` — capability
             не проверяется (для unit-тестов и core-internal вызовов).
@@ -84,7 +119,7 @@ class OutboundHttpClient:
         http2: bool = False,
         base_url: str = "",
     ) -> None:
-        self._policy = policy or WafPolicy()
+        self._policy = policy or _policy_from_settings()
         self._capability_check = capability_check
         self._audit = audit
         self._plugin = plugin

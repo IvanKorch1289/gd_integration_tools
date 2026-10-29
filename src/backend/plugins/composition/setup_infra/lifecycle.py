@@ -402,6 +402,56 @@ async def _stop_config_hot_reload() -> None:
     app_logger.info("Config hot-reload stopped")
 
 
+async def _start_vault_secret_refresher() -> None:
+    """A2 (ADR-0385): запустить фоновое обновление секретов из Vault.
+
+    Инстанс рефрешера создаётся в composition root
+    (``plugins/composition/di.py``), но ``start()`` не вызывался —
+    фоновая ротация секретов не работала (пароли/токены обновлялись
+    только после рестарта).
+
+    Vault — опциональный источник секретов: сбой старта логируется и
+    деградирует, но не роняет приложение.
+    """
+    from src.backend.infrastructure.application.vault_refresher import (
+        get_vault_refresher,
+    )
+
+    try:
+        refresher = get_vault_refresher()
+        await refresher.start()
+    except Exception as exc:
+        app_logger.warning(
+            "Запуск Vault secret refresher не удался (деградация)",
+            extra={"error": str(exc)},
+        )
+        return
+    app_logger.info("Vault secret refresher запущен")
+
+
+async def _stop_vault_secret_refresher() -> None:
+    """A2 (ADR-0385): остановить фоновое обновление секретов из Vault.
+
+    Вызывается в shutdown: ``stop()`` отменяет refresh-loop и дожидается
+    её завершения, поэтому фоновые задачи не «протекают» после остановки
+    приложения.
+    """
+    from src.backend.infrastructure.application.vault_refresher import (
+        get_vault_refresher,
+    )
+
+    try:
+        refresher = get_vault_refresher()
+        await refresher.stop()
+    except Exception as exc:
+        app_logger.warning(
+            "Остановка Vault secret refresher не удалась (деградация)",
+            extra={"error": str(exc)},
+        )
+        return
+    app_logger.info("Vault secret refresher остановлен")
+
+
 starting_operations: list[OperationItem] = [
     (
         "register_default_degradation_features",
@@ -421,6 +471,8 @@ starting_operations: list[OperationItem] = [
     ),
     # D-AUDIT-A12-06 fix (cycle 1): wire ConfigHotReloader в production lifespan
     ("start_config_hot_reload", _start_config_hot_reload, None),
+    # A2 (ADR-0385): wire VaultSecretRefresher — фоновая ротация секретов.
+    ("start_vault_secret_refresher", _start_vault_secret_refresher, None),
     ("init_workflow_audit_sink", _init_workflow_audit_sink, _clickhouse_enabled),
     # D-A8-04 fix (cycle 1): wire TemporalWorkerRuntime в production lifespan.
     # D-AUDIT-704 fix (cycle 7): обёртка с activity-list (ActivityBridge +
@@ -446,6 +498,8 @@ ending_operations: list[OperationItem] = [
     ("stop_scheduler_if_leader", _stop_scheduler_if_leader, None),
     # D-AUDIT-A12-06 fix (cycle 1): stop ConfigHotReloader в shutdown
     ("stop_config_hot_reload", _stop_config_hot_reload, None),
+    # A2 (ADR-0385): stop VaultSecretRefresher в shutdown
+    ("stop_vault_secret_refresher", _stop_vault_secret_refresher, None),
     # D-A8-04 fix (cycle 1): graceful stop TemporalWorkerRuntime.
     ("stop_temporal_worker_runtime", stop_temporal_worker_runtime, None),
 ]
@@ -536,6 +590,16 @@ def _build_infrastructure_operations() -> list[LifecycleOperation]:
             phase=_INFRASTRUCTURE_PHASE,
             start=_start_config_hot_reload,
             stop=_stop_config_hot_reload,
+        ),
+        LifecycleOperation(
+            # A2 (ADR-0385): wire VaultSecretRefresher — фоновая ротация
+            # секретов из Vault. OPTIONAL: Vault — опциональный источник,
+            # его недоступность не должна ронять старт приложения.
+            name="start_vault_secret_refresher",
+            phase=_INFRASTRUCTURE_PHASE,
+            start=_start_vault_secret_refresher,
+            stop=_stop_vault_secret_refresher,
+            criticality=Criticality.OPTIONAL,
         ),
         LifecycleOperation(
             # OPTIONAL: ClickHouse в dev_light выключен — деградация вместо падения.

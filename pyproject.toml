@@ -263,6 +263,10 @@ rpa = [
     # параллельно с playwright (legacy), полная миграция — Sprint 9 K3.
     "patchright>=1.40.0,<2.0",
     "pdfplumber>=0.11.0,<1.0.0",
+    # ADR-0385 (A5): пин <13.0.0 УДЕРЖИВАЕТСЯ — streamlit (core-зависимость,
+    # locked 1.63.0) требует pillow<13,>=7.1.0, поэтому pillow>=13 делает
+    # lock-файл неразрешимым. 59 CVE Pillow 12.x (5 CRIT) приняты осознанно,
+    # отложены до обновления streamlit — см. docs/adr/0385-*.md.
     "pillow>=12.3.0,<13.0.0",
     "playwright>=1.48.0,<2.0.0",
     "pytesseract>=0.3.10,<1.0.0",
@@ -298,7 +302,7 @@ rpa-ocr = [
 # sidecar; на Linux/macOS sidecar возвращает 503.
 rpa-windows = [
     "pywinauto>=0.6.8,<1.0",
-    "pillow>=12.3.0,<13.0.0",  # SECURITY: memory corruption CVE fix (vulnerable < 12.2.0)
+    "pillow>=12.3.0,<13.0.0",  # ADR-0385 (A5): пин удерживается из-за streamlit (pillow<13); 59 CVE отложены
 ]
 # Sprint 8 — HTTP/3 + WebTransport opt-in.
 # aioquic — pure-Python QUIC/HTTP3 stack; cp314 wheels с 1.1.0 (cryptography>=42).
@@ -641,7 +645,7 @@ multimodal-rag = [
     "docling>=2.132.0,<3.0.0",
     "paddleocr>=2.8.0,<4.0.0",
     "pypdfium2>=4.30.0,<5.0.0",
-    "Pillow>=10.0.0,<13.0.0",  # S30: upped to <13.0.0 — Pillow 12.x officially supports Python 3.14
+    "Pillow>=10.0.0,<13.0.0",  # ADR-0385 (A5): <13.0.0 удерживается из-за streamlit (pillow<13,>=7.1.0) — 59 CVE отложены
     # Sprint 11 K4 W1: BLIP2 image captioning (HF transformers).
     # Lazy-import внутри services/ai/rag/multimodal/blip2_captioner.py;
     # extra включается только при использовании.

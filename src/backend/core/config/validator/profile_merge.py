@@ -37,6 +37,9 @@ from src.backend.core.config.base import AppBaseSettings
 from src.backend.core.config.config_loader import _deep_merge, repo_root
 from src.backend.core.config.constants_settings import ConstantsSettings
 from src.backend.core.config.database import DatabaseConnectionSettings
+from src.backend.core.config.external_databases.registry import (
+    ExternalDatabasesSettings,
+)
 from src.backend.core.config.features import FeatureFlags
 from src.backend.core.config.security import SecureSettings
 from src.backend.core.config.services.cache import RedisSettings
@@ -83,6 +86,7 @@ class ProfileSettings(BaseSettings):
     secure: SecureSettings
     vault: VaultSettings
     database: DatabaseConnectionSettings
+    external_databases: ExternalDatabasesSettings
     redis: RedisSettings
     features: FeatureFlags
 
@@ -192,9 +196,58 @@ def build_profile_settings(merged: dict[str, Any]) -> ProfileSettings:
         secure=_construct(SecureSettings, merged.get("security")),
         vault=_construct(VaultSettings, merged.get("vault")),
         database=_construct(DatabaseConnectionSettings, merged.get("database")),
+        external_databases=_construct(
+            ExternalDatabasesSettings, merged.get("external_databases")
+        ),
         redis=_construct(RedisSettings, merged.get("redis")),
         features=_construct(FeatureFlags, merged.get("features")),
     )
+
+
+def _validate_model_section(
+    model_cls: type[Any],
+    section: dict[str, Any] | None,
+    section_name: str,
+) -> tuple[ConfigViolation, ...]:
+    """Валидирует секцию merged-конфига pydantic-моделью (ADR-0385, A9).
+
+    ``ProfileSettings`` собирается через ``model_construct`` (без
+    валидации — CLI не должен требовать секреты), поэтому ограничения
+    полей секций БД (``pool_size >= 1``, ``port < 65536``, ``extra=forbid``)
+    не проверялись: битые значения проходили с exit 0 и роняли старт.
+
+    Args:
+        model_cls: Pydantic-модель секции.
+        section: YAML-секция merged-конфига (может быть пустой).
+        section_name: Имя секции (для кода нарушения и подсказки).
+
+    Returns:
+        Кортеж нарушений (по одному на ошибочное поле).
+
+    """
+    if not section:
+        return ()
+    try:
+        model_cls.model_validate(section)
+    except ValidationError as exc:
+        return tuple(
+            ConfigViolation(
+                severity=ConfigSeverity.CRITICAL,
+                code=f"{section_name}.invalid",
+                message=(
+                    f"Некорректное значение в секции {section_name}: "
+                    f"{_field_path(error['loc'])} — {error['msg']}"
+                ),
+                field=f"{section_name}.{_field_path(error['loc'])}",
+                recommendation=(
+                    f"Исправить значение в секции {section_name} файла "
+                    "config_profiles/base.yml (или overlay профиля)."
+                ),
+                context={"input": error.get("input")},
+            )
+            for error in exc.errors()
+        )
+    return ()
 
 
 def _validate_constants_section(section: dict[str, Any]) -> tuple[ConfigViolation, ...]:
@@ -291,6 +344,21 @@ def validate_profile_config(
             ),
         )
     violations.extend(_validate_constants_section(merged.get("constants") or {}))
+    # ADR-0385 (A9): секции БД валидируются моделями — битые значения
+    # (``pool_size: 0``, ``port: 99999``, опечатки в подключениях) больше
+    # не проходят с exit 0.
+    violations.extend(
+        _validate_model_section(
+            DatabaseConnectionSettings, merged.get("database"), "database"
+        )
+    )
+    violations.extend(
+        _validate_model_section(
+            ExternalDatabasesSettings,
+            merged.get("external_databases"),
+            "external_databases",
+        )
+    )
     return tuple(
         sorted(
             violations,

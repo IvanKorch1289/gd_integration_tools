@@ -12,8 +12,11 @@ from src.backend.core.config.external_databases.connection import (
     ExternalDatabaseConnectionSettings,
 )
 from src.backend.core.config.external_databases.item import ExternalDatabaseItemSettings
+from src.backend.core.logging import get_logger
 
 __all__ = ("ExternalDatabasesSettings", "external_databases_settings")
+
+_logger = get_logger("config.external_databases")
 
 
 class ExternalDatabasesSettings(BaseSettingsWithLoader):
@@ -178,8 +181,21 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
         - берёт top-level defaults;
         - применяет profile-specific overrides;
         - подмешивает username/password из env.
+
+        ADR-0385 (A8): отсутствие кредов НЕ поднимает исключение — иначе
+        computed-поля роняли ``settings.model_dump()`` и admin-эндпоинт
+        ``GET /api/v1/admin/config`` отдавал 500. Проблема фиксируется
+        warning'ом и проявляется в момент реального использования
+        профиля (:meth:`get_profile`).
         """
-        payload = connection.model_dump(exclude_none=True)
+        # ``exclude`` — computed-поля item'а (``username_env_key``/
+        # ``password_env_key``): это служебные ключи env, а не параметры
+        # подключения (ADR-0385 A10: item — extra="forbid", лишние ключи
+        # отвергаются валидатором).
+        payload = connection.model_dump(
+            exclude_none=True,
+            exclude=set(ExternalDatabaseItemSettings.model_computed_fields),
+        )
 
         common_fields = (
             "echo",
@@ -212,13 +228,17 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
         )
 
         if connection.enabled and not username:
-            raise ValueError(
-                f"Не найден username для внешней БД '{connection.profile_name}'"
+            _logger.warning(
+                "Не найден username для внешней БД '%s' — профиль деградирован "
+                "(подключение невозможно до появления кредов в env/Vault)",
+                connection.profile_name,
             )
 
         if connection.enabled and not password_raw:
-            raise ValueError(
-                f"Не найден password для внешней БД '{connection.profile_name}'"
+            _logger.warning(
+                "Не найден password для внешней БД '%s' — профиль деградирован "
+                "(подключение невозможно до появления кредов в env/Vault)",
+                connection.profile_name,
             )
 
         payload["username"] = username
@@ -240,11 +260,23 @@ class ExternalDatabasesSettings(BaseSettingsWithLoader):
         return result
 
     def get_profile(self, profile_name: str) -> ExternalDatabaseConnectionSettings:
-        """Возвращает resolved-конфигурацию внешней БД по profile_name."""
+        """Возвращает resolved-конфигурацию внешней БД по profile_name.
+
+        Raises:
+            ValueError: Профиля нет либо для него не заданы креды
+                (fail-fast в точке использования — вместо молчаливого
+                подключения без пароля).
+
+        """
         try:
-            return self.profiles[profile_name]  # type: ignore[index]
+            connection = self.profiles[profile_name]  # type: ignore[index]
         except KeyError as exc:
             raise ValueError(f"Профиль внешней БД '{profile_name}' не найден") from exc
+        if not connection.username or connection.password is None:
+            raise ValueError(
+                f"Не найден username/password для внешней БД '{profile_name}'"
+            )
+        return connection
 
 
 external_databases_settings = ExternalDatabasesSettings()

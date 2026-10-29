@@ -166,14 +166,16 @@ class TestAllowlistFile:
     def test_allowlist_is_loadable(self) -> None:
         """Allowlist читается: комментарии игнорируются.
 
-        Wave 13 Q2: ``pyodbc`` объявлен в extra ``db_drivers`` — запись снята;
-        в долге остался только проприетарный ``ibm_db_sa``.
+        Wave 13 Q2: ``pyodbc`` объявлен в extra ``db_drivers`` — запись снята.
+        ADR-0381 (A4): ``ibm_db_sa`` снят — DB2 недостижим через SQLAlchemy
+        DSN (диалект удалён в 2.0), тип отвергается fail-fast; allowlist
+        гейта объявления драйверов пуст.
         """
         entries = load_allowlist(_TOOLS_DIR / "check_dsn_drivers_allowlist.txt")
         assert isinstance(entries, frozenset)
         assert "pyodbc" not in entries
         assert "psycopg2" not in entries
-        assert "ibm_db_sa" in entries
+        assert "ibm_db_sa" not in entries
 
 
 @pytest.mark.unit

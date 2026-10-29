@@ -40,7 +40,11 @@ class ExternalDatabaseItemSettings(BaseModel):
     # Поле ``schema`` в YAML мапится в ``db_schema``: одноимённое имя
     # затеняет атрибут ``BaseModel.schema`` (deprecated в Pydantic v2,
     # удаляется в v3) и вызывает UserWarning при создании класса.
-    model_config = ConfigDict(populate_by_name=True)
+    #
+    # ADR-0385 (A10): ``extra="forbid"`` — опечатка в ключе подключения
+    # (``sslmode`` вместо ``ssl_mode``, ``pool_sze`` вместо ``pool_size``)
+    # больше не теряется молча: конфигурация отвергается на валидации.
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
 
     name: str = Field(
         ...,

@@ -140,6 +140,26 @@ jobs:
       - name: Sync deps
         run: uv sync
 
+      # A6 (ADR-0385): аудит ВСЕГО uv.lock (все extras) — `uv audit --frozen`
+      # разбирает весь lock-файл без установки пакетов. Job pip-audit ниже
+      # сканирует только default-venv (`uv sync`): 41 из 117 уязвимостей в
+      # extras не проверялись.
+      #
+      # Известный долг (99 уязвимостей: chromadb/diskcache без фикса,
+      # pillow/virtualenv/filelock отложены) вынесен в canonical allowlist
+      # (.security/uv-audit-allowlist.txt) — блокируются НОВЫЕ advisory-ID.
+      # `uv audit` не умеет читать allowlist-файл (только --ignore в CLI),
+      # поэтому allowlist разбирает tools/uv_audit_gate.py.
+      - name: Audit full lock file (uv audit --frozen)
+        # `uv audit` возвращает exit 1, если найдены уязвимости, поэтому
+        # сам вызов не роняет шаг — решение принимает гейт по allowlist.
+        run: uv audit --frozen > uv-audit.txt || true
+
+      - name: uv audit gate (new advisories only)
+        # Любая advisory-ID, которой нет в .security/uv-audit-allowlist.txt,
+        # БЛОКИРУЕТ CI. Пустой/битый отчёт — fail-closed (exit 1).
+        run: python tools/uv_audit_gate.py --report uv-audit.txt
+
       - name: Run pip-audit
         # pip-audit уже в pyproject.toml dev-deps.
         # S29 W1: pip-audit 2.10.0 always exits 0, используем wrapper-скрипт
@@ -165,6 +185,14 @@ jobs:
         with:
           name: pip-audit-report
           path: pip-audit.json
+          retention-days: 30
+
+      - name: Upload uv audit report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: uv-audit-report
+          path: uv-audit.txt
           retention-days: 30
 
   gitleaks:

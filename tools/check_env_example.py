@@ -55,6 +55,11 @@ ENV_EXAMPLE = PROJECT_ROOT / ".env.example"
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from tools.config_audit import (  # noqa: E402
+    _parse_config_classes,
+    _resolve_env_prefix,
+    _resolve_fields,
+)
 from tools.config_secret_rules import is_secret_field, is_secret_name  # noqa: E402
 
 app = typer.Typer(
@@ -200,12 +205,74 @@ def _extract_env_prefixes_from_file(
     return [(prefix, fields) for prefix, fields in grouped.items()]
 
 
-def collect_env_fields(config_dir: Path = CONFIG_DIR) -> dict[str, EnvField]:
-    """Собирает все env-переменные Settings-моделей: ``{ENV_VAR: EnvField}``."""
-    fields: dict[str, EnvField] = {}
+def _collect_default_factory_fields(config_dir: Path = CONFIG_DIR) -> set[str]:
+    """Имена полей, объявленных через ``Field(default_factory=...)``.
+
+    Резолвер ``tools.config_audit`` считает такое поле «без дефолта»
+    (у него нет positional-аргумента), поэтому required-ness уточняется
+    здесь — иначе фабрика по умолчанию выглядела бы как обязательный
+    секрет и ломала бы ``--matrix``.
+    """
+    names: set[str] = set()
     for path in config_dir.rglob("*.py"):
-        for field in _extract_env_fields_from_file(path):
-            fields.setdefault(field.env_var, field)
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        except (OSError, SyntaxError):
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.AnnAssign):
+                continue
+            if not isinstance(node.target, ast.Name):
+                continue
+            value = node.value
+            if not isinstance(value, ast.Call):
+                continue
+            func = value.func
+            func_name = getattr(func, "id", "") or getattr(func, "attr", "")
+            if func_name != "Field":
+                continue
+            if any(kw.arg == "default_factory" for kw in value.keywords):
+                names.add(node.target.id)
+    return names
+
+
+def collect_env_fields(config_dir: Path = CONFIG_DIR) -> dict[str, EnvField]:
+    """Собирает все env-переменные Settings-моделей: ``{ENV_VAR: EnvField}``.
+
+    Наследование полей учитывается (ADR-0385): резолвер
+    ``tools.config_audit._resolve_fields`` склеивает поля базовых классов
+    и mixin'ов (``ConnectionMixin``, ``BaseBotChannelSettings``), поэтому
+    креды, объявленные в базе (``AI_USERNAME``, ``EXPRESS_SECRET_KEY``,
+    ``TELEGRAM_SIGNATURE_SECRET``), больше не теряются.
+
+    Раньше скан смотрел только ``node.body`` самого класса — девять живых
+    секретов помечались как «не используются в Settings» и не попадали
+    под гейт ADR-0373.
+    """
+    registry = _parse_config_classes(config_dir)
+    default_factory_fields = _collect_default_factory_fields(config_dir)
+    fields: dict[str, EnvField] = {}
+    for spec in registry.values():
+        prefix = _resolve_env_prefix(spec, registry)
+        if not prefix:
+            continue
+        env_prefix = prefix.rstrip("_")
+        for field_name, field in _resolve_fields(spec, registry).items():
+            if "ClassVar" in field.annotation:
+                continue
+            env_var = f"{env_prefix}_{field_name}".upper()
+            fields.setdefault(
+                env_var,
+                EnvField(
+                    env_var=env_var,
+                    field_name=field_name,
+                    annotation=field.annotation,
+                    is_required=(
+                        not field.has_default
+                        and field_name not in default_factory_fields
+                    ),
+                ),
+            )
     return fields
 
 

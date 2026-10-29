@@ -137,6 +137,15 @@ YAML-кэш и кэш секретов Vault, пересоздаёт вложе�
 `succeeded`/`failed`/`callbacks`/`ok`; отсутствие `settings.reload()` или
 ошибка callback'а — это **ошибка** (`failed` непустой), а не «успех».
 
+**Предел hot-reload: пулы БД не пересоздаются (ADR-0385).** SQLAlchemy
+`engine`/`pool` печётся при создании (`DatabaseInitializer`,
+`ExternalDatabaseRegistry`), поэтому изменение `database.*` /
+`external_databases.*` в YAML **не применяется к живому пулу** — нужен
+**рестарт процесса**. Hot-reload перечитывает настройки, но уже
+созданный engine продолжает использовать старые `pool_size`,
+`pool_timeout`, DSN и т.д. Операторам это фиксировано явно (ADR-0385),
+чтобы правка YAML не выглядела применённой.
+
 ## Consul integration (D-rule)
 
 **2 integration points:**
@@ -192,7 +201,11 @@ YAML-кэш и кэш секретов Vault, пересоздаёт вложе�
 4. `ConfigValidator` по merged-конфигу → CRITICAL = exit 1,
    WARNING = exit 1 при `--strict`;
 5. секция `constants` — ограничения полей (`ge=0` / `gt=0`) → CRITICAL
-   = exit 1 (ADR-0377).
+   = exit 1 (ADR-0377);
+6. секции БД — `database` (`DatabaseConnectionSettings`) и
+   `external_databases` (`ExternalDatabasesSettings`) валидируются
+   **моделями** (ADR-0385): `pool_size: 0`, `port: 99999`, опечатка в
+   подключении (`sslmode` вместо `ssl_mode`) → CRITICAL = exit 1.
 
 CLI не требует секретов: секции собираются через `model_construct`.
 
@@ -284,6 +297,45 @@ Webhook-relay (`services/integrations/webhook_relay.py`) в allowlist не
 помогает `core/config/secret.py::secret_value` (терпим к `SecretStr`,
 `str`, `None`). Публичные контракты не сломаны: `AuthConfig.api_key`,
 `redis_url`, HTTP-заголовки и параметры SDK остаются строками.
+
+### env-ключи с наследованием (ADR-0385)
+
+`tools/check_env_example.py` разрешает **наследование** полей (резолвер
+`tools/config_audit.py::_resolve_fields`): креды, объявленные в mixin'ах
+(`ConnectionMixin`) и базах (`BaseBotChannelSettings`), видны гейту под
+env-префиксом класса-наследника:
+
+| env-ключ | Источник поля |
+|---|---|
+| `AI_USERNAME` / `AI_PASSWORD` / `AI_API_KEY` | `ConnectionMixin` → `AIProvidersSettings` |
+| `MINIMAX_USERNAME` / `MINIMAX_PASSWORD` | `ConnectionMixin` → `MiniMaxSettings` |
+| `EXPRESS_SECRET_KEY` / `EXPRESS_SIGNATURE_SECRET` | `BaseBotChannelSettings` → `ExpressSettings` |
+| `TELEGRAM_SECRET_KEY` / `TELEGRAM_SIGNATURE_SECRET` | `BaseBotChannelSettings` → `TelegramBotSettings` |
+
+Все девять ключей описаны в `.env.example` пустыми значениями (ADR-0373:
+в `.env` — только секреты).
+
+### Внешние БД: DSN и креды (ADR-0385)
+
+* `external_databases.connections[]` — модель с `extra="forbid"`:
+  опечатка в ключе подключения отвергается валидацией, а не теряется
+  молча;
+* computed-поля `async_connection_url` / `sync_connection_url` маскируют
+  пароль в `model_dump()` (`mask_url_password`) — `GET /api/v1/admin/config`
+  больше не отдаёт пароль; сами атрибуты DSN остаются рабочими для
+  SQLAlchemy;
+* отсутствие кредов/драйвера **не роняет** `settings.model_dump()`
+  (admin-эндпоинт отдавал 500): профиль деградирует с warning'ом, а
+  `ExternalDatabasesSettings.get_profile()` по-прежнему падает с понятной
+  ошибкой в точке использования.
+
+### WAF-policy по умолчанию (ADR-0385)
+
+`OutboundHttpClient` без явно переданной policy берёт её из
+`waf_settings` (`allow_hosts` / `deny_hosts` / `strict` /
+`max_payload_bytes`) — раньше подставлялась пустая permissive-policy, и
+вызывающие вроде `make_http_client` обходили настройку WAF. Явная policy
+всегда имеет приоритет.
 
 ## D-rules (Configuration)
 
