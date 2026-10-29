@@ -13,14 +13,22 @@ Sprint 0 (Redis cluster + pipelining): добавлены ``mget_pipelined`` /
 Tag-index (Wave 2.3): добавлены ``bind_key_to_tag`` и ``delete_by_tag`` —
 для tag-based инвалидации используется Redis SET-индекс:
 ``__cache_tag:{tag}`` хранит множество ключей с этим тегом.
+
+Circuit breaker (wave 18, ADR-0391, дефект 6): backend работает с raw
+``redis.asyncio.Redis`` и идёт мимо ``RedisClient.execute()`` — там CB есть,
+а тут был только socket-таймаут. Теперь каждая операция обёрнута в
+:class:`ClientCircuitBreaker`: после N подряд отказов breaker открывается и
+следующие вызовы падают быстро (``CircuitOpen``) — фасад деградирует в
+memory/disk, не дожидаясь socket-таймаута.
 """
 
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from src.backend.core.interfaces.cache import CacheBackend
+from src.backend.infrastructure.resilience.client_breaker import ClientCircuitBreaker
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis
@@ -33,8 +41,34 @@ _TAG_INDEX_PREFIX = "__cache_tag:"
 class RedisBackend(CacheBackend):
     """Cache backend поверх ``redis.asyncio.Redis``."""
 
-    def __init__(self, client: Redis) -> None:
+    _breaker_name: ClassVar[str] = "cache.redis"
+    _breaker_host: ClassVar[str] = "primary"
+    _breaker_failure_threshold: ClassVar[int] = 5
+    _breaker_recovery_timeout: ClassVar[float] = 30.0
+
+    def __init__(
+        self,
+        client: Redis,
+        *,
+        breaker: ClientCircuitBreaker | None = None,
+    ) -> None:
+        """Args:
+        client: raw ``redis.asyncio.Redis`` (НЕ обёртка RedisClient).
+        breaker: Circuit breaker; по умолчанию — общий ``cache.redis``.
+
+        """
         self._client = client
+        self._breaker = breaker or ClientCircuitBreaker(
+            name=self._breaker_name,
+            failure_threshold=self._breaker_failure_threshold,
+            recovery_timeout=self._breaker_recovery_timeout,
+            host=self._breaker_host,
+        )
+
+    @property
+    def breaker(self) -> ClientCircuitBreaker:
+        """Circuit breaker backend'а (read-only)."""
+        return self._breaker
 
     async def get(self, key: str) -> bytes | None:
         """Get value from Redis cache.
@@ -46,7 +80,8 @@ class RedisBackend(CacheBackend):
             Cached bytes or None if not found.
 
         """
-        return await self._client.get(key)
+        async with self._breaker.guard():
+            return await self._client.get(key)
 
     async def set(self, key: str, value: bytes, ttl: int | None = None) -> None:
         """Set value in Redis cache.
@@ -57,10 +92,11 @@ class RedisBackend(CacheBackend):
             ttl: Optional TTL in seconds.
 
         """
-        if ttl is not None:
-            await self._client.set(key, value, ex=ttl)
-        else:
-            await self._client.set(key, value)
+        async with self._breaker.guard():
+            if ttl is not None:
+                await self._client.set(key, value, ex=ttl)
+            else:
+                await self._client.set(key, value)
 
     async def delete(self, *keys: str) -> None:
         """Delete values from Redis cache.
@@ -81,7 +117,8 @@ class RedisBackend(CacheBackend):
         """
         if not keys:
             return
-        await asyncio.gather(*(self._client.delete(key) for key in keys))
+        async with self._breaker.guard():
+            await asyncio.gather(*(self._client.delete(key) for key in keys))
 
     async def delete_pattern(self, pattern: str) -> None:
         """Delete values matching pattern using SCAN.
@@ -91,8 +128,9 @@ class RedisBackend(CacheBackend):
 
         """
         # SCAN вместо KEYS — безопаснее для больших keyspace.
-        async for key in self._client.scan_iter(match=pattern, count=200):
-            await self._client.delete(key)
+        async with self._breaker.guard():
+            async for key in self._client.scan_iter(match=pattern, count=200):
+                await self._client.delete(key)
 
     async def exists(self, key: str) -> bool:
         """Check if key exists in Redis cache.
@@ -104,7 +142,8 @@ class RedisBackend(CacheBackend):
             True if key exists, False otherwise.
 
         """
-        return bool(await self._client.exists(key))
+        async with self._breaker.guard():
+            return bool(await self._client.exists(key))
 
     # ── Tag-index support (for tag-based invalidation) ──────────────────────
 
@@ -114,7 +153,8 @@ class RedisBackend(CacheBackend):
 
     async def bind_key_to_tag(self, tag: str, key: str) -> None:
         """Привязывает cache key к тегу (SET SADD __cache_tag:{tag} {key})."""
-        await self._client.sadd(self._tag_index_key(tag), key)  # type: ignore[misc]
+        async with self._breaker.guard():
+            await self._client.sadd(self._tag_index_key(tag), key)  # type: ignore[misc]
 
     async def delete_by_tag(self, tag: str) -> int:
         """Удаляет все ключи, привязанные к тегу.
@@ -133,25 +173,27 @@ class RedisBackend(CacheBackend):
 
         """
         index_key = self._tag_index_key(tag)
-        # SMEMBERS + индивидуальные DEL
-        keys = await self._client.smembers(index_key)  # type: ignore[misc]
-        if not keys:
-            return 0
-        # Декодируем bytes-ключи из SET в str
-        str_keys = [k.decode() if isinstance(k, bytes) else k for k in keys]
-        if str_keys:
-            # Cluster-safe: по одному ключу за вызов (см. RedisBackend.delete).
-            await self.delete(*str_keys)
-        # Tag-index — отдельный одноключевой DEL.
-        await self._client.delete(index_key)
+        async with self._breaker.guard():
+            # SMEMBERS + индивидуальные DEL
+            keys = await self._client.smembers(index_key)  # type: ignore[misc]
+            if not keys:
+                return 0
+            # Декодируем bytes-ключи из SET в str
+            str_keys = [k.decode() if isinstance(k, bytes) else k for k in keys]
+            if str_keys:
+                # Cluster-safe: по одному ключу за вызов (см. RedisBackend.delete).
+                await self.delete(*str_keys)
+            # Tag-index — отдельный одноключевой DEL.
+            await self._client.delete(index_key)
         return len(str_keys)
 
     async def delete_by_pattern(self, pattern: str) -> int:
         """Удаляет все ключи, matching glob pattern."""
         count = 0
-        async for key in self._client.scan_iter(match=pattern, count=200):
-            await self._client.delete(key)
-            count += 1
+        async with self._breaker.guard():
+            async for key in self._client.scan_iter(match=pattern, count=200):
+                await self._client.delete(key)
+                count += 1
         return count
 
     # Максимальный размер одного pipeline-батча (защита от OOM при

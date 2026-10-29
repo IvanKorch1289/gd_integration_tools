@@ -529,6 +529,18 @@ class CacheSettings(BaseSettingsWithLoader):
             "только primary + memory (2-tier), без диска."
         ),
     )
+    max_value_bytes: int = Field(
+        default=1_048_576,
+        ge=1024,
+        le=100_000_000,
+        description=(
+            "Wave 18 (ADR-0391), дефект 7: лимит размера одного cache-значения "
+            "в байтах. Значения больше лимита отклоняются с понятной ошибкой "
+            "(ValueError) и не пишутся ни в один tier — иначе произвольный "
+            "orjson-дамп (например, большой ответ LLM) забивал Redis."
+        ),
+        json_schema_extra={"example": 1048576},
+    )
 
 
 cache_settings = CacheSettings()

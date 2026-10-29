@@ -24,10 +24,7 @@ Helper semantics:
 
 from __future__ import annotations
 
-from src.backend.services.cache.facade import (
-    CacheResult,
-    UnifiedCacheFacade,
-)
+from src.backend.services.cache.facade import CacheResult, UnifiedCacheFacade
 
 __all__ = (
     "CacheResult",
@@ -76,7 +73,7 @@ def get_unified_cache_facade(plugin: str = _DEFAULT_PLUGIN) -> UnifiedCacheFacad
     """
     if plugin == _DEFAULT_PLUGIN:
         # Production path: lookup registered singleton.
-        from src.backend.core.svcs_registry import has_service, get_service
+        from src.backend.core.svcs_registry import get_service, has_service
 
         if not has_service(UnifiedCacheFacade):
             raise RuntimeError(

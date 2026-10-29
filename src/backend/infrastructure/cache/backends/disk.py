@@ -12,7 +12,7 @@ Cycle 168 (PROD_READINESS_LOGGING_CACHE_2026-10-20 §1.1): per-key TTL
 
 from __future__ import annotations
 
-import asyncio
+import fnmatch
 import hashlib
 import time
 from pathlib import Path
@@ -45,6 +45,10 @@ class DiskCacheBackend(CacheBackend):
     def __init__(self, base_path: str | Path) -> None:
         self._base = Path(base_path).expanduser().resolve()
         self._base.mkdir(parents=True, exist_ok=True)
+        # In-memory индекс записанных ключей — нужен для pattern-delete
+        # (из файла имя ключа не восстановить: ключ хэшируется SHA256).
+        # Wave 18 (ADR-0391), дефект 8.
+        self._keys: set[str] = set()
 
     def _safe_path(self, key: str) -> Path:
         """Хэширует ключ и возвращает безопасный путь внутри base_path."""
@@ -129,6 +133,7 @@ class DiskCacheBackend(CacheBackend):
         """
         path = self._safe_path(key)
         expiry_path = self._expiry_path(key)
+        self._keys.add(key)
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             tmp = path.with_suffix(path.suffix + ".tmp")
@@ -160,31 +165,56 @@ class DiskCacheBackend(CacheBackend):
 
         """
         for key in keys:
+            self._keys.discard(key)
             for p in (self._safe_path(key), self._expiry_path(key)):
                 try:
                     await aiofiles.os.remove(str(p))
-                except FileNotFoundError:  # noqa: violation-check — expected
+                except FileNotFoundError:
                     pass
                 except OSError as exc:
                     _logger.debug("DiskCache delete failed key=%s: %s", key, exc)
 
     async def delete_pattern(self, pattern: str) -> None:
-        """Delete values matching pattern (no-op for disk cache).
+        """Delete values matching pattern.
+
+        Ключи хэшируются (SHA256) → из имени файла ключ не восстановить.
+        Поэтому backend держит in-memory индекс ключей, записанных через
+        ``set()``, и удаляет их по glob-паттерну.
+
+        ponytail: потолок решения — индекс живёт в памяти процесса; после
+        рестарта ранее записанные ключи неизвестны и pattern-delete их не
+        заденет. Апгрейд — on-disk индекс (key → hash) рядом с данными.
 
         Args:
-            pattern: Glob pattern (ignored, disk cache doesn't support pattern delete).
+            pattern: Glob pattern (например ``"ns:*"``).
 
         """
-
-        def _sync() -> None:
-            for path in self._base.rglob("*"):
-                if path.is_file() and not path.name.endswith(".tmp"):
-                    # key cannot be recovered from hash; skip pattern delete
+        matched = [key for key in self._keys if fnmatch.fnmatch(key, pattern)]
+        for key in matched:
+            self._keys.discard(key)
+            for p in (self._safe_path(key), self._expiry_path(key)):
+                try:
+                    await aiofiles.os.remove(str(p))
+                except FileNotFoundError:
                     pass
+                except OSError as exc:
+                    _logger.debug(
+                        "DiskCache delete_pattern failed key=%s: %s", key, exc
+                    )
 
-        await asyncio.to_thread(_sync)
-        # Disk backend does not support pattern delete efficiently without
-        # maintaining an index. delete_pattern is a no-op for disk fallback.
+    async def delete_by_pattern(self, pattern: str) -> int:
+        """Удаляет ключи по паттерну и возвращает их количество.
+
+        Args:
+            pattern: Glob pattern.
+
+        Returns:
+            Число удалённых ключей.
+
+        """
+        matched = [key for key in self._keys if fnmatch.fnmatch(key, pattern)]
+        await self.delete_pattern(pattern)
+        return len(matched)
 
     async def exists(self, key: str) -> bool:
         """Check if key exists in disk cache.

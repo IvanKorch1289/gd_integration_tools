@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 
 

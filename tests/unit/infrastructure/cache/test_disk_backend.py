@@ -36,8 +36,24 @@ async def test_delete_missing_is_noop(backend: DiskCacheBackend) -> None:
 
 
 @pytest.mark.asyncio
-async def test_delete_pattern_is_noop(backend: DiskCacheBackend) -> None:
-    """Disk backend не поддерживает pattern delete (no-op без ошибок)."""
+async def test_delete_pattern_removes_matching_keys(backend: DiskCacheBackend) -> None:
+    """Wave 18 (ADR-0391): pattern delete удаляет подходящие ключи.
+
+    Раньше был no-op (ключи хэшируются SHA256) → disk-tier копил stale
+    значения (дефект 8).
+    """
     await backend.set("a.b", b"1")
+    await backend.set("c.d", b"2")
     await backend.delete_pattern("a.*")
-    assert await backend.get("a.b") == b"1"
+    assert await backend.get("a.b") is None
+    assert await backend.get("c.d") == b"2"
+
+
+@pytest.mark.asyncio
+async def test_delete_by_pattern_returns_count(backend: DiskCacheBackend) -> None:
+    """``delete_by_pattern`` возвращает число удалённых ключей."""
+    await backend.set("a.b", b"1")
+    await backend.set("a.c", b"2")
+    await backend.set("c.d", b"3")
+    assert await backend.delete_by_pattern("a.*") == 2
+    assert await backend.get("c.d") == b"3"

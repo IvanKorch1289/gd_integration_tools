@@ -10,19 +10,14 @@ Cycle 168: throttling через ``_LOG_THROTTLE_WINDOW_SECONDS = 60s``.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from collections.abc import AsyncIterator
-from typing import Any
 
 import pytest
 
 from src.backend.core.interfaces.cache import CacheBackend
-from src.backend.services.cache.facade import (
-    UnifiedCacheFacade,
-    _log_throttle_counters,
-)
 from src.backend.infrastructure.cache.backends.memory import MemoryBackend
+from src.backend.services.cache.facade import UnifiedCacheFacade, _log_throttle_counters
 
 
 class FailingBackend(CacheBackend):

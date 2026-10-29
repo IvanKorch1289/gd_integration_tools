@@ -115,14 +115,17 @@ async def test_delete_nonexistent(disk_cache: DiskCacheBackend) -> None:
 
 @pytest.mark.asyncio
 async def test_delete_pattern(disk_cache: DiskCacheBackend) -> None:
-    """delete_pattern() — документированный no-op (ключи не восстанавливаются из хэша)."""
+    """delete_pattern() удаляет подходящие ключи (wave 18, ADR-0391).
+
+    Раньше был no-op: ключи хэшируются SHA256, из файла имя ключа не
+    восстановить. Теперь backend держит in-memory индекс записанных ключей.
+    """
     await disk_cache.set("prefix_a", b"1")
     await disk_cache.set("prefix_b", b"2")
     await disk_cache.set("other", b"3")
-    await disk_cache.delete_pattern("prefix_")
-    # no-op: все значения остаются на месте
-    assert await disk_cache.get("prefix_a") == b"1"
-    assert await disk_cache.get("prefix_b") == b"2"
+    await disk_cache.delete_pattern("prefix_*")
+    assert await disk_cache.get("prefix_a") is None
+    assert await disk_cache.get("prefix_b") is None
     assert await disk_cache.get("other") == b"3"
 
 

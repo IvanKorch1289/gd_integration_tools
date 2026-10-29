@@ -37,6 +37,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from src.backend.core.cache.facade import UnifiedCacheFacade as _CoreUnifiedCacheFacade
+from src.backend.core.config.services.cache import cache_settings
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.logging import get_logger
 
@@ -255,9 +256,17 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
         tags: list[str] | None = None,
         namespace: str = "default",
     ) -> None:
-        """Namespace-aware set (best-effort по всем уровням)."""
+        """Namespace-aware set (best-effort по всем уровням).
+
+        Raises:
+            ValueError: если размер значения превышает
+                ``cache_settings.max_value_bytes`` (wave 18, ADR-0391,
+                дефект 7) — значение не пишется ни в один tier.
+
+        """
         self._assert("cache.write", namespace)
         full = self._full_key(namespace, key)
+        self._assert_value_size(value)
 
         successful_writes = 0
         for name, backend in (
@@ -280,6 +289,57 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
             ns_tags = self._tag_index.setdefault(namespace, {})
             for tag in tags:
                 ns_tags.setdefault(tag, set()).add(key)
+            await self._bind_tags_to_backends(full, tags)
+
+    @staticmethod
+    def _assert_value_size(value: bytes) -> None:
+        """Проверяет лимит размера значения (wave 18, ADR-0391, дефект 7).
+
+        Args:
+            value: Значение, которое планируется записать.
+
+        Raises:
+            ValueError: значение больше ``cache_settings.max_value_bytes``.
+
+        """
+        max_bytes = cache_settings.max_value_bytes
+        if max_bytes and len(value) > max_bytes:
+            raise ValueError(
+                f"Cache value too large: {len(value)} bytes exceeds "
+                f"max_value_bytes={max_bytes}. Increase cache.max_value_bytes "
+                f"or reduce payload size."
+            )
+
+    async def _bind_tags_to_backends(
+        self, full_key: str, tags: list[str]
+    ) -> None:
+        """Регистрирует ключ в tag-индексах backend'ов (дефект 5).
+
+        Backend'ы с нативной поддержкой тегов (``RedisBackend``) хранят
+        индекс ``__cache_tag:{tag}`` — без привязки ``CacheInvalidator``
+        не может удалить ключи по тегу.
+
+        Args:
+            full_key: Полный (namespace-scoped) ключ.
+            tags: Список тегов.
+
+        """
+        for backend in (self._primary, self._memory, self._disk):
+            if backend is None:
+                continue
+            binder = getattr(backend, "bind_key_to_tag", None)
+            if binder is None:
+                continue
+            for tag in tags:
+                try:
+                    await binder(tag, full_key)
+                except Exception as exc:
+                    _throttled_warning(
+                        backend=type(backend).__name__,
+                        operation="bind_tag",
+                        key=full_key,
+                        error=exc,
+                    )
 
     async def delete_ns(self, *keys: str, namespace: str = "default") -> None:
         """Namespace-aware delete (все уровни)."""
@@ -324,17 +384,29 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
         return False
 
     async def delete_pattern_ns(self, pattern: str, namespace: str = "default") -> None:
-        """Namespace-aware delete_pattern (только primary/memory).
+        """Namespace-aware delete_pattern (все уровни: primary/memory/disk).
 
-        Cycle 168: disk fallback исключён намеренно — disk backend хэширует
-        ключи через SHA256, pattern matching невозможен без reverse index.
-        Для disk namespace-prefix flush использовать ``flush_namespace()``
-        (отдельный метод, см. ADR-0352 Stage 5 / cycle 169 TODO).
+        Wave 18 (ADR-0391), дефект 8: disk-tier тоже чистится. Раньше он
+        намеренно исключался (pattern-delete в disk был no-op) → после
+        падения Redis клиент получал stale-значения из L3.
+
+        Для disk pattern-delete работает по in-memory индексу ключей
+        (см. ``DiskCacheBackend.delete_pattern``) — tenant-scoped паттерн
+        применяется на уровне wrapper'а.
+
+        Args:
+            pattern: Glob pattern.
+            namespace: Namespace ключей.
+
         """
         self._assert("cache.write", namespace)
         full_pattern = self._full_key(namespace, pattern)
 
-        for name, backend in (("primary", self._primary), ("memory", self._memory)):
+        for name, backend in (
+            ("primary", self._primary),
+            ("memory", self._memory),
+            ("disk", self._disk),
+        ):
             if backend is None:
                 continue
             try:

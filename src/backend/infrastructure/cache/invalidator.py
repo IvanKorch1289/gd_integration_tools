@@ -143,8 +143,24 @@ class CacheInvalidator:
         self._backends: list[CacheBackendProtocol] = list(backends or [])
 
     def add_backend(self, backend: CacheBackendProtocol) -> None:
-        """Добавляет backend в инвалидатор."""
+        """Добавляет backend в инвалидатор.
+
+        Идемпотентно: повторная регистрация того же backend'а игнорируется
+        (wave 18, ADR-0391 — фабрика вызывается на каждой инициализации
+        композиции).
+
+        Args:
+            backend: Backend, поддерживающий tag/pattern-инвалидацию.
+
+        """
+        if backend in self._backends:
+            return
         self._backends.append(backend)
+
+    @property
+    def backends(self) -> list[CacheBackendProtocol]:
+        """Зарегистрированные backend'ы (read-only копия списка)."""
+        return list(self._backends)
 
     async def invalidate(self, *tags: str) -> int:
         """Инвалидирует все ключи, помеченные указанными тегами, во всех

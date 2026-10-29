@@ -234,8 +234,12 @@ redis:
   # Чтение через settings.redis.cache_expire_seconds сохранено как deprecated
   # property — backwards-compat. Удалить эту строку можно после cycle 166.
   max_connections: 20
-  socket_timeout: 600
-  socket_connect_timeout: 60
+  # Wave 18 (ADR-0391), дефект 6: socket_timeout был 600 с — зависший Redis
+  # держал HTTP-запрос до 10 минут. Значение должно быть БОЛЬШЕ максимального
+  # block-таймаута blocking-операций (stream_read: block_ms=5000 → 5 с),
+  # иначе XREAD отвалится по socket-таймауту.
+  socket_timeout: 10
+  socket_connect_timeout: 5
   retry_on_timeout: true
   max_stream_len: 1000
   approximate_trimming_stream: true
@@ -271,6 +275,10 @@ cache:
   # для выделенного storage volume (например, EmptyDir на k8s).
   disk_fallback_enabled: false
   disk_fallback_path: "var/cache/disk_fallback"
+  # Wave 18 (ADR-0391), дефект 7: лимит размера одного cache-значения (1 MiB).
+  # Значения больше лимита отклоняются с понятной ошибкой (ValueError) и не
+  # пишутся ни в один tier — иначе произвольный orjson-дамп забивал Redis.
+  max_value_bytes: 1048576
 
 
 watermark:
@@ -318,6 +326,10 @@ fs:
   key_prefix: "uploads"
   max_pool_connections: 20
   read_timeout: 30
+  # ADR-0390: enforcement пер-тенантных квот файлов. false = alert-only
+  # (превышение лимита логируется, запись разрешена). Включается env
+  # FS_ENFORCE_QUOTA=true.
+  enforce_quota: false
 
 
 log:

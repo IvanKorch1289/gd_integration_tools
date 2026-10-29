@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from src.backend.dsl.engine.processors.ai.cache_processor import CacheProcessor
+
+# Провайдер unified cache facade (core DI) — патчится в тестах деградации.
+_FACADE_PROVIDER = "src.backend.core.di.providers.cache.get_unified_cache_facade_provider"
 
 
 class _Message:
@@ -122,3 +125,52 @@ class TestCacheProcessor:
             await proc.process(exchange, _Context())
 
         assert exchange.properties["cached"] is False
+
+
+class TestCacheProcessorDegradation:
+    """Wave 18 (ADR-0391), дефект 4: ошибка фасада = cache miss, не падение.
+
+    Раньше ``_get_facade()`` ловил только ``ImportError`` — ``RuntimeError``
+    от провайдера (например, «Memcached-бэкенд требует aiomcache»)
+    пробивал обработчик и ронял DSL-роут.
+    """
+
+    @pytest.mark.asyncio
+    async def test_facade_provider_raises_degrades_to_miss(self) -> None:
+        """Провайдер бросает RuntimeError → cache miss, роут живёт."""
+        proc = CacheProcessor(key_fn=lambda e: "k1")
+        exchange = _Exchange(body="x")
+
+        with patch(
+            _FACADE_PROVIDER,
+            side_effect=RuntimeError("Memcached-бэкенд требует aiomcache"),
+        ):
+            await proc.process(exchange, _Context())
+
+        assert exchange.properties["cached"] is False
+
+    @pytest.mark.asyncio
+    async def test_facade_read_raises_degrades_to_miss(self) -> None:
+        """Ошибка чтения из фасада → cache miss, роут живёт."""
+        facade = MagicMock()
+        facade.get_ns = AsyncMock(side_effect=RuntimeError("redis down"))
+        proc = CacheProcessor(key_fn=lambda e: "k1")
+        exchange = _Exchange(body="x")
+
+        with patch(_FACADE_PROVIDER, return_value=facade):
+            await proc.process(exchange, _Context())
+
+        assert exchange.properties["cached"] is False
+
+    @pytest.mark.asyncio
+    async def test_facade_hit_sets_cached_true(self) -> None:
+        """Успешный hit → cached=True (регрессия на деградацию)."""
+        facade = MagicMock()
+        facade.get_ns = AsyncMock(return_value=MagicMock(value=b'{"ok": true}', hit=True))
+        proc = CacheProcessor(key_fn=lambda e: "k1")
+        exchange = _Exchange(body="x")
+
+        with patch(_FACADE_PROVIDER, return_value=facade):
+            await proc.process(exchange, _Context())
+
+        assert exchange.properties["cached"] is True

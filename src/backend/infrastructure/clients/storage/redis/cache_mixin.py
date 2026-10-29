@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Literal
 
 from redis.asyncio import Redis
@@ -22,10 +23,66 @@ _MAX_BATCH_LIMIT: int = 1000
 RedisKind = Literal["cache", "queue", "limits"]
 
 
+async def _unlink_each(conn: Redis, keys: list[Any]) -> int:
+    """UNLINK по одному ключу за вызов — cluster-safe.
+
+    Multi-key ``UNLINK`` (``conn.unlink(*keys)``) в RedisCluster бросает
+    ``CROSSSLOT``: ключи попадают в разные hash-слоты. Волна 13 починила
+    только ``RedisBackend.delete`` — mixin оставался непочиненным
+    (wave 18, ADR-0391).
+
+    ponytail: потолок решения — до N round-trip'ов (по одному на ключ)
+    вместо одного multi-key UNLINK; это осознанный компромисс в пользу
+    cluster-корректности (тот же приём, что в ``RedisBackend.delete``).
+    Апгрейд при большом N — pipeline с per-key командами
+    (``pipe.unlink(key)`` для каждого ключа): pipeline разбрасывает
+    команды по нодам и CROSSSLOT не возникает.
+
+    Args:
+        conn: raw redis-соединение.
+        keys: ключи для удаления.
+
+    Returns:
+        Число удалённых ключей.
+
+    """
+    if not keys:
+        return 0
+    results = await asyncio.gather(*(conn.unlink(key) for key in keys))
+    return sum(int(r) for r in results)
+
+
 class CacheMixin(_RedisClientProtocol):
     """cache ops (decode + simple + bulk + pattern delete) для RedisClient. S59 W3 extraction."""
 
     __slots__ = ()
+
+    def raw_cache_client(self) -> Redis:
+        """Возвращает raw ``redis.asyncio.Redis`` для kind='cache'.
+
+        Синхронный accessor: redis-py создаёт клиент лениво (TCP-соединение
+        поднимается при первом command), поэтому ``await`` не нужен.
+
+        Уже созданный клиент переиспользуется — общий connection pool с
+        ``get_client('cache')``. Если клиента ещё нет — он создаётся
+        без сетевого I/O (соединение ленивое).
+
+        Назначение: ``infrastructure.cache.factory`` обязан передать в
+        ``RedisBackend`` ИМЕННО raw-клиент. Раньше фабрика брала
+        ``getattr(client, "_raw_client", None) or getattr(client, "client", None)``
+        — у ``RedisClient`` нет ``_raw_client``, а property ``client``
+        возвращает ``self`` → в бэкенд попадала обёртка → ``AttributeError``
+        → Redis не использовался вообще (wave 18, ADR-0391).
+
+        Returns:
+            Экземпляр ``redis.asyncio.Redis`` (или ``RedisCluster``).
+
+        """
+        client = self._clients.get("cache")
+        if client is None:
+            client = self._build_client("cache")
+            self._clients["cache"] = client
+        return client
 
     @staticmethod
     def decode(value: Any, _depth: int = 0) -> Any:
@@ -93,6 +150,10 @@ class CacheMixin(_RedisClientProtocol):
     async def cache_delete(self, *keys: str) -> int:
         """Удаляет ключи из кэша (unlink).
 
+        Каждый ключ удаляется ОТДЕЛЬНЫМ одноключевым ``UNLINK``: multi-key
+        UNLINK в RedisCluster падает с ``CROSSSLOT`` (см.
+        :func:`_unlink_each`).
+
         Args:
             keys: ключи для удаления.
 
@@ -102,7 +163,9 @@ class CacheMixin(_RedisClientProtocol):
         """
         if not keys:
             return 0
-        return int(await self.execute("cache", lambda conn: conn.unlink(*keys)))
+        return int(
+            await self.execute("cache", lambda conn: _unlink_each(conn, list(keys)))
+        )
 
     async def bulk_get(self, keys: list[str]) -> list[bytes | None]:
         """Batch-чтение через non-transactional pipeline (Sprint 0).
@@ -200,11 +263,11 @@ class CacheMixin(_RedisClientProtocol):
             async for key in conn.scan_iter(match=pattern, count=500):
                 batch.append(key)
                 if len(batch) >= 500:
-                    deleted += await conn.unlink(*batch)
+                    deleted += await _unlink_each(conn, batch)
                     batch.clear()
 
             if batch:
-                deleted += await conn.unlink(*batch)
+                deleted += await _unlink_each(conn, batch)
 
             return deleted
 

@@ -88,16 +88,32 @@ class CacheWriteProcessor(BaseProcessor):
             OSError,
         ):
             pass
+        except Exception as exc:
+            # Wave 18 (ADR-0391), дефект 4/7: ошибка записи в кэш (в т.ч.
+            # превышение лимита размера значения) не должна ронять роут.
+            _logger.warning("Cache write failed, деградация без кэша: %s", exc)
 
     def _get_facade(self) -> Any:
-        """Получает ``UnifiedCacheFacade`` из svcs registry (lazy resolve)."""
+        """Получает ``UnifiedCacheFacade`` из svcs registry (lazy resolve).
+
+        Wave 18 (ADR-0391), дефект 4: ловится ЛЮБОЕ исключение провайдера
+        (``RuntimeError`` от ``create_cache_backend`` — например, «Memcached-
+        бэкенд требует aiomcache» — не является ``ImportError``).
+
+        Returns:
+            ``UnifiedCacheFacade`` либо ``None`` (запись в кэш пропускается).
+
+        """
         try:
             from src.backend.core.di.providers.cache import (
                 get_unified_cache_facade_provider,
             )
 
             return get_unified_cache_facade_provider()
-        except ImportError:
+        except Exception as exc:
+            _logger.warning(
+                "Cache facade недоступен, запись в кэш пропускается: %s", exc
+            )
             return None
 
     async def _legacy_cache_write(self, key: str, data: str) -> None:
@@ -118,3 +134,9 @@ class CacheWriteProcessor(BaseProcessor):
             OSError,
         ):
             pass
+        except Exception as exc:
+            # Legacy-fallback — best effort: любой сбой провайдера не должен
+            # ронять DSL-роут (ADR-0391, деградация без кэша).
+            _logger.warning(
+                "Legacy cache write недоступен, деградация без кэша: %s", exc
+            )

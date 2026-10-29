@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from src.backend.dsl.engine.processors.ai.cachewrite_processor import (
     CacheWriteProcessor,
 )
+
+# Провайдер unified cache facade (core DI) — патчится в тестах деградации.
+_FACADE_PROVIDER = "src.backend.core.di.providers.cache.get_unified_cache_facade_provider"
 
 
 class _Message:
@@ -123,3 +126,38 @@ class TestCacheWriteProcessor:
         ) as mock_redis:
             mock_redis.cache_set = AsyncMock(side_effect=TimeoutError("slow"))
             await proc.process(exchange, _Context())
+
+
+class TestCacheWriteProcessorDegradation:
+    """Wave 18 (ADR-0391), дефект 4/7: ошибка фасада не роняет DSL-роут.
+
+    ``RuntimeError`` провайдера (например, «Memcached-бэкенд требует
+    aiomcache») и ``ValueError`` лимита размера значения (дефект 7)
+    деградируют в warning без записи в кэш.
+    """
+
+    @pytest.mark.asyncio
+    async def test_facade_provider_raises_degrades(self) -> None:
+        """Провайдер бросает RuntimeError → запись пропускается, роут живёт."""
+        exchange = _Exchange(body="x")
+        exchange.set_property("cached", False)
+        proc = CacheWriteProcessor(key_fn=lambda e: "key")
+
+        with patch(_FACADE_PROVIDER, side_effect=RuntimeError("boom")):
+            await proc.process(exchange, _Context())
+
+        assert exchange.properties["cached"] is False
+
+    @pytest.mark.asyncio
+    async def test_oversized_value_degrades(self) -> None:
+        """Превышение лимита размера значения → warning, не исключение."""
+        facade = MagicMock()
+        facade.set_ns = AsyncMock(side_effect=ValueError("max_value_bytes"))
+        exchange = _Exchange(body="x")
+        exchange.set_property("cached", False)
+        proc = CacheWriteProcessor(key_fn=lambda e: "key")
+
+        with patch(_FACADE_PROVIDER, return_value=facade):
+            await proc.process(exchange, _Context())
+
+        assert exchange.properties["cached"] is False

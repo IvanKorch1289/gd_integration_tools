@@ -34,16 +34,63 @@ logger = get_logger("infrastructure.cache.factory")
 
 
 def _redis_client() -> Redis:
-    """Достаёт raw redis-клиент из инфраструктурного синглтона."""
+    """Достаёт raw redis-клиент (``redis.asyncio.Redis``) из синглтона.
+
+    Wave 18 (ADR-0391), дефект 1 (critical): раньше бралось
+    ``getattr(client, "_raw_client", None) or getattr(client, "client", None)``.
+    У ``RedisClient`` нет ``_raw_client``, а property ``client`` возвращает
+    ``self`` → в ``RedisBackend`` попадала обёртка → ``AttributeError:
+    'RedisClient' object has no attribute 'get'`` → Redis не использовался
+    вообще (кэш = только per-process L1).
+
+    Теперь используется публичный accessor ``RedisClient.raw_cache_client()``:
+    он возвращает настоящий raw-клиент (переиспользуется общий connection
+    pool с ``get_client('cache')``).
+
+    Raises:
+        RuntimeError: если raw-клиент недоступен (DI не инициализирован
+            либо вернулась обёртка вместо raw-клиента).
+
+    """
     from src.backend.infrastructure.clients.storage.redis import get_redis_client
 
     client = get_redis_client()  # get singleton INSTANCE (not function)
-    raw = getattr(client, "_raw_client", None) or getattr(client, "client", None)
-    if raw is None:  # pragma: no cover — sanity
+    accessor = getattr(client, "raw_cache_client", None)
+    if callable(accessor):
+        raw = accessor()
+    else:  # pragma: no cover — legacy-клиент без нового accessor'а
+        raw = getattr(client, "_raw_client", None) or getattr(client, "client", None)
+    if raw is None or raw is client:
         raise RuntimeError(
             "redis_client не инициализирован: создайте backend после старта DI."
         )
     return raw
+
+
+def _register_invalidator_backend(backend: CacheBackend) -> None:
+    """Регистрирует backend в глобальном ``CacheInvalidator``.
+
+    Wave 18 (ADR-0391), дефект 5 (medium): ``CacheInvalidator._backends``
+    был пуст — ``add_backend()`` не вызывался нигде в ``src/`` → tag- и
+    pattern-инвалидация всегда возвращала 0 (no-op).
+
+    Регистрация идёт из фабрики (composition root не в зоне правок),
+    idempotent: повторный вызов с тем же backend'ом не дублирует запись.
+
+    Args:
+        backend: Созданный cache-backend.
+
+    """
+    from src.backend.infrastructure.cache.invalidator import get_cache_invalidator
+
+    invalidator = get_cache_invalidator()
+    if backend in invalidator.backends:
+        return
+    invalidator.add_backend(backend)
+    logger.debug(
+        "create_cache_backend: зарегистрирован backend %s в CacheInvalidator",
+        type(backend).__name__,
+    )
 
 
 def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
@@ -104,4 +151,8 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
         type(backend).__name__,
         feature_flags.tenant_cache_prefix_enabled,
     )
-    return TenantCacheBackend(backend)
+    wrapped = TenantCacheBackend(backend)
+    # Wave 18 (ADR-0391), дефект 5: регистрируем backend в инвалидаторе —
+    # иначе tag/pattern-инвалидация остаётся no-op (всегда 0).
+    _register_invalidator_backend(wrapped)
+    return wrapped

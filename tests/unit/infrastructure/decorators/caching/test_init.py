@@ -61,7 +61,8 @@ def test_response_cache_key_with_self() -> None:
 
     owner = Owner()
     key = response_cache_key(func, (owner, 1), {"y": 2})
-    assert key.startswith("cache:Owner:func:")
+    # Wave 18 (ADR-0391): tenant-сегмент добавлен в ключ (дефект 3).
+    assert key.startswith("cache:_unscoped_:Owner:func:")
 
 
 @pytest.mark.unit
@@ -69,49 +70,57 @@ def test_response_cache_key_without_self() -> None:
     async def func(x: int) -> None: ...
 
     key = response_cache_key(func, (), {"y": 2})
-    assert key.startswith(f"cache:{func.__module__}:func:")
+    assert key.startswith(f"cache:_unscoped_:{func.__module__}:func:")
 
 
 @pytest.mark.unit
 def test_metadata_cache_key_from_kwargs() -> None:
     async def func(key: str) -> None: ...
 
-    assert metadata_cache_key(func, (), {"key": "my_key"}) == "s3:metadata:my_key"
+    assert metadata_cache_key(func, (), {"key": "my_key"}) == (
+        "s3:metadata:_unscoped_:my_key"
+    )
 
 
 @pytest.mark.unit
 def test_metadata_cache_key_from_args() -> None:
     async def func(_: Any, key: str) -> None: ...
 
-    assert metadata_cache_key(func, (None, "arg_key"), {}) == "s3:metadata:arg_key"
+    assert metadata_cache_key(func, (None, "arg_key"), {}) == (
+        "s3:metadata:_unscoped_:arg_key"
+    )
 
 
 @pytest.mark.unit
 def test_metadata_cache_key_fallback() -> None:
     async def func() -> None: ...
 
-    assert metadata_cache_key(func, (), {}) == "s3:metadata:"
+    assert metadata_cache_key(func, (), {}) == "s3:metadata:_unscoped_:"
 
 
 @pytest.mark.unit
 def test_existence_cache_key_from_kwargs() -> None:
     async def func(key: str) -> None: ...
 
-    assert existence_cache_key(func, (), {"key": "my_key"}) == "s3:exists:my_key"
+    assert existence_cache_key(func, (), {"key": "my_key"}) == (
+        "s3:exists:_unscoped_:my_key"
+    )
 
 
 @pytest.mark.unit
 def test_existence_cache_key_from_args() -> None:
     async def func(_: Any, key: str) -> None: ...
 
-    assert existence_cache_key(func, (None, "arg_key"), {}) == "s3:exists:arg_key"
+    assert existence_cache_key(func, (None, "arg_key"), {}) == (
+        "s3:exists:_unscoped_:arg_key"
+    )
 
 
 @pytest.mark.unit
 def test_existence_cache_key_fallback() -> None:
     async def func() -> None: ...
 
-    assert existence_cache_key(func, (), {}) == "s3:exists:"
+    assert existence_cache_key(func, (), {}) == "s3:exists:_unscoped_:"
 
 
 @pytest.mark.unit

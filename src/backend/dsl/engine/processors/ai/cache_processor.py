@@ -72,6 +72,10 @@ class CacheProcessor(BaseProcessor):
         if facade is None:
             # Fallback: svcs registry не зарегистрирован (unit tests).
             # Используем прямую Redis-логику без tenant prefix.
+            # Wave 18: «кэш недоступен» = промах по определению → фиксируем
+            # признак ДО fallback'а, чтобы результат не зависел от того,
+            # отвечает ли legacy-путь.
+            exchange.set_property("cached", False)
             await self._legacy_cache_get(exchange, full_key)
             return
 
@@ -91,18 +95,39 @@ class CacheProcessor(BaseProcessor):
             OSError,
         ):
             pass
+        except Exception as exc:
+            # Wave 18 (ADR-0391), дефект 4: недоступность кэша = cache miss,
+            # а не падение DSL-роута (деградация как при недоступном Redis).
+            _logger.warning(
+                "Cache read failed, деградация в cache miss: key=%s err=%s",
+                full_key,
+                exc,
+            )
 
         exchange.set_property("cached", False)
 
     def _get_facade(self) -> Any:
-        """Получает ``UnifiedCacheFacade`` из svcs registry (lazy resolve)."""
+        """Получает ``UnifiedCacheFacade`` из svcs registry (lazy resolve).
+
+        Wave 18 (ADR-0391), дефект 4: ловится ЛЮБОЕ исключение провайдера
+        (``RuntimeError`` от ``create_cache_backend`` — например, «Memcached-
+        бэкенд требует aiomcache» — не является ``ImportError``). Раньше
+        такой exception пробивал обработчик и ронял DSL-роут.
+
+        Returns:
+            ``UnifiedCacheFacade`` либо ``None`` (деградация в cache miss).
+
+        """
         try:
             from src.backend.core.di.providers.cache import (
                 get_unified_cache_facade_provider,
             )
 
             return get_unified_cache_facade_provider()
-        except ImportError:
+        except Exception as exc:
+            _logger.warning(
+                "Cache facade недоступен, деградация в cache miss: %s", exc
+            )
             return None
 
     async def _legacy_cache_get(
@@ -132,5 +157,12 @@ class CacheProcessor(BaseProcessor):
             OSError,
         ):
             pass
+        except Exception as exc:
+            # Legacy-fallback — best effort: любой сбой провайдера (например
+            # RuntimeError «svcs registry not registered») не должен ронять
+            # DSL-роут (ADR-0391, деградация в cache miss).
+            _logger.warning(
+                "Legacy cache fallback недоступен, деградация в cache miss: %s", exc
+            )
 
         exchange.set_property("cached", False)

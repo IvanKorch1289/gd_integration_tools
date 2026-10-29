@@ -18,8 +18,11 @@ Feature-flag:
     (прямая делегация в underlying backend).
 
 См. также:
-    * :mod:`src.backend.core.tenancy.cache` — ``TenantNamespacedCache`` для
-      прямого API (используется в существующих RAG-узлах).
+    * :mod:`src.backend.core.tenancy` — ``TenantContext`` / ``current_tenant()``
+      (источник tenant_id для префикса).
+    * ``core/tenancy/cache.py::TenantNamespacedCache`` удалён как мёртвый код
+      (wave 18, ADR-0391, дефект 8) — потребителей в ``src/`` не было;
+      канонический tenant-namespacing выполняет этот wrapper.
 """
 
 from __future__ import annotations
@@ -89,6 +92,13 @@ class TenantCacheBackend(CacheBackend):
             return pattern
         return prefix + pattern
 
+    def _scoped_tag(self, tag: str) -> str:
+        """Scoped tag — tag-индекс не смешивается между tenants."""
+        prefix = self._prefix()
+        if not prefix:
+            return tag
+        return f"{prefix}{tag}"
+
     async def get(self, key: str) -> bytes | None:
         """Get value with tenant-scoped key.
 
@@ -144,6 +154,62 @@ class TenantCacheBackend(CacheBackend):
 
         """
         return await self._wrapped.exists(self._scoped(key))
+
+    # ── Tag-index support (wave 18, ADR-0391, дефект 5) ───────────────────
+    #
+    # Tag-инвалидация через ``CacheInvalidator`` работает только если
+    # backend умеет ``delete_by_tag``/``delete_by_pattern``. Wrapper
+    # проксирует эти вызовы, сохраняя tenant-изоляцию: тег и ключ
+    # получают тот же ``tenant:{id}:`` префикс, что и обычные ключи.
+
+    async def bind_key_to_tag(self, tag: str, key: str) -> None:
+        """Привязывает tenant-scoped ключ к tenant-scoped тегу.
+
+        Args:
+            tag: Имя тега.
+            key: Cache key (без tenant-префикса).
+
+        """
+        binder = getattr(self._wrapped, "bind_key_to_tag", None)
+        if binder is None:
+            return
+        await binder(self._scoped_tag(tag), self._scoped(key))
+
+    async def delete_by_tag(self, tag: str) -> int:
+        """Удаляет все ключи tenant-scoped тега.
+
+        Args:
+            tag: Имя тега.
+
+        Returns:
+            Число удалённых ключей (0 — если backend не поддерживает
+            tag-инвалидацию).
+
+        """
+        deleter = getattr(self._wrapped, "delete_by_tag", None)
+        if deleter is None:
+            return 0
+        return int(await deleter(self._scoped_tag(tag)))
+
+    async def delete_by_pattern(self, pattern: str) -> int:
+        """Удаляет все ключи, matching tenant-scoped glob pattern.
+
+        Args:
+            pattern: Glob pattern (без tenant-префикса).
+
+        Returns:
+            Число удалённых ключей (0 — если backend не умеет считать
+            удалённые при pattern-delete).
+
+        """
+        deleter = getattr(self._wrapped, "delete_by_pattern", None)
+        if deleter is not None:
+            return int(await deleter(self._scoped_pattern(pattern)))
+        fallback = getattr(self._wrapped, "delete_pattern", None)
+        if fallback is None:
+            return 0
+        await fallback(self._scoped_pattern(pattern))
+        return 0
 
 
 def _matches_pattern(key: str, pattern: str) -> bool:

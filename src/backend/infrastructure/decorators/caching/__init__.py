@@ -18,6 +18,7 @@ from functools import lru_cache as lru_cache
 from typing import Any as Any
 
 from src.backend.core.codec.json import json_dumps as json_dumps
+from src.backend.core.tenancy import current_tenant as current_tenant
 from src.backend.infrastructure.decorators.caching.decorator import CachingDecorator
 
 __all__ = (
@@ -31,6 +32,28 @@ __all__ = (
     "response_cache",
 )
 
+# Сегмент ключа для случая «tenant-контекста нет». Совпадает с
+# соглашением ``TenantCacheBackend`` (``tenant:_unscoped_``) — значения
+# без tenant'а не смешиваются с tenant-scoped ключами.
+UNSCOPED_TENANT_SEGMENT = "_unscoped_"
+
+
+def _tenant_segment() -> str:
+    """Возвращает tenant-сегмент для cache-ключа.
+
+    Wave 18 (ADR-0391), дефект 3 (high): tenant-контекст обязателен в
+    ключе — иначе два tenant'а делят один ключ кэша (cross-tenant
+    коллизия), тогда как БД фильтруется по ContextVar-tenant'у.
+
+    Returns:
+        ``tenant_id`` активного tenant'а либо ``_unscoped_``.
+
+    """
+    ctx = current_tenant()
+    if ctx is None or not getattr(ctx, "tenant_id", None):
+        return UNSCOPED_TENANT_SEGMENT
+    return str(ctx.tenant_id)
+
 
 def _stable_hash(payload: dict[str, Any]) -> str:
     return hashlib.sha256(json_dumps(payload)).hexdigest()
@@ -39,34 +62,44 @@ def _stable_hash(payload: dict[str, Any]) -> str:
 def response_cache_key(
     func: Callable[..., Awaitable[Any]], args: tuple[Any, ...], kwargs: dict[str, Any]
 ) -> str:
-    """Строит ключ response-cache: ``cache:{owner}:{func}:{sha256(args|kwargs)}``."""
+    """Строит ключ response-cache: ``cache:{tenant}:{owner}:{func}:{sha256(args|kwargs)}``.
+
+    Wave 18 (ADR-0391): добавлен tenant-сегмент — без него ключи
+    разных tenant'ов совпадали (cross-tenant коллизия кэша).
+    """
     owner = (
         args[0].__class__.__name__
         if args and hasattr(args[0], "__class__")
         else func.__module__
     )
     payload = {"args": args[1:] if args else (), "kwargs": dict(sorted(kwargs.items()))}
-    return f"cache:{owner}:{func.__name__}:{_stable_hash(payload)}"
+    return f"cache:{_tenant_segment()}:{owner}:{func.__name__}:{_stable_hash(payload)}"
 
 
 def metadata_cache_key(
     func: Callable[..., Awaitable[Any]], args: tuple[Any, ...], kwargs: dict[str, Any]
 ) -> str:
-    """Строит ключ S3 metadata-cache на основе ``key`` из kwargs/args."""
+    """Строит ключ S3 metadata-cache на основе ``key`` из kwargs/args.
+
+    Wave 18 (ADR-0391): добавлен tenant-сегмент (tenant-изоляция кэша).
+    """
     key = kwargs.get("key")
     if key is None and len(args) > 1:
         key = args[1]
-    return f"s3:metadata:{key or ''}"
+    return f"s3:metadata:{_tenant_segment()}:{key or ''}"
 
 
 def existence_cache_key(
     func: Callable[..., Awaitable[Any]], args: tuple[Any, ...], kwargs: dict[str, Any]
 ) -> str:
-    """Строит ключ S3 existence-cache на основе ``key`` из kwargs/args."""
+    """Строит ключ S3 existence-cache на основе ``key`` из kwargs/args.
+
+    Wave 18 (ADR-0391): добавлен tenant-сегмент (tenant-изоляция кэша).
+    """
     key = kwargs.get("key")
     if key is None and len(args) > 1:
         key = args[1]
-    return f"s3:exists:{key or ''}"
+    return f"s3:exists:{_tenant_segment()}:{key or ''}"
 
 
 @lru_cache(maxsize=1)

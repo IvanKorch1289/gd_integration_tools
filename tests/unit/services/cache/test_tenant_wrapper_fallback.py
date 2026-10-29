@@ -10,8 +10,6 @@ Cycle 168: service_setup оборачивает все tiers в ``TenantCacheBac
 from __future__ import annotations
 
 import tempfile
-from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -30,8 +28,6 @@ async def disk() -> DiskCacheBackend:
 class TestTenantWrapperFallback:
     async def test_tenant_wrapper_applied_to_memory_fallback(self) -> None:
         """``memory_fallback`` в facade — это ``TenantCacheBackend``."""
-        from src.backend.plugins.composition.service_setup import _register_cache_facade
-        from src.backend.core.config.services.cache import cache_settings
 
         # В тестовой среде tenant_cache_prefix_enabled=True (default)
         facade = UnifiedCacheFacade(
@@ -82,7 +78,6 @@ class TestTagIndexSuccessOnly:
     async def test_tag_index_not_updated_on_total_failure(self) -> None:
         """Если все backend'ы упали — tag НЕ попадает в _tag_index."""
         from src.backend.services.cache.facade import UnifiedCacheFacade
-
         from tests.unit.services.cache.test_log_throttling import FailingBackend
 
         facade = UnifiedCacheFacade(
@@ -102,7 +97,6 @@ class TestTagIndexSuccessOnly:
     async def test_tag_index_updated_on_partial_success(self) -> None:
         """Если хотя бы один backend успешен — tag добавляется."""
         from src.backend.services.cache.facade import UnifiedCacheFacade
-
         from tests.unit.services.cache.test_log_throttling import FailingBackend
 
         facade = UnifiedCacheFacade(

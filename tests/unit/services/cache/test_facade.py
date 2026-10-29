@@ -124,16 +124,21 @@ async def test_set_and_delete(facade: UnifiedCacheFacade) -> None:
 
 
 @pytest.mark.asyncio
-async def test_delete_pattern_only_primary_and_memory(
+async def test_delete_pattern_clears_all_tiers(
     primary: _SimpleBackend, facade: UnifiedCacheFacade
 ) -> None:
+    """Wave 18 (ADR-0391), дефект 8: pattern delete чистит и disk-tier.
+
+    Раньше disk исключался (pattern-delete в disk был no-op) → после падения
+    Redis клиент получал stale-значения из L3.
+    """
     await facade.set_ns("ns.a", b"1")
     await facade.set_ns("ns.b", b"2")
     await facade.set_ns("other", b"3")
     await facade.delete_pattern_ns("ns.*")
-    # disk fallback still holds the value because pattern delete is no-op there
-    assert (await facade.get_ns("ns.a")).backend == "disk"
-    assert (await facade.get_ns("ns.b")).backend == "disk"
+    # Ни один tier не должен держать удалённые значения.
+    assert (await facade.get_ns("ns.a")).hit is False
+    assert (await facade.get_ns("ns.b")).hit is False
     assert (await facade.get_ns("other")).value == b"3"
 
 
