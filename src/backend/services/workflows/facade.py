@@ -10,6 +10,9 @@ ADR-045 §«Capability integration»: route, стартующий workflow,
 4. После успешного backend-вызова отправляет событие в
    :class:`WorkflowAuditSink` (если зарегистрирован). Ошибка emit
    логируется warning'ом и не ломает основной workflow-flow.
+5. ADR-0396: SLA-политика workflow больше не инертна — hard-limit
+   используется как бюджет времени (``execution_timeout``), а запущенный
+   workflow ставится на SLA-трекинг (:class:`SlaTracker`).
 
 Плагины НЕ должны импортировать ``WorkflowBackend`` напрямую — только
 через ``WorkflowFacade`` (через DI). Это даёт audit-trail и blast-radius
@@ -18,6 +21,7 @@ control: capability denied → исключение, попытка фиксир
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
@@ -28,13 +32,21 @@ from src.backend.core.workflow.backend import (
     WorkflowHandle,
     WorkflowResult,
 )
+from src.backend.services.workflows.sla_alerting import SlaTracker
 
 if TYPE_CHECKING:
     from src.backend.services.audit.workflow_audit_sink import WorkflowAuditSink
 
-__all__ = ("WorkflowFacade",)
+__all__ = ("WorkflowFacade", "SlaResolver")
 
 _logger = get_logger("services.workflows.facade")
+
+#: Резолвер SLA-политики по имени workflow (``None`` — политики нет).
+#: Политика — объект с полями ``soft_limit_seconds`` /
+#: ``hard_limit_seconds`` / ``escalation_email`` / ``escalation_slack`` /
+#: ``breach_action`` (совместим с :class:`SlaPolicy` и
+#: :class:`SlaTracker`).
+SlaResolver = Callable[[str], Any | None]
 
 
 class WorkflowFacade:
@@ -46,6 +58,11 @@ class WorkflowFacade:
         audit_sink: опц. :class:`WorkflowAuditSink`. Если ``None`` —
             audit-emit пропускается (no-op). emit-фейлы поглощаются
             ``try/except logger.warning``.
+        sla_tracker: опц. :class:`SlaTracker` — SLA-мониторинг запущенных
+            workflow'ов (ADR-0396). Если ``None`` — трекинг пропускается.
+        sla_resolver: опц. резолвер SLA-политики по имени workflow.
+            Используется для бюджета времени (``execution_timeout``) и
+            SLA-трекинга.
 
     """
 
@@ -55,10 +72,14 @@ class WorkflowFacade:
         backend: WorkflowBackend,
         capability_gate: CapabilityGate,
         audit_sink: WorkflowAuditSink | None = None,
+        sla_tracker: SlaTracker | None = None,
+        sla_resolver: SlaResolver | None = None,
     ) -> None:
         self._backend = backend
         self._gate = capability_gate
         self._audit_sink = audit_sink
+        self._sla_tracker = sla_tracker
+        self._sla_resolver = sla_resolver
 
     async def _emit(
         self,
@@ -107,19 +128,30 @@ class WorkflowFacade:
     ) -> WorkflowHandle:
         """Стартовать workflow от имени плагина/route'а.
 
+        ADR-0396: если SLA-политика workflow'а найдена и явный
+        ``execution_timeout`` не передан — используется SLA hard-limit как
+        бюджет времени выполнения; запущенный workflow ставится на
+        SLA-трекинг.
+
         :param caller: имя plugin'а / route'а (для capability lookup).
         :raises CapabilityDeniedError: если caller не задекларировал
             ``workflow.start`` или scope не покрывает ``workflow_id``.
         """
         self._gate.check(caller, "workflow.start", workflow_id)
+        sla_policy = self._resolve_sla(workflow_name)
+        timeout = execution_timeout
+        if timeout is None and sla_policy is not None:
+            # SLA hard-limit = бюджет времени workflow (ADR-0396).
+            timeout = timedelta(seconds=float(sla_policy.hard_limit_seconds))
         handle = await self._backend.start_workflow(
             workflow_name=workflow_name,
             workflow_id=workflow_id,
             input=input,
             namespace=namespace,
             task_queue=task_queue,
-            execution_timeout=execution_timeout,
+            execution_timeout=timeout,
         )
+        await self._track_sla(workflow_id=handle.workflow_id, sla=sla_policy)
         await self._emit(
             event_type="workflow.start",
             workflow_id=workflow_id,
@@ -127,6 +159,46 @@ class WorkflowFacade:
             payload={"workflow_name": workflow_name, "namespace": namespace},
         )
         return handle
+
+    def _resolve_sla(self, workflow_name: str) -> Any | None:
+        """Найти SLA-политику workflow'а (None — политики нет)."""
+        resolver = self._sla_resolver
+        if resolver is None:
+            return None
+        try:
+            return resolver(workflow_name)
+        except Exception as exc:
+            _logger.warning(
+                "workflow_sla.resolve_failed",
+                extra={"workflow_name": workflow_name, "error": str(exc)[:200]},
+            )
+            return None
+
+    async def _track_sla(self, *, workflow_id: str, sla: Any | None) -> None:
+        """Поставить workflow на SLA-трекинг (best-effort, no-op без трекера)."""
+        tracker = self._sla_tracker
+        if tracker is None or sla is None:
+            return
+        try:
+            await tracker.track(workflow_id=workflow_id, sla=sla)
+        except Exception as exc:
+            _logger.warning(
+                "workflow_sla.track_failed",
+                extra={"workflow_id": workflow_id, "error": str(exc)[:200]},
+            )
+
+    async def _untrack_sla(self, *, workflow_id: str) -> None:
+        """Снять workflow с SLA-трекинга (best-effort)."""
+        tracker = self._sla_tracker
+        if tracker is None:
+            return
+        try:
+            await tracker.untrack(workflow_id)
+        except Exception as exc:
+            _logger.warning(
+                "workflow_sla.untrack_failed",
+                extra={"workflow_id": workflow_id, "error": str(exc)[:200]},
+            )
 
     async def signal(
         self,
@@ -189,5 +261,9 @@ class WorkflowFacade:
 
         Кто запустил workflow, тот может узнать его финал через
         handle (никакого side-effect'а на чужой workflow).
+
+        ADR-0396: после завершения workflow снимается с SLA-трекинга.
         """
-        return await self._backend.await_completion(handle=handle, timeout=timeout)
+        result = await self._backend.await_completion(handle=handle, timeout=timeout)
+        await self._untrack_sla(workflow_id=handle.workflow_id)
+        return result

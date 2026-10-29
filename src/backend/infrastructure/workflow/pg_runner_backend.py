@@ -185,7 +185,14 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
         return value if isinstance(value, dict) else {"value": value}
 
     async def cancel_workflow(self, *, handle: WorkflowHandle) -> None:
-        """Перевести инстанс в ``cancelling`` (runner финализирует)."""
+        """Перевести инстанс в ``cancelling`` (runner финализирует).
+
+        Runner при ближайшем pickup'е переводит ``cancelling`` →
+        ``cancelled``: пишет событие ``cancelled`` и проставляет
+        ``finished_at``; шаги инстанса не исполняются (ADR-0394).
+        Pickup — по backup-poll'у (инстанс в статусе ``cancelling`` включён
+        в ``list_pending``) либо по LISTEN-wakeup'у.
+        """
         instance_id = self._uuid_from_handle(handle)
         await self._state_store.update_status(instance_id, WorkflowStatus.cancelling)
 

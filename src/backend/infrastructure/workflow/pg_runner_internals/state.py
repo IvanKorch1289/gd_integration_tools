@@ -7,6 +7,7 @@ Funcs: .
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -41,6 +42,9 @@ class WorkflowState:
     status: WorkflowStatus = WorkflowStatus.pending
     last_error: str | None = None
     child_workflows: list[str] = field(default_factory=list)
+    #: Дедлайны wait-шагов (имя шага → ISO-8601). Переживают requeue,
+    #: поэтому wait завершается, а не перезапускается с нового срока.
+    wait_deadlines: dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def replay(cls, events: list[WorkflowEventRow]) -> WorkflowState:
@@ -133,7 +137,36 @@ class WorkflowState:
             status=status,
             last_error=snapshot.get("last_error"),
             child_workflows=list(snapshot.get("child_workflows", [])),
+            wait_deadlines=dict(snapshot.get("wait_deadlines", {})),
         )
+
+    def apply_event(
+        self,
+        event_type: WorkflowEventType,
+        payload: dict[str, Any],
+        step_name: str | None = None,
+    ) -> None:
+        """Применяет событие к состоянию (без чтения event log'а).
+
+        Используется runner'ом сразу после append события — чтобы
+        in-memory состояние совпадало с event log'ом (attempts,
+        current_step, exchange_snapshot) без повторного replay.
+
+        Args:
+            event_type: Тип события.
+            payload: Payload события.
+            step_name: Имя шага (опционально).
+
+        """
+        row = WorkflowEventRow(
+            seq=0,
+            workflow_id=self.workflow_id,
+            event_type=event_type,
+            payload=dict(payload or {}),
+            step_name=step_name,
+            occurred_at=datetime.now(UTC),
+        )
+        self._apply(row)
 
     def _apply(self, event: WorkflowEventRow) -> None:
         """Применяет одно событие к текущему state'у (mutate in place)."""
@@ -143,10 +176,22 @@ class WorkflowState:
         if etype == WorkflowEventType.created:
             self.workflow_name = payload.get("workflow_name", self.workflow_name)
             self.status = WorkflowStatus.pending
+            # Вход workflow'а — начальный exchange: данные не теряются
+            # между шагами (ADR-0394). Служебные ``__``-ключи отбрасываются.
+            incoming = payload.get("input")
+            if isinstance(incoming, dict):
+                self.exchange_snapshot = {
+                    key: value
+                    for key, value in incoming.items()
+                    if not str(key).startswith("__")
+                }
 
         elif etype == WorkflowEventType.step_started:
             self.status = WorkflowStatus.running
-            self.attempts = int(payload.get("attempt", self.attempts + 1))
+            # attempts НЕ меняется: счётчик = число зафиксированных
+            # падений (``step_failed``). Повтор после падения получает
+            # тот же номер попытки и тот же idempotency-key — повтор
+            # распознаваем (ADR-0394).
 
         elif etype == WorkflowEventType.step_finished:
             if event.step_name:
@@ -154,12 +199,15 @@ class WorkflowState:
             self.current_step = int(payload.get("next_step", self.current_step + 1))
             self.attempts = 0
             exch = payload.get("exchange")
+            if exch is None:
+                # Legacy-события (до ADR-0394) клали результат под "output".
+                exch = payload.get("output")
             if isinstance(exch, dict):
                 self.exchange_snapshot = exch
 
         elif etype == WorkflowEventType.step_failed:
             self.last_error = str(payload.get("error", ""))[:2048]
-            self.attempts = int(payload.get("attempt", self.attempts))
+            self.attempts = int(payload.get("attempt", self.attempts + 1))
 
         elif etype == WorkflowEventType.branch_taken:
             name = payload.get("choice", event.step_name or "")
@@ -179,6 +227,10 @@ class WorkflowState:
 
         elif etype == WorkflowEventType.paused:
             self.status = WorkflowStatus.paused
+            wait_step = payload.get("wait_step")
+            deadline = payload.get("wait_deadline") or payload.get("next_attempt_at")
+            if wait_step and deadline:
+                self.wait_deadlines[str(wait_step)] = str(deadline)
 
         elif etype == WorkflowEventType.resumed:
             self.status = WorkflowStatus.running

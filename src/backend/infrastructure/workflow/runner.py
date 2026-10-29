@@ -37,6 +37,7 @@ Unit-testable без Postgres: pluggable `InstanceSource` + `StateStore` +
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import os
 import random
 import uuid
@@ -56,10 +57,36 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowState,
 )
 
-__all__ = ("DurableWorkflowRunner", "RunnerConfig", "StepExecutor", "StepResult")
+__all__ = (
+    "DurableWorkflowRunner",
+    "RunnerConfig",
+    "StepExecutor",
+    "StepResult",
+    "idempotency_key",
+)
 
 
 _logger = get_logger("workflow.runner")
+
+
+def idempotency_key(instance_id: UUID, step_name: str, attempt: int) -> str:
+    """Ключ идемпотентности шага.
+
+    Детерминированная функция от (инстанс, шаг, попытка): одинаковые
+    входы дают одинаковый ключ, поэтому повторное исполнение того же
+    шага той же попытки распознаётся в event log'е (ADR-0394).
+
+    Args:
+        instance_id: UUID инстанса workflow'а.
+        step_name: Имя шага.
+        attempt: Номер попытки.
+
+    Returns:
+        hex-хеш ``sha256(instance_id|step_name|attempt)``.
+
+    """
+    raw = f"{instance_id}|{step_name}|{attempt}".encode()
+    return hashlib.sha256(raw).hexdigest()
 
 
 # -- Типы для step-executor контракта ----------------------------------
@@ -88,6 +115,9 @@ class StepResult:
       * ``next_attempt_at`` — для ``PAUSE`` / ``FAILED`` (retry later).
       * ``output_state`` — materialized state после step (для snapshot).
       * ``error_message`` — при ``FAILED``.
+      * ``attempts`` — номер текущей попытки (для retry-бюджета).
+      * ``max_attempts`` — retry-бюджет из спецификации (``None`` —
+        используется :attr:`RunnerConfig.max_attempts_default`).
     """
 
     outcome: str
@@ -97,6 +127,8 @@ class StepResult:
     next_attempt_at: datetime | None = None
     output_state: dict[str, Any] | None = None
     error_message: str | None = None
+    attempts: int | None = None
+    max_attempts: int | None = None
 
 
 class StepExecutor(Protocol):
@@ -372,6 +404,10 @@ class DurableWorkflowRunner:
             _logger.debug("lock busy: %s", workflow_id)
             return
 
+        # Heartbeat продлевает lease: TTL короче таймаута шага, иначе
+        # backup-poll подхватит инстанст и выполнит шаг второй раз.
+        heartbeat = self._start_heartbeat(workflow_id)
+        lease_released = False
         try:
             # 2) Read instance + replay events → WorkflowState.
             instance = await self._state_store.get(workflow_id)
@@ -385,36 +421,115 @@ class DurableWorkflowRunner:
             }:
                 return
 
-            events = await self._event_store.read_events(workflow_id=workflow_id)
-            state = WorkflowState.replay(events)
+            # 3) Отмена финализируется ДО execute_next — шаги не идут.
+            if instance.status == WorkflowStatus.cancelling:
+                seq = await self._event_store.append(
+                    workflow_id=workflow_id,
+                    event_type=WorkflowEventType.cancelled,
+                    payload={"reason": "cancel_requested"},
+                    step_name=None,
+                )
+                await self._state_store.update_status(
+                    workflow_id, WorkflowStatus.cancelled
+                )
+                await self._write_snapshot(workflow_id, seq)
+                return
 
-            # 3) Transition to 'running' if needed.
+            events = await self._event_store.read_events(workflow_id=workflow_id)
+            state = (
+                WorkflowState.replay(events)
+                if events
+                else WorkflowState(workflow_id=workflow_id)
+            )
+
+            # 4) Transition to 'running' if needed.
             if instance.status == WorkflowStatus.pending:
                 await self._state_store.update_status(
                     workflow_id, WorkflowStatus.running
                 )
 
-            # 4) Execute next step via injected executor.
+            # 5) Pre-step событие: пишем ДО выполнения шага, чтобы падение
+            #    между эффектом шага и append'ом результата было
+            #    распознаваемо (ADR-0394).
+            resolved = self._resolve_step(instance, state)
+            attempt: int | None = None
+            step_key: str | None = None
+            pre_step_name: str | None = None
+            last_seq = 0
+            if resolved is not None:
+                pre_step_name, attempt = resolved
+                step_key = idempotency_key(instance.id, pre_step_name, attempt)
+                started_payload = {
+                    "cursor": state.current_step,
+                    "attempt": attempt,
+                    "idempotency_key": step_key,
+                }
+                last_seq = await self._event_store.append(
+                    workflow_id=workflow_id,
+                    event_type=WorkflowEventType.step_started,
+                    payload=started_payload,
+                    step_name=pre_step_name,
+                )
+                state.apply_event(
+                    WorkflowEventType.step_started, started_payload, pre_step_name
+                )
+
+            # 6) Execute next step via injected executor.
             result: StepResult = await self._executor.execute_next(
                 instance=instance, state=state
             )
 
-            # 5) Append events.
+            # 7) Append events + синхронизируем in-memory state с event log'ом.
             for event_type, payload, step_name in result.events:
-                await self._event_store.append(
+                if (
+                    event_type == WorkflowEventType.step_started
+                    and step_key is not None
+                    and step_name == pre_step_name
+                    and int(payload.get("attempt", -1)) == attempt
+                ):
+                    # Pre-step событие уже записано — дубликат не пишем.
+                    continue
+                if (
+                    event_type == WorkflowEventType.step_finished
+                    and step_key is not None
+                ):
+                    payload = {**payload, "idempotency_key": step_key}
+                last_seq = await self._event_store.append(
                     workflow_id=workflow_id,
                     event_type=event_type,
                     payload=payload,
                     step_name=step_name,
                 )
+                state.apply_event(event_type, payload, step_name)
 
-            # 6) Handle outcome.
+            # 8) Persist snapshot — данные между шагами не теряются.
+            if result.output_state:
+                self._merge_output_state(state, result.output_state)
+            # 9) Snapshot в event log: событие ``snapshotted`` + колонка
+            #    ``snapshot_state`` (её читает admin-API). Replay стартует
+            #    с последнего snapshot'а (ADR-0394).
+            await self._event_store.snapshot(
+                workflow_id=workflow_id, state=state.to_snapshot(), at_seq=last_seq
+            )
+
+            # 10) Handle outcome.
+            if result.outcome == StepOutcome.CONTINUE:
+                # CONTINUE не меняет статус — освобождаем lease ДО re-enqueue,
+                # иначе следующий pickup не захватит lease (ADR-0394).
+                await self._stop_heartbeat(heartbeat)
+                await self._state_store.unlock(
+                    workflow_id=workflow_id, worker_id=self._config.worker_id
+                )
+                lease_released = True
+
             await self._apply_outcome(workflow_id, result, state, instance)
 
         finally:
-            await self._state_store.unlock(
-                workflow_id=workflow_id, worker_id=self._config.worker_id
-            )
+            await self._stop_heartbeat(heartbeat)
+            if not lease_released:
+                await self._state_store.unlock(
+                    workflow_id=workflow_id, worker_id=self._config.worker_id
+                )
 
     async def _apply_outcome(
         self,
@@ -441,9 +556,28 @@ class DurableWorkflowRunner:
             return
 
         if result.outcome == StepOutcome.PAUSE:
+            attempts = (
+                result.attempts if result.attempts is not None else state.attempts
+            )
+            max_attempts = (
+                result.max_attempts
+                if result.max_attempts is not None
+                else self._config.max_attempts_default
+            )
+            if attempts >= max_attempts:
+                # Retry-бюджет исчерпан → терминальный FAILED (ADR-0394).
+                await self._state_store.update_status(
+                    workflow_id,
+                    WorkflowStatus.failed,
+                    error=(
+                        f"max_attempts exceeded ({attempts}/{max_attempts}): "
+                        f"{result.error_message or 'step failed'}"
+                    ),
+                )
+                return
             next_at = result.next_attempt_at or (
                 datetime.now(UTC)
-                + timedelta(seconds=self._compute_backoff(state.attempts))
+                + timedelta(seconds=self._compute_backoff(max(0, attempts - 1)))
             )
             await self._state_store.update_status(
                 workflow_id, WorkflowStatus.paused, next_attempt_at=next_at
@@ -451,7 +585,11 @@ class DurableWorkflowRunner:
             return
 
         if result.outcome == StepOutcome.CONTINUE:
-            # Сразу переставим в очередь для следующего step.
+            # id убираем из active ДО re-enqueue: иначе _dispatch_loop
+            # отбросит элемент очереди как дубликат активной execution'и
+            # и следующий шаг ждал бы backup-poll (ADR-0394).
+            async with self._active_lock:
+                self._active_executions.discard(workflow_id)
             try:
                 self._pending_instance_ids.put_nowait(workflow_id)
             except asyncio.QueueFull:
@@ -468,7 +606,135 @@ class DurableWorkflowRunner:
             workflow_id, WorkflowStatus.paused, next_attempt_at=next_at
         )
 
+    # -- Lease heartbeat ------------------------------------------------
+
+    def _start_heartbeat(
+        self, workflow_id: UUID
+    ) -> tuple[asyncio.Task[None], asyncio.Event] | None:
+        """Стартует фоновую задачу продления lease инстанса.
+
+        Returns:
+            Пара ``(task, stop_event)`` либо ``None``, если реестр задач
+            закрыт (shutdown).
+
+        """
+        stop = asyncio.Event()
+        try:
+            task = get_task_registry().create_task(
+                self._lease_heartbeat(workflow_id, stop), name=f"wf-lease-{workflow_id}"
+            )
+        except RuntimeError as exc:
+            # Реестр закрыт (shutdown) — работаем без heartbeat.
+            _logger.warning("lease heartbeat not started: %s", exc)
+            return None
+        return task, stop
+
+    @staticmethod
+    async def _stop_heartbeat(
+        heartbeat: tuple[asyncio.Task[None], asyncio.Event] | None,
+    ) -> None:
+        """Останавливает heartbeat-задачу (если она была запущена)."""
+        if heartbeat is None:
+            return
+        task, stop = heartbeat
+        stop.set()
+        if task.done():
+            return
+        try:
+            await task
+        except asyncio.CancelledError:
+            # Отмена самого heartbeat'а — штатная ситуация; отмена
+            # вызывающей задачи пробрасывается дальше.
+            if not task.cancelled():
+                raise
+        except Exception:
+            _logger.debug("lease heartbeat stopped", exc_info=True)
+
+    async def _lease_heartbeat(self, workflow_id: UUID, stop: asyncio.Event) -> None:
+        """Продлевает lease, пока выполняется шаг.
+
+        TTL lease (по умолчанию 120 с) короче дефолтного таймаута шага
+        (300 с) — без продления backup-poll подхватил бы инстанст и
+        выполнил шаг повторно (ADR-0394).
+        """
+        interval = max(0.1, self._config.lock_ttl_s / 3)
+        while not stop.is_set():
+            try:
+                await asyncio.wait_for(stop.wait(), timeout=interval)
+            except TimeoutError:
+                pass
+            else:
+                return
+            if stop.is_set():
+                return
+            try:
+                renewed = await self._state_store.renew_lock(
+                    workflow_id=workflow_id,
+                    worker_id=self._config.worker_id,
+                    ttl_s=self._config.lock_ttl_s,
+                )
+            except Exception as exc:
+                _logger.warning("lease renewal error for %s: %s", workflow_id, exc)
+                continue
+            if not renewed:
+                _logger.warning(
+                    "lease lost for %s — another worker took over", workflow_id
+                )
+                return
+
     # -- Helpers ----------------------------------------------------
+
+    def _resolve_step(
+        self, instance: WorkflowInstanceRow, state: WorkflowState
+    ) -> tuple[str, int] | None:
+        """Определяет имя шага и номер попытки для pre-step события.
+
+        Executor может описать следующий шаг (``describe_next``) — тогда
+        pre-step событие пишется до эффекта шага. Executor'ы без такого
+        метода работают в прежнем режиме (событие пишет сам executor).
+
+        Args:
+            instance: Row инстанса workflow'а.
+            state: Materialized state.
+
+        Returns:
+            Пара ``(step_name, attempt)`` либо ``None``.
+
+        """
+        describe = getattr(self._executor, "describe_next", None)
+        if describe is None:
+            return None
+        descriptor = describe(instance=instance, state=state)
+        if descriptor is None:
+            return None
+        return str(descriptor.name), int(descriptor.attempt)
+
+    async def _write_snapshot(self, workflow_id: UUID, at_seq: int) -> None:
+        """Фиксирует snapshot состояния инстанса (событие ``snapshotted``)."""
+        events = await self._event_store.read_events(workflow_id=workflow_id)
+        if not events:
+            return
+        state = WorkflowState.replay(events)
+        await self._event_store.snapshot(
+            workflow_id=workflow_id, state=state.to_snapshot(), at_seq=at_seq
+        )
+
+    @staticmethod
+    def _merge_output_state(state: WorkflowState, output_state: dict[str, Any]) -> None:
+        """Применяет ``StepResult.output_state`` к материализованному state."""
+        exchange = output_state.get("exchange_snapshot")
+        if isinstance(exchange, dict):
+            state.exchange_snapshot = dict(exchange)
+        loop_counters = output_state.get("loop_counters")
+        if isinstance(loop_counters, dict):
+            state.loop_counters.update(
+                {str(k): v for k, v in loop_counters.items() if isinstance(v, int)}
+            )
+        wait_deadlines = output_state.get("wait_deadlines")
+        if isinstance(wait_deadlines, dict):
+            state.wait_deadlines.update(
+                {str(k): str(v) for k, v in wait_deadlines.items()}
+            )
 
     def _compute_backoff(self, attempt: int) -> float:
         """Exponential backoff с jitter.

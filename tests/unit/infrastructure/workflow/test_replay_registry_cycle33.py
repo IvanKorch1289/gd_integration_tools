@@ -153,11 +153,17 @@ def test_workflow_registry_singleton_is_module_level() -> None:
 
     # До reload — один и тот же объект.
     pre_reload_id = id(workflow_registry)
+    pre_reload_registry = workflow_registry
     assert other_import.workflow_registry is workflow_registry
 
     # После reload — модуль пересоздаёт singleton (новый id).
     importlib.reload(registry_module)
     assert id(registry_module.workflow_registry) != pre_reload_id
+    # Восстанавливаем pre-reload singleton: модули-потребители (emitter,
+    # workflow_setup) держат ссылку на исходный объект, и без
+    # восстановления их регистрации разойдутся с module-level объектом
+    # (order-dependent падения соседних тестов в одном suite'е).
+    registry_module.workflow_registry = pre_reload_registry
 
 
 def test_register_uses_decorator_name_when_present() -> None:

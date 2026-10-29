@@ -6,6 +6,42 @@ from typing import Any, Literal
 
 from src.backend.infrastructure.workflow.pg_runner_internals import WorkflowState
 
+__all__ = ("StepDescriptor", "WorkflowSpec", "WorkflowStep", "next_attempt")
+
+
+def next_attempt(state: WorkflowState) -> int:
+    """Номер текущей попытки шага.
+
+    Args:
+        state: Materialized state workflow'а.
+
+    Returns:
+        Номер попытки (``state.attempts + 1``) — попадает в payload
+        событий ``step_started`` / ``step_failed`` (ADR-0394).
+
+    """
+    return state.attempts + 1
+
+
+@dataclass(frozen=True, slots=True)
+class StepDescriptor:
+    """Описание следующего шага — для pre-step событий runner'а.
+
+    Runner записывает событие ``step_started`` **до** выполнения шага:
+    падение между эффектом шага и append'ом события не должно приводить
+    к незаметному повторному исполнению (ADR-0394).
+
+    Поля:
+      * ``name`` — имя шага (идёт в ``step_name`` событий).
+      * ``kind`` — тип шага (``sequential`` / ``branch`` / ...).
+      * ``attempt`` — номер попытки.
+    """
+
+    name: str
+    kind: str
+    attempt: int
+
+
 # -- Declarative spec types (serializable, hot-reloadable) --------------
 
 StepKind = Literal[
@@ -37,7 +73,10 @@ class WorkflowStep:
     * ``sub_flow``: ``workflow_name``, ``input_map: dict`` (JMESPath → payload),
       ``wait: bool = True`` (параллель pause-unpause vs fire-and-forget).
     * ``wait``: ``duration_s: float`` или ``until_expr``.
-    * ``compensate``: ``steps`` — выполняется runner'ом при перехода в failed.
+    * ``compensate``: rollback-действие (откат уже выполненного
+      forward-шага). В прямом потоке не исполняется — цепочка
+      компенсаций запускается executor'ом при терминальном FAILED
+      (ADR-0396, см. ``executor/compensating.py``).
 
     ``name`` — уникальное имя внутри spec'а; используется для logging /
     events (`step_name`) и ``state.branch_choices`` / ``loop_counters``.
@@ -80,12 +119,25 @@ class WorkflowSpec:
 
     Compensation: per-step ``saga_step.compensate`` (StepKind
     ``compensate``) — canonical rollback path.
+
+    Атрибуты:
+      * ``compensate_map`` — явный маппинг forward-шага → compensate-шаг
+        (имя → имя). Если пусто — позиционный fallback (i-й
+        compensate-шаг ↔ i-й forward-шаг), как в Temporal-пути.
+      * ``strict_compensate`` — True → ошибки компенсаций chain'ятся с
+        исходной ошибкой forward-шага (``CompensationError``).
+      * ``run_timeout_s`` — бюджет времени workflow (секунды). None →
+        бюджет не задан (иначе берётся ``__execution_timeout_s`` из
+        payload'а инстанса).
     """
 
     name: str
     steps: tuple[WorkflowStep, ...]
     max_attempts: int = 10
     default_timeout_s: float = 300.0
+    compensate_map: dict[str, str] = field(default_factory=dict)
+    strict_compensate: bool = True
+    run_timeout_s: float | None = None
 
 
 class DurableWorkflowProcessor:

@@ -32,7 +32,10 @@ if TYPE_CHECKING:
 
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.core.logging import get_logger
-from src.backend.infrastructure.workflow.executor.state import WorkflowStep
+from src.backend.infrastructure.workflow.executor.state import (
+    WorkflowStep,
+    next_attempt,
+)
 from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceRow,
     WorkflowState,
@@ -128,6 +131,7 @@ class SequentialMixin:
     ) -> StepResult:
         """Запускает processors-chain. B1-phase-2: Exchange wrapping опционален."""
         body = dict(state.exchange_snapshot)
+        attempt = next_attempt(state)
         for proc in step.processors:
             try:
                 body = await _run_processor(proc, body, self._timeout_per_step_s)
@@ -149,6 +153,7 @@ class SequentialMixin:
                             {
                                 "reason": "processor_timeout",
                                 "timeout_s": self._timeout_per_step_s,
+                                "attempt": attempt,
                             },
                             step.name,
                         )
@@ -160,12 +165,19 @@ class SequentialMixin:
             events=[
                 (
                     WorkflowEventType.step_started,
-                    {"cursor": state.current_step},
+                    {"cursor": state.current_step, "attempt": attempt},
                     step.name,
                 ),
                 (
+                    # Единый payload-контракт: результат шага — под "exchange"
+                    # (ADR-0394). "output" использовался до контракта.
                     WorkflowEventType.step_finished,
-                    {"cursor": state.current_step, "output": body},
+                    {
+                        "cursor": state.current_step,
+                        "next_step": state.current_step + 1,
+                        "exchange": body,
+                        "attempt": attempt,
+                    },
                     step.name,
                 ),
             ],

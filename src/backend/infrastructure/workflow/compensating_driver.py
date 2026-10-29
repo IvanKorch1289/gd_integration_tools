@@ -7,10 +7,17 @@ Closes BOTH:
 Поведение: в-process asyncio-таск, периодически (60s) сканирует
 ``WorkflowStateRepository.list_compensating()`` и для каждой
 compensating-записи:
-1. Re-injects failed compensation step via ``signal_event(state="rolled_back")``
-2. Использует asyncio-таск + graceful shutdown (per LifecycleMixin pattern)
-3. Tenant-aware: фильтрует по `tenant_id` через existing repository method
-4. DLQ-pattern: failed step -> WARNING-log + audit event (NOT silent loss)
+1. Если компенсации уже исполнены (``compensating_actions`` пуст) —
+   фиксирует терминальное состояние через
+   ``signal_event(state="rolled_back")``
+2. Если компенсации ещё НЕ исполнены — состояние НЕ меняется: saga
+   остаётся в ``compensating``, чтобы компенсации доигрались при
+   re-entry процессора (``SagaLRAProcessor._resume_compensating``).
+   Раньше здесь был молчаливый ``rolled_back`` без исполнения отката —
+   потеря данных (ADR-0396)
+3. Использует asyncio-таск + graceful shutdown (per LifecycleMixin pattern)
+4. Tenant-aware: фильтрует по `tenant_id` через existing repository method
+5. DLQ-pattern: failed step -> WARNING-log + audit event (NOT silent loss)
 
 Не вводит:
 - Новых deps (pure stdlib asyncio)
@@ -112,7 +119,14 @@ class CompensatingDriverWorker:
             _logger.info("CompensatingDriverWorker loop cancelled")
 
     async def _scan_once(self) -> None:
-        """Single scan: list_compensating → re-inject as rolled_back."""
+        """Single scan: list_compensating → rolled_back (только без pending-компенсаций).
+
+        ADR-0396: если у saga остались неисполненные компенсации
+        (``compensating_actions``), помечать её ``rolled_back`` нельзя —
+        это молчаливая потеря отката. Такая saga остаётся в состоянии
+        ``compensating``: компенсации доигрываются при re-entry
+        процессора (``SagaLRAProcessor._resume_compensating``).
+        """
         async with self._session_factory() as session:  # type: AsyncSession
             repo = self._session_factory.__class__.__module__  # placeholder
             from src.backend.infrastructure.workflow.saga_state import (
@@ -126,6 +140,17 @@ class CompensatingDriverWorker:
             _logger.info("compensating-driver: found %d stuck saga(s)", len(stuck))
             for saga in stuck:
                 try:
+                    pending = list(getattr(saga, "compensating_actions", None) or [])
+                    if pending:
+                        # Откат не исполнен — состояние не меняем (ADR-0396).
+                        _logger.warning(
+                            "compensating-driver: saga %s/%s ждёт %d компенсаци(й) — "
+                            "оставлена в 'compensating' (откат не выполнен)",
+                            saga.workflow_id,
+                            saga.run_id,
+                            len(pending),
+                        )
+                        continue
                     rolled = await repo.signal_event(
                         saga.workflow_id, saga.run_id, event="rolled_back"
                     )

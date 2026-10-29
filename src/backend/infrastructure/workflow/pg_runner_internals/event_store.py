@@ -126,7 +126,12 @@ class WorkflowEventStore:
     async def snapshot(
         self, workflow_id: UUID, state: dict[str, Any], at_seq: int
     ) -> None:
-        """Фиксирует snapshot state + event ``snapshotted`` атомарно."""
+        """Фиксирует snapshot state + event ``snapshotted`` атомарно.
+
+        Payload события ``snapshotted`` содержит сам дамп состояния —
+        иначе replay из snapshot'а восстановил бы пустой state
+        (ADR-0394).
+        """
         async with self._sm.create_session() as session:
             async with self._sm.transaction(session):
                 await session.execute(
@@ -138,7 +143,7 @@ class WorkflowEventStore:
                     session,
                     workflow_id=workflow_id,
                     event_type=WorkflowEventType.snapshotted,
-                    payload={"at_seq": at_seq},
+                    payload={"at_seq": at_seq, "state": dict(state)},
                     step_name=None,
                 )
 

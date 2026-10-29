@@ -11,7 +11,10 @@ if TYPE_CHECKING:
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.workflow.executor.sequential_mixin import _run_processor
-from src.backend.infrastructure.workflow.executor.state import WorkflowStep
+from src.backend.infrastructure.workflow.executor.state import (
+    WorkflowStep,
+    next_attempt,
+)
 from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceRow,
     WorkflowState,
@@ -35,14 +38,20 @@ class ControlFlowMixin:
         state: WorkflowState,
         instance: WorkflowInstanceRow,
     ) -> StepResult:
-        """if/else по predicate → выбираем branch и выполняем sub-steps inline."""
+        """if/else по predicate → выбираем branch и выполняем sub-steps inline.
+
+        Branch обязан завершаться событием ``step_finished`` — иначе курсор
+        не двигается и шаг выполняется бесконечно (ADR-0394).
+        """
         chosen = "then" if self._eval_predicate(step.predicate, state) else "else"
         sub_steps = step.then_steps if chosen == "then" else step.else_steps
+        attempt = next_attempt(state)
+        body = dict(state.exchange_snapshot)
 
         events: list[tuple[WorkflowEventType, dict[str, Any], str | None]] = [
             (
                 WorkflowEventType.branch_taken,
-                {"chosen": chosen, "branch_name": step.name},
+                {"chosen": chosen, "branch": chosen, "branch_name": step.name},
                 step.name,
             )
         ]
@@ -50,11 +59,21 @@ class ControlFlowMixin:
         if not sub_steps:
             return StepResult(
                 outcome=StepOutcome.CONTINUE,
-                events=events,
-                output_state={"branch_choice": chosen},
+                events=[
+                    *events,
+                    (
+                        WorkflowEventType.step_finished,
+                        {
+                            "next_step": state.current_step + 1,
+                            "exchange": body,
+                            "attempt": attempt,
+                        },
+                        step.name,
+                    ),
+                ],
+                output_state={"branch_choice": chosen, "exchange_snapshot": body},
             )
 
-        body = dict(state.exchange_snapshot)
         for sub_step in sub_steps:
             if sub_step.kind == "sequential":
                 for proc in sub_step.processors:
@@ -70,7 +89,7 @@ class ControlFlowMixin:
                                 *events,
                                 (
                                     WorkflowEventType.step_failed,
-                                    {"reason": "timeout"},
+                                    {"reason": "timeout", "attempt": attempt},
                                     sub_step.name,
                                 ),
                             ],
@@ -83,7 +102,18 @@ class ControlFlowMixin:
 
         return StepResult(
             outcome=StepOutcome.CONTINUE,
-            events=events,
+            events=[
+                *events,
+                (
+                    WorkflowEventType.step_finished,
+                    {
+                        "next_step": state.current_step + 1,
+                        "exchange": body,
+                        "attempt": attempt,
+                    },
+                    step.name,
+                ),
+            ],
             output_state={"branch_choice": chosen, "exchange_snapshot": body},
         )
 
@@ -99,6 +129,7 @@ class ControlFlowMixin:
         от infinite loop. Выполняет body_steps inline.
         """
         iter_count = state.loop_counters.get(step.name, 0)
+        attempt = next_attempt(state)
         if iter_count >= step.max_iter:
             _logger.warning(
                 "loop max_iter reached; exiting",
@@ -109,7 +140,12 @@ class ControlFlowMixin:
                 events=[
                     (
                         WorkflowEventType.step_finished,
-                        {"reason": "max_iter_exhausted", "iter": iter_count},
+                        {
+                            "reason": "max_iter_exhausted",
+                            "iter": iter_count,
+                            "next_step": state.current_step + 1,
+                            "attempt": attempt,
+                        },
                         step.name,
                     )
                 ],
@@ -121,7 +157,12 @@ class ControlFlowMixin:
                 events=[
                     (
                         WorkflowEventType.step_finished,
-                        {"reason": "condition_false", "iter": iter_count},
+                        {
+                            "reason": "condition_false",
+                            "iter": iter_count,
+                            "next_step": state.current_step + 1,
+                            "attempt": attempt,
+                        },
                         step.name,
                     )
                 ],
@@ -151,7 +192,11 @@ class ControlFlowMixin:
                                 *events,
                                 (
                                     WorkflowEventType.step_failed,
-                                    {"reason": "timeout", "iter": iter_count},
+                                    {
+                                        "reason": "timeout",
+                                        "iter": iter_count,
+                                        "attempt": attempt,
+                                    },
                                     body_step.name,
                                 ),
                             ],
@@ -199,11 +244,17 @@ class ControlFlowMixin:
                 ],
             )
         total = len(collection)
+        attempt = next_attempt(state)
 
         events: list[tuple[WorkflowEventType, dict[str, Any], str | None]] = [
             (
                 WorkflowEventType.step_started,
-                {"items": total, "parallel": step.parallel, "for_each": step.name},
+                {
+                    "items": total,
+                    "parallel": step.parallel,
+                    "for_each": step.name,
+                    "attempt": attempt,
+                },
                 step.name,
             )
         ]
@@ -252,7 +303,11 @@ class ControlFlowMixin:
                         *events,
                         (
                             WorkflowEventType.step_failed,
-                            {"reason": "item_error", "count": len(errors)},
+                            {
+                                "reason": "item_error",
+                                "count": len(errors),
+                                "attempt": attempt,
+                            },
                             step.name,
                         ),
                     ],
@@ -282,7 +337,11 @@ class ControlFlowMixin:
                                         *events,
                                         (
                                             WorkflowEventType.step_failed,
-                                            {"reason": "timeout", "index": idx},
+                                            {
+                                                "reason": "timeout",
+                                                "index": idx,
+                                                "attempt": attempt,
+                                            },
                                             step.name,
                                         ),
                                     ],
@@ -293,7 +352,13 @@ class ControlFlowMixin:
                 *events,
                 (
                     WorkflowEventType.step_finished,
-                    {"items": total, "completed": True},
+                    {
+                        "items": total,
+                        "completed": True,
+                        "next_step": state.current_step + 1,
+                        "exchange": final_body,
+                        "attempt": attempt,
+                    },
                     step.name,
                 ),
             ],

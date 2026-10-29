@@ -98,6 +98,7 @@ class WorkflowInstanceStore:
             WorkflowStatus.pending,
             WorkflowStatus.running,
             WorkflowStatus.paused,
+            WorkflowStatus.cancelling,
         )
 
         async with self._sm.create_session() as session:
@@ -127,7 +128,13 @@ class WorkflowInstanceStore:
             return [WorkflowInstanceRow.from_orm(r) for r in rows]
 
     async def try_lock(self, workflow_id: UUID, worker_id: str, ttl_s: int) -> bool:
-        """Кооперативная блокировка инстанса за worker'ом."""
+        """Кооперативная блокировка инстанса за worker'ом.
+
+        Возвращает ``True`` только если lease действительно выдан: advisory
+        lock — только защита от гонки, окончательное решение принимает
+        UPDATE lease (ADR-0394). Если UPDATE не обновил ни одной строки
+        (lease держит другой worker) — возвращается ``False``.
+        """
         lock_key = _advisory_lock_key(workflow_id)
         locked_until = datetime.now(UTC) + timedelta(seconds=ttl_s)
 
@@ -140,7 +147,7 @@ class WorkflowInstanceStore:
                 if not acquired:
                     return False
 
-                await session.execute(
+                update_result = await session.execute(
                     update(WorkflowInstance)
                     .where(WorkflowInstance.id == workflow_id)
                     .where(
@@ -151,7 +158,34 @@ class WorkflowInstanceStore:
                     )
                     .values(locked_by=worker_id, locked_until=locked_until)
                 )
+                if update_result.rowcount == 0:
+                    # Lease занят другим worker'ом — двойное исполнение
+                    # шага недопустимо.
+                    return False
         return True
+
+    async def renew_lock(self, workflow_id: UUID, worker_id: str, ttl_s: int) -> bool:
+        """Продлевает lease инстанса (heartbeat во время долгого шага).
+
+        Args:
+            workflow_id: UUID инстанса.
+            worker_id: Владелец lease.
+            ttl_s: Новый TTL lease в секундах.
+
+        Returns:
+            ``True`` если lease продлён, ``False`` если он уже чужой.
+
+        """
+        locked_until = datetime.now(UTC) + timedelta(seconds=ttl_s)
+        async with self._sm.create_session() as session:
+            async with self._sm.transaction(session):
+                result = await session.execute(
+                    update(WorkflowInstance)
+                    .where(WorkflowInstance.id == workflow_id)
+                    .where(WorkflowInstance.locked_by == worker_id)
+                    .values(locked_until=locked_until)
+                )
+                return result.rowcount > 0
 
     async def unlock(self, workflow_id: UUID, worker_id: str) -> None:
         """Снимает lease-блокировку с инстанса."""
