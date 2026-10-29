@@ -20,6 +20,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from src.backend.core.cdc.source import CDCCursor, CDCEvent, CDCSource
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.datetime_utils import ensure_utc
 from src.backend.infrastructure.clients.external.cdc import CDCClient, get_cdc_client
 
 __all__ = ("CDCClientAdapter", "CDCOverflowDLQ")
@@ -229,16 +230,35 @@ class CDCClientAdapter(CDCSource):
             )
 
 
+def _parse_event_timestamp(value: Any) -> datetime:
+    """Привести timestamp CDC-события к UTC-aware datetime.
+
+    ADR-0384: исходное значение сохраняется — Kafka-стратегия отдаёт
+    ``datetime``, раньше он подменялся на ``now()`` (терялось время
+    события).
+
+    Args:
+        value: Значение timestamp (datetime / ISO-строка / None).
+
+    Returns:
+        UTC-aware datetime; ``now()`` — только если значение отсутствует
+        или не распознано.
+
+    """
+    if isinstance(value, datetime):
+        return ensure_utc(value)
+    if isinstance(value, str) and value:
+        try:
+            return ensure_utc(datetime.fromisoformat(value))
+        except ValueError:
+            return datetime.now(UTC)
+    return datetime.now(UTC)
+
+
 def _client_event_to_source(event_dict: dict[str, Any]) -> CDCEvent:
     """Преобразовать CDCEvent из CDCClient в core CDCEvent."""
     ts = event_dict.get("timestamp")
-    if isinstance(ts, str):
-        try:
-            timestamp = datetime.fromisoformat(ts)
-        except ValueError:
-            timestamp = datetime.now(UTC)
-    else:
-        timestamp = datetime.now(UTC)
+    timestamp = _parse_event_timestamp(ts)
     return CDCEvent(
         operation=event_dict.get("operation", "UPSERT"),
         source=f"cdc_client:{event_dict.get('profile', '?')}",

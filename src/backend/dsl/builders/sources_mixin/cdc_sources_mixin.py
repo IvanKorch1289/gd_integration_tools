@@ -235,7 +235,104 @@ class CdcSourcesMixin:
                 **kwargs,
             },
         )
+        # ADR-0384: ``_source_config`` должен читаться — иначе подписка
+        # объявлялась, но процессор в pipeline не появлялся.
+        builder._cdc_capture_from_config()  # type: ignore[attr-defined]
         return builder
+
+    def _cdc_capture_from_config(self) -> RouteBuilder:
+        """Создать :class:`CDCCaptureProcessor` из ``_source_config``.
+
+        Returns:
+            RouteBuilder с добавленным процессором CDC-capture.
+
+        Raises:
+            ValueError: Если ``_source_config`` отсутствует или неполон.
+
+        """
+        config = getattr(self, "_source_config", None)
+        if not config:
+            raise ValueError(
+                "CDC capture config is missing: _source_config is not set "
+                "(use from_cdc_capture() or cdc_capture())"
+            )
+        try:
+            profile = config["profile"]
+            tables = list(config["tables"])
+            strategy = config["strategy"]
+            interval = config["interval"]
+            timestamp_column = config["timestamp_column"]
+            batch_size = config["batch_size"]
+            channel = config["channel"]
+        except KeyError as exc:
+            raise ValueError(f"CDC capture config is incomplete: missing {exc}") from exc
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.cdc_capture",
+            "CDCCaptureProcessor",
+            profile=profile,
+            tables=tables,
+            strategy=strategy,
+            interval=interval,
+            timestamp_column=timestamp_column,
+            batch_size=batch_size,
+            channel=channel,
+        )
+
+    def cdc_capture(
+        self,
+        *,
+        profile: str,
+        tables: list[str],
+        strategy: str = "polling",
+        result_property: str = "cdc_events",
+        interval: float = 5.0,
+        timestamp_column: str = "updated_at",
+        batch_size: int = 100,
+        channel: str | None = None,
+        include_schema: bool = True,
+    ) -> RouteBuilder:
+        """Подписаться на CDC-события внешней БД (YAML-шаг ``cdc_capture``).
+
+        ADR-0384: публичный метод RouteBuilder — YAML-загрузчик принимает
+        только публичные методы builder'а, поэтому шаг ``cdc_capture``
+        раньше отвергался как «Unknown or forbidden processor».
+
+        Args:
+            profile: Имя профиля внешней БД.
+            tables: Список таблиц для отслеживания.
+            strategy: Стратегия CDC (polling / listen_notify / logminer / kafka).
+            result_property: Ключ ``Exchange.properties`` с событиями.
+            interval: Интервал polling в секундах.
+            timestamp_column: Timestamp-колонка для polling.
+            batch_size: Макс. событий за итерацию.
+            channel: Канал PG LISTEN/NOTIFY.
+            include_schema: Включать схему таблицы в события.
+
+        Returns:
+            RouteBuilder с добавленным :class:`CDCCaptureProcessor`.
+
+        Example::
+            route = (
+                RouteBuilder.from_("orders.changes", "cdc:orders")
+                .cdc_capture(profile="pg_prod", tables=["orders"])
+                .dispatch_action("analytics.process_changes")
+                .build()
+            )
+
+        """
+        return self._add_lazy(  # type: ignore[attr-defined]
+            "src.backend.dsl.engine.processors.cdc_capture",
+            "CDCCaptureProcessor",
+            profile=profile,
+            tables=tables,
+            strategy=strategy,
+            result_property=result_property,
+            interval=interval,
+            timestamp_column=timestamp_column,
+            batch_size=batch_size,
+            channel=channel,
+            include_schema=include_schema,
+        )
 
     def cdc_transform(
         self,

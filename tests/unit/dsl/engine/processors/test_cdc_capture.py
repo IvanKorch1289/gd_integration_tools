@@ -193,11 +193,62 @@ class TestCDCCaptureProcessorProcess:
             timestamp_column="updated_at",
             batch_size=100,
             channel=None,
-            callback=None,
+            callback=processor._on_event,
             target_action=None,
         )
         assert processor._subscription_id == "sub_123"
         assert mock_exchange.properties["cdc_subscription_id"] == "sub_123"
+
+    @pytest.mark.asyncio
+    async def test_process_registers_callback_not_none(self) -> None:
+        """ADR-0384: подписка создаётся с callback'ом (иначе события дропались)."""
+        processor = CDCCaptureProcessor(profile="oracle_prod", tables=["orders"])
+
+        mock_client = MagicMock()
+        mock_client.subscribe = AsyncMock(return_value="sub_cb")
+        mock_exchange = _Exchange()
+
+        with patch(
+            "src.backend.dsl.engine.processors.cdc_capture.get_cdc_client_provider",
+            return_value=mock_client,
+        ):
+            await processor.process(mock_exchange, _Context())
+
+        callback = mock_client.subscribe.call_args.kwargs["callback"]
+        assert callback is not None
+        assert callable(callback)
+
+    @pytest.mark.asyncio
+    async def test_cdc_event_reaches_result_property(self) -> None:
+        """ADR-0384: событие CDC доходит до result_property."""
+        processor = CDCCaptureProcessor(
+            profile="oracle_prod",
+            tables=["orders"],
+            result_property="cdc_events",
+        )
+
+        mock_client = MagicMock()
+        mock_client.subscribe = AsyncMock(return_value="sub_events")
+        mock_exchange = _Exchange()
+
+        with patch(
+            "src.backend.dsl.engine.processors.cdc_capture.get_cdc_client_provider",
+            return_value=mock_client,
+        ):
+            await processor.process(mock_exchange, _Context())
+
+        event = {
+            "operation": "UPSERT",
+            "table": "orders",
+            "timestamp": "2026-04-19T12:00:00+00:00",
+            "profile": "oracle_prod",
+            "new": {"id": 1},
+        }
+        await processor._on_event(event)
+
+        result = mock_exchange.properties["cdc_events"]
+        assert result["events"] == [event]
+        assert mock_exchange.in_message.body == [event]
 
     @pytest.mark.asyncio
     async def test_process_does_not_resubscribe(self) -> None:

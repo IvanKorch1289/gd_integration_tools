@@ -107,6 +107,8 @@ def validate_subscription_identifiers(sub: CDCSubscription) -> None:
     for table in sub.tables:
         validate_identifier(table, context=f"cdc.tables[{sub.id}]")
     validate_identifier(sub.timestamp_column, context=f"cdc.timestamp_column[{sub.id}]")
+    if sub.primary_key:
+        validate_identifier(sub.primary_key, context=f"cdc.primary_key[{sub.id}]")
 
 
 def escape_sql_literal(value: str) -> str:

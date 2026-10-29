@@ -8,7 +8,7 @@ cycle-2/D-AUDIT-07 fix: management endpoints защищены
 Pure ASGI fail-closed: неаутентифицированные запросы → 403.
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
@@ -23,6 +23,13 @@ __all__ = ("cdc_router",)
 # вызове, ломая FastAPI dependency_overrides identity check.
 _admin_dep = require_admin((AdminRole.SUPER_ADMIN,))
 
+#: ADR-0384: допустимые стратегии CDC на REST-границе.
+CDC_STRATEGIES = ("polling", "listen_notify", "logminer", "kafka")
+
+#: ADR-0384: лимиты параметров подписки (см. ``client.MAX_BATCH_SIZE``).
+MAX_BATCH_SIZE = 10_000
+MAX_INTERVAL_SECONDS = 3600.0
+
 cdc_router = APIRouter(
     prefix="/api/v1/cdc", tags=["CDC"], dependencies=[Depends(_admin_dep)]
 )
@@ -31,8 +38,36 @@ cdc_router = APIRouter(
 class CDCSubscribeRequest(BaseModel):
     """Запрос на создание CDC-подписки."""
 
-    profile: str = Field(description="Имя профиля внешней БД.")
-    tables: list[str] = Field(description="Список таблиц для отслеживания.")
+    profile: str = Field(min_length=1, description="Имя профиля внешней БД.")
+    tables: list[str] = Field(
+        min_length=1,
+        description="Список таблиц для отслеживания (не пустой).",
+    )
+    strategy: Literal["polling", "listen_notify", "logminer", "kafka"] = Field(
+        default="polling",
+        description="Стратегия обнаружения изменений.",
+    )
+    interval: float = Field(
+        default=5.0,
+        gt=0,
+        le=MAX_INTERVAL_SECONDS,
+        description="Интервал polling в секундах.",
+    )
+    batch_size: int = Field(
+        default=100,
+        ge=1,
+        le=MAX_BATCH_SIZE,
+        description="Максимум событий за итерацию.",
+    )
+    timestamp_column: str = Field(
+        default="updated_at",
+        min_length=1,
+        description="Колонка с временем изменения (для polling).",
+    )
+    channel: str | None = Field(
+        default=None,
+        description="Канал PostgreSQL LISTEN/NOTIFY (для listen_notify).",
+    )
     target_action: str | None = Field(
         default=None, description="Action для вызова при обнаружении изменений."
     )
@@ -58,6 +93,11 @@ async def create_subscription(request: CDCSubscribeRequest) -> CDCSubscribeRespo
     sub_id = await client.subscribe(
         profile=request.profile,
         tables=request.tables,
+        strategy=request.strategy,
+        interval=request.interval,
+        batch_size=request.batch_size,
+        timestamp_column=request.timestamp_column,
+        channel=request.channel,
         target_action=request.target_action,
     )
     return CDCSubscribeResponse(

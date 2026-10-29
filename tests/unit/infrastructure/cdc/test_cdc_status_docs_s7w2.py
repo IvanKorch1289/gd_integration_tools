@@ -5,10 +5,11 @@
 
 Покрывает (per ARCHITECTURE.md:160-169):
 
-* ``PollCDCBackend`` → **scaffold** (polling-mode без ``feed`` —
-  heartbeat-cursor advance без реальных SELECT'ов; Wave R3).
-* ``ListenNotifyCDCBackend`` → **scaffold** (``subscribe()`` ждёт
-  ``_stopped.wait()`` без реального ``asyncpg.add_listener``; Wave R3).
+* ``PollCDCBackend`` → **implemented** при наличии ``sql_executor``
+  (составной курсор ``(timestamp, PK)``, ADR-0384); без executor'а —
+  честно «not implemented» (health-status), а не scaffold-заглушка.
+* ``ListenNotifyCDCBackend`` → **implemented** (``asyncpg.add_listener``,
+  ADR-0384).
 * ``DebeziumEventsCDCBackend`` → **implemented** (322 LOC через
   ``aiokafka.AIOKafkaConsumer``: subscribe/ack/replay/close —
   см. ``debezium_events_backend.py:104``).
@@ -115,30 +116,28 @@ def test_debezium_implements_parse_helper() -> None:
     )
 
 
-# --- 2. PollCDCBackend: scaffold -------------------------------------------
+# --- 2. PollCDCBackend: honest status ---------------------------------------
 
 
-def test_poll_backend_class_docstring_marks_scaffold() -> None:
-    """Class docstring ``PollCDCBackend`` явно говорит scaffold."""
+def test_poll_backend_class_docstring_declares_not_implemented_mode() -> None:
+    """ADR-0384: polling-режим без ``sql_executor`` честно объявлен как
+    «не реализован» (вместо молчаливого scaffold-цикла)."""
     doc = PollCDCBackend.__doc__ or ""
-    assert "scaffold" in doc.lower(), (
-        f"PollCDCBackend class docstring lost 'scaffold' marker: {doc!r}"
+    assert "не реализован" in doc.lower() or "not implemented" in doc.lower(), (
+        f"PollCDCBackend class docstring lost 'not implemented' marker: {doc!r}"
     )
 
 
 @pytest.mark.asyncio
-async def test_poll_backend_polling_mode_is_scaffold_no_events() -> None:
-    """Polling-mode (без ``feed``) — heartbeat-cursor advance без yield'а событий.
-
-    Pre-existing scaffold behaviour; Wave R3 принесёт реальные SELECT'ы.
-    """
+async def test_poll_backend_polling_mode_without_executor_yields_no_events() -> None:
+    """Polling-mode без ``sql_executor`` — честно выключен (0 событий)."""
     backend = PollCDCBackend(profile="test", interval_s=0.01)
     events: list[object] = []
 
     async def consume_with_timeout() -> None:
         async for evt in backend.subscribe(tables=["t"]):
             events.append(evt)
-            if len(events) > 0:  # safety: scaffold должен быть no-op
+            if len(events) > 0:  # safety: режим без executor'а — no-op
                 break
 
     task = asyncio.create_task(consume_with_timeout())
@@ -149,45 +148,22 @@ async def test_poll_backend_polling_mode_is_scaffold_no_events() -> None:
     except TimeoutError:
         task.cancel()
     assert events == [], (
-        f"PollCDCBackend polling-mode yielded events; scaffold-контракт нарушен: {events!r}"
+        f"PollCDCBackend polling-mode yielded events; not-implemented-контракт "
+        f"нарушен: {events!r}"
     )
 
-
-# --- 3. ListenNotifyCDCBackend: scaffold -----------------------------------
-
-
-def test_listen_notify_class_docstring_marks_scaffold() -> None:
-    """Class docstring ``ListenNotifyCDCBackend`` явно говорит scaffold."""
-    doc = ListenNotifyCDCBackend.__doc__ or ""
-    assert "scaffold" in doc.lower(), (
-        f"ListenNotifyCDCBackend class docstring lost 'scaffold' marker: {doc!r}"
-    )
+    health = await backend.health_check()
+    assert health["status"] == "not_implemented"
 
 
-@pytest.mark.asyncio
-async def test_listen_notify_subscribe_blocks_until_close() -> None:
-    """``subscribe()`` ждёт ``_stopped.wait()`` без реального ``asyncpg.add_listener``.
+# --- 3. ListenNotifyCDCBackend: implemented ---------------------------------
 
-    Pre-existing scaffold behaviour; Wave R3 принесёт реальный listener.
-    """
-    backend = ListenNotifyCDCBackend(dsn="postgresql://test:test@localhost/test")
-    events: list[object] = []
 
-    async def consume_with_timeout() -> None:
-        async for evt in backend.subscribe(tables=["t"]):
-            events.append(evt)
-            break  # safety; scaffold должен быть no-op
-
-    task = asyncio.create_task(consume_with_timeout())
-    await asyncio.sleep(0.05)  # subscribe должен висеть в wait
-    await backend.close()  # это выводит subscribe из wait
-    try:
-        await asyncio.wait_for(task, timeout=1.0)
-    except TimeoutError:
-        task.cancel()
-    assert events == [], (
-        f"ListenNotifyCDCBackend.subscribe yielded events; scaffold-контракт нарушен: {events!r}"
-    )
+def test_listen_notify_backend_uses_asyncpg_listener() -> None:
+    """ADR-0384: backend реализован через ``asyncpg.add_listener``."""
+    source = _LISTEN_PATH.read_text(encoding="utf-8")
+    assert "add_listener" in source, "ListenNotify backend lost asyncpg listener"
+    assert "asyncpg.connect" in source, "ListenNotify backend lost asyncpg.connect"
 
 
 def test_listen_notify_replay_is_unsupported_scaffold() -> None:

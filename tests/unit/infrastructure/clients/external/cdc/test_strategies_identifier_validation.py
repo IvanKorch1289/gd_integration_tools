@@ -16,11 +16,11 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
 from typing import Any
 
 import pytest
 
+from src.backend.infrastructure.clients.external.cdc._cursor import PollCursor
 from src.backend.infrastructure.clients.external.cdc.client import CDCClient
 from src.backend.infrastructure.clients.external.cdc.events import (
     CDCEvent,
@@ -133,7 +133,7 @@ def _polling_without_redis(monkeypatch: pytest.MonkeyPatch) -> _PollingStrategy:
     """Polling-стратегия без обращения к Redis (курсор всегда в памяти)."""
     strategy = _PollingStrategy()
 
-    async def _cursor(key: str, default: datetime) -> datetime:
+    async def _cursor(key: str, default: PollCursor) -> PollCursor:
         return default
 
     monkeypatch.setattr(strategy, "_get_cursor", _cursor)
@@ -265,7 +265,8 @@ async def test_polling_strategy_executes_sql_with_valid_identifier(
     assert len(sql_harness.captured) == 1
     sql = sql_harness.captured[0]
     assert "SELECT * FROM public.orders" in sql
-    assert "WHERE updated_at > :last" in sql
+    # ADR-0384: составной курсор (ts, PK) — условие на границе батча.
+    assert "WHERE updated_at >= :last_ts" in sql
     assert "ORDER BY updated_at" in sql
     assert "DROP" not in sql.upper()
 
@@ -313,10 +314,13 @@ async def test_logminer_strategy_executes_sql_with_valid_identifiers(
 
     await strategy.run(sub, _noop_dispatch)
 
-    assert len(sql_harness.captured) == 1
-    sql = sql_harness.captured[0]
+    # ADR-0384: START_LOGMNR → SELECT → END_LOGMNR.
+    assert len(sql_harness.captured) == 3
+    assert "DBMS_LOGMNR.START_LOGMNR" in sql_harness.captured[0]
+    sql = sql_harness.captured[1]
     assert "TABLE_NAME IN ('ORDERS', 'CUSTOMERS')" in sql
     assert "OR '1'='1" not in sql
+    assert "DBMS_LOGMNR.END_LOGMNR" in sql_harness.captured[2]
 
 
 # ════════════════════════════════════════════════════════════════════

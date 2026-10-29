@@ -80,5 +80,6 @@ async def test_poll_backend_executes_sql_with_valid_identifiers() -> None:
     assert len(connection.executed) == 1
     sql = connection.executed[0]
     assert "SELECT * FROM public.users" in sql
-    assert "WHERE updated_at > %s" in sql
+    # ADR-0384: условие на границе батча — >= (ts-only режим без PK).
+    assert "WHERE updated_at >= %s" in sql
     assert "ORDER BY updated_at ASC" in sql

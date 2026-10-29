@@ -24,7 +24,9 @@ from src.backend.infrastructure.clients.external.cdc.events import (
     CDCSubscription,  # S60 W2: cross-import
 )
 from src.backend.infrastructure.clients.external.cdc.kafka_strategy import (
+    DEFAULT_GROUP_ID,
     _KafkaDebeziumStrategy,  # S166 W1: cross-import (S167 W1.1 wired)
+    resolve_bootstrap_servers,
 )
 from src.backend.infrastructure.clients.external.cdc.strategies import (
     _CDCStrategy,  # S60 W2: cross-import
@@ -37,6 +39,11 @@ if TYPE_CHECKING:
     from src.backend.infrastructure.messaging.dlq_base import DLQWriter
 
 logger = get_logger("infrastructure.clients.cdc")
+
+#: ADR-0384: лимиты подписки CDC (fail-fast на границе API).
+MAX_SUBSCRIPTIONS = 100
+MAX_BATCH_SIZE = 10_000
+MAX_INTERVAL_SECONDS = 3600.0
 
 
 # S102 W1: module-level singleton holder. До этого момента
@@ -68,6 +75,9 @@ class CDCClient:
     ) -> None:
         self._subscriptions: dict[str, CDCSubscription] = {}
         self._tasks: dict[str, asyncio.Task] = {}
+        # ADR-0384: стратегии хранятся рядом с подписками — по ним видно
+        # фактические параметры (bootstrap/group_id) и их можно остановить.
+        self._strategies: dict[str, _CDCStrategy] = {}
         # B-02 fix (S176 cycle 33): DLQ handoff on callback/dispatch failure.
         # When set, exceptions in ``_dispatch_change`` no longer silently
         # drop the event — they are serialized as ``DLQEnvelope`` and written
@@ -116,32 +126,38 @@ class CDCClient:
         channel: str | None = None,
         callback: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
         target_action: str | None = None,
+        primary_key: str | None = None,
     ) -> str:
         """Создаёт подписку на изменения в таблицах.
 
         Args:
             profile: Имя профиля внешней БД.
             tables: Список таблиц для отслеживания.
-            strategy: polling | listen_notify | logminer.
+            strategy: polling | listen_notify | logminer | kafka.
             interval: Интервал polling (сек).
             batch_size: Макс. событий за итерацию.
             timestamp_column: Столбец для polling-стратегии.
             channel: PG LISTEN-канал (по умолчанию cdc_<table>).
             callback: Async-функция обработки событий.
             target_action: Action для диспетчеризации при событии.
+            primary_key: PK-колонка для составного курсора polling'а
+                (``(timestamp, PK)``). ``None`` — определить по выборке.
 
         Returns:
             ID подписки.
 
         Raises:
-            ValueError: Если стратегия неизвестна либо имена таблиц/колонок
-                не проходят allowlist-валидацию (S-17).
+            ValueError: Если стратегия неизвестна, имена таблиц/колонок
+                не проходят allowlist-валидацию (S-17) либо параметры
+                подписки вне допустимых лимитов (ADR-0384).
 
         """
-        if strategy not in self._STRATEGIES:
-            raise ValueError(
-                f"Unknown CDC strategy '{strategy}'. Available: {list(self._STRATEGIES)}"
-            )
+        self._validate_subscription(
+            strategy=strategy,
+            tables=tables,
+            interval=interval,
+            batch_size=batch_size,
+        )
 
         sub = CDCSubscription(
             profile=profile,
@@ -153,6 +169,7 @@ class CDCClient:
             channel=channel,
             callback=callback,
             target_action=target_action,
+            primary_key=primary_key,
         )
         # S-17: fail-fast валидация идентификаторов на этапе подписки —
         # недоверенное имя таблицы/колонки отклоняется сразу, а не
@@ -160,7 +177,8 @@ class CDCClient:
         validate_subscription_identifiers(sub)
         self._subscriptions[sub.id] = sub
 
-        strategy_impl = self._STRATEGIES[strategy]()
+        strategy_impl = self._build_strategy(strategy, sub)
+        self._strategies[sub.id] = strategy_impl
         task = get_task_registry().create_task(
             self._run_strategy(strategy_impl, sub), name=f"cdc-{sub.id}"
         )
@@ -174,6 +192,86 @@ class CDCClient:
             strategy,
         )
         return sub.id
+
+    def _validate_subscription(
+        self,
+        *,
+        strategy: str,
+        tables: list[str],
+        interval: float,
+        batch_size: int,
+    ) -> None:
+        """Проверить параметры подписки (ADR-0384 — явные лимиты).
+
+        Args:
+            strategy: Имя стратегии.
+            tables: Список таблиц.
+            interval: Интервал polling (сек).
+            batch_size: Максимум событий за итерацию.
+
+        Raises:
+            ValueError: Если параметры вне допустимых диапазонов.
+
+        """
+        if strategy not in self._STRATEGIES:
+            raise ValueError(
+                f"Unknown CDC strategy '{strategy}'. Available: {list(self._STRATEGIES)}"
+            )
+        if not tables:
+            raise ValueError("CDC subscription requires at least one table")
+        if not isinstance(batch_size, int) or isinstance(batch_size, bool):
+            raise ValueError(f"CDC batch_size must be an integer, got {batch_size!r}")
+        if not 1 <= batch_size <= MAX_BATCH_SIZE:
+            raise ValueError(
+                f"CDC batch_size must be between 1 and {MAX_BATCH_SIZE}, "
+                f"got {batch_size}"
+            )
+        if not isinstance(interval, (int, float)) or isinstance(interval, bool):
+            raise ValueError(f"CDC interval must be a number, got {interval!r}")
+        if not 0 < float(interval) <= MAX_INTERVAL_SECONDS:
+            raise ValueError(
+                f"CDC interval must be between 0 and {MAX_INTERVAL_SECONDS} "
+                f"seconds, got {interval}"
+            )
+        if len(self._subscriptions) >= MAX_SUBSCRIPTIONS:
+            raise ValueError(
+                f"CDC subscription limit reached ({MAX_SUBSCRIPTIONS}); "
+                "unsubscribe before creating a new one"
+            )
+
+    def _build_strategy(self, strategy: str, sub: CDCSubscription) -> _CDCStrategy:
+        """Создать стратегию с фактическими параметрами (ADR-0384).
+
+        Kafka-стратегия получает bootstrap-серверы из настроек очереди и
+        уникальный ``group_id`` (суффикс подписки) — две подписки не делят
+        партиции.
+        """
+        if strategy == "kafka":
+            return _KafkaDebeziumStrategy(
+                bootstrap_servers=resolve_bootstrap_servers(),
+                group_id=f"{DEFAULT_GROUP_ID}_{sub.id}",
+                poison_handler=self._handle_poison_message,
+            )
+        return self._STRATEGIES[strategy]()
+
+    async def _handle_poison_message(
+        self,
+        sub: CDCSubscription,
+        payload: dict[str, Any],
+        exc: BaseException,
+    ) -> None:
+        """Передать poison-сообщение Kafka в DLQ (ADR-0384).
+
+        Args:
+            sub: Подписка CDC.
+            payload: Исходное сообщение (topic/partition/offset/value).
+            exc: Ошибка обработки сообщения.
+
+        Raises:
+            RuntimeError: Если DLQ-writer не подключён (production-режим).
+
+        """
+        await self._send_to_dlq(sub, payload, exc, stage="kafka_poison")
 
     async def _run_strategy(self, strategy: _CDCStrategy, sub: CDCSubscription) -> None:
         """Запускает стратегию и ловит cancellation."""
@@ -191,6 +289,7 @@ class CDCClient:
             return False
 
         sub.active = False
+        self._strategies.pop(subscription_id, None)
         task = self._tasks.pop(subscription_id, None)
         if task and not task.done():
             task.cancel()

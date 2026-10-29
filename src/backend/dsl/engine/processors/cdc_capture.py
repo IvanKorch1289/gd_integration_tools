@@ -43,6 +43,9 @@ __all__ = ("CDCCaptureProcessor",)
 
 _ALLOWED_STRATEGIES = frozenset({"polling", "listen_notify", "logminer", "kafka"})
 
+#: Максимум CDC-событий, удерживаемых процессором (bounded-memory).
+_MAX_EVENTS = 1000
+
 
 class CDCCaptureProcessor(BaseProcessor):
     """Читает изменения из внешней БД через CDC и кладёт события в result_property.
@@ -99,6 +102,36 @@ class CDCCaptureProcessor(BaseProcessor):
         self._channel = channel
         self._include_schema = include_schema
         self._subscription_id: str | None = None
+        # ADR-0384: события CDC-клиента приходят асинхронно (callback) —
+        # процессор накапливает их и отдаёт в result_property.
+        self._events: list[dict[str, Any]] = []
+        self._exchange: Exchange[Any] | None = None
+
+    async def _on_event(self, event: dict[str, Any]) -> None:
+        """Callback CDC-клиента: событие попадает в ``result_property``.
+
+        Args:
+            event: Событие CDC (dict с ключами operation/table/timestamp/...).
+
+        """
+        self._events.append(event)
+        if len(self._events) > _MAX_EVENTS:
+            del self._events[: len(self._events) - _MAX_EVENTS]
+        exchange = self._exchange
+        if exchange is not None:
+            exchange.set_property(self._result_property, self._result_payload())
+            exchange.in_message.body = list(self._events)
+
+    def _result_payload(self) -> dict[str, Any]:
+        """Собрать payload результата подписки + накопленных событий."""
+        return {
+            "subscription_id": self._subscription_id,
+            "profile": self._profile,
+            "tables": list(self._tables),
+            "strategy": self._strategy,
+            "status": "cdc_capture_active",
+            "events": list(self._events),
+        }
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
@@ -118,30 +151,19 @@ class CDCCaptureProcessor(BaseProcessor):
                 timestamp_column=self._timestamp_column,
                 batch_size=self._batch_size,
                 channel=self._channel,
-                callback=None,
+                # ADR-0384: callback обязателен — иначе события CDC
+                # дропались на стороне клиента и до result_property
+                # не доходили.
+                callback=self._on_event,
                 target_action=None,
             )
             self._subscription_id = subscription_id
 
+        self._exchange = exchange
         exchange.set_property("cdc_subscription_id", subscription_id)
-
-        exchange.set_property(
-            self._result_property,
-            {
-                "subscription_id": subscription_id,
-                "profile": self._profile,
-                "tables": self._tables,
-                "strategy": self._strategy,
-                "status": "cdc_capture_active",
-            },
-        )
+        exchange.set_property(self._result_property, self._result_payload())
         exchange.set_out(
-            body={
-                "status": "cdc_capture_active",
-                "subscription_id": subscription_id,
-                "profile": self._profile,
-                "tables": self._tables,
-            },
+            body=self._result_payload(),
             headers=dict(exchange.in_message.headers),
         )
 
