@@ -190,6 +190,8 @@ class TestJdbcQueryProcessorInsertReturnsAffectedCount:
 
         mock_result = MagicMock()
         mock_result.rowcount = 1
+        # DML не возвращает строк (ADR-0382: тип результата, а не префикс SQL)
+        mock_result.returns_rows = False
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
@@ -223,6 +225,8 @@ class TestJdbcQueryProcessorInsertReturnsAffectedCount:
 
         mock_result = MagicMock()
         mock_result.rowcount = 3
+        # DML не возвращает строк (ADR-0382: тип результата, а не префикс SQL)
+        mock_result.returns_rows = False
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
@@ -255,6 +259,8 @@ class TestJdbcQueryProcessorInsertReturnsAffectedCount:
 
         mock_result = MagicMock()
         mock_result.rowcount = 1
+        # DML не возвращает строк (ADR-0382: тип результата, а не префикс SQL)
+        mock_result.returns_rows = False
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result

@@ -15,6 +15,12 @@
   ``REVOKE``) запрещены;
 * для жёстких whitelist-сценариев см. ``ExternalDatabaseService``.
 
+Фиксация транзакции (ADR-0382):
+* ``commit=None`` (default) — auto: DML коммитится, чтение — нет.
+  ``create_session()`` не коммитит сам, поэтому без commit DML молча
+  откатывался (тихая потеря данных);
+* ``commit=True`` / ``commit=False`` — явный opt-in / opt-out.
+
 Контракт DSL::
 
     .db_query_external(
@@ -32,7 +38,12 @@ from typing import Any, ClassVar
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors._sql_validation import validate_sql
+from src.backend.dsl.engine.processors._sql_validation import (
+    needs_commit,
+    result_returns_rows,
+    sql_statement_kind,
+    validate_sql,
+)
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
 __all__ = ("ExternalDbQueryProcessor",)
@@ -57,8 +68,10 @@ class ExternalDbQueryProcessor(BaseProcessor):
             ``"all"`` (default) — list[dict] всех строк;
             ``"one"`` — единственная строка как dict (или None);
             ``"scalar"`` — скалярное значение.
-        commit: Если ``True`` — выполнить ``session.commit()`` после запроса
-            (для INSERT/UPDATE/DELETE/CALL). Default ``False``.
+        commit: Режим фиксации транзакции:
+            ``None`` (default) — auto: DML коммитится, чтение — нет;
+            ``True`` — коммитить всегда;
+            ``False`` — не коммитить никогда (явный opt-out).
 
     """
 
@@ -73,7 +86,7 @@ class ExternalDbQueryProcessor(BaseProcessor):
         params_from: str = "body",
         result_property: str = "db_result",
         fetch: str = "all",
-        commit: bool = False,
+        commit: bool | None = None,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name or f"db_query_external:{profile}")
@@ -94,7 +107,8 @@ class ExternalDbQueryProcessor(BaseProcessor):
         self._commit = commit
         # Если коммит — это наблюдаемый внешний эффект, помечаем как SIDE_EFFECTING.
         # Запись идёт в instance __dict__, а не перезаписывает ClassVar.
-        if commit:
+        # ADR-0382: DML по умолчанию коммитится → такой же side-effect.
+        if commit is True or sql_statement_kind(sql) == "dml":
             self.__dict__["side_effect"] = SideEffectKind.SIDE_EFFECTING
             self.__dict__["compensatable"] = False
 
@@ -127,9 +141,21 @@ class ExternalDbQueryProcessor(BaseProcessor):
 
         async with session_manager.create_session() as session:
             result = await session.execute(text(self._sql), params)
-            payload = self._materialize_result(result)
-            if self._commit:
+            # ADR-0382: ветка по ФАКТИЧЕСКОМУ типу результата, а не по префиксу
+            # SQL. ``mappings()`` у result без строк бросает
+            # ResourceClosedError — раньше это съедало commit() и DML
+            # молча откатывалось на выходе из create_session().
+            returns_rows = result_returns_rows(result, self._sql)
+            # rowcount читаем ДО commit: commit закрывает курсор, после него
+            # ``result.rowcount`` может бросить ResourceClosedError.
+            rowcount = getattr(result, "rowcount", -1)
+            # Commit ДО материализации: данные фиксируются, даже если
+            # разбор результата упадёт.
+            if self._should_commit(returns_rows):
                 await session.commit()
+            payload = self._materialize_result(
+                result, returns_rows=returns_rows, rowcount=rowcount
+            )
 
         exchange.set_property(self._result_property, payload)
         exchange.set_out(body=payload, headers=dict(exchange.in_message.headers))
@@ -149,8 +175,40 @@ class ExternalDbQueryProcessor(BaseProcessor):
             case _:
                 return {}
 
-    def _materialize_result(self, result: Any) -> Any:
-        """Конвертирует SQLAlchemy-result в привычную структуру."""
+    def _should_commit(self, returns_rows: bool) -> bool:
+        """Решает, фиксировать ли транзакцию.
+
+        Args:
+            returns_rows: ``result.returns_rows`` — возвращает ли результат строки.
+
+        Returns:
+            ``True`` — нужен ``session.commit()``.
+
+        """
+        if self._commit is True:
+            return True
+        if self._commit is False:
+            return False
+        return needs_commit(self._sql, returns_rows=returns_rows)
+
+    def _materialize_result(
+        self, result: Any, *, returns_rows: bool, rowcount: int = -1
+    ) -> Any:
+        """Конвертирует SQLAlchemy-result в привычную структуру.
+
+        Args:
+            result: Результат ``session.execute``.
+            returns_rows: Возвращает ли результат строки.
+            rowcount: Количество затронутых строк (для DML).
+
+        Returns:
+            Для SELECT — list[dict] / dict / scalar (по ``fetch``);
+            для DML без ``RETURNING`` — ``{"rowcount": <int>}``.
+
+        """
+        if not returns_rows:
+            # Result без строк: ``mappings()`` бросил бы ResourceClosedError.
+            return {"rowcount": rowcount}
         match self._fetch:
             case "all":
                 rows = result.mappings().all()
@@ -172,6 +230,6 @@ class ExternalDbQueryProcessor(BaseProcessor):
             spec["result_property"] = self._result_property
         if self._fetch != "all":
             spec["fetch"] = self._fetch
-        if self._commit is not False:
+        if self._commit is not None:
             spec["commit"] = self._commit
         return {"db_query_external": spec}

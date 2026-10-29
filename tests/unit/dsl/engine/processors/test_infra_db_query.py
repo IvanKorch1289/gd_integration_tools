@@ -35,11 +35,22 @@ class _FakeRow:
 
 
 class _FakeResult(list[Any]):
-    """Итерируемый результат запроса + ``rowcount`` (как ``CursorResult``)."""
+    """Итерируемый результат запроса + ``rowcount``/``returns_rows``.
 
-    def __init__(self, rows: list[Any], rowcount: int = -1) -> None:
+    ``returns_rows`` моделирует реальный ``CursorResult``: SELECT возвращает
+    строки, DML — нет (ADR-0382: тип результата, а не префикс SQL).
+    """
+
+    def __init__(
+        self,
+        rows: list[Any],
+        rowcount: int = -1,
+        *,
+        returns_rows: bool = True,
+    ) -> None:
         super().__init__(rows)
         self.rowcount = rowcount
+        self.returns_rows = returns_rows
 
 
 class _FakeSession:
@@ -249,7 +260,7 @@ async def test_valid_dml_is_executed_and_committed(
 ) -> None:
     """Валидный DML исполняется и коммитится."""
     monkeypatch.setattr(feature_flags, "infra_db_query_enabled", True)
-    session = _FakeSession(_FakeResult([], rowcount=3))
+    session = _FakeSession(_FakeResult([], rowcount=3, returns_rows=False))
     processor = InfraDbQueryProcessor(
         sql="UPDATE users SET name = :name WHERE id = :id",
         params={"name": "Alice", "id": 1},

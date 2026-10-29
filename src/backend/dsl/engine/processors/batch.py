@@ -5,26 +5,32 @@
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 
+from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
+from src.backend.core.utils.sql_identifiers import validate_identifier
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
 
-#: Разрешённые символы в имени таблицы (schema.table или table).
-_TABLE_NAME_RE: re.Pattern[str] = re.compile(
-    r"^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$"
-)
-
-#: Разрешённые символы в SQL-идентификаторе (колонка, alias и т.д.).
-_IDENTIFIER_RE: re.Pattern[str] = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+_logger = get_logger("dsl.batch")
 
 
 def _validate_identifier(name: str) -> None:
-    if not _IDENTIFIER_RE.fullmatch(name):
-        raise ValueError(f"Invalid identifier: {name!r}")
+    """Валидирует SQL-идентификатор по канону ADR-0365.
+
+    Args:
+        name: Имя колонки / alias.
+
+    Raises:
+        ValueError: Если имя не является безопасным идентификатором.
+
+    """
+    try:
+        validate_identifier(name, context="batch.identifier")
+    except ValueError as exc:
+        raise ValueError(f"Invalid identifier: {name!r}") from exc
 
 
 # lazy-evaluated at module level for testability
@@ -50,9 +56,23 @@ __all__ = ("BatchDeleteProcessor", "BatchInsertProcessor", "BatchUpdateProcessor
 
 
 def _validate_table(table: str) -> None:
-    """Проверяет, что имя таблицы не содержит SQL-injection."""
-    if not _TABLE_NAME_RE.fullmatch(table):
-        raise ValueError(f"Invalid table name: {table!r}")
+    """Проверяет, что имя таблицы (schema.table или table) безопасно.
+
+    Каждый сегмент проверяется по канону ADR-0365
+    (``core.utils.sql_identifiers.validate_identifier``).
+
+    Args:
+        table: Имя таблицы.
+
+    Raises:
+        ValueError: Если имя содержит небезопасные символы.
+
+    """
+    for part in table.split("."):
+        try:
+            validate_identifier(part, context="batch.table")
+        except ValueError as exc:
+            raise ValueError(f"Invalid table name: {table!r}") from exc
 
 
 class BatchInsertProcessor(BaseProcessor):
@@ -90,17 +110,33 @@ class BatchInsertProcessor(BaseProcessor):
             return
 
         _validate_table(self._table)
-        # fail-fast: validate all column identifiers before touching DB
-        first = items[0]
-        for col in first:
-            _validate_identifier(col)
+        # fail-fast: validate all column identifiers before touching DB.
+        # ADR-0382: колонки — UNION по всем items (раньше брались только из
+        # 1-го item → лишние ключи остальных молча терялись).
+        columns: list[str] = []
+        for item in items:
+            if not isinstance(item, dict):
+                raise ValueError(
+                    f"batch_insert: каждый item должен быть dict, получено {type(item).__name__}"
+                )
+            for col in item:
+                _validate_identifier(col)
+                if col not in columns:
+                    columns.append(col)
+        if not columns:
+            exchange.set_property("batch_insert_result", {"affected": 0})
+            exchange.set_out(body=items, headers=dict(exchange.in_message.headers))
+            return
+
         bundle = _lazy_get_external_db_registry()().get_bundle(self._profile)
-        # executemany через list[dict]
-        columns = ", ".join(first.keys())
-        placeholders = ", ".join(f":{k}" for k in first)
-        stmt_text = f"INSERT INTO {self._table} ({columns}) VALUES ({placeholders})"
+        # executemany через list[dict]: все items приводятся к общему набору
+        # колонок, отсутствующие значения → NULL (данные не теряются).
+        rows = [{col: item.get(col) for col in columns} for item in items]
+        columns_sql = ", ".join(columns)
+        placeholders = ", ".join(f":{col}" for col in columns)
+        stmt_text = f"INSERT INTO {self._table} ({columns_sql}) VALUES ({placeholders})"
         async with bundle.async_session_maker() as session:
-            result = await session.execute(text(stmt_text), items)
+            result = await session.execute(text(stmt_text), rows)
             await session.commit()
             affected = getattr(result, "rowcount", len(items))
             exchange.set_property("batch_insert_result", {"affected": affected})
@@ -184,6 +220,10 @@ class BatchUpdateProcessor(BaseProcessor):
         _validate_identifier(self._key_field)
         # fail-fast: validate all column identifiers before touching DB
         for item in items:
+            if not isinstance(item, dict):
+                raise ValueError(
+                    f"batch_update: каждый item должен быть dict, получено {type(item).__name__}"
+                )
             for col in item:
                 if col != self._key_field:
                     _validate_identifier(col)
@@ -193,16 +233,28 @@ class BatchUpdateProcessor(BaseProcessor):
         from collections import defaultdict
 
         groups: dict[frozenset[str], list[dict[str, Any]]] = defaultdict(list)
+        skipped = 0
         for item in items:
             key_value = item.get(self._key_field)
             if key_value is None:
+                # ADR-0382: item без key-поля нельзя обновить — раньше он
+                # молча терялся; теперь это видно в логе.
+                skipped += 1
                 continue
             updates = {k: v for k, v in item.items() if k != self._key_field}
             if not updates:
+                skipped += 1
                 continue
             params = dict(updates)
             params["_key"] = key_value
             groups[frozenset(updates.keys())].append(params)
+        if skipped:
+            _logger.warning(
+                "batch_update: пропущено %d item'ов без key-поля '%s' (table=%s)",
+                skipped,
+                self._key_field,
+                self._table,
+            )
 
         bundle = _lazy_get_external_db_registry()().get_bundle(self._profile)
         total_affected = 0
@@ -254,7 +306,7 @@ class BatchDeleteProcessor(BaseProcessor):
 
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
-        """Выполняет batch DELETE через SQLAlchemy (``= ANY(:ids)`` для Postgres).
+        """Выполняет batch DELETE через SQLAlchemy (``IN (:ids)`` — все диалекты).
 
         IDs берутся из ``self._ids`` либо ``in_message.body``. Table и key_field
         проходят SQL-injection валидацию.
@@ -275,9 +327,13 @@ class BatchDeleteProcessor(BaseProcessor):
         _validate_identifier(self._key_field)
         bundle = _lazy_get_external_db_registry()().get_bundle(self._profile)
         async with bundle.async_session_maker() as session:
-            # Postgres-compatible: = ANY(:ids); fallback IN для остальных
-            stmt_text = f"DELETE FROM {self._table} WHERE {self._key_field} = ANY(:ids)"
-            result = await session.execute(text(stmt_text), {"ids": list(ids)})
+            # ADR-0382: ``= ANY(:ids)`` — только PostgreSQL (на sqlite/mysql/
+            # oracle «no such function: ANY»). Expanding bindparam даёт
+            # переносимый ``IN (:id_1, :id_2, ...)`` для всех диалектов.
+            stmt = text(
+                f"DELETE FROM {self._table} WHERE {self._key_field} IN :ids"
+            ).bindparams(bindparam("ids", expanding=True))
+            result = await session.execute(stmt, {"ids": list(ids)})
             await session.commit()
             affected = getattr(result, "rowcount", len(ids))
             exchange.set_property("batch_delete_result", {"affected": affected})

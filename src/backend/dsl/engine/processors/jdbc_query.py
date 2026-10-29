@@ -32,6 +32,8 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors._sql_validation import (
     FORBIDDEN_SQL,
+    needs_commit,
+    result_returns_rows,
     validate_sql,
 )
 from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
@@ -124,19 +126,23 @@ class JdbcQueryProcessor(BaseProcessor):
         async with session_manager.create_session() as session:
             result = await session.execute(text(self._sql), params)
 
-            sql_upper = self._sql.strip().upper()
-            is_select = sql_upper.startswith("SELECT")
+            # ADR-0382: SELECT-детект по фактическому типу результата
+            # (``returns_rows``), а не по префиксу SQL: ``WITH ... SELECT``
+            # раньше уходил в ветку DML → ``{"rowcount": -1}`` и строки
+            # терялись.
+            returns_rows = result_returns_rows(result, self._sql)
+            rowcount = getattr(result, "rowcount", -1)
+            if needs_commit(self._sql, returns_rows=returns_rows):
+                await session.commit()
 
-            if is_select:
+            if returns_rows:
                 rows = [dict(row._mapping) for row in result.fetchall()]
                 exchange.set_property(self._result_property, rows)
                 exchange.set_out(body=rows, headers=dict(exchange.in_message.headers))
             else:
-                await session.commit()
-                affected_count = result.rowcount
-                exchange.set_property(self._result_property, affected_count)
+                exchange.set_property(self._result_property, rowcount)
                 exchange.set_out(
-                    body={"affected_count": affected_count},
+                    body={"affected_count": rowcount},
                     headers=dict(exchange.in_message.headers),
                 )
 

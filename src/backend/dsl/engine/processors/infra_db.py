@@ -40,7 +40,11 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.processors._sql_validation import validate_sql
+from src.backend.dsl.engine.processors._sql_validation import (
+    needs_commit,
+    result_returns_rows,
+    validate_sql,
+)
 from src.backend.dsl.engine.processors.base import BaseProcessor
 from src.backend.dsl.registry import processor
 
@@ -149,9 +153,14 @@ class InfraDbQueryProcessor(BaseProcessor):
         session_manager = get_main_session_manager_getter()()
         async with session_manager.create_session() as session:
             result = await session.execute(text(self.sql), self._params)
-            if self.sql.strip().upper().startswith("SELECT"):
+            # ADR-0382: SELECT-детект по фактическому типу результата, а не по
+            # первой букве SQL — ``WITH ... SELECT`` больше не считается DML.
+            returns_rows = result_returns_rows(result, self.sql)
+            rowcount = getattr(result, "rowcount", -1)
+            if needs_commit(self.sql, returns_rows=returns_rows):
+                await session.commit()
+            if returns_rows:
                 rows = [self._row_to_dict(row) for row in result]
             else:
-                await session.commit()
-                rows = [{"rowcount": result.rowcount}]
+                rows = [{"rowcount": rowcount}]
         self.set_result(exchange, self.target, rows)

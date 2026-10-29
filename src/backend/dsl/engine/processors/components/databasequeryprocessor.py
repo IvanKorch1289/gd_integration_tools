@@ -12,6 +12,8 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors._sql_validation import (
     FORBIDDEN_SQL,
+    needs_commit,
+    result_returns_rows,
     validate_sql,
 )
 from src.backend.dsl.engine.processors.base import BaseProcessor
@@ -86,16 +88,24 @@ class DatabaseQueryProcessor(BaseProcessor):
             async with engine.connect() as conn:
                 result = await conn.execute(text(self._sql), params)
 
-                if self._sql.strip().upper().startswith("SELECT"):
+                # ADR-0382: тип результата определяется по факту
+                # (``result.returns_rows``), а не по первой букве SQL.
+                # ``WITH ... SELECT`` раньше считался DML → ``{"rowcount": -1}``
+                # и строки терялись.
+                returns_rows = result_returns_rows(result, self._sql)
+                rowcount = getattr(result, "rowcount", -1)
+                if needs_commit(self._sql, returns_rows=returns_rows):
+                    await conn.commit()
+
+                if returns_rows:
                     rows = [dict(row._mapping) for row in result.fetchall()]
                     exchange.set_property(self._result_property, rows)
                     exchange.set_out(
                         body=rows, headers=dict(exchange.in_message.headers)
                     )
                 else:
-                    await conn.commit()
                     exchange.set_property(
-                        self._result_property, {"rowcount": result.rowcount}
+                        self._result_property, {"rowcount": rowcount}
                     )
 
         except Exception as exc:

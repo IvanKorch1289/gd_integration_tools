@@ -288,9 +288,11 @@ def test_build_upsert_sql_mysql_uses_duplicate_key() -> None:
     )
     assert "INSERT INTO" in sql
     assert "ON DUPLICATE KEY UPDATE" in sql
-    assert '"name" = VALUES("name")' in sql
+    # ADR-0382: MySQL без ANSI_QUOTES не понимает двойные кавычки → backticks
+    assert "`name` = VALUES(`name`)" in sql
+    assert "`users`" in sql
     # id is conflict key → NOT in update set
-    assert '"id" = VALUES("id")' not in sql
+    assert "`id` = VALUES(`id`)" not in sql
     assert params == {"id": 1, "name": "Alice"}
 
 
@@ -306,16 +308,30 @@ def test_build_upsert_sql_mysql_no_update_cols_keeps_clause() -> None:
 
 
 def test_build_upsert_sql_merge_uses_merge_into() -> None:
+    """Oracle-диалект MERGE: без ``AS`` у алиаса, с ``FROM DUAL`` (ADR-0382)."""
     sql, params = build_upsert_sql_merge(
         "users", {"id": 1, "name": "Alice"}, conflict_keys=["id"]
     )
     assert sql.startswith("MERGE INTO")
     assert "USING (SELECT" in sql
-    assert 'ON t."id" = src."id"' in sql
+    assert "FROM DUAL" in sql
+    assert " AS t " not in sql
+    assert 'ON (t."id" = src."id")' in sql
     assert "WHEN MATCHED THEN UPDATE SET" in sql
     assert "WHEN NOT MATCHED THEN INSERT" in sql
     assert 'src."name"' in sql
     assert params == {"id": 1, "name": "Alice"}
+
+
+def test_build_upsert_sql_merge_mssql_is_terminated() -> None:
+    """MSSQL MERGE обязан завершаться ``;`` (ADR-0382)."""
+    sql, _ = build_upsert_sql_merge(
+        "users", {"id": 1, "name": "Alice"}, conflict_keys=["id"], dialect="mssql"
+    )
+    assert sql.startswith("MERGE INTO")
+    assert sql.rstrip().endswith(";")
+    assert "[users]" in sql
+    assert "FROM DUAL" not in sql
 
 
 def test_build_upsert_sql_merge_rejects_unsafe_identifier() -> None:
@@ -364,15 +380,15 @@ def test_build_upsert_sql_dialect_rejects_unknown() -> None:
         build_upsert_sql_dialect("clickhouse", "users", {"id": 1}, ["id"])
 
 
-def test_processor_default_dialect_is_postgresql() -> None:
-    """Backward-compat: default dialect остаётся PostgreSQL."""
+def test_processor_default_dialect_is_auto() -> None:
+    """ADR-0382: дефолт диалекта — auto (диалект целевой БД), не postgresql."""
     proc = DbCrudProcessor(
         operation="UPSERT",
         table="users",
         data={"id": 1, "name": "A"},
         conflict_keys=["id"],
     )
-    assert proc._dialect == "postgresql"
+    assert proc._dialect is None
 
 
 def test_processor_upsert_mysql_dialect_uses_duplicate_key() -> None:
@@ -386,10 +402,16 @@ def test_processor_upsert_mysql_dialect_uses_duplicate_key() -> None:
         conflict_keys=["id"],
         dialect="mysql",
     )
-    with patch(
-        "src.backend.dsl.engine.processors.components.databasequeryprocessor.DatabaseQueryProcessor.process",
-        new=AsyncMock(),
-    ) as mock_proc:
+    with (
+        patch(
+            "src.backend.dsl.engine.processors.db_crud._target_dialect",
+            return_value="mysql",
+        ),
+        patch(
+            "src.backend.dsl.engine.processors.components.databasequeryprocessor.DatabaseQueryProcessor.process",
+            new=AsyncMock(),
+        ) as mock_proc,
+    ):
         from src.backend.dsl.engine.exchange import Exchange, Message
 
         ex = Exchange(in_message=Message(body={"id": 1, "name": "A"}))
@@ -421,7 +443,7 @@ def test_execute_dml_method_present_on_persistence_mixin() -> None:
         pytest.skip("persistence module not found")
     src = p.read_text(encoding="utf-8")
     assert "def execute_dml(" in src, "PersistenceMixin.execute_dml missing"
-    assert 'dialect: str = "postgresql"' in src, "execute_dml default dialect missing"
+    assert "dialect: str | None = None" in src, "execute_dml default dialect missing"
     # Сигнатура многострочная — собираем строки до первого '): RouteBuilder'.
     lines = src.splitlines()
     start_idx = next(
@@ -521,7 +543,12 @@ def test_processor_insert_rejects_unsafe_identifier_via_dialect() -> None:
     ``DbCrudProcessor.process`` обёрнут в :func:`handle_processor_error`,
     поэтому ValueError из SQL builder не пробрасывается — записывается в
     ``exchange.error`` + stopping exchange. Проверяем этот fail-closed path.
+
+    Целевая БД подменяется на проверяемый диалект (ADR-0382: явный диалект
+    обязан совпадать с целевой БД, иначе — mismatch).
     """
+    from unittest.mock import patch
+
     from src.backend.dsl.engine.exchange import Exchange, Message
 
     for dialect in SUPPORTED_DIALECTS:
@@ -534,7 +561,11 @@ def test_processor_insert_rejects_unsafe_identifier_via_dialect() -> None:
         ex = Exchange(in_message=Message(body={"id": 1}))
         import asyncio
 
-        asyncio.run(proc.process(ex, None))  # type: ignore[arg-type]
+        with patch(
+            "src.backend.dsl.engine.processors.db_crud._target_dialect",
+            return_value=dialect,
+        ):
+            asyncio.run(proc.process(ex, None))  # type: ignore[arg-type]
         assert ex.error is not None, (
             f"dialect={dialect}: unsafe identifier должен маркировать exchange"
         )

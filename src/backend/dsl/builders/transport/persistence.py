@@ -26,7 +26,7 @@ class PersistenceMixin:
         profile: str,
         name: str,
         *,
-        schema: str = "public",
+        schema: str | None = None,
         params_from: str = "body",
         result_property: str = "sp_result",
         dialect: str | None = None,
@@ -159,14 +159,19 @@ class PersistenceMixin:
         data: dict[str, Any],
         conflict_keys: list[str],
         *,
+        dialect: str | None = None,
         result_property: str = "db_crud_result",
     ) -> RouteBuilder:
-        """Safe UPSERT (INSERT ... ON CONFLICT DO UPDATE, PostgreSQL).
+        """Safe UPSERT (INSERT ... ON CONFLICT DO UPDATE по умолчанию).
 
         Args:
             table: Table name.
             data: Column → value mapping (включая conflict_keys).
             conflict_keys: PK/unique columns для conflict target.
+            dialect: SQL dialect (``postgresql`` / ``sqlite`` / ``mysql`` /
+                ``oracle`` / ``mssql``). ``None`` (default) — диалект
+                берётся из целевой БД (ADR-0382); раньше YAML-шаг всегда
+                строил PostgreSQL-SQL, даже когда целевая БД — другая.
             result_property: Куда положить result.
 
         Example::
@@ -187,6 +192,7 @@ class PersistenceMixin:
             table=table,
             data=data,
             conflict_keys=conflict_keys,
+            dialect=dialect,
             result_property=result_property,
         )
 
@@ -195,7 +201,7 @@ class PersistenceMixin:
         operation: str,
         table: str,
         *,
-        dialect: str = "postgresql",
+        dialect: str | None = None,
         data: dict[str, Any] | None = None,
         where: dict[str, Any] | None = None,
         conflict_keys: list[str] | None = None,
@@ -220,9 +226,10 @@ class PersistenceMixin:
         Args:
             operation: ``INSERT`` | ``UPDATE`` | ``DELETE`` | ``UPSERT``.
             table: Table name.
-            dialect: ``postgresql`` (default) / ``sqlite`` / ``mysql`` /
-                ``oracle`` / ``mssql``. Affects UPSERT syntax only
-                (INSERT/DELETE/UPDATE are ANSI-compatible).
+            dialect: ``None`` (default) — диалект целевой БД; явно заданный
+                диалект проверяется на соответствие целевой БД (ADR-0382).
+                Допустимы ``postgresql`` / ``sqlite`` / ``mysql`` / ``oracle``
+                / ``mssql``.
             data: Column → value (для INSERT/UPSERT/UPDATE).
             where: Column → value (для DELETE/UPDATE).
             conflict_keys: PK/unique columns (для UPSERT).
@@ -313,12 +320,15 @@ class PersistenceMixin:
         params_from: str = "body",
         result_property: str = "db_result",
         fetch: str = "all",
-        commit: bool = False,
+        commit: bool | None = None,
     ) -> RouteBuilder:
         """Выполняет произвольный SQL во внешней БД по profile-имени.
 
         Использует ``ExternalDatabaseRegistry`` (через DI) для получения
         async-сессии. Параметры берутся из body / properties / headers.
+
+        ``commit=None`` (default) — auto: DML коммитится, чтение — нет
+        (ADR-0382: без commit DML молча откатывался).
         """
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.db_query_external",
