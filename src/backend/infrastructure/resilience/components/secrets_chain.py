@@ -32,6 +32,8 @@ async def _vault_resolve(ref: str) -> str | None:
     """Primary: Vault KV v2."""
     from hvac import Client
 
+    from src.backend.core.config.vault import vault_endpoint
+
     if not ref.startswith("vault:"):
         # Поддерживаем простой ref-формат: считаем ref ключом в дефолтном пути.
         path, _, key = ref.partition(":")
@@ -40,7 +42,7 @@ async def _vault_resolve(ref: str) -> str | None:
     else:
         _, path, key = ref.split(":", 2)
 
-    addr = os.environ.get("VAULT_ADDR")
+    addr = vault_endpoint()
     token = os.environ.get("VAULT_TOKEN")
     if not addr or not token:
         raise RuntimeError("Vault не сконфигурирован: VAULT_ADDR/TOKEN отсутствуют")

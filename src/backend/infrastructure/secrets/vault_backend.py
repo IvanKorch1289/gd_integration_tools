@@ -49,9 +49,15 @@ class VaultConfig:
 
         Поддерживает ``VAULT_ADDR``, ``VAULT_TOKEN``, ``VAULT_ROLE_ID``,
         ``VAULT_SECRET_ID``, ``VAULT_MOUNT``, ``VAULT_NAMESPACE``.
+
+        ADR-0376: адрес Vault берётся через единый helper
+        ``vault_endpoint()`` — YAML-секция ``vault`` (ADR-0372) имеет
+        приоритет над ``.env``, реальное окружение — над YAML.
         """
+        from src.backend.core.config.vault import vault_endpoint
+
         return cls(
-            url=os.environ.get("VAULT_ADDR", "http://127.0.0.1:8200"),
+            url=vault_endpoint() or "http://127.0.0.1:8200",
             token=os.environ.get("VAULT_TOKEN"),
             role_id=os.environ.get("VAULT_ROLE_ID"),
             secret_id=os.environ.get("VAULT_SECRET_ID"),

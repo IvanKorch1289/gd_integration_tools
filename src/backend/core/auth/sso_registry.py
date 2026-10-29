@@ -110,11 +110,15 @@ class HvacVaultClient:
     Lazy-import ``hvac`` (опциональная зависимость). Если ``hvac``
     не установлен — :meth:`read_secret` бросает ``SsoRegistryError``.
 
-    ENV vars: ``VAULT_ADDR`` (URL) + ``VAULT_TOKEN`` (auth token).
+    ADR-0376: адрес Vault берётся через единый helper
+    ``vault_endpoint()`` (реальное env → YAML ``vault.addr`` → ``.env``),
+    токен — только из окружения (это секрет).
     """
 
     def __init__(self, *, url: str | None = None, token: str | None = None) -> None:
-        self._url = url or os.environ.get("VAULT_ADDR")
+        from src.backend.core.config.vault import vault_endpoint
+
+        self._url = url or vault_endpoint() or None
         self._token = token or os.environ.get("VAULT_TOKEN")
         self._client: Any | None = None
 

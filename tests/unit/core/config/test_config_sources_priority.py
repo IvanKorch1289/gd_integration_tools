@@ -407,6 +407,36 @@ class TestDotEnvPriority:
         finally:
             cl._ENV_FILE_VALUES.pop(key, None)
 
+    def test_real_env_wins_over_lowercase_dotenv_key(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Настоящий env побеждает ``.env`` даже при lowercase-ключе в файле.
+
+        Регрессия (ADR-0376, ранее xfail W4/ADR-0379): ``.env`` с ключом
+        ``probe_value`` (нижний регистр) перебивал настоящую переменную
+        ``PROBE_VALUE`` — значение из окружения терялось, оставалось
+        значение из YAML.
+        """
+        global _PROFILES_DIR
+
+        profile = get_active_profile().value
+        (tmp_path / "base.yml").write_text("probe:\n  value: 0\n")
+        _write_profile(tmp_path, profile, 5)
+        _PROFILES_DIR = tmp_path
+        cl.clear_yaml_cache()
+
+        # Настоящее окружение (регистр как в деплое) — задаётся первым.
+        monkeypatch.setenv("PROBE_VALUE", "999")
+        # Значение из файла ``.env`` — ключ в нижнем регистре.
+        monkeypatch.setenv("probe_value", "777")
+        cl._ENV_FILE_VALUES["probe_value"] = "777"
+        try:
+            assert _ProbeSettings().value == 999
+        finally:
+            cl._ENV_FILE_VALUES.pop("probe_value", None)
+            cl.clear_yaml_cache()
+            _PROFILES_DIR = None
+
     def test_dotenv_value_is_recognised(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Значение, совпадающее с ``.env``, считается файловым (низкий приоритет)."""
         key = "PROBE_FROM_FILE"

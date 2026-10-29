@@ -77,7 +77,9 @@ class VaultSecretRefresher:
 
     async def start(self) -> None:
         """Запускает фоновый refresh loop."""
-        vault_addr = getenv("VAULT_ADDR")
+        from src.backend.core.config.vault import vault_endpoint
+
+        vault_addr = vault_endpoint()
         if not vault_addr:
             logger.info("VAULT_ADDR not set — secret refresh disabled")
             return
@@ -113,9 +115,11 @@ class VaultSecretRefresher:
 
     async def _check_and_refresh(self) -> None:
         """Проверяет Vault на новые версии секретов."""
-        vault_addr = getenv("VAULT_ADDR")
+        from src.backend.core.config.vault import vault_endpoint, vault_secret_path
+
+        vault_addr = vault_endpoint()
         vault_token = getenv("VAULT_TOKEN")
-        vault_path = getenv("VAULT_SECRET_PATH")
+        vault_path = vault_secret_path()
 
         if not all([vault_addr, vault_token, vault_path]):
             return
@@ -170,7 +174,9 @@ class VaultSecretRefresher:
         if not self._tracked_paths:
             return
 
-        vault_addr = getenv("VAULT_ADDR")
+        from src.backend.core.config.vault import vault_endpoint
+
+        vault_addr = vault_endpoint()
         vault_token = getenv("VAULT_TOKEN")
         if not all([vault_addr, vault_token]):
             return

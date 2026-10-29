@@ -83,7 +83,9 @@ class VaultPkiClient:
 
             import hvac
 
-            addr = self._addr or os.environ.get("VAULT_ADDR", "http://127.0.0.1:8200")
+            from src.backend.core.config.vault import vault_endpoint
+
+            addr = self._addr or vault_endpoint() or "http://127.0.0.1:8200"
             token = self._token or os.environ.get("VAULT_TOKEN")
             self._client = hvac.Client(url=addr, token=token)
             return self._client

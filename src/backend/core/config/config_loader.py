@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from pathlib import Path
@@ -21,8 +22,10 @@ __all__ = (
     "clear_vault_cache",
     "clear_yaml_cache",
     "ensure_env_file_loaded",
+    "env_lookup",
     "load_env_file",
     "reload_settings",
+    "vault_yaml_config",
 )
 
 
@@ -95,18 +98,47 @@ _ENV_FILE_VALUES: dict[str, str] = {}
 """
 
 
+def _env_case_variants() -> dict[str, set[str]]:
+    """Значения ``os.environ``, сгруппированные по регистронезависимому ключу.
+
+    ``os.environ`` на Linux регистрозависим: ``APP_FOO`` и ``app_foo`` —
+    разные переменные, но pydantic схлопывает их в один ключ (последний
+    побеждает). Поэтому сравнение с ``.env`` должно быть
+    регистронезависимым (ADR-0376).
+
+    Returns:
+        Словарь ``ключ в нижнем регистре -> множество значений``.
+
+    """
+    variants: dict[str, set[str]] = {}
+    for name, value in os.environ.items():
+        variants.setdefault(name.lower(), set()).add(value)
+    return variants
+
+
 def _dotenv_only_keys() -> set[str]:
     """Ключи, значения которых в ``os.environ`` пришли из ``.env``.
+
+    Ключ считается «из файла» только если НИ ОДИН его регистрозависимый
+    вариант в окружении не содержит другого значения: реальное окружение
+    (в т.ч. записанное в другом регистре — ``APP_FOO`` против ``app_foo``)
+    приоритетнее файла. Раньше сравнение было регистрозависимым, и
+    значение из ``.env`` (lowercase) перебивало реальное окружение
+    (uppercase) — настройка уезжала в YAML (ADR-0376).
 
     Returns:
         Множество имён переменных (в нижнем регистре).
 
     """
-    return {
-        key.lower()
-        for key, value in _ENV_FILE_VALUES.items()
-        if os.environ.get(key) == value
-    }
+    variants = _env_case_variants()
+    only_from_file: set[str] = set()
+    for key, value in _ENV_FILE_VALUES.items():
+        if os.environ.get(key) != value:
+            continue
+        if any(v != value for v in variants.get(key.lower(), ())):
+            continue
+        only_from_file.add(key.lower())
+    return only_from_file
 
 
 def load_env_file(path: Path | None = None, *, override: bool = False) -> bool:
@@ -304,7 +336,7 @@ def _merged_profile_yaml() -> dict[str, Any]:
     )
 
 
-def _vault_yaml_config() -> dict[str, Any]:
+def vault_yaml_config() -> dict[str, Any]:
     """Секция ``vault`` из YAML-профиля (с кэшем чтения).
 
     ADR-0372: ``VAULT_ADDR``/``VAULT_SECRET_PATH`` — не секреты, они
@@ -318,7 +350,11 @@ def _vault_yaml_config() -> dict[str, Any]:
     return vault_cfg if isinstance(vault_cfg, dict) else {}
 
 
-def _env_lookup(name: str) -> str:
+_vault_yaml_config = vault_yaml_config
+"""Back-compat alias (историческое приватное имя)."""
+
+
+def env_lookup(name: str) -> str:
     """Значение переменной окружения, заданное НЕ через ``.env``.
 
     ADR-0372: значения из ``.env`` не должны перебивать YAML/Vault —
@@ -336,6 +372,10 @@ def _env_lookup(name: str) -> str:
     if name.lower() in _dotenv_only_keys():
         return ""
     return os.environ.get(name, "")
+
+
+_env_lookup = env_lookup
+"""Back-compat alias (историческое приватное имя)."""
 
 
 def _is_vault_enabled() -> bool:
@@ -368,6 +408,17 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
     """
 
     fail_closed: ClassVar[bool] = False
+
+    flat_payload: ClassVar[bool] = False
+    """Источник отдаёт ПЛОСКИЙ payload (ключ = имя поля модели).
+
+    ADR-0376: Vault-секрет и Consul-KV Runtime-config — плоские словари
+    (``{field_name: value}``), а не секции ``payload[yaml_group]``. Раньше
+    фильтр требовал вложенности → данные из Vault/Consul отбрасывались
+    как «неизвестные» и НЕ применялись. Для плоских источников фильтр
+    принимает и вложенный вид (``{yaml_group: {...}}``) — оба формата
+    поддержаны.
+    """
 
     def __init__(self, settings_cls: type[BaseSettings]):
         super().__init__(settings_cls)
@@ -405,15 +456,45 @@ class FilteredSettingsSource(PydanticBaseSettingsSource, ABC):
         настройки. ``extra="forbid"`` в моделях на YAML не действует —
         фильтр отбрасывает ключ ДО валидации pydantic, поэтому опечатку
         ловит только warning в логе (см. :meth:`_warn_unknown_keys`).
+
+        ADR-0376: для плоских источников (Vault/Consul) warning о
+        неизвестных ключах выдаётся только когда payload относится к
+        этой модели (хотя бы одно поле совпало) — иначе один общий
+        секрет давал бы 40+ одинаковых WARNING'ов на все Settings-классы.
         """
-        if self.yaml_group:
-            group_data = raw_data.get(self.yaml_group, {})
-        else:
-            group_data = raw_data
+        group_data = self._select_group_data(raw_data)
 
         filtered = {k: v for k, v in group_data.items() if k in self.model_fields}
-        self._warn_unknown_keys(group_data)
+        if not self.flat_payload or filtered:
+            self._warn_unknown_keys(group_data)
         return filtered
+
+    def _select_group_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
+        """Выбирает секцию данных источника.
+
+        Для YAML-источника — секция ``raw_data[yaml_group]``. Для плоских
+        источников (Vault/Consul, ADR-0376) — сам payload, если вложенной
+        секции нет; вложенный формат тоже поддерживается.
+
+        Args:
+            raw_data: Сырые данные источника.
+
+        Returns:
+            Словарь с данными, пригодными для фильтрации по полям модели.
+
+        """
+        if not self.yaml_group:
+            return raw_data
+        if self.yaml_group in raw_data:
+            nested = raw_data[self.yaml_group]
+            if isinstance(nested, dict):
+                return nested
+            if self.flat_payload:
+                return raw_data
+            return nested
+        if self.flat_payload:
+            return raw_data
+        return {}
 
     def _warn_unknown_keys(self, group_data: dict[str, Any]) -> None:
         """Логирует отброшенные неизвестные ключи (один WARNING на источник).
@@ -510,24 +591,63 @@ Vault выполняется N раз, поэтому 30+ одинаковых �
 """
 
 
-_VAULT_SECRET_CACHE: dict[tuple[str, str], dict[str, Any]] = {}
-"""Кэш секретов Vault: ``(addr, secret_path) -> payload``.
+_VAULT_CACHE_TTL_SECONDS: float = 300.0
+"""TTL кэша секретов Vault (секунды).
+
+ADR-0376: кэш без TTL не видел ротацию секрета — значение в настройках
+оставалось старым до рестарта. 300 с — тот же интервал, что и у
+``VaultSecretRefresher`` (background refresh).
+"""
+
+
+_VAULT_SECRET_CACHE: dict[tuple[str, str], tuple[dict[str, Any], float]] = {}
+"""Кэш секретов Vault: ``(addr, secret_path) -> (payload, expires_at)``.
 
 ADR-0372: без кэша Vault читался 46 раз на старте (92 HTTP-запроса:
 ``is_authenticated`` + ``read_secret_version`` на каждый Settings-класс).
 Секрет одинаков для всех классов → достаточно одного чтения. Кэш
 сбрасывается в :func:`clear_vault_cache` (hot-reload).
+
+ADR-0376: добавлен TTL (:data:`_VAULT_CACHE_TTL_SECONDS`) — истёкшая
+запись перечитывается, поэтому ротация секрета видна без рестарта.
 """
 
 
+def _vault_cache_get(cache_key: tuple[str, str]) -> dict[str, Any] | None:
+    """Возвращает payload из кэша секретов, если запись не истекла.
+
+    Args:
+        cache_key: Ключ кэша ``(addr, secret_path)``.
+
+    Returns:
+        Payload секрета или ``None`` (нет записи / истекла).
+
+    """
+    entry = _VAULT_SECRET_CACHE.get(cache_key)
+    if entry is None:
+        return None
+    payload, expires_at = entry
+    if expires_at <= time.monotonic():
+        _VAULT_SECRET_CACHE.pop(cache_key, None)
+        return None
+    return payload
+
+
 def clear_vault_cache() -> None:
-    """Сбрасывает кэш секретов Vault (hot-reload).
+    """Сбрасывает кэш секретов Vault и флаг недоступности (hot-reload).
+
+    ADR-0376: вместе с кэшем сбрасывается ``_VAULT_UNREACHABLE`` — иначе
+    флаг оставался бы липким навсегда, и после «подъёма» Vault секреты
+    не приходили бы до рестарта процесса.
 
     Returns:
         None.
 
     """
+    global _VAULT_UNREACHABLE
+
     _VAULT_SECRET_CACHE.clear()
+    _VAULT_UNREACHABLE = False
 
 
 _HVAC_AVAILABLE: bool | None = None
@@ -577,7 +697,13 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
     Если Vault недоступен (connection refused, таймаут, auth-fail) —
     источник один раз пишет warning и затем тихо возвращает ``{}`` для
     остальных Settings-классов (см. ``_VAULT_UNREACHABLE``).
+
+    ADR-0376: payload секрета — ПЛОСКИЙ (``{field_name: value}``), он
+    применяется к полям модели напрямую; вложенный формат
+    (``{yaml_group: {...}}``) тоже поддерживается.
     """
+
+    flat_payload: ClassVar[bool] = True
 
     def _load_data(self) -> dict[str, Any]:
         """Load data from Vault."""
@@ -600,15 +726,15 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
             _VAULT_UNREACHABLE = True
             return {}
 
-        yaml_cfg = _vault_yaml_config()
+        yaml_cfg = vault_yaml_config()
         vault_addr = (
-            _env_lookup("VAULT_ADDR")
+            env_lookup("VAULT_ADDR")
             or yaml_cfg.get("addr")
             or os.environ.get("VAULT_ADDR", "")
         )
-        vault_token = _env_lookup("VAULT_TOKEN") or os.environ.get("VAULT_TOKEN", "")
+        vault_token = env_lookup("VAULT_TOKEN") or os.environ.get("VAULT_TOKEN", "")
         vault_secret_path = (
-            _env_lookup("VAULT_SECRET_PATH")
+            env_lookup("VAULT_SECRET_PATH")
             or yaml_cfg.get("secret_path")
             or os.environ.get("VAULT_SECRET_PATH", "")
         )
@@ -617,7 +743,7 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
             return {}
 
         cache_key = (vault_addr, vault_secret_path)
-        cached = _VAULT_SECRET_CACHE.get(cache_key)
+        cached = _vault_cache_get(cache_key)
         if cached is not None:
             return cached
 
@@ -634,7 +760,10 @@ class VaultConfigSettingsSource(FilteredSettingsSource):
 
             response = client.secrets.kv.v2.read_secret_version(path=vault_secret_path)
             payload = response.get("data", {}).get("data", {})
-            _VAULT_SECRET_CACHE[cache_key] = payload
+            _VAULT_SECRET_CACHE[cache_key] = (
+                payload,
+                time.monotonic() + _VAULT_CACHE_TTL_SECONDS,
+            )
             return payload
         except (RequestException, VaultError) as exc:
             _VAULT_UNREACHABLE = True
@@ -705,7 +834,14 @@ class ConsulConfigSettingsSource(FilteredSettingsSource):
     ADR-0372: источник стоит **выше** YAML — иначе «runtime-config из
     Consul KV» не работал: YAML перекрывал значения из Consul.
     Недоступность Consul — fail-soft (возвращает ``{}``).
+
+    ADR-0376: значения из Consul — ПЛОСКИЙ payload ``{field_name: value}``
+    (ключи KV под префиксом ``runtime/{yaml_group}/``). Раньше фильтр
+    требовал вложенности ``payload[yaml_group]`` → значения из Consul
+    отбрасывались и YAML оставался единственным источником.
     """
+
+    flat_payload: ClassVar[bool] = True
 
     def _load_data(self) -> dict[str, Any]:
         """Load data from Consul KV. Fail-silent if unreachable."""
@@ -747,6 +883,49 @@ class ConsulConfigSettingsSource(FilteredSettingsSource):
             return {}
 
 
+def _env_vars_for_source(
+    *, ignore_empty: bool, parse_none_str: str | None
+) -> dict[str, str | None]:
+    """Значения окружения для env-source (регистронезависимо).
+
+    ADR-0376: pydantic схлопывает регистрозависимые варианты в один ключ
+    (последний побеждает) — из-за этого значение из ``.env`` (обычно
+    lowercase) перебивало реальное окружение (обычно uppercase), и
+    настройка уезжала в YAML. Здесь для каждого логического ключа
+    выбирается вариант, значение которого ОТЛИЧАЕТСЯ от значения ``.env``
+    (реальное окружение приоритетнее файла). Если такого варианта нет —
+    ключ «из файла» и в env-source не попадает: его отдаёт dotenv-source
+    ниже YAML.
+
+    Args:
+        ignore_empty: Игнорировать пустые значения (опция pydantic).
+        parse_none_str: Значение, трактуемое как ``None`` (опция pydantic).
+
+    Returns:
+        Словарь ``ключ в нижнем регистре -> значение`` для env-source.
+
+    """
+    file_values = {key.lower(): value for key, value in _ENV_FILE_VALUES.items()}
+    variants: dict[str, list[str]] = {}
+    for name, value in os.environ.items():
+        if ignore_empty and value == "":
+            continue
+        variants.setdefault(name.lower(), []).append(value)
+
+    env_vars: dict[str, str | None] = {}
+    for key, values in variants.items():
+        file_value = file_values.get(key)
+        if file_value is None:
+            env_vars[key] = values[-1]
+            continue
+        real_values = [value for value in values if value != file_value]
+        if not real_values:
+            continue  # значение только из ``.env`` → его отдаёт dotenv-source
+        chosen = real_values[-1]
+        env_vars[key] = None if parse_none_str is not None and chosen == parse_none_str else chosen
+    return env_vars
+
+
 class DotEnvAwareEnvSource(EnvSettingsSource):
     """Env-source, игнорирующий переменные, подставленные из ``.env``.
 
@@ -756,16 +935,28 @@ class DotEnvAwareEnvSource(EnvSettingsSource):
 
     Переменные, которые были в ``os.environ`` ДО загрузки ``.env``,
     остаются видимыми: реальное окружение приоритетнее файла.
+
+    ADR-0376: сравнение регистронезависимое — ``os.environ`` на Linux
+    регистрозависим, поэтому ``APP_FOO`` и ``app_foo`` — разные
+    переменные; pydantic схлопывает их в один ключ (последний побеждает),
+    и значение из ``.env`` (lowercase) перебивало реальное окружение
+    (uppercase). См. :func:`_env_vars_for_source`.
     """
 
     def __init__(self, settings_cls: type[BaseSettings]) -> None:
         super().__init__(settings_cls)
+        if not self.case_sensitive:
+            self.env_vars = _env_vars_for_source(
+                ignore_empty=self.env_ignore_empty,
+                parse_none_str=self.env_parse_none_str,
+            )
+            return
         dotenv_keys = _dotenv_only_keys()
         if dotenv_keys:
             self.env_vars = {
                 key: value
                 for key, value in self.env_vars.items()
-                if key not in dotenv_keys
+                if key.lower() not in dotenv_keys
             }
 
 
@@ -897,7 +1088,8 @@ def reload_settings(root: BaseSettings) -> dict[str, Any]:
 
     Последовательность (ADR-0372):
 
-    1. сбрасываются кэши YAML и секретов Vault;
+    1. сбрасываются кэши YAML и секретов Vault, а также флаг
+       «Vault недоступен» (ADR-0376);
     2. для каждой вложенной модели корневого ``Settings`` и каждого
        модульного синглтона пакета ``core.config`` создаётся НОВЫЙ
        экземпляр (перечитывание источников);
@@ -914,8 +1106,13 @@ def reload_settings(root: BaseSettings) -> dict[str, Any]:
         Отчёт ``{"reloaded": [...], "failed": [...]}``.
 
     """
+    global _VAULT_UNREACHABLE
+
     clear_yaml_cache()
     clear_vault_cache()
+    # ADR-0376: флаг «Vault недоступен» не должен пережить reload —
+    # иначе после подъёма Vault секреты не придут до рестарта.
+    _VAULT_UNREACHABLE = False
 
     targets: list[tuple[str, Any]] = []
     for field_name in type(root).model_fields:
