@@ -72,6 +72,27 @@ allowlist:
     review_date: "2027-03-24"
     added_at: "2026-09-24"
 
+  - file: src/backend/infrastructure/cdc/poll_backend.py
+    line: 338
+    reason: >
+      ``row.get(pk_column)`` в polling-стратегии CDC — извлечение значения
+      первичного ключа из строки результата запроса (RowMapping/dict),
+      чтобы построить составной курсор (timestamp, PK). Это НЕ lookup по
+      идентификатору и НЕ чтение чужого объекта: строка уже получена тем же
+      tenant-scoped запросом. Назначение PK — технический, не tenant-идентификатор.
+    owner: gd_integration_tools/infrastructure
+    review_date: "2027-04-28"
+    added_at: "2026-10-29"
+  - file: src/backend/infrastructure/clients/external/cdc/strategies.py
+    line: 398
+    reason: >
+      ``row.get(pk_column)`` в polling-стратегии CDC — то же, что и в
+      poll_backend.py:338: чтение PK-колонки из уже полученной строки для
+      построения составного курсора (timestamp, PK), ADR-0384. Не lookup по
+      идентификатору, не чтение объекта другого тенанта.
+    owner: gd_integration_tools/infrastructure
+    review_date: "2027-04-28"
+    added_at: "2026-10-29"
   - file: src/backend/infrastructure/clients/storage/sqlite_search.py
     line: 95
     reason: >
