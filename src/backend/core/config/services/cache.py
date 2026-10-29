@@ -2,9 +2,17 @@ from __future__ import annotations
 
 from typing import ClassVar, Literal
 
-from pydantic import Field, SecretStr, computed_field, field_validator, model_validator
+from pydantic import (
+    Field,
+    SecretStr,
+    computed_field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import SettingsConfigDict
 
+from src.backend.core.config.base import mask_url_password
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 from src.backend.core.config.secret import secret_value
 
@@ -400,6 +408,22 @@ class RedisSettings(BaseSettingsWithLoader):
         password = secret_value(self.password)
         auth = f":{password}@" if password else ""
         return f"{protocol}://{auth}{self.host}:{self.port}"
+
+    @field_serializer("redis_url")
+    def _serialize_redis_url(self, value: str) -> str:
+        """Маскирует пароль в дампе модели (ADR-0378).
+
+        ``repr=False`` у computed-поля скрывает URL только из ``__repr__``;
+        в ``model_dump()``/``model_dump_json()`` пароль попадал открытым
+        текстом. Атрибут ``redis_url`` остаётся рабочим — клиент Redis
+        подключается с настоящим паролем.
+        """
+        return mask_url_password(value)
+
+    @property
+    def redis_url_masked(self) -> str:
+        """URL подключения с замаскированным паролем — для логов (ADR-0378)."""
+        return mask_url_password(self.redis_url)
 
     @field_validator("port", "db_cache", "db_queue", "db_limits", "db_tasks")
     @classmethod

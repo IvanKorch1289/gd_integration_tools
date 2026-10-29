@@ -6,9 +6,10 @@
 
 from typing import ClassVar
 
-from pydantic import Field, SecretStr, computed_field
+from pydantic import Field, SecretStr, computed_field, field_serializer
 from pydantic_settings import SettingsConfigDict
 
+from src.backend.core.config.base import mask_url_password
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 
 __all__ = ("MongoConnectionSettings", "mongo_connection_settings")
@@ -98,6 +99,17 @@ class MongoConnectionSettings(BaseSettingsWithLoader):
             f"mongodb://{self.username}:{self.password.get_secret_value()}@"
             f"{self.host}:{self.port}/{self.name}?authSource=admin"
         )
+
+    @field_serializer("connection_string")
+    def _serialize_connection_string(self, value: str) -> str:
+        """Маскирует пароль в дампе модели (ADR-0378).
+
+        ``repr=False`` скрывает строку подключения только из ``__repr__`` —
+        в ``model_dump()`` пароль утекал открытым текстом. Атрибут
+        ``connection_string`` остаётся рабочим: драйвер подключается с
+        настоящим паролем.
+        """
+        return mask_url_password(value)
 
 
 mongo_connection_settings = MongoConnectionSettings()

@@ -3,9 +3,10 @@ from __future__ import annotations
 from typing import ClassVar
 from urllib.parse import quote_plus
 
-from pydantic import Field, SecretStr, computed_field, model_validator
+from pydantic import Field, SecretStr, computed_field, field_serializer, model_validator
 from pydantic_settings import SettingsConfigDict
 
+from src.backend.core.config.base import mask_url_password
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
 from src.backend.core.config.db_drivers import ensure_driver_available
 from src.backend.core.enums.database import DatabaseTypeChoices
@@ -214,6 +215,17 @@ class DatabaseConnectionSettings(BaseSettingsWithLoader):
     def sync_connection_url(self) -> str:
         """Формирует DSN для синхронного драйвера."""
         return self._build_dsn(is_async=False)
+
+    @field_serializer("async_connection_url", "sync_connection_url")
+    def _serialize_connection_urls(self, value: str) -> str:
+        """Маскирует пароль в дампе модели (ADR-0378).
+
+        ``repr=False`` скрывает DSN только из ``__repr__`` — в
+        ``model_dump()``/``model_dump_json()`` пароль утекал открытым
+        текстом. Атрибуты DSN остаются рабочими: SQLAlchemy подключается
+        с настоящим паролем.
+        """
+        return mask_url_password(value)
 
     def _build_dsn(self, is_async: bool) -> str:
         """Внутренний метод генерации строки подключения.

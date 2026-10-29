@@ -10,9 +10,15 @@ CF3 (ADR-0373) типизировал ``database.py`` и ``mongo.py``. Эта в
   ``if not api_key`` перед использованием).
 
 Поля-«исключения» (owner-задачи) перечислены в ADR-0375.
+
+ADR-0378 (wave 15, кластер W3) добавляет сюда проверки маскирования:
+``repr=False`` у computed-поля НЕ маскирует значение в ``model_dump()``,
+поэтому DSN/URL с паролем протекали в дампы и в логи старта.
 """
 
 from __future__ import annotations
+
+from types import SimpleNamespace
 
 import pytest
 from pydantic import SecretStr
@@ -29,8 +35,10 @@ from src.backend.core.config.ai import (
     SaluteSpeechSettings,
     YandexGPTSettings,
 )
+from src.backend.core.config.database import DatabaseConnectionSettings
 from src.backend.core.config.influxdb import InfluxDBSettings
 from src.backend.core.config.lineage import LineageSettings
+from src.backend.core.config.mongo import MongoConnectionSettings
 from src.backend.core.config.rag import RAGSettings
 from src.backend.core.config.secret import secret_value
 from src.backend.core.config.security import SecureSettings
@@ -41,6 +49,42 @@ from src.backend.core.config.services.mail import MailSettings
 from src.backend.core.config.services.storage import FileStorageSettings
 
 pytestmark = pytest.mark.unit
+
+#: Значения для полной валидации моделей подключений.
+_DB_VALUES: dict[str, object] = {
+    "type": "postgresql",
+    "host": "db.example.com",
+    "port": 5432,
+    "name": "app",
+    "username": "app_user",
+    "password": "s3cr3t-db-pass",
+    "pool_size": 10,
+    "max_overflow": 10,
+    "pool_recycle": 1800,
+    "pool_timeout": 30,
+    "connect_timeout": 10,
+    "command_timeout": 30,
+    "max_retries": 0,
+    "circuit_breaker_max_failures": 10,
+    "circuit_breaker_reset_timeout": 30,
+    "slow_query_threshold": 1.0,
+}
+
+_MONGO_VALUES: dict[str, object] = {
+    "username": "mongo_admin",
+    "password": "s3cr3t-mongo-pass",
+    "name": "app",
+    "host": "mongo.example.com",
+    "port": 27017,
+    "min_pool_size": 10,
+    "max_pool_size": 50,
+    "timeout": 5000,
+}
+
+#: Пароль Redis из пробы независимого свипа (волна 15).
+REDIS_SECRET = "REDISPASS-SECRET-1"
+REDIS_REAL_URL = f"redis://:{REDIS_SECRET}@redis.local:6379"
+REDIS_MASKED_URL = "redis://:***@redis.local:6379"
 
 #: Поля, типизированные как ``SecretStr`` в этой волне.
 TYPED_SECRET_FIELDS: tuple[tuple[type, str], ...] = (
@@ -190,3 +234,161 @@ class TestPublicContractsPreserved:
         """Пустой пароль SMTP остаётся «нет auth» (поведение не изменилось)."""
         settings = MailSettings.model_construct(password=SecretStr(""))
         assert not secret_value(settings.password)
+
+
+def _redis_settings() -> RedisSettings:
+    """Экземпляр ``RedisSettings`` с паролем (все поля проставлены)."""
+    return _instance(
+        RedisSettings,
+        host="redis.local",
+        port=6379,
+        use_ssl=False,
+        password=SecretStr(REDIS_SECRET),
+    )
+
+
+class TestComputedFieldMasking:
+    """Секреты в computed-полях не попадают в ``model_dump`` (ADR-0378).
+
+    ``computed_field(repr=False)`` влияет только на ``__repr__`` — значение
+    оставалось plain-строкой в ``model_dump()``/``model_dump_json()``.
+    """
+
+    def test_redis_url_masked_in_model_dump(self) -> None:
+        """Пароль Redis замаскирован в дампе модели."""
+        dumped = _redis_settings().model_dump()
+        assert dumped["redis_url"] == REDIS_MASKED_URL
+
+    def test_redis_url_masked_in_model_dump_json(self) -> None:
+        """Пароль Redis не попадает в JSON-дамп модели."""
+        assert REDIS_SECRET not in _redis_settings().model_dump_json()
+
+    def test_redis_url_keeps_real_password_for_connection(self) -> None:
+        """Атрибут ``redis_url`` остаётся рабочим (клиент подключается)."""
+        assert _redis_settings().redis_url == REDIS_REAL_URL
+
+    def test_redis_masked_url_property(self) -> None:
+        """``redis_url_masked`` — URL с паролем ``***`` (для логов)."""
+        assert _redis_settings().redis_url_masked == REDIS_MASKED_URL
+
+    def test_database_dsn_masked_in_model_dump(self) -> None:
+        """DSN реляционной БД замаскированы в дампе модели."""
+        settings = DatabaseConnectionSettings.model_validate(_DB_VALUES)
+        dumped = settings.model_dump()
+        assert dumped["async_connection_url"] == (
+            "postgresql+asyncpg://app_user:***@db.example.com:5432/app"
+        )
+        assert dumped["sync_connection_url"] == (
+            "postgresql+psycopg://app_user:***@db.example.com:5432/app"
+        )
+        assert "s3cr3t-db-pass" not in settings.model_dump_json()
+
+    def test_database_dsn_keeps_real_password_for_connection(self) -> None:
+        """Атрибуты DSN остаются рабочими (SQLAlchemy подключается)."""
+        settings = DatabaseConnectionSettings.model_validate(_DB_VALUES)
+        assert "s3cr3t-db-pass" in settings.async_connection_url
+        assert "s3cr3t-db-pass" in settings.sync_connection_url
+
+    def test_mongo_connection_string_masked_in_model_dump(self) -> None:
+        """Строка подключения MongoDB замаскирована в дампе модели."""
+        settings = MongoConnectionSettings.model_validate(_MONGO_VALUES)
+        dumped = settings.model_dump()
+        assert dumped["connection_string"] == (
+            "mongodb://mongo_admin:***@mongo.example.com:27017/app?authSource=admin"
+        )
+        assert "s3cr3t-mongo-pass" not in settings.model_dump_json()
+
+    def test_mongo_connection_string_keeps_real_password_for_connection(self) -> None:
+        """Атрибут ``connection_string`` остаётся рабочим (драйвер подключается)."""
+        settings = MongoConnectionSettings.model_validate(_MONGO_VALUES)
+        assert "s3cr3t-mongo-pass" in settings.connection_string
+
+
+class TestWebhookSignatureSecretsMasking:
+    """HMAC-ключи вебхуков не текут в ``repr``/``model_dump`` (ADR-0378)."""
+
+    def test_secrets_not_leaked_in_repr(self) -> None:
+        """Значения HMAC-ключей не попадают в ``repr`` модели."""
+        settings = _instance(
+            SecureSettings,
+            webhook_signature_secrets={"/webhooks/stripe": "whsec_super-secret"},
+        )
+        assert "whsec_super-secret" not in repr(settings)
+
+    def test_secrets_masked_in_model_dump(self) -> None:
+        """Значения HMAC-ключей замаскированы в дампе модели."""
+        settings = _instance(
+            SecureSettings,
+            webhook_signature_secrets={"/webhooks/stripe": "whsec_super-secret"},
+        )
+        dumped = settings.model_dump()
+        assert dumped["webhook_signature_secrets"] == {"/webhooks/stripe": "***"}
+        assert "whsec_super-secret" not in settings.model_dump_json()
+
+    def test_runtime_values_unchanged(self) -> None:
+        """Маппинг для middleware остаётся обычным ``dict[str, str]``."""
+        settings = _instance(
+            SecureSettings,
+            webhook_signature_secrets={"/webhooks/stripe": "whsec_super-secret"},
+        )
+        secrets = settings.webhook_signature_secrets
+        assert secrets == {"/webhooks/stripe": "whsec_super-secret"}
+        assert isinstance(secrets["/webhooks/stripe"], str)
+
+
+class TestEventBusStartupLogging:
+    """Пароль Redis не утекает в лог старта (ADR-0378)."""
+
+    async def test_redis_password_not_leaked_to_startup_logs(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """INFO/ warning старта содержат замаскированный URL."""
+        from src.backend.plugins.composition.lifecycle import startup
+
+        records: list[str] = []
+
+        class _FakeLogger:
+            """Минимальный логгер: собирает отформатированные сообщения."""
+
+            def info(self, msg: str, *args: object) -> None:
+                """Записывает INFO-сообщение."""
+                records.append(msg % args if args else msg)
+
+            def warning(self, msg: str, *args: object) -> None:
+                """Записывает WARNING-сообщение."""
+                records.append(msg % args if args else msg)
+
+        class _FakeBus:
+            """EventBus-заглушка: запоминает URL подключения."""
+
+            def __init__(self) -> None:
+                self.started_with: str | None = None
+
+            async def start(self, redis_url: str) -> None:
+                """Имитирует старт шины."""
+                self.started_with = redis_url
+
+        bus = _FakeBus()
+        fake_settings = SimpleNamespace(
+            redis=SimpleNamespace(
+                redis_url=REDIS_REAL_URL, redis_url_masked=REDIS_MASKED_URL
+            )
+        )
+
+        monkeypatch.setattr(startup, "_logger", _FakeLogger())
+        monkeypatch.setattr("src.backend.core.config.settings.settings", fake_settings)
+        monkeypatch.setattr(
+            "src.backend.core.config.features.feature_flags",
+            SimpleNamespace(eventbus_facade=True, eventbus_dsl_enabled=False),
+        )
+        monkeypatch.setattr(
+            "src.backend.core.messaging.event_bus.get_event_bus", lambda: bus
+        )
+
+        app = SimpleNamespace(state=SimpleNamespace())
+        await startup._start_event_bus(app)
+
+        assert bus.started_with == REDIS_REAL_URL, "подключение должно идти с паролем"
+        assert records, "startup ничего не залогировал"
+        assert all(REDIS_SECRET not in record for record in records), records
+        assert any(REDIS_MASKED_URL in record for record in records), records

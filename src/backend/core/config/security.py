@@ -3,7 +3,13 @@ from __future__ import annotations
 import os
 from typing import Any, ClassVar, Literal
 
-from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic import (
+    Field,
+    SecretStr,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
@@ -221,14 +227,32 @@ class SecureSettings(BaseSettingsWithLoader):
     # V9 (S183 W4): HMAC-секреты для входящих webhooks. Ключ — prefix пути
     # (например "/webhooks/stripe"), значение — shared secret отправителя.
     # Пустой dict отключает WebhookSignatureMiddleware в prod (безопасный default).
+    # ADR-0378: значения — реальные секреты, поэтому поле скрыто из repr,
+    # а в model_dump() значения маскируются (``***``). Тип остаётся
+    # ``dict[str, str]``: WebhookSignatureMiddleware (вне core/config)
+    # принимает ``Mapping[str, str]``.
     webhook_signature_secrets: dict[str, str] = Field(
         default_factory=dict,
+        repr=False,
         description=(
             "Маппинг prefix пути → HMAC-секрет для WebhookSignatureMiddleware. "
             "Пустой словарь — middleware не проверяет подпись (только для dev)."
         ),
         examples=[{"/webhooks/stripe": "whsec_xxx"}],
     )
+
+    @field_serializer("webhook_signature_secrets")
+    def _serialize_webhook_signature_secrets(
+        self, value: dict[str, str]
+    ) -> dict[str, str]:
+        """Маскирует HMAC-ключи в дампе модели (ADR-0378).
+
+        Ключи (prefix'ы путей) несекретны и остаются видимыми — значения
+        заменяются на ``***``. В рантайме маппинг остаётся обычным
+        ``dict[str, str]`` — middleware получает настоящие HMAC-ключи.
+        """
+        return dict.fromkeys(value, "***")
+
     # Fail-closed при отсутствии секрета для protected prefix (default ON).
     # Если True и path матчит prefix, но соответствующий секрет не сконфигурирован —
     # middleware возвращает 503 вместо пропуска без проверки. Safe-by-default;

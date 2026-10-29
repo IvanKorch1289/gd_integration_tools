@@ -71,11 +71,11 @@ async def _start_event_bus(app: FastAPI) -> None:
         except TimeoutError:
             _logger.warning(
                 "EventBus start timed out (Redis %s unavailable) — skipping",
-                settings.redis.redis_url,
+                settings.redis.redis_url_masked,
             )
             return
         app.state.event_bus = bus
-        _logger.info("EventBus started on %s", settings.redis.redis_url)
+        _logger.info("EventBus started on %s", settings.redis.redis_url_masked)
     except BaseException as exc:
         _logger.warning("EventBus startup skipped: %s", exc)
 

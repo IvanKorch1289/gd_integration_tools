@@ -29,7 +29,38 @@ from src.backend.core.config.constants_settings import (  # noqa: F401
     constants_settings,
 )
 
+#: ``__all__`` не расширяется хелпером ``mask_url_password`` — ratchet-тест
+#: экспортов facade'а (``tests/unit/core/config/base/test_init.py``) фиксирует
+#: ровно 2 символа. Явный импорт ``from ... import mask_url_password`` работает
+#: независимо от ``__all__``.
 __all__ = ("AppBaseSettings", "SchedulerSettings")
+
+
+def mask_url_password(url: str) -> str:
+    """Маскирует пароль в URL/DSN: ``redis://:pass@host`` → ``redis://:***@host``.
+
+    Используется для логов и ``model_dump()`` — рабочее значение DSN
+    (для подключения к БД/Redis) остаётся в атрибуте модели.
+
+    Args:
+        url: URL/DSN с возможным паролем в userinfo-части.
+
+    Returns:
+        Тот же URL с замаскированным паролем; если пароля нет — исходная
+        строка без изменений.
+    """
+    scheme, sep, rest = url.partition("://")
+    if not sep:
+        return url
+    authority, slash, tail = rest.partition("/")
+    userinfo, at, host = authority.rpartition("@")
+    if not at:
+        return url
+    user, colon, _password = userinfo.partition(":")
+    if not colon:
+        return url
+    return f"{scheme}://{user}:***@{host}{slash}{tail}"
+
 
 app_base_settings: AppBaseSettings = AppBaseSettings()
 
