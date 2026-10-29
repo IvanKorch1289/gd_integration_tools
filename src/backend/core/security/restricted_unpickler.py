@@ -3,8 +3,8 @@
 Использовать только когда источник данных **не полностью доверенный**
 (например, shared cache бэкенды: Redis, Memcached, network storage).
 Для trusted-источников (MemoryBackend в текущем процессе) legacy
-``pickle.loads`` остаётся допустимым — см. ``nosec B301`` annotations
-в ``infrastructure.database.query_result_cache``.
+``pickle.loads`` остаётся допустимым — с обязательной пометкой
+``# nosec B301`` и явным комментарием о доверии к источнику данных.
 
 Whitelist покрывает stdlib-типы, безопасные для round-trip через pickle
 без выполнения произвольного кода. Любой класс вне whitelist → fail-closed

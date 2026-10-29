@@ -5,7 +5,9 @@ from typing import Any
 
 from pydantic import SecretStr
 from sqlalchemy import Engine, create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
@@ -22,7 +24,11 @@ from src.backend.core.enums.database import DatabaseTypeChoices
 from src.backend.core.errors import DatabaseError
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.database.database.bundle import DatabaseBundle
-from src.backend.infrastructure.database.listeners import DatabaseListener
+from src.backend.infrastructure.database.listeners import (
+    DatabaseListener,
+    sanitize_db_error_text,
+    sanitized_exc_info,
+)
 
 db_logger = get_logger("database")
 
@@ -280,8 +286,21 @@ class DatabaseInitializer:
         return connect_args
 
     async def initialize_async_pool(self) -> None:
-        """Предварительно прогревает асинхронный пул соединений."""
-        connections = []
+        """Предварительно прогревает асинхронный пул соединений.
+
+        Прогрев — best-effort (ADR-0387): недоступность БД
+        (``sqlalchemy.exc.OperationalError``), таймаут или сетевой сбой
+        не роняют старт приложения. Тот же контракт graceful-degradation,
+        что у sync-пула (движок → ``None`` + warning): ошибка логируется
+        (warning), уже открытые соединения закрываются, пул остаётся
+        «холодным» и прогревается лениво при первом запросе.
+
+        Returns:
+            None: Метод ничего не возвращает — контракт деградации
+                «не бросать исключение, а залогировать и продолжить».
+
+        """
+        connections: list[AsyncConnection] = []
 
         try:
             pool_size = getattr(self.settings, "pool_size", 1)
@@ -294,15 +313,29 @@ class DatabaseInitializer:
                 "Асинхронный пул соединений инициализирован",
                 extra={"db_name": self.name},
             )
-        except (OSError, TimeoutError):
-            self.logger.error(
-                "Ошибка инициализации асинхронного пула соединений",
+        except (OSError, TimeoutError, SQLAlchemyError) as exc:
+            self.logger.warning(
+                "Не удалось прогреть асинхронный пул соединений БД '%s': %s; "
+                "старт продолжается degraded — пул прогреется лениво при "
+                "первом запросе.",
+                self.name,
+                sanitize_db_error_text(str(exc)),
                 extra={"db_name": self.name},
-                exc_info=True,
+                exc_info=sanitized_exc_info(exc),
             )
         finally:
             for conn in connections:
-                await conn.close()
+                try:
+                    await conn.close()
+                except (RuntimeError, OSError, SQLAlchemyError) as exc:
+                    # Ошибка закрытия битого соединения не должна пробивать
+                    # контракт деградации (иначе старт падает на finally).
+                    self.logger.warning(
+                        "Ошибка закрытия соединения при прогреве пула БД '%s': %s",
+                        self.name,
+                        sanitize_db_error_text(str(exc)),
+                        extra={"db_name": self.name},
+                    )
 
     def get_async_engine(self) -> AsyncEngine:
         """Возвращает асинхронный engine."""
