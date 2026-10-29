@@ -171,12 +171,14 @@ class Sprint5DSLFlags(BaseSettings):
     )
 
     db_call_procedure_enabled: bool = Field(
-        default=True,
+        default=False,
         title="K3 S5 W8: DSL .db_call_procedure(name, params, schema)",
         description=(
             "K3 Sprint 5 Wave 8. Owner: K3 DSL. ETA: S5-W8. "
             "Активирует RouteBuilder .db_call_procedure() builder method + "
-            "DbCallProcedureProcessor (asyncpg execute SP)."
+            "DbCallProcedureProcessor (asyncpg execute SP). "
+            "default-OFF (ADR-0380): вызов stored procedure — исполняемый "
+            "код в БД, включается только явным решением."
         ),
     )
 

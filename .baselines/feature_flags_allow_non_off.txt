@@ -55,7 +55,6 @@ config_validator_enabled
 core_entities_legacy_off
 current_frames_fallback
 custom_code_audit_enabled
-db_call_procedure_enabled
 demo_routes_enabled
 desktop_rpa_session_pool_enabled
 distributed_rl_redis_cluster

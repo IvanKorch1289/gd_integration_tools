@@ -36,7 +36,10 @@ class PersistenceMixin:
         Args:
             profile: Профиль внешней БД из ``settings.external_databases``.
             name: Имя процедуры.
-            schema: Schema-префикс (default ``public``).
+            schema: Schema-префикс. ``None`` (default) — схема берётся из
+                профиля внешней БД (``db_schema``); для Oracle-профиля это,
+                например, ``REPORTING`` (ADR-0380). Прежний hardcoded-дефолт
+                ``public`` для oracle/mssql был неверным.
             params_from: ``body`` / ``properties`` / ``headers`` / ``none``.
             result_property: Куда положить result-set.
             dialect: ``postgres`` / ``mssql`` / ``oracle`` / ``mysql`` / ``db2``.

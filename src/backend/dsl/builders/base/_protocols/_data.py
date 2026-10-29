@@ -212,7 +212,7 @@ class _RoutePersistenceProtocol(_Protocol):
         profile: str,
         name: str,
         *,
-        schema: str = "public",
+        schema: str | None = None,
         params_from: str = "body",
         result_property: str = "sp_result",
         dialect: str = "postgres",

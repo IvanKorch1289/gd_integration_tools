@@ -58,6 +58,8 @@ class TestSprint5DSLFlagsClass:
         # demo_routes_enabled, external_health_proxy_enabled,
         # osint_agent_enabled, hello_route_enabled, test_route_w1_enabled.
         # S44 W45: these are not in the originally-tested default-True set.
+        # ADR-0380: db_call_procedure_enabled — default-OFF (вызов stored
+        # procedure = исполняемый код в БД).
         _DEFAULT_TRUE_FIELDS = tuple(
             f
             for f in SPRINT5_DSL_FIELD_NAMES
@@ -68,6 +70,7 @@ class TestSprint5DSLFlagsClass:
                 "osint_agent_enabled",
                 "hello_route_enabled",
                 "test_route_w1_enabled",
+                "db_call_procedure_enabled",
             }
         )
         for f in _DEFAULT_TRUE_FIELDS:
