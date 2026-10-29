@@ -1,40 +1,65 @@
 # Runbook: HITL stuck workflow
 
-> Owner: K3.
+> Owner: K3 DSL+Workflow.
+
+Термины: **шаг** (step) — одна декларация в `steps[]`; **этап** (stage) —
+крупная фаза из нескольких шагов. В этом runbook речь о шаге
+`wait_signal` (тип `wait_signal` в YAML, `wait_for_signal(...)` в
+Python-builder).
 
 ## Symptom
 
-* Workflow висит в `wait_for_signal` дольше ожидаемого (часы / дни).
+* Workflow висит в ожидании сигнала (`wait_signal`) дольше ожидаемого
+  (часы / дни).
 * HITL panel показывает старые pending signals.
 * Operator не получил notification.
 
 ## Detection
 
 ```bash
-curl http://<api>/api/v1/hitl/pending?tenant_id=<tid>
+curl "http://<api>/api/v1/hitl/pending?tenant_id=<tid>"
 # items[].created_at >> 24h ago
+```
+
+Статус инстанса workflow — admin-API:
+
+```bash
+curl "http://<api>/api/v1/admin/workflows/<wf_id>"
+# "status": "paused"
 ```
 
 ## Diagnosis
 
-1. **Stuck потому что workflow timeout = бесконечность.**
-   * Не задан `timeout_s` в `wait_for_signal`.
+1. **Workflow завис, потому что у шага ожидания нет таймаута.**
+   * Не задан `timeout_s` в `wait_signal` / `wait_for_signal(...)`.
    * Solution: ставить default timeout 24h (см. tutorial 05).
 
 2. **Operator не видит pending signal.**
-   * `feature_flag.hitl_panel_enabled == False`.
-   * Tenant filter скрывает signal.
+   * Feature-flag `feature_flags.hitl_panel_enabled` выключен в профиле.
+     Дефолт флага — **True** (`core/config/features/infrastructure.py`),
+     то есть «выключен» — это явная настройка профиля, а не дефолт.
+   * Tenant filter скрывает signal (`tenant_id` в `GET /hitl/pending`).
    * Solution: проверить feature-flag + filter.
 
 3. **Notification не дошёл до operator.**
-   * Email/Slack escalation не настроен в SLA policy.
-   * `SlaTracker.start()` не запущен в lifespan.
+   * Email/Slack escalation в SLA-политике не настроен.
+   * **SlaTracker не запущен — и это не баг конфигурации, а
+     нереализованная возможность.** Класс `SlaTracker`
+     (`src/backend/services/workflows/sla_alerting.py`) существует, но
+     **нигде не инстанцируется**: ни в `lifespan`, ни в worker'ах, ни
+     в composition root. `WorkflowFacade` принимает `sla_tracker` только
+     как опциональный параметр (ADR-0396), а сам фасад в `src/` пока не
+     создаётся. Поэтому автоматической эскалации по SLA в рантайме нет.
+     Owner-задача: K3 DSL+Workflow, GAP-WF-4.5 (см.
+     `docs/roadmap/PROD_READINESS_GAPS.md`).
 
 ## Mitigation
 
 ### Manual signal через REST
+
 ```bash
-curl -X POST http://<api>/api/v1/hitl/<signal_id>/resolve \
+curl -X POST "http://<api>/api/v1/hitl/<signal_id>/resolve" \
+  -H "Content-Type: application/json" \
   -d '{
     "action": "approve",
     "resolved_by": "ops-admin",
@@ -43,35 +68,63 @@ curl -X POST http://<api>/api/v1/hitl/<signal_id>/resolve \
 ```
 
 ### Cancel workflow (если approval не возможен)
+
 ```bash
-curl -X POST http://<api>/api/v1/admin/workflows/<wf_id>/cancel
+curl -X POST "http://<api>/api/v1/admin/workflows/<wf_id>/cancel" \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "operator escalation: original approver unavailable"}'
+```
+
+### Возобновить paused workflow
+
+```bash
+curl -X POST "http://<api>/api/v1/admin/workflows/<wf_id>/resume"
 ```
 
 ### Bulk discovery старых signals
+
 ```python
 # Streamlit pages/72_HITL_Panel — фильтр "Older than X days"
-# или CLI:
-.venv/bin/python -c "
-from src.backend.services.workflows.hitl_service import HitlService
-svc = ...
+# или напрямую через сервис:
+from src.backend.services.workflows.hitl_service import (
+    HitlService,
+    InMemoryHitlSignalStore,
+)
+
+svc = HitlService(store=InMemoryHitlSignalStore())
 old = [s for s in await svc.list_pending() if (now - s.created_at).days > 7]
-"
 ```
 
 ## Verification
 
-* Workflow завершается (статус `completed`).
+* Workflow выходит из `paused` и приходит в терминальный статус
+  (`succeeded` / `failed` / `cancelled`); статуса `completed` в системе
+  нет — полный список в
+  [Workflows → Схема состояний](../workflows/index.md#схема-состояний).
 * Pending signal убирается из `list_pending`.
-* Audit-event `hitl.signal.resolved` записан.
+* В event log инстанса есть событие `signal_received`
+  (`GET /api/v1/admin/workflows/<wf_id>/events`).
+
+> **Не реализовано:** audit-event `hitl.signal.resolved` в отдельном
+> audit-sink не пишется. Step-level audit-события по шагам workflow
+> вообще не эмится: `StepAuditMiddleware`
+> (`src/backend/infrastructure/workflow/middlewares/step_audit.py`)
+> существует, но не инстанцируется и не подключён к runner'у (см.
+> «Не реализовано» в [Workflows](../workflows/index.md#не-реализовано)).
+> Не стройте детекцию на «audit → ClickHouse».
 
 ## Prevention
 
 * Всегда задавать `wait_for_signal(timeout_s=86400)`.
-* Настроить SLA policy в `workflow.yaml::sla` (K3 W10).
-* Email/Slack escalation в `SlaPolicy` для HITL workflows.
+* Настроить SLA-политику в декларации workflow (`sla:` в
+  `WorkflowDeclaration` / `.sla(...)` в builder) — но помните, что
+  **исполняющего трекера пока нет** (см. диагностику п. 3).
+* Эскалацию по SLA (email/Slack) в `SlaPolicy` пока не рассчитывайте
+  как работающую — это owner-задача K3.
 
 ## Postmortem
 
 * Сколько времени signal был pending.
 * Original initiator vs final resolver — несоответствие?
-* Action: добавить SLA policy с escalation_email.
+* Action: добавить SLA policy с escalation_email **после** появления
+  исполнителя SLA-трекера.

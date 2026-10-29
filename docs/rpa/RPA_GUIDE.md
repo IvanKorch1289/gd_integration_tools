@@ -141,6 +141,44 @@ path-allowlist (settings.dsl.allowed_paths) — для файловых опер
 
 3. **Audit-события** — **не реализованы** (см. врезку в разделе «Архитектура»).
 
+## Политика prod / staging (ADR-0393) — RPA-шаги fail-closed
+
+> **Важно.** В prod и staging RPA-шаги **не работают** до появления
+> плагина-владельца RPA-capability.
+
+В `config_profiles/prod.yml` и `config_profiles/staging.yml`:
+
+```yaml
+features:
+  dsl_capability_gate_enabled: true
+  dsl_capability_core_baseline_enabled: false
+```
+
+Что это значит на практике:
+
+* capability-гейт в prod/staging **включён** (runtime-резолвер
+  ADR-0366): namespace = `route_id` роута → fallback `"core"` (baseline)
+  → fail-closed DENY;
+* core-baseline **выключен** → least privilege: доступ определяется
+  только декларациями роутов/плагинов;
+* capability `rpa.*` **не публична** и **не принадлежит ни одному
+  плагину** → RPA-шаги в prod/staging отклоняются **fail-closed**;
+* объявить `rpa.*` прямо в `route.toml` нельзя: subset-инвариант
+  `route.capabilities ⊆ plugins ∪ public` отклоняет такой роут
+  (`CapabilitySupersetError`) — роут просто не загрузился бы. Поэтому
+  RPA-capability требует **плагина-владельца** (ADR-0078 / ADR-044).
+
+Практический вывод: RPA-сценарии работают в dev/dev_light (гейт
+выключен, legacy-путь). Для prod их нужно сначала провести через
+плагина-владельца capability — иначе шаг упадёт с отказом capability-гейта
+до выполнения операции.
+
+Проверка профиля (`core/config/validator/profile_merge.py`) поднимает
+CRITICAL, если в prod/staging capability-гейт выключен, и WARNING,
+если включён core-baseline.
+
+Подробнее — [Capability runtime](../explanation/capability_runtime.md).
+
 ## Path-allowlist (ADR-0358)
 
 Файловые RPA-операции (и core-процессоры FileRead/FileWrite/FileWatch/
@@ -247,7 +285,9 @@ steps:
 - **ADR-0367** — файловый доступ и защита от инъекций в RPA-процессорах;
 - **ADR-0368** — fail-closed whitelist shell-команд;
 - **ADR-0369** — достижимость RPA-шагов из YAML и канон имён;
-- **ADR-0370** — консолидация RPA-конфига и тестовая гигиена.
+- **ADR-0370** — консолидация RPA-конфига и тестовая гигиена;
+- **ADR-0393** — DB-capability-гейт, tenant-изоляция DSL-SQL и
+  авторизация RPA (в т.ч. prod/staging-политика выше).
 
 ## Где смотреть код
 

@@ -180,9 +180,13 @@
 | [ADR-0391](0391-cache-primary-tier-and-tenant-keys.md) | Primary cache-тир, tenant-ключи и деградация кэша (волна 18, кластер G2) | Accepted |
 | [ADR-0392](0392-logging-redos-sync-audit-and-request-logging.md) | Логирование: ReDoS в PII-регексе, доставка audit-событий, structlog-стек, дефолты конфигурации | Accepted |
 | [ADR-0393](0393-db-capability-gate-and-rpa-authorization.md) | DB-capability-гейт, tenant-изоляция DSL-SQL и авторизация RPA | Accepted |
+| [ADR-0394](0394-pg-runner-state-transitions-and-lease.md) | PG-runner: транзиции состояний, payload-контракт, lease и отмена | Accepted |
+| [ADR-0395](0395-workflow-declaration-model-and-worker-registration.md) | Модель workflow-деклараций, регистрация Temporal Worker'а и детерминизм | Accepted |
+| [ADR-0396](0396-workflow-compensation-and-time-budget.md) | Компенсации Saga в pg-runner-пути и бюджет времени workflow | Accepted |
+| [ADR-0397](0397-dsl-authoring-ergonomics.md) | Эргономика авторства DSL: скаффолд, линтер, capability-гейт, вложенный YAML | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 178 ADRs.
+**Total:** 182 ADRs.
 

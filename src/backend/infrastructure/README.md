@@ -38,7 +38,7 @@ Direct `from src.backend.infrastructure.*` in core/ is a **layer violation** (cu
 | `sources/` | 23 | Source adapters (HTTP/Kafka/CDC/IMAP/file/etc.) |
 | `storage/` | 7 | Object storage (S3/MinIO/LocalFS) + fallback chain |
 | `watermark/` | 4 | Watermark store (memory/postgres) for incremental processing |
-| `workflow/` | 13 | Workflow backends (Temporal/pg_runner/fake) + builder + executor |
+| `workflow/` | 32 | Workflow backends (Temporal/LiteTemporal/pg_runner/fake) + builder + executor |
 
 ## Layer Position
 

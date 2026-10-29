@@ -16,6 +16,7 @@ step-by-step instructions, verification, troubleshooting.
 | 3 | [Notebook execution с E2B sandbox](03-e2b-jupyter-sandbox.md) | S75 | ✅ ready |
 | 4 | [CircuitBreaker deployment (per-route resilience)](04-circuit-breaker-middleware.md) | S81 | ✅ ready |
 | 5 | [LiteLLM Gateway в PoolHealthMonitor](05-pool-health-monitoring.md) | S80 | ✅ ready |
+| 6 | [DSN Driver Availability (MSSQL/MySQL/DB2/Oracle)](06-dsn-driver-availability.md) | S104 W3 | ✅ ready |
 
 ## Cookbook structure (template)
 

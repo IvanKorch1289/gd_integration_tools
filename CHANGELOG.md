@@ -1,5 +1,103 @@
 # CHANGELOG — GD Integration Tools
 
+## [Unreleased] — 2026-10-28 — Cycle 172/173: волны 13–19 (кластер E — документация воркфлоу)
+
+Волны 13–19 — продолжение цикла 172/173 (прод-ридiness re-verification).
+Раздел датирован 2026-10-28 по дате старта кластера; волны 15–18
+исполнялись 2026-10-29.
+
+### Волна 13 — RPA, capability-гейт, профили (cycle 172, 2026-10-27…28)
+
+* ADR-0364 — удаление мёртвого кода, найденного в wave 13;
+* ADR-0365 — единый канон валидации SQL-идентификаторов;
+* ADR-0366 — runtime-enforcement capability-гейта DSL-процессоров
+  (резолвер namespace `route_id` → `"core"` → fail-closed DENY);
+* ADR-0367 — файловый доступ и защита от инъекций в RPA-процессорах;
+* ADR-0368 — отказоустойчивость RPA (cleanup-финализаторы, живой
+  circuit breaker, таймауты внешних вызовов);
+* ADR-0369 — достижимость RPA-шагов из YAML и канон именования;
+* ADR-0370 — консолидация RPA-конфига и честная документация;
+* ADR-0371 — харденинг prod/staging-профилей и инварианты профилей;
+* ADR-0372 — приоритет источников конфигурации и рабочий hot-reload;
+* ADR-0373 — правило «в `.env` только секреты» и гейты конфигурации.
+
+### Волна 14 — RPA-зависимости и полнота настроек (2026-10-28)
+
+* ADR-0374 — зависимости RPA и обновления по CVE;
+* ADR-0375 — полнота покрытия настроек, merged-валидация профиля,
+  константы из YAML, типизация секретов.
+
+### Волна 15 — Vault/Consul, профили, секреты, hot-reload (2026-10-29)
+
+* ADR-0376 — формат payload Vault/Consul и единое разрешение endpoint;
+* ADR-0377 — профили без env-плейсхолдеров, WAF-allowlist и валидация
+  секции constants;
+* ADR-0378 — маскирование секретов в дампах/логах и необъявленные
+  env-секреты;
+* ADR-0379 — честный hot-reload, валидация профиля и приоритет env
+  над `.env`.
+
+### Волна 16 — БД, tenant-изоляция, CDC (2026-10-29)
+
+* ADR-0380 — SQL-инъекция и fail-open в `db_call_procedure`;
+* ADR-0381 — драйверы и DSN: совместимость пар, driver-specific
+  `connect_args`, fail-fast для недостижимых типов;
+* ADR-0382 — потеря данных и диалекты в DSL-БД;
+* ADR-0383 — tenant-изоляция raw SQL, санитизация PII в ошибках БД и
+  breaker;
+* ADR-0384 — CDC: граница батча, диалекты и рабочий DSL-путь;
+* ADR-0385 — открытые задачи A1–A11 (env-гейт, Vault-refresher, WAF,
+  внешние БД, валидация профиля).
+
+### Волна 17 — tenant-guard, RLS, пул БД, Pillow (2026-10-29)
+
+* ADR-0386 — tenant-guard для `Connection.execute` и RLS на всех
+  tenant-таблицах (миграция `2026_10_29_1200`, 9 таблиц);
+* ADR-0387 — деградация пула при старте и удаление мёртвого
+  `QueryResultCache`;
+* ADR-0388 — Pillow 12.x: снижение риска без обновления;
+* ADR-0389 — семантика флага `db_call_procedure_enabled` (отключение
+  должно быть явным).
+
+### Волна 18 — хранилище, кэш, логирование, capability-гейт БД (2026-10-29)
+
+* ADR-0390 — production-guard хранилища, пути/файлы и лимиты;
+* ADR-0391 — primary cache-тир, tenant-ключи и деградация кэша;
+* ADR-0392 — логирование: ReDoS в PII-регексе, доставка audit-событий,
+  structlog-стек, дефолты конфигурации;
+* ADR-0393 — DB-capability-гейт (`db.read` / `db.write`), tenant-изоляция
+  DSL-SQL и авторизация RPA; в prod/staging capability-гейт включён,
+  core-baseline выключен, RPA-шаги отклоняются fail-closed.
+
+### Волна 19 — кластер E: документация воркфлоу (2026-10-29)
+
+Правка документации под фактический код (без изменения runtime):
+
+* `docs/workflows/index.md` — реальная архитектура
+  (`core/workflow` + `dsl/workflow` + `infrastructure/workflow` +
+  `services/workflows`), рабочий вызов `invoke_workflow`, схема из 8
+  статусов, раздел «Как отладить» (admin-API), терминология
+  «шаг»/«этап», раздел «Не реализовано»;
+* `docs/architecture/workflow_architecture.md` — новая страница
+  workflow-архитектуры; `docs/architecture/index.md` — отрендеренный
+  индекс с toctree;
+* `docs/tutorials/04_temporal_workflow.md`, `05_hitl_workflow.md` —
+  рабочие сниппеты (`type: activity` / `name:` / `"${{ }}"`,
+  `BranchSpec(name=...)`, `ActivityDeclaration`), реальный REST-контракт
+  admin-API и реальные статусы workflow;
+* `docs/explanation/tenancy_model.md` — RLS на 9 таблицах, ORM-фильтр,
+  raw-SQL guard, audit (ADR-0383/0386/0393);
+* `docs/explanation/capability_runtime.md` — ADR-0366 (резолвер) и
+  ADR-0393 (БД-гейт + prod/staging-политика);
+* `docs/rpa/RPA_GUIDE.md` — предупреждение о fail-closed политике
+  prod/staging;
+* `docs/runbooks/hitl-stuck-workflow.md` — реальное имя feature-флага,
+  дефолт `True`, `SlaTracker` помечен как не реализованный;
+* `docs/reference/index.md`, `docs/tutorials/index.md` — toctree вместо
+  заглушек; `docs/cookbooks/README.md` — 6 cookbook'ов;
+  `src/backend/infrastructure/README.md` — актуальное число файлов в
+  `workflow/`.
+
 ## [Unreleased] — 2026-10-20 — Cycle 170: Deferred ADR fixes (cache + DSL cleanups)
 
 ### refactor(core): remove `core/rate_limiter/` (ADR-0353)
