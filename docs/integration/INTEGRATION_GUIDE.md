@@ -124,6 +124,26 @@ route = (
 
 Supports: PostgreSQL, MS SQL, Oracle, MySQL, DB2.
 
+> **Флаг `db_call_procedure_enabled` — default-OFF** (ADR-0380/ADR-0389).
+> Шаг исполняется только при явном включении флага: в overlay'е профиля
+> `features: { db_call_procedure_enabled: true }` либо env
+> `FEATURE_DB_CALL_PROCEDURE_ENABLED=true`. Пока флаг выключен, шаг
+> **пропускается** (`skipped`), а причина — в
+> `exchange.properties["db_call_procedure_skip_reason"]` и в WARNING-логе
+> `dsl.processors.db_call_procedure`; тексты обоих сообщений называют флаг и
+> способ его включения. Если флаг недоступен (ошибка чтения) — шаг
+> fail-closed (`exchange.fail`).
+>
+> **Требования к профилю внешней БД:** в `external_databases.connections[]`
+> должно быть подключение со схемой (`schema:`) — из неё берётся схема
+> вызова по умолчанию; процедура должна существовать в этой схеме. Профиль с
+> внешней БД и выключенным флагом даёт WARNING в
+> `manage.py validate-profile` (`feature_flag.db_call_procedure_disabled`) —
+> это видно до деплоя.
+>
+> Подробнее: `docs/config/SETTINGS_GUIDE.md` (раздел про флаги) и
+> `docs/adr/0389-db-call-procedure-flag-semantics.md`.
+
 ## CDC DSL
 
 ```python

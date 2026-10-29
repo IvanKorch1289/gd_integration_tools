@@ -178,7 +178,17 @@ class Sprint5DSLFlags(BaseSettings):
             "Активирует RouteBuilder .db_call_procedure() builder method + "
             "DbCallProcedureProcessor (asyncpg execute SP). "
             "default-OFF (ADR-0380): вызов stored procedure — исполняемый "
-            "код в БД, включается только явным решением."
+            "код в БД, включается только явным решением. "
+            "Включение (ADR-0389): features.db_call_procedure_enabled: true в "
+            "overlay'е профиля либо env FEATURE_DB_CALL_PROCEDURE_ENABLED=true. "
+            "Требования: в секции external_databases профиля объявлено "
+            "подключение с профилем и схемой (schema:) — из неё берётся "
+            "схема вызова по умолчанию; процедура должна существовать в этой "
+            "схеме. Пока флаг выключен, шаг пропускается (skipped), причина — "
+            "в exchange.properties['db_call_procedure_skip_reason']. "
+            "manage.py validate-profile даёт WARNING "
+            "(feature_flag.db_call_procedure_disabled), если в профиле есть "
+            "внешняя БД, а флаг выключен."
         ),
     )
 

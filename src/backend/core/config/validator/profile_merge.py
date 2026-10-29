@@ -205,9 +205,7 @@ def build_profile_settings(merged: dict[str, Any]) -> ProfileSettings:
 
 
 def _validate_model_section(
-    model_cls: type[Any],
-    section: dict[str, Any] | None,
-    section_name: str,
+    model_cls: type[Any], section: dict[str, Any] | None, section_name: str
 ) -> tuple[ConfigViolation, ...]:
     """Валидирует секцию merged-конфига pydantic-моделью (ADR-0385, A9).
 
@@ -304,6 +302,138 @@ def _field_path(location: tuple[Any, ...]) -> str:
     return ".".join(str(part) for part in location)
 
 
+def _check_db_call_procedure_flag(
+    merged: dict[str, Any],
+) -> tuple[ConfigViolation, ...]:
+    """ADR-0389: внешняя БД в профиле, а флаг ``db_call_procedure`` выключен.
+
+    Флаг ``db_call_procedure_enabled`` — default-OFF (ADR-0380), поэтому
+    вызовы stored procedure в профиле без явного включения флага молча
+    пропускаются (``skipped``). Чтобы это было видно ДО деплоя, профиль с
+    объявленными внешними БД и выключенным флагом даёт WARNING.
+
+    Сигналом служат сами внешние подключения: в конфигурации нет отдельного
+    поля «процедура», а ``schema`` профиля — это контейнер
+    view/procedure/function (``ExternalDatabaseItemSettings.db_schema``).
+
+    Severity — WARNING, а не CRITICAL: профиль может объявлять внешнюю БД
+    вовсе без вызовов процедур (тогда флаг выключен правильно).
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        Кортеж нарушений (пустой — если нарушения нет).
+
+    """
+    features = merged.get("features") or {}
+    if features.get("db_call_procedure_enabled"):
+        return ()
+    connections = (merged.get("external_databases") or {}).get("connections") or []
+    profiles = [
+        str(connection.get("profile_name") or connection.get("name"))
+        for connection in connections
+        if isinstance(connection, dict) and connection.get("enabled", True)
+    ]
+    if not profiles:
+        return ()
+    return (
+        ConfigViolation(
+            severity=ConfigSeverity.WARNING,
+            code="feature_flag.db_call_procedure_disabled",
+            message=(
+                "В профиле объявлены внешние БД ("
+                f"{', '.join(profiles)}), но feature-флаг "
+                "'db_call_procedure_enabled' выключен (default-OFF, ADR-0389): "
+                "шаги db_call_procedure будут пропущены (skipped) без ошибки."
+            ),
+            field="features.db_call_procedure_enabled",
+            recommendation=(
+                "Если вызовы stored procedure нужны — включите флаг в overlay "
+                "профиля (features.db_call_procedure_enabled: true) либо env "
+                "FEATURE_DB_CALL_PROCEDURE_ENABLED=true. Если не нужны — "
+                "оставьте флаг выключенным и удалите внешние БД из профиля."
+            ),
+            context={"external_db_profiles": profiles},
+        ),
+    )
+
+
+def _check_capability_gate_policy(
+    merged: dict[str, Any],
+) -> tuple[ConfigViolation, ...]:
+    """ADR-0393: capability-гейт в prod/staging обязан быть включён.
+
+    Политика (ADR-0393, «Политика capability-гейта»):
+
+    * ``dsl_capability_gate_enabled`` — runtime-enforcement capability-гейта
+      DSL-процессоров (ADR-0366). В prod/staging обязан быть ``true``:
+      иначе отказ capability-гейта неотличим от «сломанного шага», а
+      БД-шаги (без ``required_capability``) читают/пишут любую БД;
+    * ``dsl_capability_core_baseline_enabled`` — выдача capability ядра всем
+      роутам подряд. В prod/staging обязан быть ``false`` (least
+      privilege): baseline маскирует отсутствие деклараций в route.toml.
+
+    Проверяется по merged-конфигу (base + overlay) — как в рантайме.
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        Кортеж нарушений (пустой — если нарушений нет).
+
+    """
+    app = merged.get("app") or {}
+    environment = str(app.get("environment") or "").lower()
+    if environment not in {"production", "staging"}:
+        return ()
+
+    features = merged.get("features") or {}
+    violations: list[ConfigViolation] = []
+
+    if not features.get("dsl_capability_gate_enabled"):
+        violations.append(
+            ConfigViolation(
+                severity=ConfigSeverity.CRITICAL,
+                code="feature_flag.dsl_capability_gate_disabled",
+                message=(
+                    "В профиле '%s' выключен capability-гейт DSL-процессоров "
+                    "(features.dsl_capability_gate_enabled=false): БД- и "
+                    "RPA-шаги не проходят авторизацию, а отказ capability-гейта "
+                    "неотличим от «сломанного шага» (ADR-0393)."
+                ),
+                field="features.dsl_capability_gate_enabled",
+                recommendation=(
+                    "Включите features.dsl_capability_gate_enabled: true в "
+                    "overlay профиля (или env FEATURE_DSL_CAPABILITY_GATE_ENABLED=true)."
+                ),
+                context={"environment": environment},
+            )
+        )
+
+    if features.get("dsl_capability_core_baseline_enabled"):
+        violations.append(
+            ConfigViolation(
+                severity=ConfigSeverity.WARNING,
+                code="feature_flag.dsl_capability_core_baseline_enabled",
+                message=(
+                    "В профиле '%s' включён core-baseline capability-гейта: "
+                    "любой роут получает capability ядра (в т.ч. rpa.*) без "
+                    "декларации в route.toml — это least-privilege-нарушение "
+                    "(ADR-0393)."
+                ),
+                field="features.dsl_capability_core_baseline_enabled",
+                recommendation=(
+                    "Выключите features.dsl_capability_core_baseline_enabled "
+                    "после того, как роуты объявят нужные capability явно."
+                ),
+                context={"environment": environment},
+            )
+        )
+
+    return tuple(violations)
+
+
 def validate_profile_config(
     profile: str, profiles_dir: Path | None = None
 ) -> tuple[ConfigViolation, ...]:
@@ -359,6 +489,13 @@ def validate_profile_config(
             "external_databases",
         )
     )
+    # ADR-0389: внешняя БД в профиле + выключенный feature-флаг
+    # ``db_call_procedure_enabled`` → WARNING (вызовы процедур молча
+    # пропускались бы). Не CRITICAL: внешняя БД может быть и без вызовов
+    # процедур.
+    violations.extend(_check_db_call_procedure_flag(merged))
+    # ADR-0393: явная политика capability-гейта в prod/staging.
+    violations.extend(_check_capability_gate_policy(merged))
     return tuple(
         sorted(
             violations,

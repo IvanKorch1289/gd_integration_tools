@@ -6,6 +6,10 @@ pipelines = ["main.dsl.yaml"]
 # db.write удалён 2026-10-06 (least privilege): в пайплайне нет ни одного
 # шага записи в БД (crud_*/db_query*/db_persist*/db_call_procedure) —
 # capability была объявлена, но не использовалась.
+# db_call_procedure в списке — потому что шаг существует, но по умолчанию
+# выключен флагом features.db_call_procedure_enabled (default-OFF,
+# ADR-0380/ADR-0389): с выключенным флагом шаг был бы пропущен (skipped),
+# поэтому он и не используется. Включение — только явным решением в профиле.
 capabilities = ["net.outbound", "audit.write"]
 tenant_aware = true
 feature_flag = { enabled = true, gate = "test_route_w1_enabled" }

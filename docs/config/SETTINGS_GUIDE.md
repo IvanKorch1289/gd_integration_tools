@@ -209,6 +209,43 @@ YAML-кэш и кэш секретов Vault, пересоздаёт вложе�
 
 CLI не требует секретов: секции собираются через `model_construct`.
 
+### Feature-флаг `db_call_procedure_enabled` (ADR-0389)
+
+Флаг **выключен по умолчанию** (`default=False`, ADR-0380): вызов stored
+procedure — исполняемый код в БД, поэтому включается только явным решением.
+
+| Что | Как |
+|---|---|
+| Включить в профиле | `features: { db_call_procedure_enabled: true }` в overlay'е (`config_profiles/<env>.yml`) |
+| Включить через env | `FEATURE_DB_CALL_PROCEDURE_ENABLED=true` (env приоритетнее YAML, ADR-0372) |
+| Где живёт модель флага | `core/config/features/sprint5_dsl.py::Sprint5DSLFlags.db_call_procedure_enabled` |
+
+Поведение шага `db_call_procedure` (`dsl/engine/processors/db_call_procedure.py`):
+
+* флаг **выключен** → шаг пропускается (`skipped`), маршрут не падает;
+  причина — в `exchange.properties["db_call_procedure_skip_reason"]` и в
+  WARNING-логе `dsl.processors.db_call_procedure`;
+* флаг **недоступен** (ошибка чтения) → `exchange.fail(...)` (fail-closed,
+  ADR-0380);
+* тексты обоих сообщений называют флаг и способ его включения.
+
+**Требования к профилю внешней БД** (иначе шаг не дойдёт до БД):
+
+* в секции `external_databases` профиля объявлено подключение
+  (`connections[]`) с `profile_name`, `type`, `host`, `port` и **схемой**
+  (`schema:` → `db_schema`); именно из неё берётся схема вызова по
+  умолчанию (`schema` шага имеет приоритет);
+* креды — через env `EXT_DB_<PROFILE>_USERNAME` / `EXT_DB_<PROFILE>_PASSWORD`
+  или Vault (ADR-0385);
+* процедура должна существовать в этой схеме; вызов уходит через
+  `CALL`/`EXEC`/`BEGIN..END` по типу СУБД.
+
+**Инвариант профиля:** если в профиле объявлены внешние БД, а флаг выключен —
+`manage.py validate-profile <env>` даёт **WARNING**
+(`feature_flag.db_call_procedure_disabled`), а не CRITICAL: внешняя БД может
+быть и без вызовов процедур. WARNING виден до деплоя (exit 1 — только при
+`--strict`).
+
 ### Профили без env-плейсхолдеров (ADR-0377)
 
 **YAML-профили не поддерживают подстановку `${VAR:-default}`.** Загрузчик
@@ -357,3 +394,4 @@ env-префиксом класса-наследника:
 - `src/backend/infrastructure/security/cert_store/backend_consul.py` — Consul cert backend
 - `docs/adr/0375-settings-coverage-merged-validation-constants-and-secret-typing.md`
 - `docs/adr/0377-profile-placeholders-waf-allowlist-and-validation.md`
+- `docs/adr/0389-db-call-procedure-flag-semantics.md` — семантика флага `db_call_procedure_enabled`

@@ -157,6 +157,50 @@ async def test_skipped_when_flag_off(monkeypatch: pytest.MonkeyPatch) -> None:
     assert ex.properties.get("db_call_procedure_status") == "skipped"
 
 
+# ─── ADR-0389: сообщения называют флаг и способ его включения ─────────────
+
+
+@pytest.mark.asyncio
+async def test_disabled_step_message_names_flag(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Выключенный флаг: причина пропуска называет флаг и способ включения."""
+    monkeypatch.setattr(feature_flags, "db_call_procedure_enabled", False)
+    session = _install_session(
+        monkeypatch, _FakeSession(_FakeResult(returns_rows=True))
+    )
+    proc = DbCallProcedureProcessor(profile="p", name="recalc", dialect="postgres")
+    ex = _ex({"id": 1})
+
+    await proc.process(ex, AsyncMock())
+
+    assert session.statements == []
+    reason = str(ex.properties.get("db_call_procedure_skip_reason") or "")
+    assert "db_call_procedure_enabled" in reason
+    assert "features.db_call_procedure_enabled: true" in reason
+
+
+@pytest.mark.asyncio
+async def test_flag_unavailable_error_names_flag(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Fail-closed: текст ошибки называет флаг и способ его включения."""
+    session = _install_session(
+        monkeypatch, _FakeSession(_FakeResult(returns_rows=True))
+    )
+    monkeypatch.setitem(sys.modules, "src.backend.core.config.features", None)
+    proc = DbCallProcedureProcessor(profile="p", name="recalc", dialect="postgres")
+    ex = _ex({"id": 1})
+
+    await proc.process(ex, AsyncMock())
+
+    assert session.statements == []
+    assert ex.status is ExchangeStatus.failed
+    error = ex.error or ""
+    assert "db_call_procedure_enabled" in error
+    assert "features.db_call_procedure_enabled: true" in error
+
+
 # ─── ADR-0380: инъекция (schema / name / bind-ключи) ───────────────────────
 
 

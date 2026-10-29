@@ -36,6 +36,14 @@ Wave ``[wave:s5/k3-w8-db-call-procedure]``.
   hardcoded ``public`` (для Oracle-профиля это ``REPORTING`` и т. п.).
 
 Feature flag: ``feature_flags.db_call_procedure_enabled`` (default-OFF).
+
+Семантика флага (ADR-0389):
+
+* флаг **выключен** (default) → шаг пропускается (``skipped``), причина — в
+  ``exchange.properties["db_call_procedure_skip_reason"]`` и в WARNING-логе;
+* флаг **недоступен** (ошибка чтения) → ``exchange.fail(...)`` (fail-closed);
+* включение — только явно: ``features.db_call_procedure_enabled: true`` в
+  overlay'е профиля либо env ``FEATURE_DB_CALL_PROCEDURE_ENABLED=true``.
 """
 
 from __future__ import annotations
@@ -59,6 +67,18 @@ __all__ = ("DbCallProcedureProcessor",)
 _logger = get_logger("dsl.processors.db_call_procedure")
 
 _ALLOWED_PARAM_SOURCES = frozenset({"body", "properties", "headers", "none"})
+
+#: Имя feature-флага, включающего шаг (default-OFF, ADR-0380/ADR-0389).
+_FEATURE_FLAG: Final = "db_call_procedure_enabled"
+
+#: Единая подсказка «как включить» — используется и в тексте ошибки, и в
+#: причине пропуска шага, чтобы оператор видел один и тот же способ включения
+#: (ADR-0389: отключение должно быть явным и полезным, а не «выключенной
+#: фичей» без указания, что делать).
+_ENABLE_HINT: Final = (
+    "enable it in the profile (features.db_call_procedure_enabled: true) "
+    "or via env FEATURE_DB_CALL_PROCEDURE_ENABLED=true"
+)
 
 #: Допустимые диалекты вызова stored procedure. ``None`` (не указан) означает
 #: «вывести из типа СУБД профиля» — см. ``_resolve_dialect``.
@@ -293,13 +313,24 @@ class DbCallProcedureProcessor(BaseProcessor):
             # в debug и шаг продолжал исполняться (fail-open).
             _logger.error("db_call_procedure.flag_unavailable: %s", ff_exc)
             exchange.fail(
-                "db_call_procedure is disabled: feature flag "
-                "'db_call_procedure_enabled' is unavailable (fail-closed)"
+                f"db_call_procedure is disabled: feature flag '{_FEATURE_FLAG}' "
+                f"is unavailable (fail-closed) — {_ENABLE_HINT}"
             )
             return
 
         if not enabled:
+            # ADR-0389: выключенный флаг — не молчаливый skip. Причина
+            # пропуска попадает в exchange (property) и в лог (WARNING),
+            # чтобы отключение было явным и подсказывало, как включить флаг.
+            # Контроль потока не меняется (ADR-0380): шаг пропускается,
+            # маршрут не падает.
+            reason = (
+                f"db_call_procedure is skipped: feature flag '{_FEATURE_FLAG}' "
+                f"is OFF (default-OFF, ADR-0380/ADR-0389) — {_ENABLE_HINT}"
+            )
+            _logger.warning("db_call_procedure.disabled: %s", reason)
             exchange.set_property("db_call_procedure_status", "skipped")
+            exchange.set_property("db_call_procedure_skip_reason", reason)
             return
 
         params = self._collect_params(exchange)
