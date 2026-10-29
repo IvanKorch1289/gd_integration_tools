@@ -57,6 +57,14 @@ FORBIDDEN_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"\bawait\s+\w*[Pp]ublisher\.\w+\("), "direct publisher (use workflow.execute_activity)"),
     (re.compile(r"\bawait\s+\w*[Ss]ink\.\w+\("), "direct sink (use workflow.execute_activity)"),
     (re.compile(r"\basyncio\.sleep\("), "asyncio.sleep non-deterministic (use workflow.sleep)"),
+    # ADR-0395: asyncio-примитивы ожидания рестритктуются Temporal-sandbox'ом
+    # (temporalio/worker/workflow_sandbox/_restrictions.py) либо не дают
+    # детерминированного порядка событий при replay'е.
+    (re.compile(r"\basyncio\.wait\("), "asyncio.wait non-deterministic (use workflow.wait)"),
+    (re.compile(r"\basyncio\.gather\("), "asyncio.gather non-deterministic join (use workflow.wait)"),
+    (re.compile(r"\basyncio\.as_completed\("), "asyncio.as_completed non-deterministic (use workflow.as_completed)"),
+    (re.compile(r"\basyncio\.create_task\("), "asyncio.create_task non-deterministic (use workflow.wait + task registry)"),
+    (re.compile(r"\basyncio\.ensure_future\("), "asyncio.ensure_future non-deterministic (use workflow.wait + task registry)"),
     (re.compile(r"\b(uuid\.uuid4|time\.time|datetime\.now)\(\)"), "non-deterministic clock/UUID (use workflow.now() or activity UUID)"),
     (re.compile(r"\bget_stream_client\(\)\."), "direct stream client (use workflow.execute_activity)"),
     (re.compile(r"\bos\.environ"), "os.environ non-deterministic (use activity-side env read)"),

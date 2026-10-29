@@ -13,11 +13,13 @@ from __future__ import annotations
 
 from src.backend.dsl.workflow.spec.activity_declarations import (
     ActivityDeclaration,  # S56 W1: re-export
+    CallFunctionDeclaration,  # call_function-шаг (module:fn)
     PauseDeclaration,  # S56 W1: re-export
     ResumeDeclaration,  # S56 W1: re-export
     SagaDeclaration,  # S56 W1: re-export
     SignalWaitDeclaration,  # S56 W1: re-export
     SleepDeclaration,  # S56 W1: re-export
+    is_call_function_ref,  # call_function-ссылка (module:fn)
 )
 from src.backend.dsl.workflow.spec.advanced_declarations import (
     AgentInvokeDeclaration,  # S56 W1: re-export
@@ -41,6 +43,7 @@ from src.backend.dsl.workflow.spec.workflow import (
 __all__ = (
     "ActivityDeclaration",
     "AgentInvokeDeclaration",
+    "CallFunctionDeclaration",
     "CheckpointDeclaration",
     "ContinueAsNewDeclaration",
     "EscalateDeclaration",
@@ -57,4 +60,5 @@ __all__ = (
     "SleepDeclaration",
     "WorkflowDeclaration",
     "WorkflowStep",
+    "is_call_function_ref",
 )

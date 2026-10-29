@@ -22,6 +22,7 @@ from src.backend.dsl.workflow.compiler.step_compilers._retry import (  # noqa: F
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     AgentInvokeDeclaration,
+    CallFunctionDeclaration,
     PauseDeclaration,
     ResumeDeclaration,
     SensorDeclaration,
@@ -87,6 +88,37 @@ async def compile_activity_step(decl: ActivityDeclaration, ctx: dict[str, Any]) 
 
     result = await workflow.execute_activity(decl.name, payload, **kwargs)
 
+    if decl.output_key:
+        ctx.setdefault("_outputs", {})[decl.output_key] = result
+    return result
+
+
+async def compile_call_function_step(
+    decl: CallFunctionDeclaration, ctx: dict[str, Any]
+) -> Any:
+    """Выполнить ``call_function``-шаг (``module:fn``) как Temporal activity.
+
+    Прямой вызов Python-функции внутри workflow-сэндбокса невозможен
+    (импорт модуля + I/O внутри функции ломают детерминизм replay'а).
+    Поэтому шаг компилируется в ``workflow.execute_activity(ref, ...)``,
+    а сама функция выполняется воркером вне сэндбокса — её обёртку
+    регистрирует :class:`~src.backend.dsl.workflow.compiler.activity_bridge.ActivityBridge`.
+
+    Args:
+        decl: Декларация call_function-шага.
+        ctx: Рантайм-контекст workflow.
+
+    Returns:
+        Результат вызова функции.
+
+    """
+    from temporalio import workflow
+
+    timeout_s = decl.timeout_s or ctx["_default_timeout_s"]
+    payload = dict(decl.args) if decl.args else {}
+    result = await workflow.execute_activity(
+        decl.ref, payload, start_to_close_timeout=timedelta(seconds=timeout_s)
+    )
     if decl.output_key:
         ctx.setdefault("_outputs", {})[decl.output_key] = result
     return result

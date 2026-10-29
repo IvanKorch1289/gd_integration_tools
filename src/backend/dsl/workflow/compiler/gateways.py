@@ -9,9 +9,18 @@ BPMN-импортёром в ``ActivityDeclaration.args["gateway"]`` (либо �
 
 Семантика:
     * :func:`compile_xor` — exclusive: первая ветка с истинным ``condition``.
-    * :func:`compile_and` — parallel: ``asyncio.gather`` всех веток (join-all).
-    * :func:`compile_or`  — race: ``asyncio.wait(FIRST_COMPLETED)`` +
-      ``task.cancel()`` для pending.
+    * :func:`compile_and` — parallel: ветки стартуют параллельно, join-all
+      через ``workflow.wait`` (Temporal-детерминированная замена
+      ``asyncio.wait``/``asyncio.gather``).
+    * :func:`compile_or`  — race: ``workflow.wait(FIRST_COMPLETED)`` +
+      ``task.cancel()`` для pending; победитель выбирается детерминированно
+      (первая успешная ветка в порядке объявления).
+
+ADR-0395: ``asyncio.wait`` рестритктуется Temporal-sandbox'ом
+(``temporalio/worker/workflow_sandbox/_restrictions.py``) как
+недетерминированный API, а ``asyncio.gather``/``create_task`` не дают
+стабильного порядка событий при replay'е. Все join-точки используют
+``temporalio.workflow.wait``.
 
 Каждый ``BranchSpec.steps`` — список :class:`ActivityDeclaration` или
 marker-dict (``{"bpmn_target": target_id}``). На исполнение идут только
@@ -155,10 +164,16 @@ async def compile_xor(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
 async def compile_and(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
     """AND (parallel) gateway: все ветки параллельно, join-all.
 
-    Семантика: ``asyncio.gather`` всех веток — workflow продолжается
-    только после завершения **всех** веток. Если любая ветка бросила
-    exception — gather re-raises (first failure), остальные ветки
-    продолжают работу в фоне (asyncio.gather semantics).
+    Семантика: ветки стартуют параллельно (task'и создаются в порядке
+    объявления), join — ``workflow.wait`` (Temporal-детерминированная
+    версия ``asyncio.wait``). Результаты собираются в порядке объявления
+    веток, поэтому порядок событий не зависит от того, какая ветка
+    завершилась первой.
+
+    ADR-0395: раньше использовался ``asyncio.gather`` — он не запрещён
+    sandbox'ом напрямую, но join-семантика (и порядок завершения)
+    зависела от event-loop, а ``asyncio.wait`` в sandbox'е Temporal
+    рестритктуется явно (temporalio/worker/workflow_sandbox/_restrictions.py).
 
     Args:
         decl: ActivityDeclaration с ``args['gateway']`` = AND GatewaySpec.
@@ -171,17 +186,24 @@ async def compile_and(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
     spec = _resolve_gateway_spec(decl)
     if not spec.branches:
         return []
-    coros = [_run_branch_steps(branch, ctx) for branch in spec.branches]
-    return await asyncio.gather(*coros)
+    tasks = _start_branch_tasks(spec.branches, ctx)
+    await _wait_all(tasks)
+    return [task.result() for task in tasks]
 
 
 async def compile_or(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
     """OR (inclusive) gateway: race, cancel remaining on first complete.
 
-    Семантика: каждая ветка запускается как отдельная ``asyncio.Task``;
-    ``asyncio.wait(FIRST_COMPLETED)`` resolves когда **первая** ветка
-    завершается (success или exception). Все pending tasks получают
-    ``task.cancel()`` + await для подавления CancelledError-warning.
+    Семантика: каждая ветка запускается как отдельная task;
+    ``workflow.wait(FIRST_COMPLETED)`` (Temporal-детерминированная
+    версия ``asyncio.wait``) resolves когда **первая** ветка завершается.
+    Все pending tasks получают ``task.cancel()`` + await для подавления
+    CancelledError-warning.
+
+    Победитель выбирается **детерминированно**: среди завершившихся
+    веток берётся первая успешная в порядке объявления (а не «первая
+    по времени завершения»). Иначе порядок событий зависел бы от
+    скорости внешних систем и ломался бы при replay'е.
 
     Args:
         decl: ActivityDeclaration с ``args['gateway']`` = OR GatewaySpec.
@@ -195,14 +217,8 @@ async def compile_or(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
     if not spec.branches:
         return None
 
-    tasks: list[asyncio.Task[Any]] = [
-        get_task_registry().create_task(
-            _run_branch_steps(branch, ctx), name=f"gateway-parallel:{idx}"
-        )
-        for idx, branch in enumerate(spec.branches)
-    ]
-
-    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+    tasks = _start_branch_tasks(spec.branches, ctx)
+    done, pending = await _wait_first(tasks)
 
     for task in pending:
         task.cancel()
@@ -214,8 +230,11 @@ async def compile_or(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
         except asyncio.CancelledError:
             pass
 
-    # Возвращаем первый успешный result; если done-task упал — propagate.
-    for task in done:
+    # Возвращаем первый успешный result в порядке объявления веток;
+    # если done-task упал — propagate.
+    for task in tasks:
+        if task not in done:
+            continue
         if task.cancelled():
             continue
         exc = task.exception()
@@ -223,3 +242,65 @@ async def compile_or(decl: ActivityDeclaration, ctx: dict[str, Any]) -> Any:
             raise exc
         return task.result()
     return None
+
+
+def _start_branch_tasks(
+    branches: list[BranchSpec], ctx: dict[str, Any]
+) -> list[asyncio.Task[Any]]:
+    """Создать task'и для веток gateway в порядке объявления.
+
+    Args:
+        branches: Ветки gateway.
+        ctx: Рантайм-контекст workflow (shared между ветками).
+
+    Returns:
+        Список task'ей (порядок совпадает с порядком веток).
+
+    """
+    return [
+        get_task_registry().create_task(
+            _run_branch_steps(branch, ctx), name=f"gateway-parallel:{idx}"
+        )
+        for idx, branch in enumerate(branches)
+    ]
+
+
+async def _wait_all(tasks: list[asyncio.Task[Any]]) -> None:
+    """Дождаться завершения всех task'ей (детерминированный join-all)."""
+    if not tasks:
+        return
+    await _workflow_wait(tasks)
+
+
+async def _wait_first(
+    tasks: list[asyncio.Task[Any]],
+) -> tuple[list[asyncio.Task[Any]], list[asyncio.Task[Any]]]:
+    """Дождаться первой завершившейся task'и (детерминированный wait-any)."""
+    if not tasks:
+        return [], []
+    done, pending = await _workflow_wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+    return list(done), list(pending)
+
+
+async def _workflow_wait(
+    tasks: list[asyncio.Task[Any]], *, return_when: str = asyncio.ALL_COMPLETED
+) -> tuple[list[asyncio.Task[Any]], list[asyncio.Task[Any]]]:
+    """Обёртка над ``temporalio.workflow.wait`` (sandbox-safe wait).
+
+    ``asyncio.wait`` рестритктуется Temporal-sandbox'ом
+    (``temporalio/worker/workflow_sandbox/_restrictions.py``) как
+    недетерминированный API; ``workflow.wait`` — его детерминированная
+    замена (список вместо set'а, стабильный порядок ``done``/``pending``).
+
+    Args:
+        tasks: Task'и для ожидания.
+        return_when: ``ALL_COMPLETED`` (по умолчанию) или ``FIRST_COMPLETED``.
+
+    Returns:
+        Кортеж ``(done, pending)`` в порядке объявления task'ей.
+
+    """
+    from temporalio import workflow
+
+    result = await workflow.wait(tasks, return_when=return_when)
+    return list(result[0]), list(result[1])

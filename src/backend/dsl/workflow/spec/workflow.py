@@ -7,17 +7,19 @@ top-level workflow declaration.
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.backend.dsl.workflow.spec.activity_declarations import (
     ActivityDeclaration,
+    CallFunctionDeclaration,
     PauseDeclaration,
     ResumeDeclaration,
     SagaDeclaration,
     SignalWaitDeclaration,
     SleepDeclaration,
+    is_call_function_ref,
 )
 from src.backend.dsl.workflow.spec.advanced_declarations import (
     AgentInvokeDeclaration,
@@ -32,6 +34,7 @@ from src.backend.dsl.workflow.spec.policies import RetryPolicy, SlaPolicy
 
 WorkflowStep = Annotated[
     ActivityDeclaration
+    | CallFunctionDeclaration
     | SagaDeclaration
     | SignalWaitDeclaration
     | SleepDeclaration
@@ -91,6 +94,57 @@ class WorkflowDeclaration(BaseModel):
             "помечается как breached + breach_action."
         ),
     )
+    tags: tuple[str, ...] = Field(
+        default=(),
+        description=(
+            "Произвольные теги workflow ('banking', 'ai', 'saga', ...). "
+            "Используются только для фильтрации в каталоге (Admin UI / MCP)."
+        ),
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_call_function_steps(cls, data: Any) -> Any:
+        """Преобразовать activity-шаги вида ``module:fn`` в ``call_function``.
+
+        Расширения и YAML-шаблоны репозитория адресуют Python-функции
+        идиомой route-DSL (``module:fn``). Раньше workflow-DSL такой
+        формы не знал: шаг падал в ``action_handler_registry.dispatch`` и
+        завершался ``KeyError`` в рантайме.
+
+        Args:
+            data: Сырые данные декларации (dict или уже-валидный объект).
+
+        Returns:
+            Данные с нормализованными шагами.
+
+        """
+        if not isinstance(data, dict):
+            return data
+        steps = data.get("steps")
+        if not isinstance(steps, list):
+            return data
+        normalized: list[Any] = []
+        changed = False
+        for step in steps:
+            if (
+                isinstance(step, dict)
+                and step.get("type") == "activity"
+                and isinstance(step.get("name"), str)
+                and is_call_function_ref(step["name"])
+            ):
+                converted = {key: value for key, value in step.items() if key != "name"}
+                converted["type"] = "call_function"
+                converted["ref"] = step["name"]
+                normalized.append(converted)
+                changed = True
+                continue
+            normalized.append(step)
+        if not changed:
+            return data
+        data = dict(data)
+        data["steps"] = normalized
+        return data
 
     # Runtime path docstring (S36-W16):
     #   WorkflowDeclaration.compile_workflow() → dynamic Temporal

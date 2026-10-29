@@ -4,7 +4,10 @@ Settings.workflow_backend = ``temporal | lite_temporal | pg_runner | fake | auto
 
 * ``auto`` — выбирается по profile: dev_light → pg_runner; dev/staging/
   prod → temporal (если установлен SDK), иначе fallback pg_runner с
-  warning'ом.
+  warning'ом. Fallback — **degraded-режим**: он теряет replay,
+  детерминизм и typed-query (ADR-0395), поэтому логируется WARNING'ом
+  с перечнем потерянных гарантий. Явный ``kind="temporal"`` никогда
+  не деградирует — ошибка подключения пробрасывается наружу.
 * ``temporal`` — :class:`TemporalWorkflowBackend` (требует extras
   ``workflow``: ``uv sync --extra workflow``).
 * ``lite_temporal`` — :class:`LiteTemporalBackend` (in-process Temporal
@@ -36,6 +39,14 @@ _logger = get_logger("workflow.factory")
 
 
 BackendKind = Literal["temporal", "lite_temporal", "pg_runner", "fake", "auto"]
+
+#: Гарантии, которые теряются при downgrade'е Temporal → pg_runner.
+#: ADR-0395: downgrade — degraded-режим, а не равноценная замена.
+_LOST_GUARANTEES: tuple[str, ...] = (
+    "replay (историю выполнения нельзя переиграть в CI versioning-gate)",
+    "determinism (pg-runner не даёт sandbox-детерминированных команд)",
+    "typed-query (query_workflow не поддерживается pg-runner'ом)",
+)
 
 
 async def create_workflow_backend(
@@ -106,9 +117,28 @@ async def create_workflow_backend(
                 namespace=temporal_namespace,
                 default_task_queue=temporal_task_queue,
             )
-        except RuntimeError as exc:
+        except Exception as exc:
+            # ADR-0395: ловим ЛЮБУЮ ошибку подключения (OSError,
+            # ConnectionError, temporalio RPCError, TimeoutError, ...),
+            # а не только RuntimeError. Раньше падение коннекта к
+            # Temporal-кластеру (например, недоступный хост) не давало
+            # fallback'а — приложение падало вместо деградации.
+            if kind == "temporal":
+                # Явный выбор оператора — downgrade недопустим: он тихо
+                # меняет семантику исполнения (см. _LOST_GUARANTEES).
+                _logger.error(
+                    "Temporal connect failed (%s: %s) — explicit kind='temporal', "
+                    "downgrade to pg_runner запрещён.",
+                    type(exc).__name__,
+                    exc,
+                )
+                raise
             _logger.warning(
-                "Temporal SDK unavailable (%s); falling back to pg_runner", exc
+                "Temporal connect failed (%s: %s) — degraded fallback to "
+                "pg_runner. ПОТЕРЯННЫЕ ГАРАНТИИ: %s",
+                type(exc).__name__,
+                exc,
+                "; ".join(_LOST_GUARANTEES),
             )
             from src.backend.infrastructure.workflow.pg_runner_backend import (
                 PgRunnerWorkflowBackend,

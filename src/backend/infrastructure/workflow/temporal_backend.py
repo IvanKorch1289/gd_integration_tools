@@ -21,7 +21,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
-from src.backend.core.codec.json import canonical_json_bytes
+from src.backend.core.codec.json import canonical_json_bytes, from_jsonable, to_jsonable
 from src.backend.core.logging import get_logger
 from src.backend.core.workflow.backend import (
     WorkflowBackend,
@@ -47,6 +47,15 @@ def build_temporal_data_converter() -> Any:
     ``temporalio.converter.DataConverter`` с custom payload converter,
     использующим ``canonical_json_bytes`` (sort_keys=True, separators
     без пробелов).
+
+    ADR-0395: богатые типы (datetime / UUID / Decimal / date / bytes)
+    **не теряются**. Раньше ``canonical_json_bytes`` применял
+    ``default=str`` (datetime → строка), а ``orjson.loads`` типы не
+    восстанавливал — семантика шага зависела от движка (Temporal отдавал
+    строки, pg-runner — оригинальные объекты). Теперь значение
+    предварительно проходит через ``to_jsonable`` (tagged-dict) и
+    восстанавливается через ``from_jsonable``; byte-stability сохраняется,
+    потому что canonical-энкодер сортирует ключи.
     """
     from temporalio.api.common.v1 import Payload
     from temporalio.converter import (
@@ -72,7 +81,7 @@ def build_temporal_data_converter() -> Any:
             """
             return Payload(
                 metadata={"encoding": self.encoding.encode("utf-8")},
-                data=canonical_json_bytes(value),
+                data=canonical_json_bytes(to_jsonable(value)),
             )
 
         def from_payload(self, payload: Payload, type_hint: type | None = None) -> Any:
@@ -83,12 +92,14 @@ def build_temporal_data_converter() -> Any:
                 type_hint: Optional type hint for decoding.
 
             Returns:
-                Decoded Python value.
+                Decoded Python value (datetime/UUID/Decimal восстановлены).
 
             """
             import orjson  # lazy — orjson быстрее на decode
 
-            return orjson.loads(payload.data) if payload.data else None
+            if not payload.data:
+                return None
+            return from_jsonable(orjson.loads(payload.data))
 
     return DataConverter(
         payload_converter_class=type(

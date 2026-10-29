@@ -22,8 +22,9 @@
 
 from __future__ import annotations
 
+import importlib
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
 from src.backend.core.security.activity_capability_guard import (
@@ -33,9 +34,11 @@ from src.backend.dsl.commands.action_registry import action_handler_registry
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     AgentInvokeDeclaration,
+    CallFunctionDeclaration,
     SagaDeclaration,
     WorkflowDeclaration,
     WorkflowStep,
+    is_call_function_ref,
 )
 from src.backend.schemas.invocation import ActionCommandMetaSchema, ActionCommandSchema
 
@@ -43,8 +46,12 @@ __all__ = (
     "LANGGRAPH_CHECKPOINT_GET_ACTIVITY",
     "LANGGRAPH_CHECKPOINT_PUT_ACTIVITY",
     "ActivityBridge",
+    "ActivityTarget",
+    "UnknownActivityError",
     "bridge_action_handler",
+    "bridge_call_function",
     "get_activity_callables",
+    "resolve_activity_target",
 )
 
 
@@ -198,6 +205,121 @@ def bridge_action_handler(
     return _activity_impl
 
 
+def bridge_call_function(ref: str) -> Callable[..., Awaitable[Any]]:
+    """Создать activity-обёртку над Python-функцией ``module:fn``.
+
+    Идиома совпадает с route-DSL (``call_function('module:fn')``):
+    функция принимает payload одним позиционным аргументом и может быть
+    sync или async. Импорт модуля ленивый — на этапе регистрации activity
+    модуль не импортируется.
+
+    Args:
+        ref: Ссылка ``module.path:function_name``.
+
+    Returns:
+        Async-callable, пригодный для регистрации в Temporal Worker.
+
+    Raises:
+        ValueError: Если ``ref`` не соответствует шаблону ``module:fn``.
+
+    """
+
+    async def _activity_impl(payload: dict[str, Any]) -> Any:
+        module_name, fn_name = ref.split(":", 1)
+        module = importlib.import_module(module_name)
+        fn = getattr(module, fn_name, None)
+        if fn is None or not callable(fn):
+            raise ValueError(
+                f"call_function: {ref!r} not found or not callable "
+                f"(module={module_name!r}, attr={fn_name!r})"
+            )
+        result = fn(payload or {})
+        if hasattr(result, "__await__"):
+            result = await result
+        return result
+
+    _activity_impl.__name__ = f"call_function_{ref.replace('.', '_').replace(':', '_')}"
+    _activity_impl.__qualname__ = f"activity::{ref}"
+    _activity_impl.__activity_name__ = ref  # type: ignore[attr-defined]
+    return _activity_impl
+
+
+class UnknownActivityError(ValueError):
+    """Имя activity не резолвится ни в action-реестре, ни в ``module:fn``.
+
+    Выбрасывается на **build-time** (сбор activity-list для Worker'а),
+    чтобы неполное имя в YAML-декларации падало с понятным сообщением,
+    а не с ``KeyError`` внутри ``action_handler_registry.dispatch`` в
+    рантайме workflow.
+    """
+
+
+#: Куда резолвится имя activity-шага.
+ActivityTarget = Literal["action", "call_function"]
+
+
+def resolve_activity_target(
+    name: str, *, known_actions: tuple[str, ...] | None = None
+) -> ActivityTarget:
+    """Резолвить имя activity-шага против action-реестра / ``module:fn``.
+
+    Args:
+        name: Имя activity-шага из декларации.
+        known_actions: Список известных action-имён (для сообщения об
+            ошибке). Если ``None`` — берётся из глобального реестра.
+
+    Returns:
+        ``"action"`` — имя зарегистрировано в
+        :data:`action_handler_registry`; ``"call_function"`` — это
+        ссылка ``module:fn``.
+
+    Raises:
+        UnknownActivityError: Если имя не резолвится ни одним из способов.
+
+    """
+    if is_call_function_ref(name):
+        return "call_function"
+    if action_handler_registry.is_registered(name):
+        return "action"
+
+    known = (
+        known_actions
+        if known_actions is not None
+        else action_handler_registry.list_actions()
+    )
+    preview = ", ".join(known[:10]) if known else "<реестр пуст>"
+    raise UnknownActivityError(
+        f"Unknown activity {name!r}: не зарегистрирован в action-реестре "
+        f"и не является 'call_function' ссылкой вида 'module:fn'. "
+        f"Известные actions (первые 10): {preview}. "
+        "Зарегистрируйте action (ActionHandlerRegistry) либо используйте "
+        "step 'call_function' с ref='module.path:function_name'."
+    )
+
+
+def _unknown_activities_message(unknown: list[str]) -> str:
+    """Собрать сообщение обо всех неизвестных activity-именах сразу.
+
+    Args:
+        unknown: Список неизвестных имён (в порядке декларации).
+
+    Returns:
+        Текст ошибки для :class:`UnknownActivityError`.
+
+    """
+    unique = list(dict.fromkeys(unknown))
+    known = action_handler_registry.list_actions()
+    preview = ", ".join(known[:10]) if known else "<реестр пуст>"
+    return (
+        f"Unknown activity names ({len(unique)}): {', '.join(unique)}. "
+        "Ни одно из имён не зарегистрировано в action-реестре и не является "
+        "'call_function' ссылкой вида 'module:fn'. "
+        f"Известные actions (первые 10): {preview}. "
+        "Зарегистрируйте action (ActionHandlerRegistry) либо используйте "
+        "step 'call_function' с ref='module.path:function_name'."
+    )
+
+
 class ActivityBridge:
     """Сборщик activity-функций для регистрации в Temporal Worker.
 
@@ -216,7 +338,7 @@ class ActivityBridge:
         """Получить (или создать) activity-обёртку для ``action_id``.
 
         Args:
-            action_id: Имя action.
+            action_id: Имя action либо ``call_function``-ссылка ``module:fn``.
             required_capabilities: Capability'и, требуемые активности.
                 Применяется только при создании новой обёртки —
                 cache-hit возвращает уже зарегистрированную callable.
@@ -235,6 +357,10 @@ class ActivityBridge:
             elif action_id == LANGGRAPH_CHECKPOINT_PUT_ACTIVITY:
                 wrapper = _langgraph_checkpoint_put_activity
                 wrapper.__activity_name__ = action_id  # type: ignore[attr-defined]
+            elif is_call_function_ref(action_id):
+                # call_function-шаг (module:fn) — прямой вызов функции,
+                # без обёртки в ActionHandlerRegistry.
+                wrapper = bridge_call_function(action_id)
             else:
                 wrapper = bridge_action_handler(
                     action_id, required_capabilities=required_capabilities
@@ -243,29 +369,47 @@ class ActivityBridge:
         return wrapper
 
     def collect_activities(
-        self, declarations: list[WorkflowDeclaration]
+        self, declarations: list[WorkflowDeclaration], *, validate: bool = False
     ) -> list[Callable[..., Awaitable[Any]]]:
         """Собрать уникальные activity-функции для списка деклараций.
 
         Args:
             declarations: Список workflow-деклараций.
+            validate: ``True`` — резолвить каждое имя activity против
+                action-реестра (``module:fn``-ссылки допускаются) и
+                бросить :class:`UnknownActivityError` при неизвестном
+                имени. Используется на build-time Worker'а, чтобы
+                сломанная YAML-декларация падала сразу, а не в рантайме
+                с ``KeyError`` внутри ``action_handler_registry``.
 
         Returns:
             Список activity-callable в порядке появления action_id
             (без дубликатов).
 
+        Raises:
+            UnknownActivityError: При ``validate=True`` и неизвестном имени
+                activity.
+
         """
         seen: set[str] = set()
+        unknown: list[str] = []
         result: list[Callable[..., Awaitable[Any]]] = []
         for decl in declarations:
             for step in decl.steps:
                 for action_id, capabilities in _iter_activity_specs(step):
+                    if validate and action_id not in seen:
+                        try:
+                            resolve_activity_target(action_id)
+                        except UnknownActivityError:
+                            unknown.append(action_id)
                     if action_id in seen:
                         continue
                     seen.add(action_id)
                     result.append(
                         self.get(action_id, required_capabilities=capabilities)
                     )
+        if unknown:
+            raise UnknownActivityError(_unknown_activities_message(unknown))
         return result
 
     def decorate(self) -> None:
@@ -299,7 +443,7 @@ def _iter_activity_specs(step: WorkflowStep) -> list[tuple[str, tuple[str, ...]]
     """Извлечь ``(action_id, required_capabilities)`` всех activity-шагов.
 
     Args:
-        step: Workflow-step (activity / saga / agent_invoke / иной).
+        step: Workflow-step (activity / call_function / saga / agent_invoke / иной).
 
     Returns:
         Список пар ``(action_id, capabilities-tuple)`` в порядке
@@ -308,6 +452,8 @@ def _iter_activity_specs(step: WorkflowStep) -> list[tuple[str, tuple[str, ...]]
     """
     if isinstance(step, ActivityDeclaration):
         return [(step.name, tuple(step.required_capabilities))]
+    if isinstance(step, CallFunctionDeclaration):
+        return [(step.ref, ())]
     if isinstance(step, SagaDeclaration):
         specs: list[tuple[str, tuple[str, ...]]] = [
             (a.name, tuple(a.required_capabilities)) for a in step.forward
@@ -320,7 +466,10 @@ def _iter_activity_specs(step: WorkflowStep) -> list[tuple[str, tuple[str, ...]]
 
 
 def get_activity_callables(
-    declarations: list[WorkflowDeclaration], *, bridge: ActivityBridge | None = None
+    declarations: list[WorkflowDeclaration],
+    *,
+    bridge: ActivityBridge | None = None,
+    validate: bool = False,
 ) -> list[Callable[..., Awaitable[Any]]]:
     """Удобная функция: собрать activity-callable для Worker регистрации.
 
@@ -329,6 +478,8 @@ def get_activity_callables(
         bridge: Опциональный кастомный :class:`ActivityBridge`
             (нужен для тестов / shared-cache). Если ``None`` —
             создаётся новый одноразовый.
+        validate: ``True`` — резолвить имена activity против
+            action-реестра (см. :meth:`ActivityBridge.collect_activities`).
 
     Returns:
         Список callable, готовых к декорированию ``@activity.defn``
@@ -336,4 +487,4 @@ def get_activity_callables(
 
     """
     bridge = bridge or ActivityBridge()
-    return bridge.collect_activities(declarations)
+    return bridge.collect_activities(declarations, validate=validate)

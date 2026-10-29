@@ -3,7 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Self
 
 from src.backend.dsl.workflow.builder._protocol import _WorkflowBuilderProtocol
-from src.backend.dsl.workflow.spec import ActivityDeclaration, RetryPolicy
+from src.backend.dsl.workflow.spec import (
+    ActivityDeclaration,
+    CallFunctionDeclaration,
+    RetryPolicy,
+)
 
 if TYPE_CHECKING:
     pass
@@ -61,6 +65,37 @@ class SlaMixin(_WorkflowBuilderProtocol):
                 timeout_s=timeout_s,
                 retry_policy=retry_policy,
                 output_key=output_key,
+            )
+        )
+        return self
+
+    def call_function(
+        self,
+        ref: str,
+        *,
+        args: dict[str, Any] | None = None,
+        timeout_s: float | None = None,
+        output_key: str | None = None,
+    ) -> Self:
+        """Добавить шаг прямого вызова Python-функции ``module:fn``.
+
+        Идиома совпадает с route-DSL (``call_function('module:fn')``):
+        функция вызывается вне workflow-сэндбокса, payload передаётся
+        одним позиционным аргументом.
+
+        Args:
+            ref: Ссылка ``module.path:function_name``.
+            args: Payload для вызова функции.
+            timeout_s: Per-activity timeout.
+            output_key: Ключ для сохранения результата в outputs.
+
+        Returns:
+            Self (fluent--builder).
+
+        """
+        self._steps.append(
+            CallFunctionDeclaration(
+                ref=ref, args=args or {}, timeout_s=timeout_s, output_key=output_key
             )
         )
         return self

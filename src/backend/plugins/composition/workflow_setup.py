@@ -28,6 +28,7 @@ the body" т.к. ``workflow_registry`` был пустой.
 from __future__ import annotations
 
 import os
+import threading
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
@@ -35,8 +36,13 @@ from typing import Any
 from src.backend.core.logging import get_logger
 from src.backend.dsl.workflow.compiler import CompiledWorkflow, WorkflowCompilerRegistry
 from src.backend.dsl.workflow.spec import WorkflowDeclaration
+from src.backend.infrastructure.workflow.registry import (
+    WorkflowDescriptor,
+    workflow_registry,
+)
 
 __all__ = (
+    "ensure_workflow_declarations_loaded",
     "register_workflow_declarations",
     "start_workflow_runtime",
     "workflow_compiler_registry",
@@ -48,6 +54,10 @@ _logger = get_logger("workflow.setup")
 
 workflow_compiler_registry: WorkflowCompilerRegistry = WorkflowCompilerRegistry()
 """Глобальный реестр скомпилированных workflow-деклараций."""
+
+_loaded_declarations: list[WorkflowDeclaration] = []
+_declarations_loaded: bool = False
+_load_lock = threading.Lock()
 
 
 def _resolve_extensions_dir() -> Path:
@@ -76,50 +86,86 @@ def _resolve_extensions_dir() -> Path:
 def _register_workflow_declarations_from_filesystem() -> int:
     """S124 W1: auto-load ``*.workflow.yaml`` из EXTENSIONS_DIR.
 
-    Идемпотентно: повторный вызов не падает на уже зарегистрированной
-    декларации, а считает её успешно зарегистрированной. Раньше docstring
-    обещал идемпотентность, но ``workflow_registry.register`` бросал
-    ``ValueError`` при повторе — при каждом старте ловилась серия
-    ``workflow.auto_register FAIL`` на уже валидных workflow.
+    ADR-0395: в реестр descriptor'ов кладётся **WorkflowDescriptor**
+    (а не ``WorkflowDeclaration``). Раньше в реестр попадала сама
+    декларация, поэтому admin-trigger читал ``descriptor.input_schema``
+    (AttributeError) и MCP-экспорт читал ``descriptor.tags``
+    (AttributeError, проглоченный try/except → тихая потеря tool'а).
+
+    Декларации дополнительно **компилируются** в
+    :data:`workflow_compiler_registry` — иначе Temporal Worker не
+    получал workflow-классы и workflow стартовал, но не исполнялся.
+
+    Идемпотентно: повторный вызов заменяет descriptor (hot-reload),
+    а не падает на дубликате.
 
     Returns:
         Кол-во успешно зарегистрированных workflow-деклараций.
     """
+    declarations = ensure_workflow_declarations_loaded()
+    return len(declarations)
+
+
+def ensure_workflow_declarations_loaded(
+    *, force: bool = False
+) -> list[WorkflowDeclaration]:
+    """Загрузить YAML-декларации, зарегистрировать descriptor'ы и скомпилировать.
+
+    Вызывается из двух мест:
+
+    * ``start_workflow_runtime`` (фаза services — после поднятия
+      инфраструктуры);
+    * ``setup_infra.lifecycle._build_temporal_activities`` (фаза
+      infrastructure — раньше неё, иначе Worker поднимался без
+      workflow-классов и без activity-list).
+
+    Результат кешируется: повторный вызов без ``force=True`` не
+    перечитывает файлы (и не перерегистрирует descriptor'ы).
+
+    Args:
+        force: Перезагрузить YAML-файлы даже если они уже загружены
+            (hot-reload).
+
+    Returns:
+        Список загруженных деклараций (в порядке файлов).
+
+    """
+    global _declarations_loaded, _loaded_declarations
+    with _load_lock:
+        if _declarations_loaded and not force:
+            return list(_loaded_declarations)
+
+        declarations = _load_and_register_declarations()
+        _loaded_declarations = declarations
+        _declarations_loaded = True
+        return list(declarations)
+
+
+def _load_and_register_declarations() -> list[WorkflowDeclaration]:
+    """Прочитать YAML-декларации, зарегистрировать descriptor'ы, скомпилировать.
+
+    Returns:
+        Список успешно загруженных деклараций.
+
+    """
     from src.backend.dsl.portal import load_workflow_from_yaml
-    from src.backend.services.workflow import workflow_registry
 
     extensions_dir = _resolve_extensions_dir()
     if not extensions_dir.exists():
         _logger.warning("EXTENSIONS_DIR not found: %s", extensions_dir)
-        return 0
+        return []
 
-    registered = 0
+    declarations: list[WorkflowDeclaration] = []
     for workflow_yaml in sorted(extensions_dir.rglob("*.workflow.yaml")):
         try:
-            with open(workflow_yaml) as f:
-                yaml_text = f.read()
+            yaml_text = workflow_yaml.read_text(encoding="utf-8")
             wf = load_workflow_from_yaml(yaml_text)
             rel = workflow_yaml.relative_to(extensions_dir)
             parts = rel.parts  # ('plugin', 'workflows', 'name.workflow.yaml')
             route_id = f"routes/{parts[0]}/{workflow_yaml.stem}"
-            try:
-                workflow_registry.register(wf, route_id=route_id)  # type: ignore[arg-type]  # R2.MYPY: WorkflowDeclaration vs WorkflowDescriptor
-            except ValueError as dup_exc:
-                # Повторная регистрация (fallback при import + startup phase) —
-                # декларация уже в реестре, считаем успехом.
-                _logger.debug(
-                    "workflow.auto_register already registered: %s (%s)",
-                    wf.name,
-                    str(dup_exc)[:120],
-                )
-            # P0-NEW-3 (cycle 242): test_workflow_setup_calls_register_spec
-            # regression — register_spec required after register per
-            # workflow/registry.py:103 docstring.
-            try:
-                workflow_registry.register_spec(route_id, wf)  # type: ignore[arg-type]  # R2.MYPY: same
-            except (AttributeError, NotImplementedError) as exc:
-                _logger.debug("workflow.register_spec not available: %s", exc)
-            registered += 1
+            _register_descriptor(wf, route_id=route_id)
+            _compile_declaration(wf)
+            declarations.append(wf)
             _logger.info("workflow.auto_register OK: %s -> %s", wf.name, route_id)
         except Exception as exc:
             _logger.warning(
@@ -128,7 +174,61 @@ def _register_workflow_declarations_from_filesystem() -> int:
                 type(exc).__name__,
                 str(exc)[:200],
             )
-    return registered
+    return declarations
+
+
+def _register_descriptor(decl: WorkflowDeclaration, *, route_id: str) -> None:
+    """Зарегистрировать ``WorkflowDescriptor`` для декларации.
+
+    Args:
+        decl: Workflow-декларация (YAML).
+        route_id: DSL route_id, под которым выполняется workflow.
+
+    """
+    descriptor = WorkflowDescriptor(
+        name=decl.name,
+        description=decl.description or "",
+        input_schema=None,
+        output_schema=None,
+        max_attempts=_descriptor_max_attempts(decl),
+        tags=tuple(decl.tags),
+    )
+    # Replace-semantics (hot-reload): старый descriptor с тем же именем
+    # заменяется новым, иначе register() бросил бы ValueError.
+    workflow_registry.unregister(decl.name)
+    workflow_registry.register(descriptor, route_id=route_id)
+    # P0-NEW-3 (cycle 242): register_spec обязателен после register
+    # (workflow/registry.py:103). Но spec-реестр принимает только
+    # ``WorkflowSpec`` (pg-runner-модель) — YAML-декларации Temporal
+    # исполняются worker'ом, а не DSLStepExecutor'ом, поэтому
+    # register_spec вызывается лишь для совместимых объектов.
+    spec = getattr(decl, "workflow_spec", None)
+    if spec is not None:
+        workflow_registry.register_spec(route_id, spec)
+
+
+def _descriptor_max_attempts(decl: WorkflowDeclaration) -> int:
+    """Вычислить ``max_attempts`` descriptor'а из retry-политики декларации."""
+    policy = decl.default_retry_policy
+    if policy is None:
+        return 10
+    return max(1, int(policy.max_attempts))
+
+
+def _compile_declaration(decl: WorkflowDeclaration) -> CompiledWorkflow:
+    """Скомпилировать декларацию в Temporal workflow-класс.
+
+    Args:
+        decl: Workflow-декларация.
+
+    Returns:
+        Скомпилированный workflow.
+
+    Raises:
+        RuntimeError: Если temporalio SDK не установлен.
+
+    """
+    return workflow_compiler_registry.get_or_compile(decl)
 
 
 def register_workflow_declarations(
@@ -152,7 +252,8 @@ async def start_workflow_runtime(app: Any) -> None:
 
     Steps:
         1. S124 W1: auto-load workflow YAML файлов из EXTENSIONS_DIR
-           (extensions/<name>/workflows/*.workflow.yaml) → workflow_registry.
+           (extensions/<name>/workflows/*.workflow.yaml) → workflow_registry
+           (descriptor'ы) + workflow_compiler_registry (Temporal-классы).
         2. Размещает singleton compiler-реестра в ``app.state`` для
            использования entry-points (admin API, MCP tools).
         3. Плагины регистрируют свои workflow-декларации через

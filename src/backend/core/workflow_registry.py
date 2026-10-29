@@ -94,6 +94,24 @@ class WorkflowRegistry:
         """Возвращает workflow-класс по имени или ``None``."""
         return self._classes.get(name)
 
+    def unregister(self, name: str) -> bool:
+        """Удалить workflow-класс по имени (hot-reload / recompile).
+
+        Используется :func:`dsl.workflow.compiler.emitter.compile_workflow`
+        при перекомпиляции workflow'а с тем же именем: без unregister
+        старый класс остаётся в реестре, и worker/replay видят прежнюю
+        версию (дефект «stale class после recompile»).
+
+        Args:
+            name: Имя workflow'а.
+
+        Returns:
+            ``True`` если класс был найден и удалён, иначе ``False``.
+
+        """
+        with self._lock:
+            return self._classes.pop(name, None) is not None
+
     def resolve(self, names: list[str]) -> list[type]:
         """Replay-compatible class resolution: список имён → список классов.
 

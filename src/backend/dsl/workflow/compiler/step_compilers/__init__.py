@@ -33,6 +33,7 @@ from src.backend.dsl.workflow.compiler.step_compilers.activity import (
     _RESUME_SIGNAL,  # noqa: F401 — backward-compat (used by emitter.py)
     compile_activity_step,
     compile_agent_invoke_step,
+    compile_call_function_step,
     compile_pause_step,
     compile_resume_step,
     compile_sensor_step,
@@ -52,6 +53,7 @@ from src.backend.dsl.workflow.compiler.step_compilers.governance import (
 from src.backend.dsl.workflow.spec import (
     ActivityDeclaration,
     AgentInvokeDeclaration,
+    CallFunctionDeclaration,
     CheckpointDeclaration,
     ContinueAsNewDeclaration,
     EscalateDeclaration,
@@ -99,6 +101,7 @@ __all__ = (
     "StepCompiler",
     "compile_activity_step",
     "compile_agent_invoke_step",
+    "compile_call_function_step",
     "compile_checkpoint_step",
     "compile_continue_as_new_step",
     "compile_escalate_step",
@@ -170,6 +173,7 @@ from src.backend.dsl.workflow.compiler.step_compilers._retry import (  # noqa: E
 # All 13 compile функции импортируются из подмодулей (activity/flow/governance).
 _STEP_DISPATCH: dict[type, StepCompiler] = {
     ActivityDeclaration: compile_activity_step,
+    CallFunctionDeclaration: compile_call_function_step,
     SagaDeclaration: compile_saga_step,
     SignalWaitDeclaration: compile_signal_wait_step,
     SleepDeclaration: compile_sleep_step,

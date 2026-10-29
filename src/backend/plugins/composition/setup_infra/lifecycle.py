@@ -254,11 +254,22 @@ async def _start_pool_monitors() -> None:
 async def _build_temporal_activities() -> list[Any]:
     """D-AUDIT-704 fix (cycle 7): собрать Temporal activity-list для Worker.
 
-    Создаёт :class:`ActivityBridge`, вызывает
-    :func:`register_langgraph_checkpoint_activities` (S100 W1) и
-    :meth:`ActivityBridge.decorate` — без этого
-    ``workflow.execute_activity("_langgraph_checkpoint_get", ...)``
-    падает с ``ActivityNotRegisteredError``.
+    ADR-0395:Worker должен получать **все** activity-функции, на которые
+    ссылаются скомпилированные workflow-декларации, а не только две
+    LangGraph checkpoint-обёртки. Раньше в Worker попадали лишь
+    ``_langgraph_checkpoint_get``/``_langgraph_checkpoint_put`` — любой
+    ``workflow.execute_activity`` из YAML-декларации падал с
+    ``ActivityNotRegisteredError``.
+
+    Шаги:
+        1. :func:`ensure_workflow_declarations_loaded` — загрузить и
+           скомпилировать YAML-декларации (иначе Worker поднимется без
+           workflow-классов: фаза infrastructure идёт **раньше** фазы
+           services, где workflow runtime инициализируется).
+        2. ``ActivityBridge.collect_activities(declarations)`` — собрать
+           activity по каждому шагу декларации (action-имя или
+           ``call_function``-ссылка ``module:fn``).
+        3. ``register_langgraph_checkpoint_activities`` + ``decorate()``.
 
     Почему здесь, а не в :mod:`temporal_worker_runtime`:
         ``infrastructure/workflow/`` не может импортировать
@@ -267,10 +278,9 @@ async def _build_temporal_activities() -> list[Any]:
         layer (``plugins/``) — sandbox, здесь dsl-импорты разрешены.
 
     Returns:
-        Список activity-callable (минимум 2 LangGraph checkpoint). Пустой
-        list при недоступности ``temporalio`` SDK или ``activity_bridge``
-        модуля (graceful degradation — Worker всё равно стартует, но
-        checkpoint activities не зарегистрированы).
+        Список activity-callable (все activity шагов + LangGraph
+        checkpoint). Пустой list при недоступности ``temporalio`` SDK или
+        ``activity_bridge`` модуля.
 
     .. note::
        F-AT3 (re-audit 2026-10-01): возврат ``[]`` больше **не** является
@@ -294,8 +304,24 @@ async def _build_temporal_activities() -> list[Any]:
         )
         return []
 
+    # ADR-0395: workflow-декларации должны быть загружены и скомпилированы
+    # ДО поднятия Worker'а — иначе он не знает ни workflow-классов, ни
+    # activity-функций (фаза infrastructure идёт раньше фазы services).
+    declarations = _load_workflow_declarations_for_worker()
+
     bridge = ActivityBridge()
     register_langgraph_checkpoint_activities(bridge)
+    try:
+        bridge.collect_activities(declarations)
+    except Exception as exc:
+        # Неизвестное имя activity в YAML-декларации — падаем сразу на
+        # build-time Worker'а (понятная ошибка вместо KeyError в рантайме).
+        app_logger.error(
+            "temporal_activities: collect_activities FAILED — worker не "
+            "поднимется при workflow_use_temporal=true: %s",
+            exc,
+        )
+        return []
     try:
         bridge.decorate()
     except RuntimeError as exc:
@@ -311,26 +337,54 @@ async def _build_temporal_activities() -> list[Any]:
         )
         return []
 
-    activities = list(bridge._cache.values())
+    activity_list = list(bridge._cache.values())
     app_logger.info(
-        "Temporal activities wired: %d (incl. langgraph checkpoint)", len(activities)
+        "Temporal activities wired: %d (incl. langgraph checkpoint)", len(activity_list)
     )
-    return activities
+    return activity_list
+
+
+def _load_workflow_declarations_for_worker() -> list[Any]:
+    """Загрузить workflow-декларации для сбора activity-функций.
+
+    Returns:
+        Список деклараций (пустой список, если загрузка не удалась).
+
+    """
+    try:
+        from src.backend.plugins.composition.workflow_setup import (
+            ensure_workflow_declarations_loaded,
+        )
+
+        return ensure_workflow_declarations_loaded()
+    except Exception as exc:
+        app_logger.error(
+            "temporal_activities: workflow declarations load FAILED — %s", exc
+        )
+        return []
 
 
 async def _start_temporal_worker_runtime_with_activities() -> None:
     """D-AUDIT-704 fix (cycle 7): wire ActivityBridge в production lifespan.
 
     Обёртка вокруг :func:`start_temporal_worker_runtime`, которая
-    собирает activity-list (ActivityBridge + checkpoint activities) и
-    передаёт его в Worker. Без этой обёртки production lifespan не
-    передавал activities в TemporalWorkerRuntime.start() и любое
-    ``workflow.execute_activity`` падало с
-    ``ActivityNotRegisteredError``.
+    собирает activity-list (ActivityBridge + все activity шагов
+    workflow-деклараций + checkpoint activities) и передаёт его в Worker.
+    Без этой обёртки production lifespan не передавал activities в
+    TemporalWorkerRuntime.start() и любое ``workflow.execute_activity``
+    падало с ``ActivityNotRegisteredError``.
     """
     from src.backend.infrastructure.workflow.temporal_worker_runtime import (
         start_temporal_worker_runtime,
+        temporal_worker_enabled,
     )
+
+    if not temporal_worker_enabled():
+        # Флаг выключен — Worker не поднимается. Сообщение о последствиях
+        # логирует сам ``start_temporal_worker_runtime``; здесь только
+        # пропускаем сбор activities (иначе работаем впустую).
+        await start_temporal_worker_runtime(activities=[])
+        return
 
     activities = await _build_temporal_activities()
     await start_temporal_worker_runtime(activities=activities)

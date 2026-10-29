@@ -7,11 +7,33 @@ core activity declarations (activity/saga/pause/resume/signal_wait/sleep).
 
 from __future__ import annotations
 
+import re
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.backend.dsl.workflow.spec.policies import RetryPolicy
+
+#: Формат ``call_function``-ссылки: ``module.path:function_name``.
+#: Совпадает с идиомой route-DSL (``call_function('module:fn')``).
+CALL_FUNCTION_REF_PATTERN = (
+    r"^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*:[A-Za-z_][A-Za-z0-9_]*$"
+)
+
+CALL_FUNCTION_REF_RE = re.compile(CALL_FUNCTION_REF_PATTERN)
+
+
+def is_call_function_ref(name: str) -> bool:
+    """Проверить, что ``name`` — ``call_function``-ссылка вида ``module:fn``.
+
+    Args:
+        name: Имя activity-шага из декларации.
+
+    Returns:
+        ``True`` если строка соответствует шаблону ``module:fn``.
+
+    """
+    return bool(CALL_FUNCTION_REF_RE.match(name))
 
 
 class ActivityDeclaration(BaseModel):
@@ -107,6 +129,55 @@ class SagaDeclaration(BaseModel):
                     f"found in compensate[] (available: {sorted(compensate_names)})"
                 )
         return self
+
+
+class CallFunctionDeclaration(BaseModel):
+    """Шаг ``call_function`` — прямой вызов Python-функции ``module:fn``.
+
+    Идиома перенесена из route-DSL (см.
+    :class:`src.backend.dsl.engine.processors.function_call.CallFunctionProcessor`):
+    workflow-декларация может адресовать произвольную module-level
+    функцию без обёртки в :class:`ActionHandlerRegistry`.
+
+    Вызов выполняется **вне** workflow-сэндбокса: компилятор шага
+    вызывает ``workflow.execute_activity(ref, payload)``, а
+    :class:`~src.backend.dsl.workflow.compiler.activity_bridge.ActivityBridge`
+    регистрирует activity с именем ``ref``, которая импортирует модуль
+    и вызывает функцию.
+
+    YAML::
+
+        steps:
+          - type: call_function
+            ref: extensions.credit_pipeline.functions.normalize:apply_rules
+            args:
+              score: 750
+
+    Python-builder::
+
+        WorkflowBuilder("credit.flow").call_function(
+            "extensions.credit_pipeline.functions.normalize:apply_rules"
+        )
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["call_function"] = "call_function"
+    ref: str = Field(
+        min_length=1,
+        pattern=CALL_FUNCTION_REF_PATTERN,
+        description="Ссылка на функцию в формате 'module.path:function_name'.",
+    )
+    args: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Payload, передаваемый функции одним позиционным аргументом.",
+    )
+    timeout_s: float | None = Field(
+        default=None, gt=0.0, description="Per-activity timeout."
+    )
+    output_key: str | None = Field(
+        default=None, description="Имя property для сохранения результата activity."
+    )
 
 
 class PauseDeclaration(BaseModel):

@@ -24,6 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from src.backend.core.logging import get_logger
 from src.backend.core.workflow_registry import workflow_registry
 from src.backend.dsl.workflow.compiler.step_compilers import (
     _RESUME_SIGNAL,
@@ -36,6 +37,8 @@ from src.backend.dsl.workflow.spec import (
 )
 
 __all__ = ("CompiledWorkflow", "compile_workflow", "compile_workflows")
+
+_logger = get_logger("dsl.workflow.compiler.emitter")
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,7 +85,9 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
         Регистрирует скомпилированный класс в singleton
         :data:`src.backend.core.workflow_registry.workflow_registry`
         (см. B-15 fix (cycle 37)). Повторная компиляция того же
-        ``decl.name`` идемпотентна (skip через ``ValueError`` guard).
+        ``decl.name`` **заменяет** ранее зарегистрированный класс
+        (ADR-0395): старый класс удаляется из реестра, чтобы worker и
+        replay не видели устаревшую версию.
 
     Raises:
         RuntimeError: Если ``temporalio`` SDK не установлен.
@@ -158,17 +163,23 @@ def compile_workflow(decl: WorkflowDeclaration) -> CompiledWorkflow:
     # B-15 fix (cycle 37): register compiled class in workflow_registry so that
     # ``TemporalWorkflowBackend.replay(workflow_name=...)`` может резолвить
     # имя → класс через ``workflow_registry.get(name)`` (иначе KeyError).
-    # Guard: повторная компиляция того же ``decl.name`` (replay-determinism)
-    # бросает ``ValueError`` — логируем и пропускаем (idempotent).
+    #
+    # ADR-0395: перекомпиляция workflow'а с тем же именем ДОЛЖНА заменять
+    # старый класс. Раньше ``ValueError`` глотался (только DEBUG-лог) —
+    # в реестре оставался прежний класс, worker/replay видели старую
+    # версию, а post-check ``compile_workflows`` (проверка только имени)
+    # проходил. Теперь: unregister старого → register нового.
     try:
         workflow_registry.register(cls)
     except ValueError:
-        # Класс уже зарегистрирован (повторный compile_workflow с тем же decl).
-        # Это ожидаемо для replay-determinism; не считаем ошибкой.
-        from src.backend.core.logging import get_logger as _gl
-
-        _gl("dsl.workflow.compiler.emitter").debug(
-            "Workflow '%s' уже зарегистрирован в WorkflowRegistry — skip", decl.name
+        previous = workflow_registry.get(decl.name)
+        workflow_registry.unregister(decl.name)
+        workflow_registry.register(cls)
+        _logger.info(
+            "Workflow '%s' перекомпилирован — прежний класс заменён (prev=%s, new=%s)",
+            decl.name,
+            getattr(previous, "__name__", previous),
+            cls.__name__,
         )
 
     return CompiledWorkflow(
@@ -197,12 +208,23 @@ def compile_workflows(
     # B-15 fix (cycle 37): post-step guard — все скомпилированные классы
     # должны попасть в реестр. Если нет — fail-loud: replay через
     # ``TemporalWorkflowBackend.replay()`` молча вернёт ``KeyError``.
+    #
+    # ADR-0395: проверяется не только имя, но и identity класса — иначе
+    # stale-класс после recompile проходил бы этот guard.
     for compiled in out:
-        if compiled.name not in workflow_registry:
+        registered = workflow_registry.get(compiled.name)
+        if registered is None:
             raise RuntimeError(
                 f"Workflow {compiled.name} compiled but NOT registered в "
                 "WorkflowRegistry — replay() будет сломан. Проверьте, что "
                 "compile_workflow() корректно вызывает workflow_registry.register()."
+            )
+        if registered is not compiled.cls:
+            raise RuntimeError(
+                f"Workflow {compiled.name}: в WorkflowRegistry лежит устаревший "
+                f"класс ({registered!r}), а скомпилирован {compiled.cls!r}. "
+                "Перекомпиляция не заменила класс — replay() увидит старую "
+                "версию."
             )
     return out
 

@@ -31,9 +31,23 @@ __all__ = (
     "reset_temporal_worker_runtime",
     "start_temporal_worker_runtime",
     "stop_temporal_worker_runtime",
+    "temporal_worker_enabled",
 )
 
 _logger = get_logger("workflow.temporal_worker_runtime")
+
+
+def temporal_worker_enabled() -> bool:
+    """Проверить feature-flag ``workflow_use_temporal`` (default-OFF).
+
+    Returns:
+        ``True`` если Temporal Worker должен быть поднят в lifespan.
+
+    """
+    from src.backend.core.config.features import FeatureFlags
+
+    flags = FeatureFlags()
+    return bool(getattr(flags, "workflow_use_temporal", False))
 
 
 class TemporalWorkerRuntime:
@@ -262,9 +276,18 @@ async def start_temporal_worker_runtime(*, activities: list[Any] | None = None) 
     # D-A8-04 fix (cycle 1): explicit feature-flag guard, default-OFF.
     enabled = bool(getattr(flags, "workflow_use_temporal", False))
     if not enabled:
-        _logger.info(
+        # ADR-0395: флаг выключен — worker не поднимается, поэтому
+        # сообщение должно быть WARNING'ом с описанием последствий
+        # (иначе оператор не знает, что workflow не исполняются).
+        _logger.warning(
             "temporal.worker_runtime.skipped",
-            extra={"reason": "FEATURE_WORKFLOW_USE_TEMPORAL=false"},
+            extra={
+                "reason": "FEATURE_WORKFLOW_USE_TEMPORAL=false",
+                "impact": (
+                    "Temporal Worker не запущен — workflow-декларации "
+                    "не исполняются Temporal-движком (pg-runner path)"
+                ),
+            },
         )
         return
 
