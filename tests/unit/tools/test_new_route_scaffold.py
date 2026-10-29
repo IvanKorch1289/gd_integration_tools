@@ -74,6 +74,43 @@ def test_scaffold_yaml_structure(repo_root: Path) -> None:
     assert isinstance(data["steps"], list) and data["steps"]
 
 
+def test_scaffold_manifest_loads_by_route_loader(repo_root: Path) -> None:
+    """Сгенерированный route.toml грузится настоящим load_route_manifest.
+
+    Регрессия (ADR-0397, кластер D / дефект 1): в шаблоне не было
+    обязательного ``pipelines`` (``Field(min_length=1)`` в
+    ``RouteManifest``) → ``RouteLoader`` падал с
+    ``manifest_error: pipelines Field required``.
+    """
+    from src.backend.services.routes.manifest_toml import load_route_manifest
+
+    result = _run_scaffold(repo_root, "order_status")
+    assert result.returncode == 0, result.stderr
+    manifest = load_route_manifest(
+        repo_root / "routes" / "order_status" / "route.toml"
+    )
+    assert manifest.name == "order_status"
+    assert manifest.pipelines == ("main.dsl.yaml",)
+
+
+def test_scaffold_pipeline_loads_by_yaml_loader(repo_root: Path) -> None:
+    """Сгенерированный main.dsl.yaml собирается настоящим YAML-loader'ом.
+
+    Регрессия (ADR-0397, кластер D / дефект 1): шаг ``validate_request``
+    не существует как метод RouteBuilder, а ``to: {response: ...}`` —
+    невалидный sink-вызов → роут был незагружаемым.
+    """
+    from src.backend.dsl.yaml_loader.loaders import load_pipeline_from_file
+
+    result = _run_scaffold(repo_root, "order_status")
+    assert result.returncode == 0, result.stderr
+    pipeline = load_pipeline_from_file(
+        repo_root / "routes" / "order_status" / "main.dsl.yaml"
+    )
+    assert pipeline.route_id == "order_status"
+    assert pipeline.processors
+
+
 def test_scaffold_rejects_bad_name(repo_root: Path) -> None:
     """Не-snake_case имя → exit 1, файлы не созданы."""
     result = _run_scaffold(repo_root, "Bad-Name")

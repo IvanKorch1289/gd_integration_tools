@@ -158,12 +158,12 @@ class TestCheckCapabilitiesSubset:
         with pytest.raises(CapabilitySupersetError) as exc:
             check_capabilities_subset(
                 route="r1",
-                route_caps=[CapabilityRef(name="db.read", scope="credit_db")],
+                route_caps=[CapabilityRef(name="mq.publish", scope="events")],
                 plugin_caps_by_name={},
                 vocabulary=vocab,
             )
         assert exc.value.route == "r1"
-        assert exc.value.offending[0].name == "db.read"
+        assert exc.value.offending[0].name == "mq.publish"
 
     def test_route_glob_covered(self) -> None:
         vocab = build_default_vocabulary()

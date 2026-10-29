@@ -240,14 +240,16 @@ class TestCapabilitiesSubset:
             tmp_path,
             name="r1",
             requires_plugins={"plug_a": ">=1.0"},
-            capabilities=[("db.read", "credit_db")],
+            capabilities=[("mq.publish", "events")],
         )
         # Plugin задекларировал ДРУГОЙ scope — capability route'а не покрыта.
+        # (db.read/db.write — public с 2026-10-29, ADR-0397: route объявляет
+        # их сам, поэтому для проверки subset используем непубличную mq.*)
         installed = {
             "plug_a": InstalledPlugin(
                 name="plug_a",
                 version="1.0.0",
-                capabilities=(CapabilityRef(name="db.read", scope="audit_db"),),
+                capabilities=(CapabilityRef(name="mq.publish", scope="other.events"),),
             )
         }
         loader, _ = _build_loader(tmp_path, installed_plugins=installed)

@@ -42,7 +42,10 @@ ROUTE_TOML_TEMPLATE = """\
 name = "{name}"
 version = "0.1.0"
 requires_core = ">=0.20,<0.21"
-capabilities = ["net.outbound", "audit.write"]
+# ADR-043: pipelines — обязательное поле RouteManifest (min_length=1).
+# Без него RouteLoader падает с «pipelines Field required».
+pipelines = ["main.dsl.yaml"]
+capabilities = ["audit.write"]
 tenant_aware = true
 feature_flag = {{ enabled = true, gate = "{name}_enabled" }}
 slo = {{ p95_ms = 500, timeout_ms = 5000 }}
@@ -56,18 +59,24 @@ source:
     method: POST
     path: /api/v1/{name}   # CHANGEME: целевой public path маршрута
 steps:
+# Каждый step — публичный метод RouteBuilder (ADR-0397). Словарь шагов:
+# docs/integration/INTEGRATION_GUIDE.md
 - feature_flag:
     flag: {name}_enabled
     default: true
     stop_on_disabled: false
     output_field: {name}_active
-- validate_request:
-    schema:
-      type: object
-- to:
-    response:
-      code: 200
-      body: ${{body}}   # CHANGEME: доменная логика (добавьте steps до `to`)
+- transform:
+    expression: body
+- audit:
+    action: {name}.processed
+# Response-binding (ADR-0349) объявляется на верхнем уровне файла
+# (sibling от steps), а не как step: `to` — это sink-метод RouteBuilder.
+to:
+  body:
+    status: ok
+    route: "{name}"
+    received: "${{body}}"   # CHANGEME: доменная логика (добавьте steps до `to`)
 """
 
 ROUTE_README_TEMPLATE = """\

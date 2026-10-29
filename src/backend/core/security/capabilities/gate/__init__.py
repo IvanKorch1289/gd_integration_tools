@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING as TYPE_CHECKING
 from typing import Final as Final
 
 from src.backend.core.security.capabilities.errors import (
+    CapabilityDeniedError,
     CapabilityNotFoundError,
     CapabilitySupersetError,
 )
@@ -105,6 +106,28 @@ class CapabilityGate(DeclarationMixin, CheckMixin, CacheMixin, AuditMixin):
         # "RuntimeError: dictionary changed size during iteration".
         self._lock: Lock = Lock()
 
+    def check(self, plugin: str, capability: str, requested_scope: str | None) -> None:
+        """Runtime-проверка capability (ADR-0397: actionable-сообщение).
+
+        Перекрывает :meth:`CheckMixin.check`, чтобы сообщение об отказе
+        называло **требуемый scope** и **где объявить** capability — иначе
+        автор роута получает «Capability denied» без подсказки.
+
+        Args:
+            plugin: Имя плагина / роута (namespace декларации).
+            capability: Имя capability.
+            requested_scope: Scope, который требуется на runtime.
+
+        Raises:
+            CapabilityDeniedError: Декларация отсутствует или scope не
+                покрывается. Сообщение дополнено подсказкой.
+
+        """
+        try:
+            super().check(plugin, capability, requested_scope)
+        except CapabilityDeniedError as exc:
+            raise _with_declaration_hint(exc, plugin, capability) from exc
+
     @property
     def vocabulary(self) -> CapabilityVocabulary:
         """Доступ к registry для админ-UI и DSL-Linter."""
@@ -171,6 +194,61 @@ def get_capability_gate() -> CapabilityGate:
     return gate
 
 
+def _declaration_hint(capability: str, scope: str | None) -> str:
+    """Подсказка «где и как объявить capability» (ADR-0397).
+
+    Args:
+        capability: Имя capability.
+        scope: Требуемый scope (алиас ресурса) либо ``None``.
+
+    Returns:
+        Текст подсказки для сообщения об ошибке.
+
+    """
+    scope_hint = f'scope = "{scope}"' if scope else 'scope = "<scope>"'
+    hint = (
+        f'Объявите capability в routes/<route>/route.toml (или в plugin.toml '
+        f'владельца): [[capabilities]] name = "{capability}" {scope_hint}'
+    )
+    if capability.startswith("db."):
+        hint += (
+            " — scope обязан совпасть с алиасом ресурса БД "
+            "(профиль внешней БД или имя таблицы), который использует шаг"
+        )
+    return hint
+
+
+def _with_declaration_hint(
+    exc: CapabilityDeniedError, plugin: str, capability: str
+) -> CapabilityDeniedError:
+    """Дополнить :class:`CapabilityDeniedError` подсказкой по декларации.
+
+    Args:
+        exc: Исходная ошибка отказа.
+        plugin: Имя плагина / роута.
+        capability: Имя capability.
+
+    Returns:
+        Новая ошибка с тем же набором полей и расширенным сообщением.
+
+    """
+    enriched = CapabilityDeniedError(
+        plugin=exc.plugin,
+        capability=exc.capability,
+        requested_scope=exc.requested_scope,
+        declared_scope=exc.declared_scope,
+        tenant=exc.tenant,
+        principal=exc.principal,
+        correlation_id=exc.correlation_id,
+    )
+    base = exc.args[0] if exc.args else str(exc)
+    enriched.args = (
+        f"{base}. {_declaration_hint(capability, exc.requested_scope)}",
+    )
+    del plugin  # plugin уже присутствует в тексте исходной ошибки
+    return enriched
+
+
 def check_capabilities_subset(
     *,
     route: str,
@@ -192,7 +270,8 @@ def check_capabilities_subset(
 
     Raises:
         CapabilitySupersetError: Хотя бы одна capability route'а не
-            покрывается объединением источников.
+            покрывается объединением источников. Сообщение дополнено
+            требуемым scope и местом декларации (ADR-0397).
 
     """
     available: list[CapabilityRef] = []
@@ -209,7 +288,16 @@ def check_capabilities_subset(
         if not _is_covered(ref, available, vocabulary):
             offending.append(ref)
     if offending:
-        raise CapabilitySupersetError(route=route, offending=tuple(offending))
+        error = CapabilitySupersetError(route=route, offending=tuple(offending))
+        names = ", ".join(f"{c.name}({c.scope!r})" for c in offending)
+        hints = "; ".join(
+            _declaration_hint(ref.name, ref.scope) for ref in offending
+        )
+        error.args = (
+            f"Route {route!r} requests capabilities not covered by "
+            f"requires_plugins or core public set: {names}. {hints}",
+        )
+        raise error
 
 
 def _is_covered(

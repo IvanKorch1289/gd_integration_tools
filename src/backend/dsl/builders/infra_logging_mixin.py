@@ -25,7 +25,9 @@ class InfraLoggingMixin:
 
     if TYPE_CHECKING:
         # type hints для IDE / mypy (mixin не имеет runtime класса).
-        def infra_log_write(self, level: str, message: str) -> "Self": ...
+        def infra_log_write(self, level: str, message: str) -> "Self":
+            """Сигнатура метода (реализация — ниже)."""
+            ...
 
     def infra_log_write(self, level: str, message: str) -> Any:
         """Add :class:`InfraLogWriteProcessor` в pipeline.

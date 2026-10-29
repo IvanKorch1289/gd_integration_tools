@@ -30,6 +30,22 @@ def register(vocab: CapabilityVocabulary) -> None:
             name="db.read",
             matcher=exact,
             description="Чтение из БД через DatabaseFacade (read-only-сессия).",
+            # ADR-0397 (кластер D, дефект 3): public — по существу.
+            # Scope обязателен (scope_required=True) и обязан совпасть с
+            # алиасом ресурса: для внешнего профиля БД это имя профиля
+            # (``db_query_external`` → ``_capability_scope`` возвращает
+            # profile), для внутренней БД — имя таблицы из SQL.
+            #
+            # Что снимает public: проверку «назван ли плагин, который
+            # декларирует эту capability» в check_capabilities_subset —
+            # автор роута объявляет db.read сам (в route.toml), т.к. в
+            # проекте нет единого plugin-владельца доступа к БД.
+            # Что НЕ снимает: runtime-контроль. CapabilityGate.check
+            # по-прежнему сверяет scope (ExactAliasMatcher) и требует
+            # декларации в самом роуте/плагине; в prod core-baseline
+            # выключен (config_profiles/prod.yml), поэтому без явной
+            # декларации db.read в route.toml БД-шаг будет отклонён.
+            public=True,
         )
     )
     vocab.register(
@@ -37,6 +53,9 @@ def register(vocab: CapabilityVocabulary) -> None:
             name="db.write",
             matcher=exact,
             description="Запись в БД через DatabaseFacade (rw-сессия).",
+            # См. комментарий к db.read: public + обязательный scope,
+            # равный алиасу ресурса (профиль БД / таблица).
+            public=True,
         )
     )
     vocab.register(

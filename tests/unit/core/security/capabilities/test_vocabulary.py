@@ -100,7 +100,7 @@ class TestCapabilityVocabulary:
         assert len(v.all()) == 108
 
     def test_net_capabilities_are_public(self) -> None:
-        """Публичный набор: net.*, audit.write, storage.*.
+        """Публичный набор: net.*, db.*, audit.write, storage.*.
 
         Публичность снимает только declaration-time проверку манифеста роута.
         Рантайм-контроль (CapabilityGate.check через OutboundHttpClient и
@@ -117,12 +117,20 @@ class TestCapabilityVocabulary:
         ``check_capabilities_subset`` отклоняет такой роут с
         CapabilitySupersetError. Рантайм-контроль при этом сохраняется:
         scope=key/prefix по-прежнему сверяется matcher'ем path_glob.
+
+        ``db.read`` / ``db.write`` — ADR-0397 (кластер D, дефект 3):
+        plugin-владельца доступа к БД в проекте нет, поэтому автор роута
+        объявляет capability сам (в route.toml) с **обязательным** scope —
+        алиасом профиля БД / таблицы. Scope по-прежнему сверяется
+        matcher'ем ExactAliasMatcher, т.е. public не выдаёт доступ.
         """
         v = build_default_vocabulary()
         public_names = {d.name for d in v.public_capabilities()}
         assert public_names == {
             "net.inbound",
             "net.outbound",
+            "db.read",
+            "db.write",
             "audit.write",
             "storage.read",
             "storage.write",
@@ -130,8 +138,12 @@ class TestCapabilityVocabulary:
         }
         # Доменные и привилегированные capability остаются непубличными —
         # расширять набор молча нельзя.
-        for name in ("db.read", "db.write", "ai.invoke", "secrets.read"):
+        for name in ("ai.invoke", "secrets.read", "rpa.browser.click"):
             assert name not in public_names, f"{name} не должен быть публичным"
+
+        # db.* остаются scope-обязательными: public ≠ «без scope».
+        for name in ("db.read", "db.write"):
+            assert v.get(name).scope_required is True
 
     def test_privileged_capabilities_are_not_public(self) -> None:
         """jupyter.hub НЕ публична: это удалённое выполнение кода.
