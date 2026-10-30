@@ -184,9 +184,13 @@
 | [ADR-0395](0395-workflow-declaration-model-and-worker-registration.md) | Модель workflow-деклараций, регистрация Temporal Worker'а и детерминизм | Accepted |
 | [ADR-0396](0396-workflow-compensation-and-time-budget.md) | Компенсации Saga в pg-runner-пути и бюджет времени workflow | Accepted |
 | [ADR-0397](0397-dsl-authoring-ergonomics.md) | Эргономика авторства DSL: скаффолд, линтер, capability-гейт, вложенный YAML | Accepted |
+| [ADR-0398](0398-workflow-event-log-pagination-and-subflow-semantics.md) | Пагинация event-log, семантика sub_flow, retry-бюджет и build-time резолв activity | Accepted |
+| [ADR-0399](0399-dsl-schemas-lsp-catalog-and-workflow-metrics.md) | JSON-Schema процессоров в репозитории, каталог LSP-шагов и метрики workflow | Accepted |
+| [ADR-0400](0400-snapshot-rls-graphql-hot-reload-and-bls-gate.md) | Snapshot под RLS, интроспекция GraphQL, честный hot-reload и гейт профилей | Accepted |
+| [ADR-0401](0401-rpa-runtime-wiring-cache-invalidation-and-quotas.md) | RPA-runtime wiring, инвалидация всех уровней кэша, квоты и PII fast-path (волна 20, кластер W4) | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 182 ADRs.
+**Total:** 186 ADRs.
 

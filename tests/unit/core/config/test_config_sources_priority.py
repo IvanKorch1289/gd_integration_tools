@@ -437,6 +437,26 @@ class TestDotEnvPriority:
             cl.clear_yaml_cache()
             _PROFILES_DIR = None
 
+    def test_dotenv_only_keys_is_case_insensitive(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Регрессия ADR-0376/ADR-0379: сравнение env/``.env`` — без регистра.
+
+        Реальное окружение (``PROBE_CASE``) и значение из ``.env``
+        (``probe_case``) — один и тот же ключ для pydantic. Файловое
+        значение не должно считаться «приоритетным» только из-за
+        регистра: ключ помечается файловым, лишь если НИ ОДИН его
+        регистронезависимый вариант в окружении не содержит другого
+        значения.
+        """
+        monkeypatch.setenv("PROBE_CASE", "from-env")
+        monkeypatch.setenv("probe_case", "from-file")
+        cl._ENV_FILE_VALUES["probe_case"] = "from-file"
+        try:
+            assert "probe_case" not in cl._dotenv_only_keys()
+        finally:
+            cl._ENV_FILE_VALUES.pop("probe_case", None)
+
     def test_dotenv_value_is_recognised(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Значение, совпадающее с ``.env``, считается файловым (низкий приоритет)."""
         key = "PROBE_FROM_FILE"

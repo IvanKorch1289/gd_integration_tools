@@ -61,18 +61,24 @@ class TestMemoryBackendInfrastructureRole:
         assert await backend.get("user:2") is None
         assert await backend.get("order:1") == b"data3"
 
-    async def test_no_tag_invalidation(self) -> None:
-        """MemoryBackend does NOT support tag invalidation (REMOVED MemoryCacheFacade).
+    async def test_supports_tag_invalidation(self) -> None:
+        """MemoryBackend поддерживает tag-инвалидацию (ADR-0401).
 
-        Cycle 167: MemoryCacheFacade удалена. Tag invalidation теперь
-        только в services.UnifiedCacheFacade (``delete_by_tag_ns``).
+        Cycle 167: MemoryCacheFacade удалена, tag-инвалидация осталась
+        только в services.UnifiedCacheFacade. ADR-0401: глобальный
+        ``CacheInvalidator`` чистит только primary-тир, поэтому
+        fallback-уровни (L1 memory / L3 disk) должны уметь
+        ``delete_by_tag`` — иначе после отказа Redis клиент получал
+        stale-значения из fallback'а.
         """
         from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 
         backend = MemoryBackend()
-        assert not hasattr(backend, "delete_by_tag") or not callable(
-            getattr(backend, "delete_by_tag", None)
-        )
+        assert callable(getattr(backend, "delete_by_tag", None))
+        await backend.set("k1", b"v1")
+        await backend.bind_key_to_tag("entity:orders", "k1")
+        assert await backend.delete_by_tag("entity:orders") == 1
+        assert await backend.get("k1") is None
 
     async def test_no_healthcheck(self) -> None:
         """MemoryBackend does NOT have healthcheck."""
