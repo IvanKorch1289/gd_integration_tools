@@ -551,7 +551,7 @@ docs = [
     "mkdocstrings>=0.25.0,<2.0.0",  # S44 W12b: widened <1.0.0 -> <2.0.0 to allow mkdocstrings 1.0.x (dependabot #125)
     "mkdocstrings-python>=1.10.0,<2.0.0",
     "mike>=2.0.0,<3.0.0",
-    "pymdown-extensions>=11.0.1,<12.0.0",  # 2026-10-15 Dependabot: PYSEC-2026-3609 (b64 image injection) and PYSEC-2026-3654 (ReDoS in 4 inline processors) — fixed in 11.0.0/11.0.1
+    "pymdown-extensions>=11.0.1,<13.0.0",  # 2026-10-15 Dependabot: PYSEC-2026-3609 (b64 image injection) and PYSEC-2026-3654 (ReDoS in 4 inline processors) — fixed in 11.0.0/11.0.1
 ]
 # K5 Sprint 8 [wave:s8/k5-ru-proofreader]: optional ru-language proofreader.
 # language-tool-python тянет ~500MB JVM + словари; в core не нужен,
