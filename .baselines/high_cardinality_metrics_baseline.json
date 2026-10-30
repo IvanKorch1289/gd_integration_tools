@@ -875,7 +875,7 @@
     "file": "src/backend/services/workflows/sla_alerting.py",
     "full_call": "_sla_counter.labels(level=level.value)",
     "label": "level",
-    "line": 179,
+    "line": 169,
     "reason": "label 'level' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },

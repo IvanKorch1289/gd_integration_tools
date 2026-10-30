@@ -661,7 +661,7 @@
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/services/workflows/sla_alerting.py",
-    "line": 115,
+    "line": 100,
     "qualified_name": "evaluate_sla"
   },
   {

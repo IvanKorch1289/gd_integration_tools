@@ -47,26 +47,25 @@
 
 ## 2. Lock-чанж: Pillow 13 и `psycopg[binary]` → extra `db_drivers`
 
-* **Что не сделано.** (а) Пин `pillow>=12.3.0,<13.0.0` удерживается в трёх
+* **Что сделано (б).** `psycopg[binary]>=3.1,<4.0.0` объявлен в extra
+  `db_drivers` рядом с остальными драйверами БД (`oracledb`, `aioodbc`,
+  `aiomysql`, `clickhouse-connect`, `pyodbc`); `uv.lock` пересобран (712
+  пакетов), `uv lock --check` — зелёный (ADR-0402). Объявление оставлено и
+  в `sources-cdc` (CDC-транспорт `pgoutput`), поэтому образ, ставящий
+  `sources-cdc`, драйвер не потерял; `db_drivers` — каноническое место
+  sync-драйвера PostgreSQL.
+* **Что не сделано (а).** Пин `pillow>=12.3.0,<13.0.0` удерживается в трёх
   местах `pyproject.toml` (`rpa`, `rpa-windows`, `multimodal-rag`).
-  (б) `psycopg[binary]>=3.1,<4.0.0` объявлен в extra `sources-cdc`, а не в
-  `db_drivers`, где соседствуют остальные драйверы БД (`oracledb`, `aioodbc`,
-  `aiomysql`, `clickhouse-connect`, `pyodbc`).
-* **Почему.** (а) `streamlit` (core-зависимость) требует `pillow<13` — снятие
-  пина делает lock-файл неразрешимым; 59 CVE Pillow 12.x приняты осознанно
-  (ADR-0385 A5, ADR-0388). (б) перенос затрагивает lock-файл, а lock-файл в
-  волне 20 не менялся.
-* **Требует владельца.** Да — владелец зависимостей: без обновления
-  `streamlit` (или снятия пина с явным принятием CVE) и без решения по
-  `uv.lock` пункт не закрывается. Lock-чанж — **вне зоны** кластера
-  документации.
+* **Почему.** (а) `streamlit` (core-зависимость, locked 1.63.0) требует
+  `pillow<13,>=7.1.0` — снятие пина делает lock-файл неразрешимым; 59 CVE
+  Pillow 12.x приняты осознанно (ADR-0385 A5, ADR-0388).
+* **Требует владельца.** Да — только пункт (а): владелец зависимостей; без
+  обновления `streamlit` (или снятия пина с явным принятием CVE) пункт не
+  закрывается.
 * **Минимальный шаг.** (а) обновить `streamlit` до версии, допускающей
-  `pillow>=13`, снять пин в трёх местах, обновить lock. (б) перенести
-  `psycopg[binary]` в extra `db_drivers`, обновить lock, прогнать
-  `tools/check_dsn_drivers.py`.
-* **Done-критерий.** `uv lock` без `pillow<13`; `psycopg` объявлен в
-  `db_drivers`; `uv audit --frozen` не содержит Pillow; `tools/config_audit.py
-  --scope orphans` → 0.
+  `pillow>=13`, снять пин в трёх местах, обновить lock.
+* **Done-критерий.** `uv lock` без `pillow<13`; `uv audit --frozen` не
+  содержит Pillow; `tools/config_audit.py --scope orphans` → 0.
 
 ## 3. Прод-значения, оставленные осознанно
 
@@ -118,23 +117,27 @@
 * **Done-критерий.** `PolicyMixin.cache` отсутствует; в коде нет вызовов
   `builder.cache(...)` в позиции policy-маркера.
 
-## 6. Дубль OCR-процессора
+## 6. Дубль OCR-процессора — закрыто (ADR-0402)
 
-* **Что не сделано.** OCR реализован дважды:
-  `src/backend/services/rpa/ocr_processor.py` (протокол `OCRProcessor`,
-  `PytesseractOCRProcessor`, `NoOpOCRProcessor`) и
-  `src/backend/dsl/engine/processors/rpa/operations/imageocrprocessor.py`
-  (`ImageOcrProcessor` — DSL-шаг `ocr`). ADR-0368 починил таймаут только в
-  сервисной копии, ADR-0393 добавил предел ожидания в DSL-копии.
-* **Почему.** Две реализации живут в разных слоях (services vs dsl) и
-  различаются поведением при отсутствии Tesseract: сервисная отдаёт пустую
-  строку через `NoOpOCRProcessor`, DSL-шаг — свой fallback.
-* **Требует владельца.** Да — какая копия канон (и в каком слое) —
-  архитектурное решение; слияние меняет поведение шага `ocr`.
-* **Минимальный шаг.** Выбрать канон, свести вторую копию к общему
-  протоколу (или удалить), обновить `feature_flags.rpa_ocr_enabled`.
-* **Done-критерий.** В `src/` остаётся одна реализация OCR; оба
-  потребителя используют её.
+* **Что сделано.** Каноном выбран DSL-шаг `ocr`
+  (`src/backend/dsl/engine/processors/rpa/operations/imageocrprocessor.py`,
+  класс `ImageOcrProcessor`). Мёртвый дубль `services/rpa/ocr_processor.py`
+  (протокол `OCRProcessor`, `PytesseractOCRProcessor`, `NoOpOCRProcessor`,
+  фабрика `from_environment`) удалён: 0 вызовов в `src/` — ни импортов, ни
+  lazy-импортов, ни DI-регистраций (ADR-0402, прецедент ADR-0100).
+* **Почему.** Реализация в слое `services` не имела потребителей, а предел
+  ожидания дублировался: ADR-0368 починил сервисную копию, ADR-0393 добавил
+  тот же предел в DSL-копию, которая умеет `fail` с понятным сообщением.
+* **Требует владельца.** Нет — закрыто кодом (⚙️ инженерно, ADR-0402).
+  Остаток вне зоны: feature-flag `feature_flags.rpa_ocr_enabled` и его
+  описание в конфиг-модели больше не управляют реализацией (канон закрыт
+  capability-гейтом `rpa.image.ocr`) — их удаление или переприцеливание
+  требует владельца конфигурации.
+* **Минимальный шаг.** Сделан: удалён модуль и его тесты; инвариант «одна
+  реализация OCR» закреплён тестом в
+  `tests/unit/services/rpa/test_ocr_processor_removed.py`.
+* **Done-критерий.** Выполнен: в `src/` осталась одна реализация OCR
+  (DSL-шаг `ocr`), сервисная копия отсутствует и нигде не импортируется.
 
 ## 7. `pg_runner_backend.py:250` — `replay()` → `NotImplementedError`
 

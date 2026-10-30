@@ -1,6 +1,6 @@
 {
   "tool": "doc_path_validator",
-  "note": "Baseline of DANGLING documentation references: paths cited inside docs/ that do not exist on disk under src/backend or extensions. Not 'undocumented modules' - DocPathValidator.find_missing() checks the docs->code direction, so every entry is a link a reader would follow into a 404. Ratchet: the set may shrink (link fixed or removed) but must not grow. | 2026-10-15: добавлен `services/ai/agents/langgraph_postgres_saver.py` — модуль удалён осознанно (audit-stabilization Proposal 3, 2026-10-14: AsyncPostgresSaver отсутствует в langchain_postgres==0.0.17). Ссылку на него сохраняют два исторических swarm-отчёта от 2026-08-06 (cycle-2/phase-1/08-agents.md, cycle-4/phase-1/08-agents.md) — это point-in-time инвентаризация файлов, её нельзя переписывать без искажения аудиторской записи. Живые ADR и docs/roadmap актуализированы. Волна 20: +8 исторических ссылок — модули, удалённые ранее и упомянутые в ADR, документирующих их удаление (rate_limiter — ADR-0353, core/tenancy/cache.py — ADR-0391, rpa/file_search.py — ADR-0364, rpa/utils.py — ADR-0369, database/query_result_cache.py — ADR-0387), плюс два never-existing пути из исторических отчётов (processors/ai/_integration.py, dsl/orchestration/__init__.py).",
+  "note": "Baseline of DANGLING documentation references: paths cited inside docs/ that do not exist on disk under src/backend or extensions. Not 'undocumented modules' - DocPathValidator.find_missing() checks the docs->code direction, so every entry is a link a reader would follow into a 404. Ratchet: the set may shrink (link fixed or removed) but must not grow. | 2026-10-15: добавлен `services/ai/agents/langgraph_postgres_saver.py` — модуль удалён осознанно (audit-stabilization Proposal 3, 2026-10-14: AsyncPostgresSaver отсутствует в langchain_postgres==0.0.17). Ссылку на него сохраняют два исторических swarm-отчёта от 2026-08-06 (cycle-2/phase-1/08-agents.md, cycle-4/phase-1/08-agents.md) — это point-in-time инвентаризация файлов, её нельзя переписывать без искажения аудиторской записи. Живые ADR и docs/roadmap актуализированы. Волна 20: +8 исторических ссылок — модули, удалённые ранее и упомянутые в ADR, документирующих их удаление (rate_limiter — ADR-0353, core/tenancy/cache.py — ADR-0391, rpa/file_search.py — ADR-0364, rpa/utils.py — ADR-0369, database/query_result_cache.py — ADR-0387), плюс два never-existing пути из исторических отчётов (processors/ai/_integration.py, dsl/orchestration/__init__.py). Волна 21 (кластер A1): +1 историческая ссылка — services/rpa/ocr_processor.py; модуль удалён осознанно как мёртвый дубль OCR-процессора (ADR-0402, прецедент ADR-0100), ссылка остаётся в ADR-0402 и в исторических audit-отчётах.",
   "src_backend": [
     "core/ai/gateway.py",
     "core/ai/gateway/orchestrator/enforced_invoke.py",
@@ -151,6 +151,7 @@
     "services/observability/nats_metrics.py",
     "services/ops/data_quality.py",
     "services/ops/data_quality/_types.py",
+    "services/rpa/ocr_processor.py",
     "services/secrets/facade.py",
     "services/workflows/orders_dsl.py",
     "testkit/chaos_fixtures.py",

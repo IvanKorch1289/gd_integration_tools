@@ -43,20 +43,22 @@ curl "http://<api>/api/v1/admin/workflows/<wf_id>"
 
 3. **Notification не дошёл до operator.**
    * Email/Slack escalation в SLA-политике не настроен.
-   * **SlaTracker не запущен — и это не баг конфигурации, а
-     нереализованная возможность: SLA-алертинг не реализовано.** Класс
-     `SlaTracker`
-     (`src/backend/services/workflows/sla_alerting.py`) существует, но
-     **не инстанцируется нигде в `src/`**: ни в `lifespan`, ни в
-     worker'ах, ни в composition root. `WorkflowFacade` принимает
-     `sla_tracker` только как опциональный параметр, а сам фасад в `src/`
-     не создаётся. Поэтому автоматической эскалации по SLA в рантайме нет
-     вовсе — настраивать «SLA-политику» для workflow бессмысленно, пока
-     не появится исполнитель. Следите за owner-задачей, а не за
-     конфигурацией.
+   * **SLA-алертинг не реализован — и это не баг конфигурации, а
+     отсутствующая возможность.** ADR-0403 (волна 21) удалил класс
+     `SlaTracker` и протокол `SlaAlertDispatcher` как мёртвый код: они не
+     инстанцировались нигде в `src/` (ни в `lifespan`, ни в worker'ах, ни в
+     composition root), поэтому автоматической эскалации по SLA в рантайме
+     не было вовсе. `WorkflowFacade` больше не принимает `sla_tracker`
+     (остался только `sla_resolver` — SLA hard-limit как бюджет времени),
+     а сам фасад в `src/` по-прежнему не создаётся: production-путь старта
+     workflow идёт напрямую через `WorkflowBackend`
+     (`dsl/engine/processors/invoke_workflow.py`). Настраивать
+     «SLA-политику» для workflow бессмысленно, пока не появится
+     исполнитель. Следите за owner-задачей, а не за конфигурацией.
    * Owner-задача: K3 DSL+Workflow, **GAP-WF-4.5** — зафиксирована в
      [PROD_READINESS_GAPS.md](../roadmap/PROD_READINESS_GAPS.md), сводка —
-     в [OWNER_TASKS.md](../roadmap/OWNER_TASKS.md) § 8.
+     в [OWNER_TASKS.md](../roadmap/OWNER_TASKS.md) § 8, решение волны 21 —
+     в [ADR-0403](../adr/0403-workflow-sla-dlq-and-prod-validator.md).
 
 ## Mitigation
 
@@ -123,9 +125,9 @@ old = [s for s in await svc.list_pending() if (now - s.created_at).days > 7]
 * Всегда задавать `wait_for_signal(timeout_s=86400)`.
 * Настроить SLA-политику в декларации workflow (`sla:` в
   `WorkflowDeclaration` / `.sla(...)` в builder) — но помните, что
-  **исполнителя SLA-трекера не существует**: `SlaTracker` не
-  инстанцируется нигде в `src/` (см. диагностику п. 3, owner-задача
-  GAP-WF-4.5).
+  **исполнителя SLA-трекера не существует**: класс `SlaTracker` удалён
+  как мёртвый код (ADR-0403), эскалация по SLA не реализована (см.
+  диагностику п. 3, owner-задача GAP-WF-4.5).
 * Эскалацию по SLA (email/Slack) в `SlaPolicy` пока не рассчитывайте
   как работающую — это owner-задача K3.
 

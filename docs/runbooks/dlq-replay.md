@@ -2,6 +2,17 @@
 
 > Owner: K2. Symptom→Diagnosis→Mitigation→Verification.
 
+> **Scope: messaging.** Этот runbook — про DLQ транспортов
+> (Kafka/RabbitMQ/NATS/Inbox, admin-API `/api/v1/admin/dlq/*`, метрика
+> `dlq_depth` по транспортам).
+>
+> **Workflow-шаги в этот DLQ не попадают** (ADR-0403): `workflow_events` —
+> append-only event log инстанса, а не очередь недоставленных сообщений.
+> Исчерпание retry-бюджета шага даёт терминальный `FAILED` + метрику +
+> запись об ошибке в `workflow_instances.error`; переигровки шага не
+> существует. Если workflow завис — см. runbook
+> [HITL stuck workflow](hitl-stuck-workflow.md).
+
 ## Symptom
 
 * Grafana alert `dlq_depth > 200` (per-transport) долго не падает.

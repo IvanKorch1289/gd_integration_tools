@@ -59,7 +59,7 @@ src/backend/services/workflows/       # прикладные сервисы по
 ├── facade.py                         # WorkflowFacade (сигналы, запуск, отмена)
 ├── hitl_service.py                   # pending-сигналы HITL
 ├── hitl_signal_store.py              # хранилище сигналов (in-memory / Redis)
-├── sla_alerting.py                   # SlaTracker / SlaPolicy
+├── sla_alerting.py                   # оценка SLA (evaluate_sla); трекер удалён (ADR-0403)
 └── saga_history.py                   # timeline saga-компенсаций
 ```
 
@@ -417,12 +417,15 @@ workflow; для workflow используйте admin-API (см. выше).
 
 ## Не реализовано
 
-* `SlaTracker` (`src/backend/services/workflows/sla_alerting.py`) — класс
-  существует, но **нигде не инстанцируется**: ни в `lifespan`, ни в
-  worker'ах, ни в composition root. `WorkflowFacade` принимает
-  `sla_tracker` только как опциональный параметр, а сам фасад в `src/`
-  пока не создаётся. SLA-алертинг (email/Slack escalation по
-  `soft_limit_seconds` / `hard_limit_seconds`) в рантайме не работает.
+* SLA-алертинг **не реализован** (ADR-0403): исполнитель трекинга
+  (`SlaTracker`) и протокол диспетчера (`SlaAlertDispatcher`) удалены как
+  мёртвый код — они не инстанцировались нигде в `src/`, поэтому эскалация
+  по `soft_limit_seconds` / `hard_limit_seconds` в рантайме не
+  работала. Осталась только чистая оценка SLA (`evaluate_sla`).
+  `WorkflowFacade` больше не принимает `sla_tracker` (остался
+  `sla_resolver` — SLA hard-limit как бюджет времени), а сам фасад в `src/`
+  пока не создаётся: production-путь старта workflow идёт напрямую через
+  `WorkflowBackend`. Owner-задача: **GAP-WF-4.5** (ADR-0403 §Открытое).
 * `escalate` (`type: escalate`) и downstream-эскалация — объявлены в
   union шагов, но отдельного исполнителя эскалации в проде нет.
 * Audit-события **по шагам** в ClickHouse/Redis не пишутся: middleware
@@ -447,6 +450,14 @@ Owner-задачи: SLA-alerting и step-level audit — K3 DSL+Workflow
 > в компенсациях — это WARNING-лог + audit-событие, то есть сигнал без
 > потери данных, но **не** очередь для переигровки. Temporal-совместимый
 > `replay()` в pg-runner не реализован (`NotImplementedError`, deprecated).
+>
+> **Что происходит при исчерпании попыток шага** (ADR-0403): retry-бюджет
+> исчерпан → терминальный `WorkflowStatus.failed` + метрика
+> `record_workflow_status` + текст ошибки в `workflow_instances.error`;
+> компенсации уже выполненных forward-шагов выполняются (ADR-0396).
+> Записи в DLQ и переигровки шага нет — DLQ для workflow не реализована
+> (owner-задача, ADR-0403 §Открытое; `docs/runbooks/dlq-replay.md` —
+> про messaging-DLQ).
 
 ## См. также
 
