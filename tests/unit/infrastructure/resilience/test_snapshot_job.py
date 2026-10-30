@@ -166,7 +166,13 @@ def test_sync_pg_to_sqlite_success(
 
     assert result == {mock_table.name: 2}
     mock_select.assert_called_once_with(mock_table)
-    pg_conn.execute.assert_called_once_with(select_stmt)
+    # ADR-0400: перед SELECT выставляется tenant-scope (SET app.tenant_id).
+    select_calls = [
+        call
+        for call in pg_conn.execute.call_args_list
+        if call.args and call.args[0] is select_stmt
+    ]
+    assert len(select_calls) == 1
     mock_metadata.create_all.assert_called_once_with(
         sqlite_engine, tables=[mock_table], checkfirst=True
     )
@@ -176,6 +182,54 @@ def test_sync_pg_to_sqlite_success(
     sqlite_conn.execute.assert_any_call(
         insert_stmt, [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
     )
+
+
+@pytest.mark.unit
+@patch("src.backend.infrastructure.resilience.snapshot_job.insert")
+@patch("src.backend.infrastructure.resilience.snapshot_job.delete")
+@patch("src.backend.infrastructure.resilience.snapshot_job.select")
+@patch("src.backend.core.domain.models.base.metadata")
+def test_sync_pg_to_sqlite_sets_tenant_scope_before_select(
+    mock_metadata: MagicMock,
+    mock_select: MagicMock,
+    mock_delete: MagicMock,
+    mock_insert: MagicMock,
+    mock_engines: tuple[MagicMock, MagicMock, MagicMock, MagicMock],
+    mock_table: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ADR-0400: перед выборкой выставляется ``app.tenant_id`` (RLS).
+
+    Без tenant-скоупа PostgreSQL-RLS отдаёт 0 строк — snapshot молча
+    пустой (тихая потеря fallback'а db_main). Тест фиксирует и сам SQL
+    (``set_config('app.tenant_id', ...)``), и его порядок — ДО ``SELECT``.
+    """
+    mock_metadata.tables = {mock_table.name: mock_table}
+    pg_engine, pg_conn, sqlite_engine, _ = mock_engines
+    monkeypatch.setattr(
+        "src.backend.core.tenancy.get_tenant_id", lambda: "acme", raising=True
+    )
+
+    select_stmt = MagicMock()
+    mock_select.return_value = select_stmt
+
+    sj.sync_pg_to_sqlite(pg_engine, sqlite_engine, [mock_table.name])
+
+    calls = pg_conn.execute.call_args_list
+    assert calls, "PG-соединение должно получить execute с tenant-scope"
+
+    scope_sql = str(calls[0].args[0])
+    assert "app.tenant_id" in scope_sql
+    assert calls[0].args[1] == {"tenant_id": "acme"}
+
+    # SET должен выполниться ДО выборки данных.
+    select_positions = [
+        index
+        for index, call in enumerate(calls)
+        if call.args and call.args[0] is select_stmt
+    ]
+    assert select_positions, "SELECT не выполнен"
+    assert select_positions[0] > 0, "tenant-scope обязан предшествовать SELECT"
 
 
 @pytest.mark.unit

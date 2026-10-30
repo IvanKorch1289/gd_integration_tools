@@ -24,6 +24,13 @@ from pathlib import Path
 
 import typer
 
+from src.backend.core.config.config_loader import load_env_file
+
+# ADR-0400: `.env` (в нём — только секреты) загружается ЯВНО при старте
+# CLI — до того, как команды и feature-флаги читают ``os.environ``.
+# Идемпотентно: цепочка Settings тоже вызывает ``ensure_env_file_loaded()``.
+load_env_file()
+
 app = typer.Typer(
     name="gd-tools", help="GD Integration Tools — management CLI", add_completion=True
 )

@@ -434,6 +434,50 @@ def _check_capability_gate_policy(
     return tuple(violations)
 
 
+def _check_graphql_introspection_policy(
+    merged: dict[str, Any],
+) -> tuple[ConfigViolation, ...]:
+    """ADR-0400: в prod/staging интроспекция GraphQL обязана быть выключена.
+
+    Ключ ``graphql.enable_introspection`` декларативен (base/prod/staging.yml),
+    но раньше его значение никто не проверял — «выключено в конфиге» и
+    «разрешено в рантайме» могли разойтись (раньше ``graphql_guards``
+    смотрел только на окружение). Интроспекция — recon-поверхность,
+    поэтому в prod/staging значение ``true`` — CRITICAL.
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        Кортеж нарушений (пустой — если нарушения нет).
+
+    """
+    app = merged.get("app") or {}
+    environment = str(app.get("environment") or "").lower()
+    if environment not in {"production", "staging"}:
+        return ()
+    graphql_cfg = merged.get("graphql") or {}
+    if not graphql_cfg.get("enable_introspection", False):
+        return ()
+    return (
+        ConfigViolation(
+            severity=ConfigSeverity.CRITICAL,
+            code="graphql.introspection_enabled_in_prod",
+            message=(
+                "В профиле '%s' включена интроспекция GraphQL "
+                "(graphql.enable_introspection=true): recon-поверхность "
+                "в production (ADR-0400)."
+            ),
+            field="graphql.enable_introspection",
+            recommendation=(
+                "Установите graphql.enable_introspection: false в "
+                "config_profiles/base.yml (или в overlay профиля)."
+            ),
+            context={"environment": environment},
+        ),
+    )
+
+
 def validate_profile_config(
     profile: str, profiles_dir: Path | None = None
 ) -> tuple[ConfigViolation, ...]:
@@ -496,6 +540,8 @@ def validate_profile_config(
     violations.extend(_check_db_call_procedure_flag(merged))
     # ADR-0393: явная политика capability-гейта в prod/staging.
     violations.extend(_check_capability_gate_policy(merged))
+    # ADR-0400: интроспекция GraphQL в prod/staging — только выключенной.
+    violations.extend(_check_graphql_introspection_policy(merged))
     return tuple(
         sorted(
             violations,

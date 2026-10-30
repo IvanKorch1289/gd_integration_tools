@@ -17,6 +17,23 @@ Background-задача периодически реплицирует read-onl
 * Регистрация APScheduler-job'а через ``IntervalTrigger`` —
   совместимо с уже существующим ``scheduler_manager``.
 
+Tenant-скоуп (ADR-0400)
+-----------------------
+Таблицы ``users`` / ``orders`` / ``orderkinds`` защищены PostgreSQL-RLS
+(политика ``tenant_id = current_setting('app.tenant_id', true)``).
+Чтение без выставленного ``app.tenant_id`` возвращает **0 строк** —
+снапшот молча пустой (тихая потеря fallback'а ``db_main``). Поэтому перед
+выборкой соединение получает явный tenant-скоуп
+(:func:`_apply_tenant_scope`): ``set_config('app.tenant_id', ..., true)``
+— transaction-local, значение не «залипает» в пуле.
+
+Ограничение (требует владельца): под RLS снимок покрывает ОДИН tenant.
+Для межtenant-снимка соединение snapshot'а должно использовать служебную
+роль с ``BYPASSRLS`` (ADR-0393, «BYPASSRLS-роль для служебных
+соединений»). Пока такой роли нет — tenant-скоуп берётся из
+tenant-контекста процесса, а при его отсутствии — из системного tenant'а
+(с WARNING в лог).
+
 Метрики Prometheus:
 
 * ``snapshot_age_seconds`` (Gauge) — секунды с последнего успешного sync.
@@ -36,7 +53,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import Engine, Table, create_engine, delete, insert, select
+from sqlalchemy import Engine, Table, create_engine, delete, insert, select, text
 from sqlalchemy.engine import Connection
 
 from src.backend.core.logging import get_logger
@@ -59,6 +76,13 @@ _last_sync_ts: float | None = None
 _last_sync_duration: float = 0.0
 #: Кол-во строк per таблица после последнего sync.
 _last_sync_rows: dict[str, int] = {}
+
+#: SQL установки tenant-скоупа для RLS-политик PostgreSQL (ADR-0400).
+#:
+#: ``set_config(..., true)`` — transaction-local: значение действует до
+#: конца транзакции соединения и не «залипает» в пуле. Канон тот же, что
+#: в ``core/tenancy/sqlalchemy_filter.py``.
+_TENANT_SCOPE_SQL = "SELECT set_config('app.tenant_id', :tenant_id, true)"
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -163,6 +187,47 @@ def _select_tables(metadata_tables: dict[str, Table], wanted: list[str]) -> list
     return result
 
 
+def _resolve_snapshot_tenant() -> str:
+    """Определить tenant для snapshot-снимка (ADR-0400).
+
+    Приоритет: активный tenant-контекст процесса → системный tenant
+    (``_system``). Без явного tenant-скоупа PostgreSQL-RLS отдаёт 0 строк,
+    поэтому пустое значение недопустимо.
+
+    Returns:
+        Идентификатор tenant'а для ``app.tenant_id``.
+    """
+    from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID
+    from src.backend.core.tenancy import get_tenant_id
+
+    tenant_id = get_tenant_id()
+    if tenant_id:
+        return tenant_id
+    logger.warning(
+        "Snapshot: нет активного tenant-контекста — снимок ограничен "
+        "системным tenant=%s; для межtenant-снимка нужна роль с BYPASSRLS",
+        SYSTEM_TENANT_ID,
+    )
+    return SYSTEM_TENANT_ID
+
+
+def _apply_tenant_scope(pg_conn: Connection, tenant_id: str) -> None:
+    """Выставить ``app.tenant_id`` на PG-соединении (ADR-0400).
+
+    Без этого PostgreSQL-RLS-политика
+    (``tenant_id = current_setting('app.tenant_id', true)``) отдаёт 0 строк
+    — снимок получается пустым без ошибки.
+
+    Args:
+        pg_conn: PG-соединение (транзакция открыта неявно первым execute).
+        tenant_id: Идентификатор tenant'а для ``app.tenant_id``.
+
+    Returns:
+        None.
+    """
+    pg_conn.execute(text(_TENANT_SCOPE_SQL), {"tenant_id": tenant_id})
+
+
 def _replicate_table(pg_conn: Connection, sqlite_conn: Connection, table: Table) -> int:
     """Реплицирует одну таблицу: ``DELETE FROM tbl; INSERT ...``.
 
@@ -236,6 +301,10 @@ def sync_pg_to_sqlite(
     rows_per_table: dict[str, int] = {}
 
     with pg_engine.connect() as pg_conn, sqlite_engine.begin() as sqlite_conn:
+        # ADR-0400: tenant-скоуп ДО выборки — иначе RLS вернёт 0 строк
+        # (тихая потеря снапшота).
+        tenant_id = _resolve_snapshot_tenant()
+        _apply_tenant_scope(pg_conn, tenant_id)
         for table in target_tables:
             count = _replicate_table(pg_conn, sqlite_conn, table)
             rows_per_table[table.name] = count

@@ -18,6 +18,14 @@ from granian import Granian  # S146 W3: module-level import для test patchabi
 from granian.constants import HTTPModes, Interfaces, Loops, RuntimeModes
 from granian.log import LogLevels
 
+from src.backend.core.config.config_loader import load_env_file
+
+# ADR-0400: `.env` (в нём — только секреты) загружается ЯВНО при старте
+# процесса — ДО сборки Settings и до чтения ``os.environ`` потребителями
+# (feature-флаги, DSN). Идемпотентно: цепочка Settings тоже вызывает
+# ``ensure_env_file_loaded()``.
+load_env_file()
+
 from src.backend.core.config.settings import settings
 from src.backend.core.logging import get_logger
 from src.backend.plugins.composition.app_factory import create_app

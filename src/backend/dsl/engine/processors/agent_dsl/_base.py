@@ -97,6 +97,13 @@ class BaseAIProcessor(BaseProcessor):
 
         При выключенном feature_flag — silent no-op (pass-through).
         При denied capability — raise (выходит из process с error в exchange).
+
+        ADR-0400 (ADR-0366 G12.2): capability-гейт вызывается каноническим
+        :meth:`BaseProcessor.auth_check` — он учитывает feature-флаг
+        ``dsl_capability_gate_enabled`` и переводит exchange в ``failed``
+        при отказе (fail-closed, ADR-0393). Раньше проверка шла обходным
+        путём (``_check_capability``), из-за чего ``required_capability``
+        у 13 классов ``agent_dsl/*`` был декларацией без эффекта.
         """
         if not self._check_feature_flag():
             _logger.debug(
@@ -107,11 +114,7 @@ class BaseAIProcessor(BaseProcessor):
             return
 
         scope = self._capability_scope(exchange)
-        try:
-            self._check_capability(exchange, scope=scope)
-        except Exception as exc:
-            exchange.set_error(f"{self.name}: capability denied ({exc})")
-            exchange.stop()
+        if not await self.auth_check(exchange, action="execute"):
             await self._audit_safe_emit(
                 exchange,
                 outcome="denied",
@@ -174,47 +177,6 @@ class BaseAIProcessor(BaseProcessor):
                 "%s: feature_flag resolve failed (%s) — default OFF", self.name, exc
             )
             return False
-
-    def _check_capability(self, exchange: Exchange[Any], *, scope: str | None) -> None:
-        """Capability-gate через общий runtime-резолвер (ADR-0366).
-
-        Namespace — ``core`` (см. :meth:`_capability_namespace`); principal
-        берётся из ``exchange.meta.principal`` и namespace'ом не является.
-
-        Args:
-            exchange: DSL Exchange (tenant + principal).
-            scope: Динамический scope (например ``"credit_check"``
-                для capability ``"ai.invoke"``).
-
-        Raises:
-            CapabilityDeniedError: если capability не выдана плагину.
-
-        """
-        if self.required_capability is None:
-            return
-        from src.backend.core.security.capabilities import runtime_resolver
-        from src.backend.core.security.capabilities.errors import CapabilityDeniedError
-        from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID
-
-        tenant_id = getattr(exchange.meta, "tenant_id", None) or SYSTEM_TENANT_ID
-        principal = getattr(exchange.meta, "principal", None)
-        request = runtime_resolver.CapabilityRequest(
-            capability=self.required_capability,
-            action="execute",
-            plugin=self._plugin_name(),
-            scope=scope,
-            tenant=tenant_id,
-        )
-        decision = runtime_resolver.check(request, principal=principal)
-        if not decision.allowed:
-            raise CapabilityDeniedError(
-                plugin=decision.plugin or self._plugin_name(),
-                capability=self.required_capability,
-                requested_scope=scope,
-                declared_scope=None,
-                tenant=tenant_id,
-                principal=principal,
-            )
 
     def _plugin_name(self) -> str:
         """Имя плагина / route'а для capability check.

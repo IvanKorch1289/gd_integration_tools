@@ -8,9 +8,6 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
-import re
-from typing import Final
-
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,25 +17,38 @@ from src.backend.core.enums.external_db import (
     ExternalDBObjectTypeChoices,
 )
 from src.backend.core.errors import DatabaseError
+from src.backend.core.utils.sql_identifiers import validate_qualified_identifier
 from src.backend.services.io.external_database.state import PreparedDBParameter
 
 # IL-CRIT1.1: SQL Injection defence-in-depth (Security Layer 2 review).
 #
 # Даже при том, что `meta.qualified_name` / `param.db_name` / `param.bind_name`
 # приходят из whitelist-enum `ExternalDBObjectChoices`, никогда не следует
-# полагаться на один уровень защиты. Добавлен regex-guard для всех identifier-ов,
-# которые попадают в динамический SQL. Если кто-то случайно / вредительски
-# запишет в meta строку с пробелом / кавычкой / точкой с запятой — `DatabaseError`
-# с понятным сообщением вместо выполнения неожиданного SQL.
-#
-# Формат identifier-а: `name` или `schema.name` или `db.schema.name`, где
-# каждый сегмент — обычный SQL identifier без кавычек.
-_IDENT_RE: Final = re.compile(
-    r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$"
-)
+# полагаться на один уровень защиты. Правило допустимых имён — единый
+# канон ADR-0365 (`core/utils/sql_identifiers.py`): локальных regex в этом
+# модуле больше нет. Ошибка канона переводится в `DatabaseError` — поведение
+# пакета (тип исключения и текст) не меняется.
 
-# Bind-имена (после ":") должны быть простыми — без точек, без спецсимволов.
-_BIND_NAME_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+def _validate_sql_identifier(value: str, *, context: str) -> str:
+    """Проверить квалифицированное имя объекта по канону ADR-0365.
+
+    Args:
+        value: Проверяемое имя (``name`` / ``schema.name`` / ``db.schema.name``).
+        context: Контекст для сообщения об ошибке (``"view"`` и т.п.).
+
+    Returns:
+        То же значение ``value``.
+
+    Raises:
+        DatabaseError: Если имя недопустимо (вместо ``ValueError`` канона —
+            поведение пакета сохранено).
+
+    """
+    try:
+        return validate_qualified_identifier(value, context=context)
+    except ValueError as exc:
+        raise DatabaseError(message=str(exc)) from exc
 
 
 from src.backend.services.io.external_database._protocol import (
@@ -107,8 +117,8 @@ class DispatchMixin(_ExternalDatabaseProtocol):
         self, session: AsyncSession, meta: ExternalDBObjectMeta
     ) -> list[dict[str, Any]]:
         """Выполняет SELECT * FROM разрешённого view."""
-        safe_name = self._validate_identifier(meta.qualified_name, context="view")
-        sql = f"SELECT * FROM {safe_name}"  # safe_name провалидирован _validate_identifier (regex)  # internal query with controlled parameters
+        safe_name = _validate_sql_identifier(meta.qualified_name, context="view")
+        sql = f"SELECT * FROM {safe_name}"  # safe_name провалидирован каноном ADR-0365  # internal query with controlled parameters
         result = await session.execute(text(sql))
         return [dict(row) for row in result.mappings().all()]
 
@@ -121,26 +131,26 @@ class DispatchMixin(_ExternalDatabaseProtocol):
         execute_params: dict[str, Any],
     ) -> Any:
         """Выполняет разрешённую функцию."""
-        safe_name = self._validate_identifier(meta.qualified_name, context="function")
+        safe_name = _validate_sql_identifier(meta.qualified_name, context="function")
         arguments_sql = self._build_arguments_sql(meta, prepared_params)
 
         if db_type == DatabaseTypeChoices.postgresql:
             if meta.returns_rows:
-                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # internal query with controlled parameters
+                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # safe_name из канона ADR-0365, arguments_sql из _build_arguments_sql  # internal query with controlled parameters
                 result = await session.execute(text(sql), execute_params)
                 return result.mappings().all()
 
-            sql = f"SELECT {safe_name}({arguments_sql}) AS result"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql
+            sql = f"SELECT {safe_name}({arguments_sql}) AS result"  # safe_name из канона ADR-0365, arguments_sql из _build_arguments_sql
             result = await session.execute(text(sql), execute_params)
             return result.scalar_one_or_none()
 
         if db_type == DatabaseTypeChoices.oracle:
             if meta.returns_rows:
-                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # internal query with controlled parameters
+                sql = f"SELECT * FROM {safe_name}({arguments_sql})"  # safe_name из канона ADR-0365, arguments_sql из _build_arguments_sql  # internal query with controlled parameters
                 result = await session.execute(text(sql), execute_params)
                 return result.mappings().all()
 
-            sql = f"SELECT {safe_name}({arguments_sql}) AS result FROM dual"  # safe_name из _validate_identifier, arguments_sql из _build_arguments_sql  # internal query with controlled parameters
+            sql = f"SELECT {safe_name}({arguments_sql}) AS result FROM dual"  # safe_name из канона ADR-0365, arguments_sql из _build_arguments_sql  # internal query with controlled parameters
             result = await session.execute(text(sql), execute_params)
             return result.scalar_one_or_none()
 
@@ -162,7 +172,7 @@ class DispatchMixin(_ExternalDatabaseProtocol):
         - преобразован в параметры БД;
         - безопасно передан через bind-параметры.
         """
-        safe_name = self._validate_identifier(meta.qualified_name, context="procedure")
+        safe_name = _validate_sql_identifier(meta.qualified_name, context="procedure")
         arguments_sql = self._build_arguments_sql(meta, prepared_params)
 
         if db_type == DatabaseTypeChoices.postgresql:

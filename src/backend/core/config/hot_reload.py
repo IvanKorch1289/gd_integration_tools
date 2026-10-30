@@ -24,7 +24,12 @@ from typing import Any
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
 
-__all__ = ("ConfigHotReloader", "ConfigReloadError", "get_hot_reloader")
+__all__ = (
+    "RESTART_REQUIRED_SECTIONS",
+    "ConfigHotReloader",
+    "ConfigReloadError",
+    "get_hot_reloader",
+)
 
 logger = get_logger("config.hot_reload")
 
@@ -33,6 +38,14 @@ ReloadCallback = Callable[[], Awaitable[None] | None]
 #: Период опроса файловой системы (``watchfiles.awatch(step=...)``), мс.
 #: Это НЕ окно группировки изменений — за него отвечает ``debounce``.
 _WATCH_STEP_MS: int = 50
+
+#: Секции конфигурации, которые hot-reload НЕ применяет (ADR-0400).
+#:
+#: Параметры пулов БД (``pool_size`` / ``max_overflow`` / ``pool_recycle``)
+#: читаются при создании engine'а — существующий пул не пересоздаётся.
+#: Поэтому в отчёте reload обязана быть строка «требуется рестарт», иначе
+#: оператор считает, что новые значения пула уже действуют.
+RESTART_REQUIRED_SECTIONS: tuple[str, ...] = ("database.*", "external_databases.*")
 
 
 class ConfigReloadError(RuntimeError):
@@ -120,7 +133,8 @@ class ConfigHotReloader:
             reason: Причина перезагрузки (для логов и отчёта).
 
         Returns:
-            Отчёт ``{"reason", "succeeded", "failed", "callbacks", "ok"}``.
+            Отчёт ``{"reason", "succeeded", "failed", "callbacks", "ok",
+            "restart_required"}``.
 
         """
         if not self._callbacks:
@@ -142,6 +156,7 @@ class ConfigHotReloader:
                 ],
                 "callbacks": 0,
                 "ok": False,
+                "restart_required": list(RESTART_REQUIRED_SECTIONS),
             }
 
         ok, failed = 0, []
@@ -161,12 +176,19 @@ class ConfigHotReloader:
                 failed.append(entry)
                 logger.error("Hot-reload callback failed: %s", exc)
         logger.info("Config reloaded (%s): %d OK, %d failed", reason, ok, len(failed))
+        logger.warning(
+            "Config reload (%s): %s применяются только после рестарта процесса "
+            "(пулы БД пересоздаются на старте)",
+            reason,
+            ", ".join(RESTART_REQUIRED_SECTIONS),
+        )
         return {
             "reason": reason,
             "succeeded": ok,
             "failed": failed,
             "callbacks": len(self._callbacks),
             "ok": not failed,
+            "restart_required": list(RESTART_REQUIRED_SECTIONS),
         }
 
     async def start(self) -> None:

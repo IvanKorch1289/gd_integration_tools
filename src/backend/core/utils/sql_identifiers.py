@@ -14,7 +14,10 @@ ADR-0284 §1.1).
 * ``validate_identifier`` — одиночный идентификатор
   ``[A-Za-z_][A-Za-z0-9_]*`` (имя таблицы, имя индекса);
 * ``validate_path_key`` — JSON-путь из таких же сегментов, разделённых
-  точками (``parent.child`` → ``$.parent.child``).
+  точками (``parent.child`` → ``$.parent.child``);
+* ``validate_qualified_identifier`` — квалифицированное имя объекта
+  (``name`` / ``schema.name`` / ``db.schema.name``): до 3 сегментов,
+  каждый — по правилу ``validate_identifier`` (ADR-0365).
 """
 
 from __future__ import annotations
@@ -22,15 +25,15 @@ from __future__ import annotations
 import re
 from typing import Final
 
-__all__ = (
-    "validate_identifier",
-    "validate_path_key",
-)
+__all__ = ("validate_identifier", "validate_path_key", "validate_qualified_identifier")
 
 # `\Z` вместо `$`: `$` в regex совпадает и перед завершающим `\n`,
 # `\Z` — строго в конце строки (иначе `"orders\n"` проходил бы валидацию).
 _IDENT_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\Z")
 _PATH_RE: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*\Z")
+
+#: Максимальное число сегментов в квалифицированном имени объекта.
+_MAX_QUALIFIED_SEGMENTS: Final = 3
 
 
 def validate_identifier(value: str, *, context: str) -> str:
@@ -55,6 +58,51 @@ def validate_identifier(value: str, *, context: str) -> str:
             f"Недопустимый SQL identifier в контексте '{context}': {value!r}. "
             "Ожидается [A-Za-z_][A-Za-z0-9_]* (без кавычек и спецсимволов)."
         )
+    return value
+
+
+def validate_qualified_identifier(value: str, *, context: str) -> str:
+    """Проверить квалифицированное имя SQL-объекта (ADR-0365).
+
+    Допустимы ``name``, ``schema.name``, ``db.schema.name`` — до 3
+    сегментов, каждый из которых проверяется каноном
+    :func:`validate_identifier`. Кавычки, пробелы, спецсимволы и
+    trailing newline — запрещены.
+
+    Args:
+        value: Проверяемое квалифицированное имя (view/function/procedure).
+        context: Контекст для сообщения об ошибке (например ``"view"``).
+
+    Returns:
+        То же значение ``value`` (для удобства inline-использования).
+
+    Raises:
+        ValueError: Если значение не является валидным квалифицированным
+            именем.
+
+    """
+    if not isinstance(value, str):
+        raise ValueError(
+            f"Недопустимый SQL identifier в контексте '{context}': {value!r}. "
+            "Ожидается name / schema.name / db.schema.name "
+            "без кавычек и спецсимволов."
+        )
+    segments = value.split(".")
+    if not 1 <= len(segments) <= _MAX_QUALIFIED_SEGMENTS:
+        raise ValueError(
+            f"Недопустимый SQL identifier в контексте '{context}': {value!r}. "
+            "Ожидается name / schema.name / db.schema.name "
+            "без кавычек и спецсимволов."
+        )
+    for segment in segments:
+        try:
+            validate_identifier(segment, context=context)
+        except ValueError as exc:
+            raise ValueError(
+                f"Недопустимый SQL identifier в контексте '{context}': {value!r}. "
+                "Ожидается name / schema.name / db.schema.name "
+                "без кавычек и спецсимволов."
+            ) from exc
     return value
 
 

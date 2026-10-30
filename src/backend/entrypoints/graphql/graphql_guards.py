@@ -1,8 +1,10 @@
 """GraphQL guards: depth-limit + introspection policy (P0, audit a2bd6f294).
 
 - QueryDepthLimiter(12) — защита от вложенных depth-атак.
-- Introspection: разрешена только в environment="development"; в
-  staging/prod — ValidationRule запрещает __schema/__type
+- Introspection: разрешена только когда ВЫПОЛНЕНЫ оба условия —
+  ``graphql.enable_introspection == true`` (декларативный ключ
+  ``config_profiles/*.yml``) И ``environment == "development"``;
+  в staging/prod — ValidationRule запрещает __schema/__type
   (recon-поверхность).
 
 Подключение: ``build_graphql_extensions()`` → ``strawberry.Schema(extensions=...)``
@@ -47,9 +49,26 @@ class NoIntrospectionRule(ValidationRule):
 
 
 def _introspection_allowed() -> bool:
+    """Разрешена ли интроспекция GraphQL (ADR-0400).
+
+    Разрешена ТОЛЬКО при выполнении обоих условий:
+
+    1. ``graphql.enable_introspection == true`` — декларативный ключ
+       (``config_profiles/base.yml`` + overlay профиля). Раньше ключ не
+       читался вообще: правило срабатывало только по окружению, т.е.
+       конфиг был «не подключён»;
+    2. ``app.environment == "development"`` — в staging/prod интроспекция
+       запрещена независимо от флага.
+
+    Returns:
+        ``True`` — интроспекция разрешена, ``False`` — запрещена.
+    """
     try:
+        from src.backend.core.config.services.graphql import graphql_settings
         from src.backend.core.config.settings import settings
 
+        if not graphql_settings.enable_introspection:
+            return False
         return settings.app.environment == "development"
     except Exception:  # noqa: BLE001 — fail-closed: конфиг недоступен → запрещаем
         return False

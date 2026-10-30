@@ -339,3 +339,45 @@ class TestReloadReportHonesty:
         assert report["ok"] is True
         assert report["succeeded"] == 1
         assert report["failed"] == []
+
+
+class TestRestartRequiredWarning:
+    """ADR-0400: hot-reload не применяет параметры пулов БД — нужен рестарт."""
+
+    @pytest.mark.asyncio
+    async def test_report_lists_db_pool_sections_requiring_restart(self) -> None:
+        """Отчёт reload содержит секции, применяемые только после рестарта."""
+        reloader = ConfigHotReloader()
+        reloader.on_reload(lambda: None)
+
+        report = await reloader.trigger_reload(reason="test")
+
+        restart_required = report["restart_required"]
+        assert "database.*" in restart_required
+        assert "external_databases.*" in restart_required
+
+    @pytest.mark.asyncio
+    async def test_report_contains_warning_about_db_pools(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """В лог уходит явное предупреждение про рестарт для пулов БД."""
+        reloader = ConfigHotReloader()
+        reloader.on_reload(lambda: None)
+
+        with caplog.at_level("WARNING"):
+            await reloader.trigger_reload(reason="test")
+
+        messages = [rec.message for rec in caplog.records]
+        assert any(
+            "database.*" in message and "external_databases.*" in message
+            for message in messages
+        ), f"Нет предупреждения о пулах БД: {messages}"
+
+    @pytest.mark.asyncio
+    async def test_report_without_callbacks_also_lists_restart_sections(self) -> None:
+        """Даже при ошибке reload отчёт содержит список секций для рестарта."""
+        reloader = ConfigHotReloader()
+
+        report = await reloader.trigger_reload(reason="test")
+
+        assert "database.*" in report["restart_required"]
