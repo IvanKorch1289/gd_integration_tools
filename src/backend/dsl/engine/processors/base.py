@@ -118,7 +118,11 @@ class BaseProcessor(ABC):
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
     compensatable: ClassVar[bool] = True
     required_capability: ClassVar[str | None] = None
-    audit_event: ClassVar[str | None] = None
+    # ``audit_event`` НЕ объявляется здесь как ClassVar: подклассы объявляют
+    # его как ``audit_event: str = "..."`` (аннотация без ClassVar), и mypy
+    # трактует такое объявление как переменную экземпляра → «Cannot override
+    # class variable» в каждом наследнике. Значение читается через getattr
+    # (см. _emit_processor_audit) — поведение идентично декларации ClassVar.
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """Оборачивает ``process`` наследника эмиссией ``audit_event``.
@@ -179,7 +183,7 @@ class BaseProcessor(ABC):
             outcome: Итог выполнения (``success`` / ``failure`` / ``denied``).
 
         """
-        event = self.audit_event
+        event = getattr(self, "audit_event", None)
         if event is None:
             return
         details: dict[str, Any] = {

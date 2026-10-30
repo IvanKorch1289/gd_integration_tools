@@ -420,11 +420,11 @@ def _signature_schema(step: str) -> dict[str, Any]:
                     param.VAR_KEYWORD,
                 ):
                     continue
-                schema: dict[str, Any] = {"title": name}
+                property_schema: dict[str, Any] = {"title": name}
                 json_type = _annotation_type(param.annotation)
                 if json_type:
-                    schema["type"] = json_type
-                properties[name] = schema
+                    property_schema["type"] = json_type
+                properties[name] = property_schema
                 if param.default is param.empty:
                     required.append(name)
     schema: dict[str, Any] = {
