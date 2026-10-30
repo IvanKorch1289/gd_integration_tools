@@ -236,6 +236,23 @@ pending ──► running ──► succeeded
               └──► compensating ──► failed | cancelled
 ```
 
+Наблюдаемость статусов различается по слоям (важно при разборе инстанса):
+
+* `workflow_instances.status` (PG-enum) хранит **instance-level** статус:
+  `pending | running | paused | succeeded | failed | cancelling | cancelled`.
+  Pg-runner пишет в него `update_status(...)` при переходах;
+  `compensating` в эту колонку **не пишется**.
+* `compensating` наблюдаем в двух других местах: (а) в **materialized
+  state** (`WorkflowState.replay` переводит состояние в `compensating` по
+  событию `compensated` — это то, что попадает в `snapshot_state`), и
+  (б) в `workflow_state.state` (таблица saga-состояний, литералы
+  `running | completed | compensating | rolled_back`) — её читает
+  `compensating-driver`, который доигрывает зависшие компенсации.
+* `WorkflowStatus` (`src/backend/core/domain/models/workflow_instance.py`)
+  содержит `compensating`, поэтому он валиден в фильтре admin-API
+  (`GET /api/v1/admin/workflows?status=compensating`), но инстанс в этом
+  статусе в PG-таблице не появляется.
+
 Инстанс и его события хранятся в Postgres: `workflow_instances`
 (header) и `workflow_events` (append-only event log, `seq` +
 `step_name` + `event_type`). Типы событий —
@@ -243,6 +260,94 @@ pending ──► running ──► succeeded
 (`created`, `paused`, `resumed`, `cancelled`, `snapshotted`),
 step-level (`step_started`, `step_finished`, `step_failed`,
 `branch_taken`, `compensated`) и `signal_received`.
+
+## Event log и пагинация (ADR-0398)
+
+Event log растёт линейно по числу шагов, сигналов и ретраев, поэтому он
+читается **постранично** по cursor'у `seq`:
+
+* admin-API: `GET /api/v1/admin/workflows/<instance_id>/events?after_seq=<N>&limit=<M>`
+  — `after_seq` — нижняя граница `seq` (cursor), `limit` — размер страницы
+  (1…1000, по умолчанию 100). Следующая страница — от `seq` последнего
+  события предыдущей.
+* Внутреннее чтение runner'а (`DurableWorkflowRunner._read_all_events`)
+  использует тот же cursor с размером страницы `event_page_size`
+  (`RunnerConfig`, по умолчанию 1000) и читает **до конца лога**.
+
+До ADR-0398 runner читал лог одним SELECT'ом с `LIMIT 1000`: при более
+длинном логе replay находил последний `snapshotted` только в пределах
+первой тысячи событий, состояние откатывалось к старому snapshot'у, а уже
+выполненные шаги исполнялись повторно (дубли эффектов). Теперь длинные
+workflow корректно восстанавливаются.
+
+> Цена: лог инстанса держится в памяти целиком (потолок — десятки тысяч
+> событий на инстанс; апгрейд при необходимости — стриминг fold'а прямо
+> в SQL).
+
+## `sub_flow` в pg-runner — fail-fast (ADR-0398)
+
+Шаг `sub_flow` требует внешнего оркестратора (Temporal): pg-runner не
+умеет создавать дочерний workflow-инстанс и получать событие
+`sub_completed`. Поэтому в pg-runner шаг завершается **терминальным
+FAILED** с событием `step_failed` и причиной:
+
+* `sub_flow_unsupported` — spawn дочернего workflow в pg-runner не
+  поддерживается, используйте `TemporalWorkflowBackend`;
+* `missing_workflow_name` — в шаге не задан `workflow_name`.
+
+Раньше шаг только эмитил событие `sub_spawned` (без `child_workflow_id`),
+родитель навсегда оставался в статусе `running`, а шаг переисполнялся на
+каждом backup-poll (30 с) без какого-либо продвижения. Теперь оператор
+видит причину в event log'е, а workflow не «висит» и не дублирует эффекты.
+
+> В DSL-декларациях (`WorkflowStep`) тип `sub_flow` **не входит** в union
+> 14 типов — шаг адресуется только внутренним executor'ом pg-runner'а.
+> Workflow-в-workflow на уровне DSL делается через
+> `RouteBuilder.sub_workflow(...)` (`mode="async-api"`).
+
+## Retry-бюджет и admin-retry (ADR-0398)
+
+Счётчик падений живёт в event log'е: номер следующей попытки —
+`attempts + 1`, а исчерпание бюджета (`max_attempts`) переводит workflow
+в терминальный `failed`. Поэтому «просто перезапустить» упавший workflow
+через admin-API было нельзя: счётчик оставался, и следующая попытка
+сразу превышала `max_attempts` — workflow падал again, не выполнив ни
+одного шага.
+
+`POST /api/v1/admin/workflows/<instance_id>/retry` теперь пишет в event log
+событие `resumed` с payload `{"reason": "admin_retry", "attempts_reset":
+true}` **перед** переводом инстанса в `pending`; при replay этого события
+`WorkflowState` обнуляет `attempts`. Один новый тип события не
+вводился: `workflow_events.event_type` — нативный PG-enum, добавление
+значения потребовало бы Alembic-миграции.
+
+Терминальные статусы (`succeeded` / `cancelled`) admin-retry отвергает
+(409).
+
+## Результаты `for_each` (ADR-0398)
+
+Шаг `for_each` клал в exchange только значения **последнего** элемента
+(`final_body.update(r)` в цикле): для трёх item'ов оставалось
+`{'current_item': 3, 'out': 'A'}`. Теперь per-item результаты
+собираются отдельно и кладутся в exchange под ключом
+**`for_each_results`** (список), а в `step_finished`-payload попадают
+и в `exchange_snapshot` — то есть переживают шаг и сохраняются в
+snapshot'е. Контракт `out` не сломан: последнее значение по-прежнему
+видно в exchange.
+
+## Метрики (ADR-0399)
+
+Pg-runner эмитит OTel-метрики (meter `gd.workflow`) через
+`src/backend/infrastructure/observability/otel/setup.py`:
+
+| Метрика | Тип | Смысл |
+|---|---|---|
+| `workflow.step_duration` | histogram | Длительность шага (ms). |
+| `workflow.step_retries` | counter | Число ретраев шага. |
+| `workflow.compensation_total` | counter | Выполненные компенсации (событие `compensated`). |
+| `workflow.status` | counter | Переходы в `succeeded` / `failed` / `paused` / `cancelled`. |
+
+Recorders best-effort: отсутствие OTel SDK не ломает исполнение.
 
 ## Как отладить
 
@@ -331,7 +436,17 @@ workflow; для workflow используйте admin-API (см. выше).
 
 Owner-задачи: SLA-alerting и step-level audit — K3 DSL+Workflow
 (GAP-WF-4.5 и follow-up wave 18); точные идентификаторы — в
-`docs/roadmap/PROD_READINESS_GAPS.md`.
+`docs/roadmap/PROD_READINESS_GAPS.md`, сводка — в
+[OWNER_TASKS.md](../roadmap/OWNER_TASKS.md).
+
+> **DLQ и replay.** Runbook'а `docs/runbooks/dlq-replay.md` относится к
+> **messaging** (Kafka/RabbitMQ/NATS/Inbox, admin-API `/api/v1/admin/dlq/*`,
+> метрика `dlq_depth` по транспортам). Workflow в DLQ **не** попадает:
+> `workflow_events` — append-only event log инстанса, а не очередь
+> недоставленных сообщений. У workflow нет собственного DLQ; «DLQ-паттерн»
+> в компенсациях — это WARNING-лог + audit-событие, то есть сигнал без
+> потери данных, но **не** очередь для переигровки. Temporal-совместимый
+> `replay()` в pg-runner не реализован (`NotImplementedError`, deprecated).
 
 ## См. также
 
@@ -339,4 +454,5 @@ Owner-задачи: SLA-alerting и step-level audit — K3 DSL+Workflow
 - [Workflow-архитектура](../architecture/workflow_architecture.md)
 - [Worker Versioning](worker-versioning.md)
 - [Runbook: HITL stuck workflow](../runbooks/hitl-stuck-workflow.md)
+- [Owner-задачи и известные ограничения](../roadmap/OWNER_TASKS.md)
 - [Tutorial 04 — Temporal workflow](../tutorials/04_temporal_workflow.md)

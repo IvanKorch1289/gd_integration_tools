@@ -78,6 +78,25 @@ DSL-процессор «сырой SQL» (`DatabaseQueryProcessor`) перед 
 
 Политика RLS — PostgreSQL-only; на других диалектах миграция — no-op.
 
+### 4. Snapshot под RLS (ADR-0400)
+
+`infrastructure/resilience/snapshot_job.py` читает tenant-таблицы
+(`users`, `orders`, `orderkinds`, …), защищённые `FORCE ROW LEVEL
+SECURITY`. Раньше выборка шла без tenant-скоупа, и политика
+`tenant_id = current_setting('app.tenant_id', true)` возвращала **0
+строк** — снапшот был пуст, **ошибки не было**, fallback `db_main`
+деградировал тихо. В prod дефект был латентным: `snapshot.enabled: false`.
+
+Теперь перед выборкой соединение получает явный tenant-скоуп
+`SELECT set_config('app.tenant_id', :tenant_id, true)` — transaction-local,
+значение не «залипает» в пуле. Tenant берётся из tenant-контекста
+процесса; при его отсутствии job работает в системном tenant (`_system`)
+**с WARNING'ом** в лог.
+
+Покрытие снимка при этом — **один** tenant: межtenant-снимок требует
+служебной роли с `BYPASSRLS` (owner-задача — см.
+[OWNER_TASKS.md](../roadmap/OWNER_TASKS.md) § 11).
+
 ## Audit
 
 Каждый доступ к данным через БД порождает audit-событие с capability,

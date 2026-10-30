@@ -137,7 +137,8 @@ YAML-кэш и кэш секретов Vault, пересоздаёт вложе�
 `succeeded`/`failed`/`callbacks`/`ok`; отсутствие `settings.reload()` или
 ошибка callback'а — это **ошибка** (`failed` непустой), а не «успех».
 
-**Предел hot-reload: пулы БД не пересоздаются (ADR-0385).** SQLAlchemy
+**Предел hot-reload: пулы БД не пересоздаются (ADR-0385, ADR-0400).**
+SQLAlchemy
 `engine`/`pool` печётся при создании (`DatabaseInitializer`,
 `ExternalDatabaseRegistry`), поэтому изменение `database.*` /
 `external_databases.*` в YAML **не применяется к живому пулу** — нужен
@@ -145,6 +146,39 @@ YAML-кэш и кэш секретов Vault, пересоздаёт вложе�
 созданный engine продолжает использовать старые `pool_size`,
 `pool_timeout`, DSN и т.д. Операторам это фиксировано явно (ADR-0385),
 чтобы правка YAML не выглядела применённой.
+
+С ADR-0400 отчёт reload'а содержит поле `restart_required` со списком
+секций (`database.*`, `external_databases.*`) и сопровождается
+WARNING-логом — «молчаливый» reload без такого предупреждения больше не
+возможен. Подробнее — [HOT_RELOAD.md](HOT_RELOAD.md).
+
+## GraphQL-интроспекция (ADR-0400)
+
+Ключ `graphql.enable_introspection` (секция `graphql` в
+`config_profiles/*.yml`) теперь **подключён** к рантайму: раньше правило
+срабатывало только по окружению, и конфиг был «не подключён» — значение
+из профиля ни на что не влияло.
+
+Интроспекция (`__schema` / `__type`) разрешена **только** при
+одновременном выполнении **обоих** условий:
+
+1. `graphql.enable_introspection == true`;
+2. `app.environment == "development"`.
+
+В staging/prod интроспекция запрещена независимо от флага
+(`NoIntrospectionRule` в `src/backend/entrypoints/graphql/graphql_guards.py`).
+Если конфиг недоступен — fail-closed (запрет).
+
+Профильный гейт (`core/config/validator/profile_merge.py`) в
+prod/staging поднимает **CRITICAL**, если
+`graphql.enable_introspection: true` (`graphql.introspection_enabled_in_prod`).
+В `config_profiles/prod.yml` ключ выключен явно.
+
+> Ограничение: корневой `Settings` (`core/config/settings.py`) не отдаёт
+> секцию `graphql` — `settings.graphql.enable_introspection` требует
+> одной строки в корневом агрегаторе (вне зоны волны 20); сейчас
+> используется модельный синглтон
+> `core.config.services.graphql.graphql_settings`.
 
 ## Consul integration (D-rule)
 

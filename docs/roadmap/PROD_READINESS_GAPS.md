@@ -206,6 +206,28 @@
 
 ---
 
+## GAP-WF-4.5. SLA-алертинг workflow не реализован (`SlaTracker` мёртв)
+
+- **Тип**: code (P1). **Owner**: K3 DSL+Workflow.
+- **Статус**: 🟡 ЗАФИКСИРОВАН (волна 20, инвентаризация кластера W5).
+- **Причина**: класс `SlaTracker`
+  (`src/backend/services/workflows/sla_alerting.py`) существует, но **не
+  инстанцируется нигде в `src/`** — ни в `lifespan`, ни в worker'ах, ни в
+  composition root. `WorkflowFacade` принимает `sla_tracker` только как
+  опциональный параметр, а сам фасад в `src/` не создаётся. Email/Slack-
+  эскалация по `soft_limit_seconds` / `hard_limit_seconds` в рантайме не
+  работает.
+- **Шаг (требует владельца)**: зарегистрировать `WorkflowFacade` (+
+  `SlaTracker`) в composition root **либо** удалить класс и опциональный
+  параметр фасада. Документация не может закрыть позицию: отсутствие
+  инстанцирования — следствие неполной интеграции сервисного слоя.
+- **Done**: `SlaTracker` инстанцируется в composition root **или** класс
+  удалён; утверждение в
+  [runbook'е HITL](../runbooks/hitl-stuck-workflow.md) соответствует коду.
+- **Сводка**: [OWNER_TASKS.md](OWNER_TASKS.md) § 8.
+
+---
+
 ## Обновление 2026-09-14 (волны 6–9)
 
 | Изменение | Коммит |

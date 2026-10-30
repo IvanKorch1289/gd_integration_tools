@@ -2,41 +2,47 @@
 
 **Role:** External-world adapters, runtime services, and platform infrastructure.
 **Boundary rule:** Core/DSL/services MAY import from infrastructure via `core/di/providers/*` facade ONLY.
-Direct `from src.backend.infrastructure.*` in core/ is a **layer violation** (currently 42 such imports — tracked for E2 migration).
+Direct `from src.backend.infrastructure.*` in core/ is a **layer violation** (currently 33 such import statements in 16 files — tracked for E2 migration).
 
 ## Navigation Index
 
+Счётчик «Files» — число `.py`-файлов в подкаталоге (рекурсивно, без
+`__pycache__`). Всего в слое — 455 .py-файлов в 32 подкаталогах плюс
+3 файла в корне слоя (`__init__.py`, `registry.py`,
+`registry_vault_bridge.py`).
+
 | Subdir | Files | Role |
 |--------|------:|------|
-| `ai/` | 5 | AI/ML runtime: model orchestration, embeddings, sandbox (e2b_code_interpreter) |
-| `antivirus/` | 6 | Antivirus scanning (ClamAV unix/TCP, HTTP API) via ChainedAntivirusBackend |
+| `ai/` | 4 | AI/ML runtime: model orchestration, embeddings, sandbox (e2b_code_interpreter) |
+| `antivirus/` | 10 | Antivirus scanning (ClamAV unix/TCP, HTTP API) via ChainedAntivirusBackend |
 | `application/` | 7 | Health aggregator + system-level runtime services |
-| `audit/` | 4 | Audit event log + audit pipeline (immutable records) |
-| `cache/` | 9 | Cache backends (Redis/KeyDB/Memcached/Memory) + RAG three-tier |
+| `audit/` | 5 | Audit event log + audit pipeline (immutable records) |
+| `cache/` | 24 | Cache backends (Redis/KeyDB/Memcached/Memory) + RAG three-tier + invalidator tiers |
 | `cdc/` | 5 | Change Data Capture: Debezium, poll, listen/notify backends |
 | `chaos/` | 1 | Chaos engineering (resilience testing) |
-| `clients/` | 6 | External service clients (HTTP/SOAP/GRPC/SFTP/SMTP/IMAP/NATS) |
-| `database/` | 11 | Database primitives (SQLAlchemy session, init, dialect types) |
+| `clients/` | 73 | External service clients (HTTP/SOAP/GRPC/SFTP/SMTP/IMAP/NATS) |
+| `database/` | 44 | Database primitives (SQLAlchemy session, init, dialect types, migrations) |
 | `decorators/` | 6 | Cross-cutting decorators (caching, callbacks) |
-| `eventing/` | 6 | Event bus + outbox pattern |
+| `di_bridge/` | 6 | DI bridges to core-owned providers (lazy accessors) |
+| `eventing/` | 5 | Event bus + outbox pattern |
 | `execution/` | 2 | Dask/RQ/sync execution backends |
 | `external_apis/` | 5 | External API adapters (search, docs, etc.) |
 | `import_gateway/` | 5 | Import schemas from external sources (Postman/OpenAPI/WSDL) |
-| `logging/` | 7 | Structured logging (structlog, stdlib, graylog, console) |
-| `messaging/` | 2 | Queue adapters (Kafka/RabbitMQ/Redis Streams) |
+| `logging/` | 11 | Structured logging (structlog, stdlib, graylog, console) |
+| `messaging/` | 25 | Queue adapters (Kafka/RabbitMQ/Redis Streams/NATS) + DLQ |
 | `monitoring/` | 2 | Health checks + system metrics |
-| `notifications/` | 5 | Notification gateway (email/telegram/slack/etc.) |
-| `observability/` | 16 | OpenTelemetry, Prometheus, audit traces, metrics registry |
+| `notifications/` | 14 | Notification gateway (email/telegram/slack/etc.) |
+| `observability/` | 18 | OpenTelemetry, Prometheus, audit traces, metrics registry |
 | `persistence/` | 2 | Degradation state + persistence helpers |
-| `policy/` | 3 | Capability + RBAC policy runtime |
-| `repositories/` | 8 | SQLAlchemy repository pattern (base + per-domain) |
-| `resilience/` | 17 | Circuit breakers, retries, rate limiters, bulkheads, health |
+| `policy/` | 5 | Capability + RBAC policy runtime |
+| `repositories/` | 15 | SQLAlchemy repository pattern (base + per-domain) |
+| `resilience/` | 27 | Circuit breakers, retries, rate limiters, bulkheads, health |
 | `scheduler/` | 10 | APScheduler + DLQ + job queue |
 | `secrets/` | 9 | Vault integration, env-secrets, secret rotation |
-| `security/` | 9 | Token registry, env-secrets, security primitives |
-| `sinks/` | 13 | Sink adapters (HTTP/MQ/SOAP/S3/file/webhook/etc.) |
-| `sources/` | 23 | Source adapters (HTTP/Kafka/CDC/IMAP/file/etc.) |
-| `storage/` | 7 | Object storage (S3/MinIO/LocalFS) + fallback chain |
+| `security/` | 27 | Token registry, env-secrets, security primitives |
+| `sinks/` | 15 | Sink adapters (HTTP/MQ/SOAP/S3/file/webhook/etc.) |
+| `sources/` | 24 | Source adapters (HTTP/Kafka/CDC/IMAP/file/etc.) |
+| `storage/` | 10 | Object storage (S3/MinIO/LocalFS) + fallback chain + quotas |
 | `watermark/` | 4 | Watermark store (memory/postgres) for incremental processing |
 | `workflow/` | 32 | Workflow backends (Temporal/LiteTemporal/pg_runner/fake) + builder + executor |
 
@@ -73,7 +79,8 @@ Per-connector health: each `clients/transport/<protocol>` module exposes `is_hea
 
 ## Resilience Patterns
 
-All external calls use `resilience/` (15 modules):
+All external calls use `resilience/` (27 modules, 15 верхнего уровня +
+`components/`):
 
 - `coordinator.py` — orchestrator for fallback chain
 - `client_breaker.py` — per-client circuit breaker
@@ -84,16 +91,18 @@ All external calls use `resilience/` (15 modules):
 - `bulkhead.py` — concurrent call isolation
 - `health.py` — liveness/readiness probes
 
-## Audit Status (2026-06-24)
+## Audit Status (2026-10-30)
 
 - ✅ DI registry unified (svcs_registry is single source)
 - ✅ 32 subdirs organized by concern (adapters/clients/repositories/runtime)
-- ⚠️  42 direct `from src.backend.infrastructure` in `core/` (bridge re-exports)
+- ⚠️  33 direct `from src.backend.infrastructure` import statements in
+  `core/` (16 files) — bridge re-exports; baseline слоёв: 37 legacy + 4
+  contract (`tools/check_layers.py`)
 - ⚠️  Connector-level health/facade coverage thin (only 1 facade pattern site)
-- ✅ Resilience stack production-grade (15 components, 61 fallback patterns)
+- ✅ Resilience stack production-grade (27 modules, 61 fallback patterns)
 
 ## Pending (Milestone 1)
 
 1. Health check facade for each connector category (`clients/transport/*`)
-2. Architecture-decision-record for the 42 re-export bridges (when to retire them)
+2. Architecture-decision-record for the 33 re-export bridges (when to retire them)
 3. `core/di/providers/` extension coverage for CDC, scheduler, notifications, web_search

@@ -277,6 +277,43 @@ steps:
 > процессоры существовали, но были недостижимы из YAML
 > («Unknown or forbidden processor»).
 
+## RPA-runtime wiring (ADR-0401)
+
+Шаги `browser_launch` / `navigate` / `click` (`rpa_browser.py`) и шаг
+`desktop_rpa` (`desktop_rpa.py`) искали свои зависимости **только** в
+`ExecutionContext`. Но `ExecutionContext` — `dataclass(slots=True)` и не
+имеет ни `browser_pool`, ни `app_state`, поэтому RPA browser/desktop-шаги
+**всегда** заканчивались `RuntimeError` (ADR-0369, дефект G12.6).
+
+Теперь разрешение идёт в три шага:
+
+1. `context.browser_pool` — прямая инъекция (тесты / кастомные роуты);
+2. `context.app_state.browser_pool` — legacy-путь;
+3. **DI-провайдер** `src/backend/core/di/providers/rpa.py` —
+   `get_browser_pool_provider()` / `get_desktop_rpa_client_provider()`
+   (canonical single entry point).
+
+Композиционный root регистрирует `app.state.browser_pool` и
+`app.state.desktop_rpa_client`; на shutdown вызывается
+`shutdown_rpa_runtime()` — иначе playwright-subprocess жил до конца
+процесса. Браузер поднимается **по требованию** (при первом `acquire()`),
+поэтому отсутствие playwright/patchright не ломает старт приложения.
+
+## Audit-события процессоров (ADR-0401)
+
+Поле `audit_event` объявлено более чем 40 классами процессоров, но
+потребитель был один — `agent_dsl/_base.py`; события не создавал никто.
+
+Теперь `BaseProcessor` получил `audit_event: ClassVar[str | None]` и
+`__init_subclass__`, который оборачивает `process` наследника: после
+шага эмитится событие с outcome `success` / `failure` / `denied`.
+
+* Событие содержит **только метаданные** — имя процессора, класс,
+  capability, route и tenant; значения данных в payload не попадают.
+* Шаги без `audit_event` не аудируются.
+* Классы, эмиттящие событие сами (`BaseAIProcessor`), не оборачиваются —
+  дубля события нет.
+
 ## Связанные ADR
 
 - **ADR-0358** — allowlist файловых путей и единый path-барьер DSL;
@@ -287,7 +324,10 @@ steps:
 - **ADR-0369** — достижимость RPA-шагов из YAML и канон имён;
 - **ADR-0370** — консолидация RPA-конфига и тестовая гигиена;
 - **ADR-0393** — DB-capability-гейт, tenant-изоляция DSL-SQL и
-  авторизация RPA (в т.ч. prod/staging-политика выше).
+  авторизация RPA (в т.ч. prod/staging-политика выше);
+- **ADR-0401** — RPA-runtime wiring (DI-провайдер browser pool и desktop
+  client), audit-события процессоров, инвалидация всех уровней кэша и
+  квоты файлов.
 
 ## Где смотреть код
 

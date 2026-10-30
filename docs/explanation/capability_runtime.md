@@ -3,11 +3,13 @@
 Runtime-контроль capabilities: плагин получает только то, что
 задекларировал, и не больше.
 
-Документ покрывает три слоя:
+Документ покрывает четыре слоя:
 
 1. **ADR-044** — открытый registry capabilities (декларация + гейт).
 2. **ADR-0366** — runtime-резолвер namespace для DSL-процессоров.
 3. **ADR-0393** — БД-гейт `db.read` / `db.write` и авторизация RPA.
+4. **ADR-0400** — capability-гейт AI-процессоров (`agent_dsl`) и
+   fail-closed при отказе.
 
 ## Зачем
 
@@ -103,6 +105,41 @@ scope = "orders"
 Роут при этом обязан ссылаться на плагина-владельца ресурса
 (`requires_plugins`), иначе subset-инвариант не пройдёт.
 
+## ADR-0400 — capability-гейт AI-процессоров (`agent_dsl`)
+
+13 классов в `src/backend/dsl/engine/processors/agent_dsl/` объявляют
+`required_capability` (`ai.invoke`, `skill.invoke`, …), но проверка шла
+обходным путём — мимо канонического
+`BaseProcessor.auth_check`. Декларация была **без эффекта**: флаг
+`dsl_capability_gate_enabled` на неё не влиял, а отказ не переводил
+exchange в `failed`.
+
+Теперь `BaseAIProcessor.process()` вызывает **канонический**
+`BaseProcessor.auth_check(exchange, action="execute")` **до** вызова
+`_run`:
+
+* `auth_check` учитывает feature-флаг `dsl_capability_gate_enabled`;
+* при отказе действие **не выполняется**, exchange переводится в
+  `failed` (fail-closed, ADR-0393), эмитится audit-событие с outcome
+  `denied`;
+* обходной `_check_capability` из процесса удалён.
+
+Порядок вызовов в `process()`:
+
+```
+feature-flag check ──► auth_check (capability) ──► _run ──► audit-emit
+        │                      │
+     no-op                deny → exchange.failed
+```
+
+Незаявленная capability (например `ai.unknown.capability`) отклоняется
+fail-closed: резолвер namespace не находит её ни в одном namespace'е →
+DENY, действие не выполняется.
+
+> Следствие: до включения `dsl_capability_gate_enabled` в проде
+> `required_capability` у AI-процессоров не влиял на исполнение. Это
+> осознанная политика rollout'а (ADR-0366), а не дефект.
+
 ## Политика prod / staging
 
 В `config_profiles/prod.yml` и `config_profiles/staging.yml`:
@@ -155,4 +192,6 @@ steps:
 * Capability vocabulary (см. `src/backend/core/security/capabilities/`).
 * Capability catalog — [reference/capabilities.md](../reference/capabilities.md).
 * Streamlit page **71_Capabilities** — live heatmap.
-* ADR-0366, ADR-0393 — в `docs/adr/`.
+* ADR-0366, ADR-0393, ADR-0400 — в `docs/adr/`.
+* Owner-задачи (миграция `route.toml` под новый namespace и др.) — в
+  [OWNER_TASKS.md](../roadmap/OWNER_TASKS.md).

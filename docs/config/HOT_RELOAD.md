@@ -63,6 +63,23 @@ reloader.watch(Path("configs/routes.yaml"))
   YAML как работающий, что **противоречит реальности** — нужно исправить в
   следующем спринте.
 
+## Секции, которые требуют рестарта (ADR-0400)
+
+Даже при срабатывании reload'а часть параметров **не применяется на лету**:
+пулы БД создаются при старте процесса, и hot-reload их **не пересоздаёт**.
+
+Константа `RESTART_REQUIRED_SECTIONS`
+(`src/backend/core/config/hot_reload.py`):
+
+| Секция | Почему нужен рестарт |
+|---|---|
+| `database.*` | `pool_size` / `max_overflow` / `pool_recycle` / `pool_timeout` читаются при создании engine'а; существующий пул не пересоздаётся. |
+| `external_databases.*` | То же для внешних БД (Oracle/MSSQL/MySQL/ClickHouse). |
+
+Отчёт reload'а (`POST /admin/config/reload`) содержит поле
+`restart_required` со списком этих секций и сопровождается WARNING-логом.
+Без этого оператор считал бы, что новые значения пула уже действуют.
+
 ## TODO (Sprint 37+)
 
 ```bash

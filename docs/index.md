@@ -21,6 +21,9 @@ explanation/index
 - [Architecture](ARCHITECTURE.md)
 - [Domain DSL](dsl/index.md) — RouteBuilder + WorkflowBuilder
 - [AI Platform](ai/index.md) — AIGateway + PydanticAI + MultiAgent
+- [Workflows](workflows/index.md) — контракт workflow-подсистемы и схема состояний
+- [Owner-задачи и известные ограничения](roadmap/OWNER_TASKS.md) — сводка
+  позиций, требующих владельца
 - [ADRs](adr/INDEX.md) — 190+ Architecture Decision Records
 
 ## Layers

@@ -44,14 +44,19 @@ curl "http://<api>/api/v1/admin/workflows/<wf_id>"
 3. **Notification не дошёл до operator.**
    * Email/Slack escalation в SLA-политике не настроен.
    * **SlaTracker не запущен — и это не баг конфигурации, а
-     нереализованная возможность.** Класс `SlaTracker`
+     нереализованная возможность: SLA-алертинг не реализовано.** Класс
+     `SlaTracker`
      (`src/backend/services/workflows/sla_alerting.py`) существует, но
-     **нигде не инстанцируется**: ни в `lifespan`, ни в worker'ах, ни
-     в composition root. `WorkflowFacade` принимает `sla_tracker` только
-     как опциональный параметр (ADR-0396), а сам фасад в `src/` пока не
-     создаётся. Поэтому автоматической эскалации по SLA в рантайме нет.
-     Owner-задача: K3 DSL+Workflow, GAP-WF-4.5 (см.
-     `docs/roadmap/PROD_READINESS_GAPS.md`).
+     **не инстанцируется нигде в `src/`**: ни в `lifespan`, ни в
+     worker'ах, ни в composition root. `WorkflowFacade` принимает
+     `sla_tracker` только как опциональный параметр, а сам фасад в `src/`
+     не создаётся. Поэтому автоматической эскалации по SLA в рантайме нет
+     вовсе — настраивать «SLA-политику» для workflow бессмысленно, пока
+     не появится исполнитель. Следите за owner-задачей, а не за
+     конфигурацией.
+   * Owner-задача: K3 DSL+Workflow, **GAP-WF-4.5** — зафиксирована в
+     [PROD_READINESS_GAPS.md](../roadmap/PROD_READINESS_GAPS.md), сводка —
+     в [OWNER_TASKS.md](../roadmap/OWNER_TASKS.md) § 8.
 
 ## Mitigation
 
@@ -118,7 +123,9 @@ old = [s for s in await svc.list_pending() if (now - s.created_at).days > 7]
 * Всегда задавать `wait_for_signal(timeout_s=86400)`.
 * Настроить SLA-политику в декларации workflow (`sla:` в
   `WorkflowDeclaration` / `.sla(...)` в builder) — но помните, что
-  **исполняющего трекера пока нет** (см. диагностику п. 3).
+  **исполнителя SLA-трекера не существует**: `SlaTracker` не
+  инстанцируется нигде в `src/` (см. диагностику п. 3, owner-задача
+  GAP-WF-4.5).
 * Эскалацию по SLA (email/Slack) в `SlaPolicy` пока не рассчитывайте
   как работающую — это owner-задача K3.
 

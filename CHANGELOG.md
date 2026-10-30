@@ -98,6 +98,43 @@
   `src/backend/infrastructure/README.md` — актуальное число файлов в
   `workflow/`.
 
+### Волна 20 — ADR-0398…ADR-0401 + сводка owner-задач (2026-10-29)
+
+Код волны 20 (кластеры W1–W4) и синхронизация документации (кластер W5):
+
+* ADR-0398 — пагинация event-log, семантика `sub_flow`, retry-бюджет и
+  build-time резолв activity;
+* ADR-0399 — JSON-Schema процессоров в репозитории, каталог LSP-шагов и
+  метрики workflow;
+* ADR-0400 — snapshot под RLS, интроспекция GraphQL, честный hot-reload и
+  гейт профилей;
+* ADR-0401 — RPA-runtime wiring, инвалидация всех уровней кэша, квоты и
+  PII fast-path.
+
+Документация (кластер W5):
+
+* `docs/workflows/index.md` — разделы «Event log и пагинация»,
+  «`sub_flow` в pg-runner — fail-fast», «Retry-бюджет и admin-retry»,
+  «Результаты `for_each`», «Метрики»; наблюдаемость статуса
+  `compensating` разграничена по слоям (`workflow_instances.status` vs
+  materialized state vs `workflow_state.state`);
+* `docs/explanation/capability_runtime.md` — ADR-0400: capability-гейт
+  AI-процессоров (`agent_dsl`) идёт через канонический `auth_check`
+  (fail-closed);
+* `docs/reference/index.md` — каталог JSON-Schema процессоров
+  (`make schemas` → `docs/reference/schemas/processors/`) и связь с
+  LSP-каталогом;
+* `docs/runbooks/hitl-stuck-workflow.md` — `SlaTracker` помечен
+  «не реализовано» (не создан нигде в `src/`), добавлена ссылка на
+  owner-задачу GAP-WF-4.5; уточнено, что runbook DLQ относится к
+  messaging, а не к workflow;
+* `docs/roadmap/OWNER_TASKS.md` — **новая** сводка «Известные ограничения и
+  owner-задачи» (9 позиций, все помечены «требует владельца»);
+* `docs/roadmap/PROD_READINESS_GAPS.md` — GAP-WF-4.5 (SlaTracker)
+  зафиксирована в реестре (раньше была только ссылка в трёх документах);
+* `src/backend/infrastructure/README.md` — актуальные счётчики модулей по
+  32 подкаталогам (455 `.py`-файлов).
+
 ## [Unreleased] — 2026-10-20 — Cycle 170: Deferred ADR fixes (cache + DSL cleanups)
 
 ### refactor(core): remove `core/rate_limiter/` (ADR-0353)
