@@ -55,14 +55,38 @@ _stub_sm.main_session_manager = _StubSessionManager()  # type: ignore[attr-defin
 _stub_sm.get_main_session_manager = lambda *_a, **_kw: _StubSessionManager()  # type: ignore[attr-defined]
 # outbox.py импортирует DatabaseSessionManager только для аннотации типа.
 _stub_sm.DatabaseSessionManager = _StubSessionManager  # type: ignore[attr-defined]
+
+# ADR-0404: stub не должен оставаться в sys.modules после импорта outbox.
+# ``session_manager`` экспортирует ``main_session_manager`` через PEP-562
+# ``__getattr__`` + ``@lru_cache`` — то есть СИНГЛТОН живёт в кэше функции.
+# Если модуль удалить из sys.modules (а conftest это делает для «polluted»
+# модулей) и потом импортировать заново — получится НОВЫЙ модуль, НОВЫЙ
+# lru_cache и НОВЫЙ инстанс синглтона. Модули, импортировавшие
+# ``main_session_manager`` раньше (например ``repositories.base.crud_mixin``),
+# продолжат держать СТАРЫЙ инстанс — и их декоратор ``@main_session_manager
+# .connection()`` уходит в реальный Postgres вместо подставленной SQLite
+# сессии (24 падения в test_base_repository.py).
+# Поэтому: сохраняем оригинальный модуль и возвращаем его сразу после
+# импорта outbox.
+_REAL_SESSION_MANAGER = sys.modules.get(
+    "src.backend.infrastructure.database.session_manager"
+)
 sys.modules["src.backend.infrastructure.database.session_manager"] = _stub_sm
 
-# Импорт outbox-модели тоже требует session_manager (для Base.metadata),
-# но sqlalchemy-mapped класс импортируется без runtime DB connection.
-from src.backend.infrastructure.repositories.outbox import (
-    _advisory_lock_key,
-    claim_pending,
-)
+try:
+    # Импорт outbox-модели тоже требует session_manager (для Base.metadata),
+    # но sqlalchemy-mapped класс импортируется без runtime DB connection.
+    from src.backend.infrastructure.repositories.outbox import (
+        _advisory_lock_key,
+        claim_pending,
+    )
+finally:
+    if _REAL_SESSION_MANAGER is not None:
+        sys.modules["src.backend.infrastructure.database.session_manager"] = (
+            _REAL_SESSION_MANAGER
+        )
+    else:
+        sys.modules.pop("src.backend.infrastructure.database.session_manager", None)
 
 
 def test_advisory_lock_key_deterministic() -> None:

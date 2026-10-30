@@ -197,6 +197,16 @@ async def test_structlog_pipeline_dispatches_to_sink() -> None:
     sink = _CollectingSink("e2e")
     configure_router([sink])
 
+    # ADR-0404: structlog-конфигурация — process-global. Раньше здесь стоял
+    # ``structlog.reset_defaults()`` в finally, который навсегда переключал
+    # pipeline на ``PrintLoggerFactory`` (stdout) и ломал stdlib-bridge для
+    # ВСЕХ последующих тестов сессии: любые caplog/handler-проверки на
+    # WARNING-уровне (services/cache, services/rpa, services/ai) получали
+    # пустой caplog. Восстанавливаем ровно ту конфигурацию, что была до
+    # теста (тот же паттерн, что в tests/unit/infrastructure/logging/
+    # test_pii_in_pipeline.py).
+    saved_config = structlog.get_config()
+
     structlog.configure(
         processors=[
             structlog.processors.add_log_level,
@@ -224,4 +234,4 @@ async def test_structlog_pipeline_dispatches_to_sink() -> None:
         assert record["level"] == "info"
         assert "timestamp" in record
     finally:
-        structlog.reset_defaults()
+        structlog.configure(**saved_config)

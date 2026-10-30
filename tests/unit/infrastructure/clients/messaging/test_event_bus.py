@@ -20,6 +20,23 @@ from src.backend.infrastructure.clients.messaging.event_bus import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _reset_breaker_registry() -> Any:
+    """Сбрасывает глобальный реестр breaker-ов (ADR-0404).
+
+    ``EventBus.publish`` обёрнут в ``@resilient(name="eventbus_publish")``:
+    неудачный publish (например, брокер не стартовал) открывает breaker, и
+    ВСЕ последующие тесты в сессии получают ``OpenedState`` вместо своей
+    ошибки. Breaker-реестр — process-global состояние, поэтому между
+    тестами его нужно сбрасывать.
+    """
+    from src.backend.core.resilience.breaker import get_breaker_registry
+
+    get_breaker_registry().reset()
+    yield
+    get_breaker_registry().reset()
+
+
 @pytest.fixture
 def fake_redis_broker_module(monkeypatch: pytest.MonkeyPatch) -> Any:
     """Подсовывает фейковый faststream.redis модуль с RedisBroker AsyncMock."""

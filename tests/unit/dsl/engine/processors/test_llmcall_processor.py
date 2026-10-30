@@ -285,6 +285,15 @@ class TestLLMCallProcessor:
                 _mock_flags(enforce=True),
             ),
             patch("src.backend.core.ai.gateway.AIGateway") as MockGW,
+            # ADR-0404: процессор зовёт ``get_ai_gateway()`` из
+            # ``services.ai.gateway_adapter``; тот возвращает КЭШИРОВАННЫЙ
+            # singleton. Патч только ``AIGateway`` в полном прогоне не
+            # действовал (singleton был создан раньше) → реальный gateway →
+            # «AIPolicySpec не найден». Патчим точку вызова.
+            patch(
+                "src.backend.services.ai.gateway_adapter.get_ai_gateway",
+                return_value=MockGW.return_value,
+            ),
             patch(_LITELLM_PROBE, return_value=None),
         ):
             MockGW.return_value.invoke = AsyncMock(return_value=mock_response)

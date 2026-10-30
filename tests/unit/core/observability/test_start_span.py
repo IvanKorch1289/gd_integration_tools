@@ -59,11 +59,18 @@ def test_start_span_passes_attributes_to_otel() -> None:
     provider = TracerProvider()
     exporter = InMemorySpanExporter()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
-    trace.set_tracer_provider(provider)
+    # ADR-0404: НЕ используем ``trace.set_tracer_provider(provider)`` —
+    # OTel разрешает установить глобальный провайдер только ОДИН раз за
+    # процесс. Если другой suite уже установил свой, вызов — no-op
+    # («Overriding of current TracerProvider is not allowed»), и экспортер
+    # остаётся пустым → «Expected 1 span, got 0». Вместо этого подменяем
+    # только ``get_tracer`` — тест становится независимым от порядка.
+    tracer = provider.get_tracer(__name__)
 
     attrs = {"key1": "value1", "key2": 42}
-    with correlation.start_span("test.attrs", attributes=attrs):
-        pass
+    with patch("opentelemetry.trace.get_tracer", return_value=tracer):
+        with correlation.start_span("test.attrs", attributes=attrs):
+            pass
 
     spans = exporter.get_finished_spans()
     assert len(spans) == 1, f"Expected 1 span, got {len(spans)}"

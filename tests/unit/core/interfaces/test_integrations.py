@@ -208,10 +208,32 @@ class _FakeAsyncContextManager:
 
 
 class _FakeExternalSession:
-    """Implements ``ExternalSessionManagerProtocol`` (one async-cm method)."""
+    """Implements ``ExternalSessionManagerProtocol`` (5 методов).
+
+    Cycle 172 (Wave 4.2) расширил протокол: кроме ``create_session`` в нём
+    объявлены ``transaction`` / ``connection`` / ``get_session`` /
+    ``get_transaction_session``. Fake обязан реализовывать полную
+    поверхность — иначе ``isinstance`` возвращает ``False`` и тест падает.
+    """
 
     @staticmethod
     def create_session() -> Any:
+        return _FakeAsyncContextManager({"session": "fake"})
+
+    @staticmethod
+    def transaction(session: Any) -> Any:
+        return _FakeAsyncContextManager(session)
+
+    @staticmethod
+    def connection(*args: Any, **kwargs: Any) -> Any:
+        return lambda func: func
+
+    @staticmethod
+    def get_session() -> Any:
+        return _FakeAsyncContextManager({"session": "fake"})
+
+    @staticmethod
+    def get_transaction_session() -> Any:
         return _FakeAsyncContextManager({"session": "fake"})
 
 

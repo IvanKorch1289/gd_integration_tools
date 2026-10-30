@@ -488,17 +488,26 @@ def test_hitl_runbook_matches_real_feature_flag() -> None:
 
 
 def test_hitl_runbook_marks_unimplemented_sla_tracker() -> None:
-    """(10) SlaTracker помечен как не реализованный."""
+    """(10) SLA-алертинг честно помечен «не реализован» (ADR-0403).
+
+    В волне 21 трекер удалён как мёртвый код, поэтому runbook обязан
+    говорить «не реализовано», а не намекать на существующий класс.
+    """
     from src.backend.services.workflows import sla_alerting
 
     text = _read(_HITL_RUNBOOK)
-    assert "SlaTracker" in text
-    assert "не реализовано" in text.lower()
-    assert sla_alerting.SlaTracker is not None
+    assert "SLA" in text, "runbook не упоминает SLA-алертинг"
+    assert "не реализован" in text.lower(), (
+        "runbook должен честно помечать SLA-алертинг как «не реализовано»"
+    )
+    assert not hasattr(sla_alerting, "SlaTracker"), (
+        "SlaTracker удалён как мёртвый код (ADR-0403) — runbook не должен "
+        "предполагать его наличие"
+    )
 
 
 def test_sla_tracker_is_not_instantiated_in_src() -> None:
-    """(10) Проба кода: SlaTracker нигде не инстанцируется."""
+    """(10) Проба кода: SlaTracker нигде не инстанцируется (класс удалён)."""
     import re as _re
 
     hits: list[str] = []

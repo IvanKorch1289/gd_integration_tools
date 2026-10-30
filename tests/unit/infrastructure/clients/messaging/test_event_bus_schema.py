@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from src.backend.infrastructure.clients.messaging.event_bus import (
@@ -18,6 +20,22 @@ from src.backend.services.schema_registry.registry import (
     SchemaKind,
     ServiceSchemaRegistry,
 )
+
+
+@pytest.fixture(autouse=True)
+def _reset_breaker_registry() -> Any:
+    """Сбрасывает глобальный реестр breaker-ов (ADR-0404).
+
+    ``EventBus.publish`` обёрнут в ``@resilient(name="eventbus_publish")``:
+    неудачный publish открывает breaker, и ВСЕ последующие тесты в сессии
+    получают ``OpenedState`` вместо своей ошибки. Breaker-реестр —
+    process-global состояние, поэтому между тестами его нужно сбрасывать.
+    """
+    from src.backend.core.resilience.breaker import get_breaker_registry
+
+    get_breaker_registry().reset()
+    yield
+    get_breaker_registry().reset()
 
 
 def test_schema_kind_event_exists() -> None:

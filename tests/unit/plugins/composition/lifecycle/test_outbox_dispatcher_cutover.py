@@ -161,12 +161,62 @@ def _load_lifespan_isolated() -> ModuleType:
 # NOTE: pre-loading happens at collection time. If you modify
 # ``lifespan.py`` / ``startup.py`` after this, tests will use STALE
 # version. Re-run pytest to pick up changes.
-_lifespan = _load_lifespan_isolated()
-sys.modules["src.backend.plugins.composition.lifecycle.lifespan"] = _lifespan
+#
+# ADR-0404: изолированная загрузка обязана быть ОБРАТИМОЙ. Раньше
+# изолированные модули оставались в ``sys.modules`` под реальными
+# dotted-именами (``...lifecycle.lifespan`` / ``...lifecycle.startup`` /
+# ``...lifecycle.outbox_setup``). Conftest удалял их как «polluted», но
+# следующий ``import`` снова загружал модуль — и import-машина делала
+# ``setattr(pkg, "lifespan", <module>)``, затирая пакетный ре-экспорт
+# ФУНКЦИИ ``lifecycle.lifespan``. Из-за этого 7 тестов в
+# test_lifecycle_smoke.py / test_app_factory_smoke.py получали модуль вместо
+# функции («'module' object is not callable»).
+# Ниже: снимок sys.modules → изолированная загрузка → точное восстановление.
+_ISOLATION_KEYS = (
+    "src.backend.plugins.composition",
+    "src.backend.plugins.composition.lifecycle",
+    "src.backend.plugins.composition.lifecycle.bootstrap",
+    "src.backend.plugins.composition.lifecycle.protocols",
+    "src.backend.plugins.composition.lifecycle.plugin_loader",
+    "src.backend.plugins.composition.lifecycle.watchers",
+    "src.backend.plugins.composition.lifecycle.outbox_setup",
+    "src.backend.plugins.composition.lifecycle.startup",
+    "src.backend.plugins.composition.lifecycle.lifespan",
+    "src.backend.infrastructure.repositories.outbox",
+    # Фиктивные dotted-имена из module_level_stubs / lazy_stubs: модули вида
+    # «src.backend.core.config.services.outbox.outbox_settings». Если такой
+    # ключ остаётся в sys.modules, то ``from src.backend.core.config.services
+    # .outbox import outbox_settings`` находит ПОДДЕЛЬНЫЙ модуль вместо
+    # пакета, и атрибут ``services.outbox`` не выставляется — 5 ERROR
+    # «module 'src.backend.core.config.services' has no attribute 'outbox'».
+    "src.backend.core.utils.task_registry.get_task_registry",
+    "src.backend.infrastructure.logging.factory.get_logger",
+    "src.backend.plugins.composition.lifecycle.bootstrap.bootstrap_resilience_coordinator",
+    "src.backend.plugins.composition.lifecycle.bootstrap.bootstrap_snapshot_job",
+    "src.backend.plugins.composition.lifecycle.bootstrap.register_storage_singletons",
+    "src.backend.plugins.composition.lifecycle.bootstrap.validate_cache_layers",
+    "src.backend.plugins.composition.lifecycle.protocols.register_protocol_providers",
+    "src.backend.plugins.composition.lifecycle.plugin_loader.bootstrap_v11_plugin_loader",
+    "src.backend.plugins.composition.lifecycle.plugin_loader.bootstrap_v11_route_loader",
+    "src.backend.plugins.composition.lifecycle.plugin_loader.shutdown_plugin_loaders",
+    "src.backend.plugins.composition.lifecycle.plugin_loader.start_v11_hot_reload",
+    "src.backend.plugins.composition.lifecycle.watchers.start_dsl_yaml_watcher",
+    "src.backend.plugins.composition.lifecycle.watchers.stop_dsl_yaml_watcher",
+    "src.backend.core.config.services.outbox.outbox_settings",
+    "src.backend.infrastructure.workflow.outbox_worker.start_outbox_worker",
+    "src.backend.infrastructure.workflow.outbox_worker._publish",
+    "src.backend.infrastructure.messaging.outbox.lifecycle.start_outbox_dispatcher",
+    "src.backend.core.messaging.outbox.FakeOutbox",
+    "src.backend.core.messaging.outbox.OutboxEvent",
+    "src.backend.infrastructure.repositories.outbox.claim_pending",
+    "src.backend.infrastructure.repositories.outbox.mark_sent",
+)
 
-# Force-overwrite DEBUG print to verify _lifespan version matches
-# S111 W2: re-exported from startup, but co_filename / co_firstlineno
-# указывают на startup.py (где функция реально определена).
+_saved_modules: dict[str, ModuleType | None] = {
+    _key: sys.modules.get(_key) for _key in _ISOLATION_KEYS
+}
+
+_lifespan = _load_lifespan_isolated()
 
 # Pre-stub outbox_repo module (BEFORE any test runs, ensure real
 # outbox.py is not loaded by accidental pytest collection).
@@ -176,6 +226,15 @@ _outbox_stub = _types.ModuleType("src.backend.infrastructure.repositories.outbox
 _outbox_stub.claim_pending = AsyncMock(return_value=[])
 _outbox_stub.mark_sent = AsyncMock()
 sys.modules["src.backend.infrastructure.repositories.outbox"] = _outbox_stub
+
+# Восстанавливаем sys.modules: изолированные модули нужны только самому
+# тесту (через переменную ``_lifespan``), но не должны занимать реальные
+# dotted-имена в глобальном реестре модулей.
+for _key, _value in _saved_modules.items():
+    if _value is None:
+        sys.modules.pop(_key, None)
+    else:
+        sys.modules[_key] = _value
 
 
 @pytest.fixture

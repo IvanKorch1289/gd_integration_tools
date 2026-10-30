@@ -23,9 +23,17 @@ def _reload_dlq():
 
     Per v4 §10 testable surface: lazy proxy state должен быть testable
     для verifying resolution patterns.
+
+    ADR-0404: дополнительно вычищаем ``dlq.kafka_writer`` — иначе
+    pre-condition «kafka_writer не загружен» зависит от порядка тестов:
+    любой более ранний тест, импортировавший writer, ломал бы assert
+    независимо от поведения lazy-proxy.
     """
-    if "src.backend.infrastructure.messaging.dlq" in sys.modules:
-        del sys.modules["src.backend.infrastructure.messaging.dlq"]
+    for _key in (
+        "src.backend.infrastructure.messaging.dlq",
+        "src.backend.infrastructure.messaging.dlq.kafka_writer",
+    ):
+        sys.modules.pop(_key, None)
     return importlib.import_module("src.backend.infrastructure.messaging.dlq")
 
 

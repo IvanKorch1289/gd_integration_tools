@@ -232,8 +232,16 @@ async def test_upload_excel_for_mass_create(service: TechService) -> None:
             "src.backend.services.core.tech.get_service_for_model",
             return_value=fake_service,
         ),
+        # ADR-0404: патчим polars ТАМ, где его держит production-код
+        # (``src.backend.services.core.tech.pl``), а не глобальный
+        # ``polars.read_excel``. Глобальная подмена расходится с тем
+        # экземпляром модуля, который был импортирован при сборе тестов:
+        # если ``sys.modules['polars']`` очищен, ``patch('polars.read_excel')``
+        # импортирует НОВЫЙ экземпляр, а production-код продолжает держать
+        # старый → вызывается реальный read_excel → «required package
+        # 'fastexcel' not found».
         patch(
-            "polars.read_excel",
+            "src.backend.services.core.tech.pl.read_excel",
             return_value=pl.DataFrame({"name": ["A"], "amount": [10]}),
         ),
     ):

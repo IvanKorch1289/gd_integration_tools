@@ -18,6 +18,8 @@ from pathlib import Path
 from types import ModuleType
 from unittest.mock import MagicMock
 
+import pytest
+
 # Mock streamlit (full surface) BEFORE any imports.
 _streamlit_mock = ModuleType("streamlit")
 for attr in [
@@ -70,12 +72,40 @@ def _passthrough_decorator(*_args, **_kwargs):
 
 _streamlit_mock.cache_data = _passthrough_decorator
 _streamlit_mock.cache_resource = _passthrough_decorator
-sys.modules["streamlit"] = _streamlit_mock
+# ADR-0404: настоящие polars/streamlit сохраняем ДО установки моков.
+# Иначе мок «вытесняет» реальный модуль из sys.modules, а conftest затем
+# удаляет мок — и в sys.modules не остаётся ни мока, ни оригинала. Позже
+# ``import polars`` создаёт НОВЫЙ экземпляр, а production-код продолжает
+# держать СТАРЫЙ → ``patch('polars.read_excel')`` патчит не тот модуль
+# (падение «required package 'fastexcel' not found»).
+# ADR-0404: оригиналы sys.modules фиксируются ДО установки моков, чтобы
+# после теста их можно было вернуть (мок polars/streamlit иначе остаётся
+# в глобальном реестре модулей и ломает другие suite'ы: «patch('polars.
+# read_excel')» патчит мок, а production-код зовёт реальный polars).
+_ORIGINAL_MODULES: dict[str, ModuleType | None] = {
+    "polars": sys.modules.get("polars"),
+    "streamlit": sys.modules.get("streamlit"),
+}
+
+
+@pytest.fixture(autouse=True)
+def _restore_stubbed_modules() -> None:
+    """Восстанавливает ``sys.modules`` после подмен polars/streamlit."""
+    yield
+    for _key, _original in _ORIGINAL_MODULES.items():
+        if _original is None:
+            for _name in [
+                _n for _n in list(sys.modules) if _n == _key or _n.startswith(f"{_key}.")
+            ]:
+                del sys.modules[_name]
+        else:
+            sys.modules[_key] = _original
+
+
 
 # Mock polars.
 _polars_mock = ModuleType("polars")
 _polars_mock.DataFrame = MagicMock()
-sys.modules["polars"] = _polars_mock
 
 
 def _page_path() -> Path:
@@ -159,12 +189,26 @@ def _load_page_module() -> object:
     global _load_counter
     _load_counter += 1
     module_name = f"_operational_costs_page_{_load_counter}"
+    _saved_modules = {
+        _key: sys.modules.get(_key) for _key in ("streamlit", "polars")
+    }
     sys.modules["streamlit"] = _build_streamlit_mock()
     sys.modules["polars"] = _build_polars_mock()
     spec = importlib.util.spec_from_file_location(module_name, _page_path())
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
-    spec.loader.exec_module(module)
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        # ADR-0404: мок polars/streamlit действует ТОЛЬКО на время загрузки
+        # страницы — иначе он остаётся в sys.modules и ``patch('polars.
+        # read_excel')`` в других suite'ах патчит мок вместо реального
+        # модуля, который держит production-код.
+        for _key, _value in _saved_modules.items():
+            if _value is None:
+                sys.modules.pop(_key, None)
+            else:
+                sys.modules[_key] = _value
     return module
 
 

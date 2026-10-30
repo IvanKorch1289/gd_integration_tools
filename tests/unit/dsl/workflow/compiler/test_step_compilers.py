@@ -95,7 +95,20 @@ def _make_fake_common() -> SimpleNamespace:
 
 @pytest.fixture
 def temporal_mock(monkeypatch: pytest.MonkeyPatch) -> tuple[SimpleNamespace, list[Any]]:
-    """Mock ``temporalio.workflow`` + ``temporalio.common``."""
+    """Mock ``temporalio.workflow`` + ``temporalio.common``.
+
+    ADR-0404: сначала импортируется РЕАЛЬНЫЙ temporalio SDK (вместе с
+    подмодулями ``client``/``service``/``exceptions``). Иначе в окне fake'а
+    любой ``import temporalio.<sub>`` создаёт в sys.modules «полу-real»
+    подмодуль (родитель — SimpleNamespace), который НЕ откатывается
+    monkeypatch'ом. Позже реальный SDK падает при импорте:
+    «module 'temporalio' has no attribute 'exceptions'» — это ломало
+    tests/unit/infrastructure/workflow/test_temporal_otel_interceptor.py.
+    """
+    import importlib
+
+    importlib.import_module("temporalio.client")
+
     fake_wf, recorder = _make_fake_temporal()
     fake_common = _make_fake_common()
     fake_temporalio = SimpleNamespace(workflow=fake_wf, common=fake_common)

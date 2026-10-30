@@ -148,12 +148,18 @@ async def _verify_ownership(
 
     # Legacy fallback (backwards-compat): no session_factory OR no explicit_tenant_id.
     if session_factory is None or explicit_tenant_id is None:
+        # extra={...} — stdlib-совместимая форма structured-полей (конвенция
+        # проекта): при fallback'е фабрики логирования на stdlib-backend
+        # structlog-kwargs привели бы к TypeError (Logger._log() не знает
+        # именованных аргументов).
         logger.debug(
             "ownership_check_stub",
-            resource_model=getattr(resource_model, "__name__", str(resource_model)),
-            resource_id=resource_id,
-            tenant_field=tenant_field,
-            reason="missing session_factory OR explicit_tenant_id",
+            extra={
+                "resource_model": getattr(resource_model, "__name__", str(resource_model)),
+                "resource_id": resource_id,
+                "tenant_field": tenant_field,
+                "reason": "missing session_factory OR explicit_tenant_id",
+            },
         )
         return
 
@@ -194,9 +200,11 @@ async def _verify_ownership(
 
     logger.debug(
         "ownership_check_pass",
-        resource_model=getattr(resource_model, "__name__", str(resource_model)),
-        resource_id=resource_id,
-        tenant_id=explicit_tenant_id,
+        extra={
+            "resource_model": getattr(resource_model, "__name__", str(resource_model)),
+            "resource_id": resource_id,
+            "tenant_id": explicit_tenant_id,
+        },
     )
 
 

@@ -384,11 +384,15 @@ def test_owner_tasks_summary_dlq_formulation_is_correct() -> None:
 
 
 def test_hitl_runbook_marks_sla_tracker_not_implemented() -> None:
-    """(6) SlaTracker помечен «не реализовано», а не «не запущен»."""
+    """(6) SLA-алертинг помечен «не реализован», а не «не запущен».
+
+    Волна 21 (ADR-0403): трекер удалён как мёртвый код → runbook говорит
+    «не реализовано», не подразумевая существующий класс.
+    """
     text = _read(_HITL_RUNBOOK)
-    assert "SlaTracker" in text, "runbook не упоминает SlaTracker"
-    assert "не реализовано" in text, (
-        "runbook должен честно помечать SlaTracker как «не реализовано»"
+    assert "SLA" in text, "runbook не упоминает SLA-алертинг"
+    assert "не реализован" in text, (
+        "runbook должен честно помечать SLA-алертинг как «не реализовано»"
     )
     assert "owner-задач" in text.lower(), (
         "runbook не ссылается на owner-задачу по SLA-алертингу"

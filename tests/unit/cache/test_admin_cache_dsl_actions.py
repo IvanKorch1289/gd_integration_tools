@@ -24,9 +24,21 @@ def _register_admin_actions() -> None:
     from src.backend.dsl.commands.action_registry import action_handler_registry
     from src.backend.dsl.commands.setup import register_action_handlers
 
+    # ADR-0404: реестр — ГЛОБАЛЬНОЕ состояние. Раньше в teardown вызывался
+    # ``clear()``, и последующие suite'ы находили пустой реестр:
+    # ``tests/unit/dsl/test_action_metadata_contract.py`` падал с
+    # «Зарегистрировано подозрительно мало action: 0». Теперь состояние
+    # восстанавливается, а не уничтожается.
+    saved_handlers = dict(action_handler_registry._handlers)
+    saved_metadata = dict(action_handler_registry._metadata)
+    saved_middleware = list(action_handler_registry._middleware)
+
     register_action_handlers()
     yield
     action_handler_registry.clear()
+    action_handler_registry._handlers.update(saved_handlers)
+    action_handler_registry._metadata.update(saved_metadata)
+    action_handler_registry._middleware.extend(saved_middleware)
 
 
 @pytest.fixture

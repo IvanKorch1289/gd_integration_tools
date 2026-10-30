@@ -33,11 +33,13 @@ from __future__ import annotations
 
 import os
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 
 from src.backend.core.config.constants import consts
+from tests.unit._xfail_environment import apply_xfail_environment_bank
 
 
 def _find_repo_root_with_config() -> Path | None:
@@ -164,10 +166,74 @@ def _cleanup_polluted_modules() -> int:
         if k in sys.modules and _is_polluted_module(k):
             del sys.modules[k]
             removed += 1
+            # ADR-0404: у подменённого ``polars`` подмодули остаются в
+            # sys.modules от ПРЕДЫДУЩЕГО реального импорта. Следующий
+            # ``import polars`` переиспользует их как «частично
+            # инициализированные» → ``polars/__init__.py::__getattr__``
+            # рекурсивно импортирует ``polars.datatypes.group`` →
+            # RecursionError (3 падения в dsl/engine/processors/*csv_to_dict*).
+            # Поэтому сносим ВСЕ подмодули polars вместе со stub'ом.
+            if k == "polars":
+                for sub in [m for m in sys.modules if m.startswith("polars.")]:
+                    del sys.modules[sub]
+                    removed += 1
     return removed
 
 
+def _ensure_structlog_backend() -> None:
+    """Возвращает structlog-backend, если фабрика логирования с него свалилась.
+
+    Фабрика (``infrastructure/logging/factory.py``) молча переключается на
+    stdlib-backend, если structlog не удалось импортировать в момент первого
+    ``get_logger()`` (циклический импорт) или если тест сбросил ``_backend``.
+    stdlib-логгер не принимает structlog-kwargs → ``Logger._log() got an
+    unexpected keyword argument 'resource_model'`` в других сьютах.
+    """
+    try:
+        from src.backend.infrastructure.logging import factory
+
+        backend = factory._backend
+        if backend is None or type(backend).__name__ == "StdlibLoggingBackend":
+            factory.configure_logging(backend="structlog")
+    except Exception:  # pragma: no cover — изоляция не должна ронять тесты
+        pass
+
+
+@pytest.fixture(autouse=True)
+def _restore_structlog_backend() -> Iterator[None]:
+    """Возвращает structlog-backend перед каждым тестом (ADR-0404).
+
+    Фабрика логирования может быть сброшена/перезагружена другим тестом →
+    следующий ``get_logger()`` молча уходит на stdlib-backend, который не
+    принимает structlog-kwargs → ``Logger._log() got an unexpected keyword
+    argument 'resource_model'`` в посторонних сьютах.
+
+    Очистка ЗАГРЯЗНЁННЫХ Модулей намеренно НЕ выполняется здесь: stub'ы
+    ставятся на уровне модуля теста (collection) и нужны самому тесту —
+    их удаление перед его же запуском ломает 10 тестов.
+    """
+    _ensure_structlog_backend()
+    yield
+
+
 @pytest.hookimpl(tryfirst=True)
+def pytest_configure(config: pytest.Config) -> None:
+    """Фиксирует logging-backend до импорта тестовых модулей (ADR-0404).
+
+    ``factory._backend`` — process-global ленивый синглтон: он создаётся при
+    ПЕРВОМ вызове ``get_logger()``. Если первый вызов приходится на момент
+    циклического импорта, ``structlog_backend`` импортировать не удаётся, и
+    фабрика МОЛЧА переключается на stdlib-backend. Тогда логгеры не
+    принимают structlog-kwargs (``Logger._log() got an unexpected keyword
+    argument 'resource_model'``), а caplog-проверки в других suite'ах видят
+    не тот вывод. Здесь backend инициализируется заранее — вне циклов
+    импорта.
+    """
+    from src.backend.core.logging import get_logger
+
+    get_logger("testbootstrap")
+
+
 def pytest_collectstart(collector: pytest.Collector) -> None:
     """Перед collection каждого узла — cleanup pollution от предыдущих.
 
@@ -179,6 +245,21 @@ def pytest_collectstart(collector: pytest.Collector) -> None:
     ``__init__.py``.
     """
     _cleanup_polluted_modules()
+
+
+# ── Банк xfail для environment-limited тестов (ADR-0404) ──────────────────────
+# Тесты, ограниченные окружением (отсутствующая optional-зависимость, нужен
+# живой Temporal-кластер, недетерминированный benchmark), помечаются
+# ``xfail`` с причиной и owner-задачей — вместо skip, чтобы сигнал не
+# терялся. Подробности и правило роста — в tests/unit/_xfail_environment.py.
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Применяет банк ``xfail`` к environment-limited тестам.
+
+    Args:
+        items: Собранные pytest-тесты.
+
+    """
+    apply_xfail_environment_bank(items)
 
 
 # ── DI overrides: snapshot/restore после каждого теста (fix 2026-09-24) ──
@@ -263,6 +344,29 @@ def _purge_polluted_modules():
     _cleanup_polluted_modules()
     yield
     _cleanup_polluted_modules()
+
+
+# ── Корневой логгер: восстановление уровня и handler'ов (ADR-0404) ───────────
+# ``init_application_logging()`` (tests/unit/infrastructure/logging/
+# test_settings_driven_init.py) выставляет корневому stdlib-логгеру уровень
+# из активного профиля (в dev это DEBUG) и НЕ восстанавливает его. После
+# этого любой ``logging.getLogger(...).debug(msg, extra={...})`` в
+# production-коде реально создаёт LogRecord — и падает на зарезервированных
+# атрибутах («Attempt to overwrite 'name' in LogRecord»), а structlog-style
+# kwargs («resource_model=...») дают «Logger._log() got an unexpected
+# keyword argument». В изоляции те же вызовы — no-op (уровень выше DEBUG),
+# поэтому дефект проявлялся только в полном прогоне.
+@_pytest.fixture(autouse=True)
+def _restore_root_logger():
+    """Восстанавливает уровень и handler'ы корневого stdlib-логгера."""
+    import logging
+
+    root = logging.getLogger()
+    saved_level = root.level
+    saved_handlers = list(root.handlers)
+    yield
+    root.setLevel(saved_level)
+    root.handlers[:] = saved_handlers
 
 
 # ── TaskRegistry: снятие «закрыт» после каждого теста (fix test pollution) ──

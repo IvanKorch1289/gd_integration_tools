@@ -53,12 +53,33 @@ _stub_sm.main_session_manager = _StubSessionManager()  # type: ignore[attr-defin
 _stub_sm.get_main_session_manager = lambda *_a, **_kw: _StubSessionManager()  # type: ignore[attr-defined]
 # outbox.py импортирует DatabaseSessionManager только для аннотации типа.
 _stub_sm.DatabaseSessionManager = _StubSessionManager  # type: ignore[attr-defined]
+
+# ADR-0404: stub не должен оставаться в sys.modules после импорта outbox.
+# ``session_manager`` экспортирует ``main_session_manager`` через PEP-562
+# ``__getattr__`` + ``@lru_cache`` — СИНГЛТОН живёт в кэше функции. Удаление
+# модуля из sys.modules (conftest чистит «polluted» модули) и последующий
+# re-import дают НОВЫЙ модуль → НОВЫЙ lru_cache → НОВЫЙ инстанс синглтона.
+# Ранние импортёры (``repositories.base.crud_mixin``) продолжают держать
+# старый инстанс — их декоратор ``@main_session_manager.connection()`` уходит
+# в реальный Postgres вместо подставленной SQLite-сессии (24 падения в
+# test_base_repository.py). Поэтому возвращаем оригинальный модуль сразу.
+_REAL_SESSION_MANAGER = sys.modules.get(
+    "src.backend.infrastructure.database.session_manager"
+)
 sys.modules["src.backend.infrastructure.database.session_manager"] = _stub_sm
 
-from src.backend.infrastructure.repositories.outbox import (
-    claim_pending,
-    reset_stuck_processing,
-)
+try:
+    from src.backend.infrastructure.repositories.outbox import (
+        claim_pending,
+        reset_stuck_processing,
+    )
+finally:
+    if _REAL_SESSION_MANAGER is not None:
+        sys.modules["src.backend.infrastructure.database.session_manager"] = (
+            _REAL_SESSION_MANAGER
+        )
+    else:
+        sys.modules.pop("src.backend.infrastructure.database.session_manager", None)
 
 
 def _make_fake_outbox_row(

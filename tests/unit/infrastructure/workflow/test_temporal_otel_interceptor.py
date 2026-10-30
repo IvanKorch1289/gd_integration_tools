@@ -17,6 +17,27 @@ import pytest
 from src.backend.infrastructure.workflow.temporal_backend import TemporalWorkflowBackend
 
 
+@pytest.fixture(autouse=True)
+def _clean_temporal_sdk() -> Any:
+    """ADR-0404: temporalio — глобальный пакет в ``sys.modules``.
+
+    Другие suite'ы подменяют ``temporalio`` fake-модулями (monkeypatch),
+    после чего в ``sys.modules`` остаются «полу-real» подмодули, и реальный
+    SDK перестаёт импортироваться («module 'temporalio' has no attribute
+    'client'»). Здесь пакет приводится к чистому состоянию и импортируется
+    заново — тест не зависит от порядка выполнения suite'ов.
+    """
+    import importlib
+    import sys
+
+    for _name in [
+        _n for _n in list(sys.modules) if _n == "temporalio" or _n.startswith("temporalio.")
+    ]:
+        del sys.modules[_name]
+    module = importlib.import_module("temporalio.client")
+    yield module
+
+
 @pytest.mark.asyncio
 async def test_connect_passes_tracing_interceptor() -> None:
     """Client.connect получает TracingInterceptor (trace propagation)."""

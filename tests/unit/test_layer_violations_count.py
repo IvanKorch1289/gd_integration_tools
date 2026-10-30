@@ -53,8 +53,13 @@ def _run_check_layers() -> subprocess.CompletedProcess[str]:
 
 
 def _reported_legacy_count(output: str) -> int | None:
-    """Извлечь число legacy-нарушений из вывода гейта (``baseline: N legacy``)."""
-    match = re.search(r"baseline:\s*(\d+)\s*legacy", output)
+    """Извлечь число legacy-нарушений из вывода гейта.
+
+    Формат вывода менялся: раньше было ``baseline: N legacy``, теперь —
+    ``debt: N legacy`` (в скобках сводки). Поддерживаем оба, чтобы теект
+    не ломался при косметической правке гейта (ADR-0404).
+    """
+    match = re.search(r"(?:baseline|debt):\s*(\d+)\s*legacy", output)
     return int(match.group(1)) if match else None
 
 

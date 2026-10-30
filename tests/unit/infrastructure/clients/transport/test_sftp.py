@@ -7,27 +7,36 @@
 
 from __future__ import annotations
 
-import importlib
-
 import pytest
 
 from src.backend.core.config.profile import APP_PROFILE_ENV
 
 
-def _reload_sftp_module():
-    """Перезагружает модуль ``sftp`` после изменения settings/env.
+def _reload_sftp_module(monkeypatch: pytest.MonkeyPatch):
+    """Готовит модуль ``sftp`` к проверке ``_resolve_known_hosts``.
 
-    Settings-singleton кэширует ``transport_settings`` на момент импорта,
-    поэтому для проверки изменения ``TRANSPORT_SFTP_KNOWN_HOSTS_PATH``
-    нужен повторный импорт модуля.
+    ADR-0404: раньше здесь стоял ``importlib.reload(settings_module)`` —
+    он пересоздаёт глобальный singleton ``settings`` (PEP-562 ``__getattr__``
+    + ``@lru_cache``). Ранние импортёры держали старый объект, поздние —
+    новый: рассинхрон ломал ``monkeypatch.setattr(settings.app, ...)`` в
+    других suite'ах (например ``admin_enabled=False`` не выключал
+    admin-backend в ``plugins/composition/test_app_factory_smoke.py``).
+
+    Теперь подмена локальная: путь к ``known_hosts`` выставляется прямо в
+    ``settings.transport`` (monkeypatch откатит его), а активный профиль
+    читается из env напрямую (``get_active_profile`` без кэша).
     """
+    import os
+
     import src.backend.core.config.settings as settings_module
-    import src.backend.core.config.transport as transport_module
     import src.backend.infrastructure.clients.transport.sftp as sftp_module
 
-    importlib.reload(transport_module)
-    importlib.reload(settings_module)
-    importlib.reload(sftp_module)
+    raw_path = os.environ.get("TRANSPORT_SFTP_KNOWN_HOSTS_PATH", "")
+    monkeypatch.setattr(
+        settings_module.settings.transport,
+        "sftp_known_hosts_path",
+        raw_path or None,
+    )
     return sftp_module
 
 
@@ -37,7 +46,7 @@ def test_resolve_known_hosts_dev_light_without_path_returns_empty_tuple(
     """В dev_light без пути _resolve_known_hosts() возвращает () (skip)."""
     monkeypatch.setenv(APP_PROFILE_ENV, "dev_light")
     monkeypatch.delenv("TRANSPORT_SFTP_KNOWN_HOSTS_PATH", raising=False)
-    sftp_module = _reload_sftp_module()
+    sftp_module = _reload_sftp_module(monkeypatch)
 
     result = sftp_module._resolve_known_hosts()
 
@@ -50,7 +59,7 @@ def test_resolve_known_hosts_prod_without_path_raises(
     """В prod без пути _resolve_known_hosts() поднимает ValueError (V1)."""
     monkeypatch.setenv(APP_PROFILE_ENV, "prod")
     monkeypatch.delenv("TRANSPORT_SFTP_KNOWN_HOSTS_PATH", raising=False)
-    sftp_module = _reload_sftp_module()
+    sftp_module = _reload_sftp_module(monkeypatch)
 
     with pytest.raises(ValueError, match="TRANSPORT_SFTP_KNOWN_HOSTS_PATH"):
         sftp_module._resolve_known_hosts()
@@ -64,7 +73,7 @@ def test_resolve_known_hosts_returns_path_when_configured(
     known_hosts_file.write_text("example.com ssh-rsa AAAA...")
     monkeypatch.setenv(APP_PROFILE_ENV, "prod")
     monkeypatch.setenv("TRANSPORT_SFTP_KNOWN_HOSTS_PATH", str(known_hosts_file))
-    sftp_module = _reload_sftp_module()
+    sftp_module = _reload_sftp_module(monkeypatch)
 
     result = sftp_module._resolve_known_hosts()
 
@@ -77,7 +86,7 @@ def test_resolve_known_hosts_dev_profile_without_path_raises(
     """В dev (не dev_light) без пути требуется явная декларация."""
     monkeypatch.setenv(APP_PROFILE_ENV, "dev")
     monkeypatch.delenv("TRANSPORT_SFTP_KNOWN_HOSTS_PATH", raising=False)
-    sftp_module = _reload_sftp_module()
+    sftp_module = _reload_sftp_module(monkeypatch)
 
     with pytest.raises(ValueError, match="TRANSPORT_SFTP_KNOWN_HOSTS_PATH"):
         sftp_module._resolve_known_hosts()
