@@ -32,11 +32,16 @@ __all__ = ("mask_pii", "redact_for_observability")
 # S222: Email/Phone/Card shared via core.security.pii_patterns.
 # S219: SNILS/INN/RU_PASSPORT (single source of truth).
 from src.backend.core.security.pii_patterns import CARD as _CARD
-from src.backend.core.security.pii_patterns import EMAIL as _EMAIL
 from src.backend.core.security.pii_patterns import INN as _INN
 from src.backend.core.security.pii_patterns import PHONE as _PHONE
 from src.backend.core.security.pii_patterns import RU_PASSPORT as _RU_PASSPORT
 from src.backend.core.security.pii_patterns import SNILS as _SNILS
+
+# ADR-0401: fast-path маскирования email. ``sub_email`` пропускает регекс
+# для строк без ``@`` (ADR-0392) — раньше этот путь применял только
+# ``entrypoints/middlewares/data_masking.py``, а structlog-фильтр всегда
+# сканировал строку линейно.
+from src.backend.core.security.pii_patterns import sub_email
 
 
 def redact_for_observability(value: Any) -> Any:
@@ -55,7 +60,7 @@ def redact_for_observability(value: Any) -> Any:
         v = _CARD.sub("<card>", v)
         v = _RU_PASSPORT.sub("<passport>", v)
         v = _INN.sub("<inn>", v)
-        v = _EMAIL.sub("<email>", v)
+        v = sub_email("<email>", v)
         return _PHONE.sub("<phone>", v)
     if isinstance(value, dict):
         return {k: redact_for_observability(v) for k, v in value.items()}

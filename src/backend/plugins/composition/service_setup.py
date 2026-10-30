@@ -173,36 +173,33 @@ def _register_cache_facade() -> None:
         return
 
     def _factory() -> UnifiedCacheFacade:
-        from pathlib import Path
-
         from src.backend.core.config.services.cache import cache_settings
         from src.backend.core.security.capabilities.gate import CapabilityGate
         from src.backend.core.svcs_registry import get_service, has_service
-        from src.backend.infrastructure.cache.backends.disk import DiskCacheBackend
-        from src.backend.infrastructure.cache.backends.memory import MemoryBackend
-        from src.backend.infrastructure.cache.factory import create_cache_backend
-        from src.backend.infrastructure.cache.tenant_wrapper import TenantCacheBackend
+        from src.backend.infrastructure.cache.factory import (
+            create_cache_backend,
+            create_cache_fallback_backends,
+        )
 
         primary = create_cache_backend(cache_settings)
         # Cycle 168 (PROD_READINESS §1.2): memory и disk fallback тоже
         # оборачиваются в TenantCacheBackend для defense-in-depth против
         # cross-tenant data leak через shared L1/L3 fallback.
-        memory = (
-            TenantCacheBackend(
-                MemoryBackend(maxsize=cache_settings.l1_maxsize)
-            )
-            if cache_settings.l1_enabled
-            else None
-        )
+        #
+        # ADR-0401: fallback-уровни создаются фабрикой кэша, которая
+        # регистрирует их в глобальном ``CacheInvalidator``. Раньше они
+        # создавались здесь напрямую и в инвалидаторе не регистрировались —
+        # tag/pattern-инвалидация чистила только primary-тир, поэтому после
+        # отказа Redis клиент получал stale-значения из L1/L3.
+        #
         # Cycle 163 audit fix: disk_fallback_path теперь в CacheSettings
         # (cycle 162 audit found: getattr-fallback маскировал отсутствие
         # поля). disk_fallback_enabled позволяет отключить L3 tier
         # (например, для in-cluster production, где диск — anti-pattern).
-        disk: TenantCacheBackend | None = None
-        if cache_settings.disk_fallback_enabled:
-            disk = TenantCacheBackend(
-                DiskCacheBackend(Path(cache_settings.disk_fallback_path))
-            )
+        memory, disk = create_cache_fallback_backends(
+            cache_settings,
+            disk_path=cache_settings.disk_fallback_path,
+        )
 
         capability_check = None
         if has_service(CapabilityGate):

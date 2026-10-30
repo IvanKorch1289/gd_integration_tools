@@ -537,6 +537,36 @@ class S3ObjectStorage(ObjectStorage):
                 )
                 raise ServiceError(f"S3 head failed: {exc}") from exc
 
+    async def size(self, key: str) -> int:
+        """Размер объекта в байтах (``0`` — если объекта нет).
+
+        ADR-0401: метод отсутствовал, поэтому ``StorageFacade`` (который
+        работает через :class:`TenantObjectStorage`) не мог уменьшить
+        счётчик байт пер-тенантной квоты при удалении объекта — уменьшался
+        только счётчик файлов. Контракт совпадает с
+        :meth:`LocalFSStorage.size <src.backend.infrastructure.storage.local_fs.LocalFSStorage.size>`.
+
+        Args:
+            key: Object key.
+
+        Returns:
+            Размер объекта в байтах (``0`` — объект отсутствует).
+
+        """
+        full_key = self._safe_key(key)
+        async with self._open() as s3:
+            try:
+                response = await s3.head_object(Bucket=self._bucket, Key=full_key)
+            except ClientError as exc:
+                if self._is_not_found(exc):
+                    return 0
+                self.logger.error(
+                    "S3ObjectStorage.size failed key=%s err=%s", full_key, exc
+                )
+                raise ServiceError(f"S3 head failed: {exc}") from exc
+            length = response.get("ContentLength")
+            return int(length) if isinstance(length, int) else 0
+
     async def list_keys(self, prefix: str = "") -> list[str]:
         """List all object keys with given prefix.
 

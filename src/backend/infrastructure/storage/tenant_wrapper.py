@@ -132,6 +132,25 @@ class TenantObjectStorage(ObjectStorage):
         """Exists по tenant-префиксу."""
         return await self._wrapped.exists(self._scoped(key))
 
+    async def size(self, key: str) -> int:
+        """Размер объекта по tenant-префиксу (``0`` — объект отсутствует).
+
+        ADR-0401: wrapper проксировал только CRUD-операции, поэтому
+        ``size()`` у S3-бэкенда не доходил до :class:`StorageFacade` —
+        счётчик байт пер-тенантной квоты не уменьшался при удалении.
+
+        Args:
+            key: Object key (без tenant-префикса).
+
+        Returns:
+            Размер объекта в байтах (``0`` — неизвестно/отсутствует).
+
+        """
+        size_fn = getattr(self._wrapped, "size", None)
+        if not callable(size_fn):
+            return 0
+        return int(await size_fn(self._scoped(key)))
+
     async def list_keys(self, prefix: str = "") -> list[str]:
         """List в рамках tenant-пространства; возвращает ключи без префикса.
 

@@ -89,14 +89,29 @@ def _extract_domain(url: str) -> str:
 def _get_pool(context: ExecutionContext) -> PlaywrightBrowserPool:
     """Получает pool из ExecutionContext (DI-инъекция через app_state).
 
-    В тестах pool инжектится через monkeypatch в context.app_state или
-    через прямой attr ``context.browser_pool``.
+    Порядок разрешения:
+
+    1. ``context.browser_pool`` — прямая инъекция (тесты / кастомные роуты);
+    2. ``context.app_state.browser_pool`` — legacy-путь (app_state есть
+       не у всех реализаций :class:`ExecutionContext`);
+    3. DI-провайдер :func:`core.di.providers.rpa.get_browser_pool_provider`
+       — canonical single entry point (ADR-0401). Раньше этого шага не
+       было, поэтому RPA browser-шаги всегда падали с ``RuntimeError``
+       (ADR-0369, дефект G12.6).
+
+    Raises:
+        RuntimeError: pool не зарегистрирован ни в одном из источников.
+
     """
     pool = getattr(context, "browser_pool", None)
     if pool is None:
         app_state = getattr(context, "app_state", None)
         if app_state is not None:
             pool = getattr(app_state, "browser_pool", None)
+    if pool is None:
+        from src.backend.core.di.providers.rpa import get_browser_pool_provider
+
+        pool = get_browser_pool_provider()
     if pool is None:
         raise RuntimeError(
             "PlaywrightBrowserPool не зарегистрирован в ExecutionContext; "

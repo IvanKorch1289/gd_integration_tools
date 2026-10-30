@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import inspect
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
@@ -7,7 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
-from src.backend.dsl.engine.exchange import Exchange
+from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -25,6 +26,51 @@ __all__ = (
 ProcessorCallable = Callable[[Exchange[Any], "ExecutionContext"], Any | Awaitable[Any]]
 
 _logger = get_logger(__name__)
+
+
+def _exchange_stopped(exchange: Exchange[Any]) -> bool:
+    """True, если обработка exchange остановлена (безопасно для mock'ов).
+
+    Args:
+        exchange: Текущий Exchange.
+
+    Returns:
+        ``True`` — шаг был прерван (``exchange.stop()``).
+
+    """
+    try:
+        return exchange.stopped is True
+    except AttributeError:
+        return False
+
+
+def _audit_outcome(exchange: Exchange[Any]) -> str:
+    """Вычисляет outcome audit-события по состоянию exchange.
+
+    Args:
+        exchange: Текущий Exchange.
+
+    Returns:
+        ``"failure"`` — шаг упал; ``"denied"`` — обработка остановлена
+        (в т.ч. отказ capability-гейта); ``"success"`` — шаг выполнен.
+
+    """
+    try:
+        status = exchange.status
+    except AttributeError:
+        # Exchange-заглушка (mock) без ``status`` — считаем шаг успешным.
+        return "success"
+    if status == ExchangeStatus.failed:
+        # fail+stop — это отказ capability-гейта (ADR-0393).
+        return "denied" if _exchange_stopped(exchange) else "failure"
+    try:
+        if exchange.error:
+            return "failure"
+    except AttributeError:
+        pass
+    if _exchange_stopped(exchange):
+        return "denied"
+    return "success"
 
 
 def _capability_gate_enabled() -> bool:
@@ -61,11 +107,33 @@ class BaseProcessor(ABC):
             capability-check через runtime-резолвер (ADR-0366) перед
             выполнением. Если ``None`` — auth-check пропускается.
             (S172 Wave S2 — connector authorization.)
+        audit_event: Имя audit-события шага (``"rpa.browser.launch"``).
+            ADR-0370: поле было объявлено более чем 40 классами, но
+            **ни один потребитель его не читал** — событие не создавалось.
+            ADR-0401: эмиссия перенесена в базовый класс — событие
+            создаётся автоматически после выполнения шага. ``None`` —
+            шаг не аудируется (поведение по умолчанию).
     """
 
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
     compensatable: ClassVar[bool] = True
     required_capability: ClassVar[str | None] = None
+    audit_event: ClassVar[str | None] = None
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Оборачивает ``process`` наследника эмиссией ``audit_event``.
+
+        ADR-0401: событие объявляется классами, но потребителя у него
+        не было (ADR-0370). Чтобы не править 40+ классов, эмиссия
+        подключается здесь — на уровне базового класса.
+
+        Args:
+            cls: Создаваемый подкласс.
+            **kwargs: Прочие аргументы (передаются базовому классу).
+
+        """
+        super().__init_subclass__(**kwargs)
+        _install_audit_emitter(cls)
 
     def __init__(self, name: str | None = None) -> None:
         self.name = name or self.__class__.__name__
@@ -92,6 +160,55 @@ class BaseProcessor(ABC):
             exchange.set_property(field, value)
             return
         exchange.set_property(target, value)
+
+    def _emit_processor_audit(
+        self, exchange: Exchange[Any], *, outcome: str = "success"
+    ) -> None:
+        """Эмитит audit-событие шага (ADR-0401).
+
+        Событие **не содержит значений данных** — только метаданные
+        выполнения: имя процессора, capability, маршрут и tenant. Это
+        позволяет построить журнал «кто и каким шагом что делал», не
+        превращая audit-лог в копию данных.
+
+        Ошибка эмиссии никогда не роняет шаг (best-effort, как и остальные
+        audit-вызовы проекта).
+
+        Args:
+            exchange: Текущий Exchange (источник tenant/route/principal).
+            outcome: Итог выполнения (``success`` / ``failure`` / ``denied``).
+
+        """
+        event = self.audit_event
+        if event is None:
+            return
+        details: dict[str, Any] = {
+            "processor": self.name,
+            "processor_class": type(self).__name__,
+        }
+        capability = self.required_capability
+        if capability:
+            details["capability"] = capability
+        meta = getattr(exchange, "meta", None)
+        route_id = getattr(meta, "route_id", None)
+        if route_id:
+            details["route_id"] = route_id
+        tenant_id = getattr(meta, "tenant_id", None)
+        if tenant_id:
+            details["tenant"] = tenant_id
+        try:
+            from src.backend.core.audit.facade import emit_audit
+
+            emit_audit(
+                event=event,
+                actor=f"dsl_processor:{self.name}",
+                resource=f"dsl_processor:{self.name}",
+                action="process",
+                outcome=outcome,
+                details=details,
+            )
+        except Exception as exc:  # pragma: no cover — аудит не должен ронять шаг
+            _logger.debug("processor_audit_emit_failed: %s", exc)
 
     async def auth_check(
         self,
@@ -257,6 +374,55 @@ class BaseProcessor(ABC):
 
         """
         return None
+
+
+def _install_audit_emitter(cls: type[BaseProcessor]) -> None:
+    """Оборачивает ``process`` класса эмиссией ``audit_event`` (ADR-0401).
+
+    Правила:
+
+    * класс без ``audit_event`` — не оборачивается (шаг не аудируется);
+    * класс, объявляющий ``audit_event`` **и** реализующий собственный
+      ``process`` — оборачивается (событие эмитится после шага);
+    * класс, наследующий ``process`` от класса, который эмитит audit
+      самостоятельно (контракт ``_audit_safe_emit`` — ``BaseAIProcessor``),
+      — **не** оборачивается, иначе событие продублировалось бы.
+
+    Args:
+        cls: Подкласс :class:`BaseProcessor` (в момент создания класса).
+
+    """
+    own_process = cls.__dict__.get("process")
+    if own_process is not None:
+        target = own_process
+    else:
+        target = getattr(cls, "process", None)
+        if target is None:
+            return
+        if hasattr(cls, "_audit_safe_emit"):
+            # Наследник сам эмитит audit (BaseAIProcessor) — дублировать нельзя.
+            return
+    if getattr(target, "__audit_wrapped__", False):
+        return
+    if getattr(cls, "audit_event", None) is None:
+        return
+
+    @functools.wraps(target)
+    async def _process_with_audit(
+        self: BaseProcessor,
+        exchange: Exchange[Any],
+        context: ExecutionContext,
+    ) -> None:
+        """Выполняет шаг и эмитит его audit-событие."""
+        try:
+            await target(self, exchange, context)
+        except BaseException:
+            self._emit_processor_audit(exchange, outcome="failure")
+            raise
+        self._emit_processor_audit(exchange, outcome=_audit_outcome(exchange))
+
+    _process_with_audit.__audit_wrapped__ = True  # type: ignore[attr-defined]
+    cls.process = _process_with_audit  # type: ignore[method-assign]
 
 
 class CallableProcessor(BaseProcessor):

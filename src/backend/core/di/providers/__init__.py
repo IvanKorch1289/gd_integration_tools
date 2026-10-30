@@ -48,6 +48,7 @@ from src.backend.core.di.providers import db as db
 from src.backend.core.di.providers import http as http
 from src.backend.core.di.providers import messaging as messaging
 from src.backend.core.di.providers import observability as observability
+from src.backend.core.di.providers import rpa as rpa
 from src.backend.core.di.providers import security as security
 from src.backend.core.di.providers import storage as storage
 from src.backend.core.di.providers import workflow as workflow
@@ -193,6 +194,15 @@ from src.backend.core.di.providers.observability import (
     set_slo_tracker_provider,
 )
 
+# --- rpa.py (ADR-0401) ---
+from src.backend.core.di.providers.rpa import (
+    get_browser_pool_provider,
+    get_desktop_rpa_client_provider,
+    set_browser_pool_provider,
+    set_desktop_rpa_client_provider,
+    shutdown_rpa_runtime,
+)
+
 # --- security.py (4 funcs, W9 P2-13 Phase 2) ---
 from src.backend.core.di.providers.security import (
     get_antivirus_backend_factory_provider,
@@ -289,6 +299,7 @@ __all__ = [
     "get_api_key_manager_provider",
     "get_app_logger_provider",
     "get_browser_client_provider",
+    "get_browser_pool_provider",
     "get_cache_invalidator_provider",
     "get_cdc_client_provider",
     "get_clickhouse_client_provider",
@@ -327,6 +338,7 @@ __all__ = [
     "get_mongo_client_provider",
     "get_mq_sink_class_provider",
     "get_notifications_module_provider",
+    "get_desktop_rpa_client_provider",
     "get_object_storage_provider",
     "get_pii_tokenizer_provider",
     "get_rag_cache_provider",
@@ -376,6 +388,7 @@ __all__ = [
     "messaging",
     "observability",
     "resolve_module",
+    "rpa",
     "security",
     "set_action_bus_service_provider",
     "set_action_dispatcher_provider",
@@ -422,6 +435,8 @@ __all__ = [
     "set_mongo_client_provider",
     "set_mq_sink_class_provider",
     "set_notifications_module_provider",
+    "set_browser_pool_provider",
+    "set_desktop_rpa_client_provider",
     "set_object_storage_provider",
     "set_pii_tokenizer_provider",
     "set_rag_cache_provider",
@@ -463,6 +478,7 @@ __all__ = [
     "set_workflow_state_repository_provider",
     "set_workflow_state_store_provider",
     "set_ws_sink_class_provider",
+    "shutdown_rpa_runtime",
     "storage",
     "workflow",
 ]

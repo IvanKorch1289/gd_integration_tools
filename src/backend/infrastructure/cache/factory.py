@@ -26,9 +26,15 @@ from src.backend.infrastructure.cache.backends.redis import RedisBackend
 from src.backend.infrastructure.cache.tenant_wrapper import TenantCacheBackend
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from redis.asyncio import Redis
 
-__all__ = ("create_cache_backend",)
+__all__ = (
+    "create_cache_backend",
+    "create_cache_fallback_backends",
+    "register_backend_in_invalidator",
+)
 
 logger = get_logger("infrastructure.cache.factory")
 
@@ -67,15 +73,19 @@ def _redis_client() -> Redis:
     return raw
 
 
-def _register_invalidator_backend(backend: CacheBackend) -> None:
+def register_backend_in_invalidator(backend: CacheBackend) -> None:
     """Регистрирует backend в глобальном ``CacheInvalidator``.
 
     Wave 18 (ADR-0391), дефект 5 (medium): ``CacheInvalidator._backends``
     был пуст — ``add_backend()`` не вызывался нигде в ``src/`` → tag- и
     pattern-инвалидация всегда возвращала 0 (no-op).
 
-    Регистрация идёт из фабрики (composition root не в зоне правок),
-    idempotent: повторный вызов с тем же backend'ом не дублирует запись.
+    Идемпотентно: повторный вызов с тем же backend'ом не дублирует запись.
+
+    ADR-0401: функция сделана публичной, потому что регистрировать
+    backend'ы должен не только primary (Redis), но и fallback-уровни
+    L1/L3 — иначе tag-инвалидация очищала только primary-тир, и после
+    отказа Redis клиент получал stale-значения из fallback'а.
 
     Args:
         backend: Созданный cache-backend.
@@ -88,9 +98,66 @@ def _register_invalidator_backend(backend: CacheBackend) -> None:
         return
     invalidator.add_backend(backend)
     logger.debug(
-        "create_cache_backend: зарегистрирован backend %s в CacheInvalidator",
+        "cache backend %s зарегистрирован в CacheInvalidator",
         type(backend).__name__,
     )
+
+
+def create_cache_fallback_backends(
+    settings: CacheSettings | None = None,
+    *,
+    disk_path: str | Path | None = None,
+) -> tuple[CacheBackend | None, CacheBackend | None]:
+    """Создаёт fallback-уровни кэша (L1 memory, L3 disk) с tenant-изоляцией.
+
+    ADR-0401: уровни создавались напрямую в
+    ``plugins/composition/service_setup.py`` и в глобальный
+    ``CacheInvalidator`` **не** регистрировались — регистрировался только
+    primary (Redis). В итоге tag/pattern-инвалидация чистила лишь
+    primary-тир, и после отказа Redis клиент получал stale-значения из
+    memory/disk-fallback.
+
+    Оба backend'а оборачиваются в :class:`TenantCacheBackend`
+    (defense-in-depth против cross-tenant leak через shared L1/L3) и
+    регистрируются в глобальном ``CacheInvalidator``.
+
+    Args:
+        settings: Опциональный override; по умолчанию — ``cache_settings``.
+        disk_path: Опциональный override пути L3-тира; по умолчанию —
+            ``settings.disk_fallback_path``. Composition root передаёт путь
+            явно, чтобы чтение конфигурации оставалось в нём.
+
+    Returns:
+        Кортеж ``(memory, disk)``; ``None`` — если соответствующий уровень
+        выключен в настройках (``l1_enabled`` / ``disk_fallback_enabled``).
+
+    """
+    from pathlib import Path
+
+    from src.backend.infrastructure.cache.backends.disk import DiskCacheBackend
+    from src.backend.infrastructure.cache.backends.memory import MemoryBackend
+
+    cfg = settings or cache_settings
+
+    memory: CacheBackend | None = None
+    if cfg.l1_enabled:
+        memory = TenantCacheBackend(MemoryBackend(maxsize=cfg.l1_maxsize))
+        register_backend_in_invalidator(memory)
+
+    disk: CacheBackend | None = None
+    if cfg.disk_fallback_enabled:
+        resolved_path = Path(disk_path) if disk_path is not None else Path(
+            cfg.disk_fallback_path
+        )
+        disk = TenantCacheBackend(DiskCacheBackend(resolved_path))
+        register_backend_in_invalidator(disk)
+
+    logger.debug(
+        "create_cache_fallback_backends: memory=%s disk=%s",
+        memory is not None,
+        disk is not None,
+    )
+    return memory, disk
 
 
 def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
@@ -154,5 +221,5 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
     wrapped = TenantCacheBackend(backend)
     # Wave 18 (ADR-0391), дефект 5: регистрируем backend в инвалидаторе —
     # иначе tag/pattern-инвалидация остаётся no-op (всегда 0).
-    _register_invalidator_backend(wrapped)
+    register_backend_in_invalidator(wrapped)
     return wrapped

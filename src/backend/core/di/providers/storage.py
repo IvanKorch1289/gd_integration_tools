@@ -70,13 +70,64 @@ def get_storage_facade_provider(
     from src.backend.services.storage.facade import StorageFacade
 
     return StorageFacade(
-        storage=storage_backend, capability_check=capability_check, plugin=plugin
+        storage=storage_backend,
+        capability_check=capability_check,
+        plugin=plugin,
+        quota_manager=get_quota_manager_provider(),
+        enforce_quota=_enforce_quota_enabled(),
     )
 
 
 def set_storage_facade_provider(facade: Any) -> None:
     """Test-инжекция готового :class:`StorageFacade`."""
     _overrides["storage_facade"] = facade
+
+
+# ─────────────── Quota manager (ADR-0401) ───────────────
+
+
+def _enforce_quota_enabled() -> bool:
+    """Читает флаг ``storage.enforce_quota`` из настроек (fail-safe → False).
+
+    Returns:
+        ``True`` — квоты enforce'ятся (запись падает при превышении);
+        ``False`` — alert-only режим.
+
+    """
+    try:
+        from src.backend.core.config.settings import settings
+
+        return bool(getattr(settings.storage, "enforce_quota", False))
+    except Exception:  # pragma: no cover — настройки недоступны → alert-only
+        return False
+
+
+def get_quota_manager_provider() -> Any:
+    """Возвращает менеджер пер-тенантных квот (single entry point).
+
+    ADR-0401: раньше в этом модуле квотный менеджер **не создавался**
+    вовсе — фасад, отданный extensions'ам через
+    :func:`get_storage_facade_provider`, получал ``quota_manager=None`` и
+    ``enforce_quota=False``, то есть режим enforcement из
+    ``FileStorageSettings.enforce_quota`` не доходил до extensions, а учёт
+    usage вёлся через ленивый default-менеджер фасада (вне DI-реестра).
+
+    Returns:
+        :class:`TenantFileQuotaManager` (fail-OPEN без Redis).
+
+    """
+    if "quota_manager" in _overrides:
+        return _overrides["quota_manager"]
+    from src.backend.infrastructure.storage.tenant_file_quota import (
+        get_tenant_file_quota_manager,
+    )
+
+    return get_tenant_file_quota_manager()
+
+
+def set_quota_manager_provider(manager: Any) -> None:
+    """Test-инъекция менеджера квот."""
+    _overrides["quota_manager"] = manager
 
 
 def get_s3_client_provider() -> Any:
@@ -89,7 +140,9 @@ def get_s3_client_provider() -> Any:
 
 __all__ = (
     "get_object_storage_provider",
+    "get_quota_manager_provider",
     "get_storage_facade_provider",
     "set_object_storage_provider",
+    "set_quota_manager_provider",
     "set_storage_facade_provider",
 )

@@ -209,6 +209,10 @@ def test_register_app_state_writes_every_singleton_to_state(
         "vault_refresher",
         "watermark_store",
         "mqtt_handler",
+        # ADR-0401: RPA-runtime (browser pool + desktop-RPA client) —
+        # без регистрации DSL-шаги browser/desktop падали с RuntimeError.
+        "browser_pool",
+        "desktop_rpa_client",
     )
     for attr in expected_attrs:
         assert hasattr(fresh_app.state, attr), f"app.state.{attr} missing"

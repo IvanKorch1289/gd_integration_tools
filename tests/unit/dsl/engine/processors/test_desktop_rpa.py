@@ -1,6 +1,11 @@
 """Тесты DSL-шага ``desktop_rpa`` (Wave [wave:s8/k3-rpa-windows-desktop]).
 
 Используют AsyncMock для DesktopRpaClient — реальный pywinauto не нужен.
+
+ADR-0401: клиент резолвится не только из ``ExecutionContext``, но и из
+DI-провайдера ``core.di.providers.rpa`` — поэтому тесты, проверяющие ветку
+«клиент вообще недоступен», подменяют провайдер на ``None`` (иначе шаг
+выполнил бы реальный HTTP-вызов к sidecar'у).
 """
 
 from __future__ import annotations
@@ -19,6 +24,18 @@ from src.backend.services.rpa.desktop_rpa_client import DesktopRpaError
 def _bypass_auth() -> None:
     """DesktopRpaProcessor требует capability=rpa.desktop.automate — bypass."""
     DesktopRpaProcessor.auth_check = AsyncMock(return_value=True)  # type: ignore[method-assign]
+
+
+@pytest.fixture(autouse=True)
+def _isolate_desktop_client_provider() -> Any:
+    """Изолирует DI-провайдер desktop-RPA клиента (ADR-0401)."""
+    from src.backend.core.di.providers import rpa as rpa_providers
+
+    saved = dict(rpa_providers._overrides)
+    rpa_providers.set_desktop_rpa_client_provider(None)
+    yield
+    rpa_providers._overrides.clear()
+    rpa_providers._overrides.update(saved)
 
 
 def _exchange() -> Exchange[Any]:

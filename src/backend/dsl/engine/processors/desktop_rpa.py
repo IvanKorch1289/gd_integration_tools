@@ -95,6 +95,16 @@ class DesktopRpaProcessor(BaseProcessor):
             if app_state is not None:
                 client = getattr(app_state, "desktop_rpa_client", None)
         if client is None:
+            # ADR-0401: canonical single entry point — DI-провайдер
+            # RPA-runtime. Раньше зависимость искалась только в
+            # ``ExecutionContext`` (у которого нет ни ``desktop_rpa_client``,
+            # ни ``app_state``) → шаг всегда падал.
+            from src.backend.core.di.providers.rpa import (
+                get_desktop_rpa_client_provider,
+            )
+
+            client = get_desktop_rpa_client_provider()
+        if client is None:
             exchange.fail(
                 "desktop_rpa: DesktopRpaClient не зарегистрирован "
                 "(проверь lifespan / DI services/rpa/desktop_rpa_client.py)"

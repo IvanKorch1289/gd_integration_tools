@@ -10,6 +10,10 @@ Capability-facade stub возвращает denied в unit-тестах, поэ�
 ``auth_check`` подменяется на no-op через ``_bypass_auth_check`` fixture.
 Round-trip тесты проверяют что ``required_capability`` объявлен и
 соответствует documented vocabulary.
+
+ADR-0401: pool резолвится не только из ``ExecutionContext``, но и из
+DI-провайдера ``core.di.providers.rpa`` — поэтому тесты, проверяющие
+ветку «pool вообще недоступен», подменяют провайдер на ``None``.
 """
 
 from __future__ import annotations
@@ -54,6 +58,22 @@ def _bypass_auth_check(monkeypatch: pytest.MonkeyPatch) -> None:
     """
     for proc_cls in _BYPASS_AUTH_TARGETS:
         monkeypatch.setattr(proc_cls, "auth_check", AsyncMock(return_value=True))
+
+
+@pytest.fixture(autouse=True)
+def _isolate_rpa_pool_provider() -> Any:
+    """Изолирует DI-провайдер browser-pool'а (ADR-0401).
+
+    Провайдер умеет отдать реальный пул — он должен быть заглушен, чтобы
+    тесты не поднимали playwright и не делили состояние между модулями.
+    """
+    from src.backend.core.di.providers import rpa as rpa_providers
+
+    saved = dict(rpa_providers._overrides)
+    rpa_providers.set_browser_pool_provider(None)
+    yield
+    rpa_providers._overrides.clear()
+    rpa_providers._overrides.update(saved)
 
 
 def _exchange_with_page(page: Any) -> Exchange[Any]:

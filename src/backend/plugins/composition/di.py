@@ -268,6 +268,24 @@ def register_app_state(app: FastAPI) -> None:
 
     mark_cdc_dlq_writer_wired(inbox_dlq_writer)
 
+    # ADR-0401: RPA-runtime (Playwright browser-pool + desktop-RPA client).
+    #
+    # До фикса эти зависимости **не были зарегистрированы нигде**: DSL-шаги
+    # ``browser_launch`` / ``desktop_rpa`` искали их только в
+    # ``ExecutionContext`` (у которого нет ни ``browser_pool``, ни
+    # ``app_state``) → шаги всегда падали с RuntimeError (ADR-0369, G12.6).
+    #
+    # Регистрация идёт через DI-провайдеры (lazy singleton'ы): сам браузер
+    # поднимается при первом ``acquire()``, поэтому отсутствие
+    # playwright/patchright не ломает старт приложения.
+    from src.backend.core.di.providers.rpa import (
+        get_browser_pool_provider,
+        get_desktop_rpa_client_provider,
+    )
+
+    app.state.browser_pool = get_browser_pool_provider()
+    app.state.desktop_rpa_client = get_desktop_rpa_client_provider()
+
 
 # --- FastAPI Depends-функции для инъекции singletons в эндпоинты ---
 

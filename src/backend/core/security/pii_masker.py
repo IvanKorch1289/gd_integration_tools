@@ -56,6 +56,14 @@ from src.backend.core.security.pii_patterns import PHONE as _PHONE
 from src.backend.core.security.pii_patterns import RU_PASSPORT as _RU_PASSPORT
 from src.backend.core.security.pii_patterns import SNILS as _SNILS
 
+# ADR-0401: fast-path маскирования email. Канонический регекс EMAIL
+# сканирует строку линейно; для строк без ``@`` совпадений быть не может,
+# поэтому ``sub_email`` пропускает регекс целиком (ADR-0392). Раньше
+# fast-path применял только ``entrypoints/middlewares/data_masking.py`` —
+# здесь и в ``infrastructure/observability/pii_filter.py`` регекс
+# вызывался напрямую.
+from src.backend.core.security.pii_patterns import sub_email
+
 # JWT — три base64url-сегмента, разделённых точкой (Bearer-токены, OAuth).
 _JWT = re.compile(r"\beyJ[\w\-]+\.[\w\-]+\.[\w\-]+\b")
 # IBAN — 2 буквы страны + 2 контрольные + до 30 символов (всего 15–34 длиной).
@@ -197,6 +205,10 @@ class PIIMasker:
         for name in self._order:
             pattern = self._patterns.get(name)
             if pattern is None:
+                continue
+            if pattern is _EMAIL:
+                # Канонический email-паттерн → fast-path (ADR-0401).
+                result = sub_email(self.replacement, result)
                 continue
             result = pattern.sub(self.replacement, result)
         return result

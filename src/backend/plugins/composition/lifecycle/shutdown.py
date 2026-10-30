@@ -172,6 +172,17 @@ async def run_shutdown(app: FastAPI, task_registry: Any) -> None:
     except Exception as storage_exc:
         _logger.warning("ObjectStorage shutdown error: %s", storage_exc)
 
+    # ── 8c. RPA runtime (Playwright browser pool) ──
+    # ADR-0401: browser-pool поднимается при первом ``acquire()`` и держит
+    # playwright-subprocess + контексты браузера. Без явного shutdown они
+    # жили до принудительного завершения процесса.
+    try:
+        from src.backend.core.di.providers.rpa import shutdown_rpa_runtime
+
+        await shutdown_rpa_runtime()
+    except Exception as rpa_exc:
+        _logger.warning("RPA runtime shutdown error: %s", rpa_exc)
+
     _logger.info("Приложение остановлено")
 
     # ── 9. LogSink final flush + close ──

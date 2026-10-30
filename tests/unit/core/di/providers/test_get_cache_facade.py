@@ -31,11 +31,14 @@ class TestGetCacheFacade:
         assert result is None
 
     def test_returns_object_without_unified_cache_facade_methods(self) -> None:
-        """MemoryBackend НЕ реализует ``delete_by_tag`` и ``healthcheck``.
+        """MemoryBackend реализует tag-инвалидацию, но НЕ реализует ``healthcheck``.
 
-        Это документированное ограничение — production canonical —
-        ``services.cache.UnifiedCacheFacade``, не этот dev/test helper.
+        ADR-0401: tag-инвалидация перенесена на backend-уровень (L1/L3
+        должны чиститься глобальным ``CacheInvalidator``), поэтому
+        ``delete_by_tag`` у ``MemoryBackend`` теперь есть. ``healthcheck``
+        остаётся прерогативой production-фасада
+        ``services.cache.UnifiedCacheFacade``.
         """
         result = get_cache_facade()
-        assert not hasattr(result, "delete_by_tag")
+        assert callable(getattr(result, "delete_by_tag", None))
         assert not hasattr(result, "healthcheck")

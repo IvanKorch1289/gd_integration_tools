@@ -67,6 +67,10 @@ class MemoryBackend(CacheBackend):
         self._default_ttl = default_ttl
         self._cache: LRUCache[str, _CacheEntry] = LRUCache(maxsize=maxsize)
         self._lock = asyncio.Lock()
+        # ADR-0401: tag-индекс ``{tag: {key, ...}}`` — без него
+        # ``CacheInvalidator.delete_by_tag`` не мог почистить L1-тир
+        # (backend не реализовывал ``delete_by_tag`` вообще).
+        self._tags: dict[str, set[str]] = {}
 
     def _resolve_expires_at(self, ttl: int | None) -> float | None:
         """Возвращает ``expires_at`` (monotonic) для ``ttl`` параметра.
@@ -135,6 +139,7 @@ class MemoryBackend(CacheBackend):
         async with self._lock:
             for key in keys:
                 self._cache.pop(key, None)
+                self._forget_key(key)
 
     async def delete_pattern(self, pattern: str) -> None:
         """Delete values matching glob pattern.
@@ -146,6 +151,68 @@ class MemoryBackend(CacheBackend):
         async with self._lock:
             for key in [k for k in self._cache if fnmatch.fnmatch(k, pattern)]:
                 self._cache.pop(key, None)
+                self._forget_key(key)
+
+    def _forget_key(self, key: str) -> None:
+        """Убрать ключ из всех tag-групп (вызывается под ``self._lock``).
+
+        Args:
+            key: Cache key.
+
+        """
+        for tag_keys in self._tags.values():
+            tag_keys.discard(key)
+
+    # ── Tag-index support (ADR-0401) ───────────────────────────────────
+    #
+    # Контракт совпадает с ``RedisBackend``: ``bind_key_to_tag`` создаёт
+    # связь «тег → ключи», ``delete_by_tag`` удаляет все ключи тега.
+    # Без этого ``CacheInvalidator`` не мог инвалидировать L1-тир.
+
+    async def bind_key_to_tag(self, tag: str, key: str) -> None:
+        """Привязывает cache key к тегу.
+
+        Args:
+            tag: Имя тега (например ``entity:orders``).
+            key: Cache key.
+
+        """
+        async with self._lock:
+            self._tags.setdefault(tag, set()).add(key)
+
+    async def delete_by_tag(self, tag: str) -> int:
+        """Удаляет все ключи, привязанные к тегу.
+
+        Args:
+            tag: Имя тега.
+
+        Returns:
+            Число удалённых ключей.
+
+        """
+        async with self._lock:
+            keys = self._tags.pop(tag, set())
+            for key in keys:
+                self._cache.pop(key, None)
+                self._forget_key(key)
+        return len(keys)
+
+    async def delete_by_pattern(self, pattern: str) -> int:
+        """Удаляет ключи по glob pattern и возвращает их количество.
+
+        Args:
+            pattern: Glob pattern.
+
+        Returns:
+            Число удалённых ключей.
+
+        """
+        async with self._lock:
+            matched = [k for k in self._cache if fnmatch.fnmatch(k, pattern)]
+            for key in matched:
+                self._cache.pop(key, None)
+                self._forget_key(key)
+        return len(matched)
 
     async def exists(self, key: str) -> bool:
         """Check if key exists in cache (не expired).

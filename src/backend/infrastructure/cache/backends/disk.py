@@ -49,6 +49,10 @@ class DiskCacheBackend(CacheBackend):
         # (из файла имя ключа не восстановить: ключ хэшируется SHA256).
         # Wave 18 (ADR-0391), дефект 8.
         self._keys: set[str] = set()
+        # ADR-0401: tag-индекс ``{tag: {key, ...}}`` — без него
+        # ``CacheInvalidator.delete_by_tag`` не мог почистить L3-тир
+        # (backend не реализовывал ``delete_by_tag`` вообще).
+        self._tags: dict[str, set[str]] = {}
 
     def _safe_path(self, key: str) -> Path:
         """Хэширует ключ и возвращает безопасный путь внутри base_path."""
@@ -166,13 +170,66 @@ class DiskCacheBackend(CacheBackend):
         """
         for key in keys:
             self._keys.discard(key)
-            for p in (self._safe_path(key), self._expiry_path(key)):
-                try:
-                    await aiofiles.os.remove(str(p))
-                except FileNotFoundError:
-                    pass
-                except OSError as exc:
-                    _logger.debug("DiskCache delete failed key=%s: %s", key, exc)
+            self._forget_key(key)
+            await self._remove_files(key)
+
+    async def _remove_files(self, key: str) -> None:
+        """Удалить data-файл + expiry sidecar ключа (best-effort).
+
+        Args:
+            key: Cache key.
+
+        """
+        for p in (self._safe_path(key), self._expiry_path(key)):
+            try:
+                await aiofiles.os.remove(str(p))
+            except FileNotFoundError:
+                pass
+            except OSError as exc:
+                _logger.debug("DiskCache delete failed key=%s: %s", key, exc)
+
+    def _forget_key(self, key: str) -> None:
+        """Убрать ключ из всех tag-групп.
+
+        Args:
+            key: Cache key.
+
+        """
+        for tag_keys in self._tags.values():
+            tag_keys.discard(key)
+
+    # ── Tag-index support (ADR-0401) ───────────────────────────────────
+    #
+    # Контракт совпадает с ``RedisBackend``: ``bind_key_to_tag`` создаёт
+    # связь «тег → ключи», ``delete_by_tag`` удаляет все ключи тега.
+    # Без этого ``CacheInvalidator`` не мог инвалидировать L3-тир.
+
+    async def bind_key_to_tag(self, tag: str, key: str) -> None:
+        """Привязывает cache key к тегу.
+
+        Args:
+            tag: Имя тега (например ``entity:orders``).
+            key: Cache key.
+
+        """
+        self._tags.setdefault(tag, set()).add(key)
+
+    async def delete_by_tag(self, tag: str) -> int:
+        """Удаляет все ключи, привязанные к тегу.
+
+        Args:
+            tag: Имя тега.
+
+        Returns:
+            Число удалённых ключей.
+
+        """
+        keys = self._tags.pop(tag, set())
+        for key in keys:
+            self._keys.discard(key)
+            self._forget_key(key)
+            await self._remove_files(key)
+        return len(keys)
 
     async def delete_pattern(self, pattern: str) -> None:
         """Delete values matching pattern.
@@ -192,15 +249,8 @@ class DiskCacheBackend(CacheBackend):
         matched = [key for key in self._keys if fnmatch.fnmatch(key, pattern)]
         for key in matched:
             self._keys.discard(key)
-            for p in (self._safe_path(key), self._expiry_path(key)):
-                try:
-                    await aiofiles.os.remove(str(p))
-                except FileNotFoundError:
-                    pass
-                except OSError as exc:
-                    _logger.debug(
-                        "DiskCache delete_pattern failed key=%s: %s", key, exc
-                    )
+            self._forget_key(key)
+            await self._remove_files(key)
 
     async def delete_by_pattern(self, pattern: str) -> int:
         """Удаляет ключи по паттерну и возвращает их количество.
