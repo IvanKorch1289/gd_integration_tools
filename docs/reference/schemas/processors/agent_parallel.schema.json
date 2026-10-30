@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "properties": {
+    "branches": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 2
+    },
+    "join_strategy": {
+      "enum": [
+        "all",
+        "first",
+        "any"
+      ]
+    }
+  },
+  "required": [
+    "branches"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/agent_parallel/1.0.0",
+  "title": "AgentParallelProcessor",
+  "x-gd-capabilities": [
+    "ai.parallel"
+  ]
+}

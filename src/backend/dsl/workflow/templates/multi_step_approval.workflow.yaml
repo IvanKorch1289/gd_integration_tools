@@ -4,8 +4,11 @@ description: |
   Multi-Step Approval — request → manager → director → finance (HITL chain).
   Template tags: approval, hitl, hierarchy, signoff.
 steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity
-    name: submit_request
+    name: orders.create_skb_order
+    args:
+      order_id: 0
     timeout_s: 30
   - type: wait_signal
     signal_name: manager_approved
@@ -17,5 +20,7 @@ steps:
     signal_name: finance_approved
     timeout_s: 86400
   - type: activity
-    name: finalize_approval
+    name: orders.send_order_data
+    args:
+      order_id: 0
     timeout_s: 30

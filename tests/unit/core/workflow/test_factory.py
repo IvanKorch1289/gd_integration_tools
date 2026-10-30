@@ -34,9 +34,15 @@ class TestCreateWorkflowBackend:
 
         assert isinstance(backend, LiteTemporalBackend)
 
-    async def test_auto_prod_falls_back_when_temporal_missing(
+    async def test_auto_prod_refuses_downgrade_when_temporal_missing(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """ADR-0399: в prod downgrade Temporal → pg_runner запрещён.
+
+        Раньше factory молча деградировал в pg_runner, теряя replay /
+        determinism / typed-query (ADR-0395 обещает запрет).
+        """
+
         # Имитируем RuntimeError при попытке connect (нет SDK).
         async def _broken_connect(**kwargs: object) -> object:
             raise RuntimeError("temporalio SDK not installed.")
@@ -58,12 +64,8 @@ class TestCreateWorkflowBackend:
             fake_module,
         )
 
-        backend = await create_workflow_backend(kind="auto", profile="prod")
-        from src.backend.infrastructure.workflow.pg_runner_backend import (
-            PgRunnerWorkflowBackend,
-        )
-
-        assert isinstance(backend, PgRunnerWorkflowBackend)
+        with pytest.raises(RuntimeError, match="downgrade"):
+            await create_workflow_backend(kind="auto", profile="prod")
 
     async def test_unknown_kind_raises(self) -> None:
         with pytest.raises(ValueError, match="Unknown WorkflowBackend kind"):

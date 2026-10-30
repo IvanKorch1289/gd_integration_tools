@@ -4,27 +4,33 @@ description: |
   Customer Onboarding — collect docs → KYC → AML → approve (parallel KYC+AML).
   Template tags: kyc, aml, onboarding, customer.
 steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398):
+  # build-time валидация резолвит их против action-реестра.
   - type: activity
-    name: collect_documents
+    name: users.list
     args:
-      doc_set: full_kyc
+      limit: 100
     timeout_s: 120
   - type: saga
     forward:
-      - name: kyc_check
-        args: {provider: dadata}
+      - name: users.get
+        args: {key: id, value: 0}
         timeout_s: 60
-      - name: aml_check
-        args: {provider: world_check}
+      - name: web_search.query
+        args: {query: "aml sanctions screening", max_results: 5}
         timeout_s: 60
     compensate:
-      - name: rollback_provisional_account
+      - name: users.update
+        args:
+          key: id
+          value: 0
+          data: {status: rolled_back}
         timeout_s: 30
   - type: wait_signal
     signal_name: kyc_aml_approved
     timeout_s: 3600
   - type: activity
-    name: provision_customer_account
+    name: users.add
     args:
-      tier: basic
+      data: {email: user@example.com, status: active}
     timeout_s: 60

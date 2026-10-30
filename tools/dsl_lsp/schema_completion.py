@@ -13,9 +13,16 @@ ADR-0369 (cycle 172, cluster C4): канон — **имя YAML-шага = имя
 метода ``RouteBuilder``**. Completion не предлагает фиктивных шагов и
 фиктивных параметров: каждая метка — реальный метод ``RouteBuilder``, каждое
 свойство snippet'а — реальный kwarg этого метода.
+
+ADR-0399: список шагов **генерируется из каталога**
+(:mod:`src.backend.dsl.builders.step_catalog`) — 438 шагов вместо 55
+захардкоженных. Статический список (``_STATIC_STEP_COMPLETIONS``) остаётся
+fallback'ом и источником curated-описаний для известных шагов.
 """
 
 from __future__ import annotations
+
+from typing import Any
 
 __all__ = (
     "STEP_COMPLETIONS",
@@ -25,10 +32,14 @@ __all__ = (
 )
 
 
-#: Step type keywords for the ``steps[]`` array in ``*.dsl.yaml``.
+#: Curated step type keywords for the ``steps[]`` array in ``*.dsl.yaml``.
 #: Each entry: (label, detail, insert_text_snippet).
 #: The insert_text includes YAML indentation anchors (``${N}`` are tab-stops).
-STEP_COMPLETIONS: tuple[tuple[str, str, str], ...] = (
+#:
+#: ADR-0399: список — **fallback**; полный набор шагов генерируется из
+#: каталога ``src.backend.dsl.builders.step_catalog`` (см.
+#: :func:`_build_step_completions`).
+_STATIC_STEP_COMPLETIONS: tuple[tuple[str, str, str], ...] = (
     (
         "proxy",
         "Прокси-запрос на upstream без бизнес-логики",
@@ -841,6 +852,94 @@ ROUTE_COMPLETIONS: tuple[tuple[str, str], ...] = (
 )
 
 
+def _step_detail(step: str, capabilities: dict[str, str]) -> str:
+    """Человекочитаемое описание YAML-шага для LSP-completion.
+
+    Args:
+        step: Имя YAML-шага.
+        capabilities: Карта ``шаг → capability``.
+
+    Returns:
+        Описание шага (для ``detail`` LSP-item'а).
+
+    """
+    capability = capabilities.get(step)
+    if capability:
+        return f"YAML-шаг RouteBuilder.{step} (capability: {capability})"
+    return f"YAML-шаг RouteBuilder.{step}"
+
+
+def _step_snippet(step: str, schema: dict[str, Any] | None) -> str:
+    """Сгенерировать ``insert_text`` YAML-шага по его JSON-Schema.
+
+    Args:
+        step: Имя YAML-шага.
+        schema: JSON-Schema параметров шага (может быть ``None``).
+
+    Returns:
+        YAML-snippet с tab-stop'ами (``${N:...}``).
+
+    """
+    properties = (schema or {}).get("properties") or {}
+    lines = [f"{step}:"]
+    for index, (name, spec) in enumerate(properties.items(), start=1):
+        default = spec.get("default") if isinstance(spec, dict) else None
+        placeholder = (
+            f"${{{index}:{default}}}" if default is not None else f"${{{index}:{name}}}"
+        )
+        lines.append(f"  {name}: {placeholder}")
+    return "\n".join(lines) if len(lines) > 1 else f"{step}:"
+
+
+def _build_step_completions() -> tuple[tuple[str, str, str], ...]:
+    """Собрать полный список LSP-completion из каталога YAML-шагов.
+
+    ADR-0399: источник истины — каталог
+    :mod:`src.backend.dsl.builders.step_catalog` (все публичные методы
+    ``RouteBuilder``). Curated-описания и snippet'ы из
+    :data:`_STATIC_STEP_COMPLETIONS` сохраняются; остальные шаги
+    генерируются автоматически.
+
+    Returns:
+        Кортеж ``(label, detail, insert_text)`` для каждого YAML-шага.
+
+    """
+    try:
+        from src.backend.dsl.builders.step_catalog import (
+            builder_step_names,
+            step_capability_map,
+            step_schema_map,
+        )
+    except ImportError:  # pragma: no cover — каталог недоступен → fallback
+        return _STATIC_STEP_COMPLETIONS
+
+    steps = builder_step_names()
+    schemas = step_schema_map()
+    capabilities = step_capability_map()
+
+    completions: list[tuple[str, str, str]] = [
+        (label, detail, snippet)
+        for label, detail, snippet in _STATIC_STEP_COMPLETIONS
+        if label in steps
+    ]
+    known = {label for label, *_ in completions}
+    for step in steps:
+        if step in known:
+            continue
+        completions.append(
+            (
+                step,
+                _step_detail(step, capabilities),
+                _step_snippet(step, schemas.get(step)),
+            )
+        )
+    return tuple(completions)
+
+
+#: Полный список step-комплишенов (каталог YAML-шагов, ADR-0399).
+STEP_COMPLETIONS: tuple[tuple[str, str, str], ...] = _build_step_completions()
+
+
 def get_step_snippet(step_type: str) -> dict[str, object] | None:
     """Return the JSON-Schema skeleton for a given step type.
 
@@ -851,4 +950,12 @@ def get_step_snippet(step_type: str) -> dict[str, object] | None:
     Returns:
         JSON-Schema dict for the step type, or ``None`` if unknown.
     """
-    return STEP_SCHEMA_SNIPPETS.get(step_type)
+    snippet = STEP_SCHEMA_SNIPPETS.get(step_type)
+    if snippet is not None:
+        return snippet
+    # ADR-0399: curated-схемы не покрывают все шаги — добираем из каталога.
+    try:
+        from src.backend.dsl.builders.step_catalog import step_schema_map
+    except ImportError:  # pragma: no cover — каталог недоступен
+        return None
+    return step_schema_map().get(step_type)

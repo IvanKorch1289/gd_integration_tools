@@ -586,6 +586,12 @@ class DSLLinter:
             )
             return issues
 
+        # ADR-0399: имя из реестра ``@processor`` может отличаться от
+        # YAML-имени (``rpa_pdf`` → ``print_pdf``) — подсказываем верный шаг.
+        registry_issue = self._registry_name_issue(proc_name, yaml_path, index)
+        if registry_issue is not None:
+            issues.append(registry_issue)
+
         # Capability check.
         required = _step_capability(proc_name, params)
         if required is None:
@@ -653,6 +659,61 @@ class DSLLinter:
                 )
 
         return issues
+
+    @staticmethod
+    def _registry_name_issue(
+        proc_name: str, yaml_path: Path, index: int
+    ) -> LintIssue | None:
+        """Имя шага — из реестра ``@processor``, а не из YAML-whitelist.
+
+        ADR-0399: в YAML шаг адресуется **публичным методом**
+        ``RouteBuilder``. Некоторые процессоры зарегистрированы в реестре
+        под другим именем (``rpa_pdf`` → ``print_pdf``), а часть вообще
+        не имеет YAML-имени (``memory_recall``).
+
+        Args:
+            proc_name: Имя шага из YAML.
+            yaml_path: Путь к YAML-файлу (для отчёта).
+            index: Индекс шага в ``steps[]``.
+
+        Returns:
+            :class:`LintIssue` либо ``None``, если имя корректно.
+
+        """
+        from src.backend.dsl.builders.step_catalog import (
+            registry_only_steps,
+            yaml_step_for_registry_name,
+        )
+
+        yaml_step = yaml_step_for_registry_name(proc_name)
+        if yaml_step is not None and yaml_step != proc_name:
+            return LintIssue(
+                code="PROCESSOR_NOT_YAML_ADDRESSABLE",
+                severity="error",
+                message=(
+                    f"step[{index}].{proc_name}: имя процессора из реестра "
+                    f"«@processor» не адресуемо из YAML под этим именем"
+                ),
+                file=yaml_path,
+                processor=proc_name,
+                suggestion=f"Переименуйте шаг в {yaml_step!r}",
+            )
+        if proc_name in registry_only_steps():
+            return LintIssue(
+                code="PROCESSOR_NOT_YAML_ADDRESSABLE",
+                severity="error",
+                message=(
+                    f"step[{index}].{proc_name}: процессор не адресуем из YAML "
+                    "(нет публичного метода RouteBuilder)"
+                ),
+                file=yaml_path,
+                processor=proc_name,
+                suggestion=(
+                    "Используйте публичный метод RouteBuilder "
+                    "(см. make schemas — список YAML-шагов)"
+                ),
+            )
+        return None
 
     @staticmethod
     def _capability_suggestion(capability: str, required_scope: str | None) -> str:

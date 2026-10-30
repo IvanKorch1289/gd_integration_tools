@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "graph_id": {
+      "type": "string"
+    },
+    "state": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "graph_id"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/langgraph_agent/1.0.0",
+  "title": "LangGraphAgentProcessor",
+  "x-gd-capabilities": [
+    "ai.langgraph.invoke"
+  ]
+}

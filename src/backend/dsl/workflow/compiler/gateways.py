@@ -22,15 +22,17 @@ ADR-0395: ``asyncio.wait`` рестритктуется Temporal-sandbox'ом
 стабильного порядка событий при replay'е. Все join-точки используют
 ``temporalio.workflow.wait``.
 
-Каждый ``BranchSpec.steps`` — список :class:`ActivityDeclaration` или
-marker-dict (``{"bpmn_target": target_id}``). На исполнение идут только
-ActivityDeclaration; marker-dict игнорируются (compile-time markers
-для BPMN topology, не runtime steps).
+Каждый ``BranchSpec.steps`` — список :class:`ActivityDeclaration` (шаги
+ветки, развёрнутые BPMN-импортёром) либо marker-dict
+(``{"bpmn_target": target_id}`` — compile-time marker для неподдерживаемой
+топологии). На исполнение идут только ActivityDeclaration; marker-dict
+игнорируются (ADR-0398).
 """
 
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import Any
 
 from src.backend.core.logging import get_logger
@@ -70,6 +72,29 @@ def _resolve_gateway_spec(decl: ActivityDeclaration) -> GatewaySpec:
     )
 
 
+def _normalize_condition(condition: str) -> str:
+    """Привести BPMN-выражение к виду, понятному simpleeval.
+
+    BPMN conditionExpression — это formal-expression: ``${score} >= 700``
+    или ``${x>=5}``. simpleeval такого не понимает (имя ``${score}`` не
+    определено → eval-error → ветка никогда не выбирается). Поэтому:
+
+    * обёртка ``${...}`` вокруг всего выражения снимается;
+    * плейсхолдеры ``${name}`` заменяются на голое имя переменной.
+
+    Args:
+        condition: Исходное выражение условия.
+
+    Returns:
+        Нормализованное выражение (например ``score >= 700``).
+
+    """
+    expr = condition.strip()
+    if expr.startswith("${") and expr.endswith("}"):
+        expr = expr[2:-1].strip()
+    return re.sub(r"\$\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}", r"\1", expr)
+
+
 def _eval_condition(condition: str | None, ctx: dict[str, Any]) -> bool:
     """Оценить condition-выражение против контекста workflow.
 
@@ -84,14 +109,17 @@ def _eval_condition(condition: str | None, ctx: dict[str, Any]) -> bool:
         return True  # default branch — fallback
     outputs = ctx.get("_outputs", {})
     namespace: dict[str, Any] = {**outputs}
+    expression = _normalize_condition(condition)
     try:
         from simpleeval import SimpleEval  # S4 R-V15-4: lazy-import
 
-        return bool(SimpleEval(names=namespace).eval(condition))
+        return bool(SimpleEval(names=namespace).eval(expression))
     except Exception as exc:
         _logger.warning(
-            "gateway condition eval failed: condition=%r err=%s; treating as False",
+            "gateway condition eval failed: condition=%r expr=%r err=%s; "
+            "treating as False",
             condition,
+            expression,
             exc,
         )
         return False

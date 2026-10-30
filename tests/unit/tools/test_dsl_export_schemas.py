@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -54,3 +55,38 @@ class TestDslExportSchemas:
 
         exit_code = main(["--output", str(tmp_path)])
         assert exit_code in (0, 1)
+
+
+class TestMakeSchemasTarget:
+    """ADR-0399: ``make schemas`` публикует схемы процессоров в docs/."""
+
+    def test_make_schemas_target_is_declared(self) -> None:
+        """Цель ``schemas`` объявлена в ``make/codegen.mk``."""
+        repo_root = Path(__file__).resolve().parents[3]
+        codegen = (repo_root / "make" / "codegen.mk").read_text(encoding="utf-8")
+        assert "\nschemas:" in codegen, "make/codegen.mk: нет цели 'schemas'"
+        assert "tools/dsl_export_schemas.py" in codegen, (
+            "цель schemas должна звать tools/dsl_export_schemas.py"
+        )
+
+    def test_export_creates_output_dir_with_valid_json(self, tmp_path: Path) -> None:
+        """Экспорт создаёт каталог (включая вложенные) и пишет валидные JSON."""
+        from tools.dsl_export_schemas import main
+
+        target = tmp_path / "docs" / "reference" / "schemas" / "processors"
+        assert not target.exists()
+
+        assert main(["--output", str(target)]) == 0
+
+        assert target.is_dir(), "каталог публикации схем не создан"
+        files = sorted(target.glob("*.schema.json"))
+        assert files, "не экспортировано ни одной схемы процессора"
+        for path in files:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            assert isinstance(payload, dict), f"{path.name}: не JSON-объект"
+            assert "$schema" in payload, f"{path.name}: нет $schema"
+            assert payload.get("type") == "object", f"{path.name}: не object-schema"
+
+        index = json.loads((target / "index.json").read_text(encoding="utf-8"))
+        assert index["processors"], "index.json пуст"
+        assert len(index["processors"]) == len(files)

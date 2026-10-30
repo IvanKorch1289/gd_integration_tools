@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "properties": {
+    "max_iterations": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "stop_condition": {
+      "type": "string"
+    },
+    "initial_prompt_ref": {
+      "type": "string"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/agent_loop/1.0.0",
+  "title": "AgentLoopProcessor",
+  "x-gd-capabilities": [
+    "ai.loop"
+  ]
+}

@@ -9,23 +9,30 @@ default_retry_policy:
   maximum_interval_s: 60.0
   max_attempts: 3
 steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity
-    name: prepare_dataset
+    name: analytics.query
     args:
-      split_ratio: 0.8
+      sql: "SELECT * FROM training_data"
     timeout_s: 300
   - type: activity
-    name: train_model
+    name: ai.run_agent
     args:
-      algorithm: lightgbm
+      prompt: train model
+      tools: []
     timeout_s: 3600
   - type: activity
-    name: evaluate_metrics
+    name: analytics.aggregate
     args:
-      metric_set: classification_full
+      table: ml_metrics
+      agg_func: avg
+      column: score
     timeout_s: 180
   - type: activity
-    name: register_in_mlflow
+    name: notebooks.create
     args:
-      stage: staging
+      title: ml_model
+      content: "{}"
+      created_by: mlops
+      tags: [mlflow]
     timeout_s: 60

@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "description": "Camel Timeout — wrap sub-processors with a time limit.",
+  "properties": {
+    "seconds": {
+      "type": "number",
+      "minimum": 0,
+      "default": 30.0
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/timeout/1.0.0",
+  "title": "TimeoutProcessor",
+  "x-gd-capabilities": [
+    "dsl.eip.timeout"
+  ],
+  "x-gd-tags": [
+    "eip",
+    "resilience",
+    "timeout"
+  ]
+}

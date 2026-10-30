@@ -14,8 +14,10 @@ from __future__ import annotations
 from src.backend.dsl.builders.step_catalog import (
     builder_step_names,
     catalog_coverage,
+    registry_only_steps,
     step_capability_map,
     step_schema_map,
+    yaml_step_for_registry_name,
 )
 
 
@@ -71,3 +73,39 @@ def test_catalog_coverage_is_reported() -> None:
     assert coverage["with_capability"] > 0
     assert coverage["with_capability"] <= coverage["steps"]
     assert coverage["with_registry_schema"] > 0
+
+
+class TestRegistrySync:
+    """ADR-0399: каталог синхронизирован с реестром ``@processor``."""
+
+    def test_renamed_steps_use_registry_schema(self) -> None:
+        """``print_pdf``/``wait_for_selector`` берут схему реестра, а не каркас."""
+        schemas = step_schema_map()
+        for step, registry_name in (
+            ("print_pdf", "rpa_pdf"),
+            ("wait_for_selector", "rpa_wait_for"),
+        ):
+            schema = schemas[step]
+            assert "$id" in schema, f"{step}: достался сигнатурный каркас"
+            assert registry_name in schema["$id"], (
+                f"{step}: ожидалась схема реестра {registry_name}"
+            )
+
+    def test_registry_only_steps_are_reported(self) -> None:
+        """Процессоры реестра без YAML-шага перечислены отдельным списком."""
+        only = registry_only_steps()
+        assert only, "реестр не может быть пустым"
+        assert "memory_recall" in only
+        steps = set(builder_step_names())
+        assert not (set(only) & steps)
+
+    def test_yaml_step_for_registry_name(self) -> None:
+        """Имя реестра → YAML-шаг (``rpa_pdf`` → ``print_pdf``)."""
+        assert yaml_step_for_registry_name("rpa_pdf") == "print_pdf"
+        assert yaml_step_for_registry_name("rpa_wait_for") == "wait_for_selector"
+        assert yaml_step_for_registry_name("memory_recall") is None
+
+    def test_coverage_reports_registry_only(self) -> None:
+        """Покрытие каталога сообщает о процессорах без YAML-шага."""
+        coverage = catalog_coverage()
+        assert coverage["registry_only"] == len(registry_only_steps())

@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/render_xlsx/1.0.0",
+  "title": "RenderXlsxProcessor",
+  "type": "object"
+}

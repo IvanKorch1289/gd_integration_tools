@@ -4,23 +4,29 @@ description: |
   Report Generation — schedule cron → fetch → aggregate → render → send.
   Template tags: reporting, scheduled, etl, render.
 steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity
-    name: fetch_period_data
+    name: orders.list
     args:
-      period: yesterday
+      limit: 1000
     timeout_s: 300
   - type: activity
-    name: aggregate_metrics
+    name: analytics.aggregate
     args:
-      level: tenant
+      table: orders
+      agg_func: count
+      column: id
     timeout_s: 120
   - type: activity
-    name: render_pdf
+    name: export.to_pdf
     args:
-      template: monthly_summary
+      rows: []
+      title: monthly_summary
     timeout_s: 60
   - type: activity
-    name: send_via_email
+    name: notify.email
     args:
-      recipients: ops_team
+      to: ops_team@example.com
+      subject: monthly report
+      message: "report attached"
     timeout_s: 30

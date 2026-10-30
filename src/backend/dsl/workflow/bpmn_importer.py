@@ -77,6 +77,11 @@ BPMN_NAMESPACE: Final[str] = "http://www.omg.org/spec/BPMN/20100524/MODEL"
 #: Префикс для всех bpmn-тегов в :mod:`xml.etree` (Clark-notation).
 _NS_PREFIX: Final[str] = f"{{{BPMN_NAMESPACE}}}"
 
+#: BPMN-теги gateway-узлов (ветвление).
+_GATEWAY_TAGS: Final[frozenset[str]] = frozenset(
+    {"exclusiveGateway", "parallelGateway", "inclusiveGateway"}
+)
+
 
 class BpmnImportError(ValueError):
     """Базовое исключение для ошибок импорта BPMN."""
@@ -334,7 +339,24 @@ def _build_steps(
     no-op activity, а IR-dict в args позволяет последующему этапу
     компиляции (когда GatewayDeclaration появится в spec) распознать
     эти узлы и эмитить корректный Temporal-код.
+
+    Задачи, достижимые только из gateway-ветки, НЕ становятся
+    top-level шагами: иначе они выполнялись бы всегда, вне зависимости
+    от того, какая ветка выбрана (ADR-0398). Такие задачи переносятся
+    внутрь соответствующей ветки :class:`GatewaySpec`.
+
+    Args:
+        ordered_ids: Топологически упорядоченные node-id.
+        elements: Карта ``{id: element}``.
+        flows: Adjacency-list исходящих sequence-flow.
+
+    Returns:
+        Список шагов декларации (top-level).
+
     """
+    chains = _resolve_branch_chains(elements, flows)
+    branch_only = {node for chain in chains.values() for node in chain}
+
     steps: list[ActivityDeclaration] = []
     for node_id in ordered_ids:
         element = elements.get(node_id)
@@ -345,20 +367,18 @@ def _build_steps(
         if local_name in {"startEvent", "endEvent"}:
             continue
 
-        if local_name in {"serviceTask", "task"}:
-            activity_name = (
-                element.attrib.get("name") or element.attrib.get("id") or node_id
-            )
-            steps.append(
-                ActivityDeclaration(
-                    name=activity_name,
-                    args={"bpmn_id": node_id, "bpmn_type": local_name},
-                )
-            )
+        if node_id in branch_only:
+            # Задача ветки gateway — исполняется внутри ветки.
             continue
 
-        if local_name in {"exclusiveGateway", "parallelGateway", "inclusiveGateway"}:
-            gateway_spec = _build_gateway_spec(node_id, local_name, flows, elements)
+        if local_name in {"serviceTask", "task"}:
+            steps.append(_task_declaration(node_id, element))
+            continue
+
+        if local_name in _GATEWAY_TAGS:
+            gateway_spec = _build_gateway_spec(
+                node_id, local_name, flows, elements, chains
+            )
             steps.append(
                 ActivityDeclaration(
                     name=f"__gateway__{node_id}",
@@ -374,18 +394,126 @@ def _build_steps(
     return steps
 
 
+def _task_declaration(node_id: str, element: Any) -> ActivityDeclaration:
+    """Собрать :class:`ActivityDeclaration` из BPMN serviceTask/task.
+
+    Args:
+        node_id: Идентификатор узла в BPMN.
+        element: XML-элемент узла.
+
+    Returns:
+        Декларация activity-шага.
+
+    """
+    activity_name = element.attrib.get("name") or element.attrib.get("id") or node_id
+    return ActivityDeclaration(
+        name=activity_name,
+        args={"bpmn_id": node_id, "bpmn_type": _strip_ns(element.tag)},
+    )
+
+
+def _resolve_branch_chains(
+    elements: dict[str, Any], flows: dict[str, list[dict[str, str]]]
+) -> dict[tuple[str, str], list[str]]:
+    """Вычислить цепочки задач для каждой ветки каждого gateway.
+
+    Цепочка ветки — задачи, достижимые из ``target``'а flow'ами без
+    условия, до следующего gateway / endEvent. Задачи, встречающиеся
+    сразу в нескольких ветках (join-узлы), остаются top-level шагами:
+    иначе они выполнились бы по разу в каждой ветке.
+
+    Args:
+        elements: Карта ``{id: element}``.
+        flows: Adjacency-list исходящих sequence-flow.
+
+    Returns:
+        Карта ``{(gateway_id, target_id): [node_id, ...]}``.
+
+    """
+    raw: dict[tuple[str, str], list[str]] = {}
+    for gateway_id, element in elements.items():
+        if _strip_ns(element.tag) not in _GATEWAY_TAGS:
+            continue
+        for edge in flows.get(gateway_id, []):
+            raw[(gateway_id, edge["target"])] = _walk_branch_chain(
+                edge["target"], elements, flows
+            )
+
+    counts: dict[str, int] = {}
+    for chain in raw.values():
+        for node_id in chain:
+            counts[node_id] = counts.get(node_id, 0) + 1
+
+    return {
+        key: [node_id for node_id in chain if counts[node_id] == 1]
+        for key, chain in raw.items()
+    }
+
+
+def _walk_branch_chain(
+    target_id: str, elements: dict[str, Any], flows: dict[str, list[dict[str, str]]]
+) -> list[str]:
+    """Пройти по цепочке задач ветки от ``target_id``.
+
+    Args:
+        target_id: Первый узел ветки.
+        elements: Карта ``{id: element}``.
+        flows: Adjacency-list исходящих sequence-flow.
+
+    Returns:
+        Список node-id задач ветки (до gateway / endEvent).
+
+    """
+    chain: list[str] = []
+    seen: set[str] = set()
+    current: str | None = target_id
+    while current and current not in seen:
+        seen.add(current)
+        element = elements.get(current)
+        if element is None:
+            break
+        local_name = _strip_ns(element.tag)
+        if local_name in {"startEvent", "endEvent"} or local_name in _GATEWAY_TAGS:
+            break
+        if local_name in {"serviceTask", "task"}:
+            chain.append(current)
+        # Следующий узел — первый исходящий flow без условия.
+        nxt: str | None = None
+        for edge in flows.get(current, []):
+            if not edge.get("condition"):
+                nxt = edge["target"]
+                break
+        current = nxt
+    return chain
+
+
 def _build_gateway_spec(
     gateway_id: str,
     bpmn_type: str,
     flows: dict[str, list[dict[str, str]]],
     elements: dict[str, Any],
+    chains: dict[tuple[str, str], list[str]] | None = None,
 ) -> GatewaySpec:
     """Построить :class:`GatewaySpec` для gateway-узла.
 
     Ветки берутся из исходящих sequence-flow от ``gateway_id``.
     Имя ветки = ``name`` или ``target`` sequence-flow.
+
+    Args:
+        gateway_id: Идентификатор gateway-узла.
+        bpmn_type: BPMN-тип gateway'а.
+        flows: Adjacency-list исходящих sequence-flow.
+        elements: Карта ``{id: element}``.
+        chains: Карта цепочек веток (``{(gateway_id, target_id): [node_id]}``).
+            Если ``None`` — цепочки вычисляются на лету.
+
+    Returns:
+        Спецификация gateway'а.
+
     """
     kind = _map_bpmn_kind_to_gateway_kind(bpmn_type)
+    if chains is None:
+        chains = _resolve_branch_chains(elements, flows)
 
     branches: list[BranchSpec] = []
     for edge in flows.get(gateway_id, []):
@@ -396,12 +524,13 @@ def _build_gateway_spec(
         )
         branch_name = edge["name"] or target_label or target_id
         condition_expr = edge["condition"] or None
+        branch_steps: list[Any] = []
+        for node_id in chains.get((gateway_id, target_id), []):
+            node_element = elements.get(node_id)
+            if node_element is not None:
+                branch_steps.append(_task_declaration(node_id, node_element))
         branches.append(
-            BranchSpec(
-                name=branch_name,
-                condition=condition_expr,
-                steps=[{"bpmn_target": target_id}],
-            )
+            BranchSpec(name=branch_name, condition=condition_expr, steps=branch_steps)
         )
 
     return GatewaySpec(kind=kind, branches=branches)  # type: ignore[arg-type]  # R2.MYPY: str → Literal['xor','and','or']

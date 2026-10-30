@@ -1,0 +1,444 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/index",
+  "title": "GD Integration Tools — DSL Processor Index",
+  "description": "Агрегированный индекс всех зарегистрированных DSL-процессоров. Генерируется автоматически через export_processors_schema() (ADR-0058).",
+  "processors": [
+    {
+      "fqn": "core:agent_branch",
+      "name": "agent_branch",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "agent_branch.schema.json",
+      "$ref": "./agent_branch.schema.json"
+    },
+    {
+      "fqn": "core:agent_graph",
+      "name": "agent_graph",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "agent_graph.schema.json",
+      "$ref": "./agent_graph.schema.json"
+    },
+    {
+      "fqn": "core:agent_loop",
+      "name": "agent_loop",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "agent_loop.schema.json",
+      "$ref": "./agent_loop.schema.json"
+    },
+    {
+      "fqn": "core:agent_run",
+      "name": "agent_run",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "agent_run.schema.json",
+      "$ref": "./agent_run.schema.json"
+    },
+    {
+      "fqn": "core:agent_parallel",
+      "name": "agent_parallel",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "agent_parallel.schema.json",
+      "$ref": "./agent_parallel.schema.json"
+    },
+    {
+      "fqn": "core:agent_security_check",
+      "name": "agent_security_check",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "agent_security_check.schema.json",
+      "$ref": "./agent_security_check.schema.json"
+    },
+    {
+      "fqn": "core:ai_tool_dispatch",
+      "name": "ai_tool_dispatch",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "ai_tool_dispatch.schema.json",
+      "$ref": "./ai_tool_dispatch.schema.json"
+    },
+    {
+      "fqn": "core:guardrails_apply",
+      "name": "guardrails_apply",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "guardrails_apply.schema.json",
+      "$ref": "./guardrails_apply.schema.json"
+    },
+    {
+      "fqn": "core:langgraph_agent",
+      "name": "langgraph_agent",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "langgraph_agent.schema.json",
+      "$ref": "./langgraph_agent.schema.json"
+    },
+    {
+      "fqn": "core:mcp_tool",
+      "name": "mcp_tool",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "mcp_tool.schema.json",
+      "$ref": "./mcp_tool.schema.json"
+    },
+    {
+      "fqn": "core:memory_recall",
+      "name": "memory_recall",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "memory_recall.schema.json",
+      "$ref": "./memory_recall.schema.json"
+    },
+    {
+      "fqn": "core:memory_store",
+      "name": "memory_store",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "memory_store.schema.json",
+      "$ref": "./memory_store.schema.json"
+    },
+    {
+      "fqn": "core:pii_mask",
+      "name": "pii_mask",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "pii_mask.schema.json",
+      "$ref": "./pii_mask.schema.json"
+    },
+    {
+      "fqn": "core:pii_unmask",
+      "name": "pii_unmask",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "pii_unmask.schema.json",
+      "$ref": "./pii_unmask.schema.json"
+    },
+    {
+      "fqn": "core:plan_execute",
+      "name": "plan_execute",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "plan_execute.schema.json",
+      "$ref": "./plan_execute.schema.json"
+    },
+    {
+      "fqn": "core:reflection_loop",
+      "name": "reflection_loop",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "reflection_loop.schema.json",
+      "$ref": "./reflection_loop.schema.json"
+    },
+    {
+      "fqn": "core:skill_invoke",
+      "name": "skill_invoke",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "skill_invoke.schema.json",
+      "$ref": "./skill_invoke.schema.json"
+    },
+    {
+      "fqn": "core:ai_rpa",
+      "name": "ai_rpa",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "ai_rpa.schema.json",
+      "$ref": "./ai_rpa.schema.json"
+    },
+    {
+      "fqn": "core:cancel_workflow",
+      "name": "cancel_workflow",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "cancel_workflow.schema.json",
+      "$ref": "./cancel_workflow.schema.json"
+    },
+    {
+      "fqn": "core:dispatch_action",
+      "name": "dispatch_action",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "dispatch_action.schema.json",
+      "$ref": "./dispatch_action.schema.json"
+    },
+    {
+      "fqn": "core:log",
+      "name": "log",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "log.schema.json",
+      "$ref": "./log.schema.json"
+    },
+    {
+      "fqn": "core:render_docx",
+      "name": "render_docx",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "render_docx.schema.json",
+      "$ref": "./render_docx.schema.json"
+    },
+    {
+      "fqn": "core:render_xlsx",
+      "name": "render_xlsx",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "render_xlsx.schema.json",
+      "$ref": "./render_xlsx.schema.json"
+    },
+    {
+      "fqn": "core:throttler",
+      "name": "throttler",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [
+        "eip",
+        "flow_control",
+        "throttle"
+      ],
+      "file": "throttler.schema.json",
+      "$ref": "./throttler.schema.json"
+    },
+    {
+      "fqn": "core:redelivery_policy",
+      "name": "redelivery_policy",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [
+        "eip",
+        "reliability",
+        "redelivery",
+        "retry"
+      ],
+      "file": "redelivery_policy.schema.json",
+      "$ref": "./redelivery_policy.schema.json"
+    },
+    {
+      "fqn": "core:dead_letter",
+      "name": "dead_letter",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [
+        "eip",
+        "reliability",
+        "dlq"
+      ],
+      "file": "dead_letter.schema.json",
+      "$ref": "./dead_letter.schema.json"
+    },
+    {
+      "fqn": "core:fallback_chain",
+      "name": "fallback_chain",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [
+        "eip",
+        "resilience",
+        "fallback"
+      ],
+      "file": "fallback_chain.schema.json",
+      "$ref": "./fallback_chain.schema.json"
+    },
+    {
+      "fqn": "core:circuit_breaker",
+      "name": "circuit_breaker",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [
+        "eip",
+        "resilience",
+        "circuit_breaker",
+        "purgatory"
+      ],
+      "file": "circuit_breaker.schema.json",
+      "$ref": "./circuit_breaker.schema.json"
+    },
+    {
+      "fqn": "core:timeout",
+      "name": "timeout",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [
+        "eip",
+        "resilience",
+        "timeout"
+      ],
+      "file": "timeout.schema.json",
+      "$ref": "./timeout.schema.json"
+    },
+    {
+      "fqn": "core:routing_slip",
+      "name": "routing_slip",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [
+        "eip",
+        "routing",
+        "routing_slip",
+        "dynamic"
+      ],
+      "file": "routing_slip.schema.json",
+      "$ref": "./routing_slip.schema.json"
+    },
+    {
+      "fqn": "core:graphql_query",
+      "name": "graphql_query",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "graphql_query.schema.json",
+      "$ref": "./graphql_query.schema.json"
+    },
+    {
+      "fqn": "core:ingest_file",
+      "name": "ingest_file",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "ingest_file.schema.json",
+      "$ref": "./ingest_file.schema.json"
+    },
+    {
+      "fqn": "core:invoke",
+      "name": "invoke",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "invoke.schema.json",
+      "$ref": "./invoke.schema.json"
+    },
+    {
+      "fqn": "core:invoke_workflow",
+      "name": "invoke_workflow",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "invoke_workflow.schema.json",
+      "$ref": "./invoke_workflow.schema.json"
+    },
+    {
+      "fqn": "core:browser_launch",
+      "name": "browser_launch",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "browser_launch.schema.json",
+      "$ref": "./browser_launch.schema.json"
+    },
+    {
+      "fqn": "core:rpa_navigate",
+      "name": "rpa_navigate",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "rpa_navigate.schema.json",
+      "$ref": "./rpa_navigate.schema.json"
+    },
+    {
+      "fqn": "core:rpa_click",
+      "name": "rpa_click",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "rpa_click.schema.json",
+      "$ref": "./rpa_click.schema.json"
+    },
+    {
+      "fqn": "core:rpa_fill",
+      "name": "rpa_fill",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "rpa_fill.schema.json",
+      "$ref": "./rpa_fill.schema.json"
+    },
+    {
+      "fqn": "core:rpa_extract",
+      "name": "rpa_extract",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "rpa_extract.schema.json",
+      "$ref": "./rpa_extract.schema.json"
+    },
+    {
+      "fqn": "core:rpa_wait_for",
+      "name": "rpa_wait_for",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "rpa_wait_for.schema.json",
+      "$ref": "./rpa_wait_for.schema.json"
+    },
+    {
+      "fqn": "core:rpa_screenshot",
+      "name": "rpa_screenshot",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "rpa_screenshot.schema.json",
+      "$ref": "./rpa_screenshot.schema.json"
+    },
+    {
+      "fqn": "core:rpa_pdf",
+      "name": "rpa_pdf",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "rpa_pdf.schema.json",
+      "$ref": "./rpa_pdf.schema.json"
+    },
+    {
+      "fqn": "core:evaluate_rules",
+      "name": "evaluate_rules",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "evaluate_rules.schema.json",
+      "$ref": "./evaluate_rules.schema.json"
+    },
+    {
+      "fqn": "core:ssh_exec",
+      "name": "ssh_exec",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "ssh_exec.schema.json",
+      "$ref": "./ssh_exec.schema.json"
+    },
+    {
+      "fqn": "core:sub_workflow",
+      "name": "sub_workflow",
+      "namespace": "core",
+      "version": "1.0.0",
+      "tags": [],
+      "file": "sub_workflow.schema.json",
+      "$ref": "./sub_workflow.schema.json"
+    }
+  ]
+}

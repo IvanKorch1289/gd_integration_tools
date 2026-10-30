@@ -195,20 +195,50 @@ class TestRepoWorkflowDeclarations:
 
         assert activities, "ожидаются activity-функции для credit_assessment"
 
-    def test_template_workflow_reports_unknown_activity(self) -> None:
-        """Шаблон с несуществующим action → понятная ошибка резолва."""
+    def test_template_workflow_resolves_all_activity_names(self) -> None:
+        """Поставляемые шаблоны резолвятся — имён activity больше нет.
+
+        ADR-0398: activity-имена в ``templates/*.workflow.yaml`` переименованы
+        в зарегистрированные actions, поэтому build-time валидация проходит.
+        """
+        from src.backend.dsl.commands.action_registry import action_handler_registry
+        from src.backend.dsl.commands.setup import register_action_handlers
         from src.backend.dsl.workflow.yaml_io import load_workflow_from_file
 
-        yaml_path = (
-            _REPO_ROOT
-            / "src"
-            / "backend"
-            / "dsl"
-            / "workflow"
-            / "templates"
-            / "kyc_aml_check.workflow.yaml"
+        # Регистрация actions глобальная — откатываем её после теста,
+        # иначе ломаются тесты, ожидающие «action не зарегистрирован».
+        saved_handlers = dict(action_handler_registry._handlers)
+        register_action_handlers()
+        try:
+            yaml_path = (
+                _REPO_ROOT
+                / "src"
+                / "backend"
+                / "dsl"
+                / "workflow"
+                / "templates"
+                / "kyc_aml_check.workflow.yaml"
+            )
+            decl = load_workflow_from_file(yaml_path)
+
+            bridge = ActivityBridge()
+            activities = bridge.collect_activities([decl], validate=True)
+
+            assert activities, "ожидаются activity-функции для kyc_aml_check"
+        finally:
+            action_handler_registry._handlers.clear()
+            action_handler_registry._handlers.update(saved_handlers)
+
+    def test_unknown_activity_name_reports_clear_error(self) -> None:
+        """Неизвестное имя activity → понятная ошибка резолва."""
+        from src.backend.dsl.workflow.spec import (
+            ActivityDeclaration,
+            WorkflowDeclaration,
         )
-        decl = load_workflow_from_file(yaml_path)
+
+        decl = WorkflowDeclaration(
+            name="wf", steps=[ActivityDeclaration(name="consolidate_results")]
+        )
 
         bridge = ActivityBridge()
         with pytest.raises(UnknownActivityError) as exc_info:

@@ -4,21 +4,26 @@ description: |
   Scheduled Audit — daily cron → collect events → aggregate → report.
   Template tags: scheduled, audit, daily, compliance.
 steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity
-    name: collect_audit_events
+    name: replay.list
     args:
-      period: yesterday
+      limit: 500
     timeout_s: 300
   - type: activity
-    name: aggregate_by_category
+    name: analytics.aggregate
+    args:
+      table: audit_events
+      agg_func: count
+      column: category
     timeout_s: 120
   - type: activity
-    name: detect_anomalies
+    name: anomaly.stats
     args:
-      threshold_sigma: 3
+      metric: audit_events
     timeout_s: 60
   - type: activity
-    name: publish_audit_report
+    name: export.to_csv
     args:
-      sinks: [s3, email]
+      rows: []
     timeout_s: 60

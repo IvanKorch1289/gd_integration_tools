@@ -4,20 +4,22 @@ description: |
   Data Migration — snapshot → transform → upsert → verify → rollback-on-fail.
   Template tags: migration, snapshot, saga, verification.
 steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: saga
     forward:
-      - name: snapshot_source
-        args: {target: s3://migration/snapshot}
+      - name: orders.list
+        args: {limit: 1000, by: id, order: asc}
         timeout_s: 600
-      - name: transform_records
-        args: {batch_size: 5000}
+      - name: analytics.query
+        args: {sql: "SELECT * FROM orders"}
         timeout_s: 1800
-      - name: upsert_to_target
-        args: {target: postgres}
+      - name: connector.import
+        args: {payload: {}}
         timeout_s: 1800
-      - name: verify_integrity
-        args: {sample_pct: 10}
+      - name: analytics.count
+        args: {table: orders}
         timeout_s: 300
     compensate:
-      - name: restore_from_snapshot
+      - name: replay.bulk
+        args: {status_filter: stored}
         timeout_s: 600

@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "description": "Retry-with-backoff policy (Camel Redelivery EIP).",
+  "properties": {
+    "max_attempts": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 3,
+      "description": "Maximum redelivery attempts before dispatch."
+    },
+    "initial_delay_s": {
+      "type": "number",
+      "minimum": 0,
+      "default": 1.0
+    },
+    "backoff_multiplier": {
+      "type": "number",
+      "minimum": 1.0,
+      "default": 2.0
+    },
+    "max_delay_s": {
+      "type": "number",
+      "minimum": 0,
+      "default": 60.0
+    },
+    "redelivery_header": {
+      "type": "string"
+    },
+    "on_exhausted_action": {
+      "type": "string",
+      "default": "dlq",
+      "description": "Action name dispatched after max_attempts exhausted."
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/redelivery_policy/1.0.0",
+  "title": "RedeliveryPolicyProcessor",
+  "x-gd-capabilities": [
+    "dsl.eip.redelivery_policy"
+  ],
+  "x-gd-tags": [
+    "eip",
+    "reliability",
+    "redelivery",
+    "retry"
+  ]
+}

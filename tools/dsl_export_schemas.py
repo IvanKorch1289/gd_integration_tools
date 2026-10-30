@@ -9,7 +9,11 @@
 Вызывает :func:`src.backend.dsl.registry.json_schema_exporter.export_processors_schema`
 и выводит количество экспортированных схем.
 
-Используется в ``make schemas`` (CI gate, ADR-0058).
+Каталог публикации (``docs/reference/schemas/processors``) **создаётся
+экспортёром** (включая родительские каталоги) — отдельного ``mkdir`` не
+требуется. Публикация запускается через ``make schemas`` (ADR-0399);
+в CI шаг мягкий (``continue-on-error``) — генерируемые файлы являются
+артефактом публикации, а не блокирующим гейтом.
 
 ADR-0369: реестр ``@processor`` наполняется **на этапе импорта** модулей
 процессоров, поэтому CLI сначала импортирует пакет процессоров — иначе
@@ -108,6 +112,10 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
+        # Каталог публикации создаётся здесь — до экспорта (ADR-0399):
+        # ``docs/reference/schemas/processors`` не обязан существовать в
+        # репозитории, его публикует ``make schemas``.
+        args.output.mkdir(parents=True, exist_ok=True)
         count = export_processors_schema(args.output)
     except OSError as exc:
         print(f"ОШИБКА записи файлов: {exc}", file=sys.stderr)

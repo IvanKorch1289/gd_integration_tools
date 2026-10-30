@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "description": "Camel Fallback Chain — sequential try-until-success.",
+  "properties": {
+    "name": {
+      "type": "string"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/fallback_chain/1.0.0",
+  "title": "FallbackChainProcessor",
+  "x-gd-capabilities": [
+    "dsl.eip.fallback_chain"
+  ],
+  "x-gd-tags": [
+    "eip",
+    "resilience",
+    "fallback"
+  ]
+}

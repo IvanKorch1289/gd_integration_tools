@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "description": "Camel Circuit Breaker — fail-fast guard с fallback.",
+  "properties": {
+    "failure_threshold": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 5,
+      "description": "Сколько failures до open state."
+    },
+    "recovery_timeout": {
+      "type": "number",
+      "minimum": 0,
+      "default": 30.0,
+      "description": "Секунд до half-open trial."
+    },
+    "half_open_max": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "(Deprecated) оставлен для обратной совместимости."
+    },
+    "breaker_name": {
+      "type": "string",
+      "description": "Override имени breaker'а (default: dsl.pipeline.<route_id>)."
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/circuit_breaker/1.0.0",
+  "title": "CircuitBreakerProcessor",
+  "x-gd-capabilities": [
+    "dsl.eip.circuit_breaker"
+  ],
+  "x-gd-tags": [
+    "eip",
+    "resilience",
+    "circuit_breaker",
+    "purgatory"
+  ]
+}

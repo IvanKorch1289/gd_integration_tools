@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "description": "Token-bucket rate limiter (Camel Throttler EIP).",
+  "properties": {
+    "rate": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Steady-state tokens per second."
+    },
+    "burst": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Maximum bucket capacity (initial token count)."
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "rate"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/throttler/1.0.0",
+  "title": "ThrottlerProcessor",
+  "x-gd-capabilities": [
+    "dsl.eip.throttler"
+  ],
+  "x-gd-tags": [
+    "eip",
+    "flow_control",
+    "throttle"
+  ]
+}

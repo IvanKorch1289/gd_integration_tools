@@ -2,12 +2,12 @@
 
 Settings.workflow_backend = ``temporal | lite_temporal | pg_runner | fake | auto``:
 
-* ``auto`` — выбирается по profile: dev_light → pg_runner; dev/staging/
-  prod → temporal (если установлен SDK), иначе fallback pg_runner с
-  warning'ом. Fallback — **degraded-режим**: он теряет replay,
-  детерминизм и typed-query (ADR-0395), поэтому логируется WARNING'ом
-  с перечнем потерянных гарантий. Явный ``kind="temporal"`` никогда
-  не деградирует — ошибка подключения пробрасывается наружу.
+* ``auto`` — выбирается по profile: dev_light → lite_temporal;
+  dev/staging/prod → temporal (если установлен SDK), иначе fallback
+  pg_runner с warning'ом **только в dev-профилях**. Fallback —
+  **degraded-режим**: он теряет replay, детерминизм и typed-query
+  (ADR-0395). Явный ``kind="temporal"`` никогда не деградирует — ошибка
+  подключения пробрасывается наружу.
 * ``temporal`` — :class:`TemporalWorkflowBackend` (требует extras
   ``workflow``: ``uv sync --extra workflow``).
 * ``lite_temporal`` — :class:`LiteTemporalBackend` (in-process Temporal
@@ -16,9 +16,13 @@ Settings.workflow_backend = ``temporal | lite_temporal | pg_runner | fake | auto
 * ``pg_runner`` — :class:`PgRunnerWorkflowBackend` (без extras).
 * ``fake`` — :class:`FakeWorkflowBackend` (только для тестов).
 
-Note: ``auto`` для ``dev_light`` остаётся на ``pg_runner`` для backward
-compatibility. ``lite_temporal`` — explicit opt-in для тех, кому нужна
-real Temporal semantics в dev_light (e.g. time-skipping в тестах).
+ADR-0399 (исполнение обещания ADR-0395): **downgrade Temporal → pg_runner
+запрещён в staging/prod**. В этих профилях падение коннекта к Temporal —
+ошибка с понятным сообщением, а не тихая деградация. Профиль берётся из
+аргумента ``profile``, а при его отсутствии — из ``APP_PROFILE``
+(см. :func:`src.backend.core.config.profile.get_active_profile`), поэтому
+вызовы ``kind="auto"`` без профиля (например ``manage.py workflow cancel``)
+тоже защищены.
 
 Factory сознательно использует lazy-import конкретных impl'ов,
 чтобы import core-модулей не тянул heavy SDK.
@@ -26,7 +30,7 @@ Factory сознательно использует lazy-import конкретн
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Final, Literal
 
 from src.backend.core.logging import get_logger
 from src.backend.core.workflow.backend import WorkflowBackend
@@ -48,6 +52,28 @@ _LOST_GUARANTEES: tuple[str, ...] = (
     "typed-query (query_workflow не поддерживается pg-runner'ом)",
 )
 
+#: Профили, в которых автоматический downgrade Temporal → pg_runner запрещён.
+#: ADR-0395/ADR-0399: staging/prod теряют гарантии исполнения — оператор
+#: обязан поднять Temporal-кластер, деградация допустима только в dev.
+_STRICT_PROFILES: Final[frozenset[str]] = frozenset({"staging", "prod"})
+
+
+def _resolve_profile(profile: str | None) -> str:
+    """Определить эффективный профиль запуска.
+
+    Args:
+        profile: Явно переданный профиль (``None`` → берётся ``APP_PROFILE``).
+
+    Returns:
+        Имя профиля (``dev_light`` / ``dev`` / ``staging`` / ``prod``).
+
+    """
+    if profile:
+        return profile.strip().lower()
+    from src.backend.core.config.profile import get_active_profile
+
+    return str(get_active_profile())
+
 
 async def create_workflow_backend(
     *,
@@ -61,14 +87,19 @@ async def create_workflow_backend(
 
     :param kind: явный выбор. ``"auto"`` — по profile.
     :param profile: APP_PROFILE (``dev_light`` / ``dev`` / ``staging`` /
-        ``prod``) — используется только при ``kind="auto"``.
+        ``prod``). Используется при ``kind="auto"`` и для проверки
+        допустимости downgrade'а; при ``None`` берётся из ``APP_PROFILE``.
     :param temporal_target: адрес Temporal-сервера (для ``temporal``).
     :param temporal_namespace: Temporal namespace.
     :param temporal_task_queue: default task_queue для start_workflow.
+
+    :raises RuntimeError: в профилях ``staging``/``prod`` автоматический
+        downgrade Temporal → pg_runner запрещён (ADR-0395/ADR-0399).
     """
+    active_profile = _resolve_profile(profile)
     resolved = kind
     if resolved == "auto":
-        if profile == "dev_light":
+        if active_profile == "dev_light":
             # Sprint 7 P0-3: dev_light → lite_temporal (was pg_runner DEPRECATED since Sprint 217).
             # CLAUDE.md V22 уже говорит "Lite в dev_light" — это была фактическая фиксация
             # задокументированной семантики. lite_temporal требует extras "workflow" (temporalio SDK);
@@ -133,6 +164,24 @@ async def create_workflow_backend(
                     exc,
                 )
                 raise
+            if active_profile in _STRICT_PROFILES:
+                # ADR-0395/ADR-0399: staging/prod — downgrade запрещён.
+                # Тихой деградации здесь быть не должно: оператор обязан
+                # поднять Temporal-кластер (или выбрать движок явно).
+                _logger.error(
+                    "Temporal connect failed (%s: %s) — профиль %s: downgrade "
+                    "to pg_runner запрещён. ПОТЕРЯННЫЕ ГАРАНТИИ: %s",
+                    type(exc).__name__,
+                    exc,
+                    active_profile,
+                    "; ".join(_LOST_GUARANTEES),
+                )
+                raise RuntimeError(
+                    f"Temporal connect failed ({type(exc).__name__}: {exc}) — "
+                    f"downgrade Temporal → pg_runner запрещён в профиле "
+                    f"{active_profile!r} (ADR-0395/ADR-0399). "
+                    f"ПОТЕРЯННЫЕ ГАРАНТИИ: {'; '.join(_LOST_GUARANTEES)}"
+                ) from exc
             _logger.warning(
                 "Temporal connect failed (%s: %s) — degraded fallback to "
                 "pg_runner. ПОТЕРЯННЫЕ ГАРАНТИИ: %s",

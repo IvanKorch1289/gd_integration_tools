@@ -40,6 +40,7 @@ import asyncio
 import hashlib
 import os
 import random
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -50,7 +51,14 @@ from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.core.domain.models.workflow_instance import WorkflowStatus
 from src.backend.core.logging import get_logger
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.observability.otel.setup import (
+    record_workflow_compensation,
+    record_workflow_status,
+    record_workflow_step_duration,
+    record_workflow_step_retries,
+)
 from src.backend.infrastructure.workflow.pg_runner_internals import (
+    WorkflowEventRow,
     WorkflowEventStore,
     WorkflowInstanceRow,
     WorkflowInstanceStore,
@@ -156,6 +164,52 @@ class StepExecutor(Protocol):
         ...
 
 
+def _emit_step_metrics(
+    *,
+    instance: WorkflowInstanceRow,
+    step_name: str | None,
+    attempt: int | None,
+    duration_ms: float,
+    result: StepResult,
+) -> None:
+    """Эмитить workflow-метрики pg-runner'а (ADR-0399).
+
+    Метрики: ``workflow.step_duration`` (длительность шага),
+    ``workflow.step_retries`` (число ретраев) и
+    ``workflow.compensation_total`` (компенсации из события ``compensated``).
+
+    Args:
+        instance: Row workflow-инстанса.
+        step_name: Имя выполненного шага (``None`` — шаг неизвестен).
+        attempt: Номер попытки шага (``None`` — неизвестен).
+        duration_ms: Длительность выполнения шага в миллисекундах.
+        result: Исход шага от executor'а.
+
+    """
+    workflow_name = instance.workflow_name
+    effective_step = step_name or "unknown"
+    record_workflow_step_duration(
+        workflow_name=workflow_name,
+        step_name=effective_step,
+        duration_ms=duration_ms,
+        outcome=result.outcome,
+    )
+    record_workflow_step_retries(
+        workflow_name=workflow_name,
+        step_name=effective_step,
+        retries=max(0, (attempt or 1) - 1),
+    )
+    for event_type, payload, _event_step in result.events:
+        if event_type != WorkflowEventType.compensated:
+            continue
+        steps = payload.get("steps") or []
+        record_workflow_compensation(
+            workflow_name=workflow_name,
+            status=str(payload.get("status") or "unknown"),
+            steps=len(steps),
+        )
+
+
 # -- Конфиг + Runner ----------------------------------------------------
 
 
@@ -183,6 +237,10 @@ class RunnerConfig:
     retry_jitter: float = 0.2  # ±20%
     #: Max attempts до compensate + failed.
     max_attempts_default: int = 10
+    #: Размер страницы при чтении event log'а. Чтение идёт с пагинацией
+    #: по ``after_seq`` до конца — иначе workflow с >1000 событий
+    #: откатывается к старому snapshot'у и переисполняет шаги (ADR-0398).
+    event_page_size: int = 1000
 
 
 class DurableWorkflowRunner:
@@ -264,7 +322,7 @@ class DurableWorkflowRunner:
                 task.cancel()
                 try:
                     await task
-                except (asyncio.CancelledError, Exception):
+                except asyncio.CancelledError, Exception:
                     _logger.debug(
                         "workflow runner task cancellation raised", exc_info=True
                     )
@@ -432,10 +490,14 @@ class DurableWorkflowRunner:
                 await self._state_store.update_status(
                     workflow_id, WorkflowStatus.cancelled
                 )
+                record_workflow_status(
+                    workflow_name=instance.workflow_name,
+                    status=WorkflowStatus.cancelled.value,
+                )
                 await self._write_snapshot(workflow_id, seq)
                 return
 
-            events = await self._event_store.read_events(workflow_id=workflow_id)
+            events = await self._read_all_events(workflow_id)
             state = (
                 WorkflowState.replay(events)
                 if events
@@ -475,8 +537,17 @@ class DurableWorkflowRunner:
                 )
 
             # 6) Execute next step via injected executor.
+            step_started_at = time.perf_counter()
             result: StepResult = await self._executor.execute_next(
                 instance=instance, state=state
+            )
+            step_duration_ms = (time.perf_counter() - step_started_at) * 1000.0
+            _emit_step_metrics(
+                instance=instance,
+                step_name=pre_step_name,
+                attempt=attempt,
+                duration_ms=step_duration_ms,
+                result=result,
             )
 
             # 7) Append events + синхронизируем in-memory state с event log'ом.
@@ -541,6 +612,10 @@ class DurableWorkflowRunner:
         """Transition status + schedule next attempt per outcome."""
         if result.outcome == StepOutcome.DONE:
             await self._state_store.update_status(workflow_id, WorkflowStatus.succeeded)
+            record_workflow_status(
+                workflow_name=instance.workflow_name,
+                status=WorkflowStatus.succeeded.value,
+            )
             return
 
         if result.outcome == StepOutcome.FAILED:
@@ -548,6 +623,9 @@ class DurableWorkflowRunner:
                 workflow_id,
                 WorkflowStatus.failed,
                 error=result.error_message or "unknown",
+            )
+            record_workflow_status(
+                workflow_name=instance.workflow_name, status=WorkflowStatus.failed.value
             )
             return
 
@@ -574,6 +652,10 @@ class DurableWorkflowRunner:
                         f"{result.error_message or 'step failed'}"
                     ),
                 )
+                record_workflow_status(
+                    workflow_name=instance.workflow_name,
+                    status=WorkflowStatus.failed.value,
+                )
                 return
             next_at = result.next_attempt_at or (
                 datetime.now(UTC)
@@ -581,6 +663,9 @@ class DurableWorkflowRunner:
             )
             await self._state_store.update_status(
                 workflow_id, WorkflowStatus.paused, next_attempt_at=next_at
+            )
+            record_workflow_status(
+                workflow_name=instance.workflow_name, status=WorkflowStatus.paused.value
             )
             return
 
@@ -711,13 +796,49 @@ class DurableWorkflowRunner:
 
     async def _write_snapshot(self, workflow_id: UUID, at_seq: int) -> None:
         """Фиксирует snapshot состояния инстанса (событие ``snapshotted``)."""
-        events = await self._event_store.read_events(workflow_id=workflow_id)
+        events = await self._read_all_events(workflow_id)
         if not events:
             return
         state = WorkflowState.replay(events)
         await self._event_store.snapshot(
             workflow_id=workflow_id, state=state.to_snapshot(), at_seq=at_seq
         )
+
+    async def _read_all_events(self, workflow_id: UUID) -> list[WorkflowEventRow]:
+        """Читает ВСЕ события workflow'а — с пагинацией по ``after_seq``.
+
+        Event log' растёт линейно по числу шагов (и по числу сигналов/
+        ретраев), поэтому одностраничное чтение обрезало бы лог на
+        ``event_page_size`` событиях. Replay тогда не нашёл бы последний
+        ``snapshotted``, состояние откатывалось к старому snapshot'у, а
+        уже выполненные шаги исполнялись повторно (ADR-0398).
+
+        Args:
+            workflow_id: UUID workflow-инстанса.
+
+        Returns:
+            Список всех событий в порядке возрастания ``seq``.
+
+        """
+        page_size = max(1, self._config.event_page_size)
+        events: list[WorkflowEventRow] = []
+        after_seq = 0
+        while True:
+            page = await self._event_store.read_events(
+                workflow_id=workflow_id, after_seq=after_seq, limit=page_size
+            )
+            if not page:
+                break
+            events.extend(page)
+            last_seq = page[-1].seq
+            if last_seq <= after_seq:
+                # Store не продвинул курсор — дальнейшее чтение
+                # зациклится. Защита от бесконечного цикла.
+                break
+            after_seq = last_seq
+            if len(page) < page_size:
+                break
+        return events
 
     @staticmethod
     def _merge_output_state(state: WorkflowState, output_state: dict[str, Any]) -> None:

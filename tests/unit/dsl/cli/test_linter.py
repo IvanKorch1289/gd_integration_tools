@@ -394,3 +394,15 @@ def test_processor_capability_map_comes_from_processors() -> None:
         "call_com",
     ):
         assert stale not in mapping
+
+
+def test_registry_only_processor_is_reported(tmp_path: Path) -> None:
+    """Шаг из реестра без YAML-имени → PROCESSOR_NOT_YAML_ADDRESSABLE."""
+    route_dir = _write_route(
+        tmp_path, yaml_body="steps:\n  - rpa_pdf:\n      format: A4\n"
+    )
+    issues = DSLLinter().lint_route(route_dir)
+    addressable = [i for i in issues if i.code == "PROCESSOR_NOT_YAML_ADDRESSABLE"]
+    assert addressable, [i.code for i in issues]
+    assert "rpa_pdf" in addressable[0].message
+    assert "print_pdf" in addressable[0].suggestion

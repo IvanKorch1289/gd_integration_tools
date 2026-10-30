@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string"
+    },
+    "command": {
+      "type": "string"
+    },
+    "username": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "password_from": {
+      "type": "string",
+      "enum": [
+        "body",
+        "properties",
+        "none"
+      ]
+    },
+    "key_file": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "timeout": {
+      "type": "number"
+    },
+    "result_property": {
+      "type": "string"
+    },
+    "continue_on_error": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "host",
+    "command"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/ssh_exec/1.0.0",
+  "title": "SshCommandProcessor"
+}

@@ -40,46 +40,48 @@ class SubFlowMixin:
     def _exec_sub_flow(
         self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow
     ) -> StepResult:
-        """Spawn child workflow.
+        """sub_flow в pg-runner не поддерживается — fail-fast.
 
-        * ``wait=True`` (default) — parent переходит в PAUSE, ожидая
-          `sub_completed` event. Реальное спавниваение — через
-          WorkflowInstanceStore.create() (IL-WF1.1) + correlation_id
-          = instance.id.
-        * ``wait=False`` — trigger-and-forget, сразу CONTINUE.
+        Spawn child-workflow требует внешнего оркестратора (Temporal):
+        pg-runner не умеет создавать дочерний workflow-инстанс и получать
+        событие ``sub_completed``. Прежняя реализация эмитила только
+        событие ``sub_spawned`` — parent навсегда оставался в статусе
+        ``running``, а шаг переисполнялся на каждом backup-poll (30 с)
+        без какого-либо продвижения (ADR-0398).
+
+        Поэтому шаг завершается терминальным FAILED с понятным
+        сообщением: оператор увидит причину в event log'е, а workflow
+        не будет «висеть» в running и дублировать эффекты.
+
+        Args:
+            step: Текущий шаг (``kind="sub_flow"``).
+            state: Materialized state (нужен для номера попытки).
+            instance: Row инстанса (не используется).
+
+        Returns:
+            ``StepResult(outcome=FAILED)`` с событием ``step_failed``.
+
         """
-        if not step.workflow_name:
-            return StepResult(
-                outcome=StepOutcome.FAILED,
-                error_message="sub_flow missing workflow_name",
-                events=[
-                    (
-                        WorkflowEventType.step_failed,
-                        {
-                            "reason": "missing_workflow_name",
-                            "attempt": next_attempt(state),
-                        },
-                        step.name,
-                    )
-                ],
-            )
-        # Реальная интеграция с WorkflowInstanceStore делегируется в
-        # WF1.5 (admin API trigger endpoint). Здесь формируем event
-        # + outcome, runner увидит SUB_SPAWNED и оставит parent в running.
-        events = [
-            (
-                WorkflowEventType.sub_spawned,
-                {
-                    "child_workflow": step.workflow_name,
-                    "wait": step.wait,
-                    "input_map": dict(step.input_map),
-                },
-                step.name,
-            )
-        ]
-        if step.wait:
-            return StepResult(outcome=StepOutcome.SUB_SPAWNED, events=events)  # type: ignore[arg-type]  # R2.MYPY: events tuple shape matches StepResult.events
-        return StepResult(outcome=StepOutcome.CONTINUE, events=events)  # type: ignore[arg-type]
+        del instance
+        attempt = next_attempt(state)
+        child = step.workflow_name or ""
+        reason = "missing_workflow_name" if not child else "sub_flow_unsupported"
+        return StepResult(
+            outcome=StepOutcome.FAILED,
+            error_message=(
+                "sub_flow в pg-runner не поддерживается "
+                f"(step={step.name!r}, workflow={child or '<not specified>'!r}): "
+                "spawn дочернего workflow требует внешнего оркестратора "
+                "(Temporal). Используйте TemporalWorkflowBackend."
+            ),
+            events=[
+                (
+                    WorkflowEventType.step_failed,
+                    {"reason": reason, "attempt": attempt},
+                    step.name,
+                )
+            ],
+        )
 
     def _exec_wait(
         self, step: WorkflowStep, state: WorkflowState, instance: WorkflowInstanceRow

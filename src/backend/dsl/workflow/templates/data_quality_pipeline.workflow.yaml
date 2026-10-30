@@ -4,23 +4,26 @@ description: |
   Data Quality Pipeline — ingest → validate → enrich → publish (parallel branches).
   Template tags: data, ingest, etl, parallel.
 steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity
-    name: ingest_raw_data
+    name: connector.import
     args:
-      source_format: csv
+      payload: {}
     timeout_s: 120
   - type: activity
-    name: validate_schema
+    name: dq.schema_infer
     args:
-      schema_id: customer_v3
+      data: {}
+      dataset: default
     timeout_s: 60
   - type: activity
-    name: enrich_with_external
+    name: ai.parse_webpage
     args:
-      enrich_source: dadata
+      url: https://example.com/lookup
     timeout_s: 90
   - type: activity
-    name: publish_to_warehouse
+    name: analytics.insert_event
     args:
-      target: clickhouse
+      table: data_quality_events
+      event: {}
     timeout_s: 60

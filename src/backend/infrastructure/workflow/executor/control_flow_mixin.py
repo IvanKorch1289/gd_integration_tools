@@ -259,6 +259,7 @@ class ControlFlowMixin:
             )
         ]
 
+        item_results: list[dict[str, Any]] = []
         if step.parallel:
             semaphore = asyncio.Semaphore(step.max_concurrent)
 
@@ -316,6 +317,7 @@ class ControlFlowMixin:
             final_body = dict(state.exchange_snapshot)
             for r in results:
                 if isinstance(r, dict):
+                    item_results.append(dict(r))
                     final_body.update(r)
         else:
             final_body = dict(state.exchange_snapshot)
@@ -346,6 +348,12 @@ class ControlFlowMixin:
                                         ),
                                     ],
                                 )
+                # Per-item результат: снимок body после обработки item'а.
+                item_results.append(dict(final_body))
+        # Per-item результаты сохраняются в exchange — иначе видны только
+        # последние значения (ADR-0398). Контракт ``out`` не ломается:
+        # в exchange остаются и общие, и per-item значения.
+        final_body["for_each_results"] = item_results
         return StepResult(
             outcome=StepOutcome.CONTINUE,
             events=[

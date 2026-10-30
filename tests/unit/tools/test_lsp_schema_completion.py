@@ -124,3 +124,38 @@ class TestStepCompletionApiFidelity:
             "print_pdf",
         }
         assert expected <= labels, f"не хватает RPA-шагов: {sorted(expected - labels)}"
+
+
+class TestCatalogDrivenCompletions:
+    """ADR-0399: completion строится из каталога шагов (не из хардкод-списка)."""
+
+    def test_completions_cover_whole_catalog(self) -> None:
+        """Каждый YAML-шаг каталога присутствует в completion."""
+        from src.backend.dsl.builders.step_catalog import builder_step_names
+        from tools.dsl_lsp.schema_completion import STEP_COMPLETIONS
+
+        labels = {label for label, *_ in STEP_COMPLETIONS}
+        missing = sorted(set(builder_step_names()) - labels)
+        assert not missing, f"completion не покрывает шаги: {missing[:10]}"
+
+    def test_generated_entries_have_snippet(self) -> None:
+        """Сгенерированные записи содержат валидный insert_text."""
+        from src.backend.dsl.builders.step_catalog import builder_step_names
+        from tools.dsl_lsp.schema_completion import STEP_COMPLETIONS
+
+        entries = {label: snippet for label, _detail, snippet in STEP_COMPLETIONS}
+        steps = set(builder_step_names())
+        for step in sorted(steps):
+            snippet = entries[step]
+            assert snippet.startswith(f"{step}:"), (
+                f"{step}: snippet должен начинаться с имени шага"
+            )
+
+    def test_static_list_remains_fallback(self) -> None:
+        """Статический список сохранён как fallback (ADR-0399)."""
+        from tools.dsl_lsp.schema_completion import _STATIC_STEP_COMPLETIONS
+
+        assert len(_STATIC_STEP_COMPLETIONS) >= 15
+        labels = [label for label, _, _ in _STATIC_STEP_COMPLETIONS]
+        assert "proxy" in labels
+        assert len(labels) == len(set(labels))

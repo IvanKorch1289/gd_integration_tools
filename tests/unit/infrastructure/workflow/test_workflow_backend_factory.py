@@ -106,6 +106,68 @@ class TestTemporalFallback:
             await create_workflow_backend(kind="temporal", profile="prod")
 
 
+class TestDowngradeGuard:
+    """ADR-0399 (ADR-0395): downgrade Temporal → pg_runner запрещён вне dev."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("profile", ["staging", "prod"])
+    async def test_downgrade_forbidden_outside_dev(
+        self, monkeypatch: pytest.MonkeyPatch, profile: str
+    ) -> None:
+        """В staging/prod падение Temporal → ошибка, а не pg_runner."""
+        _install_broken_temporal(monkeypatch, OSError("connection refused"))
+
+        with pytest.raises(RuntimeError, match="downgrade") as exc_info:
+            await create_workflow_backend(kind="auto", profile=profile)
+
+        message = str(exc_info.value)
+        assert profile in message
+        assert "pg_runner" in message
+        assert isinstance(exc_info.value.__cause__, OSError)
+
+    @pytest.mark.asyncio
+    async def test_auto_without_profile_uses_active_profile(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """``kind='auto'`` без профиля (cli/workflow.py) → профиль из APP_PROFILE."""
+        _install_broken_temporal(monkeypatch, OSError("connection refused"))
+        monkeypatch.setenv("APP_PROFILE", "prod")
+
+        with pytest.raises(RuntimeError, match="downgrade"):
+            await create_workflow_backend(kind="auto")
+
+    @pytest.mark.asyncio
+    async def test_auto_without_profile_in_dev_still_downgrades(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """В dev-профиле downgrade остаётся разрешённым."""
+        _install_broken_temporal(monkeypatch, OSError("connection refused"))
+        monkeypatch.setenv("APP_PROFILE", "dev")
+
+        backend = await create_workflow_backend(kind="auto")
+
+        from src.backend.infrastructure.workflow.pg_runner_backend import (
+            PgRunnerWorkflowBackend,
+        )
+
+        assert isinstance(backend, PgRunnerWorkflowBackend)
+
+    @pytest.mark.asyncio
+    async def test_explicit_pg_runner_kind_still_allowed_in_prod(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Явный выбор оператора (``kind='pg_runner'``) — не downgrade."""
+        monkeypatch.setenv("APP_PROFILE", "prod")
+
+        backend = await create_workflow_backend(kind="pg_runner")
+
+        from src.backend.infrastructure.workflow.pg_runner_backend import (
+            PgRunnerWorkflowBackend,
+        )
+
+        assert isinstance(backend, PgRunnerWorkflowBackend)
+
+
 class TestTemporalDataConverter:
     """Типы payload'а не теряются при encode/decode."""
 

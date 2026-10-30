@@ -4,16 +4,23 @@ description: |
   Webhook Pipeline — webhook trigger → validate sig → process → respond.
   Template tags: webhook, integration, signature, hmac.
 steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity
-    name: validate_hmac_signature
+    name: webhook.transform
     args:
-      algorithm: hmac-sha256
+      payload: {}
+      expression: body
     timeout_s: 10
   - type: activity
-    name: process_payload
+    name: connector.import
+    args:
+      payload: {}
     timeout_s: 30
   - type: activity
-    name: respond_with_ack
+    name: notify.send
     args:
-      status_code: 200
+      channel: webhook
+      to: "https://example.com/ack"
+      subject: ack
+      message: ok
     timeout_s: 5

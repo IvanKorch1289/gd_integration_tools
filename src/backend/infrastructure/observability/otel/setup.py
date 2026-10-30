@@ -27,15 +27,46 @@ Sprint 16 K2 W3 (L3-P0-1, 2026-05-20): добавлен ``MeterProvider`` +
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Final
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("configure_otel", "setup_otel_metrics", "shutdown_otel_metrics")
+__all__ = (
+    "WORKFLOW_COMPENSATION_TOTAL",
+    "WORKFLOW_STATUS",
+    "WORKFLOW_STEP_DURATION",
+    "WORKFLOW_STEP_RETRIES",
+    "configure_otel",
+    "get_workflow_instruments",
+    "record_workflow_compensation",
+    "record_workflow_status",
+    "record_workflow_step_duration",
+    "record_workflow_step_retries",
+    "setup_otel_metrics",
+    "shutdown_otel_metrics",
+)
 
 logger = get_logger("infra.otel.setup")
 
 _meter_provider_ref: Any | None = None
+
+#: Имя OTel-meter'а с workflow-метриками.
+_WORKFLOW_METER_NAME: Final[str] = "gd.workflow"
+
+#: Длительность шага workflow (pg-runner), ADR-0399.
+WORKFLOW_STEP_DURATION: Final[str] = "workflow.step_duration"
+
+#: Число ретраев шага workflow (pg-runner), ADR-0399.
+WORKFLOW_STEP_RETRIES: Final[str] = "workflow.step_retries"
+
+#: Число выполненных компенсаций workflow (pg-runner), ADR-0399.
+WORKFLOW_COMPENSATION_TOTAL: Final[str] = "workflow.compensation_total"
+
+#: Статус workflow (pg-runner), ADR-0399.
+WORKFLOW_STATUS: Final[str] = "workflow.status"
+
+#: Кэш OTel-инструментов workflow-метрик (создаются один раз за процесс).
+_workflow_instruments: dict[str, Any] = {}
 
 
 def configure_otel(
@@ -251,6 +282,169 @@ def setup_otel_metrics(
     return meter_provider
 
 
+def _ensure_workflow_instruments() -> dict[str, Any]:
+    """Создать (один раз за процесс) OTel-инструменты workflow-метрик.
+
+    Инструменты создаются через meter ``gd.workflow`` — тот же, что и
+    у legacy-метрик workflow. Если OTel API не установлен — возвращается
+    пустой mapping, и recorders становятся no-op.
+
+    Returns:
+        Mapping ``имя метрики → OTel-инструмент``.
+
+    """
+    global _workflow_instruments
+    if _workflow_instruments:
+        return _workflow_instruments
+    try:
+        from opentelemetry import metrics
+    except ImportError:  # pragma: no cover — OTel не установлен
+        return _workflow_instruments
+    meter = metrics.get_meter(_WORKFLOW_METER_NAME)
+    _workflow_instruments = {
+        "workflow.execution.duration": meter.create_histogram(
+            name="workflow.execution.duration",
+            unit="ms",
+            description="Длительность выполнения workflow от старта до завершения",
+        ),
+        "workflow.execution.count": meter.create_counter(
+            name="workflow.execution.count",
+            unit="1",
+            description="Количество запусков workflow (по типу + статусу)",
+        ),
+        "workflow.activity.duration": meter.create_histogram(
+            name="workflow.activity.duration",
+            unit="ms",
+            description="Длительность выполнения отдельной activity внутри workflow",
+        ),
+        WORKFLOW_STEP_DURATION: meter.create_histogram(
+            name=WORKFLOW_STEP_DURATION,
+            unit="ms",
+            description="Длительность выполнения шага workflow (pg-runner)",
+        ),
+        WORKFLOW_STEP_RETRIES: meter.create_counter(
+            name=WORKFLOW_STEP_RETRIES,
+            unit="1",
+            description="Число ретраев шага workflow (pg-runner)",
+        ),
+        WORKFLOW_COMPENSATION_TOTAL: meter.create_counter(
+            name=WORKFLOW_COMPENSATION_TOTAL,
+            unit="1",
+            description="Число выполненных компенсаций workflow (pg-runner)",
+        ),
+        WORKFLOW_STATUS: meter.create_counter(
+            name=WORKFLOW_STATUS,
+            unit="1",
+            description="Переходы workflow в терминальный статус (pg-runner)",
+        ),
+    }
+    return _workflow_instruments
+
+
+def get_workflow_instruments() -> dict[str, Any]:
+    """Вернуть созданные OTel-инструменты workflow-метрик.
+
+    Returns:
+        Mapping ``имя метрики → OTel-инструмент`` (пусто без OTel API).
+
+    """
+    return _ensure_workflow_instruments()
+
+
+def record_workflow_step_duration(
+    *, workflow_name: str, step_name: str, duration_ms: float, outcome: str
+) -> None:
+    """Записать длительность выполнения шага workflow.
+
+    ADR-0399: метрики pg-runner'а — раньше были объявлены, но не
+    наполнялись (ни одного ``record``).
+
+    Args:
+        workflow_name: Имя workflow'а.
+        step_name: Имя выполненного шага.
+        duration_ms: Длительность шага в миллисекундах.
+        outcome: Исход шага (``continue`` / ``pause`` / ``done`` / ...).
+
+    """
+    instrument = _ensure_workflow_instruments().get(WORKFLOW_STEP_DURATION)
+    if instrument is None:
+        return
+    try:
+        instrument.record(
+            max(0.0, duration_ms),
+            {
+                "workflow_name": workflow_name,
+                "step_name": step_name,
+                "outcome": outcome,
+            },
+        )
+    except Exception as exc:  # noqa: BLE001 — метрика не должна ломать workflow
+        logger.debug("workflow.step_duration record failed: %s", exc)
+
+
+def record_workflow_step_retries(
+    *, workflow_name: str, step_name: str, retries: int
+) -> None:
+    """Записать число ретраев шага workflow.
+
+    Args:
+        workflow_name: Имя workflow'а.
+        step_name: Имя шага.
+        retries: Число ретраев (0 — ничего не эмитим).
+
+    """
+    if retries <= 0:
+        return
+    instrument = _ensure_workflow_instruments().get(WORKFLOW_STEP_RETRIES)
+    if instrument is None:
+        return
+    try:
+        instrument.add(
+            retries, {"workflow_name": workflow_name, "step_name": step_name}
+        )
+    except Exception as exc:  # noqa: BLE001 — метрика не должна ломать workflow
+        logger.debug("workflow.step_retries record failed: %s", exc)
+
+
+def record_workflow_compensation(
+    *, workflow_name: str, status: str, steps: int
+) -> None:
+    """Записать выполненные компенсации workflow.
+
+    Args:
+        workflow_name: Имя workflow'а.
+        status: Статус компенсации (``completed`` / ``failed``).
+        steps: Число скомпенсированных шагов.
+
+    """
+    if steps <= 0:
+        return
+    instrument = _ensure_workflow_instruments().get(WORKFLOW_COMPENSATION_TOTAL)
+    if instrument is None:
+        return
+    try:
+        instrument.add(steps, {"workflow_name": workflow_name, "status": status})
+    except Exception as exc:  # noqa: BLE001 — метрика не должна ломать workflow
+        logger.debug("workflow.compensation_total record failed: %s", exc)
+
+
+def record_workflow_status(*, workflow_name: str, status: str) -> None:
+    """Записать переход workflow в статус.
+
+    Args:
+        workflow_name: Имя workflow'а.
+        status: Новый статус (``succeeded`` / ``failed`` / ``paused`` / ...).
+
+    """
+    instrument = _ensure_workflow_instruments().get(WORKFLOW_STATUS)
+    if instrument is None:
+        return
+    try:
+        instrument.add(1, {"workflow_name": workflow_name, "status": status})
+    except Exception as exc:  # noqa: BLE001 — метрика не должна ломать workflow
+        logger.debug("workflow.status record failed: %s", exc)
+
+
 def _register_base_meters(meter_provider: Any) -> None:
     """Зарегистрировать базовые meter-инструменты: workflow + REST + events.
 
@@ -263,27 +457,13 @@ def _register_base_meters(meter_provider: Any) -> None:
         meter_provider: сконфигурированный :class:`MeterProvider`.
 
     """
+    # Workflow-инструменты (в т.ч. метрики pg-runner'а, ADR-0399).
+    _ensure_workflow_instruments()
+
     try:
         from opentelemetry import metrics
     except ImportError:
         return
-
-    workflow_meter = metrics.get_meter("gd.workflow")
-    workflow_meter.create_histogram(
-        name="workflow.execution.duration",
-        unit="ms",
-        description="Длительность выполнения workflow от старта до завершения",
-    )
-    workflow_meter.create_counter(
-        name="workflow.execution.count",
-        unit="1",
-        description="Количество запусков workflow (по типу + статусу)",
-    )
-    workflow_meter.create_histogram(
-        name="workflow.activity.duration",
-        unit="ms",
-        description="Длительность выполнения отдельной activity внутри workflow",
-    )
 
     business_meter = metrics.get_meter("gd.business")
     business_meter.create_counter(
@@ -298,7 +478,8 @@ def _register_base_meters(meter_provider: Any) -> None:
     logger.debug(
         "OTel base meters зарегистрированы: workflow.execution.duration / "
         "workflow.execution.count / workflow.activity.duration / "
-        "business.event.count"
+        "workflow.step_duration / workflow.step_retries / "
+        "workflow.compensation_total / workflow.status / business.event.count"
     )
 
 

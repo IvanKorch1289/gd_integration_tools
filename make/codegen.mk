@@ -57,4 +57,8 @@ import-wsdl: check-env ## WSDL → actions (URL=<wsdl> CONNECTOR=<name> [WRITE=1
 	@$(UV_RUN) python tools/import_wsdl.py --url "$(URL)" --connector "$(CONNECTOR)" \
 		$(if $(WRITE),--write,) $(if $(OUTPUT_DIR),--output-dir "$(OUTPUT_DIR)",)
 
+schemas: check-env ## Export JSON-Schema DSL-процессоров → docs/reference/schemas/processors (ADR-0399)
+	@$(UV_RUN) python tools/dsl_export_schemas.py --output docs/reference/schemas/processors
+
+
 

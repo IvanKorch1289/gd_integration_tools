@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/ai_rpa/1.0.0",
+  "title": "AIRpaProcessor",
+  "type": "object"
+}

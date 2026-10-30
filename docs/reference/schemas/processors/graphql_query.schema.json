@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "properties": {
+    "endpoint": {
+      "type": "string"
+    },
+    "query": {
+      "type": "string"
+    },
+    "variables": {
+      "type": "object"
+    },
+    "operation_name": {
+      "type": "string"
+    },
+    "headers": {
+      "type": "object"
+    },
+    "auth_token": {
+      "type": "string"
+    },
+    "auth_header": {
+      "type": "string"
+    },
+    "timeout": {
+      "type": "number"
+    },
+    "result_property": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "endpoint",
+    "query"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/graphql_query/1.0.0",
+  "title": "GraphQLQueryProcessor",
+  "x-gd-capabilities": [
+    "net.outbound.*:external"
+  ]
+}

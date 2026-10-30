@@ -4,26 +4,25 @@ description: |
   Incident Response — detect → triage → notify → mitigate (HITL approve).
   Template tags: ops, incident, alerting, hitl.
 steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity
-    name: detect_anomaly
-    args:
-      detector: prometheus_rule
+    name: anomaly.list_metrics
     timeout_s: 60
   - type: activity
-    name: triage_severity
+    name: anomaly.stats
     args:
-      threshold: high
+      metric: cpu
     timeout_s: 30
   - type: activity
-    name: notify_oncall
+    name: notify.telegram
     args:
-      channel: pagerduty
+      to: "@oncall"
+      subject: incident
+      message: anomaly detected
     timeout_s: 30
   - type: wait_signal
     signal_name: incident_approved
     timeout_s: 1800
   - type: activity
-    name: mitigate_action
-    args:
-      runbook: auto_restart_service
+    name: tech.check_all_services
     timeout_s: 120

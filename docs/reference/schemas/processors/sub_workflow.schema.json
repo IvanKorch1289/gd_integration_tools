@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "args": {
+      "type": "object"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "task_queue": {
+      "type": "string"
+    },
+    "sub_workflow_id_property": {
+      "type": "string"
+    },
+    "result_property": {
+      "type": "string"
+    },
+    "parent_workflow_id_property": {
+      "type": "string"
+    },
+    "parent_correlation_id_property": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "args"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/sub_workflow/1.0.0",
+  "title": "SubWorkflowProcessor"
+}

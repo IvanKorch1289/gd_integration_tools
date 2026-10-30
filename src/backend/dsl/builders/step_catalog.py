@@ -25,7 +25,15 @@
 * :func:`builder_step_names` — все публичные методы ``RouteBuilder``;
 * :func:`step_capability_map` — ``шаг → требуемая capability``;
 * :func:`step_schema_map` — ``шаг → JSON-Schema параметров``;
+* :func:`step_registry_spec` — ``шаг → ProcessorSpec`` реестра ``@processor``;
+* :func:`registry_only_steps` — процессоры реестра без YAML-шага;
+* :func:`yaml_step_for_registry_name` — ``имя реестра → YAML-шаг``;
 * :func:`catalog_coverage` — счётчики покрытия (для мягкого CI-гейта).
+
+ADR-0399: каталог синхронизирован с реестром ``@processor`` **по классу
+процессора**, а не по имени: имя в реестре может отличаться от YAML-имени
+(``print_pdf`` → ``rpa_pdf``, ``wait_for_selector`` → ``rpa_wait_for``).
+Поэтому YAML-шаг получает **реестровую** схему, а не сигнатурный каркас.
 """
 
 from __future__ import annotations
@@ -41,8 +49,11 @@ from typing import Any, Final
 __all__ = (
     "builder_step_names",
     "catalog_coverage",
+    "registry_only_steps",
     "step_capability_map",
+    "step_registry_spec",
     "step_schema_map",
+    "yaml_step_for_registry_name",
 )
 
 #: Capability, которую шаг требует на уровне ФАСАДА, а не процессора.
@@ -187,6 +198,136 @@ def _processor_class_for_step(step: str) -> type[Any] | None:
     return None
 
 
+#: Кэш AST-разбора builder'а (шаг → класс процессора).
+#: ADR-0399: разбор дорогой (inspect.getsource + ast.parse на каждый
+#: вызов), а каталог спрашивает класс сотни раз.
+_processor_class_cache: dict[str, type[Any] | None] = {}
+
+
+def _cached_processor_class(step: str) -> type[Any] | None:
+    """Кэшированный :func:`_processor_class_for_step`."""
+    if step not in _processor_class_cache:
+        _processor_class_cache[step] = _processor_class_for_step(step)
+    return _processor_class_cache[step]
+
+
+def _processor_registry() -> Any | None:
+    """Глобальный реестр процессоров (``None`` — если импорт невозможен).
+
+    Реестр ``@processor`` наполняется на этапе импорта модулей
+    процессоров, поэтому перед обращением к нему импортируется пакет
+    ``engine.processors`` (ADR-0369).
+
+    Returns:
+        :class:`ProcessorRegistry` либо ``None``.
+
+    """
+    try:
+        import src.backend.dsl.engine.processors  # noqa: F401  — side-effect
+        from src.backend.dsl.registry.processor import get_processor_registry
+    except ImportError:  # pragma: no cover — optional deps
+        return None
+    return get_processor_registry()
+
+
+@lru_cache(maxsize=1)
+def _registry_specs_by_class() -> dict[type[Any], Any]:
+    """Реестр процессоров: ``класс → ProcessorSpec``."""
+    registry = _processor_registry()
+    if registry is None:  # pragma: no cover — optional deps
+        return {}
+    return {spec.cls: spec for spec in registry.list_specs()}
+
+
+@lru_cache(maxsize=1)
+def _registry_specs_by_name() -> dict[str, Any]:
+    """Реестр процессоров: ``короткое имя → ProcessorSpec``."""
+    registry = _processor_registry()
+    if registry is None:  # pragma: no cover — optional deps
+        return {}
+    return {spec.name: spec for spec in registry.list_specs()}
+
+
+def step_registry_spec(step: str) -> Any | None:
+    """``ProcessorSpec`` реестра для YAML-шага ``step``.
+
+    Сопоставление — **по классу процессора** (builder → AST → класс),
+    потому что имя в реестре может отличаться от YAML-имени:
+    ``print_pdf`` → ``rpa_pdf``, ``wait_for_selector`` → ``rpa_wait_for``.
+    Fallback — сопоставление по имени.
+
+    Args:
+        step: Имя YAML-шага.
+
+    Returns:
+        :class:`ProcessorSpec` либо ``None``, если шаг не зарегистрирован.
+
+    """
+    processor_cls = _cached_processor_class(step)
+    if processor_cls is not None:
+        spec = _registry_specs_by_class().get(processor_cls)
+        if spec is not None:
+            return spec
+    return _registry_specs_by_name().get(step)
+
+
+@lru_cache(maxsize=1)
+def registry_only_steps() -> tuple[str, ...]:
+    """Процессоры реестра, не адресуемые из YAML.
+
+    У таких процессоров нет публичного метода ``RouteBuilder`` — в YAML
+    их нельзя вызвать (в отличие от переименованных ``rpa_pdf`` →
+    ``print_pdf``, которые адресуемы).
+
+    Returns:
+        Отсортированный кортеж имён процессоров реестра.
+
+    """
+    yaml_classes = {
+        processor_cls
+        for processor_cls in (
+            _cached_processor_class(step) for step in builder_step_names()
+        )
+        if processor_cls is not None
+    }
+    steps = set(builder_step_names())
+    registry = _processor_registry()
+    if registry is None:  # pragma: no cover — optional deps
+        return ()
+    return tuple(
+        sorted(
+            spec.name
+            for spec in registry.list_specs()
+            if spec.name not in steps and spec.cls not in yaml_classes
+        )
+    )
+
+
+@lru_cache(maxsize=1)
+def _yaml_step_by_registry_name() -> dict[str, str]:
+    """Обратная карта ``имя процессора реестра → YAML-шаг``."""
+    mapping: dict[str, str] = {}
+    for step in builder_step_names():
+        spec = step_registry_spec(step)
+        if spec is not None:
+            mapping.setdefault(spec.name, step)
+    return mapping
+
+
+def yaml_step_for_registry_name(name: str) -> str | None:
+    """YAML-шаг для имени процессора из реестра.
+
+    Args:
+        name: Короткое имя процессора в реестре (``rpa_pdf``).
+
+    Returns:
+        Имя YAML-шага (``print_pdf``) либо ``None``, если процессор из
+        реестра не адресуем из YAML.
+
+    """
+    return _yaml_step_by_registry_name().get(name)
+
+
 @lru_cache(maxsize=1)
 def step_capability_map() -> dict[str, str]:
     """Карта «YAML-шаг → требуемая capability».
@@ -201,6 +342,10 @@ def step_capability_map() -> dict[str, str]:
     2. **Реестр ``@processor``** — для процессоров, чей шаг не удалось
        сопоставить с методом builder'а.
 
+    ADR-0399: capability берётся у класса процессора, поэтому
+    переименованные шаги (``print_pdf`` → ``rpa_pdf``) тоже получают
+    свою capability (``rpa.browser.pdf``).
+
     Returns:
         Mapping ``step → capability name``.
 
@@ -208,7 +353,7 @@ def step_capability_map() -> dict[str, str]:
     mapping: dict[str, str] = {}
     steps = builder_step_names()
     for step in steps:
-        processor_cls = _processor_class_for_step(step)
+        processor_cls = _cached_processor_class(step)
         if processor_cls is None:
             continue
         capability = getattr(processor_cls, "required_capability", None)
@@ -301,23 +446,29 @@ def step_schema_map() -> dict[str, dict[str, Any]]:
     зарегистрирован; иначе строится каркас по сигнатуре метода
     ``RouteBuilder``.
 
+    ADR-0399: реестровый процессор ищется **по классу**, поэтому
+    переименованные шаги (``print_pdf`` → ``rpa_pdf``) получают
+    реестровую схему, а не сигнатурный каркас.
+
     Returns:
         Mapping ``step → JSON-Schema``.
 
     """
     schemas: dict[str, dict[str, Any]] = {}
-    try:
-        import src.backend.dsl.engine.processors  # noqa: F401  — side-effect
-        from src.backend.dsl.registry.processor import get_processor_registry
-    except ImportError:  # pragma: no cover — optional deps
-        registry = None
-    else:
-        registry = get_processor_registry()
+    by_fqn: dict[str, dict[str, Any]] = {}
+    registry = _processor_registry()
     if registry is not None:
         for fqn, schema in registry.export_schemas().items():
             short = fqn.split(":", 1)[-1]
             schemas[short] = schema
+            by_fqn[fqn] = schema
     for step in builder_step_names():
+        spec = step_registry_spec(step)
+        if spec is not None:
+            schema = by_fqn.get(spec.fqn)
+            if schema is not None:
+                schemas[step] = schema
+                continue
         schemas.setdefault(step, _signature_schema(step))
     return schemas
 
@@ -328,18 +479,13 @@ def catalog_coverage() -> dict[str, int]:
     Returns:
         Mapping ``метрика → значение``: ``steps`` (всего шагов),
         ``with_capability`` (шагов с известной capability),
-        ``with_registry_schema`` (шагов со схемой из реестра).
+        ``with_registry_schema`` (шагов со схемой из реестра),
+        ``registry_only`` (процессоров реестра без YAML-шага).
 
     """
     schemas = step_schema_map()
     registry_schema_count = 0
-    try:
-        import src.backend.dsl.engine.processors  # noqa: F401  — side-effect
-        from src.backend.dsl.registry.processor import get_processor_registry
-    except ImportError:  # pragma: no cover — optional deps
-        registry = None
-    else:
-        registry = get_processor_registry()
+    registry = _processor_registry()
     if registry is not None:
         registry_names = {spec.name for spec in registry.list_specs()}
         registry_schema_count = sum(1 for name in registry_names if name in schemas)
@@ -347,4 +493,5 @@ def catalog_coverage() -> dict[str, int]:
         "steps": len(builder_step_names()),
         "with_capability": len(step_capability_map()),
         "with_registry_schema": registry_schema_count,
+        "registry_only": len(registry_only_steps()),
     }

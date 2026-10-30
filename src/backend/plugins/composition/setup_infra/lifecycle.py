@@ -312,7 +312,11 @@ async def _build_temporal_activities() -> list[Any]:
     bridge = ActivityBridge()
     register_langgraph_checkpoint_activities(bridge)
     try:
-        bridge.collect_activities(declarations)
+        # ADR-0398: validate=True — build-time резолв имён activity против
+        # action-реестра. Без него неизвестное имя молча регистрировалось
+        # как activity-обёртка и падало в рантайме (ActivityNotRegistered).
+        # Ошибка содержит полный список неизвестных имён.
+        bridge.collect_activities(declarations, validate=True)
     except Exception as exc:
         # Неизвестное имя activity в YAML-декларации — падаем сразу на
         # build-time Worker'а (понятная ошибка вместо KeyError в рантайме).

@@ -4,27 +4,33 @@ description: |
   KYC/AML Check — 3 parallel checks → consolidate → decide (saga compensation).
   Template tags: kyc, aml, compliance, parallel, saga.
 steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: saga
     forward:
-      - name: identity_verification
-        args: {provider: dadata}
+      - name: users.get
+        args: {key: id, value: 0}
         timeout_s: 60
-      - name: sanctions_screening
-        args: {provider: world_check}
+      - name: web_search.query
+        args: {query: "sanctions screening", max_results: 5}
         timeout_s: 60
-      - name: pep_screening
-        args: {provider: dow_jones}
+      - name: web_search.query
+        args: {query: "pep screening", max_results: 5}
         timeout_s: 60
     compensate:
-      - name: revoke_provisional_status
+      - name: users.update
+        args:
+          key: id
+          value: 0
+          data: {status: revoked}
         timeout_s: 30
   - type: activity
-    name: consolidate_results
+    name: dq.stats
     args:
-      threshold: 80
+      dataset: kyc
     timeout_s: 30
   - type: activity
-    name: decide_outcome
+    name: dq.check
     args:
-      auto_approve_threshold: 95
+      data: {}
+      dataset: kyc
     timeout_s: 30

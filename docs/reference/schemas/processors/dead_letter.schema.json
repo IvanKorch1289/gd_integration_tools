@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "description": "Camel Dead Letter Channel — wrap sub-pipeline и DLQ-route.",
+  "properties": {
+    "dlq_stream": {
+      "type": "string",
+      "default": "dsl-dlq",
+      "description": "Redis stream name для DLQ записей."
+    },
+    "dlq_path": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Опциональный локальный JSONL fallback path."
+    },
+    "max_retries": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/dead_letter/1.0.0",
+  "title": "DeadLetterProcessor",
+  "x-gd-capabilities": [
+    "dsl.eip.dead_letter",
+    "dsl.dlq.write"
+  ],
+  "x-gd-tags": [
+    "eip",
+    "reliability",
+    "dlq"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/rpa_click/1.0.0",
+  "title": "ClickProcessor",
+  "type": "object"
+}

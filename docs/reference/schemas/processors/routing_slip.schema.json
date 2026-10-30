@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "description": "Dynamic per-message chain (Camel Routing Slip EIP).",
+  "properties": {
+    "strict": {
+      "type": "boolean",
+      "default": true,
+      "description": "Raise KeyError on missing step (vs warning + skip)."
+    },
+    "max_steps": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 50,
+      "description": "Cap to prevent infinite chains."
+    },
+    "name": {
+      "type": "string"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/routing_slip/1.0.0",
+  "title": "RoutingSlipProcessor",
+  "x-gd-capabilities": [
+    "dsl.eip.routing_slip"
+  ],
+  "x-gd-tags": [
+    "eip",
+    "routing",
+    "routing_slip",
+    "dynamic"
+  ]
+}

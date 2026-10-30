@@ -31,6 +31,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 
+from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.core.logging import get_logger
 
 # Wave 6.5a: типы для type-hints импортируются через TYPE_CHECKING, чтобы
@@ -138,7 +139,23 @@ class _AdminWorkflowsFacade:
         ]
 
     async def retry_workflow(self, *, instance_id: UUID) -> dict[str, Any]:
-        """Перезапускает workflow из failed статуса в pending."""
+        """Перезапускает workflow из failed статуса в pending.
+
+        Retry-бюджет сбрасывается: без этого номер следующей попытки
+        (``attempts + 1``) сразу превышал бы ``max_attempts``, и workflow
+        падал бы снова, не выполнив ни одного шага (ADR-0398).
+
+        Args:
+            instance_id: UUID workflow-инстанса.
+
+        Returns:
+            Словарь со статусом операции и переходами статусов.
+
+        Raises:
+            HTTPException: 404 — инстанс не найден; 409 — терминальный
+                статус (``succeeded`` / ``cancelled``).
+
+        """
         store = _instance_store()
         row = await store.get(instance_id)
         if row is None:
@@ -157,6 +174,16 @@ class _AdminWorkflowsFacade:
             WorkflowStatus.pending
             if row.status == WorkflowStatus.failed
             else row.status
+        )
+        await _event_store().append(
+            workflow_id=instance_id,
+            event_type=WorkflowEventType.resumed,
+            payload={
+                "reason": "admin_retry",
+                "attempts_reset": True,
+                "previous_status": row.status.value,
+            },
+            step_name=None,
         )
         await store.update_status(
             workflow_id=instance_id,

@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string"
+    },
+    "value": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "key"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://gd-integration-tools/schemas/processors/core/memory_store/1.0.0",
+  "title": "MemoryStoreProcessor",
+  "x-gd-capabilities": [
+    "memory.store"
+  ]
+}

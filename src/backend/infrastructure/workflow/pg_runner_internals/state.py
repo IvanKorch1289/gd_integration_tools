@@ -234,6 +234,12 @@ class WorkflowState:
 
         elif etype == WorkflowEventType.resumed:
             self.status = WorkflowStatus.running
+            if payload.get("attempts_reset"):
+                # Admin-retry: счётчик падений обнуляется — иначе
+                # следующая попытка = attempts + 1 сразу превысит
+                # max_attempts и workflow упадёт без единого шага
+                # (ADR-0398).
+                self.attempts = 0
 
         elif etype == WorkflowEventType.cancelled:
             self.status = WorkflowStatus.cancelled

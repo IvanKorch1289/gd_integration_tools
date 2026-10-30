@@ -150,6 +150,14 @@ jobs:
         # Ловит: ADR INDEX.md collisions (11 пар в docs/adr/).
         run: uv run python tools/check_adr_collisions.py
 
+      - name: DSL processor schemas export (soft)
+        # ADR-0399: публикация JSON-схем процессоров в
+        # docs/reference/schemas/processors (make schemas). Шаг МЯГКИЙ:
+        # публикуемые файлы — артефакт, а не блокирующий гейт, поэтому
+        # падение экспортера не роняет PR.
+        continue-on-error: true
+        run: uv run python tools/dsl_export_schemas.py --output docs/reference/schemas/processors
+
       - name: Docstring policy gate (check_docstrings)
         # Cycle 30: убран continue-on-error — gate теперь REAL (fresh snapshot
         # в tools/check_docstrings_allowlist.txt покрывает все legacy-entries,

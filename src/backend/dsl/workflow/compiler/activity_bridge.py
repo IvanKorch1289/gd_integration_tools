@@ -36,6 +36,7 @@ from src.backend.dsl.workflow.spec import (
     AgentInvokeDeclaration,
     CallFunctionDeclaration,
     SagaDeclaration,
+    SensorDeclaration,
     WorkflowDeclaration,
     WorkflowStep,
     is_call_function_ref,
@@ -460,6 +461,10 @@ def _iter_activity_specs(step: WorkflowStep) -> list[tuple[str, tuple[str, ...]]
         ]
         specs.extend((a.name, tuple(a.required_capabilities)) for a in step.compensate)
         return specs
+    if isinstance(step, SensorDeclaration):
+        # Sensor вызывает предикат как activity (``execute_activity``) —
+        # без регистрации worker падает с ActivityNotRegisteredError.
+        return [(step.predicate, ())]
     if isinstance(step, AgentInvokeDeclaration):
         return [("_agent_invoke", ())]
     return []

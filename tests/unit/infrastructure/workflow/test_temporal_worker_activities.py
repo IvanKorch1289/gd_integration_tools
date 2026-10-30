@@ -62,9 +62,25 @@ class TestTemporalActivityCollection:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Worker получает activity из скомпилированных деклараций."""
+        from src.backend.dsl.commands.action_registry import (
+            ActionHandlerSpec,
+            action_handler_registry,
+        )
         from src.backend.dsl.workflow.compiler import activity_bridge as bridge_module
         from src.backend.plugins.composition import workflow_setup
         from src.backend.plugins.composition.setup_infra import lifecycle
+
+        # ADR-0398: build-time резолв включён (validate=True) — синтетическое
+        # activity-имя должно быть зарегистрировано в action-реестре.
+        monkeypatch.setitem(
+            action_handler_registry._handlers,
+            "orders.create",
+            ActionHandlerSpec(
+                action="orders.create",
+                service_getter=lambda: None,
+                service_method="noop",
+            ),
+        )
 
         decl = _declaration_with_activity("worker.registration.test")
         monkeypatch.setattr(
