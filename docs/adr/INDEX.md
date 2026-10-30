@@ -188,9 +188,12 @@
 | [ADR-0399](0399-dsl-schemas-lsp-catalog-and-workflow-metrics.md) | JSON-Schema процессоров в репозитории, каталог LSP-шагов и метрики workflow | Accepted |
 | [ADR-0400](0400-snapshot-rls-graphql-hot-reload-and-bls-gate.md) | Snapshot под RLS, интроспекция GraphQL, честный hot-reload и гейт профилей | Accepted |
 | [ADR-0401](0401-rpa-runtime-wiring-cache-invalidation-and-quotas.md) | RPA-runtime wiring, инвалидация всех уровней кэша, квоты и PII fast-path (волна 20, кластер W4) | Accepted |
+| [ADR-0402](0402-dependency-placement-and-dead-duplicate-removal.md) | Размещение зависимостей по extras и удаление мёртвого дубля OCR (волна 21, кластер A1) | Accepted |
+| [ADR-0403](0403-workflow-sla-dlq-and-prod-validator.md) | Workflow-SLA/DLQ: удаление мёртвого трекера, честная фиксация DLQ, прод-валидатор JWT/AI-fallback (волна 21, кластер A2) | Accepted |
+| [ADR-0404](0404-order-dependent-test-pollution.md) | Order-dependent тесты: диагностика, устранение загрязнения и гейт | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 186 ADRs.
+**Total:** 189 ADRs.
 
