@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+import pytest
 from pydantic import BaseModel
 
 from src.backend.dsl.blueprints._python_blueprints import (
@@ -22,6 +23,41 @@ from src.backend.dsl.blueprints._python_blueprints import (
     request_response_with_compensation,
 )
 from src.backend.dsl.engine.pipeline import Pipeline
+
+
+@pytest.fixture(autouse=True)
+def _ensure_action_registry() -> None:
+    """Гарантирует наличие core-actions в реестре (ADR-0404).
+
+    ``Pipeline.build()`` валидирует имена dispatch_action по ЖИВОМУ реестру
+    (``action_handler_registry.list_actions()``). Реестр — глобальное
+    состояние: часть тестов подменяет/очищает его, и blueprint-тесты падали
+    с «Unknown action(s) in pipeline: 'save'». Фикстура регистрирует
+    недостающие action-заглушки и восстанавливает состояние реестра.
+    """
+    from src.backend.dsl.commands.registry import action_handler_registry
+
+    saved_handlers = dict(action_handler_registry._handlers)
+    try:
+        for name in (
+            "save",
+            "publish",
+            "process",
+            "process_file",
+            "orders.create",
+            "messaging.publish_event",
+        ):
+            if name not in action_handler_registry.list_actions():
+                action_handler_registry.register(
+                    action=name,
+                    service_getter=lambda: None,
+                    service_method="noop",
+                    payload_model=None,
+                )
+        yield
+    finally:
+        action_handler_registry.clear()
+        action_handler_registry._handlers.update(saved_handlers)
 
 
 class _SampleSchema(BaseModel):
