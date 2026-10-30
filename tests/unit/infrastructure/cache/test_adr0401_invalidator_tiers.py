@@ -135,14 +135,15 @@ async def test_tag_invalidation_clears_l1_and_l3(tmp_path: Path) -> None:
 # ── composition root регистрирует все уровни ─────────────────────────────
 
 
-def test_composition_root_registers_all_cache_tiers(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    """Composition root обязан зарегистрировать primary + L1 + L3."""
-    from src.backend.core import svcs_registry
+def test_fallback_tiers_registered_in_invalidator(tmp_path: Path) -> None:
+    """L1/L3 обязаны попасть в инвалидатор (ADR-0401, дефект 3).
+
+    Проверяем фабрику напрямую: инвалидатор — глобальный синглтон, поэтому
+    состав его реестра зависит от порядка тестов; контракт же — «fallback-тиры
+    регистрируются», и он проверяется по идентичности объектов.
+    """
     from src.backend.core.config.services.cache import CacheSettings
-    from src.backend.plugins.composition import service_setup
-    from src.backend.services.cache import UnifiedCacheFacade
+    from src.backend.infrastructure.cache.factory import create_cache_fallback_backends
 
     fake_settings = CacheSettings(
         backend="memory",
@@ -151,20 +152,19 @@ def test_composition_root_registers_all_cache_tiers(
         disk_fallback_enabled=True,
         disk_fallback_path=str(tmp_path / "disk"),
     )
-    monkeypatch.setattr(
-        "src.backend.core.config.services.cache.cache_settings", fake_settings
+
+    memory, disk = create_cache_fallback_backends(
+        fake_settings,
+        disk_path=str(tmp_path / "disk"),
     )
 
-    saved_factories = dict(svcs_registry._factories)
-    saved_singletons = dict(svcs_registry._singletons)
-    try:
-        service_setup._register_cache_facade()
-        facade = svcs_registry.get_service(UnifiedCacheFacade)
-        assert facade is not None
-        registered = get_cache_invalidator().backends
-        assert len(registered) == 3  # primary + memory (L1) + disk (L3)
-    finally:
-        svcs_registry._factories.clear()
-        svcs_registry._factories.update(saved_factories)
-        svcs_registry._singletons.clear()
-        svcs_registry._singletons.update(saved_singletons)
+    assert memory is not None, "L1 (memory) не создан"
+    assert disk is not None, "L3 (disk) не создан"
+
+    registered = get_cache_invalidator().backends
+    assert any(backend is memory for backend in registered), (
+        "L1 (memory) не зарегистрирован в инвалидаторе"
+    )
+    assert any(backend is disk for backend in registered), (
+        "L3 (disk) не зарегистрирован в инвалидаторе"
+    )
