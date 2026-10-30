@@ -85,6 +85,17 @@ from tools.config_secret_rules import (  # noqa: E402
 #: Baseline известного долга (Wave 13 Q16).
 ALLOWLIST_PATH = ROOT / "tools" / "config_audit_allowlist.txt"
 
+#: ADR-0403: явный allowlist класса ``missing-secret`` (с обоснованиями).
+#:
+#: Отдельный файл от общего baseline: решение «переменная сознательно не
+#: документирована в ``.env.example``» — это решение владельца
+#: безопасности, и оно должно быть зафиксировано явно, с ``owner=`` и
+#: ``reason=``. Запись без этих полей **не** считается allowlisted:
+#: гейт продолжает блокировать (сигнал не теряется).
+MISSING_SECRET_ALLOWLIST_PATH = (
+    ROOT / ".security" / "config-audit-missing-secret-allowlist.txt"
+)
+
 PROFILES: tuple[str, ...] = ("dev", "dev_light", "staging", "prod")
 
 #: Виды расхождений YAML ↔ модель настроек.
@@ -614,6 +625,31 @@ def load_allowlist(path: Path = ALLOWLIST_PATH) -> dict[str, str]:
     return entries
 
 
+def load_justified_allowlist(path: Path) -> tuple[dict[str, str], list[str]]:
+    """Читает allowlist, где каждая запись обязана иметь обоснование.
+
+    Запись считается allowlisted только если в inline-комментарии есть
+    ``owner=`` и ``reason=``. Записи без них игнорируются (и возвращаются
+    отдельным списком) — гейт продолжает блокировать такие расхождения,
+    сигнал не теряется (ADR-0403).
+
+    Args:
+        path: Путь к allowlist-файлу.
+
+    Returns:
+        Кортеж ``(allowlisted: {ключ: комментарий}, unjustified: [ключ, …])``.
+
+    """
+    entries: dict[str, str] = {}
+    unjustified: list[str] = []
+    for key, comment in load_allowlist(path).items():
+        if "owner=" in comment and "reason=" in comment:
+            entries[key] = comment
+        else:
+            unjustified.append(key)
+    return entries, sorted(unjustified)
+
+
 def save_allowlist(path: Path, findings: list[Finding]) -> None:
     """Перегенерирует allowlist-файл текущим списком долга.
 
@@ -754,6 +790,14 @@ def _build_argparser() -> argparse.ArgumentParser:
         help="Путь к allowlist-файлу (baseline известного долга).",
     )
     parser.add_argument(
+        "--missing-secret-allowlist",
+        default=str(MISSING_SECRET_ALLOWLIST_PATH),
+        help=(
+            "Путь к явному allowlist класса missing-secret "
+            "(ADR-0403): запись действует только с owner= и reason=."
+        ),
+    )
+    parser.add_argument(
         "--update-allowlist",
         action="store_true",
         help="Перегенерировать allowlist текущим списком долга.",
@@ -781,6 +825,7 @@ def main(argv: list[str] | None = None) -> int:
     profiles_dir = Path(args.profiles_dir)
     env_example = Path(args.env_example)
     allowlist_path = Path(args.allowlist)
+    missing_secret_allowlist_path = Path(args.missing_secret_allowlist)
 
     missing = [
         path.as_posix() for path in (config_dir, profiles_dir) if not path.is_dir()
@@ -832,6 +877,20 @@ def main(argv: list[str] | None = None) -> int:
         for key, comment in allowlist.items()
         if key.split(":", 1)[0] in scope_kinds
     }
+    # ADR-0403: явный allowlist класса ``missing-secret`` — запись действует
+    # только с обоснованием (owner= + reason=); необоснованные записи
+    # игнорируются, гейт продолжает блокировать (сигнал не теряется).
+    missing_secret_allowlist, unjustified_entries = load_justified_allowlist(
+        missing_secret_allowlist_path
+    )
+    scoped_allowlist.update(
+        {
+            key: comment
+            for key, comment in missing_secret_allowlist.items()
+            if key.split(":", 1)[0] in _MISSING_SECRET_KINDS
+            and key.split(":", 1)[0] in scope_kinds
+        }
+    )
     if args.strict:
         # ``--strict`` игнорирует baseline: любое расхождение в scope → падение.
         new_findings = list(blocking)
@@ -851,6 +910,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Allowlist обновлён: {len(all_findings)} запис(и/ей) → {allowlist_path}")
         return 0
 
+    if unjustified_entries:
+        print(
+            "[config_audit] записи allowlist без owner=/reason= проигнорированы "
+            "(гейт продолжает блокировать):\n"
+            + "\n".join(f"  {key}" for key in unjustified_entries),
+            file=sys.stderr,
+        )
+
     if args.json:
         payload = {
             "scope": scope,
@@ -860,6 +927,8 @@ def main(argv: list[str] | None = None) -> int:
             "non_blocking": [finding.as_dict() for finding in non_blocking],
             "allowlisted": sorted({f.key for f in blocking} & set(scoped_allowlist)),
             "stale_allowlist": stale,
+            "missing_secret_allowlist": sorted(missing_secret_allowlist),
+            "unjustified_allowlist_entries": unjustified_entries,
         }
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 1 if new_findings else 0

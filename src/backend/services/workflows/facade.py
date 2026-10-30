@@ -10,13 +10,20 @@ ADR-045 §«Capability integration»: route, стартующий workflow,
 4. После успешного backend-вызова отправляет событие в
    :class:`WorkflowAuditSink` (если зарегистрирован). Ошибка emit
    логируется warning'ом и не ломает основной workflow-flow.
-5. ADR-0396: SLA-политика workflow больше не инертна — hard-limit
-   используется как бюджет времени (``execution_timeout``), а запущенный
-   workflow ставится на SLA-трекинг (:class:`SlaTracker`).
+5. ADR-0396: SLA-политика workflow задаёт бюджет времени
+   (``execution_timeout`` = SLA hard-limit).
 
 Плагины НЕ должны импортировать ``WorkflowBackend`` напрямую — только
 через ``WorkflowFacade`` (через DI). Это даёт audit-trail и blast-radius
 control: capability denied → исключение, попытка фиксируется в audit.
+
+.. note::
+   ADR-0403: SLA-трекинг (``SlaTracker``) и протокол диспетчера
+   удалены как мёртвый код — исполнитель не был инстанцирован нигде в
+   ``src/``, эскалация по SLA не работала (owner-задача GAP-WF-4.5).
+   Фасад при этом **не** находится на production-пути старта workflow:
+   ``dsl/engine/processors/invoke_workflow.py`` стартует workflow напрямую
+   через backend. Подключение фасада — отдельная задача.
 """
 
 from __future__ import annotations
@@ -32,7 +39,6 @@ from src.backend.core.workflow.backend import (
     WorkflowHandle,
     WorkflowResult,
 )
-from src.backend.services.workflows.sla_alerting import SlaTracker
 
 if TYPE_CHECKING:
     from src.backend.services.audit.workflow_audit_sink import WorkflowAuditSink
@@ -43,9 +49,7 @@ _logger = get_logger("services.workflows.facade")
 
 #: Резолвер SLA-политики по имени workflow (``None`` — политики нет).
 #: Политика — объект с полями ``soft_limit_seconds`` /
-#: ``hard_limit_seconds`` / ``escalation_email`` / ``escalation_slack`` /
-#: ``breach_action`` (совместим с :class:`SlaPolicy` и
-#: :class:`SlaTracker`).
+#: ``hard_limit_seconds`` (совместим с :class:`SlaPolicy`).
 SlaResolver = Callable[[str], Any | None]
 
 
@@ -58,11 +62,10 @@ class WorkflowFacade:
         audit_sink: опц. :class:`WorkflowAuditSink`. Если ``None`` —
             audit-emit пропускается (no-op). emit-фейлы поглощаются
             ``try/except logger.warning``.
-        sla_tracker: опц. :class:`SlaTracker` — SLA-мониторинг запущенных
-            workflow'ов (ADR-0396). Если ``None`` — трекинг пропускается.
         sla_resolver: опц. резолвер SLA-политики по имени workflow.
-            Используется для бюджета времени (``execution_timeout``) и
-            SLA-трекинга.
+            Используется для бюджета времени (``execution_timeout``).
+            ADR-0403: SLA-трекинг удалён (GAP-WF-4.5) — резолвер влияет
+            только на лимит времени.
 
     """
 
@@ -72,13 +75,11 @@ class WorkflowFacade:
         backend: WorkflowBackend,
         capability_gate: CapabilityGate,
         audit_sink: WorkflowAuditSink | None = None,
-        sla_tracker: SlaTracker | None = None,
         sla_resolver: SlaResolver | None = None,
     ) -> None:
         self._backend = backend
         self._gate = capability_gate
         self._audit_sink = audit_sink
-        self._sla_tracker = sla_tracker
         self._sla_resolver = sla_resolver
 
     async def _emit(
@@ -130,8 +131,7 @@ class WorkflowFacade:
 
         ADR-0396: если SLA-политика workflow'а найдена и явный
         ``execution_timeout`` не передан — используется SLA hard-limit как
-        бюджет времени выполнения; запущенный workflow ставится на
-        SLA-трекинг.
+        бюджет времени выполнения.
 
         :param caller: имя plugin'а / route'а (для capability lookup).
         :raises CapabilityDeniedError: если caller не задекларировал
@@ -151,7 +151,6 @@ class WorkflowFacade:
             task_queue=task_queue,
             execution_timeout=timeout,
         )
-        await self._track_sla(workflow_id=handle.workflow_id, sla=sla_policy)
         await self._emit(
             event_type="workflow.start",
             workflow_id=workflow_id,
@@ -173,32 +172,6 @@ class WorkflowFacade:
                 extra={"workflow_name": workflow_name, "error": str(exc)[:200]},
             )
             return None
-
-    async def _track_sla(self, *, workflow_id: str, sla: Any | None) -> None:
-        """Поставить workflow на SLA-трекинг (best-effort, no-op без трекера)."""
-        tracker = self._sla_tracker
-        if tracker is None or sla is None:
-            return
-        try:
-            await tracker.track(workflow_id=workflow_id, sla=sla)
-        except Exception as exc:
-            _logger.warning(
-                "workflow_sla.track_failed",
-                extra={"workflow_id": workflow_id, "error": str(exc)[:200]},
-            )
-
-    async def _untrack_sla(self, *, workflow_id: str) -> None:
-        """Снять workflow с SLA-трекинга (best-effort)."""
-        tracker = self._sla_tracker
-        if tracker is None:
-            return
-        try:
-            await tracker.untrack(workflow_id)
-        except Exception as exc:
-            _logger.warning(
-                "workflow_sla.untrack_failed",
-                extra={"workflow_id": workflow_id, "error": str(exc)[:200]},
-            )
 
     async def signal(
         self,
@@ -261,9 +234,5 @@ class WorkflowFacade:
 
         Кто запустил workflow, тот может узнать его финал через
         handle (никакого side-effect'а на чужой workflow).
-
-        ADR-0396: после завершения workflow снимается с SLA-трекинга.
         """
-        result = await self._backend.await_completion(handle=handle, timeout=timeout)
-        await self._untrack_sla(workflow_id=handle.workflow_id)
-        return result
+        return await self._backend.await_completion(handle=handle, timeout=timeout)

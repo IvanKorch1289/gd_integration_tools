@@ -1,3 +1,25 @@
+# Workflow DSL: multi_agent_supervisor
+#
+# ADR-0403 (волна 21): activity-имена приведены к реально существующим
+# targets. До фикса шаги ссылались на несуществующие activity
+# (``collect_loan_inputs``, ``supervisor_dispatch``, ``risk_agent``,
+# ``compliance_agent``, ``scoring_agent``, ``consolidate_results``,
+# ``final_decision``) — build-time резолв (ADR-0398,
+# ``collect_activities(declarations, validate=True)``) ронял подъём
+# Temporal-Worker'а со списком неизвестных имён.
+#
+# Соответствие (порядок шагов и бизнес-логика потока не менялись):
+#   collect_loan_inputs → skb:fetch_result              (входные данные)
+#   supervisor_dispatch → ai.run_agent                  (диспетчеризация)
+#   risk_agent          → agents:scoring_agent          (risk-скоринг)
+#   compliance_agent    → agents:document_parser_agent  (комплаенс-разбор)
+#   scoring_agent       → agents:scoring_agent          (скоринг)
+#   consolidate_results → normalize:apply_rules          (консолидация)
+#   final_decision      → agents:decision_agent          (решение)
+#
+# Отдельных risk/compliance-агентов в расширении нет — использованы
+# реальные агенты credit_pipeline (scoring / document_parser).
+# Owner-задача: выделенные risk/compliance-агенты (ADR-0403 §Открытое).
 name: multi_agent_supervisor
 version: "1.0"
 description: |
@@ -10,54 +32,52 @@ description: |
 default_timeout_s: 600
 steps:
   - type: activity
-    name: collect_loan_inputs
+    name: extensions.credit_pipeline.services.clients.skb:fetch_result
     args:
-      include_credit_score: true
-      include_employment_history: true
+      body:
+        order_uuid: "${{ order_uuid }}"
+        response_type_str: "JSON"
     timeout_s: 60
   - type: activity
-    name: supervisor_dispatch
+    name: ai.run_agent
     args:
-      function: services.ai.multi_agent_supervisor
-      model_id: claude-opus-4-7
-      estimated_tokens: 4000
-      agents:
-        - risk_agent
-        - compliance_agent
-        - scoring_agent
+      prompt: "${{ steps.0 }}"
+      agent_id: "credit_supervisor"
     timeout_s: 30
   - type: activity
-    name: risk_agent
+    name: extensions.credit_pipeline.agents:scoring_agent
     args:
-      function: services.ai.agent_call
-      model_id: claude-sonnet-4-6
-      estimated_tokens: 3000
+      applicant_id: "${{ applicant_id }}"
+      amount: "${{ loan_amount }}"
+      duration_months: "${{ term_months }}"
+      monthly_income: "${{ monthly_income }}"
     timeout_s: 60
   - type: activity
-    name: compliance_agent
+    name: extensions.credit_pipeline.agents:document_parser_agent
     args:
-      function: services.ai.agent_call
-      model_id: claude-sonnet-4-6
-      estimated_tokens: 3000
+      applicant_id: "${{ applicant_id }}"
+      amount: "${{ loan_amount }}"
+      duration_months: "${{ term_months }}"
+      purpose: "${{ purpose }}"
     timeout_s: 60
   - type: activity
-    name: scoring_agent
+    name: extensions.credit_pipeline.agents:scoring_agent
     args:
-      function: services.ai.agent_call
-      model_id: claude-haiku-4-5
-      estimated_tokens: 2000
+      applicant_id: "${{ applicant_id }}"
+      amount: "${{ loan_amount }}"
+      duration_months: "${{ term_months }}"
+      monthly_income: "${{ monthly_income }}"
     timeout_s: 30
   - type: activity
-    name: consolidate_results
+    name: extensions.credit_pipeline.functions.normalize:apply_rules
     args:
-      function: services.ai.consolidate_multi_agent
-      model_id: claude-opus-4-7
-      estimated_tokens: 5000
-    timeout_s: 60
+      body:
+        score: "${{ steps.4.credit_score }}"
+        decision: "${{ steps.4.risk_class }}"
+    timeout_s: 5
   - type: activity
-    name: final_decision
+    name: extensions.credit_pipeline.agents:decision_agent
     args:
-      function: services.ai.final_decision
-      model_id: claude-sonnet-4-6
-      estimated_tokens: 2500
+      applicant_id: "${{ applicant_id }}"
+      scoring_agent: "${{ steps.5 }}"
     timeout_s: 30

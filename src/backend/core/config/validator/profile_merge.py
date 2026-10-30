@@ -27,8 +27,10 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, ValidationError, create_model
 from pydantic_settings import BaseSettings
@@ -53,6 +55,11 @@ __all__ = (
     "load_profile_yaml",
     "merge_profile_yaml",
     "validate_profile_config",
+)
+
+#: Loopback-хосты, недоступные в prod (ADR-0403).
+_LOOPBACK_HOSTNAMES: frozenset[str] = frozenset(
+    {"localhost", "127.0.0.1", "0.0.0.0", "::1", "0:0:0:0:0:0:0:1"}
 )
 
 _CONSTANTS_PROBE: type[BaseModel] = create_model(
@@ -478,6 +485,182 @@ def _check_graphql_introspection_policy(
     )
 
 
+def _is_production(merged: dict[str, Any]) -> bool:
+    """Ты ли окружение — production.
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        ``True`` — если ``app.environment == "production"``.
+
+    """
+    app = merged.get("app") or {}
+    return str(app.get("environment") or "").lower() == "production"
+
+
+def _secret_source_guaranteed(merged: dict[str, Any]) -> bool:
+    """Есть ли гарантированный источник JWT-секрета.
+
+    Источники (в порядке приоритета рантайма):
+
+    * ``security.secret_key`` в YAML профиля — явное значение;
+    * env ``SEC_SECRET_KEY`` — переменная окружения рантайма;
+    * Vault (``vault.enabled`` + ``addr`` + ``secret_path``) — секреты
+      приходят из корпоративного хранилища (ADR-0372).
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        ``True`` — секрет гарантированно поступает в рантайм.
+
+    """
+    security = merged.get("security") or {}
+    if str(security.get("secret_key") or "").strip():
+        return True
+    if os.environ.get("SEC_SECRET_KEY", "").strip():
+        return True
+    vault = merged.get("vault") or {}
+    return bool(
+        vault.get("enabled")
+        and str(vault.get("addr") or "").strip()
+        and str(vault.get("secret_path") or "").strip()
+    )
+
+
+def _check_jwt_algorithm_secret_policy(
+    merged: dict[str, Any],
+) -> tuple[ConfigViolation, ...]:
+    """ADR-0403: в prod симметричный JWT-алгоритм требует гарантированного секрета.
+
+    ``security.algorithm: HS256`` подписывает токены симметричным ключом:
+    без ключа выпуск/проверка JWT не работает, а со слабым — подбирается
+    перебором. Раньше алгоритм и наличие секрета никто не сверял:
+    «HS256 в prod» и «секрет приходит из Vault» были независимыми
+    утверждениями.
+
+    Политика алгоритма валидатор НЕ меняет (переход на RS256 — задача
+    владельца, ADR-0371/OWNER_TASKS § 3): проверка только сообщает.
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        Кортеж нарушений (пустой — если нарушения нет).
+
+    """
+    if not _is_production(merged):
+        return ()
+    security = merged.get("security") or {}
+    algorithm = str(security.get("algorithm") or "").strip().upper()
+    if not algorithm.startswith("HS"):
+        return ()  # RS256/ES256 — асимметричные, симметричный секрет не нужен
+    if _secret_source_guaranteed(merged):
+        return ()
+    return (
+        ConfigViolation(
+            severity=ConfigSeverity.CRITICAL,
+            code="security.jwt_symmetric_algorithm_without_secret",
+            message=(
+                f"В prod выбран симметричный алгоритм подписи JWT "
+                f"(security.algorithm={algorithm}), но источник секрета не "
+                "гарантирован: нет ни security.secret_key в YAML, ни env "
+                "SEC_SECRET_KEY, ни включённого Vault (vault.enabled + addr + "
+                "secret_path)."
+            ),
+            field="security.algorithm",
+            recommendation=(
+                "Задать секрет (env SEC_SECRET_KEY либо Vault "
+                "vault.secret_path) либо перейти на асимметричный алгоритм "
+                "(security.algorithm=RS256 + JWKS/IdP — owner-задача)."
+            ),
+            context={"algorithm": algorithm, "environment": "production"},
+        ),
+    )
+
+
+def _default_fallback_chain() -> list[str]:
+    """Fallback-цепочка AI по умолчанию (из модели настроек).
+
+    Returns:
+        Список имён провайдеров из default'а :class:`AIProvidersSettings`.
+
+    """
+    from src.backend.core.config.ai import AIProvidersSettings
+
+    default = AIProvidersSettings.model_fields["fallback_chain"].default
+    return list(default) if isinstance(default, list) else []
+
+
+def _check_ai_fallback_chain_hosts(
+    merged: dict[str, Any],
+) -> tuple[ConfigViolation, ...]:
+    """ADR-0403: в prod fallback-цепочка AI не должна уходить на loopback.
+
+    ``open_webui`` (в базовом профиле — ``http://localhost:3000``) в
+    fallback-цепочке означает молчаливый откат на локальный инференс в
+    production: при недоступности внешнего провайдера запросы уйдут на
+    хост, которого в проде нет, и деградация будет выглядеть как «LLM
+    отвечает», а ответ будет пустым/ошибочным.
+
+    Состав цепочки валидатор НЕ меняет (prod-профиль open_webui уже
+    исключил — ADR-0371): проверка только сообщает.
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        Кортеж нарушений (пустой — если нарушения нет).
+
+    """
+    if not _is_production(merged):
+        return ()
+    providers_cfg = merged.get("ai_providers") or {}
+    chain = providers_cfg.get("fallback_chain")
+    if chain is None:
+        chain = _default_fallback_chain()
+    if not isinstance(chain, list):
+        return ()
+
+    offenders: list[tuple[str, str]] = []
+    for provider in chain:
+        name = str(provider)
+        section = merged.get(name)
+        if not isinstance(section, dict):
+            continue
+        base_url = str(section.get("base_url") or "")
+        if not base_url:
+            continue
+        host = (urlparse(base_url).hostname or "").lower()
+        if host in _LOOPBACK_HOSTNAMES:
+            offenders.append((name, base_url))
+    if not offenders:
+        return ()
+    return (
+        ConfigViolation(
+            severity=ConfigSeverity.CRITICAL,
+            code="ai_providers.fallback_chain_localhost",
+            message=(
+                "В prod fallback-цепочка AI содержит провайдера с "
+                "loopback-адресом ("
+                + ", ".join(f"{name} ({url})" for name, url in offenders)
+                + "): при недоступности внешнего провайдера запросы молча "
+                "уйдут на локальный хост, которого в prod нет."
+            ),
+            field="ai_providers.fallback_chain",
+            recommendation=(
+                "Исключить loopback-провайдера из ai_providers.fallback_chain "
+                "в prod-профиле либо задать ему реальный prod-endpoint."
+            ),
+            context={
+                "providers": [name for name, _ in offenders],
+                "chain": list(chain),
+            },
+        ),
+    )
+
+
 def validate_profile_config(
     profile: str, profiles_dir: Path | None = None
 ) -> tuple[ConfigViolation, ...]:
@@ -542,6 +725,11 @@ def validate_profile_config(
     violations.extend(_check_capability_gate_policy(merged))
     # ADR-0400: интроспекция GraphQL в prod/staging — только выключенной.
     violations.extend(_check_graphql_introspection_policy(merged))
+    # ADR-0403: prod-политика безопасности — симметричный JWT-алгоритм
+    # требует гарантированного секрета; fallback-цепочка AI не должна
+    # уходить на loopback-хост.
+    violations.extend(_check_jwt_algorithm_secret_policy(merged))
+    violations.extend(_check_ai_fallback_chain_hosts(merged))
     return tuple(
         sorted(
             violations,

@@ -1,33 +1,49 @@
-"""Workflow SLA alerting service (Sprint 9 K3 W10 / GAP-WF-4.4).
+"""Оценка SLA workflow (GAP-WF-4.5, ADR-0403).
 
-Слой контроля SLA для workflow-instances:
+Модуль содержит **чистую** оценку SLA-состояния workflow:
 
-* :class:`SlaTracker` — фоновый watch over running workflow handles,
-  emit ``soft_breach`` / ``hard_breach`` событий.
-* :class:`SlaAlertDispatcher` — abstract sender (email / Slack / pager);
-  in-memory реализация для unit-тестов.
-* :func:`evaluate_sla` — single-pass проверка одного workflow с известными
-  start_at + sla_policy.
+* :class:`SlaBreachLevel` — уровень breach'а (none / soft / hard);
+* :class:`SlaBreachRecord` — запись о breach'е (audit / dispatcher);
+* :func:`evaluate_sla` — single-pass проверка одного workflow по
+  ``elapsed_seconds`` + лимитам SLA; эмитит Prometheus-счётчик
+  ``workflow_sla_compliance_total{level}`` (используется дашбордом
+  ``infrastructure/observability/grafana/workflow_sla_compliance.json``).
+
+Честное состояние (ADR-0403, волна 21)
+---------------------------------------
+**SLA-алертинг не реализован.** Исполнитель трекинга (класс
+``SlaTracker``) и протокол диспетчера ``SlaAlertDispatcher`` удалены как
+мёртвый код: они не инстанцировались нигде в ``src/`` (ни в lifespan, ни
+в worker'ах, ни в composition root), поэтому soft/hard breach и
+эскалация (email/Slack) в рантайме не происходили. ADR-0396 утверждал
+обратное («SLA-политика перестала быть инертной») — уточнение здесь.
+
+Почему не поднять исполнителя в этой волне:
+
+* ``WorkflowFacade`` не находится на production-пути старта workflow:
+  ``dsl/engine/processors/invoke_workflow.py`` стартует workflow напрямую
+  через ``WorkflowBackend``, минуя фасад (вне зоны кластера волны 21);
+* канала эскалации (email/Slack) в репозитории нет — единственный
+  dispatcher был in-memory тест-дублем;
+* поднятие трекера без вызывающего кода = фоновая задача, которая
+  ничего не отслеживает (тихое «зелёное» состояние).
+
+Owner-задача: **GAP-WF-4.5** (см. ``docs/roadmap/PROD_READINESS_GAPS.md``,
+``docs/roadmap/OWNER_TASKS.md`` § 8, ADR-0403). Минимальный шаг: создать
+исполнителя SLA-алертинга (реальный dispatcher + подписка на старт/
+завершение workflow) либо удалить ``evaluate_sla`` вместе с дашбордом.
 """
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
 from src.backend.core.logging import get_logger
 
-__all__ = (
-    "InMemorySlaAlertDispatcher",
-    "SlaAlertDispatcher",
-    "SlaBreachLevel",
-    "SlaBreachRecord",
-    "SlaTracker",
-    "evaluate_sla",
-)
+__all__ = ("SlaBreachLevel", "SlaBreachRecord", "evaluate_sla")
 
 _logger = get_logger("workflow.sla_alerting")
 
@@ -81,37 +97,6 @@ class SlaBreachRecord:
         }
 
 
-@runtime_checkable
-class SlaAlertDispatcher(Protocol):
-    """Channel для отправки SLA-нотификаций."""
-
-    async def dispatch(
-        self, *, breach: SlaBreachRecord, email: str | None, slack: str | None
-    ) -> None:
-        """Метод dispatch (см. signature)."""
-        ...
-
-
-class InMemorySlaAlertDispatcher:
-    """In-memory dispatcher для unit-тестов и dev_light."""
-
-    def __init__(self) -> None:
-        self.sent: list[dict[str, Any]] = []
-
-    async def dispatch(
-        self, *, breach: SlaBreachRecord, email: str | None, slack: str | None
-    ) -> None:
-        """Фиксирует факт отправки SLA-alert'а (in-memory test double).
-
-        Args:
-            breach: Запись о breach (SLA violation record).
-            email: Email получателя (или ``None``).
-            slack: Slack channel (или ``None``).
-
-        """
-        self.sent.append({"breach": breach.to_dict(), "email": email, "slack": slack})
-
-
 def evaluate_sla(
     *,
     workflow_id: str,
@@ -121,10 +106,15 @@ def evaluate_sla(
     breach_action: str = "alert",
     tenant_id: str | None = None,
 ) -> SlaBreachRecord:
-    """Single-pass evaluation одного workflow.
+    """Single-pass оценка SLA одного workflow.
 
     Sprint 12 K2 W1: дополнительно инкрементирует Prometheus counter
-    ``workflow_sla_compliance_total{workflow_id,tenant_id,level}``.
+    ``workflow_sla_compliance_total{level}``.
+
+    .. note::
+       Вызов в рантайме отсутствует: исполнитель трекинга удалён
+       (ADR-0403, owner-задача GAP-WF-4.5). Функция остаётся как чистая
+       точка оценки SLA для будущего исполнителя.
 
     Returns:
         :class:`SlaBreachRecord` с ``level=NONE`` если в пределах SLA.
@@ -189,154 +179,3 @@ def _emit_sla_metric(
                     "level": level.value,
                 },
             )
-
-
-@dataclass(slots=True)
-class _TrackedWorkflow:
-    """Запись tracking'а в SlaTracker."""
-
-    workflow_id: str
-    start_at: float  # monotonic seconds
-    soft_limit_seconds: float
-    hard_limit_seconds: float
-    escalation_email: str | None
-    escalation_slack: str | None
-    breach_action: str
-    last_alerted_level: SlaBreachLevel = SlaBreachLevel.NONE
-
-
-class SlaTracker:
-    """Фоновый tracker для running workflows.
-
-    Args:
-        dispatcher: реализация :class:`SlaAlertDispatcher`.
-        check_interval_seconds: период проверки (default 10s).
-        on_hard_breach: опц. callback для cancel-action.
-
-    """
-
-    def __init__(
-        self,
-        *,
-        dispatcher: SlaAlertDispatcher,
-        check_interval_seconds: float = 10.0,
-        on_hard_breach: Any = None,
-    ) -> None:
-        self._dispatcher = dispatcher
-        self._check_interval = check_interval_seconds
-        self._on_hard_breach = on_hard_breach
-        self._tracked: dict[str, _TrackedWorkflow] = {}
-        self._lock = asyncio.Lock()
-        self._task: asyncio.Task[None] | None = None
-        self._stop = asyncio.Event()
-
-    async def track(self, *, workflow_id: str, sla: Any) -> None:
-        """Поставить workflow на tracking. ``sla`` — :class:`SlaPolicy`."""
-        import time
-
-        async with self._lock:
-            self._tracked[workflow_id] = _TrackedWorkflow(
-                workflow_id=workflow_id,
-                start_at=time.monotonic(),
-                soft_limit_seconds=sla.soft_limit_seconds,
-                hard_limit_seconds=sla.hard_limit_seconds,
-                escalation_email=sla.escalation_email,
-                escalation_slack=sla.escalation_slack,
-                breach_action=sla.breach_action,
-            )
-
-    async def untrack(self, workflow_id: str) -> None:
-        """Снять workflow с tracking (после completion)."""
-        async with self._lock:
-            self._tracked.pop(workflow_id, None)
-
-    async def start(self) -> None:
-        """Запускает фоновую задачу SLA-tracker'а.
-
-        No-op если task уже запущен (idempotent). Создаёт task через
-        :func:`get_task_registry` и запускает ``self._run()``.
-        """
-        if self._task is not None and not self._task.done():
-            return
-        self._stop.clear()
-        from src.backend.core.utils.task_registry import get_task_registry
-
-        self._task = get_task_registry().create_task(self._run(), name="sla-tracker")
-
-    async def stop(self) -> None:
-        """Graceful stop SLA-трекера.
-
-        Ожидает завершения фоновой таски с подавлением CancelledError
-        (ожидаемое исключение при cancel) и DEBUG-логом любых других
-        падений (не должны валить shutdown lifespan).
-        """
-        self._stop.set()
-        if self._task is not None:
-            self._task.cancel()
-            try:
-                await self._task
-            except asyncio.CancelledError:  # noqa: violation-check — expected post-cancel exception
-                # Ожидаемое исключение после cancel() — логировать не нужно.
-                pass
-            except Exception as exc:
-                _logger.debug("sla.tracker_stop_error: %s", exc)
-            self._task = None
-
-    async def _run(self) -> None:
-        while not self._stop.is_set():
-            try:
-                await asyncio.wait_for(self._stop.wait(), timeout=self._check_interval)
-            except TimeoutError:  # noqa: violation-check — periodic wakeup timeout, expected
-                pass
-            await self._check_once()
-
-    async def _check_once(self) -> list[SlaBreachRecord]:
-        """Single check; возвращает список breaches."""
-        import time
-
-        now = time.monotonic()
-        breaches: list[SlaBreachRecord] = []
-        async with self._lock:
-            entries = list(self._tracked.values())
-        for entry in entries:
-            elapsed = now - entry.start_at
-            breach = evaluate_sla(
-                workflow_id=entry.workflow_id,
-                elapsed_seconds=elapsed,
-                soft_limit_seconds=entry.soft_limit_seconds,
-                hard_limit_seconds=entry.hard_limit_seconds,
-                breach_action=entry.breach_action,
-            )
-            if breach.level == SlaBreachLevel.NONE:
-                continue
-            if (
-                entry.last_alerted_level == SlaBreachLevel.HARD
-                and breach.level == SlaBreachLevel.HARD
-            ):
-                continue  # уже отправили hard alert
-            if breach.level == entry.last_alerted_level:
-                continue  # уже отправили soft alert
-            await self._dispatcher.dispatch(
-                breach=breach,
-                email=entry.escalation_email,
-                slack=entry.escalation_slack,
-            )
-            entry.last_alerted_level = breach.level
-            breaches.append(breach)
-            if (
-                breach.level == SlaBreachLevel.HARD
-                and entry.breach_action == "cancel"
-                and self._on_hard_breach is not None
-            ):
-                try:
-                    await self._on_hard_breach(entry.workflow_id)
-                except Exception as _:
-                    _logger.exception(
-                        "sla.on_hard_breach.callback_failed",
-                        extra={"workflow_id": entry.workflow_id},
-                    )
-        return breaches
-
-    def list_tracked(self) -> list[str]:
-        """Возвращает отсортированный список workflow_id с активным SLA-tracking."""
-        return sorted(self._tracked.keys())

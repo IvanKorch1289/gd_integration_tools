@@ -1,3 +1,23 @@
+# Workflow DSL: code_interpreter_loop
+#
+# ADR-0403 (волна 21): activity-имена приведены к реально существующим
+# targets. До фикса шаги ссылались на несуществующие activity
+# (``receive_dataset``, ``llm_propose_code``, ``execute_code_sandboxed``,
+# ``evaluate_results``, ``format_final_report``) — build-time резолв
+# (ADR-0398, ``collect_activities(declarations, validate=True)``) ронял
+# подъём Temporal-Worker'а со списком неизвестных имён.
+#
+# Соответствие (порядок шагов, wait_signal и бизнес-логика потока не
+# менялись):
+#   receive_dataset       → skb:fetch_result   (получение данных)
+#   llm_propose_code      → ai.chat             (LLM-предложение)
+#   execute_code_sandboxed→ ai.run_agent       (исполнение агентом)
+#   evaluate_results      → normalize:apply_rules(оценка результата)
+#   format_final_report   → export.to_pdf       (формирование отчёта)
+#
+# e2b-sandbox в расширении не реализован — исполнение делегировано
+# реальному AI-агенту ядра. Owner-задача: sandbox-исполнитель
+# (ADR-0403 §Открытое).
 name: code_interpreter_loop
 version: "1.0"
 description: |
@@ -15,38 +35,39 @@ default_retry_policy:
   max_attempts: 3
 steps:
   - type: activity
-    name: receive_dataset
+    name: extensions.credit_pipeline.services.clients.skb:fetch_result
     args:
-      max_size_mb: 100
+      body:
+        order_uuid: "${{ order_uuid }}"
+        response_type_str: "JSON"
     timeout_s: 60
   - type: activity
-    name: llm_propose_code
+    name: ai.chat
     args:
-      function: services.ai.llm_code_proposal
-      model_id: claude-opus-4-7
-      estimated_tokens: 4500
+      messages:
+        - role: "user"
+          content: "${{ steps.0 }}"
+      model: "claude-opus-4-7"
     timeout_s: 90
   - type: activity
-    name: execute_code_sandboxed
+    name: ai.run_agent
     args:
-      function: services.ai.e2b_execute
-      sandbox_type: python
-      timeout_s: 60
+      prompt: "${{ steps.1 }}"
+      agent_id: "code_interpreter"
     timeout_s: 120
   - type: activity
-    name: evaluate_results
+    name: extensions.credit_pipeline.functions.normalize:apply_rules
     args:
-      function: services.ai.evaluate_output
-      model_id: claude-sonnet-4-6
-      estimated_tokens: 2500
+      body:
+        score: "${{ steps.2.credit_score }}"
+        decision: "${{ steps.2.risk_class }}"
     timeout_s: 60
   - type: wait_signal
     signal_name: continue_loop
     timeout_s: 600
   - type: activity
-    name: format_final_report
+    name: export.to_pdf
     args:
-      function: services.ai.format_report
-      model_id: claude-sonnet-4-6
-      estimated_tokens: 3000
+      rows: "${{ steps.3 }}"
+      title: "Code interpreter report"
     timeout_s: 90

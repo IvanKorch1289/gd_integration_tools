@@ -25,6 +25,30 @@ Wave D.1 / ADR-045 §«PgRunnerWorkflowBackend (legacy fallback)».
   недетерминизма, как в Temporal).
 
 Используется как dev/staging fallback до Wave D.2 (TemporalWorkflowBackend).
+
+Workflow-DLQ (ADR-0403)
+------------------------
+DLQ для workflow **не реализована** (и не является «недостающей
+функцией» — это свойство модели):
+
+* ``workflow_events`` — append-only event log инстанса, а не очередь
+  недоставленных сообщений; переигровывать в нём нечего;
+* исчерпание retry-бюджета шага приводит к терминальному
+  ``WorkflowStatus.failed`` (см. ``infrastructure/workflow/runner.py``) +
+  метрике ``record_workflow_status`` + записи об ошибке в
+  ``workflow_instances.error``; записи в DLQ не происходит и
+  переигровки шага не существует;
+* ``replay()`` ниже — **не** DLQ, а Temporal-совместимый replay-gate
+  (детерминизм history). Для workflow «DLQ-патформен» в компенсациях —
+  это WARNING-лог + audit-событие
+  (``infrastructure/workflow/compensating_driver.py``), то есть сигнал без
+  потери данных, но не очередь для переигровки.
+
+Формулировка про messaging-DLQ (``docs/runbooks/dlq-replay.md``:
+Kafka/RabbitMQ/NATS/Inbox, admin-API ``/api/v1/admin/dlq/*``) волны 20
+не откатывается — она корректна для своего scope. Owner-задача на
+реализацию DLQ для исчерпавших попыток шагов: ADR-0403 §Открытое,
+``docs/roadmap/OWNER_TASKS.md`` § 7.
 """
 
 from __future__ import annotations
@@ -255,6 +279,12 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
         ``workflow_events`` table) — у него нет ``WorkflowHistory.from_json``
         и он не может воспроизводить Temporal history bytes.
 
+        .. note::
+           **Это не DLQ.** Метод не имеет отношения к очереди недоставленных
+           сообщений: у workflow её нет (см. docstring модуля, ADR-0403).
+           Исчерпание retry-бюджета шага даёт терминальный ``FAILED`` +
+           метрику + запись об ошибке, но не запись в DLQ.
+
         .. deprecated::
             DEPRECATED since Sprint 217 (2026-08-17). pg-runner backend
             deprecated entirely — production callers must migrate to
@@ -269,7 +299,9 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
             "PgRunnerWorkflowBackend.replay() is DEPRECATED since Sprint 217 "
             "(2026-08-17) — pg-runner backend does not implement Temporal-"
             "compatible replay. Migrate to TemporalWorkflowBackend. "
-            "See MULTI_SPRINT_2026-08-17.md Sprint 7 for deprecation timeline."
+            "Note: this is a replay-gate, not a DLQ — workflow has no DLQ "
+            "(ADR-0403). See MULTI_SPRINT_2026-08-17.md Sprint 7 for "
+            "deprecation timeline."
         )
 
     async def await_external_signal(

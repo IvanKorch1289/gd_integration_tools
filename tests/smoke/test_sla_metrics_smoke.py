@@ -1,17 +1,18 @@
-"""S36 w1 — Smoke test: SLA metrics (workflow SLA alerting).
+"""S36 w1 — Smoke test: SLA metrics (workflow SLA evaluation).
 
 Проверяет критический путь:
 - evaluate_sla возвращает правильный breach level;
-- SlaBreachRecord.to_dict() сериализуется;
-- InMemorySlaAlertDispatcher накапливает события.
+- SlaBreachRecord.to_dict() сериализуется.
+
+.. note::
+   ADR-0403 (волна 21): исполнитель SLA-трекинга (``SlaTracker``) и
+   протокол диспетчера удалены как мёртвый код (owner-задача GAP-WF-4.5) —
+   smoke-тесты диспетчера удалены вместе с ними.
 """
 
 from __future__ import annotations
 
-import asyncio
-
 from src.backend.services.workflows.sla_alerting import (
-    InMemorySlaAlertDispatcher,
     SlaBreachLevel,
     SlaBreachRecord,
     evaluate_sla,
@@ -69,38 +70,3 @@ def test_sla_breach_record_to_dict() -> None:
     assert isinstance(data, dict)
     assert data["workflow_id"] == "smoke.sla.dict"
     assert data["level"] == SlaBreachLevel.SOFT
-
-
-def test_in_memory_dispatcher_accumulates_events() -> None:
-    """InMemorySlaAlertDispatcher.dispatch() сохраняет события в .sent."""
-    dispatcher = InMemorySlaAlertDispatcher()
-    record = SlaBreachRecord(
-        workflow_id="smoke.sla.dispatcher",
-        level=SlaBreachLevel.HARD,
-        elapsed_seconds=200.0,
-        soft_limit=60.0,
-        hard_limit=120.0,
-    )
-
-    asyncio.run(dispatcher.dispatch(breach=record, email=None, slack=None))
-
-    assert len(dispatcher.sent) == 1
-    assert dispatcher.sent[0]["breach"]["workflow_id"] == "smoke.sla.dispatcher"
-
-
-def test_in_memory_dispatcher_isolated_per_instance() -> None:
-    """Каждый InMemorySlaAlertDispatcher — изолированное хранилище."""
-    disp_a = InMemorySlaAlertDispatcher()
-    disp_b = InMemorySlaAlertDispatcher()
-    record = SlaBreachRecord(
-        workflow_id="smoke.sla.iso",
-        level=SlaBreachLevel.SOFT,
-        elapsed_seconds=70.0,
-        soft_limit=60.0,
-        hard_limit=120.0,
-    )
-
-    asyncio.run(disp_a.dispatch(breach=record, email=None, slack=None))
-
-    assert len(disp_a.sent) == 1
-    assert len(disp_b.sent) == 0

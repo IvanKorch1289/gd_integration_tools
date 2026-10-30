@@ -1,3 +1,26 @@
+# Workflow DSL: rag_augmented_saga
+#
+# ADR-0403 (волна 21): activity-имена приведены к реально существующим
+# targets. До фикса шаги ссылались на несуществующие activity
+# (``fetch_credit_data``, ``rag_query_legal_policies``,
+# ``llm_credit_decision``, ``fund_account``, ``refund_account``) — ни в
+# action-реестре ядра, ни среди ``module:fn``-ссылок расширения их не
+# было, поэтому build-time резолв (ADR-0398,
+# ``collect_activities(declarations, validate=True)``) ронял подъём
+# Temporal-Worker'а со списком неизвестных имён.
+#
+# Соответствие (бизнес-логика потока — порядок шагов, saga, wait_signal —
+# не менялась):
+#   fetch_credit_data          → skb:fetch_result        (данные бюро)
+#   rag_query_legal_policies   → rag.search              (RAG-поиск)
+#   llm_credit_decision        → agents:decision_agent   (решение)
+#   fund_account               → webhook.schedule        (forward)
+#   refund_account             → webhook.cancel          (компенсация)
+#
+# Ledger-операции кредитного конвейера (fund/refund) в расширении не
+# реализованы — пара forward/компенсация переведена на единственную
+# реальную пару «создать/отменить» ядра (webhook.schedule/webhook.cancel).
+# Owner-задача: реализовать ledger в credit_pipeline (ADR-0403 §Открытое).
 name: rag_augmented_saga
 version: "1.0"
 description: |
@@ -5,40 +28,43 @@ description: |
 
   Шаги:
     1. Fetch credit data (внешний bureau).
-    2. RAG query — legal/policy база через ``services.ai.rag_query``.
-    3. LLM-decision через PydanticAI (structured output).
+    2. RAG query — legal/policy база через ``rag.search``.
+    3. LLM-decision через decision_agent (structured output).
     4. Saga: fund_account / compensate refund_account.
 
   Template tags: ai, rag, saga, credit, compensation.
 default_timeout_s: 300
 steps:
   - type: activity
-    name: fetch_credit_data
+    name: extensions.credit_pipeline.services.clients.skb:fetch_result
     args:
-      bureau: equifax
-      include_history_years: 5
+      body:
+        order_uuid: "${{ order_uuid }}"
+        response_type_str: "JSON"
     timeout_s: 60
   - type: activity
-    name: rag_query_legal_policies
+    name: rag.search
     args:
-      function: services.ai.rag_query
-      collection: legal_policies
-      strategy: hybrid
+      query: "${{ applicant_id }}"
+      namespace: "legal_policies"
       top_k: 5
-      estimated_tokens: 2500
     timeout_s: 30
   - type: activity
-    name: llm_credit_decision
+    name: extensions.credit_pipeline.agents:decision_agent
     args:
-      function: services.ai.llm_structured_decision
-      model_id: claude-sonnet-4-6
-      estimated_tokens: 3500
+      applicant_id: "${{ applicant_id }}"
+      scoring_agent: "${{ steps.1 }}"
     timeout_s: 60
   - type: saga
     forward:
-      - name: fund_account
-        args: {account_type: credit}
+      - name: webhook.schedule
+        args:
+          url: "${{ credit_callback_url }}"
+          payload:
+            applicant_id: "${{ applicant_id }}"
         timeout_s: 60
     compensate:
-      - name: refund_account
+      - name: webhook.cancel
+        args:
+          schedule_id: "${{ steps.3 }}"
         timeout_s: 30
