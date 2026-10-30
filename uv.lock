@@ -2977,6 +2977,7 @@ db-drivers = [
     { name = "aioodbc", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "clickhouse-connect", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "oracledb", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "psycopg", extra = ["binary"], marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "pyodbc", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
 dev-light = [
@@ -3344,6 +3345,7 @@ requires-dist = [
     { name = "presidio-anonymizer", specifier = ">=2.2.0,<3.0.0" },
     { name = "presidio-ru-recognizers", marker = "extra == 'ai'", specifier = ">=0.1.0,<1.0.0" },
     { name = "protobuf", specifier = ">=5.29.3,<6.0.0" },
+    { name = "psycopg", extras = ["binary"], marker = "extra == 'db-drivers'", specifier = ">=3.1,<4.0.0" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'sources-cdc'", specifier = ">=3.1,<4.0.0" },
     { name = "purgatory", specifier = ">=3.0.0,<4.0.0" },
     { name = "pyarrow", marker = "extra == 'analytics'", specifier = ">=20.0.0,<25.0.0" },

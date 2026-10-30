@@ -215,6 +215,13 @@ db_drivers = [
     "aiomysql>=0.2.0,<1.0.0",     # MySQL
     "clickhouse-connect>=0.7.0,<1.0.0",
     "pyodbc>=5.0.0,<6.0.0",
+    # ADR-0402: psycopg[binary] — sync-драйвер PostgreSQL (дефолт
+    # database.sync_driver=psycopg, ADR-0363/ADR-0383). Раньше пин жил
+    # только в extra sources-cdc → образ, собранный без sources-cdc,
+    # деградировал sync-движок в None + warning
+    # (infrastructure/database/database/initializer.py) и подменял
+    # durable APScheduler-jobstore на memory.
+    "psycopg[binary]>=3.1,<4.0.0",
 ]
 # === K4 Sprint 24 W1 (ADR-NEW-16): Presidio + ru NER PII layer. ===
 # presidio-anonymizer — replace/redact/hash операторы для PII;
@@ -507,6 +514,13 @@ dev-light = [
     "fastmcp>=3.4.10,<4.0.0",
 ]
 sources-cdc = [
+    # ADR-0402: psycopg[binary] объявлен и в extra db_drivers (каноническое
+    # место sync-драйвера PostgreSQL), и здесь — CDC-транспорт
+    # (pgoutput logical replication, infrastructure/sources/cdc.py).
+    # Экстра — union: двойное объявление одного и того же требования не
+    # конфликтует (прецедент: rank-bm25 в core + extra rag). Убрать
+    # отсюда можно вместе с переводом compose-образа на --extra db_drivers
+    # (ops/compose/Dockerfile) — задача владельца образа.
     "psycopg[binary]>=3.1,<4.0.0",
 ]
 sources-mq-nats = [
