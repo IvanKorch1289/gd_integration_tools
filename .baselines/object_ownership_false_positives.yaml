@@ -72,6 +72,35 @@ allowlist:
     review_date: "2027-03-24"
     added_at: "2026-09-24"
 
+  - file: src/backend/dsl/workflow/bpmn_importer.py
+    line: 362
+    reason: >
+      ``elements.get(node_id)`` — поиск элемента в ЛОКАЛЬНОЙ карте разобранного
+      BPMN-XML ({id: element}, собирается _collect_elements(process) из
+      process-дерева, никакого I/O с БД/внешним хранилищем). Это разбор
+      документа, а не lookup объекта по идентификатору; тенант-контекст не
+      применим. Волна 20, ADR-0398 (исполнение BPMN-веток gateway).
+    owner: gd_integration_tools/dsl
+    review_date: "2027-04-29"
+    added_at: "2026-10-29"
+  - file: src/backend/dsl/workflow/bpmn_importer.py
+    line: 521
+    reason: >
+      ``elements.get(target_id)`` — та же локальная карта разобранного BPMN-XML
+      (см. запись выше): поиск целевого узла по id в процессе импорта, без
+      доступа к внешнему хранилищу. Волна 20, ADR-0398.
+    owner: gd_integration_tools/dsl
+    review_date: "2027-04-29"
+    added_at: "2026-10-29"
+  - file: src/backend/dsl/workflow/bpmn_importer.py
+    line: 529
+    reason: >
+      ``elements.get(node_id)`` — локальная карта разобранного BPMN-XML (см.
+      записи выше): разрешение порядка обхода узлов при импорте, без внешнего
+      доступа. Волна 20, ADR-0398.
+    owner: gd_integration_tools/dsl
+    review_date: "2027-04-29"
+    added_at: "2026-10-29"
   - file: src/backend/infrastructure/cdc/poll_backend.py
     line: 338
     reason: >
