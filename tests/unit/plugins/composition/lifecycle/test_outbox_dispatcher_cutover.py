@@ -121,6 +121,7 @@ def _load_lifespan_isolated() -> ModuleType:
         except Exception:  # pragma: no cover - родитель не импортируется
             _parent = None
         if _parent is not None:
+            _saved_attrs[full_name] = (_parent, _attr, getattr(_parent, _attr, None))
             setattr(_parent, _attr, stub_obj)
         else:
             _stub = _types.ModuleType(full_name)
@@ -226,6 +227,8 @@ _ISOLATION_KEYS = (
     "src.backend.infrastructure.repositories.outbox.mark_sent",
 )
 
+_saved_attrs: dict[str, tuple[object, str, object]] = {}
+
 _saved_modules: dict[str, ModuleType | None] = {
     _key: sys.modules.get(_key) for _key in _ISOLATION_KEYS
 }
@@ -249,6 +252,18 @@ for _key, _value in _saved_modules.items():
         sys.modules.pop(_key, None)
     else:
         sys.modules[_key] = _value
+
+# Атрибуты, выставленные на реальные модули-родители, тоже возвращаем:
+# иначе MagicMock-заглушка остаётся в реальном модуле и ломает чужие тесты.
+for _full_name, (_parent, _attr, _old_value) in _saved_attrs.items():
+    if _old_value is None:
+        try:
+            delattr(_parent, _attr)
+        except AttributeError:
+            pass
+    else:
+        setattr(_parent, _attr, _old_value)
+_saved_attrs.clear()
 
 
 @pytest.fixture
