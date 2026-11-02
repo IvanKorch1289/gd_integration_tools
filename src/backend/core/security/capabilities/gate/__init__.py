@@ -162,6 +162,13 @@ def get_capability_gate() -> CapabilityGate:
     экземпляров было три (loader / facade / ai-provider), поэтому
     декларации роутов не были видны runtime-проверкам вообще.
 
+    ADR-0416: baseline-декларации **не** содержат blanket ``scope="**"`` —
+    resource-scoped capability (``fs.read``, ``net.outbound``,
+    ``storage.*``, ``rpa.*``, ``db.*``, ``cache.*``) объявляет владелец
+    ресурса (роут/плагин) с конкретным scope. Fallback-namespace ``core``
+    открывается явным флагом ``dsl_capability_core_baseline_enabled``
+    в runtime-резолвере (ADR-0366 §2).
+
     Returns:
         Процессный singleton-гейт.
     """
@@ -170,12 +177,16 @@ def get_capability_gate() -> CapabilityGate:
     )
 
     gate = CapabilityGate(vocabulary=build_default_vocabulary())
+    # "core" — namespace ядра (DSL-процессоры + platform core-сервисы).
     gate.declare("core", core_capability_refs())
     # Cycle 172 (Wave 7a): production StorageFacade создаётся с
     # plugin="system" (composition root, service_setup._register_storage_facade),
-    # а DSL-шаги S3 — с plugin=route_id. Без декларации для "system"
-    # и для роутов реальный capability-gate превратил бы S3 в
-    # blanket-deny (после того, как раньше он молча обходил gate).
+    # а DSL-шаги S3 — с plugin=route_id.
+    #
+    # ADR-0416: декларация "system" получила те же **явные** scope, что и
+    # "core" (без blanket "**"). Scope-проверка storage.*/cache.*/db.*
+    # включается ровно там, где владелец ресурса объявил capability с
+    # конкретным scope (route.toml / plugin.toml).
     gate.declare("system", core_capability_refs())
     # "ai-agent" — plugin AI-слоя (core/ai/fs_facade.py:56,
     # core/ai/skill_registry.py, infrastructure/ai/e2b_sandbox.py:49).
@@ -191,6 +202,21 @@ def get_capability_gate() -> CapabilityGate:
     # (services/cache/__init__.py:100-103), а фасады, которые его всё же
     # получают, обязаны объявить capability в plugin.toml.
     gate.declare("ai-agent", core_capability_refs())
+    # ADR-0416: blanket ``scope="**"`` в декларациях ядра удалён полностью.
+    #
+    # ``net.outbound`` в baseline **нет**: scope — это host, который задаёт
+    # вызывающий, и статически выразить его нельзя (host-glob объявляет
+    # владелец ресурса: ``[[capabilities]] name = "net.outbound"`` +
+    # ``scope = "*.skb-techno.ru"`` в plugin.toml, либо
+    # ``[[route.capabilities]]`` в route.toml).
+    #
+    # Следствие (требует владельца): ``OutboundHttpClient``, который в
+    # production подключается с plugin="core"
+    # (plugins/composition/waf_setup.py:114), больше не имеет blanket-доступа
+    # к хостам. Интеграционным клиентам (services/integrations/skb.py,
+    # services/integrations/dadata.py) нужен per-plugin namespace —
+    # API ``register_outbound_http_client(plugin=...)`` уже существует, а
+    # нужные host-glob'ы уже объявлены в plugin.toml плагинов.
     return gate
 
 

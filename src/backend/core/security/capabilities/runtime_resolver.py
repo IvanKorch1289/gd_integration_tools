@@ -21,6 +21,13 @@ ADR-0366 переносит решение в ``core`` и делает его я
 * **tenant** обязателен: решение capability-гейта должно быть
   атрибутировано к тенанту (иначе аудит-цепочка разорвана).
 
+ADR-0416 (дефект 2) уточнил правило: namespace ``"core"`` — это **сам**
+core-baseline, поэтому декларация capability в гейте под именем ``core``
+не должна обходить флаг ``dsl_capability_core_baseline_enabled``. Раньше
+ветка ``has_declaration("core", ...)`` проверялась до флага, и baseline
+был открыт всегда (в prod, где флаг выключен, это означало blanket-доступ
+к capability ядра).
+
 Модуль не зависит от DSL-слоя: ``core`` не импортирует ``dsl``
 (см. ``tools/check_layers.py``), поэтому резолвер принимает готовый
 :class:`CapabilityRequest` и возвращает решение — вызов DSL-процессора
@@ -88,9 +95,9 @@ class CapabilityDecision:
     Attributes:
         allowed: ``True`` — доступ разрешён.
         plugin: Резолвнутый namespace (``None`` — namespace не найден).
-        reason: Machine-readable причина (``"granted"`` / ``"no_declaration"``
-            / ``"tenant_missing"`` / ``"capability_denied"`` /
-            ``"unknown_capability"``).
+        reason: Machine-readable причина (``"granted"`` / ``"core_baseline"``
+            / ``"no_declaration"`` / ``"tenant_missing"`` /
+            ``"capability_denied"`` / ``"unknown_capability"``).
         capability: Имя проверяемой capability.
         tenant: Tenant решения.
 
@@ -108,7 +115,7 @@ def resolve_plugin(
 ) -> str | None:
     """Резолвит namespace (plugin) для capability-запроса.
 
-    Правило (ADR-0366):
+    Правило (ADR-0366 §2, уточнено ADR-0416):
 
     1. кандидат — ``request.plugin`` (plugin роута); если capability им
        объявлена — namespace'ом становится роут (его собственный scope);
@@ -116,6 +123,12 @@ def resolve_plugin(
        ``dsl_capability_core_baseline_enabled`` **и** capability входит в
        :data:`CORE_CAPABILITIES`;
     3. иначе — ``None`` (fail-closed DENY).
+
+    ADR-0416 (дефект 2): namespace ``"core"`` — это **сам** core-baseline,
+    поэтому декларация capability в гейте под именем ``core`` **не** даёт
+    обхода флага. Раньше ветка ``has_declaration("core", ...)``
+    проверялась **до** флага, и baseline фактически был открыт всегда.
+    Теперь ``request.plugin == "core"`` обрабатывается только флагом.
 
     Args:
         request: Запрос на проверку.
@@ -126,8 +139,13 @@ def resolve_plugin(
 
     """
     gate = gate if gate is not None else get_capability_gate()
-    if request.plugin and gate.has_declaration(request.plugin, request.capability):
-        return request.plugin
+    plugin = request.plugin
+    if (
+        plugin
+        and plugin != CORE_NAMESPACE
+        and gate.has_declaration(plugin, request.capability)
+    ):
+        return plugin
     if _core_baseline_enabled() and request.capability in CORE_CAPABILITIES:
         return CORE_NAMESPACE
     return None
@@ -140,6 +158,14 @@ def check(
     gate: CapabilityGate | None = None,
 ) -> CapabilityDecision:
     """Проверить capability по namespace-правилам ADR-0366.
+
+    ADR-0416: fallback-namespace ``core`` (core-baseline) выдаёт
+    capability **сам** — по флагу ``dsl_capability_core_baseline_enabled``
+    и по списку :data:`CORE_CAPABILITIES`. Scope при этом не сверяется:
+    baseline — это «ядро использует свои capability», а не выдача доступа
+    к ресурсам. Ресурсные capability (``fs.*``, ``net.*``, ``storage.*``,
+    ``db.*``, ``cache.*``, ``rpa.*``) в baseline **не** входят — их
+    объявляет владелец ресурса (ADR-0416, дефект 3).
 
     Args:
         request: Запрос на проверку.
@@ -159,6 +185,24 @@ def check(
 
     if not request.tenant:
         return _deny(request, "tenant_missing", principal=principal, namespace=namespace)
+
+    if namespace == CORE_NAMESPACE:
+        # Core-baseline: capability выдаётся по явному флагу (ADR-0366 §2).
+        # Scope не сверяется — baseline означает «ядро использует свою
+        # capability», а не доступ к ресурсу (ADR-0416).
+        _logger.debug(
+            "capability_resolver.core_baseline_granted: capability=%s tenant=%s",
+            request.capability,
+            request.tenant,
+        )
+        _emit_grant_audit(request, principal=principal, namespace=namespace)
+        return CapabilityDecision(
+            allowed=True,
+            plugin=namespace,
+            reason="core_baseline",
+            capability=request.capability,
+            tenant=request.tenant,
+        )
 
     try:
         gate.check(namespace, request.capability, request.scope)
@@ -271,6 +315,44 @@ def _emit_deny_audit(
             resource=request.capability,
             action=request.action,
             outcome="denied",
+            details=details,
+        )
+    except Exception as exc:  # pragma: no cover — аудит не должен ломать гейт
+        _logger.debug("capability_resolver.audit_failed: %s", exc)
+
+
+def _emit_grant_audit(
+    request: CapabilityRequest,
+    *,
+    principal: str | None,
+    namespace: str,
+) -> None:
+    """Audit-событие ``capability.check`` для выдачи core-baseline (никогда не raise).
+
+    Args:
+        request: Запрос на проверку.
+        principal: Кто выполняет действие.
+        namespace: Выданный namespace (``"core"``).
+
+    """
+    details: dict[str, Any] = {
+        "plugin": namespace,
+        "principal": principal,
+        "capability": request.capability,
+        "requested_scope": request.scope,
+        "reason": "core_baseline",
+    }
+    if request.tenant is not None:
+        details["tenant"] = request.tenant
+    try:
+        from src.backend.core.audit.facade import emit_audit
+
+        emit_audit(
+            event="capability.check",
+            actor=principal or namespace,
+            resource=request.capability,
+            action=request.action,
+            outcome="granted",
             details=details,
         )
     except Exception as exc:  # pragma: no cover — аудит не должен ломать гейт

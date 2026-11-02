@@ -128,6 +128,38 @@ def test_resolve_plugin_never_uses_principal_as_namespace(
     assert resolve_plugin(request, gate=gate) is None
 
 
+# ── ADR-0416 (дефект 2): namespace "core" подчиняется флагу baseline ─────────
+
+
+def test_resolve_plugin_core_namespace_requires_baseline_flag(
+    gate: CapabilityGate, baseline_off: None
+) -> None:
+    """Декларация в namespace "core" не обходит флаг baseline (ADR-0416).
+
+    Namespace ``core`` — это **сам** core-baseline: он открывается только
+    явным флагом ``dsl_capability_core_baseline_enabled``. Раньше ветка
+    ``has_declaration("core", ...)`` проверялась до флага, и baseline был
+    открыт всегда (в prod, где флаг выключен, — blanket-доступ к
+    capability ядра).
+    """
+    request = CapabilityRequest(
+        capability="rpa.browser.launch", plugin="core", tenant="tenant-1"
+    )
+
+    assert resolve_plugin(request, gate=gate) is None
+
+
+def test_resolve_plugin_core_namespace_allowed_with_baseline_flag(
+    gate: CapabilityGate, baseline_on: None
+) -> None:
+    """С флагом baseline namespace "core" доступен для capability ядра."""
+    request = CapabilityRequest(
+        capability="rpa.browser.launch", plugin="core", tenant="tenant-1"
+    )
+
+    assert resolve_plugin(request, gate=gate) == "core"
+
+
 # ── check ──────────────────────────────────────────────────────────────────────
 
 
@@ -249,3 +281,56 @@ def test_check_denies_stale_declaration_outside_vocabulary(
 
     assert decision.allowed is False
     assert decision.reason == "unknown_capability"
+
+
+# ── ADR-0416 (дефект 2): check() по namespace "core" ────────────────────────
+
+
+def test_check_denies_core_namespace_without_baseline_flag(
+    gate: CapabilityGate, baseline_off: None
+) -> None:
+    """Без флага baseline запрос в namespace "core" → DENY (no_declaration)."""
+    decision = check(
+        CapabilityRequest(
+            capability="rpa.browser.launch", plugin="core", tenant="tenant-1"
+        ),
+        gate=gate,
+    )
+
+    assert decision.allowed is False
+    assert decision.reason == "no_declaration"
+
+
+def test_check_grants_core_baseline_with_flag(
+    gate: CapabilityGate, baseline_on: None
+) -> None:
+    """С флагом baseline core-baseline выдаёт capability ядра.
+
+    Scope при этом **не** сверяется: baseline означает «ядро использует свою
+    capability», а не доступ к ресурсу (ADR-0416). Ресурсные capability
+    (``fs.*``, ``net.*``, ``storage.*``) в baseline не входят — их
+    объявляет владелец ресурса.
+    """
+    decision = check(
+        CapabilityRequest(
+            capability="rpa.browser.launch", plugin="core", tenant="tenant-1"
+        ),
+        gate=gate,
+    )
+
+    assert decision.allowed is True
+    assert decision.plugin == "core"
+    assert decision.reason == "core_baseline"
+
+
+def test_check_core_baseline_still_requires_tenant(
+    gate: CapabilityGate, baseline_on: None
+) -> None:
+    """Core-baseline не отменяет tenant-атрибуцию (ADR-0366 §3)."""
+    decision = check(
+        CapabilityRequest(capability="rpa.browser.launch", plugin="core"),
+        gate=gate,
+    )
+
+    assert decision.allowed is False
+    assert decision.reason == "tenant_missing"

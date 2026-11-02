@@ -37,6 +37,14 @@ Capability
 SkillRegistry intercepts ``invoke()`` и проверяет каждое имя из
 :attr:`SkillSpec.capabilities` через :class:`CapabilityGate.check`.
 
+ADR-0416: проверка выполняется **напрямую** через process-wide singleton
+``get_capability_gate()`` (namespace — плагин-владелец skill'а из
+``plugin.toml::name``). Прежний код искал несуществующий символ
+``_global_capability_check`` в ``core/plugin_runtime/sandbox.py`` → блок
+проверки был **мёртвым**, и ``SkillSpec.capabilities`` не проверялись
+никогда (fail-open). Теперь недоступность гейта → **DENY** (fail-closed)
+с audit-событием.
+
 Scaffold S26 W5: модель + методы-сигнатуры; полная реализация
 loader'а + auto-export — Wave S26 W5.
 
@@ -96,6 +104,8 @@ class SkillRegistry:
     def __init__(self) -> None:
         """Инициализация пустого реестра."""
         self._skills: dict[str, SkillSpec] = {}
+        self._skill_plugins: dict[str, str] = {}
+        """Skill ID → имя плагина-владельца (namespace capability-гейта)."""
 
     def from_toml_manifest(self, plugin_toml: Path) -> list[SkillSpec]:
         """Загрузить ``[[skill]]`` секции из ``plugin.toml`` V11.2.
@@ -121,6 +131,8 @@ class SkillRegistry:
             # TOML section есть но пустой
             return []
 
+        plugin_name = str(data.get("name", "") or "").strip()
+
         results: list[SkillSpec] = []
         for idx, raw in enumerate(skills_section):
             try:
@@ -144,6 +156,11 @@ class SkillRegistry:
                 ) from exc
 
             self._skills[spec.id] = spec
+            if plugin_name:
+                # Namespace для capability-проверки — плагин-владелец
+                # skill'а (ADR-0416): capability объявляются в его
+                # plugin.toml, значит и проверяются в его namespace.
+                self._skill_plugins[spec.id] = plugin_name
             results.append(spec)
 
         return results
@@ -202,6 +219,154 @@ class SkillRegistry:
             ),
         )
 
+    @staticmethod
+    def _resolve_capability_gate() -> Any:
+        """Вернуть process-wide singleton capability-гейта.
+
+        ADR-0416: недоступность гейта — это **DENY** (fail-closed), а не
+        «пропустить проверку».
+
+        Returns:
+            :class:`core.security.capabilities.gate.CapabilityGate`.
+
+        Raises:
+            PermissionError: Гейт недоступен (ImportError / RuntimeError).
+
+        """
+        try:
+            from src.backend.core.security.capabilities.gate import get_capability_gate
+
+            return get_capability_gate()
+        except Exception as exc:
+            raise PermissionError(
+                "SkillRegistry.invoke: capability-gate недоступен — "
+                "проверка capability невозможна, вызов запрещён "
+                "(fail-closed, ADR-0416): "
+                f"{exc}"
+            ) from exc
+
+    @staticmethod
+    def _split_capability_scope(gate: Any, raw: str) -> tuple[str, str | None]:
+        """Разделить строку capability на ``(capability, scope)``.
+
+        Формат skill'а — ``"<capability>[.<scope>]"`` (ADR-0069), где
+        capability берётся из vocabulary гейта, а остаток — scope
+        (``db.read.orders`` → capability ``db.read``, scope ``orders``).
+
+        Args:
+            gate: Capability-гейт (для доступа к vocabulary).
+            raw: Строка из ``SkillSpec.capabilities``.
+
+        Returns:
+            Кортеж ``(capability, scope)``. Если capability не найдена в
+            vocabulary — возвращается ``(raw, None)``: проверка гейта
+            отклонит её с ``CapabilityNotFoundError`` (fail-closed).
+
+        """
+        vocabulary = getattr(gate, "vocabulary", None)
+        if vocabulary is not None and vocabulary.has(raw):
+            return raw, None
+        parts = raw.split(".")
+        for index in range(len(parts) - 1, 0, -1):
+            candidate = ".".join(parts[:index])
+            if vocabulary is not None and vocabulary.has(candidate):
+                return candidate, ".".join(parts[index:])
+        return raw, None
+
+    def _check_skill_capabilities(self, skill: SkillSpec) -> None:
+        """Проверить capability skill'а через capability-гейт (fail-closed).
+
+        Namespace проверки — плагин-владелец skill'а (``plugin.toml::name``):
+        capability объявляются именно там, значит и проверяются в его
+        namespace'е.
+
+        Args:
+            skill: Skill к проверке.
+
+        Raises:
+            PermissionError: Capability не объявлена, scope не покрыт,
+                гейт недоступен или владелец skill'а неизвестен.
+
+        """
+        if not skill.capabilities:
+            return
+
+        plugin = self._skill_plugins.get(skill.id)
+        if not plugin:
+            self._emit_capability_audit(
+                skill_id=skill.id,
+                capability=",".join(skill.capabilities),
+                plugin=None,
+                reason="owner_unknown",
+            )
+            raise PermissionError(
+                f"SkillRegistry.invoke: skill {skill.id!r} объявляет capability "
+                f"{skill.capabilities!r}, но плагин-владелец неизвестен "
+                "(manifest без поля 'name') — проверка capability невозможна, "
+                "вызов запрещён (fail-closed, ADR-0416)"
+            )
+
+        gate = self._resolve_capability_gate()
+
+        for raw in skill.capabilities:
+            capability, scope = self._split_capability_scope(gate, raw)
+            try:
+                gate.check(plugin, capability, scope)
+            except Exception as exc:
+                self._emit_capability_audit(
+                    skill_id=skill.id,
+                    capability=capability,
+                    plugin=plugin,
+                    reason="denied",
+                    detail=str(exc),
+                )
+                raise PermissionError(
+                    f"SkillRegistry.invoke: capability denied: {capability!r} "
+                    f"(scope={scope!r}, skill={skill.id!r}, "
+                    f"plugin={plugin!r}): {exc}"
+                ) from exc
+
+    @staticmethod
+    def _emit_capability_audit(
+        *,
+        skill_id: str,
+        capability: str,
+        plugin: str | None,
+        reason: str,
+        detail: str | None = None,
+    ) -> None:
+        """Audit-событие ``capability.check`` для skill'а (никогда не raise).
+
+        Args:
+            skill_id: Идентификатор skill'а.
+            capability: Имя capability (или список через запятую).
+            plugin: Namespace проверки (``None`` — владелец неизвестен).
+            reason: Machine-readable причина отказа.
+            detail: Текст ошибки гейта (опционально).
+
+        """
+        details: dict[str, Any] = {
+            "plugin": plugin,
+            "skill_id": skill_id,
+            "capability": capability,
+            "reason": reason,
+        }
+        if detail:
+            details["error"] = detail
+        try:
+            from src.backend.core.audit.facade import emit_audit
+
+            emit_audit(
+                event="capability.check",
+                actor=plugin or "skill",
+                resource=capability,
+                action="execute",
+                outcome="denied",
+                details=details,
+            )
+        except Exception as exc:  # pragma: no cover — аудит не роняет вызов
+            logger.debug("skill_registry.capability_audit_failed: %s", exc)
+
     async def invoke(
         self,
         skill_id: str,
@@ -218,7 +383,10 @@ class SkillRegistry:
            ``prefix.*``). Если не передан — no-op (backward-compat с
            callers, которые уже выполнили check на уровне
            SkillInvokeProcessor / V21 pattern).
-        3. Capability check via ``CapabilityGate`` if available.
+        3. Capability check via ``CapabilityGate`` (ADR-0416): каждая
+           capability из :attr:`SkillSpec.capabilities` проверяется в
+           namespace'е плагина-владельца (``plugin.toml::name``);
+           недоступность гейта → **DENY** (fail-closed).
         4. Dynamic import ``module:function`` via ``importlib``.
         5. Call handler with ``**kwargs`` (with optional ``timeout``).
 
@@ -232,8 +400,9 @@ class SkillRegistry:
 
         Raises:
             KeyError: Skill не найден.
-            PermissionError: Module not in whitelist.
-            CapabilityDeniedError: Отсутствует одна из capabilities.
+            PermissionError: Module not in whitelist; capability не
+                объявлена (или scope не покрыт) плагином-владельцем;
+                capability-гейт недоступен (fail-closed, ADR-0416).
             ImportError: Handler module/function not found.
             asyncio.TimeoutError: При превышении ``timeout``.
 
@@ -273,10 +442,8 @@ class SkillRegistry:
                 # ImportError — features module missing, AttributeError —
                 # config not initialized, RuntimeError — feature_flags
                 # unavailable.
-                import logging
-
-                logging.getLogger(__name__).debug(
-                    "skill_registry.feature_flag_fallback", extra={"error": str(ff_exc)}
+                logger.debug(
+                    "skill_registry.feature_flag_fallback: %s", ff_exc
                 )
                 strict = True  # fail-closed
             if strict:
@@ -290,34 +457,14 @@ class SkillRegistry:
                 module_name=module_name, whitelist=whitelist, skill_id=skill_id
             )
 
-        # Capability check — best-effort graceful degradation.
-        # CapabilityGate.check() IS implemented (core/security/capabilities/gate/
-        # check_mixin.py:48), but skill_registry gracefully handles the case where
-        # the gate is unavailable (ImportError or runtime error). This avoids
-        # blocking skill execution on capability subsystem failures.
-        # S66 W2 audit: comment previously said "not yet implemented (MVP phase)"
-        # which was misleading — Gate is implemented, this is best-effort fallback.
-        _capability_check: Any = None
-        try:
-            # CapabilityChecker is a type alias, not an instance.
-            # Try to get the global check function from the sandbox module.
-            import src.backend.core.plugin_runtime.sandbox as sandbox_module
-
-            _capability_check = getattr(
-                sandbox_module, "_global_capability_check", None
-            )
-        except ImportError:  # noqa: violation-check — sandbox module optional
-            pass  # sandbox module not available — skip check
-
-        if _capability_check is not None:
-            for cap in skill.capabilities:
-                try:
-                    _capability_check(cap, f"skill.invoke.{skill_id}", None)
-                except Exception as exc:
-                    raise PermissionError(
-                        f"SkillRegistry.invoke: capability denied: {cap!r} "
-                        f"(skill={skill_id!r}): {exc}"
-                    ) from exc
+        # Capability check (ADR-0416) — fail-closed.
+        #
+        # Раньше здесь искался символ ``_global_capability_check`` в
+        # ``core/plugin_runtime/sandbox.py`` — такого символа **не
+        # существует**, поэтому блок был мёртвым, а ``SkillSpec.capabilities``
+        # не проверялись НИКОГДА (fail-open). Теперь проверка идёт
+        # напрямую через process-wide singleton capability-гейта.
+        self._check_skill_capabilities(skill)
 
         # Import and call handler
         try:
@@ -444,14 +591,10 @@ class SkillRegistry:
                     # OSError — schema read failure, ValueError/JSONDecodeError
                     # — invalid JSON, UnicodeDecodeError — bad encoding,
                     # AttributeError — schema_path API change.
-                    import logging
-
-                    logging.getLogger(__name__).debug(
-                        "skill_registry.schema_load_failed",
-                        extra={
-                            "skill_id": tool_def.get("name"),
-                            "error": str(schema_exc),
-                        },
+                    logger.debug(
+                        "skill_registry.schema_load_failed: skill_id=%s error=%s",
+                        tool_def.get("name"),
+                        schema_exc,
                     )
 
             tools.append(tool_def)
@@ -537,11 +680,8 @@ class SkillRegistry:
                     # TypeError — wrong prop_type, ValueError — invalid
                     # schema, KeyError — missing required key, AttributeError
                     # — schema API change.
-                    import logging
-
-                    logging.getLogger(__name__).debug(
-                        "skill_registry.input_model_build_failed",
-                        extra={"error": str(schema_exc)},
+                    logger.debug(
+                        "skill_registry.input_model_build_failed: %s", schema_exc
                     )
 
             tool = StructuredTool(**tool_kwargs)
@@ -593,11 +733,10 @@ class SkillRegistry:
                 ) as schema_exc:
                     # cycle-9/D-AUDIT-998: narrow exceptions + observability
                     # (mirror D-AUDIT-996 для openai_tools path).
-                    import logging
-
-                    logging.getLogger(__name__).debug(
-                        "skill_registry.openai_schema_load_failed",
-                        extra={"skill_id": skill.id, "error": str(schema_exc)},
+                    logger.debug(
+                        "skill_registry.openai_schema_load_failed: skill_id=%s error=%s",
+                        skill.id,
+                        schema_exc,
                     )
 
             tools.append(tool_def)
