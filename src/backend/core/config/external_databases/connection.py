@@ -129,9 +129,14 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
         examples=[1.0],
     )
 
-    replica_dsn: str | None = Field(
+    replica_dsn: SecretStr | None = Field(
         default=None,
-        description="DSN read-replica для async-подключения (S38.1).",
+        title="DSN read-replica",
+        description=(
+            "DSN read-replica для async-подключения (S38.1). ADR-0419: DSN "
+            "содержит пароль → типизирован SecretStr, в дампах модели пароль "
+            "маскируется (как в main-БД, ADR-0378/ADR-0381)."
+        ),
         examples=["postgresql+asyncpg://user:pwd@replica:5432/test"],
     )
 
@@ -146,10 +151,14 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
         """Формирует DSN для асинхронного драйвера."""
         return self._build_dsn(is_async=True)
 
-    @computed_field(repr=False, description="URL асинхронного подключения к read-replica")
+    @computed_field(
+        repr=False, description="URL асинхронного подключения к read-replica"
+    )
     def replica_async_connection_url(self) -> str | None:
         """Возвращает DSN read-replica если задана."""
-        return self.replica_dsn
+        if self.replica_dsn is None:
+            return None
+        return self.replica_dsn.get_secret_value()
 
     @computed_field(repr=False, description="URL синхронного подключения")
     def sync_connection_url(self) -> str:
@@ -167,6 +176,28 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
         настоящим паролем.
         """
         return mask_url_password(value)
+
+    @field_serializer("replica_async_connection_url")
+    def _serialize_replica_url(self, value: str | None) -> str | None:
+        """Маскирует пароль в DSN реплики (ADR-0419).
+
+        Computed-поле отдаёт рабочий DSN (его использует инициализатор
+        для создания replica-engine), но в дампах модели пароль должен
+        быть замаскирован.
+        """
+        if value is None:
+            return None
+        return mask_url_password(value)
+
+    @field_serializer("replica_dsn")
+    def _serialize_replica_dsn(self, value: SecretStr | None) -> str | None:
+        """Маскирует пароль в DSN реплики (ADR-0419, ADR-0378).
+
+        Рабочее значение доступно через ``replica_dsn.get_secret_value()``.
+        """
+        if value is None:
+            return None
+        return mask_url_password(value.get_secret_value())
 
     def _build_dsn(self, is_async: bool) -> str:
         """Внутренний метод генерации строки подключения.
@@ -191,9 +222,7 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
                 driver_exc,
             )
         username = quote_plus(self.username) if self.username else ""
-        password = (
-            quote_plus(self.password.get_secret_value()) if self.password else ""
-        )
+        password = quote_plus(self.password.get_secret_value()) if self.password else ""
         userinfo = f"{username}:{password}@" if username or password else ""
 
         if self.type == DatabaseTypeChoices.postgresql:
@@ -210,8 +239,7 @@ class ExternalDatabaseConnectionSettings(ExternalDatabaseItemSettings):
                 )
 
             return (
-                f"oracle+{driver}://{userinfo}"
-                f"{self.host}:{self.port}/?sid={self.sid}"
+                f"oracle+{driver}://{userinfo}{self.host}:{self.port}/?sid={self.sid}"
             )
 
         raise NotImplementedError(f"Поддержка СУБД '{self.type}' не реализована")

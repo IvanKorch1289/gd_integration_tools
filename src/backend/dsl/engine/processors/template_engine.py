@@ -76,9 +76,13 @@ class RenderTemplateProcessor(BaseProcessor):
             - ``exchange.out_message`` копируется из in_message (preserves body).
 
         """
-        from jinja2 import Template
+        from jinja2.sandbox import SandboxedEnvironment
 
-        tmpl = Template(self._template_string, autoescape=True)
+        # ADR-0419: SandboxedEnvironment блокирует доступ к «небезопасным»
+        # атрибутам (``__class__``, ``__globals__`` и т.п.) — SSTI через
+        # шаблон закрыт (как в rpa/operations/templaterenderprocessor.py).
+        env = SandboxedEnvironment(autoescape=True)
+        tmpl = env.from_string(self._template_string)
         ctx = _resolve_context(exchange, self._context_from)
         result = tmpl.render(ctx)
         exchange.set_property(self._result_property, result)
@@ -147,7 +151,8 @@ class RenderTemplateFileProcessor(BaseProcessor):
             ValueError: При path-traversal (``_safe_template_path``).
 
         """
-        from jinja2 import Environment, FileSystemLoader
+        from jinja2 import FileSystemLoader
+        from jinja2.sandbox import SandboxedEnvironment
 
         # Второй независимый барьер безопасности: capability ограничивает
         # факт вызова, allowlist — каталог шаблона. Проверка выполняется
@@ -166,7 +171,8 @@ class RenderTemplateFileProcessor(BaseProcessor):
         safe_path = _safe_template_path(self._path)
         base_dir = os.path.dirname(safe_path) or "."
         template_name = os.path.basename(safe_path)
-        env = Environment(loader=FileSystemLoader(base_dir), autoescape=True)
+        # ADR-0419: файловые шаблоны — тоже в sandbox (SSTI).
+        env = SandboxedEnvironment(loader=FileSystemLoader(base_dir), autoescape=True)
         tmpl = env.get_template(template_name)
         ctx = _resolve_context(exchange, self._context_from)
         result = tmpl.render(ctx)

@@ -27,6 +27,8 @@ from src.backend.core.logging import get_logger
 # P0-S6 (audit 2026-08-19): defusedxml required dep (no stdlib fallback).
 # ``pickle`` and ``xml.etree.ElementTree`` are stdlib defaults but unsafe for
 # untrusted input — defusedxml для marshal и unmarshal paths.
+# ADR-0419: pickle десериализуется через restricted_unpickler (whitelist).
+from src.backend.core.security.restricted_unpickler import safe_loads
 from src.backend.dsl.engine.processors.eip.marshal.base import (
     DataFormat,  # S63 W3: cross-import
 )
@@ -238,7 +240,14 @@ class MessagePackDataFormat(DataFormat):
 
 
 class PickleDataFormat(DataFormat):
-    """Pickle via stdlib. Только для trusted data (security warning)."""
+    """Pickle via stdlib. Только для trusted data (security warning).
+
+    ADR-0419: десериализация выполняется через
+    ``core.security.restricted_unpickler.safe_loads`` — whitelist модулей
+    вместо обычного ``pickle.loads``. Класс вне whitelist'а →
+    ``pickle.UnpicklingError`` (fail-closed), произвольный код не
+    выполняется.
+    """
 
     def __init__(self, *, protocol: int = pickle.DEFAULT_PROTOCOL) -> None:
         """Init pickle format.
@@ -264,16 +273,18 @@ class PickleDataFormat(DataFormat):
         return pickle.dumps(body, protocol=self._protocol)
 
     def unmarshal(self, data: bytes, target_type: type | None = None) -> Any:
-        """Deserialize pickle bytes → Python object (TRUSTED ONLY).
+        """Deserialize pickle bytes → Python object (без RCE).
 
-        SECURITY: pickle.loads executes arbitrary code. This EIP is only safe
-        for trusted producers (intra-cluster, signed payloads). Production
-        callers MUST validate data provenance (signature, mTLS, source check)
-        before invoking this processor. See Camel Marshal docs warning.
-        P0-S7 (audit 2026-08-19): B301 nosec — caller обязан проверить
-        provenance (см. docstring выше).
+        ADR-0419: используется ``safe_loads`` (whitelist модулей) вместо
+        ``pickle.loads``. Формат достижим из DSL, поэтому payload может
+        прийти извне — unrestricted ``pickle.loads`` давал RCE через
+        ``__reduce__``.
+
+        Raises:
+            pickle.UnpicklingError: Если класс вне whitelist'а.
+
         """
-        obj = pickle.loads(data)  # nosec B301
+        obj = safe_loads(data)
         if target_type is not None and not isinstance(obj, target_type):
             return target_type(obj)
         return obj

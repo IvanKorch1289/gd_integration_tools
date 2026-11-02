@@ -26,6 +26,7 @@ from typing import Any, Literal
 
 from src.backend.core.interfaces.source import EventCallback, SourceEvent, SourceKind
 from src.backend.core.logging import get_logger
+from src.backend.core.utils.sql_identifiers import validate_identifier
 from src.backend.infrastructure.clients.base_connector import HealthResult
 
 __all__ = (
@@ -145,11 +146,20 @@ class CdcPostgresLogicalSource:
         if not dsn:
             raise ValueError("dsn must be non-empty")
         self.source_id = source_id
-        self.table = table
+        # ADR-0419: table/slot/publication попадают в DDL через f-string
+        # (``CREATE PUBLICATION {publication} FOR TABLE {table}`` и
+        # ``pg_create_logical_replication_slot('{slot}', ...)``) — bind-параметры
+        # к идентификаторам неприменимы. Валидация — fail-fast на
+        # конструкторе, до обращения к БД.
+        self.table = validate_identifier(table, context="cdc.postgres.table")
         self.dsn = dsn
         self.mode = mode
-        self.slot_name = slot_name or f"cdc_{table}"
-        self.publication = publication or f"pub_{table}"
+        self.slot_name = validate_identifier(
+            slot_name or f"cdc_{self.table}", context="cdc.postgres.slot_name"
+        )
+        self.publication = validate_identifier(
+            publication or f"pub_{self.table}", context="cdc.postgres.publication"
+        )
         self.cursor_store = cursor_store
         self.plugin = plugin
         self._inner: Any = None

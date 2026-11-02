@@ -262,6 +262,20 @@ waf:
   # deploy/k8s/service.yaml). Loopback в prod/staging — CRITICAL
   # ``waf.clamav_host_loopback_in_prod`` (в k8s это сам pod, а не clamd).
   clamav_host: "clamd"
+  # ADR-0419: fail-closed. В base.yml стоял ``clamav_fail_open: true`` и prod
+  # его не переопределял → при недоступном clamd запросы проходили без
+  # AV-сканирования (WARNING ``waf.clamav_fail_open_in_prod``).
+  #
+  # В prod clamd развёрнут как sidecar (service-DNS ``clamd``), поэтому
+  # «fail_open без clamd» — не штатная ситуация: если sidecar'а нет,
+  # исходящие запросы блокируются (fail-closed), а не сканируются
+  # «наполовину».
+  #
+  # Escape-hatch, если платформа не разворачивает clamd: поставить
+  # ``waf.clamav_enabled: false`` — сканер не подключается вовсе, и
+  # ``fail_open`` становится нерелевантным (это явный выбор, а не
+  # молчаливый fail-open).
+  clamav_fail_open: false
 
 
 # ADR-0371 (cycle 172): TLS-проверка и лимиты соединений — prod-уровня.

@@ -290,11 +290,15 @@ def build_update_sql(
 def build_upsert_sql_mysql(
     table: str, data: dict[str, Any], conflict_keys: list[str]
 ) -> tuple[str, dict[str, Any]]:
-    """MySQL UPSERT: ``INSERT INTO t (...) VALUES (...) ON DUPLICATE KEY UPDATE c=VALUES(c)``.
+    """MySQL UPSERT: ``INSERT INTO t (...) VALUES (...) AS new ON DUPLICATE KEY UPDATE c=new.c``.
 
     Identifiers quoting-ятся по правилам MySQL (backticks) — двойные
     кавычки без ``ANSI_QUOTES`` дают синтаксическую ошибку (ADR-0382).
     ``conflict_keys`` пропускаются в UPDATE-клаузе (они задают conflict-путь).
+
+    ADR-0419: используется row-alias ``AS new`` вместо функции ``VALUES(col)``
+    (deprecated с MySQL 8.0.20, удалена в 8.4). Alias доступен с MySQL
+    8.0.19 — ниже этой версии форма не поддерживается.
     """
     dialect = "mysql"
     if not data:
@@ -309,14 +313,17 @@ def build_upsert_sql_mysql(
     placeholders = ", ".join(f":{c}" for c in cols)
     update_cols = [c for c in cols if c not in conflict_keys]
     if not update_cols:
-        update_clause = "c = c"  # no-op to keep ON DUPLICATE KEY valid
+        # Нет колонок для обновления → валидный no-op по conflict-ключу
+        # (раньше был «c = c» — ссылка на несуществующую колонку).
+        noop_key = _quote_identifier(conflict_keys[0], dialect)
+        update_clause = f"{noop_key} = new.{noop_key}"
     else:
         update_clause = ", ".join(
-            f"{_quote_identifier(c, dialect)} = VALUES({_quote_identifier(c, dialect)})"
+            f"{_quote_identifier(c, dialect)} = new.{_quote_identifier(c, dialect)}"
             for c in update_cols
         )
     sql = (
-        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) "
+        f"INSERT INTO {table_q} ({cols_q}) VALUES ({placeholders}) AS new "
         f"ON DUPLICATE KEY UPDATE {update_clause}"
     )
     return sql, dict(data)
