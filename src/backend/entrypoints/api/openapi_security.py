@@ -52,14 +52,25 @@ from typing import Any
 from fastapi import FastAPI
 
 from src.backend.core.logging import get_logger
+from src.backend.entrypoints.api.openapi_completeness import annotate_completeness
 from src.backend.entrypoints.middlewares.auth_required import (
     DEFAULT_PUBLIC_PATH_PREFIXES,
     is_path_public,
 )
 
-__all__ = ("SECURITY_SCHEMES", "apply_security_to_openapi", "annotate_openapi")
+__all__ = (
+    "ERROR_RESPONSE_SCHEMA_NAME",
+    "SECURITY_SCHEMES",
+    "annotate_error_responses",
+    "annotate_openapi",
+    "apply_security_to_openapi",
+    "mutations_without_request_body",
+)
 
 _logger = get_logger(__name__)
+
+#: Имя компонента схемы с унифицированным error-envelope.
+ERROR_RESPONSE_SCHEMA_NAME = "ErrorEnvelope"
 
 #: Credential-схемы, соответствующие verifiers'ам ``core.auth.auth_selector``.
 #: Порядок значим только для читаемости спецификации: в массиве ``security``
@@ -107,6 +118,9 @@ _DEFAULT_REQUIREMENT: list[dict[str, list[str]]] = [
 
 _HTTP_METHODS = ("get", "put", "post", "delete", "options", "head", "patch", "trace")
 
+#: Методы, меняющие состояние (для них обязателен ``requestBody``-контракт).
+_MUTATION_METHODS = frozenset({"post", "put", "patch", "delete"})
+
 
 def annotate_openapi(schema: dict[str, Any]) -> dict[str, Any]:
     """Проставляет ``securitySchemes`` и ``security`` в готовую схему.
@@ -152,12 +166,120 @@ def annotate_openapi(schema: dict[str, Any]) -> dict[str, Any]:
     return schema
 
 
+#: Описание error-envelope, который отдают middleware слоя авторизации.
+_ERROR_ENVELOPE_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "code": {"type": "string", "description": "Машиночитаемый код ошибки."},
+        "detail": {"type": "string", "description": "Человекочитаемое описание."},
+        "error_id": {"type": "string", "format": "uuid"},
+        "correlation_id": {"type": ["string", "null"]},
+        "request_id": {"type": ["string", "null"]},
+    },
+    "required": ["code", "detail"],
+}
+
+
+def _error_response(description: str) -> dict[str, Any]:
+    """Собрать описание одного 4xx-ответа со ссылкой на error-envelope."""
+    return {
+        "description": description,
+        "content": {
+            "application/json": {
+                "schema": {"$ref": f"#/components/schemas/{ERROR_RESPONSE_SCHEMA_NAME}"}
+            }
+        },
+    }
+
+
+def annotate_error_responses(schema: dict[str, Any]) -> dict[str, Any]:
+    """Дописать 401/403 в ответы операций, которые реально их возвращают.
+
+    ADR-0422: до правки 205 из 443 операций не описывали ни одного 4xx-ответа,
+    хотя ``AuthRequiredMiddleware`` отдаёт 401 без credentials, а
+    ``CSRFMiddleware`` / admin-role guard — 403.
+
+    Публичные пути (``DEFAULT_PUBLIC_PATH_PREFIXES``) не трогаются: auth-guard
+    их пропускает, поэтому 401 там невозможен.
+
+    Args:
+        schema: OpenAPI-схема (уже проаннотированная ``security``).
+
+    Returns:
+        Та же схема с дописанными 401/403.
+
+    """
+    components = schema.setdefault("components", {})
+    schemas = components.setdefault("schemas", {})
+    schemas.setdefault(ERROR_RESPONSE_SCHEMA_NAME, _ERROR_ENVELOPE_SCHEMA)
+
+    annotated = 0
+    for path, path_item in schema.get("paths", {}).items():
+        if is_path_public(path, DEFAULT_PUBLIC_PATH_PREFIXES):
+            continue
+        for method, operation in path_item.items():
+            if method.lower() not in _HTTP_METHODS or not isinstance(operation, dict):
+                continue
+            responses = operation.setdefault("responses", {})
+            if not isinstance(responses, dict):
+                continue
+            if "401" not in responses:
+                responses["401"] = _error_response(
+                    "Отсутствуют или недействительны credentials (auth-guard)."
+                )
+            if "403" not in responses:
+                responses["403"] = _error_response(
+                    "Недостаточно прав (роль/CSRF-токен)."
+                )
+            annotated += 1
+
+    _logger.info(
+        "openapi_security.error_responses_annotated", extra={"operations": annotated}
+    )
+    return schema
+
+
+def mutations_without_request_body(schema: dict[str, Any]) -> list[tuple[str, str]]:
+    """Собрать список мутаций без ``requestBody`` (для ADR/отчёта).
+
+    Мутация без тела — не дефект: ``DELETE /order/delete/{id}`` и
+    ``POST /storage/upload-stream`` (raw-body) не имеют JSON-тела. Список
+    нужен как **документированное исключение**, а не как «неполная схема».
+
+    Args:
+        schema: OpenAPI-схема.
+
+    Returns:
+        Список пар ``(method, path)`` для мутаций без ``requestBody``.
+
+    """
+    result: list[tuple[str, str]] = []
+    for path, path_item in schema.get("paths", {}).items():
+        for method, operation in path_item.items():
+            if method.lower() not in _MUTATION_METHODS or not isinstance(
+                operation, dict
+            ):
+                continue
+            if "requestBody" not in operation:
+                result.append((method.lower(), path))
+    return sorted(result, key=lambda item: (item[1], item[0]))
+
+
 def apply_security_to_openapi(app: FastAPI) -> None:
     """Включает аннотацию схемы безопасности для ``app``.
 
     Отказ здесь не должен ронять старт приложения: спецификация — это
     документация, а не механизм контроля доступа. Ошибка логируется, и
     приложение продолжает работать с исходной схемой.
+
+    ADR-0422: вместе с ``securitySchemes``/``security`` дописываются
+    4xx-ответы (401/403) для операций под auth-guard'ом — иначе схема
+    утверждала бы, что 401 невозможен.
+
+    ADR-0423: поверх аннотаций добавляется полнота схемы
+    (``openapi_completeness``): ``requestBody`` для мутаций, читающих тело
+    вручную, публикация скрытых legacy-алиасов и реальные 4xx отдельных
+    операций (413/415/429).
 
     Args:
         app: экземпляр FastAPI из :func:`create_app`.
@@ -168,7 +290,9 @@ def apply_security_to_openapi(app: FastAPI) -> None:
     def openapi() -> dict[str, Any]:
         schema = original_openapi()
         try:
-            return annotate_openapi(schema)
+            schema = annotate_openapi(schema)
+            schema = annotate_completeness(app, schema)
+            return annotate_error_responses(schema)
         except (AttributeError, KeyError, TypeError, ValueError) as exc:
             # exc — причина сбоя аннотации; сам FastAPI уже отдал схему.
             _logger.warning(

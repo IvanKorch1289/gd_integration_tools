@@ -1,8 +1,18 @@
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Header, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Header,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 
 from extensions.core_entities.files.schemas.filter import FileFilter
 from extensions.core_entities.files.schemas.route import (  # S168 W15-17 P2-10
@@ -19,17 +29,161 @@ from src.backend.entrypoints.api.generator.actions import (
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from src.backend.services.io.files import get_file_service
 
-__all__ = ("router", "storage_router")
+__all__ = (
+    "ALLOWED_UPLOAD_CONTENT_TYPES",
+    "MAX_STREAM_UPLOAD_BYTES",
+    "MAX_UPLOAD_BYTES",
+    "router",
+    "storage_router",
+)
 
 
 router = APIRouter()
 storage_router = APIRouter()
+
+# ── ADR-0422: лимиты загрузки ─────────────────────────────────────────── #
+#
+# До ADR-0422 ``upload_file_handler`` делал ``await file.read()`` — весь
+# файл целиком попадал в RAM без ограничения размера и без проверки
+# content-type. Один запрос мог исчерпать память процесса.
+#
+# Теперь размер ограничен сверху, тело читается чанками, а неподдерживаемый
+# content-type отклоняется до чтения тела.
+
+#: Максимальный размер файла для буферизованной загрузки (64 MiB).
+MAX_UPLOAD_BYTES: int = 64 * 1024 * 1024
+
+#: Максимальный размер файла для streaming-загрузки (1 GiB).
+#:
+#: Streaming-эндпоинт создан для больших файлов (multipart-части по 8 MiB),
+#: поэтому его лимит выше, чем у буферизованного (там тело целиком
+#: попадает в RAM).
+MAX_STREAM_UPLOAD_BYTES: int = 1024 * 1024 * 1024
+
+#: Размер чанка при чтении загруженного файла (1 MiB).
+_UPLOAD_CHUNK_SIZE: int = 1024 * 1024
+
+#: Allowlist content-type для загрузки файлов.
+#:
+#: Покрывает документы, текст, изображения и бинарный fallback
+#: (``application/octet-stream``). Исполняемые файлы, скрипты и HTML
+#: отклоняются — загрузка проходит через AV-сервис, но тип файла должен
+#: быть заранее известен.
+ALLOWED_UPLOAD_CONTENT_TYPES: frozenset[str] = frozenset(
+    {
+        "application/json",
+        "application/msword",
+        "application/octet-stream",
+        "application/pdf",
+        "application/rtf",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/xml",
+        "image/gif",
+        "image/jpeg",
+        "image/png",
+        "image/tiff",
+        "image/webp",
+        "text/csv",
+        "text/markdown",
+        "text/plain",
+    }
+)
 
 # Создаем билдеры для двух роутеров
 crud_builder = ActionRouterBuilder(router)
 storage_builder = ActionRouterBuilder(storage_router)
 
 common_dependencies = [Depends(require_api_key), Depends(get_default_rate_limiter())]
+
+
+def _ensure_content_type_allowed(content_type: str | None) -> str:
+    """Проверить content-type по allowlist'у.
+
+    Args:
+        content_type: Content-type загружаемого файла (может быть ``None``).
+
+    Returns:
+        Нормализованный content-type (без параметров, в нижнем регистре).
+
+    Raises:
+        HTTPException: 415 — тип не указан или не входит в allowlist.
+
+    """
+    if not content_type:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Content-Type обязателен для загрузки файла",
+        )
+    normalized = content_type.split(";")[0].strip().lower()
+    if normalized not in ALLOWED_UPLOAD_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=(
+                f"Content-Type {normalized!r} не поддерживается. "
+                f"Разрешены: {sorted(ALLOWED_UPLOAD_CONTENT_TYPES)}"
+            ),
+        )
+    return normalized
+
+
+async def _read_limited(file: UploadFile, limit: int) -> bytes:
+    """Прочитать файл чанками, не превышая ``limit`` байт.
+
+    Args:
+        file: Загруженный файл.
+        limit: Максимальный размер в байтах.
+
+    Returns:
+        Содержимое файла.
+
+    Raises:
+        HTTPException: 413 — файл больше лимита.
+
+    """
+    chunks: list[bytes] = []
+    total = 0
+    while True:
+        chunk = await file.read(_UPLOAD_CHUNK_SIZE)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > limit:
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=(f"Файл превышает лимит {limit} байт (уже прочитано {total})"),
+            )
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+async def _limited_stream(
+    stream: AsyncIterator[bytes], limit: int
+) -> AsyncIterator[bytes]:
+    """Пропустить поток, прервав его при превышении ``limit`` байт.
+
+    Args:
+        stream: Исходный поток тела запроса.
+        limit: Максимальный размер в байтах.
+
+    Yields:
+        Чанки исходного потока.
+
+    Raises:
+        HTTPException: 413 — поток больше лимита.
+
+    """
+    total = 0
+    async for chunk in stream:
+        total += len(chunk)
+        if total > limit:
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=(f"Тело превышает лимит {limit} байт (уже прочитано {total})"),
+            )
+        yield chunk
 
 
 # --- CRUD для метаданных файлов (router) ---
@@ -78,9 +232,15 @@ async def upload_file_handler(
     multipart_field_name: str | None = None,
     x_api_key: str = Header(...),
 ) -> dict[str, Any]:
-    """Загружает файл через AV-сервис (scan + upload) и возвращает метаданные."""
+    """Загружает файл через AV-сервис (scan + upload) и возвращает метаданные.
+
+    ADR-0422: добавлены лимит размера (413 при превышении) и проверка
+    content-type по allowlist'у (415). Файл читается чанками по 1 MiB —
+    целиком в RAM больше не попадает.
+    """
     av_service = get_av_service()
-    content = await file.read()
+    _ensure_content_type_allowed(file.content_type)
+    content = await _read_limited(file, MAX_UPLOAD_BYTES)
 
     result = await av_service.scan_and_upload_file(
         file_bytes=content,
@@ -128,17 +288,39 @@ async def upload_stream_handler(
     и грузит чанками в S3 через ``put_object_multipart``. RAM-bound:
     1 chunk × 8MB ≈ 8MB peak вместо ``await file.read()``.
 
+    ADR-0422: добавлен лимит размера (1 GiB, ``MAX_STREAM_UPLOAD_BYTES``).
+    Превышение отсекается по ``Content-Length`` (без чтения тела) и по
+    факту потока (413).
+
+    ADR-0423: content-type проверяется по тому же allowlist'у, что и у
+    буферизованной загрузки (415), и тоже **до** чтения тела. Content-type
+    не передан — запрос принимается (прежний контракт).
+
     Заголовки:
 
     * ``content-type`` — MIME-type объекта;
     * ``x-filename`` — оригинальное имя файла (опционально);
     * ``x-api-key`` — auth.
     """
+    if content_type:
+        _ensure_content_type_allowed(content_type)
     s3_service = get_s3_service()
     s3_client: Any = getattr(s3_service, "_client", None) or s3_service
     key = (x_filename or "stream-upload").replace("/", "_")
+    content_length = request.headers.get("content-length")
+    if content_length and content_length.isdigit():
+        if int(content_length) > MAX_STREAM_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=(
+                    f"Тело превышает лимит {MAX_STREAM_UPLOAD_BYTES} байт "
+                    f"(content-length={content_length})"
+                ),
+            )
     etag = await s3_client.put_object_multipart(
-        key=key, stream=request.stream(), content_type=content_type
+        key=key,
+        stream=_limited_stream(request.stream(), MAX_STREAM_UPLOAD_BYTES),
+        content_type=content_type,
     )
     return {"uploaded": True, "key": key, "etag": etag, "content_type": content_type}
 
