@@ -105,13 +105,27 @@ def _load_lifespan_isolated() -> ModuleType:
         # ВАЖНО: всегда перезаписываем (override уже-loaded real module).
         # pytest может заранее загрузить real модули через autouse fixtures.
         _existing = sys.modules.get(full_name)
-        if _existing is None:
-            _stub = _types.ModuleType(full_name)
-            setattr(_stub, full_name.rsplit(".", 1)[-1], stub_obj)
-            sys.modules[full_name] = _stub
-        else:
+        if _existing is not None:
             # Force-overwrite attribute on existing module.
             setattr(_existing, full_name.rsplit(".", 1)[-1], stub_obj)
+            continue
+        # Модуля ещё нет: выставляем атрибут на РОДИТЕЛЕ, а не создаём фейковый
+        # модуль по полному dotted-пути. Фейк оставлял родительский пакет без
+        # атрибута → lazy __getattr__ родителя падал с AttributeError, и все
+        # setup'ы этого файла (23) шли в ERROR (ADR-0404/0410).
+        _parent_name, _, _attr = full_name.rpartition(".")
+        try:
+            import importlib as _importlib
+
+            _parent = _importlib.import_module(_parent_name)
+        except Exception:  # pragma: no cover - родитель не импортируется
+            _parent = None
+        if _parent is not None:
+            setattr(_parent, _attr, stub_obj)
+        else:
+            _stub = _types.ModuleType(full_name)
+            setattr(_stub, _attr, stub_obj)
+            sys.modules[full_name] = _stub
 
     # 4. Загружаем startup.py напрямую (минуя __init__.py).
     # startup.py содержит реальную ``register_outbox_dispatcher`` функцию
