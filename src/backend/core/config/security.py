@@ -48,8 +48,42 @@ class SecureSettings(BaseSettingsWithLoader):
         description="Секретный ключ для подписи токенов (минимум 32 символа)",
         examples=["supersecretkeywithatleast32characters123"],
     )
-    algorithm: Literal["HS256", "HS384", "HS512", "RS256"] = Field(
+    algorithm: Literal["HS256", "HS384", "HS512", "RS256", "ES256"] = Field(
         ..., description="Алгоритм подписи токенов", examples=["HS256", "RS256"]
+    )
+
+    # ADR-0411: асимметричный режим (RS256/ES256). Ключевая пара —
+    # ``python -m src.backend.core.security.jwt_keys generate --out <dir>``.
+    # Режим определяется алгоритмом: HS* — симметричный (secret_key),
+    # RS*/ES* — асимметричный (приватный ключ для подписи + публичный
+    # ключ или JWKS для проверки). Смешивать режимы нельзя (algorithm
+    # confusion), поэтому ключи задаются явно.
+    jwt_private_key_path: str = Field(
+        default="",
+        description=(
+            "Путь к PEM-файлу приватного ключа (PKCS#8) для подписи JWT в "
+            "асимметричном режиме (RS256/ES256). Обязателен, если сервис сам "
+            "выпускает токены (POST /auth/login). Пустая строка — не задан."
+        ),
+        examples=["/etc/gd/keys/jwt_private.pem"],
+    )
+    jwt_public_key_path: str = Field(
+        default="",
+        description=(
+            "Путь к PEM-файлу публичного ключа (SPKI) для проверки JWT в "
+            "асимметричном режиме. Используется, если JWKS-endpoint (IdP) "
+            "недоступен или не настроен. Пустая строка — не задан."
+        ),
+        examples=["/etc/gd/keys/jwt_public.pem"],
+    )
+    jwt_kid: str = Field(
+        default="",
+        description=(
+            "kid, проставляемый в заголовок выпускаемых JWT. При проверке по "
+            "локальному публичному ключу сверяется с kid токена (если токен "
+            "kid содержит); токен без kid принимается — single-key-развёртывание."
+        ),
+        examples=["a1b2c3d4e5f60718"],
     )
 
     # Wave [s2/k1-2-jwt-jwks]: JWKS-кеш для асимметричных алгоритмов (RS256/ES256).

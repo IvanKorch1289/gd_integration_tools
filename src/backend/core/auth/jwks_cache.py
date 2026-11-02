@@ -39,8 +39,9 @@ class HttpJwksFetcher:
     Используется по умолчанию; в тестах подменяется fake-fetcher'ом.
     """
 
-    def __init__(self, http: Any | None = None) -> None:
+    def __init__(self, http: Any | None = None, *, timeout: float = 5.0) -> None:
         self._http = http
+        self._timeout = timeout
 
     async def fetch(self, url: str) -> dict[str, Any]:
         """Метод fetch (см. signature)."""
@@ -49,7 +50,7 @@ class HttpJwksFetcher:
             from src.backend.core.net.outbound_http import OutboundHttpClient
 
             self._http = OutboundHttpClient()
-        response = await self._http.get(url, timeout=5.0)
+        response = await self._http.get(url, timeout=self._timeout)
         # Поддержка двух форм клиента: httpx.Response / dict-like.
         if hasattr(response, "json"):
             payload = response.json()
@@ -67,6 +68,8 @@ class JwksCache:
         url: URL JWKS endpoint'а (например, ``https://auth.example/.well-known/jwks.json``).
         ttl: Время жизни записи в секундах. По умолчанию 300 (5 минут).
         fetcher: HTTP-fetcher; если ``None`` — создаётся :class:`HttpJwksFetcher`.
+        timeout: Таймаут HTTP-запроса JWKS в секундах (ADR-0411: значение
+            берётся из ``security.jwks_fetch_timeout``).
 
     Attrs:
         url: URL JWKS endpoint'а.
@@ -74,11 +77,16 @@ class JwksCache:
     """
 
     def __init__(
-        self, url: str, *, ttl: int = 300, fetcher: _HttpFetcher | None = None
+        self,
+        url: str,
+        *,
+        ttl: int = 300,
+        fetcher: _HttpFetcher | None = None,
+        timeout: float = 5.0,
     ) -> None:
         self.url = url
         self._ttl = ttl
-        self._fetcher = fetcher or HttpJwksFetcher()
+        self._fetcher = fetcher or HttpJwksFetcher(timeout=timeout)
         self._lock = asyncio.Lock()
         self._cache: dict[str, Any] | None = None
         self._expires_at: float = 0.0

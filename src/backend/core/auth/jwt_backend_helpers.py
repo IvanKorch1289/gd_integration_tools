@@ -37,6 +37,71 @@ _ASYMMETRIC_ALGS = frozenset(
 )
 _SYMMETRIC_ALGS = frozenset({"HS256", "HS384", "HS512"})
 
+# ADR-0411: соответствие «семейство алгоритма → тип ключа».
+# Используется для явного отказа при несоответствии алгоритма и ключа
+# (algorithm confusion): HMAC-подпись публичным ключом и наоборот.
+_ALG_KEY_FAMILY: dict[str, str] = {
+    "RS256": "RSA",
+    "RS384": "RSA",
+    "RS512": "RSA",
+    "PS256": "RSA",
+    "PS384": "RSA",
+    "PS512": "RSA",
+    "ES256": "EC",
+    "ES384": "EC",
+    "ES512": "EC",
+    "HS256": "oct",
+    "HS384": "oct",
+    "HS512": "oct",
+}
+
+
+def _key_family(key: Any) -> str | None:
+    """Возвращает семейство ключа (``RSA`` / ``EC`` / ``oct``) или ``None``.
+
+    Args:
+        key: JWK-объект joserfc (``RSAKey`` / ``ECKey`` / ``OctKey``).
+
+    Returns:
+        Строка семейства или ``None``, если тип ключа не распознан.
+
+    """
+    from joserfc.jwk import ECKey, OctKey, RSAKey
+
+    if isinstance(key, OctKey):
+        return "oct"
+    if isinstance(key, RSAKey):
+        return "RSA"
+    if isinstance(key, ECKey):
+        return "EC"
+    return None
+
+
+def _assert_key_matches_alg(key: Any, alg: str) -> None:
+    """Проверяет, что тип ключа соответствует алгоритму подписи (ADR-0411).
+
+    Запрещает algorithm confusion: RSA/EC-ключ не принимается как HMAC-секрет
+    и наоборот. Для нераспознанного типа ключа проверка пропускается —
+    подпись всё равно проверяет joserfc.
+
+    Args:
+        key: JWK-объект joserfc.
+        alg: Алгоритм из JWT-заголовка.
+
+    Raises:
+        JwtVerificationError: Если тип ключа не соответствует алгоритму.
+
+    """
+    expected = _ALG_KEY_FAMILY.get(alg)
+    actual = _key_family(key)
+    if expected is None or actual is None:
+        return
+    if actual != expected:
+        raise JwtVerificationError(
+            f"Несоответствие алгоритма и ключа: {alg} требует ключ типа "
+            f"{expected}, получен {actual}"
+        )
+
 
 # ── Audience parameter normalization ───────────────────────────────────────
 
@@ -153,7 +218,9 @@ __all__ = (
     "JwtVerificationError",
     "_ASYMMETRIC_ALGS",
     "_SYMMETRIC_ALGS",
+    "_assert_key_matches_alg",
     "_audience_list",
+    "_key_family",
     "_parse_header_unsafe",
     "_validate_jwt_secret_strength",
     "JwtSecretStrengthReport",

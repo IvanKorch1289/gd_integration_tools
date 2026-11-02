@@ -24,6 +24,7 @@ from src.backend.core.auth.jwt_backend_helpers import (
     _ASYMMETRIC_ALGS,
     _SYMMETRIC_ALGS,
     JwtVerificationError,
+    _assert_key_matches_alg,
     _audience_list,
     _parse_header_unsafe,
     _validate_jwt_secret_strength,
@@ -51,6 +52,16 @@ class JwtClaims:
 class JwtBackend:
     """JWT-верификатор поверх ``joserfc``.
 
+    Режимы (ADR-0411) — **взаимоисключающие**:
+
+    * симметричный (``HS256``/``HS384``/``HS512``) — ``secret``;
+    * асимметричный (``RS*``/``ES*``/``PS*``) — ``public_key`` (локальный
+      PEM) либо ``jwks`` (JWKS-endpoint IdP).
+
+    Смешивать режимы в одном backend запрещено: иначе возможна подмена
+    алгоритма (algorithm confusion) — публичный ключ используется как
+    HMAC-секрет.
+
     Args:
         algorithms: Список допустимых алгоритмов (whitelist).
         secret: HS-секрет (для симметричных алгоритмов).
@@ -59,6 +70,10 @@ class JwtBackend:
         issuer: Ожидаемый ``iss`` (str / None).
         leeway: Допустимое отклонение времени в секундах для exp/nbf.
         blacklist: Опциональный blacklist (jti revocation).
+        public_key: Статический публичный ключ (PEM/JWK) для асимметричной
+            проверки — используется, когда JWKS-endpoint недоступен.
+        kid: Ожидаемый ``kid`` для статического публичного ключа. ``None`` —
+            ``kid`` не проверяется (single-key-развёртывание).
 
     """
 
@@ -70,6 +85,8 @@ class JwtBackend:
     issuer: str | None = None
     leeway: int = 60
     blacklist: Any | None = None
+    public_key: Any | None = None
+    kid: str | None = None
 
     def __post_init__(self) -> None:
         if not self.algorithms:
@@ -77,17 +94,27 @@ class JwtBackend:
         for alg in self.algorithms:
             if alg not in _SYMMETRIC_ALGS and alg not in _ASYMMETRIC_ALGS:
                 raise ValueError(f"JwtBackend: неподдерживаемый алгоритм {alg}")
-        if any(a in _ASYMMETRIC_ALGS for a in self.algorithms) and self.jwks is None:
+        symmetric = [a for a in self.algorithms if a in _SYMMETRIC_ALGS]
+        asymmetric = [a for a in self.algorithms if a in _ASYMMETRIC_ALGS]
+        if symmetric and asymmetric:
             raise ValueError(
-                "JwtBackend: для асимметричных алгоритмов требуется jwks-кеш"
+                "JwtBackend: нельзя смешивать симметричные (HS*) и асимметричные "
+                "(RS*/ES*/PS*) алгоритмы в одном backend — иначе возможна "
+                "подмена алгоритма (algorithm confusion): публичный ключ "
+                "используется как HMAC-секрет. Выберите один режим."
             )
-        if any(a in _SYMMETRIC_ALGS for a in self.algorithms) and not self.secret:
+        if symmetric and not self.secret:
             raise ValueError("JwtBackend: для симметричных алгоритмов требуется secret")
+        if asymmetric and self.jwks is None and self.public_key is None:
+            raise ValueError(
+                "JwtBackend: для асимметричных алгоритмов требуется jwks-кеш "
+                "или публичный ключ (public_key)"
+            )
         # S174 M9.3: weak-secret gate для HS256/384/512 (per S172 M8.3
         # pattern extension). 256-bit secret (32 bytes / 256-bit) минимум
         # для HS256 — RFC 7518. 32+ chars обеспечивают ≥ 256 бит entropy
         # при random-bytes secret. Reject trivially weak secrets.
-        if any(a in _SYMMETRIC_ALGS for a in self.algorithms) and self.secret:
+        if symmetric and self.secret:
             strength = _validate_jwt_secret_strength(self.secret)
             if not strength.is_acceptable:
                 raise ValueError(
@@ -99,10 +126,29 @@ class JwtBackend:
     async def _resolve_key(self, header: dict[str, Any]) -> Any:
         alg = header.get("alg")
         if alg in _SYMMETRIC_ALGS:
-            assert self.secret is not None  # nosec
+            if self.public_key is not None:
+                raise JwtVerificationError(
+                    f"Несоответствие алгоритма и ключа: симметричный {alg} "
+                    "не принимается при асимметричной конфигурации (public_key)"
+                )
+            if not self.secret:
+                raise JwtVerificationError(
+                    f"Симметричный алгоритм {alg} требует secret (не задан)"
+                )
             return OctKey.import_key(self.secret)
         if alg in _ASYMMETRIC_ALGS:
-            assert self.jwks is not None  # nosec
+            if self.public_key is not None:
+                kid = header.get("kid")
+                if self.kid is not None and kid is not None and kid != self.kid:
+                    raise JwtVerificationError(
+                        f"kid mismatch: ожидается {self.kid}, получен {kid}"
+                    )
+                _assert_key_matches_alg(self.public_key, alg)
+                return self.public_key
+            if self.jwks is None:
+                raise JwtVerificationError(
+                    "Для асимметричных алгоритмов нужен jwks-кеш или public_key"
+                )
             kid = header.get("kid")
             if not kid:
                 raise JwtVerificationError("Отсутствует kid в заголовке JWT")
@@ -111,10 +157,13 @@ class JwtBackend:
                 raise JwtVerificationError(f"Ключ {kid} не найден в JWKS")
             kty = jwk.get("kty")
             if kty == "RSA":
-                return RSAKey.import_key(jwk)
-            if kty == "EC":
-                return ECKey.import_key(jwk)
-            raise JwtVerificationError(f"Неподдерживаемый kty в JWKS: {kty}")
+                key: Any = RSAKey.import_key(jwk)
+            elif kty == "EC":
+                key = ECKey.import_key(jwk)
+            else:
+                raise JwtVerificationError(f"Неподдерживаемый kty в JWKS: {kty}")
+            _assert_key_matches_alg(key, alg)
+            return key
         raise JwtVerificationError(f"Алгоритм {alg} не в списке разрешённых")
 
     async def decode(self, token: str) -> JwtClaims:

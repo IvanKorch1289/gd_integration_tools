@@ -112,10 +112,15 @@ async def _get_user_service() -> Any:
 
 
 async def _get_jwt_backend() -> Any:
-    """Lazy import JWT encode (избегаем circular). S67 W2: canonical."""
-    from src.backend.core.auth.jwt_backend import encode
+    """Lazy import JWT encode (избегаем circular). S67 W2: canonical.
 
-    return encode
+    ADR-0411: возвращает выпуск токена, который сам разрешает алгоритм и
+    ключ из ``security`` (симметричный — ``secret_key``, асимметричный —
+    приватный ключ). «Тихого» downgrade HS256↔RS256 нет.
+    """
+    from src.backend.core.auth.jwt_signing import encode_token
+
+    return encode_token
 
 
 @router.post(
@@ -184,17 +189,10 @@ async def login(payload: LoginRequest) -> LoginResponse:
     # Никаких mock-fallback: encode-ошибка должна быть видна как 5xx, а не как
     # 200 OK с поддельным токеном, который сломает каждый downstream verify.
     #
-    # Prod-fix 2026-09-09 (M6-#3): secret передаётся из SecureSettings
-    # (тот же, что в JwtBackend DI-provider) — иначе HS256-encode падал
-    # «secret обязателен» → 500 на каждый успешный логин.
-    from src.backend.core.config.security import secure_settings
-
-    _secret = secure_settings.secret_key
-    secret_value = (
-        _secret.get_secret_value()
-        if hasattr(_secret, "get_secret_value")
-        else str(_secret)
-    )
+    # ADR-0411: алгоритм и ключ берёт сам encode_token из ``security``
+    # (``security.algorithm`` + ``secret_key`` либо приватный ключ для
+    # RS256/ES256) — раньше здесь всегда подписывалось HS256-секретом, что
+    # ломало выпуск в асимметричном режиме.
     result = jwt_encode(
         subject=user.username,
         claims={
@@ -206,7 +204,6 @@ async def login(payload: LoginRequest) -> LoginResponse:
             # свой же runbook.
             **({"admin_roles": ["super_admin"]} if is_superuser else {}),
         },
-        secret=secret_value,
     )
     if isinstance(result, tuple) and len(result) == 2:
         token, expires_in = result

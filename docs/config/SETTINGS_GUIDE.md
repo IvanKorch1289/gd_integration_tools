@@ -338,9 +338,10 @@ Webhook-relay (`services/integrations/webhook_relay.py`) в allowlist не
 |---|---|---|
 | **HS256 в prod** | Симметричный алгоритм (`HS*`) — только при гарантированном источнике JWT-секрета: `security.secret_key` (YAML) / env `SEC_SECRET_KEY` / Vault (`vault.enabled` + `addr` + `secret_path`) | `security.jwt_symmetric_algorithm_without_secret` |
 | **WAF allowlist** | В prod/staging при `waf.strict=true` allowlist обязан содержать хост каждой внешней интеграции (`skb.prod_url`, `dadata.base_url`) | `waf.allow_hosts_missing_integration_hosts` |
-| **WAF loopback** | Loopback-хост в allowlist — только при включённой локальной зависимости (sidecar `clamd`: `waf.clamav_enabled=true` + `waf.clamav_host` на loopback; otel: `app.opentelemetry_endpoint` на loopback) | `waf.allow_hosts_loopback_without_local_dependency` |
-| **AI-fallback** | В prod `ai_providers.fallback_chain` без провайдера с loopback-`base_url` (`open_webui` → `http://localhost:3000`) | `ai_providers.fallback_chain_localhost` |
+| **WAF loopback** | Loopback-хост в allowlist допустим только при включённой локальной зависимости. ADR-0412: в prod/staging sidecar'ы доступны по service-DNS (`clamd`, `otel-collector`), поэтому loopback-зависимости в проде нет и любая loopback-запись — CRITICAL | `waf.allow_hosts_loopback_without_local_dependency` |
+| **AI-fallback** | В prod `ai_providers.fallback_chain` без провайдера с loopback-`base_url` (ADR-0412: дефолтный endpoint `open_webui` — service-DNS `http://open-webui:3000`; сам провайдер вне цепочки, пока сервис не развёрнут) | `ai_providers.fallback_chain_localhost` |
 | **`replica_dsn`** | `null` = «реплика не развёрнута» — **допустимо**, CRITICAL-не считается. Непустое значение — только реальный (не loopback) хост реплики | `database.replica_dsn_invalid` |
+| **Sidecar-DNS** | ADR-0412: в prod/staging хост включённого sidecar'а (`waf.clamav_host`, `app.opentelemetry_endpoint`) — не loopback | `waf.clamav_host_loopback_in_prod`, `app.opentelemetry_endpoint_loopback_in_prod` |
 
 **Про JWT-секрет.** Env-имя канона — `SEC_SECRET_KEY` (env-префикс `SEC_`
 модели `SecureSettings`), а не `JWT_SECRET_KEY`. В prod источник по
@@ -364,6 +365,157 @@ read-роутинг выключен, весь трафик идёт на primar
 Гейт: `tests/unit/core/config/test_prod_values_contracts.py` — контракты
 проверяются по merged-конфигу и по результату валидатора (не по наличию
 строк в YAML); `manage.py validate-profile prod|staging` → 0 CRITICAL.
+
+### JWT: алгоритм, ключи и режим (ADR-0411)
+
+`security.algorithm` определяет **режим** подписи и проверки JWT. Режимы
+взаимоисключающие — смешивать нельзя (иначе публичный ключ можно
+использовать как HMAC-секрет, algorithm confusion).
+
+| Режим | Алгоритмы | Ключ подписи (выпуск) | Ключ проверки | Настройки |
+|---|---|---|---|---|
+| **Симметричный** | `HS256`/`HS384`/`HS512` | `security.secret_key` | то же | `SEC_ALGORITHM`, `SEC_SECRET_KEY` |
+| **Асимметричный** | `RS256`/`ES256` | `security.jwt_private_key_path` (PKCS#8 PEM) | `security.jwt_public_key_path` (SPKI PEM) **или** JWKS-endpoint | `SEC_ALGORITHM`, `SEC_JWT_PRIVATE_KEY_PATH`, `SEC_JWT_PUBLIC_KEY_PATH`, `SEC_JWKS_URL`, `SEC_JWT_KID` |
+
+Правила рантайма (`core/di/providers/auth.py` → `core/auth/jwt_backend_class.py`):
+
+* `HS*` — принимаются **только** HS-токены; JWKS и публичный ключ не
+  подключаются, даже если `security.jwks_url` задан (раньше он молча
+  добавлял `RS256` к allowlist — это и был путь к algorithm confusion);
+* `RS*`/`ES*` — принимаются **только** асимметричные токены; shared secret
+  не используется; HS-токен в RS-режиме отвергается с явной ошибкой
+  («алгоритм не разрешён»), а не downgrade'ом;
+* асимметричный режим без источника ключа (`jwks_url` **или**
+  `jwt_public_key_path`) → backend не собирается (fail-closed);
+* тип ключа сверяется с алгоритмом: RSA-ключ под `ES256` (и наоборот)
+  отвергается до проверки подписи.
+
+**Что должен задать владелец в prod (переход с HS256).** Два рабочих
+варианта:
+
+* **A. Внешний IdP (рекомендуется).** `security.algorithm=RS256`,
+  `security.jwks_url=https://idp/.well-known/jwks.json` — сервис проверяет
+  токены IdP по JWKS (кеш `security.jwks_cache_ttl`, таймаут
+  `security.jwks_fetch_timeout`, stale-fallback при недоступности IdP).
+  Собственные токены `POST /auth/login` подписываются приватным ключом
+  (`security.jwt_private_key_path`) — он обязателен, иначе выпуск падает.
+* **B. Собственный JWKS.** `security.algorithm=RS256`,
+  `security.jwt_private_key_path` + `security.jwt_public_key_path`,
+  `security.jwt_kid=<kid>`; JWKS публикуется наружу (файл `jwks.json` из
+  утилиты ниже) — внешние потребители проверяют токены по нему.
+
+**Что означает `security.algorithm` при смене.** Алгоритм — это **режим**, а
+не только подпись: смена `HS256 → RS256` переводит и выпуск, и проверку.
+Токены, выпущенные в старом режиме, в новом не проверяются (алгоритм не
+в allowlist) — это осознанный отказ, а не поломка. Планировать переход
+вместе с окном пересечения: держать старый режим, пока не истекут ранее
+выданные токены (TTL = `security.token_lifetime`).
+
+**Генерация ключевой пары** (без сети, идемпотентно по пути):
+
+```bash
+python -m src.backend.core.security.jwt_keys generate --out /etc/gd/keys
+```
+
+Файлы: `jwt_private.pem` (PKCS#8, права `0600`), `jwt_public.pem` (SPKI,
+`0644`), `jwks.json` (JWKS-документ для публикации). Повторный запуск с
+тем же `--out` **не перетирает** ключ (иначе все ранее выпущенные токены
+перестают проверяться) — перевыпуск только с `--force`. `kid` —
+детерминированный отпечаток публичного ключа (`sha256` от DER SPKI,
+16 hex-символов), его можно задать явно через `--kid` или
+`security.jwt_kid`.
+
+**Ротация ключей и отзыв старого `kid`.**
+
+1. Выпустить новую пару: `generate --out /etc/gd/keys/<new>` (старый каталог
+   не трогаем).
+2. Развернуть новую пару + обновить `security.jwt_private_key_path` /
+   `security.jwt_public_key_path` (или `security.jwks_url`) — **новый
+   `kid`** подставляется в заголовок выпускаемых токенов.
+3. Опубликовать JWKS с **обоими** ключами (старый + новый) на время
+   пересечения: иначе токены, выпущенные до ротации, перестанут
+   проверяться.
+4. Дождаться истечения TTL старых токенов (`security.token_lifetime`) плюс
+   максимальный допуск часовых поясов.
+5. Удалить старый ключ из JWKS (отзыв `kid`) — после этого токен со старым
+   `kid` отвергается: «Ключ `<kid>` не найден в JWKS».
+
+Гейт: `tests/unit/core/auth/test_jwt_asymmetric_mode.py`,
+`tests/unit/core/auth/test_jwt_provider_modes.py`,
+`tests/unit/core/security/test_jwt_keys.py`,
+`tests/unit/entrypoints/api/v1/test_auth_login_rs256.py`.
+
+### Sidecar-DNS и endpoint-контракты (ADR-0412)
+
+В k8s `127.0.0.1` — это **сам pod**, а не соседний контейнер: sidecar
+(ClamAV, OTel-collector), вынесенный в отдельный Deployment, по loopback
+недоступен. Конфигурация с loopback-хостом при этом не падает — она молча
+указывает на несуществующий сервис (AV-сканирование пропускается при
+`fail_open=true`, телеметрия не уходит). Поэтому в prod/staging sidecar'ы и
+внутренние endpoint'ы адресуются **по service-DNS** — именам их k8s-Service
+(`deploy/k8s/service.yaml`).
+
+| Endpoint | YAML-ключ | env-переопределение | service-DNS (ADR-0412) |
+|---|---|---|---|
+| ClamAV | `waf.clamav_host` | `WAF_CLAMAV_HOST` | `clamd` (порт 3310) |
+| OpenTelemetry | `app.opentelemetry_endpoint` | `APP_OPENTELEMETRY_ENDPOINT` | `otel-collector` (4317/4318) |
+| OpenWebUI | `open_webui.base_url` | `OPEN_WEBUI_BASE_URL` | `open-webui` (порт 3000) |
+
+Значения по умолчанию заданы в `config_profiles/base.yml` и явно
+продублированы в `prod.yml`/`staging.yml`; те же значения — в
+`deploy/k8s/configmap.yaml`.
+
+**Контракт валидатора.** В prod/staging (и только при включённой
+зависимости) хост sidecar'а не должен быть loopback — иначе CRITICAL:
+
+| Код нарушения (CRITICAL) | Когда |
+|---|---|
+| `waf.clamav_host_loopback_in_prod` | `waf.clamav_enabled=true` и `waf.clamav_host` — loopback-хост |
+| `app.opentelemetry_endpoint_loopback_in_prod` | `app.opentelemetry_endpoint` задан и указывает на loopback |
+
+Выключенный clamd (`waf.clamav_enabled=false`) и пустой OTel-эндпоинт
+(телеметрия выключена) проверку не проходят: это не endpoint'ы.
+
+**Локальный dev без sidecar'ов.** `config_profiles/base.yml` — общий дефолт
+для всех профилей, поэтому локальный запуск без Kubernetes требует явного
+переопределения: `waf.clamav_enabled: false` (или `WAF_CLAMAV_HOST=127.0.0.1`)
+и `app.opentelemetry_endpoint: ""`.
+
+**OpenWebUI: процедура включения.** Провайдер намеренно **не** входит в
+`ai_providers.fallback_chain` prod/staging-профиля, пока сервис не
+развёрнут: откат на несуществующий endpoint выглядит как «LLM отвечает»
+(ADR-0407, CRITICAL `ai_providers.fallback_chain_localhost`). Чтобы
+включить:
+
+1. Развернуть OpenWebUI (Deployment) + Service `open-webui`
+   (`deploy/k8s/service.yaml` — Service уже объявлен, нужен сам Deployment).
+2. Проверить, что endpoint отвечает: `curl http://open-webui:3000/api/v1/config`
+   из pod'а приложения.
+3. Вернуть провайдера в цепочку: в `config_profiles/prod.yml` (и `staging.yml`)
+   добавить `"open_webui"` в `ai_providers.fallback_chain`.
+4. `python manage.py validate-profile prod` → 0 CRITICAL; гейт
+   `tests/unit/core/config/test_adr0412_sidecar_dns.py` → зелёный.
+
+**DSN read-реплики.** Значение остаётся `null` — это инфраструктурный факт
+(«реплика не развёрнута»), а не незаполненное поле; валидатор трактует
+`null` как допустимое значение (ADR-0407). Шаблон DSN задокументирован
+в комментариях `config_profiles/{base,prod,staging}.yml` и в
+`deploy/k8s/configmap.yaml` (закомментированным — DSN содержит пароль и
+хранится в Secret/Vault):
+
+```
+postgresql+asyncpg://<user>:<pass>@<replica-host>:5432/<db>
+```
+
+YAML-профили не поддерживают `${VAR:-default}` (ADR-0377): значение
+задаётся литералом в overlay'е профиля или через env `DB_REPLICA_DSN`.
+Непустое значение — только реальный (не loopback) хост реплики, иначе
+CRITICAL `database.replica_dsn_invalid`.
+
+Гейт: `tests/unit/core/config/test_adr0412_sidecar_dns.py` (валидатор +
+ключи «модель ↔ YAML») и
+`tests/unit/core/config/test_adr0412_deploy_manifests.py` (Service для
+sidecar'ов и значения в ConfigMap).
 
 ### Секция `constants` (ADR-0377)
 

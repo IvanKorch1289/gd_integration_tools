@@ -41,6 +41,7 @@ from src.backend.core.auth.jwt_backend_helpers import (
     _SYMMETRIC_ALGS,
     JwtSecretStrengthReport,  # re-exported (S56 M2-#4: moved из jwt_backend)
     JwtVerificationError,  # re-exported (S56 M2-#4: moved из jwt_backend)
+    _assert_key_matches_alg,
     _parse_header_unsafe,
     _validate_jwt_secret_strength,
 )
@@ -150,7 +151,17 @@ def decode(
         header_raw = _parse_header_unsafe(token)
         alg = header_raw.get("alg")
 
+        if alg not in algorithms:
+            raise JwtVerificationError(
+                f"decode: алгоритм {alg} не разрешён (allow={list(algorithms)})"
+            )
+
         if alg in _SYMMETRIC_ALGS:
+            if public_key is not None:
+                raise JwtVerificationError(
+                    "decode: несоответствие алгоритма и ключа — симметричный "
+                    f"{alg} не принимается при асимметричной конфигурации"
+                )
             if not secret:
                 raise JwtVerificationError(
                     "decode: secret обязателен для симметричных алгоритмов"
@@ -165,6 +176,7 @@ def decode(
         else:
             raise JwtVerificationError(f"decode: неподдерживаемый алгоритм {alg}")
 
+        _assert_key_matches_alg(key, alg)
         decoded = joserfc_jwt.decode(token, key=key, algorithms=algorithms)
         return dict(decoded.claims)
     except JwtVerificationError:
