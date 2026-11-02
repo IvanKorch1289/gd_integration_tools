@@ -462,6 +462,7 @@ def test_run_snapshot_now_without_tenant_scope_fails_closed(
     """
     mock_settings.snapshot = MagicMock(
         enabled=True,
+        mode="single-tenant",
         tables=["users"],
         target_path="var/db/test.sqlite",
         fresh_threshold_seconds=300,
@@ -499,6 +500,7 @@ def test_run_snapshot_now_passes_tenant_scope(
     """Явный tenant-скоуп пробрасывается в ``sync_pg_to_sqlite``."""
     mock_settings.snapshot = MagicMock(
         enabled=True,
+        mode="single-tenant",
         tables=["users"],
         target_path="var/db/test.sqlite",
         fresh_threshold_seconds=300,
@@ -530,6 +532,7 @@ def test_run_snapshot_now_success(
     """Успешный полный цикл: engines → sync → state → metrics."""
     mock_settings.snapshot = MagicMock(
         enabled=True,
+        mode="single-tenant",
         tables=["users"],
         target_path="var/db/test.sqlite",
         fresh_threshold_seconds=300,
@@ -593,6 +596,7 @@ def test_run_snapshot_now_error_increments_counter(
 
     mock_settings.snapshot = MagicMock(
         enabled=True,
+        mode="single-tenant",
         tables=["users"],
         target_path="var/db/test.sqlite",
         fresh_threshold_seconds=300,
@@ -684,7 +688,10 @@ def test_register_snapshot_job_disabled(
 def test_register_snapshot_job_enabled(mock_settings: MagicMock) -> None:
     """enabled=True → add_job с корректными параметрами."""
     mock_settings.snapshot = MagicMock(
-        enabled=True, interval_minutes=5, tables=["users", "orders"]
+        enabled=True,
+        mode="single-tenant",
+        interval_minutes=5,
+        tables=["users", "orders"],
     )
     mock_settings.scheduler.default_jobstore_name = "default"
     scheduler = MagicMock()

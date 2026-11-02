@@ -39,9 +39,29 @@ Tenant-скоуп (ADR-0400, ADR-0409)
 * SQLite-файл при отказе не трогается — предыдущий (непустой) снимок
   остаётся валидным.
 
-Межtenant-снимок (все tenant'ы) требует служебной роли с ``BYPASSRLS``
-(ADR-0393, «BYPASSRLS-роль для служебных соединений») — эксплуатационное
-решение владельца БД, не реализовано в ядре.
+Режимы межtenant-снапшота (ADR-0413)
+-----------------------------------
+ADR-0409 зафиксировал контракт «снапшот в пределах одного ``tenant_id``;
+без скоупа — fail-closed»: реестра tenant'ов нет, а ``SELECT DISTINCT
+tenant_id`` под RLS видит только текущего tenant'а. ADR-0413 добавляет
+явно настраиваемый режим (``snapshot.mode``):
+
+* ``single-tenant`` (по умолчанию) — текущее поведение: скоуп из явного
+  аргумента → tenant-контекста процесса; без скоупа — fail-closed;
+* ``per-tenant`` — **безопасная** альтернатива ``BYPASSRLS``: явный
+  список ``snapshot.tenants`` перебирается, для каждого tenant'а
+  выставляется свой ``app.tenant_id``; пустой список — fail-closed;
+* ``service-role`` — служебный DSN ``snapshot.service_dsn`` пользователя
+  с ``BYPASSRLS`` (ADR-0393): чтение всех tenant'ов одним соединением;
+  DSN не задан — fail-closed; наличие ``BYPASSRLS`` у роли проверяется
+  **до** выборки (:func:`_assert_bypassrls`), иначе снимок был бы тихо
+  пустым.
+
+Во всех режимах «тихих 0 строк» нет: пустой результат в режимах
+``per-tenant`` / ``service-role`` — ошибка (снимок не пишется, предыдущий
+валидный снимок сохраняется), в ``single-tenant`` — WARNING (ADR-0409).
+
+Процедура выдачи служебной роли и риски — ``docs/ops/snapshot-bypassrls-role.md``.
 
 Метрики Prometheus:
 
@@ -69,12 +89,15 @@ from src.backend.core.logging import get_logger
 
 __all__ = (
     "SnapshotJob",
+    "SnapshotModeError",
     "SnapshotTenantScopeError",
     "get_snapshot_job",
     "is_snapshot_fresh",
     "register_snapshot_job",
     "run_snapshot_now",
+    "sync_multi_tenant_pg_to_sqlite",
     "sync_pg_to_sqlite",
+    "sync_service_role_pg_to_sqlite",
 )
 
 logger = get_logger(__name__)
@@ -86,6 +109,20 @@ class SnapshotTenantScopeError(RuntimeError):
     Снапшот покрывает ровно один tenant: под PostgreSQL-RLS выборка без
     ``app.tenant_id`` возвращает 0 строк (тихий пустой fallback). Поэтому
     отсутствие tenant-скоупа — ошибка, а не «снимок в системном tenant'е».
+    """
+
+
+class SnapshotModeError(RuntimeError):
+    """Режим межtenant-снапшота сконфигурирован некорректно (ADR-0413).
+
+    Поднимается, когда заявленный режим нельзя выполнить без явного
+    решения оператора: пустой список tenant'ов (``per-tenant``),
+    отсутствие service-DSN (``service-role``), неизвестное значение
+    режима, отсутствие ``BYPASSRLS`` у служебной роли.
+
+    Fail-closed: снимок при этом НЕ пишется — предыдущий (непустой)
+    снимок остаётся валидным, fallback ``db_main`` не получает пустых
+    данных.
     """
 
 
@@ -102,6 +139,34 @@ _last_sync_rows: dict[str, int] = {}
 #: конца транзакции соединения и не «залипает» в пуле. Канон тот же, что
 #: в ``core/tenancy/sqlalchemy_filter.py``.
 _TENANT_SCOPE_SQL = "SELECT set_config('app.tenant_id', :tenant_id, true)"
+
+#: SQL проверки наличия ``BYPASSRLS`` у роли соединения (ADR-0413).
+#:
+#: Проверяется сама роль соединения (``rolname = current_user``) и все
+#: роли, в которые она входит (``.oid`` через ``pg_has_role``) —
+#: атрибут ``BYPASSRLS`` наследуется участниками роли. Без этой проверки
+#: служебный DSN без ``BYPASSRLS`` вернул бы 0 строк без ошибки (тихий
+#: пустой снимок).
+_BYPASSRLS_CHECK_SQL = (
+    "SELECT COALESCE(bool_or(r.rolbypassrls), false) "
+    "FROM pg_roles r "
+    "WHERE r.rolname = current_user "
+    "OR pg_has_role(current_user, r.oid, 'MEMBER')"
+)
+
+#: Служебный режим чтения (без tenant-скоупа) — только для роли с BYPASSRLS.
+_SCOPE_SERVICE_ROLE = "service-role"
+
+#: Обычный режим чтения: tenant-скоуп выставляется на соединение.
+_SCOPE_TENANT = "tenant"
+
+#: Режимы межtenant-снапшота (ADR-0413). Значения совпадают с
+#: ``core.config.services.snapshot`` (единство источников истины
+#: проверяется тестом ``tests/unit/infrastructure/resilience/
+#: test_snapshot_job_modes.py``).
+_MODE_SINGLE_TENANT = "single-tenant"
+_MODE_PER_TENANT = "per-tenant"
+_MODE_SERVICE_ROLE = "service-role"
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -258,20 +323,142 @@ def _apply_tenant_scope(pg_conn: Connection, tenant_id: str) -> None:
     pg_conn.execute(text(_TENANT_SCOPE_SQL), {"tenant_id": tenant_id})
 
 
-def _replicate_table(pg_conn: Connection, sqlite_conn: Connection, table: Table) -> int:
-    """Реплицирует одну таблицу: ``DELETE FROM tbl; INSERT ...``.
+def _resolve_snapshot_mode() -> str:
+    """Определить режим межtenant-снапшота из конфигурации (ADR-0413).
 
-    Возвращает кол-во вставленных строк. Использует batch-вставку через
-    SQLAlchemy Core для скорости и минимального memory-footprint.
+    Args:
+        None.
+
+    Returns:
+        Один из режимов: ``single-tenant`` / ``per-tenant`` / ``service-role``.
+
+    Raises:
+        SnapshotModeError: В конфигурации указано неизвестное значение режима.
+
+    """
+    from src.backend.core.config.settings import settings
+
+    modes = (_MODE_SINGLE_TENANT, _MODE_PER_TENANT, _MODE_SERVICE_ROLE)
+    mode = str(settings.snapshot.mode or _MODE_SINGLE_TENANT)
+    if mode not in modes:
+        raise SnapshotModeError(
+            f"Snapshot: неизвестный режим {mode!r} (snapshot.mode). "
+            f"Допустимо: {', '.join(modes)}."
+        )
+    return mode
+
+
+def _resolve_configured_tenants() -> list[str]:
+    """Явный список tenant'ов для режима ``per-tenant`` (ADR-0413).
+
+    Args:
+        None.
+
+    Returns:
+        Список непустых tenant_id из ``snapshot.tenants``.
+
+    Raises:
+        SnapshotModeError: Список пуст — fail-closed (снимок не пишется).
+
+    """
+    from src.backend.core.config.settings import settings
+
+    raw = settings.snapshot.tenants or []
+    tenants = [str(item).strip() for item in raw if str(item).strip()]
+    if not tenants:
+        raise SnapshotModeError(
+            "Snapshot: режим 'per-tenant' требует явного списка tenant'ов "
+            "(snapshot.tenants / SNAPSHOT_TENANTS). Список пуст — снимок не "
+            "пишется, иначе получился бы тихий 0-строчный снимок."
+        )
+    return tenants
+
+
+def _resolve_service_dsn() -> str:
+    """DSN служебной роли с ``BYPASSRLS`` для режима ``service-role``.
+
+    Args:
+        None.
+
+    Returns:
+        Строка DSN (sync-драйвер psycopg).
+
+    Raises:
+        SnapshotModeError: DSN не задан — fail-closed (снимок не пишется).
+
+    """
+    from src.backend.core.config.settings import settings
+
+    secret = settings.snapshot.service_dsn
+    dsn = secret.get_secret_value().strip() if secret is not None else ""
+    if not dsn:
+        raise SnapshotModeError(
+            "Snapshot: режим 'service-role' требует явного DSN служебной "
+            "роли с BYPASSRLS (snapshot.service_dsn / SNAPSHOT_SERVICE_DSN). "
+            "Процедура выдачи роли — docs/ops/snapshot-bypassrls-role.md."
+        )
+    return dsn
+
+
+def _assert_bypassrls(pg_conn: Connection) -> None:
+    """Проверить, что роль соединения реально обходит RLS (ADR-0413).
+
+    Без ``BYPASSRLS`` служебный DSN вернул бы 0 строк без ошибки — тихий
+    пустой снимок. Проверка выполняется ДО выборки.
+
+    Args:
+        pg_conn: PG-соединение служебной роли.
+
+    Returns:
+        None.
+
+    Raises:
+        SnapshotModeError: У роли нет ``BYPASSRLS``.
+
+    """
+    bypass = pg_conn.execute(text(_BYPASSRLS_CHECK_SQL)).scalar()
+    if not bypass:
+        raise SnapshotModeError(
+            "Snapshot: у пользователя служебного DSN нет BYPASSRLS — выборка "
+            "вернула бы 0 строк (тихий пустой снимок). Выдайте роль по "
+            "docs/ops/snapshot-bypassrls-role.md."
+        )
+
+
+def _read_table_rows(pg_conn: Connection, table: Table) -> list[dict[str, Any]]:
+    """Прочитать все строки таблицы из PG.
+
+    Args:
+        pg_conn: PG-соединение (tenant-скоуп уже выставлен, если нужен).
+        table: Таблица-источник.
+
+    Returns:
+        Список строк как dict'ы.
+
     """
     # Читаем все строки из PG — для read-only critical таблиц это
     # компактные lookup'ы (orderkinds / users / orders), не миллионы строк.
-    rows = pg_conn.execute(select(table)).mappings().all()
+    return [dict(row) for row in pg_conn.execute(select(table)).mappings().all()]
 
+
+def _write_table_rows(
+    sqlite_conn: Connection, table: Table, rows: list[dict[str, Any]]
+) -> int:
+    """Записать строки таблицы в SQLite-снимок: ``DELETE FROM tbl; INSERT ...``.
+
+    Args:
+        sqlite_conn: Соединение SQLite (транзакция открыта).
+        table: Таблица-приёмник.
+        rows: Строки для вставки.
+
+    Returns:
+        Кол-во вставленных строк.
+
+    """
     # Транзакционная замена.
     sqlite_conn.execute(delete(table))
     if rows:
-        sqlite_conn.execute(insert(table), [dict(row) for row in rows])
+        sqlite_conn.execute(insert(table), rows)
     return len(rows)
 
 
@@ -282,7 +469,11 @@ def sync_pg_to_sqlite(
     *,
     tenant_id: str | None = None,
 ) -> dict[str, int]:
-    """Реплицирует список таблиц из PG в SQLite-snapshot.
+    """Реплицирует список таблиц из PG в SQLite-snapshot (один tenant).
+
+    Режим ``single-tenant`` (ADR-0409/ADR-0413): tenant-скоуп обязателен.
+    Межtenant-режимы — ``sync_multi_tenant_pg_to_sqlite`` (per-tenant) и
+    ``sync_service_role_pg_to_sqlite`` (служебная роль с BYPASSRLS).
 
     Args:
         pg_engine: SYNC SQLAlchemy engine, указывающий на PostgreSQL.
@@ -303,16 +494,132 @@ def sync_pg_to_sqlite(
         инкрементировать ``snapshot_sync_errors_total``.
 
     """
-    # Поднять ORM-модули плагинов для регистрации таблиц в metadata.tables.
-    # Без этого ``metadata.create_all`` создаст пустую структуру.
-    #
-    # Cycle-15 (D-AUDIT-1502): вместо неявных side-effect импортов через
-    # ``core/domain/models/__init__.py`` (которые и создавали слой
-    # core→extensions в гейте) теперь идём через
-    # :func:`load_plugin_manifests_for_migrations`, читая ``models_module``
-    # из каждого ``extensions/<name>/plugin.toml``. Этот же путь использует
-    # ``src/backend/infrastructure/database/migrations/env.py`` для
-    # alembic autogenerate.
+    target_tables = _resolve_target_tables(tables)
+    if not target_tables:
+        logger.warning("Snapshot: список таблиц пуст — нечего реплицировать")
+        return {}
+
+    # ADR-0409: tenant-скоуп обязателен и определяется ДО записи в SQLite —
+    # при отсутствии скоупа файл snapshot'а остаётся нетронутым (fail-closed).
+    resolved_tenant = _resolve_snapshot_tenant(tenant_id)
+
+    return _sync_snapshot(
+        pg_engine,
+        sqlite_engine,
+        target_tables,
+        scopes=[(_SCOPE_TENANT, resolved_tenant)],
+        strict=False,
+    )
+
+
+def sync_multi_tenant_pg_to_sqlite(
+    pg_engine: Engine,
+    sqlite_engine: Engine,
+    tables: list[str],
+    *,
+    tenant_ids: list[str],
+) -> dict[str, int]:
+    """Реплицировать снимок по ЯВНОМУ списку tenant'ов (ADR-0413, per-tenant).
+
+    Безопасная альтернатива роли с ``BYPASSRLS``: для каждого tenant'а
+    выставляется собственный ``app.tenant_id``, поэтому RLS остаётся
+    включённым — служебная роль не нужна.
+
+    Args:
+        pg_engine: SYNC SQLAlchemy engine, указывающий на PostgreSQL.
+        sqlite_engine: SYNC SQLAlchemy engine, указывающий на SQLite-файл.
+        tables: упорядоченный список имён таблиц (FK-таблицы первыми).
+        tenant_ids: Явный список tenant'ов. Пустой — fail-closed.
+
+    Returns:
+        Словарь ``{table_name: rows_replicated}`` (сумма по всем tenant'ам).
+
+    Raises:
+        SnapshotModeError: Список tenant'ов пуст или снимок пуст — снимок
+            не пишется (предыдущий валидный снимок сохраняется).
+
+    """
+    tenants = [str(item).strip() for item in tenant_ids if str(item).strip()]
+    if not tenants:
+        raise SnapshotModeError(
+            "Snapshot: режим 'per-tenant' требует явного списка tenant'ов. "
+            "Список пуст — снимок не пишется (иначе получился бы тихий "
+            "0-строчный снимок)."
+        )
+
+    target_tables = _resolve_target_tables(tables)
+    if not target_tables:
+        logger.warning("Snapshot: список таблиц пуст — нечего реплицировать")
+        return {}
+
+    return _sync_snapshot(
+        pg_engine,
+        sqlite_engine,
+        target_tables,
+        scopes=[(_SCOPE_TENANT, tenant) for tenant in tenants],
+        strict=True,
+    )
+
+
+def sync_service_role_pg_to_sqlite(
+    pg_engine: Engine, sqlite_engine: Engine, tables: list[str]
+) -> dict[str, int]:
+    """Реплицировать снимок служебной ролью с ``BYPASSRLS`` (ADR-0413).
+
+    Соединение должно быть открыто DSN'ом служебной роли
+    (``snapshot.service_dsn``): наличие ``BYPASSRLS`` проверяется до
+    выборки, иначе снимок был бы тихо пустым.
+
+    Args:
+        pg_engine: SYNC SQLAlchemy engine служебной роли.
+        sqlite_engine: SYNC SQLAlchemy engine, указывающий на SQLite-файл.
+        tables: упорядоченный список имён таблиц (FK-таблицы первыми).
+
+    Returns:
+        Словарь ``{table_name: rows_replicated}``.
+
+    Raises:
+        SnapshotModeError: У роли нет ``BYPASSRLS`` или снимок пуст —
+            снимок не пишется.
+
+    """
+    target_tables = _resolve_target_tables(tables)
+    if not target_tables:
+        logger.warning("Snapshot: список таблиц пуст — нечего реплицировать")
+        return {}
+
+    return _sync_snapshot(
+        pg_engine,
+        sqlite_engine,
+        target_tables,
+        scopes=[(_SCOPE_SERVICE_ROLE, None)],
+        strict=True,
+    )
+
+
+def _resolve_target_tables(tables: list[str]) -> list[Table]:
+    """Поднять ORM-модули плагинов и вернуть целевые таблицы.
+
+    Поднятие ORM-модулей плагинов обязательно для регистрации таблиц в
+    ``metadata.tables`` — иначе ``metadata.create_all`` создаст пустую
+    структуру.
+
+    Cycle-15 (D-AUDIT-1502): вместо неявных side-effect импортов через
+    ``core/domain/models/__init__.py`` (которые и создавали слой
+    core→extensions в гейте) идём через
+    :func:`load_plugin_manifests_for_migrations`, читая ``models_module``
+    из каждого ``extensions/<name>/plugin.toml``. Этот же путь использует
+    ``src/backend/infrastructure/database/migrations/env.py`` для
+    alembic autogenerate.
+
+    Args:
+        tables: Упорядоченный список имён таблиц.
+
+    Returns:
+        Список существующих ``Table``-объектов (неизвестные имена
+        пропускаются с warning).
+
+    """
     from src.backend.core.domain.models.base import metadata
     from src.backend.services.plugins.loader import load_plugin_manifests_for_migrations
 
@@ -328,40 +635,97 @@ def sync_pg_to_sqlite(
     except ImportError:
         logger.debug("snapshot: models_discovery недоступен — пропуск регистрации")
 
-    target_tables = _select_tables(metadata.tables, tables)
-    if not target_tables:
-        logger.warning("Snapshot: список таблиц пуст — нечего реплицировать")
-        return {}
+    return _select_tables(metadata.tables, tables)
 
-    # ADR-0409: tenant-скоуп обязателен и определяется ДО записи в SQLite —
-    # при отсутствии скоупа файл snapshot'а остаётся нетронутым (fail-closed).
-    resolved_tenant = _resolve_snapshot_tenant(tenant_id)
 
+def _sync_snapshot(
+    pg_engine: Engine,
+    sqlite_engine: Engine,
+    target_tables: list[Table],
+    *,
+    scopes: list[tuple[str, str | None]],
+    strict: bool,
+) -> dict[str, int]:
+    """Реплицировать таблицы из PG в SQLite по списку областей чтения.
+
+    Args:
+        pg_engine: SYNC SQLAlchemy engine, указывающий на PostgreSQL.
+        sqlite_engine: SYNC SQLAlchemy engine, указывающий на SQLite-файл.
+        target_tables: Целевые таблицы (уже разрешённые в metadata).
+        scopes: Области чтения: ``("tenant", tenant_id)`` — чтение с
+            per-tenant ``SET app.tenant_id``; ``("service-role", None)`` —
+            чтение служебной ролью с ``BYPASSRLS`` (проверяется до выборки).
+        strict: ``True`` — строгий межtenant-режим: пустой снимок — ошибка
+            (файл снимка не пишется), пустые таблицы логируются WARNING'ом.
+            ``False`` — режим single-tenant: пустой снимок — WARNING
+            (ADR-0409).
+
+    Returns:
+        Словарь ``{table_name: rows_replicated}``.
+
+    Raises:
+        SnapshotModeError: Пустой снимок в строгом режиме либо у служебной
+            роли нет ``BYPASSRLS``.
+
+    """
     # DDL: создаём только нужные таблицы в SQLite (idempotent).
+    from src.backend.core.domain.models.base import metadata
+
     metadata.create_all(sqlite_engine, tables=target_tables, checkfirst=True)
 
-    rows_per_table: dict[str, int] = {}
+    collected: dict[str, list[dict[str, Any]]] = {
+        table.name: [] for table in target_tables
+    }
 
     with pg_engine.connect() as pg_conn, sqlite_engine.begin() as sqlite_conn:
-        # ADR-0400: tenant-скоуп ДО выборки — иначе RLS вернёт 0 строк
-        # (тихая потеря снапшота).
-        _apply_tenant_scope(pg_conn, resolved_tenant)
-        for table in target_tables:
-            count = _replicate_table(pg_conn, sqlite_conn, table)
-            rows_per_table[table.name] = count
-            logger.info(
-                "Snapshot: '%s' реплицирована (%d строк, tenant=%s)",
-                table.name,
-                count,
-                resolved_tenant,
+        for scope_kind, scope_value in scopes:
+            if scope_kind == _SCOPE_SERVICE_ROLE:
+                # ADR-0413: без BYPASSRLS выборка вернула бы 0 строк.
+                _assert_bypassrls(pg_conn)
+                scope_label = _SCOPE_SERVICE_ROLE
+            else:
+                # ADR-0400: tenant-скоуп ДО выборки — иначе RLS вернёт
+                # 0 строк (тихая потеря снапшота).
+                _apply_tenant_scope(pg_conn, scope_value or "")
+                scope_label = scope_value or ""
+
+            for table in target_tables:
+                rows = _read_table_rows(pg_conn, table)
+                collected[table.name].extend(rows)
+                logger.info(
+                    "Snapshot: '%s' прочитана (%d строк, scope=%s)",
+                    table.name,
+                    len(rows),
+                    scope_label,
+                )
+                if strict and not rows:
+                    logger.warning(
+                        "Snapshot: '%s' — 0 строк (scope=%s): проверьте "
+                        "tenant-скоуп и наличие данных в PG",
+                        table.name,
+                        scope_label,
+                    )
+
+        total_rows = sum(len(rows) for rows in collected.values())
+        if strict and total_rows == 0:
+            # Fail-closed ДО записи: файл снимка не затирается пустым.
+            raise SnapshotModeError(
+                "Snapshot: снимок пуст (0 строк по всем таблицам) — запись "
+                "пропущена, предыдущий снимок сохранён. Проверьте список "
+                "tenant'ов / наличие BYPASSRLS у служебной роли."
             )
+
+        rows_per_table: dict[str, int] = {}
+        for table in target_tables:
+            count = _write_table_rows(sqlite_conn, table, collected[table.name])
+            rows_per_table[table.name] = count
+            logger.info("Snapshot: '%s' реплицирована (%d строк)", table.name, count)
 
     if not any(rows_per_table.values()):
         logger.warning(
-            "Snapshot: снимок пуст (0 строк по всем таблицам, tenant=%s) — "
-            "fallback db_main отдаст пустые данные; проверьте tenant-скоуп "
-            "и наличие данных в PG",
-            resolved_tenant,
+            "Snapshot: снимок пуст (0 строк по всем таблицам) — fallback "
+            "db_main отдаст пустые данные; проверьте tenant-скоуп и "
+            "наличие данных в PG"
         )
 
     return rows_per_table
@@ -374,16 +738,24 @@ def run_snapshot_now(tenant_id: str | None = None) -> dict[str, int]:
     публикует метрики. Безопасен к повторным вызовам (idempotent —
     DELETE+INSERT в одной транзакции).
 
+    Режим межtenant-снапшота определяется конфигурацией ``snapshot.mode``
+    (ADR-0413): ``single-tenant`` (по умолчанию) / ``per-tenant`` /
+    ``service-role``. Аргумент ``tenant_id`` имеет смысл только в
+    режиме ``single-tenant``.
+
     Args:
-        tenant_id: Явный tenant-скоуп снимка. Если не задан — берётся из
-            tenant-контекста процесса; если скоупа нет — fail-closed
-            (ADR-0409), snapshot-файл не перезаписывается.
+        tenant_id: Явный tenant-скоуп снимка (режим ``single-tenant``). Если
+            не задан — берётся из tenant-контекста процесса; если скоупа
+            нет — fail-closed (ADR-0409), snapshot-файл не перезаписывается.
 
     Returns:
         Словарь ``{table_name: rows_replicated}``.
 
     Raises:
-        SnapshotTenantScopeError: Tenant-скоуп не определён.
+        SnapshotTenantScopeError: Tenant-скоуп не определён (режим
+            ``single-tenant``).
+        SnapshotModeError: Режим сконфигурирован некорректно (пустой список
+            tenant'ов, отсутствие service-DSN, нет ``BYPASSRLS`` у роли).
 
     """
     global _last_sync_ts, _last_sync_duration, _last_sync_rows
@@ -404,19 +776,38 @@ def run_snapshot_now(tenant_id: str | None = None) -> dict[str, int]:
     started = time.perf_counter()
     _ensure_metrics()
     try:
-        # ADR-0409: скоуп обязателен — определяем ДО создания движков,
-        # чтобы при отказе snapshot-файл остался нетронутым.
-        resolved_tenant = _resolve_snapshot_tenant(tenant_id)
+        # ADR-0413: режим межtenant-снапшота определяется из конфигурации.
+        mode = _resolve_snapshot_mode()
 
-        pg_engine = create_engine(_build_pg_url(), pool_pre_ping=True)
+        # ADR-0409/ADR-0413: всё, что может отказать, определяется ДО
+        # создания движков, чтобы при отказе snapshot-файл остался
+        # нетронутым (fail-closed).
+        if mode == _MODE_PER_TENANT:
+            tenants = _resolve_configured_tenants()
+            pg_url = _build_pg_url()
+        elif mode == _MODE_SERVICE_ROLE:
+            tenants = []
+            pg_url = _resolve_service_dsn()
+        else:
+            tenants = []
+            pg_url = _build_pg_url()
+            resolved_tenant = _resolve_snapshot_tenant(tenant_id)
+
+        pg_engine = create_engine(pg_url, pool_pre_ping=True)
         sqlite_engine = create_engine(_build_sqlite_url(snapshot_cfg.target_path))
 
-        rows = sync_pg_to_sqlite(
-            pg_engine,
-            sqlite_engine,
-            snapshot_cfg.tables,
-            tenant_id=resolved_tenant,
-        )
+        if mode == _MODE_PER_TENANT:
+            rows = sync_multi_tenant_pg_to_sqlite(
+                pg_engine, sqlite_engine, snapshot_cfg.tables, tenant_ids=tenants
+            )
+        elif mode == _MODE_SERVICE_ROLE:
+            rows = sync_service_role_pg_to_sqlite(
+                pg_engine, sqlite_engine, snapshot_cfg.tables
+            )
+        else:
+            rows = sync_pg_to_sqlite(
+                pg_engine, sqlite_engine, snapshot_cfg.tables, tenant_id=resolved_tenant
+            )
 
         _last_sync_ts = time.time()
         _last_sync_duration = time.perf_counter() - started
@@ -424,10 +815,11 @@ def run_snapshot_now(tenant_id: str | None = None) -> dict[str, int]:
         _publish_metrics()
 
         logger.info(
-            "Snapshot: sync завершён за %.2fs, %d таблиц, %d строк всего",
+            "Snapshot: sync завершён за %.2fs, %d таблиц, %d строк всего (режим=%s)",
             _last_sync_duration,
             len(rows),
             sum(rows.values()),
+            mode,
         )
         return rows
     except Exception as exc:
@@ -492,7 +884,8 @@ def register_snapshot_job(scheduler: Any, tenant_id: str | None = None) -> None:
         tenant_id: Tenant-скоуп для периодического job'а. Если не задан —
             job работает в tenant-контексте процесса, а при его
             отсутствии каждый запуск падает fail-closed (ADR-0409).
-            Межtenant-снапшот не поддерживается (нужна роль с BYPASSRLS).
+            В режимах ``per-tenant`` / ``service-role`` (ADR-0413) скоуп
+            берётся из конфигурации, поэтому аргумент не требуется.
 
     """
     from src.backend.core.config.settings import settings
@@ -502,14 +895,22 @@ def register_snapshot_job(scheduler: Any, tenant_id: str | None = None) -> None:
         logger.info("Snapshot: job не регистрируется (snapshot.enabled=false)")
         return
 
+    mode = _resolve_snapshot_mode()
+
     job_kwargs: dict[str, Any] = {}
     if tenant_id:
         job_kwargs["tenant_id"] = tenant_id
-    else:
+    elif mode == _MODE_SINGLE_TENANT:
         logger.warning(
             "Snapshot: job зарегистрирован без tenant-скоупа — каждый запуск "
             "завершится fail-closed ошибкой (ADR-0409), если процесс не "
             "исполняется в tenant-контексте"
+        )
+    else:
+        logger.info(
+            "Snapshot: job зарегистрирован в режиме '%s' — tenant-скоуп "
+            "берётся из конфигурации (ADR-0413)",
+            mode,
         )
 
     scheduler.add_job(
@@ -526,10 +927,11 @@ def register_snapshot_job(scheduler: Any, tenant_id: str | None = None) -> None:
         kwargs=job_kwargs,
     )
     logger.info(
-        "Snapshot: job '%s' зарегистрирован (interval=%d min, %d таблиц)",
+        "Snapshot: job '%s' зарегистрирован (interval=%d min, %d таблиц, режим=%s)",
         SNAPSHOT_JOB_ID,
         snapshot_cfg.interval_minutes,
         len(snapshot_cfg.tables),
+        mode,
     )
 
 

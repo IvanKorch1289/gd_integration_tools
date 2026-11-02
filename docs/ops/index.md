@@ -46,6 +46,13 @@ src/backend/infrastructure/
 - **Storage**: S3 → LocalFS (S164 W37 FallbackStorageDecorator)
 - **Logging**: Graylog → Disk (auto-fallback)
 
+## Snapshot (PG → SQLite)
+
+- [Межtenant-снапшот: служебная роль `BYPASSRLS` и режимы выгрузки](snapshot-bypassrls-role.md) —
+  процедура выдачи роли (`NOLOGIN` + `BYPASSRLS` + `GRANT SELECT`),
+  шаблон DSN, режимы `single-tenant` / `per-tenant` / `service-role`
+  (ADR-0413), проверки и откат.
+
 ## Audit
 
 ClickHouse audit + OTel export. Per master_prompt §0: all actions audited.
