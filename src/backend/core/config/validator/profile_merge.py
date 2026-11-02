@@ -22,14 +22,18 @@
   поэтому контейнер настроек профиля объявляет её явно;
 * секция ``constants`` проверяется ОТДЕЛЬНО (ADR-0377): у неё нет
   ограничений уровня «контейнера» — значения применяются к глобальному
-  синглтону ``consts``, поэтому невалидное значение роняет старт.
+  синглтону ``consts``, поэтому невалидное значение роняет старт;
+* ADR-0407 — контракты прод-значений: WAF-allowlist обязан покрывать
+  внешние интеграции, loopback в allowlist оправдан локальной
+  зависимостью, ``database.replica_dsn=null`` допустим (реплика не
+  развёрнута).
 """
 
 from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, ValidationError, create_model
@@ -60,6 +64,28 @@ __all__ = (
 #: Loopback-хосты, недоступные в prod (ADR-0403).
 _LOOPBACK_HOSTNAMES: frozenset[str] = frozenset(
     {"localhost", "127.0.0.1", "0.0.0.0", "::1", "0:0:0:0:0:0:0:1"}
+)
+
+#: Окружения с прод-контрактами значений (ADR-0407).
+_PRODUCTION_LIKE_ENVIRONMENTS: Final[frozenset[str]] = frozenset(
+    {"production", "staging"}
+)
+
+#: Внешние интеграции (``src/backend/services/integrations/**``) и их
+#: endpoint'ы в merged-конфиге. Хост каждого endpoint'а обязан быть в
+#: ``waf.allow_hosts`` при ``waf.strict=true`` (ADR-0407).
+_EXTERNAL_INTEGRATION_ENDPOINTS: Final[tuple[tuple[str, str], ...]] = (
+    ("skb", "prod_url"),
+    ("dadata", "base_url"),
+)
+
+#: Локальные (sidecar) зависимости, обслуживаемые через loopback
+#: (ADR-0407). Формат: (секция, ключ endpoint'а, ключ флага включения).
+#: Loopback-запись в ``waf.allow_hosts`` оправдана, только если хотя бы одна
+#: из них включена и указывает на loopback-хост.
+_LOCAL_ENDPOINT_PROBES: Final[tuple[tuple[str, str, str], ...]] = (
+    ("waf", "clamav_host", "clamav_enabled"),
+    ("app", "opentelemetry_endpoint", ""),
 )
 
 _CONSTANTS_PROBE: type[BaseModel] = create_model(
@@ -499,6 +525,246 @@ def _is_production(merged: dict[str, Any]) -> bool:
     return str(app.get("environment") or "").lower() == "production"
 
 
+def _is_production_like(merged: dict[str, Any]) -> bool:
+    """Окружение с прод-контрактами значений (production или staging).
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        ``True`` — если окружение production-подобное.
+
+    """
+    app = merged.get("app") or {}
+    environment = str(app.get("environment") or "").lower()
+    return environment in _PRODUCTION_LIKE_ENVIRONMENTS
+
+
+def _endpoint_host(value: str) -> str:
+    """Хост endpoint'а: URL или голый host (с необязательным портом).
+
+    Args:
+        value: Значение endpoint'а (``https://host/path`` / ``host`` / ``host:port``).
+
+    Returns:
+        Хост в нижнем регистре (пустая строка — хост не разобран).
+
+    """
+    text = value.strip()
+    if not text:
+        return ""
+    if "://" in text:
+        return (urlparse(text).hostname or "").lower()
+    if text.startswith("["):
+        closing = text.find("]")
+        return (text[1:closing] if closing > 0 else text[1:]).lower()
+    return text.split(":", 1)[0].strip().lower()
+
+
+def _external_integration_hosts(merged: dict[str, Any]) -> dict[str, str]:
+    """Хосты внешних интеграций из merged-конфига.
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        Мапа ``"<section>.<key>"`` → хост интеграции (lowercase).
+
+    """
+    hosts: dict[str, str] = {}
+    for section, key in _EXTERNAL_INTEGRATION_ENDPOINTS:
+        raw = (merged.get(section) or {}).get(key)
+        if not raw:
+            continue
+        host = (urlparse(str(raw)).hostname or "").lower()
+        if host:
+            hosts[f"{section}.{key}"] = host
+    return hosts
+
+
+def _has_local_loopback_dependency(merged: dict[str, Any]) -> bool:
+    """Есть ли в профиле локальная (loopback) зависимость.
+
+    Локальные зависимости prod/staging — sidecar'ы (``clamd``, otel-collector).
+    Именно они оправдывают loopback-запись в ``waf.allow_hosts``: без них
+    такая запись либо мёртвая, либо внешняя интеграция молча указывает на
+    localhost (ADR-0407).
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        ``True`` — если есть включённая зависимость на loopback.
+
+    """
+    for section, key, enabled_key in _LOCAL_ENDPOINT_PROBES:
+        config = merged.get(section) or {}
+        if enabled_key and not config.get(enabled_key):
+            continue
+        raw = config.get(key)
+        if not raw:
+            continue
+        if _endpoint_host(str(raw)) in _LOOPBACK_HOSTNAMES:
+            return True
+    return False
+
+
+def _check_waf_allowlist_covers_integrations(
+    merged: dict[str, Any],
+) -> tuple[ConfigViolation, ...]:
+    """ADR-0407: allowlist WAF обязан покрывать внешние интеграции.
+
+    При ``waf.strict=true`` исходящий запрос к хосту вне ``waf.allow_hosts``
+    блокируется (``core/net/waf.py`` → ``WafBypassError``). Запросы
+    интеграций (``services/integrations/**``) идут напрямую, минуя WAF-шлюз
+    ``http.waf_url``, поэтому непокрытый хост означает полностью сломанную
+    интеграцию (СКБ-Техно / DaData).
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        Кортеж нарушений (пустой — если нарушения нет).
+
+    """
+    if not _is_production_like(merged):
+        return ()
+    waf = merged.get("waf") or {}
+    if not waf.get("strict"):
+        return ()  # strict=false — allowlist не ограничивает исходящие запросы
+    allowed = {str(host).strip().lower() for host in (waf.get("allow_hosts") or [])}
+    missing = {
+        field: host
+        for field, host in _external_integration_hosts(merged).items()
+        if host not in allowed
+    }
+    if not missing:
+        return ()
+    return (
+        ConfigViolation(
+            severity=ConfigSeverity.CRITICAL,
+            code="waf.allow_hosts_missing_integration_hosts",
+            message=(
+                "В профиле с waf.strict=true хосты внешних интеграций не "
+                "покрыты allowlist'ом ("
+                + ", ".join(f"{field}={host}" for field, host in missing.items())
+                + "): исходящие запросы к ним будут заблокированы "
+                "(WafBypassError) — интеграция в проде не работает."
+            ),
+            field="waf.allow_hosts",
+            recommendation=(
+                "Добавить host'ы внешних интеграций в waf.allow_hosts "
+                "overlay'а профиля (config_profiles/prod.yml, staging.yml)."
+            ),
+            context={"missing": missing, "allow_hosts": sorted(allowed)},
+        ),
+    )
+
+
+def _check_waf_loopback_allowlist(
+    merged: dict[str, Any],
+) -> tuple[ConfigViolation, ...]:
+    """ADR-0407: loopback в allowlist WAF — только ради локальной зависимости.
+
+    Loopback-хост в ``waf.allow_hosts`` оправдан, только если в профиле есть
+    включённая локальная зависимость (sidecar ``clamd``/otel). Иначе запись
+    либо мёртвая, либо (хуже) внешняя интеграция молча указывает на
+    localhost: запрос уйдёт на хост, которого в проде нет.
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        Кортеж нарушений (пустой — если нарушения нет).
+
+    """
+    if not _is_production_like(merged):
+        return ()
+    waf = merged.get("waf") or {}
+    loopback_entries = sorted(
+        {
+            str(host).strip().lower()
+            for host in (waf.get("allow_hosts") or [])
+            if str(host).strip().lower() in _LOOPBACK_HOSTNAMES
+        }
+    )
+    if not loopback_entries:
+        return ()
+    if _has_local_loopback_dependency(merged):
+        return ()
+    return (
+        ConfigViolation(
+            severity=ConfigSeverity.CRITICAL,
+            code="waf.allow_hosts_loopback_without_local_dependency",
+            message=(
+                "В prod/staging allowlist WAF содержит loopback-хост(ы) "
+                + ", ".join(loopback_entries)
+                + ", но в профиле нет включённой локальной зависимости "
+                "(sidecar clamd/otel): запись мёртвая либо внешняя интеграция "
+                "молча указывает на localhost (ADR-0407)."
+            ),
+            field="waf.allow_hosts",
+            recommendation=(
+                "Убрать loopback-хосты из waf.allow_hosts либо включить "
+                "локальный sidecar (waf.clamav_enabled=true + "
+                "waf.clamav_host на loopback)."
+            ),
+            context={"loopback_hosts": loopback_entries},
+        ),
+    )
+
+
+def _check_replica_dsn_contract(merged: dict[str, Any]) -> tuple[ConfigViolation, ...]:
+    """ADR-0407: ``database.replica_dsn`` — null допустим, непустое — реальный хост.
+
+    ``null`` означает «реплика не развёрнута»: весь трафик идёт на primary,
+    и это **не** нарушение прод-конфигурации. Непустое значение — только
+    реальный (не loopback) хост: реплика на loopback означала бы, что каждый
+    pod пишет в свой локальный экземпляр. Само значение — секрет и
+    маскируется в дампах (ADR-0378 / ADR-0381).
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        Кортеж нарушений (пустой — если нарушения нет).
+
+    """
+    if not _is_production_like(merged):
+        return ()
+    raw = (merged.get("database") or {}).get("replica_dsn")
+    if raw is None:
+        return ()  # реплики нет — штатное состояние
+    text = str(raw).strip()
+    host = (urlparse(text).hostname or "").lower() if text else ""
+    if host and host not in _LOOPBACK_HOSTNAMES:
+        return ()
+    reason = (
+        "указан loopback-хост реплики — каждый pod использовал бы свой "
+        "локальный экземпляр"
+        if host
+        else "значение не является DSN с хостом реплики"
+    )
+    return (
+        ConfigViolation(
+            severity=ConfigSeverity.CRITICAL,
+            code="database.replica_dsn_invalid",
+            message=(
+                "В prod/staging database.replica_dsn задан, но "
+                f"{reason}. null (реплика не развёрнута) — допустимое "
+                "значение (ADR-0407)."
+            ),
+            field="database.replica_dsn",
+            recommendation=(
+                "Оставить database.replica_dsn: null (трафик идёт на primary) "
+                "либо указать реальный DSN реплики "
+                "(postgresql+asyncpg://user:pwd@pg-replica:5432/main_db)."
+            ),
+            context={"host": host},
+        ),
+    )
+
+
 def _secret_source_guaranteed(merged: dict[str, Any]) -> bool:
     """Есть ли гарантированный источник JWT-секрета.
 
@@ -730,6 +996,12 @@ def validate_profile_config(
     # уходить на loopback-хост.
     violations.extend(_check_jwt_algorithm_secret_policy(merged))
     violations.extend(_check_ai_fallback_chain_hosts(merged))
+    # ADR-0407: контракты прод-значений — WAF-allowlist покрывает внешние
+    # интеграции, loopback в allowlist оправдан локальной зависимостью,
+    # ``database.replica_dsn=null`` допустим (реплика не развёрнута).
+    violations.extend(_check_waf_allowlist_covers_integrations(merged))
+    violations.extend(_check_waf_loopback_allowlist(merged))
+    violations.extend(_check_replica_dsn_contract(merged))
     return tuple(
         sorted(
             violations,

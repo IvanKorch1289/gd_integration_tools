@@ -326,6 +326,45 @@ Webhook-relay (`services/integrations/webhook_relay.py`) в allowlist не
 Гейт: `test_profile_invariants.py` — allowlist prod/staging покрывает
 хосты интеграций, и проба `WafPolicy.evaluate(url)` даёт `allowed`.
 
+### Прод-значения: контракты (ADR-0407)
+
+Четыре «прод-значения, оставленные осознанно»
+(`docs/roadmap/OWNER_TASKS.md` § 3) переведены из комментариев в
+**исполняемые проверки** `core/config/validator/profile_merge.py`: они
+работают по merged-конфигу (`base.yml` + overlay) и видны в
+`manage.py validate-profile <env>`.
+
+| Контракт | Правило | Код нарушения (CRITICAL) |
+|---|---|---|
+| **HS256 в prod** | Симметричный алгоритм (`HS*`) — только при гарантированном источнике JWT-секрета: `security.secret_key` (YAML) / env `SEC_SECRET_KEY` / Vault (`vault.enabled` + `addr` + `secret_path`) | `security.jwt_symmetric_algorithm_without_secret` |
+| **WAF allowlist** | В prod/staging при `waf.strict=true` allowlist обязан содержать хост каждой внешней интеграции (`skb.prod_url`, `dadata.base_url`) | `waf.allow_hosts_missing_integration_hosts` |
+| **WAF loopback** | Loopback-хост в allowlist — только при включённой локальной зависимости (sidecar `clamd`: `waf.clamav_enabled=true` + `waf.clamav_host` на loopback; otel: `app.opentelemetry_endpoint` на loopback) | `waf.allow_hosts_loopback_without_local_dependency` |
+| **AI-fallback** | В prod `ai_providers.fallback_chain` без провайдера с loopback-`base_url` (`open_webui` → `http://localhost:3000`) | `ai_providers.fallback_chain_localhost` |
+| **`replica_dsn`** | `null` = «реплика не развёрнута» — **допустимо**, CRITICAL-не считается. Непустое значение — только реальный (не loopback) хост реплики | `database.replica_dsn_invalid` |
+
+**Про JWT-секрет.** Env-имя канона — `SEC_SECRET_KEY` (env-префикс `SEC_`
+модели `SecureSettings`), а не `JWT_SECRET_KEY`. В prod источник по
+умолчанию — Vault (`vault.enabled` + `addr` + `secret_path`); если Vault
+недоступен или не задан `VAULT_TOKEN`, секрет не приедет, и обязательное
+поле `SecureSettings.secret_key` роняет старт процесса (`ValidationError`) —
+fail-closed, а не старт без ключа подписи. Сам алгоритм остаётся HS256:
+переход на RS256 — owner-задача (нужна RSA-keypair + JWKS/IdP, критерии —
+в `docs/roadmap/OWNER_TASKS.md` § 3.1 и ADR-0407).
+
+**Про `replica_dsn`.** Значение `null` — штатное состояние «реплики нет»:
+read-роутинг выключен, весь трафик идёт на primary
+(`SmartSessionManager`). Непустое значение — DSN реплики (например
+`postgresql+asyncpg://user:pwd@pg-replica:5432/main_db`), и оно является
+секретом: поле типизировано `SecretStr`, пароль в userinfo маскируется на
+`***` в `model_dump()` / `model_dump_json()` (ADR-0378 / ADR-0381), рабочее
+значение доступно только через `get_secret_value()`. YAML-профили не
+поддерживают `${VAR:-default}` (ADR-0377) — значение задаётся литералом или
+через env `DB_REPLICA_DSN`.
+
+Гейт: `tests/unit/core/config/test_prod_values_contracts.py` — контракты
+проверяются по merged-конфигу и по результату валидатора (не по наличию
+строк в YAML); `manage.py validate-profile prod|staging` → 0 CRITICAL.
+
 ### Секция `constants` (ADR-0377)
 
 Значения секции `constants` применяются к глобальному синглтону `consts`
@@ -429,3 +468,5 @@ env-префиксом класса-наследника:
 - `docs/adr/0375-settings-coverage-merged-validation-constants-and-secret-typing.md`
 - `docs/adr/0377-profile-placeholders-waf-allowlist-and-validation.md`
 - `docs/adr/0389-db-call-procedure-flag-semantics.md` — семантика флага `db_call_procedure_enabled`
+- `docs/adr/0407-production-values-contracts.md` — контракты прод-значений
+  (HS256, WAF allow_hosts, AI-fallback, `replica_dsn`)

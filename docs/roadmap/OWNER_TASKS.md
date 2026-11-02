@@ -1,11 +1,12 @@
-# OWNER_TASKS — Известные ограничения и owner-задачи (волна 20)
+# OWNER_TASKS — Известные ограничения и owner-задачи (волна 20 → 22)
 
 > Реестр позиций, которые **нельзя закрыть в кластере** без решения
 > владельца: внешние зависимости, эксплуатационные решения, сознательно
 > отложенные миграции. Каждая позиция: что именно не сделано, почему,
 > минимальный шаг, критерий приёмки.
 >
-> Источник правды по wave-20 решениям — `docs/adr/` (ADR-0398…ADR-0401).
+> Источник правды по wave-20…wave-22 решениям — `docs/adr/`
+> (ADR-0398…ADR-0404, ADR-0407).
 > Реестр прод-готовности — [PROD_READINESS_GAPS.md](PROD_READINESS_GAPS.md).
 
 ## Как читать
@@ -70,17 +71,75 @@
 ## 3. Прод-значения, оставленные осознанно
 
 Все четыре позиции помечены в `config_profiles/prod.yml` как owner-задачи
-(ADR-0371, ADR-0377) и требуют внешней инфраструктуры:
+(ADR-0371, ADR-0377) и требуют внешней инфраструктуры.
 
-| Позиция | Текущее значение | Почему требует владельца | Минимальный шаг |
+**Волна 22 (кластер B3, ADR-0407): контракты этих позиций переведены из
+комментариев в исполняемые проверки** `core/config/validator/profile_merge.py`
+(merged-конфиг `base.yml` + overlay) — `manage.py validate-profile prod|staging`
+показывает 0 CRITICAL для текущих профилей и ловит отклонения контракта
+до деплоя. Ниже — что осталось за владельцем.
+
+| Позиция | Текущее значение | Контракт (ADR-0407) | Остаток за владельцем |
 |---|---|---|---|
-| **HS256** в проде | `security` — JWT подписывается HS256 (секрет из Vault) | Переход на RS256 требует RSA-keypair + JWKS/IdP; без этой инфраструктуры переключение ломает выпуск и проверку JWT | выдать keypair, настроить JWKS/IdP, переключить `algorithm` |
-| **WAF `allow_hosts`** | в allowlist остаются `localhost` / `127.0.0.1` (sidecar'ы: clamd, otel) | Реальные хосты локальных sidecar'ов без инфраструктуры вывести нельзя | заменить на явные service-DNS имена |
-| **open_webui** в fallback-цепочке AI | `open_webui` исключён из `ai_providers.fallback_chain` (в base — `http://localhost:3000`) | Реальный host OpenWebUI без инфраструктуры вывести нельзя; молчаливый откат на localhost в проде опаснее | задать продовый endpoint OpenWebUI и вернуть его в цепочку |
-| **`replica_dsn`** | `database.replica_dsn: null` — read-replica выключен, весь трафик идёт на primary | Нужен реальный async-DSN реплики; YAML не поддерживает `${VAR:-default}` (ADR-0377) — значение задаётся литералом или env `DB_REPLICA_DSN` | выдать DSN реплики, задать `replica_dsn`/`DB_REPLICA_DSN`, включить `snapshot` в prod |
+| **HS256** в проде | `security.algorithm` — HS256 (секрет из Vault) | HS* в prod — только при гарантированном источнике JWT-секрета (`security.secret_key` / env `SEC_SECRET_KEY` / Vault `enabled`+`addr`+`secret_path`); иначе CRITICAL `security.jwt_symmetric_algorithm_without_secret`. Алгоритм валидатором не меняется | Переход на RS256 — § 3.1 (нужна keypair + JWKS/IdP) |
+| **WAF `allow_hosts`** | `esbgreendata`, `localhost`, `127.0.0.1` (sidecar clamd), `api.skb-techno.ru`, `suggestions.dadata.ru` | allowlist обязан покрывать хосты всех внешних интеграций (иначе CRITICAL `waf.allow_hosts_missing_integration_hosts`); loopback — только при включённой локальной зависимости (иначе CRITICAL `waf.allow_hosts_loopback_without_local_dependency`) | Вынести sidecar'ы на service-DNS (§ 3.2) |
+| **open_webui** в fallback-цепочке AI | `open_webui` исключён из `ai_providers.fallback_chain` (в base — `http://localhost:3000`) | В prod цепочка без провайдера с loopback-`base_url`, иначе CRITICAL `ai_providers.fallback_chain_localhost` | Задать прод-endpoint OpenWebUI (§ 3.3) |
+| **`replica_dsn`** | `database.replica_dsn: null` — read-replica выключен, весь трафик идёт на primary | `null` — «реплика не развёрнута», CRITICAL-не считается; непустое значение — только реальный (не loopback) хост, иначе CRITICAL `database.replica_dsn_invalid`; значение маскируется в дампах (ADR-0378/ADR-0381) | Выдать DSN реплики (§ 3.4) |
 
-> **Требует владельца** — все четыре: эксплуатационные решения и внешняя
-> инфраструктура.
+### 3.1. Переход prod на RS256 (отдельная owner-задача)
+
+* **Что не сделано.** `security.algorithm` в prod остался `HS256`.
+* **Почему.** Переход на RS256 требует RSA-keypair + JWKS/IdP; без этой
+  инфраструктуры переключение ломает выпуск и проверку JWT (ADR-0371).
+  Контракт HS256 (секрет обязателен) при этом уже enforceable — см. ADR-0407.
+* **Требует владельца.** Да — владелец безопасности/платформы.
+* **Минимальный шаг.** Выпустить keypair, поднять JWKS-endpoint (или
+  подключить IdP), задать `security.algorithm: RS256` + `security.jwks_url`.
+* **Done-критерий.** `security.algorithm=RS256` и `jwks_url` непустой в
+  prod-профиле; `SEC_SECRET_KEY` для подписи не требуется; тест
+  `test_prod_values_contracts.py::test_repo_prod_algorithm_is_symmetric_with_guarded_secret`
+  обновлён вместе с ADR-0407; `manage.py validate-profile prod` → 0 CRITICAL.
+
+### 3.2. Service-DNS вместо loopback для sidecar'ов prod/staging
+
+* **Что не сделано.** `waf.allow_hosts` prod/staging содержит `localhost`
+  и `127.0.0.1` — они оправданы локальной зависимостью (`waf.clamav_enabled=true`,
+  `waf.clamav_host=127.0.0.1`).
+* **Почему.** Реальные DNS-имена sidecar'ов (clamd, otel) без инфраструктуры
+  вывести нельзя.
+* **Требует владельца.** Да — эксплуатация.
+* **Минимальный шаг.** Вынести clamd/otel на DNS-имена, обновить
+  `waf.clamav_host` и `app.opentelemetry_endpoint`.
+* **Done-критерий.** Loopback-хостов в `waf.allow_hosts` prod/staging нет;
+  `manage.py validate-profile prod|staging` → 0 CRITICAL (контракт
+  `waf.allow_hosts_loopback_without_local_dependency` не срабатывает, потому
+  что локальной loopback-зависимости больше нет).
+
+### 3.3. Прод-endpoint OpenWebUI
+
+* **Что не сделано.** `open_webui` исключён из prod-цепочки AI; его
+  `base_url` в `base.yml` — `http://localhost:3000`.
+* **Почему.** Реальный host OpenWebUI без инфраструктуры вывести нельзя;
+  молчаливый откат на localhost в проде опаснее, чем отсутствие провайдера.
+* **Требует владельца.** Да — эксплуатация / AI-платформа.
+* **Минимальный шаг.** Задать реальный `open_webui.base_url` в prod-профиле
+  и вернуть провайдера в `ai_providers.fallback_chain`.
+* **Done-критерий.** `open_webui.base_url` — не loopback; провайдер есть в
+  prod-цепочке; `manage.py validate-profile prod` → 0 CRITICAL.
+
+### 3.4. DSN read-реплики
+
+* **Что не сделано.** `database.replica_dsn: null` в prod и staging —
+  read-replica выключен, весь трафик идёт на primary.
+* **Почему.** Нужен реальный async-DSN реплики; YAML не поддерживает
+  `${VAR:-default}` (ADR-0377) — значение задаётся литералом или env
+  `DB_REPLICA_DSN`.
+* **Требует владельца.** Да — DBA/эксплуатация.
+* **Минимальный шаг.** Выдать DSN реплики, задать `replica_dsn`/`DB_REPLICA_DSN`,
+  включить `snapshot` в prod по runbook'у.
+* **Done-критерий.** `database.replica_dsn` — непустой DSN с реальным
+  host'ом (не loopback); `manage.py validate-profile prod` → 0 CRITICAL;
+  значение маскируется в дампах настроек (ADR-0378).
 
 ## 4. Baseline `missing-secret` / `missing-non-secret`
 

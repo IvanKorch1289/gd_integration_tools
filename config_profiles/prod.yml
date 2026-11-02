@@ -48,9 +48,16 @@ security:
   # (entrypoints/middlewares/timeout.py): 20с (dev) → 30с (prod), чтобы
   # длинные интеграционные операции (SKB, загрузка файлов) не отваливались
   # по дефолтному таймауту.
-  # Про ``algorithm``: переход на RS256 требует RSA-keypair + JWKS/IdP —
-  # без этой инфраструктуры переключение ломает выпуск/проверку JWT,
-  # поэтому остаётся HS256 (секрет — из Vault). Owner-задача (ADR-0371).
+  # Про ``algorithm`` (контракт ADR-0407): в prod алгоритм подписи JWT —
+  # симметричный HS256. Он допустим ТОЛЬКО при гарантированном источнике
+  # JWT-секрета: ``security.secret_key`` (YAML) / env ``SEC_SECRET_KEY`` /
+  # Vault (``vault.enabled`` + ``addr`` + ``secret_path`` — в prod секрет
+  # приходит оттуда). Без источника — CRITICAL
+  # ``security.jwt_symmetric_algorithm_without_secret``
+  # (``manage.py validate-profile prod`` → exit 1).
+  # Переход на RS256 — отдельная owner-задача (OWNER_TASKS § 3.1): нужна
+  # RSA-keypair + JWKS/IdP; без этой инфраструктуры переключение ломает
+  # выпуск и проверку JWT.
   rate_limit: 3000
   request_timeout: 30.0
   # Локальный prod-drill: админ-доступ только с loopback; в реальном prod
@@ -160,6 +167,13 @@ database:
   # ВНИМАНИЕ (ADR-0377): YAML-конфиги не поддерживают env-подстановку вида
   # ${VAR:-default} — значение задаётся литералом в профиле или через
   # одноимённую env-переменную (DB_REPLICA_DSN), а не шаблоном.
+  #
+  # Контракт ADR-0407: ``replica_dsn: null`` — допустимое прод-значение
+  # («реплика не развёрнута»), CRITICAL-не считается. Непустое значение —
+  # только реальный (не loopback) хост реплики, иначе CRITICAL
+  # ``database.replica_dsn_invalid`` (каждый pod использовал бы свой
+  # локальный экземпляр). DSN содержит пароль → значение маскируется в
+  # дампах настроек (ADR-0378 / ADR-0381).
   replica_dsn: null
 
 
@@ -223,9 +237,21 @@ waf:
   # к хосту вне allowlist'а блокировался (WafBypassError) — в prod запросы
   # к СКБ-Техно и DaData идут напрямую (минуя WAF-шлюз http.waf_url),
   # поэтому интеграции были полностью сломаны.
+  #
+  # Контракт ADR-0407 (проверяется валидатором профиля):
+  # * allow_hosts обязан покрывать хосты ВСЕХ внешних интеграций, иначе
+  #   CRITICAL ``waf.allow_hosts_missing_integration_hosts`` — интеграция
+  #   в проде заблокирована целиком;
+  # * loopback-хост(ы) в allowlist оправданы только включённой локальной
+  #   зависимостью (sidecar clamd: ``waf.clamav_enabled=true`` +
+  #   ``waf.clamav_host`` на loopback) — иначе CRITICAL
+  #   ``waf.allow_hosts_loopback_without_local_dependency`` (мёртвая запись
+  #   либо внешняя интеграция, молча указывающая на localhost).
   strict: true
   allow_hosts:
     - "esbgreendata"
+    # Loopback — локальный sidecar clamd (ADR-0407: оправдано наличием
+    # локальной зависимости ``waf.clamav_host`` на loopback).
     - "localhost"
     - "127.0.0.1"
     # СКБ-Техно (services/integrations/skb.py → skb.prod_url)
@@ -343,6 +369,11 @@ snapshot:
 # Его ``base_url`` — ``http://localhost:3000`` (внутренний LLM-сервер), и в
 # проде откат с perplexity молча ушёл бы на localhost. Реальный host
 # OpenWebUI без инфраструктуры вывести нельзя — owner-задача.
+#
+# Контракт ADR-0407: в prod fallback-цепочка не должна содержать провайдера
+# с loopback-``base_url`` (в base.yml ``open_webui`` есть) — иначе CRITICAL
+# ``ai_providers.fallback_chain_localhost``: откат молча ушёл бы на сервис,
+# которого в проде нет. Цепочка ниже — только реально доступные провайдеры.
 ai_providers:
   fallback_chain:
     - "perplexity"

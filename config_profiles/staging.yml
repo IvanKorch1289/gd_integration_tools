@@ -46,6 +46,12 @@ security:
   # ADR-0377: rate_limit / request_timeout — prod-уровень (в base.yml
   # остались dev-значения 1000 / 20.0): стенд должен воспроизводить
   # prod-нагрузку, иначе отказы внешних интеграций не воспроизводятся.
+  #
+  # Контракт ADR-0407: алгоритм подписи JWT — как в prod (симметричный
+  # HS256) и только при гарантированном источнике секрета (env
+  # ``SEC_SECRET_KEY`` / Vault ``vault.enabled`` + ``addr`` +
+  # ``secret_path``); без источника — CRITICAL
+  # ``security.jwt_symmetric_algorithm_without_secret``.
   rate_limit: 3000
   request_timeout: 30.0
   admin_ips: []
@@ -110,10 +116,17 @@ features:
 # (src/backend/services/integrations/**): при strict=true исходящий запрос
 # к хосту вне allowlist'а блокировался (WafBypassError) — запросы к
 # СКБ-Техно и DaData идут напрямую (минуя WAF-шлюз http.waf_url).
+#
+# Контракт ADR-0407: allow_hosts обязан покрывать хосты всех внешних
+# интеграций (иначе CRITICAL
+# ``waf.allow_hosts_missing_integration_hosts``), а loopback-хост(ы) —
+# только при включённой локальной зависимости (sidecar clamd), иначе
+# CRITICAL ``waf.allow_hosts_loopback_without_local_dependency``.
 waf:
   strict: true
   allow_hosts:
     - "esbgreendata"
+    # Loopback — локальный sidecar clamd (ADR-0407).
     - "localhost"
     - "127.0.0.1"
     # СКБ-Техно (services/integrations/skb.py → skb.prod_url)
@@ -156,6 +169,12 @@ database:
   pool_timeout: 15
   pool_pre_ping: true
   pool_use_lifo: true
+  # Контракт ADR-0407: ``replica_dsn: null`` — «реплика не развёрнута»
+  # (весь трафик идёт на primary), CRITICAL-не считается. Непустое
+  # значение — только реальный (не loopback) хост реплики, иначе CRITICAL
+  # ``database.replica_dsn_invalid``. DSN — секрет, маскируется в дампах
+  # (ADR-0378 / ADR-0381).
+  replica_dsn: null
 
 
 external_databases:

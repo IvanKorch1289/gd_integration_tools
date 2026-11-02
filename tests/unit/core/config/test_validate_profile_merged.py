@@ -23,12 +23,19 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from manage import app
 from src.backend.core.config.validator import ConfigSeverity
 from src.backend.core.config.validator.profile_merge import (
     merge_profile_yaml,
     validate_profile_config,
 )
+from tests.unit.conftest import isolated_action_registry
+
+# ADR-0410: импорт ``manage`` поднимает bootstrap приложения, который
+# регистрирует ~190 legacy-action'ов в ГЛОБАЛЬНОМ реестре (минимальные
+# метаданные, ``transports=()``). Это загрязнение ломало контракт-тест
+# метаданных API v1. Реестр изолируется на время импорта.
+with isolated_action_registry():
+    from manage import app
 
 pytestmark = pytest.mark.unit
 
