@@ -36,9 +36,11 @@
 * **Governance.** Миграция меняет семантику декларации авторизации →
   оформлена отдельным ADR-0405 согласно governance-правилу **ADR-0284 §1.1**
   (изменения ALLOWED-матрицы и семантики авторизации требуют per-ADR approval).
-* **Осталось владельцу.** ⚙️ инженерно: мигрировать генераторы
-  `tools/scaffold_route.py` и `tools/wizards/route_templates.py` на табличную
-  форму (ADR-0405 §Открытое).
+* **Осталось владельцу.** ✅ закрыто (ADR-0415, волна 23): генераторы
+  `tools/scaffold_route.py`, `tools/wizards/route_templates.py` и
+  `tools/wizards/route_wizard.py` переведены на табличную форму; гейт
+  `tests/unit/tools/test_route_generators_capabilities.py` (51 тест) не даёт
+  вернуть legacy-форму.
 
 ## 2. Lock-чанж: Pillow 13 и `psycopg[binary]` → extra `db_drivers`
 
@@ -75,9 +77,14 @@
   `tests/unit/core/config/test_adr0412_sidecar_dns.py` (32 теста);
   `manage.py validate-profile prod|staging` → 0 CRITICAL.
 * **Осталось владельцу** (инфраструктурные решения, кодом не закрываются):
-  * **3.1. Переход prod на RS256.** Требует RSA-keypair + JWKS/IdP и
-    `security.algorithm=RS256` + `jwks_url`. Критерий: prod работает с
-    внешним IdP; `validate-profile prod` → 0 CRITICAL.
+  * **3.1. Переход prod на RS256.** ✅ кодовая поддержка закрыта (ADR-0411,
+    волна 23): режимы HS* ↔ RS*/ES* взаимоисключающие, JWKS/PEM-резолв по
+    `kid`, отказ при несовпадении alg/ключа (algorithm confusion закрыт),
+    утилита `python -m src.backend.core.security.jwt_keys generate --out <dir>`,
+    контракт в SETTINGS_GUIDE. Осталось только инфраструктура: выпустить
+    RSA-пару, задать `security.algorithm=RS256` + `jwt_private_key_path` +
+    (`jwks_url` **или** `jwt_public_key_path`) + `jwt_kid`. Критерий: login
+    возвращает RS256-токен; `validate-profile prod` → 0 CRITICAL.
   * **3.2. Service-DNS вместо loopback для sidecar'ов.** ✅ контракт закрыт
     кодом (ADR-0412), осталось — инфраструктура. Хосты sidecar'ов
     конфигурируемы и по умолчанию равны service-DNS именам (`clamd`,
@@ -246,13 +253,16 @@
 
 ## 12. `jupyter.hub` — capability без plugin-провайдера
 
-* **Статус.** ⚙️ инженерно: `routes/jupyter_hub_run/route.toml` объявляет
-  `jupyter.hub` (scope `run`), но провайдера в проекте нет → роут не проходит
-  capability-гейт (`capability_superset`). Остальные 6 роутов грузятся.
-* **Минимальный шаг.** Либо реализовать провайдер `jupyter.hub` (расширение),
-  либо убрать capability из манифеста роута (роут без доступа к Jupyter).
-* **Требует владельца.** Да — функциональное решение (нужен ли Jupyter-доступ
-  в проде).
+* **Статус.** ✅ **ЗАКРЫТО** (ADR-0415, волна 23): реализован провайдер
+  capability `jupyter.hub` на базе существующего клиента
+  `infrastructure/clients/external/jupyter_hub.py` (verb `run` покрывается) —
+  `extensions/jupyter_hub/{plugin.py,plugin.toml}` + sanctioned мост
+  core→services (`core/di/providers/jupyter.py`); роут объявляет
+  `requires_plugins`. Итог: **7 из 7 роутов `enabled`** (было 6/7).
+* **Осталось владельцу.** Инфраструктура: развернуть JupyterHub и включить
+  `v11.plugin_loader_enabled` + `jupyter_hub_enabled`. Отдельно: registry-ноутбуки
+  на Hub не выполнятся — `NotebookExecutionService.execute()` требует локальный
+  файл (отдельная задача).
 
 ## 13. Порядок в `tests/unit` — order-dependent загрязнение
 
