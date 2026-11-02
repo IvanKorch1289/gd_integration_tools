@@ -34,6 +34,63 @@ def test_default_slot_and_publication() -> None:
     assert src.publication == "pub_orders"
 
 
+# ── ADR-0419: идентификаторы в DDL валидируются ────────────────────
+
+
+@pytest.mark.parametrize(
+    "table",
+    [
+        "orders; DROP TABLE users",
+        "orders'",
+        'orders"',
+        "orders--",
+        "orders public",
+        "public.orders",
+        "1orders",
+    ],
+)
+def test_rejects_unsafe_table_identifier(table: str) -> None:
+    """ADR-0419: ``table`` попадает в DDL через f-string — только identifier."""
+    with pytest.raises(ValueError, match="identifier"):
+        CdcPostgresLogicalSource("s1", table, dsn="postgres://x")
+
+
+@pytest.mark.parametrize(
+    "slot_name", ["my slot", "slot'; DROP TABLE x; --", "slot.name", "1slot"]
+)
+def test_rejects_unsafe_slot_name(slot_name: str) -> None:
+    """ADR-0419: ``slot_name`` попадает в SQL-литерал — только identifier."""
+    with pytest.raises(ValueError, match="identifier"):
+        CdcPostgresLogicalSource(
+            "s1", "orders", dsn="postgres://x", slot_name=slot_name
+        )
+
+
+@pytest.mark.parametrize(
+    "publication", ["pub name", "pub'; DROP TABLE x; --", "pub.name", "1pub"]
+)
+def test_rejects_unsafe_publication(publication: str) -> None:
+    """ADR-0419: ``publication`` — идентификатор в ``CREATE PUBLICATION``."""
+    with pytest.raises(ValueError, match="identifier"):
+        CdcPostgresLogicalSource(
+            "s1", "orders", dsn="postgres://x", publication=publication
+        )
+
+
+@pytest.mark.asyncio
+async def test_setup_does_not_leak_unsafe_identifiers() -> None:
+    """Валидация происходит до обращения к БД (fail-fast на конструкторе)."""
+    executed: list[str] = []
+
+    async def conn_executor(sql: str) -> None:
+        executed.append(sql)
+
+    src = CdcPostgresLogicalSource("s1", "orders", dsn="postgres://x")
+    await src.setup(conn_executor)
+
+    assert all("DROP TABLE" not in sql for sql in executed)
+
+
 @pytest.mark.asyncio
 async def test_setup_runs_publication_and_slot_ddl() -> None:
     executed: list[str] = []

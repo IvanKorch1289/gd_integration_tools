@@ -67,7 +67,9 @@ async def test_batch_update_uses_executemany_not_cycle() -> None:
             lambda: lambda: registry,
         )
 
-        processor = BatchUpdateProcessor(table="users", items=items, key_field="id")
+        processor = BatchUpdateProcessor(
+            table="users", items=items, key_field="id", profile="probe"
+        )
         exchange = MagicMock()
         exchange.in_message.body = items
         exchange.in_message.headers = {}

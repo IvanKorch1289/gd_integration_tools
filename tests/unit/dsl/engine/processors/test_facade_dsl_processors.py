@@ -257,8 +257,14 @@ class TestInfraDbQueryProcessor:
         ex.set_property = MagicMock()
         ctx = MagicMock()
         # Mock session manager (DatabaseSessionManager.create_session)
+        # ADR-0418: результат — объект с ``fetchmany`` (лимит выборки
+        # применяется на базе, а не после ``fetchall()``).
+        result = MagicMock()
+        result.returns_rows = True
+        result.rowcount = 1
+        result.fetchmany.return_value = [{"?column?": 1}]
         session = MagicMock()
-        session.execute = AsyncMock(return_value=[{"?column?": 1}])
+        session.execute = AsyncMock(return_value=result)
         sm = MagicMock()
         sm.create_session = MagicMock()
         sm.create_session.return_value.__aenter__ = AsyncMock(return_value=session)

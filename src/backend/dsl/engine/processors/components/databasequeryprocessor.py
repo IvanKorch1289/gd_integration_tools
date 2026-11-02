@@ -17,6 +17,10 @@ ADR-0393 (волна 18) — что закрывает этот модуль:
 * **Лимит выборки** (``max_rows``) — ``fetchall()`` без ограничения
   вытягивал в память весь результат;
 * **Audit-событие** доступа к данным (без значений данных).
+
+ADR-0418 (волна 24): лимит выборки применяется **до** материализации —
+``fetchmany(limit + 1)`` вместо ``fetchall()``; «лишняя» строка —
+маркер усечения (``db_truncated`` в ``Exchange.properties``).
 """
 
 from __future__ import annotations
@@ -29,8 +33,9 @@ from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors._sql_validation import (
     FORBIDDEN_SQL,
     MAX_RESULT_ROWS,
+    TRUNCATED_PROPERTY,
     db_capability_for_sql,
-    limit_rows,
+    fetch_limited_rows,
     needs_commit,
     result_returns_rows,
     sql_capability_scope,
@@ -160,14 +165,21 @@ class DatabaseQueryProcessor(BaseProcessor):
                     await conn.commit()
 
                 if returns_rows:
-                    rows = [dict(row._mapping) for row in result.fetchall()]
-                    rows, truncated = limit_rows(rows, limit=self._max_rows)
+                    # ADR-0418: лимит применяется **до** материализации —
+                    # из курсора забирается limit+1 строк, а не весь
+                    # результат (``fetchall``). «Лишняя» строка — маркер
+                    # усечения (``TRUNCATED_PROPERTY``).
+                    fetched, truncated = await fetch_limited_rows(
+                        result, limit=self._max_rows
+                    )
+                    rows = [dict(row._mapping) for row in fetched]
                     if truncated:
                         _comp_logger.warning(
                             "db_query result truncated: limit=%s rows=%s",
                             self._max_rows,
                             len(rows),
                         )
+                        exchange.set_property(TRUNCATED_PROPERTY, True)
                     exchange.set_property(self._result_property, rows)
                     exchange.set_out(
                         body=rows, headers=dict(exchange.in_message.headers)

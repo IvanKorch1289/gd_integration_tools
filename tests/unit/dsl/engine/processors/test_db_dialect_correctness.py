@@ -82,7 +82,9 @@ async def sqlite_engine() -> AsyncEngine:
     """Настоящий SQLite-engine (общий для всех соединений — StaticPool)."""
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
-        await conn.execute(text("CREATE TABLE widgets (id INTEGER PRIMARY KEY, name TEXT)"))
+        await conn.execute(
+            text("CREATE TABLE widgets (id INTEGER PRIMARY KEY, name TEXT)")
+        )
     try:
         yield engine
     finally:
@@ -124,7 +126,7 @@ async def test_db_query_external_dml_is_committed(
     manager = _SessionManager(session_factory)
     monkeypatch.setattr(
         "src.backend.core.di.providers.get_external_session_manager_provider",
-        lambda: (lambda profile: manager),
+        lambda: lambda profile: manager,
     )
 
     proc = ExternalDbQueryProcessor(
@@ -153,12 +155,11 @@ async def test_db_query_external_dml_without_returning_commits(
     manager = _SessionManager(session_factory)
     monkeypatch.setattr(
         "src.backend.core.di.providers.get_external_session_manager_provider",
-        lambda: (lambda profile: manager),
+        lambda: lambda profile: manager,
     )
 
     proc = ExternalDbQueryProcessor(
-        profile="sqlite_probe",
-        sql="INSERT INTO widgets (name) VALUES (:name)",
+        profile="sqlite_probe", sql="INSERT INTO widgets (name) VALUES (:name)"
     )
     ex = _exchange({"name": "beta"})
     await proc.process(ex, _ctx())
@@ -176,7 +177,7 @@ async def test_db_query_external_explicit_commit_false_opts_out(
     manager = _SessionManager(session_factory)
     monkeypatch.setattr(
         "src.backend.core.di.providers.get_external_session_manager_provider",
-        lambda: (lambda profile: manager),
+        lambda: lambda profile: manager,
     )
 
     proc = ExternalDbQueryProcessor(
@@ -199,13 +200,11 @@ async def test_db_query_external_select_is_not_committed(
     manager = _SessionManager(session_factory)
     monkeypatch.setattr(
         "src.backend.core.di.providers.get_external_session_manager_provider",
-        lambda: (lambda profile: manager),
+        lambda: lambda profile: manager,
     )
 
     proc = ExternalDbQueryProcessor(
-        profile="sqlite_probe",
-        sql="SELECT id FROM widgets",
-        params_from="none",
+        profile="sqlite_probe", sql="SELECT id FROM widgets", params_from="none"
     )
     ex = _exchange({})
     await proc.process(ex, _ctx())
@@ -276,11 +275,7 @@ def patch_external_registry(
     from src.backend.dsl.engine.processors import batch as batch_module
 
     registry = _Registry(_Bundle(session_factory))
-    monkeypatch.setattr(
-        batch_module,
-        "_get_external_db_registry",
-        lambda: registry,
-    )
+    monkeypatch.setattr(batch_module, "_get_external_db_registry", lambda: registry)
 
 
 async def test_batch_insert_keeps_columns_of_all_items(
@@ -293,16 +288,17 @@ async def test_batch_insert_keeps_columns_of_all_items(
     """
     from src.backend.dsl.engine.processors.batch import BatchInsertProcessor
 
-    proc = BatchInsertProcessor(table="widgets", items=[{"name": "a"}, {"name": "b", "id": 7}])
+    proc = BatchInsertProcessor(
+        table="widgets", items=[{"name": "a"}, {"name": "b", "id": 7}], profile="probe"
+    )
     ex = _exchange()
     await proc.process(ex, _ctx())
 
     assert ex.status != ExchangeStatus.failed, ex.error
     stored = await _rows(sqlite_engine, "SELECT id, name FROM widgets ORDER BY name")
-    assert stored == [
-        {"id": 1, "name": "a"},
-        {"id": 7, "name": "b"},
-    ], f"union колонок потерян: {stored!r}"
+    assert stored == [{"id": 1, "name": "a"}, {"id": 7, "name": "b"}], (
+        f"union колонок потерян: {stored!r}"
+    )
 
 
 async def test_batch_insert_missing_column_is_null(
@@ -311,7 +307,9 @@ async def test_batch_insert_missing_column_is_null(
     """(3) Отсутствующий в item'е ключ → NULL, а не «лишний столбец»."""
     from src.backend.dsl.engine.processors.batch import BatchInsertProcessor
 
-    proc = BatchInsertProcessor(table="widgets", items=[{"id": 5, "name": "x"}, {"id": 6}])
+    proc = BatchInsertProcessor(
+        table="widgets", items=[{"id": 5, "name": "x"}, {"id": 6}], profile="probe"
+    )
     ex = _exchange()
     await proc.process(ex, _ctx())
 
@@ -336,7 +334,9 @@ async def test_batch_delete_works_on_non_postgres(
         await conn.execute(text("INSERT INTO widgets (name) VALUES ('doomed')"))
         await conn.execute(text("INSERT INTO widgets (name) VALUES ('kept')"))
 
-    proc = BatchDeleteProcessor(table="widgets", ids=[1], key_field="id")
+    proc = BatchDeleteProcessor(
+        table="widgets", ids=[1], key_field="id", profile="probe"
+    )
     ex = _exchange()
     await proc.process(ex, _ctx())
 
@@ -356,7 +356,7 @@ async def test_batch_delete_statement_uses_in_clause(
     registry = _Registry(_FakeBundle(session))
     monkeypatch.setattr(batch_module, "_get_external_db_registry", lambda: registry)
 
-    proc = BatchDeleteProcessor(table="orders", ids=[1, 2])
+    proc = BatchDeleteProcessor(table="orders", ids=[1, 2], profile="probe")
     ex = _exchange()
     await proc.process(ex, _ctx())
 
@@ -387,7 +387,7 @@ async def test_database_query_processor_with_select_returns_rows(
 
     monkeypatch.setattr(
         "src.backend.core.di.providers.cache.get_db_manager_provider",
-        lambda: (lambda: _Manager()),
+        lambda: lambda: _Manager(),
     )
 
     proc = DatabaseQueryProcessor(
@@ -421,12 +421,11 @@ async def test_infra_db_query_with_select_returns_rows(
     manager = _SessionManager(session_factory)
     monkeypatch.setattr(
         "src.backend.core.di.providers.infrastructure_locator.get_main_session_manager_getter",
-        lambda: (lambda: manager),
+        lambda: lambda: manager,
     )
 
     proc = InfraDbQueryProcessor(
-        sql="WITH cte AS (SELECT id FROM widgets) SELECT id FROM cte",
-        params={},
+        sql="WITH cte AS (SELECT id FROM widgets) SELECT id FROM cte", params={}
     )
     ex = _exchange()
     await proc.process(ex, _ctx())
@@ -447,7 +446,7 @@ async def test_jdbc_query_with_select_returns_rows(
     manager = _SessionManager(session_factory)
     monkeypatch.setattr(
         "src.backend.core.di.providers.get_external_session_manager_provider",
-        lambda: (lambda profile: manager),
+        lambda: lambda profile: manager,
     )
 
     proc = JdbcQueryProcessor(
@@ -515,7 +514,7 @@ async def test_dialect_mismatch_is_rejected(
 
     monkeypatch.setattr(
         "src.backend.core.di.providers.cache.get_db_manager_provider",
-        lambda: (lambda: _Manager()),
+        lambda: lambda: _Manager(),
     )
 
     proc = DbCrudProcessor(
@@ -546,14 +545,10 @@ async def test_dialect_defaults_to_target_db(
 
     monkeypatch.setattr(
         "src.backend.core.di.providers.cache.get_db_manager_provider",
-        lambda: (lambda: _Manager()),
+        lambda: lambda: _Manager(),
     )
 
-    proc = DbCrudProcessor(
-        operation="INSERT",
-        table="widgets",
-        data={"name": "A"},
-    )
+    proc = DbCrudProcessor(operation="INSERT", table="widgets", data={"name": "A"})
     assert proc._dialect is None, "дефолт диалекта должен быть auto (целевая БД)"
 
     ex = _exchange()

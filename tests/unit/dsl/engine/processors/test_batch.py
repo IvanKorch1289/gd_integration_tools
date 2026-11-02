@@ -38,7 +38,9 @@ async def test_batch_insert(mock_bundle: MagicMock) -> None:
         "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry"
     ) as mock_reg:
         mock_reg.return_value.return_value.get_bundle.return_value = mock_bundle
-        proc = BatchInsertProcessor(table="orders", items=[{"id": 1}, {"id": 2}])
+        proc = BatchInsertProcessor(
+            table="orders", items=[{"id": 1}, {"id": 2}], profile="probe"
+        )
         exchange = _ex()
         await proc.process(exchange, None)  # type: ignore[arg-type]
         assert exchange.properties["batch_insert_result"]["affected"] == 2
@@ -50,7 +52,7 @@ async def test_batch_insert_from_body(mock_bundle: MagicMock) -> None:
         "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry"
     ) as mock_reg:
         mock_reg.return_value.return_value.get_bundle.return_value = mock_bundle
-        proc = BatchInsertProcessor(table="orders")
+        proc = BatchInsertProcessor(table="orders", profile="probe")
         exchange = _ex([{"id": 1}])
         await proc.process(exchange, None)  # type: ignore[arg-type]
         assert exchange.properties["batch_insert_result"]["affected"] == 2
@@ -70,7 +72,9 @@ async def test_batch_update(mock_bundle: MagicMock) -> None:
         "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry"
     ) as mock_reg:
         mock_reg.return_value.return_value.get_bundle.return_value = mock_bundle
-        proc = BatchUpdateProcessor(table="orders", items=[{"id": 1, "status": "ok"}])
+        proc = BatchUpdateProcessor(
+            table="orders", items=[{"id": 1, "status": "ok"}], profile="probe"
+        )
         exchange = _ex()
         await proc.process(exchange, None)  # type: ignore[arg-type]
         assert exchange.properties["batch_update_result"]["affected"] == 2
@@ -82,7 +86,7 @@ async def test_batch_delete(mock_bundle: MagicMock) -> None:
         "src.backend.dsl.engine.processors.batch._lazy_get_external_db_registry"
     ) as mock_reg:
         mock_reg.return_value.return_value.get_bundle.return_value = mock_bundle
-        proc = BatchDeleteProcessor(table="orders", ids=[1, 2])
+        proc = BatchDeleteProcessor(table="orders", ids=[1, 2], profile="probe")
         exchange = _ex()
         await proc.process(exchange, None)  # type: ignore[arg-type]
         assert exchange.properties["batch_delete_result"]["affected"] == 2

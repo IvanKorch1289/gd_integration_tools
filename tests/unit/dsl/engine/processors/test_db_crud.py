@@ -289,11 +289,22 @@ def test_build_upsert_sql_mysql_uses_duplicate_key() -> None:
     assert "INSERT INTO" in sql
     assert "ON DUPLICATE KEY UPDATE" in sql
     # ADR-0382: MySQL без ANSI_QUOTES не понимает двойные кавычки → backticks
-    assert "`name` = VALUES(`name`)" in sql
+    assert "`name`" in sql
     assert "`users`" in sql
     # id is conflict key → NOT in update set
-    assert "`id` = VALUES(`id`)" not in sql
+    assert "`id` = new.`id`" not in sql
     assert params == {"id": 1, "name": "Alice"}
+
+
+def test_build_upsert_sql_mysql_uses_row_alias_not_deprecated_values() -> None:
+    """ADR-0419: ``VALUES(col)`` deprecated (MySQL 8.0.20) → alias-форма ``AS new``."""
+    sql, _ = build_upsert_sql_mysql(
+        "users", {"id": 1, "name": "Alice"}, conflict_keys=["id"]
+    )
+
+    assert "VALUES(`name`)" not in sql
+    assert " AS new " in sql
+    assert "`name` = new.`name`" in sql
 
 
 def test_build_upsert_sql_mysql_rejects_unsafe_identifier() -> None:
@@ -302,9 +313,12 @@ def test_build_upsert_sql_mysql_rejects_unsafe_identifier() -> None:
 
 
 def test_build_upsert_sql_mysql_no_update_cols_keeps_clause() -> None:
-    """Если все columns = conflict_keys → ON DUPLICATE KEY UPDATE c = c (no-op)."""
+    """Если все columns = conflict_keys → ON DUPLICATE KEY UPDATE с no-op."""
     sql, _ = build_upsert_sql_mysql("users", {"id": 1}, conflict_keys=["id"])
     assert "ON DUPLICATE KEY UPDATE" in sql
+    # no-op должен быть валидным SQL (раньше был «c = c» — неизвестная колонка)
+    assert "c = c" not in sql
+    assert "`id` = new.`id`" in sql
 
 
 def test_build_upsert_sql_merge_uses_merge_into() -> None:

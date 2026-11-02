@@ -66,6 +66,8 @@ from typing import NamedTuple, Sequence, Union
 
 from alembic import op
 
+from src.backend.core.tenancy.tenant_tables import TENANT_TABLES
+
 revision: str = "e2f3a4b5c6d7"
 down_revision: Union[str, None] = "f1a2b3c4d5e6"
 branch_labels: Union[str, Sequence[str], None] = None
@@ -89,23 +91,31 @@ class RLSTable(NamedTuple):
     legacy_policy: str | None = None
 
 
+#: Legacy-политики S21 — заменяются канонической ``tenant_isolation_<table>``.
+_LEGACY_POLICIES: dict[str, str] = {
+    "workflow_instances": "tenant_isolation_wfi",
+    "workflow_state": "tenant_isolation_workflow_state",
+    "rule_engine_rulesets": "tenant_isolation_rule_engine",
+}
+
+#: Таблицы с nullable ``tenant_id`` — глобальные строки (``tenant_id IS NULL``)
+#: остаются видимыми (как в исходной политике S21).
+_ALLOW_GLOBAL_TABLES: frozenset[str] = frozenset({"rule_engine_rulesets"})
+
 #: Полный список tenant-таблиц (``tenant_id``) с RLS-политикой.
-RLS_TABLES: tuple[RLSTable, ...] = (
-    # Уже покрыты S21 (политика заменяется на каноническую).
-    RLSTable("workflow_instances", legacy_policy="tenant_isolation_wfi"),
-    RLSTable("workflow_state", legacy_policy="tenant_isolation_workflow_state"),
+#:
+#: Имена берутся из **канонического** списка
+#: :data:`src.backend.core.tenancy.tenant_tables.TENANT_TABLES` (ADR-0417) —
+#: того же, по которому строится scope tenant-guard'а в приложении. Список
+#: имён не дублируется: расхождение scope'ов (guard ≠ RLS) означало бы
+#: таблицу, не защищённую ни приложением, ни БД.
+RLS_TABLES: tuple[RLSTable, ...] = tuple(
     RLSTable(
-        "rule_engine_rulesets",
-        allow_global=True,
-        legacy_policy="tenant_isolation_rule_engine",
-    ),
-    # Добавлены волнами S89/S91/S92/S101/S171/ADR-0346.
-    RLSTable("orders"),
-    RLSTable("users"),
-    RLSTable("files"),
-    RLSTable("dsl_snapshots"),
-    RLSTable("workflow_events"),
-    RLSTable("orderkinds"),
+        name,
+        allow_global=name in _ALLOW_GLOBAL_TABLES,
+        legacy_policy=_LEGACY_POLICIES.get(name),
+    )
+    for name in sorted(TENANT_TABLES)
 )
 
 #: Таблицы с ``tenant_id``, сознательно оставленные без RLS (таблица → причина).

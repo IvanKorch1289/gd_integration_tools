@@ -5,13 +5,17 @@ from typing import ParamSpec, TypeVar
 
 from sqlalchemy.exc import IntegrityError, InterfaceError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio.session import AsyncSessionTransaction
 
 from src.backend.core.config.settings import settings
 from src.backend.core.errors import DatabaseError, NotFoundError
 from src.backend.core.logging import get_logger
 from src.backend.core.resilience.breaker import BreakerSpec, get_breaker_registry
 from src.backend.core.resilience.retry import retry_async
-from src.backend.core.tenancy.sqlalchemy_filter import apply_tenant_filter
+from src.backend.core.tenancy.sqlalchemy_filter import (
+    apply_tenant_filter,
+    register_external_engine,
+)
 
 # Cycle 172 (Wave 4.3): ``get_external_db_registry`` импортируется
 # напрямую, поэтому ``patch("...session_manager.get_external_db_registry")``
@@ -38,12 +42,16 @@ db_logger = get_logger("database")
 breaker_registry = get_breaker_registry()
 
 __all__ = (
+    "RETRYABLE_PG_CODES",
     "DatabaseSessionManager",
+    "RetryableTransactionError",
     "get_external_session_manager",
     "get_main_session_manager",
     "get_smart_read_session",
     "get_smart_write_session",
+    "is_retryable_transaction_error",
     "main_session_manager",
+    "pg_sqlstate",
 )
 
 
@@ -63,6 +71,63 @@ _RETRYABLE_CONNECT_ERRORS: tuple[type[BaseException], ...] = (
     OperationalError,
     InterfaceError,
 )
+
+#: SQLSTATE-коды PostgreSQL, при которых повтор транзакции осмысленен
+#: (ADR-0418): ``40001`` — ``serialization_failure``, ``40P01`` —
+#: ``deadlock_detected``.
+#:
+#: Раньше повтор делался только на этапе установления соединения и только
+#: для ``OperationalError``/``InterfaceError`` — сериализационные конфликты
+#: (типичный сценарий двух конкурирующих транзакций) приводили к отказу
+#: всей операции без единой попытки повтора.
+RETRYABLE_PG_CODES: frozenset[str] = frozenset({"40001", "40P01"})
+
+
+class RetryableTransactionError(Exception):
+    """Внутренний маркер сериализационной ошибки (pgcode 40001/40P01).
+
+    :func:`src.backend.core.resilience.retry.retry_async` умеет повторять
+    только по **типу** исключения, а SQLAlchemy оборачивает сериализационную
+    ошибку в ``OperationalError`` (вместе с десятком других). Поэтому ошибка
+    с распознанным pgcode пере-оборачивается в этот маркер, а исходное
+    исключение сохраняется в ``__cause__`` и пробрасывается вызывающему
+    после исчерпания попыток.
+    """
+
+
+def pg_sqlstate(exc: BaseException) -> str | None:
+    """Извлечь SQLSTATE (pgcode) из исключения драйвера.
+
+    Args:
+        exc: Исключение SQLAlchemy или драйвера БД.
+
+    Returns:
+        Код SQLSTATE в верхнем регистре либо ``None``, если код не найден.
+
+    """
+    for candidate in (exc, getattr(exc, "orig", None)):
+        if candidate is None:
+            continue
+        for attr in ("sqlstate", "pgcode"):
+            value = getattr(candidate, attr, None)
+            if isinstance(value, str) and value:
+                return value.upper()
+    return None
+
+
+def is_retryable_transaction_error(exc: BaseException) -> bool:
+    """Сериализационная ошибка / дедлок (pgcode 40001 / 40P01).
+
+    Args:
+        exc: Исключение SQLAlchemy или драйвера БД.
+
+    Returns:
+        ``True``, если транзакцию осмысленно повторить.
+
+    """
+    state = pg_sqlstate(exc)
+    return state is not None and state in RETRYABLE_PG_CODES
+
 
 #: Ошибки, которые НЕ считаются отказом БД (Wave 16 / X4, ADR-0383).
 #:
@@ -121,6 +186,12 @@ class DatabaseSessionManager:
         # S21 W0). Listeners реєструються на класі ``Session`` (SessionEvents),
         # тому target аргумент ігнорується. Ідемпотентно через _INSTALLED.
         apply_tenant_filter()
+        # ADR-0417: внешние профили БД — отдельный tenant-контур. Tenant-guard
+        # (ORM-фильтр + raw-SQL guard) к ним не применяется: иначе запрос к
+        # таблице с tenant-именем (``workflow_instances``) отклоняется, и
+        # ``db_query_external`` / ``jdbc_query`` / ``batch_*`` не работают.
+        if db_name != "main":
+            register_external_engine(session_maker)
         # Wave 6.2: per-DB circuit breaker. Параметры из settings.database.*.
         self._breaker = breaker_registry.get_or_create(
             f"db:{db_name}",
@@ -207,12 +278,52 @@ class DatabaseSessionManager:
 
     @asynccontextmanager
     async def transaction(self, session: AsyncSession) -> AsyncGenerator[None]:
-        """Выполняет commit при успехе и rollback при ошибке."""
+        """Выполняет commit при успехе и rollback при ошибке.
+
+        ADR-0418 (волна 24) — два изменения относительно прежнего
+        «yield → commit / rollback всего подряд»:
+
+        * **BEGIN-этап повторяется при сериализационной ошибке.**
+          PostgreSQL сообщает о конфликте сериализации (SQLSTATE ``40001``)
+          и о дедлоке (``40P01``) — раньше эти ошибки не повторялись
+          вовсе, операция падала с первой попытки. Повтор делается
+          **только** на этапе открытия транзакции: тело транзакции на
+          этом этапе ещё не выполнялось, частичных записей нет, повтор
+          безопасен. Backoff — экспоненциальный (tenacity через
+          ``core.resilience.retry``);
+        * **тело транзакции выполняется под SAVEPOINT.** Ошибка тела
+          откатывает savepoint, а не всю транзакцию: внешняя транзакция
+          остаётся открытой, и вызывающий может её продолжить
+          (например — повторить упавший блок).
+
+        Args:
+            session: Открытая async-сессия.
+
+        Yields:
+            ``None`` — тело транзакции.
+
+        Raises:
+            DatabaseError: При ошибке открытия транзакции или её тела.
+
+        """
+        try:
+            savepoint = await self._begin_transaction(session)
+        except Exception as exc:
+            self.logger.error(
+                "Ошибка открытия транзакции в БД '%s': %s",
+                self.db_name,
+                sanitize_db_error_text(str(exc)),
+                exc_info=sanitized_exc_info(exc),
+            )
+            raise DatabaseError(
+                message=f"Failed to begin transaction for '{self.db_name}'"
+            ) from exc
+
         try:
             yield
-            await session.commit()
         except Exception as exc:
-            await session.rollback()
+            # ADR-0418: откат SAVEPOINT — внешняя транзакция не сбрасывается.
+            await self._rollback_savepoint(savepoint)
             self.logger.error(
                 "Ошибка транзакции в БД '%s': %s",
                 self.db_name,
@@ -222,6 +333,92 @@ class DatabaseSessionManager:
             raise DatabaseError(
                 message=f"Transaction failed for '{self.db_name}'"
             ) from exc
+
+        await savepoint.commit()
+        await session.commit()
+
+    async def _begin_transaction(
+        self, session: AsyncSession
+    ) -> AsyncSessionTransaction:
+        """Открывает транзакцию и SAVEPOINT на её тело (ADR-0418).
+
+        Повтор делается только на этом этапе: тело транзакции ещё не
+        выполнялось, поэтому повтор не может продублировать данные.
+
+        Args:
+            session: Открытая async-сессия.
+
+        Returns:
+            Транзакция SAVEPOINT, оборачивающая тело.
+
+        Raises:
+            Exception: Ошибка установления соединения / BEGIN / SAVEPOINT.
+
+        """
+        max_retries = max(0, int(settings.database.max_retries))
+
+        async def _open() -> AsyncSessionTransaction:
+            if not session.in_transaction():
+                # Явный BEGIN: без него «этап открытия транзакции» —
+                # это первое обращение к БД (BEGIN + SAVEPOINT).
+                await session.begin()
+            # SAVEPOINT на тело транзакции: ошибка тела откатывает
+            # savepoint, а не всю транзакцию (ADR-0418).
+            return await session.begin_nested()
+
+        if max_retries == 0:
+            return await _open()
+
+        async def _attempt() -> AsyncSessionTransaction:
+            try:
+                return await _open()
+            except Exception as exc:
+                if not is_retryable_transaction_error(exc):
+                    raise
+                # Транзакция после сериализационной ошибки невалидна —
+                # откатываем, чтобы следующая попытка шла с чистого
+                # состояния.
+                try:
+                    await session.rollback()
+                except Exception as rollback_exc:  # noqa: BLE001 — битое соединение
+                    self.logger.warning(
+                        "Откат транзакции в БД '%s' не удался: %s",
+                        self.db_name,
+                        sanitize_db_error_text(str(rollback_exc)),
+                    )
+                raise RetryableTransactionError(
+                    f"retryable transaction error (sqlstate={pg_sqlstate(exc)})"
+                ) from exc
+
+        try:
+            return await retry_async(
+                _attempt,
+                max_attempts=max_retries + 1,
+                base_delay=0.5,
+                max_delay=10.0,
+                retryable=(RetryableTransactionError,),
+                op=f"db.begin:{self.db_name}",
+            )
+        except RetryableTransactionError as exc:
+            # Возвращаем вызывающему исходную ошибку БД, а не маркер.
+            cause = exc.__cause__
+            raise (cause if cause is not None else exc) from None
+
+    async def _rollback_savepoint(self, savepoint: AsyncSessionTransaction) -> None:
+        """Откатить SAVEPOINT, не сбрасывая внешнюю транзакцию (ADR-0418).
+
+        Args:
+            savepoint: Транзакция SAVEPOINT тела.
+
+        """
+        try:
+            await savepoint.rollback()
+        except Exception as exc:  # noqa: BLE001 — битое соединение
+            self.logger.warning(
+                "Откат savepoint в БД '%s' не удался: %s",
+                self.db_name,
+                sanitize_db_error_text(str(exc)),
+            )
 
     async def get_session(self) -> AsyncGenerator[AsyncSession]:
         """Dependency-совместимый генератор сессии без auto-commit."""

@@ -114,7 +114,7 @@ class TestJdbcQueryProcessorSelectSetsResultProperty:
         exchange = _make_exchange(body={"id": 42})
 
         mock_result = MagicMock()
-        mock_result.fetchall.return_value = [
+        mock_result.fetchmany.return_value = [
             MagicMock(_mapping={"id": 42, "name": "Alice"}),
             MagicMock(_mapping={"id": 43, "name": "Bob"}),
         ]
@@ -154,7 +154,7 @@ class TestJdbcQueryProcessorSelectSetsResultProperty:
         exchange = _make_exchange(body={"id": 999})
 
         mock_result = MagicMock()
-        mock_result.fetchall.return_value = []
+        mock_result.fetchmany.return_value = []
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result
@@ -297,7 +297,7 @@ class TestJdbcQueryProcessorParamsFrom:
         exchange.set_property("id", 42)
 
         mock_result = MagicMock()
-        mock_result.fetchall.return_value = [
+        mock_result.fetchmany.return_value = [
             MagicMock(_mapping={"id": 42, "name": "Alice"})
         ]
 
@@ -337,7 +337,7 @@ class TestJdbcQueryProcessorParamsFrom:
         exchange = _make_exchange(body={"id": 42})
 
         mock_result = MagicMock()
-        mock_result.fetchall.return_value = [MagicMock(_mapping={"?column?": 1})]
+        mock_result.fetchmany.return_value = [MagicMock(_mapping={"?column?": 1})]
 
         mock_session = AsyncMock()
         mock_session.execute.return_value = mock_result

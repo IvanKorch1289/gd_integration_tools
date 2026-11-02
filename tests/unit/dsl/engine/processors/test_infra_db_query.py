@@ -39,18 +39,35 @@ class _FakeResult(list[Any]):
 
     ``returns_rows`` моделирует реальный ``CursorResult``: SELECT возвращает
     строки, DML — нет (ADR-0382: тип результата, а не префикс SQL).
+
+    ADR-0418: добавлен ``fetchmany(size)`` — лимит выборки теперь
+    применяется **на базе** (из курсора забирается ``limit + 1`` строк), а
+    не после ``fetchall()``. ``fetchall()`` остаётся, но шаг его не
+    вызывает.
     """
 
     def __init__(
-        self,
-        rows: list[Any],
-        rowcount: int = -1,
-        *,
-        returns_rows: bool = True,
+        self, rows: list[Any], rowcount: int = -1, *, returns_rows: bool = True
     ) -> None:
         super().__init__(rows)
         self.rowcount = rowcount
         self.returns_rows = returns_rows
+        self.fetchall_calls = 0
+
+    def fetchall(self) -> list[Any]:
+        """Вернуть весь результат (счётчик — шаг не должен его звать)."""
+        self.fetchall_calls += 1
+        return list(self)
+
+    def fetchmany(self, size: int | None = None) -> list[Any]:
+        """Вернуть не более ``size`` строк — как ``CursorResult.fetchmany``."""
+        if size is None:
+            out = list(self)
+            del self[:]
+            return out
+        out = list(self[:size])
+        del self[:size]
+        return out
 
 
 class _FakeSession:
@@ -174,7 +191,9 @@ async def test_ddl_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_file_function_read_csv_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_file_function_read_csv_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """DuckDB-функция ``read_csv`` (чтение ФС из SQL) отклоняется."""
     monkeypatch.setattr(feature_flags, "infra_db_query_enabled", True)
     session = _FakeSession(_FakeResult([]))

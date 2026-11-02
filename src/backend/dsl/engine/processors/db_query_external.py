@@ -29,6 +29,11 @@ ADR-0393 (волна 18):
 * **Лимит выборки** (``max_rows``) — ``mappings().all()`` без ограничения;
 * **Audit-событие** доступа к данным (без значений данных).
 
+ADR-0418 (волна 24): лимит выборки применяется **до** материализации
+результата (``fetchmany(limit + 1)`` вместо ``mappings().all()``);
+«лишняя» строка — маркер усечения (``db_truncated`` в
+``Exchange.properties``).
+
 Контракт DSL::
 
     .db_query_external(
@@ -49,8 +54,9 @@ from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
 from src.backend.dsl.engine.processors._sql_validation import (
     MAX_RESULT_ROWS,
+    TRUNCATED_PROPERTY,
     db_capability_for_sql,
-    limit_rows,
+    fetch_limited_rows,
     needs_commit,
     result_returns_rows,
     sql_statement_kind,
@@ -182,8 +188,8 @@ class ExternalDbQueryProcessor(BaseProcessor):
             # разбор результата упадёт.
             if self._should_commit(returns_rows):
                 await session.commit()
-            payload = self._materialize_result(
-                result, returns_rows=returns_rows, rowcount=rowcount
+            payload = await self._materialize_result(
+                result, exchange, returns_rows=returns_rows, rowcount=rowcount
             )
 
         exchange.set_property(self._result_property, payload)
@@ -232,13 +238,19 @@ class ExternalDbQueryProcessor(BaseProcessor):
             return False
         return needs_commit(self._sql, returns_rows=returns_rows)
 
-    def _materialize_result(
-        self, result: Any, *, returns_rows: bool, rowcount: int = -1
+    async def _materialize_result(
+        self,
+        result: Any,
+        exchange: Exchange[Any],
+        *,
+        returns_rows: bool,
+        rowcount: int = -1,
     ) -> Any:
         """Конвертирует SQLAlchemy-result в привычную структуру.
 
         Args:
             result: Результат ``session.execute``.
+            exchange: Текущий Exchange (для маркера усечения выборки).
             returns_rows: Возвращает ли результат строки.
             rowcount: Количество затронутых строк (для DML).
 
@@ -252,16 +264,20 @@ class ExternalDbQueryProcessor(BaseProcessor):
             return {"rowcount": rowcount}
         match self._fetch:
             case "all":
-                rows = [dict(row) for row in result.mappings().all()]
-                # ADR-0393: лимит выборки (без него ``SELECT *`` вытягивал
-                # в память весь результат).
-                rows, truncated = limit_rows(rows, limit=self._max_rows)
+                # ADR-0418: лимит применяется **до** материализации —
+                # ``fetchmany(limit + 1)`` вместо ``mappings().all()``;
+                # «лишняя» строка — маркер усечения.
+                fetched, truncated = await fetch_limited_rows(
+                    result.mappings(), limit=self._max_rows
+                )
+                rows = [dict(row) for row in fetched]
                 if truncated:
                     _logger.warning(
                         "db_query_external result truncated: profile=%s limit=%s",
                         self._profile,
                         self._max_rows,
                     )
+                    exchange.set_property(TRUNCATED_PROPERTY, True)
                 return rows
             case "one":
                 row = result.mappings().first()

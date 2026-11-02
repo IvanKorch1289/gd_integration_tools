@@ -4,7 +4,7 @@ import ssl
 from typing import Any
 
 from pydantic import SecretStr
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, create_engine, event, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
     AsyncConnection,
@@ -34,6 +34,18 @@ db_logger = get_logger("database")
 
 
 type DatabaseSettings = DatabaseConnectionSettings | ExternalDatabaseConnectionSettings
+
+#: Параметры, которые драйвер **не принимает** в ``connect()``, но применяет
+#: к уже установленному соединению (ADR-0418).
+#:
+#: ``oracledb.connect()`` не имеет параметра ``call_timeout`` — это свойство
+#: соединения (``Connection.call_timeout``). Если передать его в
+#: ``connect_args``, драйвер падает с
+#: ``TypeError: connect_async() got an unexpected keyword argument
+#: 'call_timeout'``. Поэтому значение выставляется на соединении через
+#: ``connect``-event (см.
+#: :meth:`DatabaseInitializer._apply_post_connect_settings`).
+_POST_CONNECT_SETTINGS: frozenset[str] = frozenset({"call_timeout"})
 
 
 def _reveal_dsn(value: str | SecretStr | None) -> str | None:
@@ -81,6 +93,7 @@ class DatabaseInitializer:
             self.replica_engine = create_async_engine(
                 url=replica_url, **self._engine_kwargs(is_async=True)
             )
+            self._apply_post_connect_settings(self.replica_engine, is_async=True)
             self.replica_session_maker = async_sessionmaker(
                 bind=self.replica_engine, autoflush=False, expire_on_commit=False
             )
@@ -168,7 +181,16 @@ class DatabaseInitializer:
             # имеют РАЗНЫЕ имена таймаут-опций (найдено prod-drill
             # 2026-09-29: sync-драйвер отвергает asyncpg-овский
             # command_timeout как «invalid connection option»).
-            "connect_args": self._get_connect_args(is_async=is_async),
+            #
+            # ADR-0418: часть опций драйвер не принимает в ``connect()``
+            # (``call_timeout`` у oracledb) — они применяются к соединению
+            # через ``connect``-event, поэтому в ``connect_args`` движка
+            # не попадают.
+            "connect_args": {
+                key: value
+                for key, value in self._get_connect_args(is_async=is_async).items()
+                if key not in _POST_CONNECT_SETTINGS
+            },
         }
         if self.settings.type != DatabaseTypeChoices.sqlite:
             kwargs.update(
@@ -189,16 +211,74 @@ class DatabaseInitializer:
 
     def _create_async_engine(self) -> AsyncEngine:
         """Создаёт и настраивает асинхронный engine SQLAlchemy."""
-        return create_async_engine(
+        engine = create_async_engine(
             url=self.settings.async_connection_url,  # type: ignore[arg-type]  # R2.MYPY: Callable[[],str] → str|URL
             **self._engine_kwargs(is_async=True),
         )
+        self._apply_post_connect_settings(engine, is_async=True)
+        return engine
 
     def _create_sync_engine(self) -> Engine:
         """Создаёт и настраивает синхронный engine SQLAlchemy."""
-        return create_engine(  # type: ignore[call-overload]
+        engine = create_engine(  # type: ignore[call-overload]
             url=self.settings.sync_connection_url, **self._engine_kwargs(is_async=False)
         )
+        self._apply_post_connect_settings(engine, is_async=False)
+        return engine
+
+    def _apply_post_connect_settings(
+        self, engine: AsyncEngine | Engine, *, is_async: bool
+    ) -> None:
+        """Применить опции, которые драйвер не принимает в ``connect()``.
+
+        ADR-0418: ``oracledb.connect()`` не имеет параметра
+        ``call_timeout`` — это свойство уже установленного соединения.
+        Если передать его в ``connect_args``, драйвер падает с
+        ``TypeError``. Поэтому значение выставляется на соединении через
+        ``connect``-event.
+
+        Args:
+            engine: Созданный engine (async или sync).
+            is_async: ``True`` — для асинхронного движка.
+
+        """
+        post_connect = {
+            key: value
+            for key, value in self._get_connect_args(is_async=is_async).items()
+            if key in _POST_CONNECT_SETTINGS
+        }
+        if not post_connect:
+            return
+
+        sync_engine = engine.sync_engine if isinstance(engine, AsyncEngine) else engine
+
+        def _on_connect(dbapi_connection: Any, _connection_record: Any) -> None:
+            """Обработчик ``connect``-event: проставляет post-connect опции."""
+            self._apply_post_connect(dbapi_connection, post_connect)
+
+        event.listen(sync_engine, "connect", _on_connect)
+
+    def _apply_post_connect(
+        self, dbapi_connection: Any, post_connect: dict[str, Any]
+    ) -> None:
+        """Проставить post-connect опции на драйверном соединении.
+
+        Args:
+            dbapi_connection: Соединение драйвера (или его адаптер).
+            post_connect: Имена и значения опций (например ``call_timeout``).
+
+        """
+        target = getattr(dbapi_connection, "_connection", None) or dbapi_connection
+        for name, value in post_connect.items():
+            try:
+                setattr(target, name, value)
+            except Exception as exc:  # noqa: BLE001 — опция не критична
+                db_logger.warning(
+                    "Не удалось применить '%s' к соединению БД '%s': %s",
+                    name,
+                    self.name,
+                    exc,
+                )
 
     def _get_connect_args(self, *, is_async: bool) -> dict[str, Any]:
         """Генерирует driver-level параметры подключения.
@@ -207,12 +287,28 @@ class DatabaseInitializer:
 
         * ``asyncpg`` — ``command_timeout`` / ``timeout`` (секунды);
         * ``psycopg`` (v3, libpq) — ``connect_timeout`` (секунды) и
-          statement_timeout через ``options='-c statement_timeout=...'``.
+          statement_timeout через ``options='-c statement_timeout=...'``;
+        * ``aiomysql`` / ``pymysql`` — ``connect_timeout`` и
+          ``init_command`` с ``SET SESSION max_execution_time`` (ADR-0418);
+        * ``aioodbc`` / ``pyodbc`` — ``timeout`` (ODBC
+          ``SQL_ATTR_LOGIN_TIMEOUT``) (ADR-0418);
+        * ``oracledb`` — ``tcp_connect_timeout`` и ``call_timeout``
+          (ADR-0418).
 
         Раньше ветка выбиралась по ``is_async``, из-за чего async-движок с
         драйвером psycopg получал asyncpg-опции и падал с
         ``psycopg.ProgrammingError: invalid connection option
         "command_timeout"``.
+
+        ADR-0418: для MySQL/MSSQL/Oracle обе опции конфигурации
+        (``connect_timeout`` / ``command_timeout``) были мертвы — ветки в
+        коде не было вовсе.
+
+        Внимание: ``call_timeout`` oracledb **не принимает** в
+        ``connect()`` — это свойство уже установленного соединения.
+        Значение из этого словаря переносится в ``connect``-event движка
+        (см. :meth:`_apply_post_connect_settings`), а в ``connect_args``
+        движка не попадает.
         """
         connect_args: dict[str, Any] = {}
 
@@ -280,8 +376,41 @@ class DatabaseInitializer:
                     # Системное хранилище CA: create_default_context без cafile.
                     connect_args["ssl"] = ssl.create_default_context()
 
+        elif self.settings.type == DatabaseTypeChoices.mysql:
+            # ADR-0418: aiomysql/pymysql — ``connect_timeout`` (таймаут
+            # установления соединения). Раньше ветки не было: обе опции
+            # конфигурации были мертвы для MySQL.
+            connect_args["connect_timeout"] = self.settings.connect_timeout
+            if self.settings.command_timeout:
+                # Серверный лимит времени выполнения запроса (MySQL 5.7+):
+                # ``max_execution_time`` — в миллисекундах.
+                # Предел (ponytail): действует только на read-only запросы
+                # (SELECT). Для DML нужен ``max_statement_time``
+                # (MySQL 8.0.26+) — см. ADR-0418.
+                connect_args["init_command"] = (
+                    "SET SESSION max_execution_time="
+                    f"{int(self.settings.command_timeout) * 1000}"
+                )
+
+        elif self.settings.type == DatabaseTypeChoices.mssql:
+            # ADR-0418: aioodbc/pyodbc — ``timeout`` — ODBC-атрибут
+            # ``SQL_ATTR_LOGIN_TIMEOUT`` (секунды) на этапе подключения.
+            # Предел (ponytail): лимит времени выполнения запроса
+            # (``SQL_ATTR_QUERY_TIMEOUT``) задаётся per-cursor и через
+            # ``connect_args`` не передаётся — см. ADR-0418.
+            connect_args["timeout"] = self.settings.connect_timeout
+
         elif self.settings.type == DatabaseTypeChoices.oracle:
-            connect_args.update({"tcp_connect_timeout": self.settings.connect_timeout})
+            # ADR-0418: oracledb — ``tcp_connect_timeout`` (установление
+            # соединения) + ``call_timeout`` (лимит времени выполнения
+            # запроса). ``call_timeout`` — свойство соединения, поэтому
+            # применяется через ``connect``-event.
+            connect_args.update(
+                {
+                    "tcp_connect_timeout": self.settings.connect_timeout,
+                    "call_timeout": self.settings.command_timeout,
+                }
+            )
 
         return connect_args
 
@@ -358,7 +487,7 @@ class DatabaseInitializer:
             self.logger.info(
                 "Синхронные соединения закрыты", extra={"db_name": self.name}
             )
-        except (RuntimeError, OSError):
+        except RuntimeError, OSError:
             self.logger.error(
                 "Ошибка закрытия синхронных соединений",
                 extra={"db_name": self.name},
@@ -372,7 +501,7 @@ class DatabaseInitializer:
             self.logger.info(
                 "Асинхронные соединения закрыты", extra={"db_name": self.name}
             )
-        except (RuntimeError, OSError):
+        except RuntimeError, OSError:
             self.logger.error(
                 "Ошибка закрытия асинхронных соединений",
                 extra={"db_name": self.name},
@@ -386,7 +515,7 @@ class DatabaseInitializer:
         if self.replica_engine is not None:
             try:
                 await self.replica_engine.dispose()
-            except (RuntimeError, OSError):
+            except RuntimeError, OSError:
                 self.logger.error(
                     "Ошибка закрытия replica engine",
                     extra={"db_name": self.name},

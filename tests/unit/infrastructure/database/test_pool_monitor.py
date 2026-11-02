@@ -86,8 +86,15 @@ class TestPoolMonitor:
     @pytest.mark.asyncio
     async def test_collect_stats_no_initializer(self, monitor: PoolMonitor) -> None:
         """collect_stats returns None when db_initializer is unavailable."""
+        # ADR-0420: патчится **пакетный** атрибут
+        # ``src.backend.infrastructure.database.database.db_initializer`` —
+        # именно его импортирует ``collect_stats``. Раньше патчился
+        # ``pool_monitor.db_initializer`` (чужой модуль) → патч не действовал,
+        # и тест проходил только потому, что в кэше accessor'а main-БД
+        # оказывался MagicMock, оставшийся от другого теста (order-dependent
+        # false-green). Теперь тест честно проверяет ветку «инициализатора нет».
         with patch(
-            "src.backend.infrastructure.database.pool_monitor.db_initializer",
+            "src.backend.infrastructure.database.database.db_initializer",
             None,
             create=True,
         ):

@@ -32,6 +32,10 @@ enforcement включается флагом ``dsl_capability_gate_enabled`` (A
 который в prod/staging включён явно. Scope — алиас таблицы из SQL.
 Также добавлены лимит выборки (``max_rows``) и audit-событие доступа
 к данным (без значений данных).
+
+ADR-0418 (волна 24): лимит выборки применяется **до** материализации
+результата (``fetchmany(limit + 1)`` вместо сплошной итерации); «лишняя»
+строка — маркер усечения (``db_truncated`` в ``Exchange.properties``).
 """
 
 from __future__ import annotations
@@ -42,8 +46,9 @@ from src.backend.core.logging import get_logger
 from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.dsl.engine.processors._sql_validation import (
     MAX_RESULT_ROWS,
+    TRUNCATED_PROPERTY,
     db_capability_for_sql,
-    limit_rows,
+    fetch_limited_rows,
     needs_commit,
     result_returns_rows,
     sql_capability_scope,
@@ -195,13 +200,18 @@ class InfraDbQueryProcessor(BaseProcessor):
             if needs_commit(self.sql, returns_rows=returns_rows):
                 await session.commit()
             if returns_rows:
-                rows = [self._row_to_dict(row) for row in result]
-                # ADR-0393: лимит выборки.
-                rows, truncated = limit_rows(rows, limit=self._max_rows)
+                # ADR-0418: лимит применяется **до** материализации —
+                # ``fetchmany(limit + 1)`` вместо сплошной итерации по
+                # результату; «лишняя» строка — маркер усечения.
+                fetched, truncated = await fetch_limited_rows(
+                    result, limit=self._max_rows
+                )
+                rows = [self._row_to_dict(row) for row in fetched]
                 if truncated:
                     _logger.warning(
                         "infra_db_query result truncated: limit=%s", self._max_rows
                     )
+                    exchange.set_property(TRUNCATED_PROPERTY, True)
             else:
                 rows = [{"rowcount": rowcount}]
         self.set_result(exchange, self.target, rows)

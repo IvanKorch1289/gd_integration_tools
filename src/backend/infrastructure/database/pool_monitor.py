@@ -102,7 +102,7 @@ class PoolMonitor:
                 "total_connections": total,
                 "utilization_pct": round(utilization, 1),
             }
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             return None
 
     def get_current_stats(self) -> dict[str, Any]:
@@ -124,32 +124,65 @@ def get_pool_monitor() -> PoolMonitor:  # type: ignore[empty-body]
     """Возвращает PoolMonitor из app.state или lazy-init fallback."""
 
 
-def _register_db_pool_in_unified_monitor() -> None:
-    """Spike-регистрация DB pool в едином PoolHealthMonitor (K8 W5).
+def register_db_pool_in_unified_monitor(initializer: Any = None) -> None:
+    """Регистрирует пул main-БД в ``UnifiedPoolManager`` и ``PoolHealthMonitor``.
 
-    Демонстрирует паттерн подключения существующего pool к
-    PoolHealthMonitor из infrastructure.clients.pool_health.
+    ADR-0420: ранее функция была приватной и **не имела ни одного
+    вызова** (мёртвый код). Теперь она вызывается при ротации кредов БД:
+    пересозданный engine даёт новый объект пула, а мониторы держали бы
+    объект пула **старого** engine'а и пинговали бы его по отозванным
+    кредам. Регистрация идемпотентна — запись по имени ``db_main``
+    перезаписывается.
 
-    Вызывается из lifespan при наличии db_initializer.
-    Безопасна при отключённом feature-flag (monitor.start() — no-op).
+    Args:
+        initializer: ``DatabaseInitializer`` нового engine'а. Если ``None`` —
+            берётся текущий singleton через accessor.
+
+    Returns:
+        None.
+
     """
+    if initializer is None:
+        from src.backend.infrastructure.database.database.accessors import (
+            get_db_initializer,
+        )
+
+        initializer = get_db_initializer()
+
+    engine = getattr(initializer, "async_engine", None)
+    if engine is None:
+        return
+    pool = getattr(engine, "pool", None)
+    if pool is None:
+        return
+
+    async def _ping_db() -> None:
+        """Ping-callable для основной БД через check_connection."""
+        await initializer.check_connection()
+
+    try:
+        from src.backend.infrastructure.clients.unified_pool_manager import (
+            get_unified_pool_manager,
+        )
+
+        size = getattr(pool, "size", None)
+        get_unified_pool_manager().register(
+            "db_main",
+            pool,
+            ping_fn=_ping_db,
+            kind="sqlalchemy",
+            max_size=size() if callable(size) else 0,
+        )
+    except Exception as exc:
+        logger.debug("UnifiedPoolManager: регистрация db_main пропущена: %s", exc)
+
     try:
         from src.backend.infrastructure.clients.pool_health import (
             get_pool_monitor as get_unified_monitor,
         )
-        from src.backend.infrastructure.database.database import get_db_initializer
-
-        db_init = get_db_initializer()
-
-        async def _ping_db() -> None:
-            """Ping-callable для основной БД через check_connection."""
-            await db_init.check_connection()
 
         get_unified_monitor().register_pool(
-            name="db_main",
-            pool=db_init.async_engine.pool,
-            ping_callable=_ping_db,
-            idle_timeout=60.0,
+            name="db_main", pool=pool, ping_callable=_ping_db, idle_timeout=60.0
         )
     except Exception as exc:
-        logger.debug("Spike DB pool registration пропущена: %s", exc)
+        logger.debug("PoolHealthMonitor: регистрация db_main пропущена: %s", exc)
