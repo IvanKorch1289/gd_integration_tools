@@ -57,6 +57,11 @@ def get_hub_run_provider() -> Any:
     return run_hub_notebook
 
 
+def set_notebook_execution_service_provider(impl: Any) -> None:
+    """Test-override для NotebookExecutionService."""
+    _overrides["notebook_execution_service"] = impl
+
+
 def set_hub_run_provider(impl: Any) -> None:
     """Test-override для ``run_hub_notebook``."""
     _overrides["hub_run"] = impl
