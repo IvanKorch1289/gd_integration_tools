@@ -24,7 +24,13 @@ import ast
 
 def _get_main_source() -> str:
     """Читает main.py source без triggering импорт."""
-    import src.backend.main
+    # ADR-0410: импорт ``src.backend.main`` поднимает bootstrap приложения,
+    # который регистрирует ~190 legacy-action'ов в ГЛОБАЛЬНОМ реестре
+    # (минимальные метаданные, ``transports=()``). Реестр изолируется.
+    from tests.unit.conftest import isolated_action_registry
+
+    with isolated_action_registry():
+        import src.backend.main
 
     with open(src.backend.main.__file__, encoding="utf-8") as f:
         return f.read()

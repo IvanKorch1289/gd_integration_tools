@@ -1,4 +1,4 @@
-"""ADR-0404 — гейт: банк xfail не должен расти + order-dependent регрессии.
+"""ADR-0404/ADR-0410 — гейт: банк xfail не должен расти + order-dependent регрессии.
 
 Что проверяет гейт
 ------------------
@@ -15,6 +15,13 @@
    подменяет ``sys.modules[...]`` / вызывает ``importlib.reload`` /
    меняет ``os.environ`` без восстановления, обязан быть в allowlist
    гейта. Новый такой файл → падение гейта.
+5. **Скан production-кода на зарезервированные ключи ``extra=``** (ADR-0410):
+   ``logging.getLogger(...).debug(msg, extra={"name": ...})`` падает с
+   ``KeyError: "Attempt to overwrite 'name' in LogRecord"``, как только
+   уровень корневого логгера опускается до DEBUG. Такой вызов выглядит как
+   обычный observability-лог, но в DEBUG-профиле (dev) ломает САМ error-handler
+   → order-dependent падение. Известные места зафиксированы в
+   ``KNOWN_RESERVED_EXTRA_SITES``; НОВОЕ место → падение гейта.
 
 Зачем именно так
 ----------------
@@ -38,6 +45,7 @@ from tests.unit._xfail_environment import MAX_BANK_ENTRIES, XFAIL_ENVIRONMENT
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TESTS_ROOT = REPO_ROOT / "tests"
+SRC_ROOT = REPO_ROOT / "src"
 
 #: Известные order-dependent жертвы (ADR-0404). Список закрытый: новый
 #: файл в этом множестве → падение гейта (см. ADR-0404 §Проверка).
@@ -79,7 +87,14 @@ KNOWN_ORDER_DEPENDENT_FILES: frozenset[str] = frozenset(
         "tests/unit/services/sources/test_idempotency.py",
         "tests/unit/services/sources/test_lifecycle.py",
         "tests/unit/tools/test_py3_syntax_migration.py",
-    },
+        # ADR-0410 (волна 22, кластер B6): закрытые order-dependent жертвы.
+        # Перечислены для истории — как только причина устранена, файл больше
+        # не является order-dependent, но остаётся в реестре, чтобы новый
+        # маркер в нём нельзя было добавить молча.
+        "tests/unit/dsl/round_trip/test_core_processors.py",
+        "tests/unit/entrypoints/api/v1/endpoints/test_p0_fixes_cycle_241.py",
+        "tests/unit/infrastructure/scheduler/test_temporal_scheduler_backend.py",
+    }
 )
 
 #: Маркер в docstring файла, который ЗАВЕДОМО является order-dependent.
@@ -112,6 +127,46 @@ KNOWN_POLLUTER_PAIRS: tuple[tuple[str, str], ...] = (
     (
         "tests/unit/dsl/workflow/compiler/test_step_compilers.py",
         "tests/unit/infrastructure/workflow/test_temporal_otel_interceptor.py",
+    ),
+    # ADR-0410: импорт ``manage`` (CLI-приложение) поднимает уровень
+    # корневого stdlib-логгера до DEBUG. В DEBUG-режиме production-вызовы
+    # ``logging.getLogger(...).debug(msg, extra={"name": ...})`` падают с
+    # KeyError → падают три жертвы сразу.
+    (
+        "tests/unit/test_manage_grpc_serve.py",
+        "tests/unit/dsl/orchestration/test_triggers_coverage.py",
+    ),
+    (
+        "tests/unit/test_manage_grpc_serve.py",
+        "tests/unit/frontend/api_clients/test_coverage_uplift.py",
+    ),
+    (
+        "tests/unit/test_manage_grpc_serve.py",
+        "tests/unit/infrastructure/scheduler/test_temporal_scheduler_backend.py",
+    ),
+    # ADR-0410: ``ActionHandlerRegistry.clear()`` сносит метаданные —
+    # жертва видит пустой реестр action'ов.
+    (
+        "tests/unit/dsl/blueprints/test_python_blueprints_focused.py",
+        "tests/unit/dsl/test_action_metadata_contract.py",
+    ),
+    # ADR-0410: реестр наполнен → DX-1-валидация имён action'ов включается.
+    (
+        "tests/unit/dsl/test_action_metadata_contract.py",
+        "tests/unit/dsl/round_trip/test_core_processors.py",
+    ),
+    # ADR-0410: ``src.backend.core.api.extensions`` импортирован заранее →
+    # подмена реестра в legacy-alias хендлере перестаёт действовать.
+    (
+        "tests/unit/core/api/test_extensions_facade.py",
+        "tests/unit/entrypoints/api/v1/endpoints/test_p0_fixes_cycle_241.py",
+    ),
+    # ADR-0410: импорт приложения поднимает bootstrap и регистрирует
+    # ~190 legacy-action'ов (минимальные метаданные, transports=()) в
+    # глобальном реестре → контракт метаданных падает на «transports пуст».
+    (
+        "tests/unit/test_main.py",
+        "tests/unit/dsl/test_action_metadata_contract.py",
     ),
 )
 
@@ -173,6 +228,114 @@ _MUTATION_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"os\.environ\s*\[\s*['\"]"),
     re.compile(r"os\.chdir\s*\("),
 )
+
+#: Атрибуты ``logging.LogRecord``, которые запрещено передавать в ``extra=``.
+#: stdlib logging отвечает на такой вызов исключением
+#: ``KeyError: "Attempt to overwrite 'name' in LogRecord"`` — и это происходит
+#: ВНУТРИ error-handler'а, который сам пытается залогировать ошибку.
+RESERVED_LOGRECORD_KEYS: frozenset[str] = frozenset(
+    {
+        "args",
+        "asctime",
+        "created",
+        "exc_info",
+        "exc_text",
+        "filename",
+        "funcName",
+        "levelname",
+        "levelno",
+        "lineno",
+        "message",
+        "module",
+        "msecs",
+        "msg",
+        "name",
+        "pathname",
+        "process",
+        "processName",
+        "relativeCreated",
+        "stack_info",
+        "taskName",
+        "thread",
+        "threadName",
+    }
+)
+
+#: Известные места в ``src/**``, где ``extra=`` содержит зарезервированный
+#: ключ (ADR-0410, owner-задача на production-фикс). Реестр может ТОЛЬКО
+#: уменьшаться: починили место — удалите запись. Новое место → падение гейта.
+KNOWN_RESERVED_EXTRA_SITES: dict[str, str] = {
+    "src/backend/core/ai/pydantic_ai_client.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/backend/core/resilience/breaker.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/backend/core/security/credential_provider.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/backend/dsl/orchestration/triggers.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/backend/infrastructure/antivirus/service.py": (
+        "extra={'filename': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/backend/infrastructure/clients/transport/imap_pool.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/backend/infrastructure/clients/transport/nats_pool.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/backend/infrastructure/clients/unified_pool_manager.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/backend/infrastructure/messaging/kafka_pool_registration.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/backend/infrastructure/scheduler/temporal_scheduler_backend.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/backend/infrastructure/storage/vector_pool_registration.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/backend/services/ai/model_registry/mlflow_backend.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/frontend/streamlit_app/api_clients/flags.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+    "src/frontend/streamlit_app/services/plugin_marketplace_client.py": (
+        "extra={'name': ...} в stdlib-логгере (ADR-0410)"
+    ),
+}
+
+
+def _reserved_extra_sites(source: str) -> list[tuple[int, str]]:
+    """Найти вызовы ``...extra={...}`` с зарезервированным ключом LogRecord.
+
+    Args:
+        source: Исходный код модуля.
+
+    Returns:
+        Список пар ``(номер строки, ключ)``.
+
+    """
+    tree = ast.parse(source)
+    found: list[tuple[int, str]] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        for keyword in node.keywords:
+            if keyword.arg != "extra" or not isinstance(keyword.value, ast.Dict):
+                continue
+            for key in keyword.value.keys:
+                if (
+                    isinstance(key, ast.Constant)
+                    and isinstance(key.value, str)
+                    and key.value in RESERVED_LOGRECORD_KEYS
+                ):
+                    found.append((node.lineno, key.value))
+    return found
 
 
 def _is_subscript_of(node: ast.AST, path: tuple[str, ...]) -> bool:
@@ -258,7 +421,9 @@ class TestOrderDependentRegistry:
     def test_known_victims_exist(self) -> None:
         """Все зарегистрированные order-dependent файлы существуют."""
         missing = [
-            rel for rel in sorted(KNOWN_ORDER_DEPENDENT_FILES) if not (REPO_ROOT / rel).is_file()
+            rel
+            for rel in sorted(KNOWN_ORDER_DEPENDENT_FILES)
+            if not (REPO_ROOT / rel).is_file()
         ]
         assert not missing, "нет файлов:\n  " + "\n  ".join(missing)
 
@@ -363,6 +528,74 @@ class TestGlobalStateMutationScan:
         )
 
 
+class TestReservedExtraKeys:
+    """Скан production-кода: зарезервированные ключи в ``extra=`` (ADR-0410).
+
+    ``logging.getLogger(x).debug(msg, extra={"name": ...})`` — валидный на
+    вид вызов, который stdlib logging отклоняет: ``LogRecord`` уже содержит
+    атрибут ``name``. Пока уровень корневого логгера выше DEBUG, вызов —
+    no-op; при DEBUG (dev-профиль) он бросает ``KeyError`` прямо внутри
+    error-handler'а, который логирует исходную ошибку. Итог — падение,
+    зависящее от порядка/профиля, а не от логики теста.
+    """
+
+    @staticmethod
+    def _scan() -> dict[str, list[tuple[int, str]]]:
+        """Просканировать ``src/**`` и вернуть места с reserved-ключами."""
+        result: dict[str, list[tuple[int, str]]] = {}
+        for path in sorted(SRC_ROOT.rglob("*.py")):
+            rel = _relative(path)
+            try:
+                source = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                continue
+            try:
+                found = _reserved_extra_sites(source)
+            except SyntaxError:
+                continue
+            if found:
+                result[rel] = found
+        return result
+
+    def test_no_new_reserved_extra_sites(self) -> None:
+        """Новое место с reserved-ключом в ``extra=`` → падение гейта."""
+        found = self._scan()
+        offenders = [
+            f"{rel}: " + ", ".join(f"{key} (line {line})" for line, key in sites)
+            for rel, sites in found.items()
+            if rel not in KNOWN_RESERVED_EXTRA_SITES
+        ]
+        assert not offenders, (
+            "новые вызовы logging с зарезервированным ключом в extra= "
+            "(KeyError: 'Attempt to overwrite ... in LogRecord', ADR-0410) — "
+            "переименуйте ключ либо зарегистрируйте место в "
+            "KNOWN_RESERVED_EXTRA_SITES с owner-задачей:\n  " + "\n  ".join(offenders)
+        )
+
+    def test_known_reserved_extra_registry_is_tight(self) -> None:
+        """Реестр известных мест не должен содержать «мёртвых» записей.
+
+        Реестр может только уменьшаться: если место починено (ключ
+        переименован) — запись обязана исчезнуть, иначе гейт перестанет
+        видеть новые нарушения в этом файле.
+        """
+        found = self._scan()
+        stale = sorted(set(KNOWN_RESERVED_EXTRA_SITES) - set(found))
+        assert not stale, (
+            "записи KNOWN_RESERVED_EXTRA_SITES устарели (место починено) — "
+            "удалите их, реестр может только уменьшаться (ADR-0410):\n  "
+            + "\n  ".join(stale)
+        )
+
+    def test_known_reserved_extra_entries_have_owner(self) -> None:
+        """Каждая запись реестра объясняет, почему место допустимо."""
+        for rel, reason in KNOWN_RESERVED_EXTRA_SITES.items():
+            assert reason.strip(), f"{rel}: пустое обоснование"
+            assert "ADR-0410" in reason, (
+                f"{rel}: нет ссылки на ADR-0410 в обосновании"
+            )
+
+
 class TestPolluterPairs:
     """Динамическая проверка пар «поллитер → жертва»."""
 
@@ -371,9 +604,7 @@ class TestPolluterPairs:
         KNOWN_POLLUTER_PAIRS,
         ids=[f"{Path(p).stem}->{Path(v).stem}" for p, v in KNOWN_POLLUTER_PAIRS],
     )
-    def test_polluter_does_not_break_victim(
-        self, polluter: str, victim: str
-    ) -> None:
+    def test_polluter_does_not_break_victim(self, polluter: str, victim: str) -> None:
         """Поллитер не должен ломать жертву (пара запускается в одном прогоне)."""
         result = subprocess.run(
             [

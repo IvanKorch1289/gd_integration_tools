@@ -127,9 +127,6 @@ def test_p0_2_legacy_aliases_registered_count() -> None:
     )
 
 
-@pytest.mark.skip(
-    reason="S44 W41: pre-existing flaky test (test isolation issue) — fails in batch context, passes individually. Needs test isolation work. Out of scope for atomic fix."
-)
 def test_p0_2_orders_all_returns_dispatch_call() -> None:
     """GET /api/v1/orders/all/ → orders.get dispatch call."""
     app = _build_test_app_with_aliases()
@@ -138,10 +135,10 @@ def test_p0_2_orders_all_returns_dispatch_call() -> None:
     mock_reg = MagicMock()
     mock_reg.dispatch = AsyncMock(return_value={"items": [], "total": 0})
 
-    # Patch source location (lazy import in _dispatch).
-    with patch(
-        "src.backend.dsl.commands.action_registry.action_handler_registry", mock_reg
-    ):
+    # ADR-0410: подменяем точку, откуда реестр реально читается —
+    # ``legacy_aliases._dispatch_with`` делает lazy-import
+    # ``src.backend.core.api.extensions`` внутри функции.
+    with patch("src.backend.core.api.extensions.action_handler_registry", mock_reg):
         r = client.get("/api/v1/orders/all/")
 
     assert r.status_code == 200
@@ -151,9 +148,6 @@ def test_p0_2_orders_all_returns_dispatch_call() -> None:
     assert call_args.action == "orders.get"
 
 
-@pytest.mark.skip(
-    reason="S44 W41: pre-existing flaky test — fails in batch context. Out of scope."
-)
 def test_p0_2_orders_create_passes_body_as_payload() -> None:
     """POST /api/v1/orders/create/ → orders.add dispatch с body как payload."""
     app = _build_test_app_with_aliases()
@@ -162,9 +156,7 @@ def test_p0_2_orders_create_passes_body_as_payload() -> None:
     mock_reg = MagicMock()
     mock_reg.dispatch = AsyncMock(return_value={"id": 1, "created": True})
 
-    with patch(
-        "src.backend.dsl.commands.action_registry.action_handler_registry", mock_reg
-    ):
+    with patch("src.backend.core.api.extensions.action_handler_registry", mock_reg):
         r = client.post(
             "/api/v1/orders/create/", json={"pledge_cadastral_number": "77:01:0001:123"}
         )
@@ -175,9 +167,6 @@ def test_p0_2_orders_create_passes_body_as_payload() -> None:
     assert call_args.payload.get("pledge_cadastral_number") == "77:01:0001:123"
 
 
-@pytest.mark.skip(
-    reason="S44 W41: pre-existing flaky test — fails in batch context. Out of scope."
-)
 def test_p0_2_orders_update_includes_id_in_path() -> None:
     """PUT /api/v1/orders/update/<id> → orders.update dispatch с id в payload."""
     app = _build_test_app_with_aliases()
@@ -186,9 +175,7 @@ def test_p0_2_orders_update_includes_id_in_path() -> None:
     mock_reg = MagicMock()
     mock_reg.dispatch = AsyncMock(return_value={"updated": True})
 
-    with patch(
-        "src.backend.dsl.commands.action_registry.action_handler_registry", mock_reg
-    ):
+    with patch("src.backend.core.api.extensions.action_handler_registry", mock_reg):
         r = client.put("/api/v1/orders/update/42", json={"is_active": True})
 
     assert r.status_code == 200
@@ -197,9 +184,6 @@ def test_p0_2_orders_update_includes_id_in_path() -> None:
     assert call_args.payload.get("id") == 42
 
 
-@pytest.mark.skip(
-    reason="S44 W41: pre-existing flaky test — fails in batch context. Out of scope."
-)
 def test_p0_2_orders_delete_includes_id() -> None:
     """DELETE /api/v1/orders/delete/<id> → orders.delete dispatch."""
     app = _build_test_app_with_aliases()
@@ -208,9 +192,7 @@ def test_p0_2_orders_delete_includes_id() -> None:
     mock_reg = MagicMock()
     mock_reg.dispatch = AsyncMock(return_value={"deleted": True})
 
-    with patch(
-        "src.backend.dsl.commands.action_registry.action_handler_registry", mock_reg
-    ):
+    with patch("src.backend.core.api.extensions.action_handler_registry", mock_reg):
         r = client.delete("/api/v1/orders/delete/42")
 
     assert r.status_code == 200
@@ -235,9 +217,17 @@ def test_p0_2_action_not_in_registry_returns_404() -> None:
     mock_reg = MagicMock()
     mock_reg.dispatch = AsyncMock(side_effect=KeyError("orders.get"))
 
-    with patch(
-        "src.backend.dsl.commands.action_registry.action_handler_registry", mock_reg
-    ):
+    # ADR-0410: подменять нужно ТУ точку, откуда реестр реально читается.
+    # ``legacy_aliases._dispatch_with`` делает
+    # ``from src.backend.core.api.extensions import action_handler_registry``
+    # внутри функции, т.е. берёт АТРИБУТ модуля-фасада. Подмена
+    # ``src.backend.dsl.commands.action_registry.action_handler_registry``
+    # работала только пока ``src.backend.core.api.extensions`` ещё не был
+    # импортирован (тогда импорт внутри функции подхватывал подмену).
+    # Как только соседний тест-модуль импортировал фасад — подмена перестала
+    # действовать, запрос уходил в ЖИВОЙ реестр → 500 вместо 404
+    # (order-dependent).
+    with patch("src.backend.core.api.extensions.action_handler_registry", mock_reg):
         r = client.get("/api/v1/orders/all/")
 
     assert r.status_code == 404

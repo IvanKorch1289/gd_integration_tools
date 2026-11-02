@@ -34,10 +34,19 @@ def _ensure_action_registry() -> None:
     состояние: часть тестов подменяет/очищает его, и blueprint-тесты падали
     с «Unknown action(s) in pipeline: 'save'». Фикстура регистрирует
     недостающие action-заглушки и восстанавливает состояние реестра.
+
+    ADR-0410: восстанавливаются ВСЕ три хранилища реестра — ``_handlers``,
+    ``_metadata`` и ``_middleware``. Раньше ``clear()`` сносил все три, а
+    возвращался только ``_handlers``: метаданные терялись для всего
+    процесса, и ``tests/unit/dsl/test_action_metadata_contract.py``
+    (``test_registry_is_not_empty``) падал с «Зарегистрировано подозрительно
+    мало action: 0» — в полном прогоне, но не в изоляции.
     """
     from src.backend.dsl.commands.registry import action_handler_registry
 
     saved_handlers = dict(action_handler_registry._handlers)
+    saved_metadata = dict(action_handler_registry._metadata)
+    saved_middleware = list(action_handler_registry._middleware)
     try:
         for name in (
             "save",
@@ -58,6 +67,8 @@ def _ensure_action_registry() -> None:
     finally:
         action_handler_registry.clear()
         action_handler_registry._handlers.update(saved_handlers)
+        action_handler_registry._metadata.update(saved_metadata)
+        action_handler_registry._middleware.extend(saved_middleware)
 
 
 class _SampleSchema(BaseModel):

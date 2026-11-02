@@ -1,6 +1,6 @@
 # ADR-0404 — Order-dependent тесты: диагностика, устранение загрязнения и гейт
 
-* Статус: Accepted (2026-10-30)
+* Статус: Accepted (2026-10-30); обновлён 2026-11-02 (ADR-0410 — финальная зачистка)
 * Автор: wave-21, кластер A3
 * Затрагивает: `tests/**`, `tests/unit/conftest.py`, `tests/unit/_xfail_environment.py`
 
@@ -96,6 +96,48 @@ production-контрактом (Protocol-методы, формат вывод�
 * Банк xfail — только для объективно внешних ограничений; рост банка
   блокируется гейтом и требует ревизии ADR.
 
+## Обновление 2026-11-02 (ADR-0410, волна 22, кластер B6)
+
+**Что закрыто.** Оставшиеся **7** order-dependent падений устранены —
+по трём причинам, а не по семи:
+
+1. **Уровень корневого stdlib-логгера** (process-global) загрязнялся
+   импортом `manage` на уровне тест-модуля → 3 падения
+   (`test_webhook_stop_router_error_swallowed`,
+   `test_toggle_flag_exception_returns_false`,
+   `test_schedule_cron_replace_existing_missing_schedule`).
+2. **Глобальный `ActionHandlerRegistry`** → 3 падения
+   (`test_registry_is_not_empty`,
+   `test_multi_processor_pipeline_round_trip`,
+   `test_dispatch_action_with_payload_factory_skipped_in_spec`).
+3. **Порядок импорта модулей** → 1 падение
+   (`test_p0_2_action_not_in_registry_returns_404`).
+
+Дополнительно снят `skip`, маскировавший 4 order-dependent падения в
+`tests/unit/entrypoints/api/v1/endpoints/test_p0_fixes_cycle_241.py`, и
+изолированы legacy-регистрации bootstrap'а (~190 action'ов с минимальными
+метаданными), которые ломали инвариант «непустой `transports`» в контракт-тесте
+метаданных (`test_transports_is_non_empty_tuple_of_strings`).
+
+**Правило банка (без изменений, подтверждено).** Order-dependent падения
+банком **не покрываются**: ни `xfail`, ни `skip`, ни ослабление assert'ов
+недопустимы. Банк `tests/unit/_xfail_environment.py` остаётся для объективно
+внешних ограничений (отсутствующая optional-зависимость, живой
+Temporal-кластер, недетерминированный benchmark) и может только уменьшаться.
+
+**Итоговые числа прогона.** `pytest tests/unit -q -p no:randomly`:
+order-dependent падений **7 → 0**; банк xfail — **1** запись (без
+изменений); гейт `tests/unit/test_order_dependent_pollution_gate.py`
+расширен до 12 пар «поллитер → жертва» + скана `src/**` на зарезервированные
+ключи `extra=` в stdlib-логгерах.
+
+**Открыто для владельца.** В `src/**` — 14 мест с
+`logging.getLogger(...).debug(msg, extra={"name": ...})`: при уровне `DEBUG`
+такой вызов бросает `KeyError` из error-handler'а. Это реальный
+production-дефект (не связан с pytest), зафиксирован гейтом
+(`KNOWN_RESERVED_EXTRA_SITES`) и передан владельцу; правка production-кода
+в кластере B6 не выполнялась.
+
 ## Проверка
 
 ```bash
@@ -108,7 +150,9 @@ ruff check tests/unit
 несуществующий тест, (в) появился файл с маркером
 `ADR-0404-ORDER-DEPENDENT`, не зарегистрированный в реестре жертв,
 (г) появился новый файл с модульной подменой глобального состояния,
-(д) известная пара «поллитер → жертва» снова даёт падения.
+(д) известная пара «поллитер → жертва» снова даёт падения,
+(е) в `src/**` появилось новое место с зарезервированным ключом `LogRecord`
+в `extra=` либо запись реестра таких мест устарела (ADR-0410).
 
 ## Связи
 

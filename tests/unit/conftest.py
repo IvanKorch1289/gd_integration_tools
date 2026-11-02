@@ -34,6 +34,7 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -216,6 +217,16 @@ def _restore_structlog_backend() -> Iterator[None]:
     yield
 
 
+#: Уровень корневого stdlib-логгера, зафиксированный ДО collection
+#: (ADR-0410). Уровень корневого логгера — process-global состояние:
+#: импорт тест-модуля (``from manage import app`` → ``init_application_logging()``)
+#: поднимает его до DEBUG профиля, и после этого DEBUG-вызовы в
+#: production-коде реально создают LogRecord. Значение, зафиксированное
+#: здесь, — единственный легитимный уровень сессии: всё, что меняет его
+#: (collection, отдельный тест), откатывается к нему.
+_SESSION_ROOT_LOG_LEVEL: int | None = None
+
+
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: pytest.Config) -> None:
     """Фиксирует logging-backend до импорта тестовых модулей (ADR-0404).
@@ -228,10 +239,36 @@ def pytest_configure(config: pytest.Config) -> None:
     argument 'resource_model'``), а caplog-проверки в других suite'ах видят
     не тот вывод. Здесь backend инициализируется заранее — вне циклов
     импорта.
+
+    Здесь же фиксируется baseline уровня корневого логгера (ADR-0410) —
+    до того, как тест-модули успеют его изменить.
     """
+    import logging
+
     from src.backend.core.logging import get_logger
 
+    global _SESSION_ROOT_LOG_LEVEL
+
     get_logger("testbootstrap")
+    _SESSION_ROOT_LOG_LEVEL = logging.getLogger().level
+
+
+def pytest_collection_finish(session: pytest.Session) -> None:
+    """Откатывает уровень корневого логгера после collection (ADR-0410).
+
+    Collection импортирует ВСЕ тест-модули, в т.ч. ``manage`` (CLI-приложение),
+    чей импорт поднимает уровень корневого stdlib-логгера до DEBUG профиля.
+    Импорт — не тест, поэтому ни одна фикстура не успевает откатить уровень,
+    и он остаётся на весь прогон. Из-за этого одни и те же production-вызовы
+    в одном suite падают, а в соседнем — нет (order-dependent).
+
+    Здесь уровень возвращается к baseline, зафиксированному в
+    ``pytest_configure``, — до запуска первого теста.
+    """
+    import logging
+
+    if _SESSION_ROOT_LOG_LEVEL is not None:
+        logging.getLogger().setLevel(_SESSION_ROOT_LOG_LEVEL)
 
 
 def pytest_collectstart(collector: pytest.Collector) -> None:
@@ -356,17 +393,53 @@ def _purge_polluted_modules():
 # kwargs («resource_model=...») дают «Logger._log() got an unexpected
 # keyword argument». В изоляции те же вызовы — no-op (уровень выше DEBUG),
 # поэтому дефект проявлялся только в полном прогоне.
+#
+# ADR-0410: восстанавливать нужно не «значение на входе теста» (оно уже
+# может быть загрязнено импортом соседнего модуля), а ЕДИНСТВЕННЫЙ
+# baseline сессии, зафиксированный в ``pytest_configure`` до collection.
 @_pytest.fixture(autouse=True)
 def _restore_root_logger():
     """Восстанавливает уровень и handler'ы корневого stdlib-логгера."""
     import logging
 
     root = logging.getLogger()
-    saved_level = root.level
     saved_handlers = list(root.handlers)
+    baseline = (
+        _SESSION_ROOT_LOG_LEVEL if _SESSION_ROOT_LOG_LEVEL is not None else root.level
+    )
     yield
-    root.setLevel(saved_level)
+    root.setLevel(baseline)
     root.handlers[:] = saved_handlers
+
+
+# ── Глобальный action-реестр: изоляция импорта приложения (ADR-0410) ────────
+# ``import src.backend.main`` / ``import manage`` поднимают bootstrap
+# приложения, который регистрирует ~190 legacy-action'ов через
+# ``ActionHandlerRegistry.register()``. Такая регистрация создаёт МИНИМАЛЬНЫЕ
+# метаданные (``transports=()``), и они остаются в глобальном реестре до конца
+# сессии. Из-за этого контракт-тест метаданных
+# (``tests/unit/dsl/test_action_metadata_contract.py``) видел в реестре чужие
+# legacy-объявления и падал на «transports пуст» — при том, что
+# декларативные метаданные API v1 (проверяемый контракт) валидны.
+#
+# Контекстный менеджер снимает ТОЛЬКО legacy-регистрации bootstrap'а.
+# Декларативные метаданные (полные, с непустыми ``transports``) остаются:
+# именно они являются проверяемым контрактом.
+@contextmanager
+def isolated_action_registry() -> Iterator[None]:
+    """Изолировать legacy-регистрации bootstrap'а в глобальном action-реестре."""
+    from src.backend.dsl.commands.action_registry import action_handler_registry
+
+    before = set(action_handler_registry._metadata)
+    try:
+        yield
+    finally:
+        added = set(action_handler_registry._metadata) - before
+        for name in added:
+            meta = action_handler_registry._metadata.get(name)
+            if meta is not None and not meta.transports:
+                action_handler_registry._metadata.pop(name, None)
+                action_handler_registry._handlers.pop(name, None)
 
 
 # ── TaskRegistry: снятие «закрыт» после каждого теста (fix test pollution) ──

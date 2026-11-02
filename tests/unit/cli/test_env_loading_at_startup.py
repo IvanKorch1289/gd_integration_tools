@@ -24,6 +24,8 @@ from unittest.mock import patch
 
 import pytest
 
+from tests.unit.conftest import isolated_action_registry
+
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _MANAGE_PY = _REPO_ROOT / "manage.py"
 _MAIN_PY = _REPO_ROOT / "src" / "backend" / "main.py"
@@ -102,9 +104,14 @@ def test_main_py_loads_env_before_settings_import() -> None:
 @pytest.mark.unit
 def test_manage_py_calls_load_env_file_at_runtime() -> None:
     """Функциональная проверка: старт CLI действительно читает ``.env``."""
-    import manage
+    # ADR-0410: ``importlib.reload(manage)`` перезапускает bootstrap и
+    # регистрирует legacy-action'ы в ГЛОБАЛЬНОМ реестре — изолируем его.
+    with isolated_action_registry():
+        import manage
 
-    with patch("src.backend.core.config.config_loader.load_env_file") as mock_load_env:
-        importlib.reload(manage)
+        with patch(
+            "src.backend.core.config.config_loader.load_env_file"
+        ) as mock_load_env:
+            importlib.reload(manage)
 
-    mock_load_env.assert_called()
+        mock_load_env.assert_called()

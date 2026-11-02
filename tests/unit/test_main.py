@@ -4,8 +4,15 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from src.backend import main
 from src.backend.plugins.composition import app_factory
+from tests.unit.conftest import isolated_action_registry
+
+# ADR-0410: импорт ``src.backend.main`` поднимает bootstrap приложения,
+# который регистрирует ~190 legacy-action'ов в ГЛОБАЛЬНОМ реестре
+# (минимальные метаданные, ``transports=()``). Это загрязнение ломало
+# контракт-тест метаданных API v1. Реестр изолируется на время импорта.
+with isolated_action_registry():
+    from src.backend import main
 
 # ``_mount_mcp_http`` переехал из ``src.backend.main`` в
 # ``src.backend.plugins.composition.app_factory`` (D-AUDIT-20807, cycle 216)

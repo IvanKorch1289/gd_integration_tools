@@ -29,7 +29,14 @@ pytest.importorskip(
     "idempotency_header_middleware", reason="non-existent PyPI package, see S48 W11"
 )
 
-from src.backend import main as main_module
+from tests.unit.conftest import isolated_action_registry  # noqa: E402
+
+# ADR-0410: импорт ``src.backend.main`` поднимает bootstrap приложения,
+# который регистрирует ~190 legacy-action'ов в ГЛОБАЛЬНОМ реестре
+# (минимальные метаданные, ``transports=()``). Это загрязнение ломало
+# контракт-тест метаданных API v1. Реестр изолируется на время импорта.
+with isolated_action_registry():
+    from src.backend import main as main_module
 
 
 def test_fallback_function_exists() -> None:
