@@ -74,6 +74,13 @@ class AdminService:
 
     Благодаря этому admin-роуты остаются тонкими и пригодными
     для декларативного описания через ActionSpec.
+
+    ADR-0421: сами методы сервиса не проверяют права — авторизация
+    выполняется на action-поверхности (``ActionHandlerRegistry.dispatch``
+    и HTTP-guard'ы): action'ы с ``admin``-префиксом требуют
+    ``role:admin``, поэтому ``admin.get_config`` /
+    ``admin.invalidate_cache`` недоступны аутентифицированному
+    пользователю без admin-прав.
     """
 
     async def get_config(self) -> dict[str, Any]:
