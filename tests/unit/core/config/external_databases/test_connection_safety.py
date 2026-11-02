@@ -99,6 +99,62 @@ class TestConnectionUrlMasking:
 
 
 @pytest.mark.unit
+class TestReplicaDsnMasking:
+    """ADR-0419: внешний ``replica_dsn`` — секрет, в дампе маскируется."""
+
+    def test_model_dump_masks_replica_dsn_password(self) -> None:
+        """Пароль реплики не попадает в ``model_dump()``."""
+        connection = ExternalDatabaseConnectionSettings(
+            **_connection_payload(
+                replica_dsn="postgresql+asyncpg://user:SUPERSECRET@replica:5432/test"
+            )
+        )
+
+        dumped = connection.model_dump()
+
+        assert "SUPERSECRET" not in str(dumped["replica_dsn"])
+        assert "***" in str(dumped["replica_dsn"])
+
+    def test_model_dump_json_masks_replica_dsn_password(self) -> None:
+        """Пароль реплики не попадает в ``model_dump_json()``."""
+        connection = ExternalDatabaseConnectionSettings(
+            **_connection_payload(
+                replica_dsn="postgresql+asyncpg://user:SUPERSECRET@replica:5432/test"
+            )
+        )
+
+        dumped = connection.model_dump_json()
+
+        assert "SUPERSECRET" not in dumped
+
+    def test_attribute_keeps_working_dsn(self) -> None:
+        """Рабочее значение DSN доступно (SecretStr → get_secret_value)."""
+        connection = ExternalDatabaseConnectionSettings(
+            **_connection_payload(
+                replica_dsn="postgresql+asyncpg://user:SUPERSECRET@replica:5432/test"
+            )
+        )
+
+        assert "SUPERSECRET" in connection.replica_dsn.get_secret_value()
+        assert (
+            "SUPERSECRET" in connection.replica_async_connection_url  # type: ignore[union-attr]
+        )
+
+    def test_replica_url_is_masked_in_dump(self) -> None:
+        """Computed-поле ``replica_async_connection_url`` тоже маскируется."""
+        connection = ExternalDatabaseConnectionSettings(
+            **_connection_payload(
+                replica_dsn="postgresql+asyncpg://user:SUPERSECRET@replica:5432/test"
+            )
+        )
+
+        dumped = connection.model_dump()
+
+        assert "SUPERSECRET" not in dumped["replica_async_connection_url"]
+        assert "***" in dumped["replica_async_connection_url"]
+
+
+@pytest.mark.unit
 class TestDumpDoesNotRaise:
     """A8: computed-поля не роняют дамп."""
 
