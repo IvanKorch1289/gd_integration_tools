@@ -21,12 +21,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
+from src.backend.core.logging import get_logger
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
 )
 
 __all__ = ("router",)
+
+logger = get_logger(__name__)
 
 
 # --- Schemas ---------------------------------------------------------------
@@ -115,8 +118,10 @@ class _AdminConnectorsFacade:
                 status_code=404, detail=f"Connector '{name}' not registered"
             ) from None
         except Exception as exc:
+            # ADR-0421: детали ошибки — в лог, наружу — безопасное сообщение.
+            logger.exception("connector_reload_failed name=%s", name)
             raise HTTPException(
-                status_code=500, detail=f"Reload failed: {type(exc).__name__}: {exc}"
+                status_code=500, detail="Connector reload failed"
             ) from exc
 
         try:
@@ -125,8 +130,10 @@ class _AdminConnectorsFacade:
             post_status = post_health.status
             post_error = post_health.error
         except Exception as exc:
+            # Детали — в лог; наружу отдаём только тип ошибки.
+            logger.exception("connector_post_reload_health_failed name=%s", name)
             post_status = "unknown"
-            post_error = str(exc)[:200]
+            post_error = type(exc).__name__
 
         total_ms = (time.perf_counter() - start) * 1000.0
         return {
@@ -175,7 +182,9 @@ class _AdminConnectorsFacade:
                 reload_status["status"] = "not_registered"
             except Exception as reload_exc:
                 reload_status["status"] = "failed"
-                reload_status["error"] = str(reload_exc)[:200]
+                # ADR-0421: детали — в лог, наружу — только тип ошибки.
+                logger.exception("connector_config_reload_failed name=%s", name)
+                reload_status["error"] = type(reload_exc).__name__
         except ImportError:
             reload_status["status"] = "registry_unavailable"
 

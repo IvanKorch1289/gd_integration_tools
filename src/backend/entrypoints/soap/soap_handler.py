@@ -161,12 +161,16 @@ async def _dispatch_via_action(
     ``permissions`` из ``auth`` (``request.state.auth``) в ``meta`` —
     иначе Tier-1/2 actions с permission checks теряли auth context
     на SOAP path (fail-open для routes без strict security).
+
+    ADR-0421: permissions собираются через ``resolve_action_permissions``
+    (user-permissions + admin-роли → ``role:admin``), поэтому
+    admin-action'ы через SOAP закрыты так же, как через REST.
     """
-    from src.backend.core.auth.auth_context_helpers import extract_user_permissions
+    from src.backend.dsl.commands.action_registry import resolve_action_permissions
     from src.backend.entrypoints.base import dispatch_action
 
     principal = getattr(auth, "principal", "") if auth is not None else ""
-    permissions = tuple(extract_user_permissions(auth)) if auth is not None else ()
+    permissions = resolve_action_permissions(auth)
 
     return await dispatch_action(
         action=operation,
@@ -237,7 +241,11 @@ async def handle_soap_request(request: Request) -> Response:
         )
 
         if exchange.error:
-            xml = _build_soap_fault("Server", exchange.error)
+            # ADR-0421: детали ошибки — в лог, наружу — безопасный fault.
+            logger.exception(
+                "SOAP DSL-ошибка: операция=%s error=%s", operation, exchange.error
+            )
+            xml = _build_soap_fault("Server", "Internal server error")
             return Response(content=xml, media_type=content_type, status_code=500)
 
         result = exchange.out_message.body if exchange.out_message else None
@@ -256,8 +264,9 @@ async def handle_soap_request(request: Request) -> Response:
             content=xml, media_type=content_type, status_code=exc.status_code
         )
     except Exception as exc:
+        # ADR-0421: внутренние детали — только в лог, наружу — безопасный fault.
         logger.exception("SOAP ошибка: %s", exc)
-        xml = _build_soap_fault("Server", str(exc))
+        xml = _build_soap_fault("Server", "Internal server error")
         return Response(content=xml, media_type=content_type, status_code=500)
 
 
@@ -431,7 +440,7 @@ def _build_invoke_response_envelope(
     if result is not None:
         try:
             result_json = orjson.dumps(result, default=str).decode()
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             result_json = str(result)
         parts.append(f"<result>{_xml_escape(result_json)}</result>")
     if error:

@@ -36,6 +36,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_cron import (
         router as admin_cron_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_embedding_providers import (
+        router as admin_embedding_providers_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_feature_flags import (
         router as admin_feature_flags_router,
     )
@@ -50,6 +53,9 @@ def get_v1_routers() -> APIRouter:
     )
     from src.backend.entrypoints.api.v1.endpoints.admin_model_registry import (
         router as admin_model_registry_router,
+    )
+    from src.backend.entrypoints.api.v1.endpoints.admin_nats import (
+        router as admin_nats_router,
     )
     from src.backend.entrypoints.api.v1.endpoints.admin_parallelism import (
         router as admin_parallelism_router,
@@ -244,6 +250,12 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(
         admin_feature_flags_router, prefix="/admin", tags=["Admin · Feature Flags"]
     )
+    # ADR-0422: список embedding-провайдеров. Клиент
+    # ``api_clients/k4.py`` ходил в этот путь, а маршрута на сервере не
+    # было → 404 и пустой selectbox в UI.
+    api_router_v1.include_router(
+        admin_embedding_providers_router, prefix="/admin", tags=["Admin · AI"]
+    )
     # Wave S1/DSL Foundation (Step 6): unified schema_registry (route /
     # workflow / service / plugin / processor / action) — JSON-Schema /
     # OpenAPI / AsyncAPI.
@@ -269,9 +281,10 @@ def get_v1_routers() -> APIRouter:
     # Wave D.5: AI cost-dashboard (LangFuse primary).
     api_router_v1.include_router(ai_costs_router, prefix="/admin", tags=["AI · Costs"])
     # S27 Wave 3: LangGraph checkpoint/session management UI.
-    api_router_v1.include_router(
-        admin_langgraph_router, prefix="/admin", tags=["Admin · LangGraph"]
-    )
+    # ADR-0421: роутер сам несёт prefix="/admin/langgraph" — дописывать
+    # "/admin" здесь нельзя, иначе путь становится
+    # "/api/v1/admin/admin/langgraph/*" (двойной префикс).
+    api_router_v1.include_router(admin_langgraph_router, tags=["Admin · LangGraph"])
     # Wave D.6: LangMem consolidation admin endpoints.
     api_router_v1.include_router(
         langmem_admin_router, prefix="/admin", tags=["AI · LangMem"]
@@ -312,9 +325,10 @@ def get_v1_routers() -> APIRouter:
     # Layer 5 Entrypoints Cycle 1 fix: admin_plugins router был orphan
     # (8 endpoints возвращали 404 в проде). S62 W1 decomp — router перенесён
     # в admin_plugins/ package. Регистрируем явно.
-    api_router_v1.include_router(
-        admin_plugins_router, prefix="/admin/plugins", tags=["Admin · Plugins"]
-    )
+    # ADR-0421: роутер сам несёт prefix="/admin/plugins" — дописывать
+    # "/admin/plugins" здесь нельзя, иначе путь становится
+    # "/api/v1/admin/plugins/admin/plugins/*" (двойной префикс).
+    api_router_v1.include_router(admin_plugins_router, tags=["Admin · Plugins"])
     # Layer 5 Cycle 2 fix: ещё 3 admin routers (actions/certs/feedback)
     # были unmounted (endpoints возвращали 404 в проде). Регистрируем.
     api_router_v1.include_router(admin_actions_router, tags=["Admin · Actions"])
@@ -342,6 +356,10 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(
         admin_model_registry_router, tags=["Admin · Model Registry"]
     )
+    # ADR-0421: NATS-роутер не был смонтирован вообще (endpoints отдавали
+    # 404). Роутер сам несёт prefix="/admin/nats" — монтируем без
+    # дополнительного префикса, иначе получится двойной префикс.
+    api_router_v1.include_router(admin_nats_router, tags=["Admin · NATS"])
     # Sprint 9 K1 W1: SAML SP-initiated SSO endpoints.
     api_router_v1.include_router(
         auth_saml_router, prefix="/auth/saml", tags=["Auth · SAML"]

@@ -13,12 +13,17 @@ W26.5: маршруты регистрируются через ``router.add_api
 ``@router``-декораторов. ``ActionSpec`` не используется, так как обоим
 endpoint'ам нужен FastAPI ``Depends`` для DI Invoker/ReplyRegistry, что
 не вписывается в ``service_getter``-контракт ActionRouterBuilder.
+
+ADR-0421: ``POST /api/v1/invocations`` — универсальный диспетчер, поэтому
+проверка прав обязательна: action с ``permissions``/``admin``-префиксом
+требует соответствующего права, иначе 403 (fail-closed).
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
+from src.backend.core.api.extensions import action_handler_registry
 from src.backend.core.di.dependencies import get_invoker_dep, get_reply_registry
 from src.backend.core.interfaces.invocation_reply import ReplyChannelRegistryProtocol
 from src.backend.core.interfaces.invoker import (
@@ -26,6 +31,11 @@ from src.backend.core.interfaces.invoker import (
     InvocationRequest,
     InvocationStatus,
     Invoker,
+)
+from src.backend.dsl.commands.action_registry import (
+    ActionPermissionDeniedError,
+    enforce_action_permissions,
+    resolve_action_permissions,
 )
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 from src.backend.schemas.invocation_api import (
@@ -41,6 +51,7 @@ router = APIRouter(tags=["Invocations"])
 async def post_invocation(
     request_body: InvocationRequestSchema,
     response: Response,
+    request: Request,
     invoker: Invoker = Depends(get_invoker_dep),
     _rate_limit: None = Depends(get_default_rate_limiter()),
 ) -> InvocationResponseSchema:
@@ -50,13 +61,38 @@ async def post_invocation(
     * остальные режимы — возвращают 202 ACCEPTED + ``invocation_id``;
       результат опрашивается через GET ``/api/v1/invocations/{id}``
       (для ``api`` reply-канала) или приходит push'ом в WS/queue.
+
+    ADR-0421: универсальный диспетчер закрыт проверкой прав — action
+    с ``permissions``/``admin``-префиксом требует соответствующего права,
+    иначе 403 (fail-closed) без вызова Invoker'а.
     """
+    auth = getattr(request.state, "auth", None)
+    principal = getattr(auth, "principal", "") if auth is not None else ""
+    permissions = resolve_action_permissions(auth)
+
+    action = request_body.action
+    required = action_handler_registry.required_permissions(action)
+    if required:
+        try:
+            await enforce_action_permissions(
+                action=action,
+                required=required,
+                granted=permissions,
+                principal=principal,
+            )
+        except ActionPermissionDeniedError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail=exc.to_detail()
+            ) from exc
+
     invocation = await invoker.invoke(
         InvocationRequest(
             action=request_body.action,
             payload=request_body.payload,
             mode=InvocationMode(request_body.mode),
             reply_channel=request_body.reply_channel,
+            principal=principal,
+            permissions=permissions,
         )
     )
     if invocation.status is InvocationStatus.ACCEPTED:
@@ -116,6 +152,7 @@ router.add_api_route(
     ),
     tags=["Invocations"],
     responses={
+        403: {"description": "Forbidden — action requires permissions (ADR-0421)."},
         422: {"description": "Validation error (invalid payload)."},
         429: {"description": "Rate limit exceeded (per default rate limiter)."},
         500: {"description": "Internal server error."},

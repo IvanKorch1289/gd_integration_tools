@@ -20,6 +20,14 @@ Backward compatibility:
   :class:`ActionMetadata` (только ``action`` + ``input_model`` из
   ``payload_model``).
 * :meth:`dispatch` не меняется (легаси контракт ``ActionDispatcher``).
+
+ADR-0421 (авторизация на action-поверхности):
+
+* ``ActionMetadata.permissions`` теперь **проверяется** перед вызовом
+  обработчика (ранее поле только пропагировалось и нигде не читалось);
+* action'ы с ``admin``-префиксом требуют ``role:admin``;
+* отказ — fail-closed (:class:`ActionPermissionDeniedError`, HTTP 403)
+  + audit-событие ``action.permission_denied``.
 """
 
 import inspect
@@ -29,13 +37,198 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from src.backend.core.errors import BaseError
 from src.backend.core.interfaces.action_dispatcher import (
     ActionMetadata,
     ActionMiddleware,
 )
+from src.backend.core.logging import get_logger
 from src.backend.schemas.invocation import ActionCommandSchema
 
-__all__ = ("ActionHandlerRegistry", "ActionHandlerSpec", "action_handler_registry")
+__all__ = (
+    "ADMIN_ACTION_PREFIXES",
+    "ADMIN_PERMISSION",
+    "ActionHandlerRegistry",
+    "ActionHandlerSpec",
+    "ActionPermissionDeniedError",
+    "action_handler_registry",
+    "enforce_action_permissions",
+    "required_action_permissions",
+    "resolve_action_permissions",
+)
+
+_logger = get_logger("dsl.commands.action_registry")
+
+#: Permission, требуемая для action'ов с ``admin``-префиксом (ADR-0421).
+ADMIN_PERMISSION: str = "role:admin"
+
+#: Префиксы action-имён, трактуемых как административные (ADR-0421).
+ADMIN_ACTION_PREFIXES: tuple[str, ...] = ("admin.", "admin_")
+
+#: HTTP-статус отказа по правам. Константа вместо ``fastapi.status`` —
+#: DSL-слой остаётся transport-agnostic (не тянет fastapi).
+_FORBIDDEN_STATUS: int = 403
+
+
+class ActionPermissionDeniedError(BaseError):
+    """403 — principal не обладает permissions, требуемыми action'ом (ADR-0421).
+
+    Attributes:
+        action: Имя action'а, к которому отказано.
+        required: Полный набор требуемых permissions.
+        missing: Permissions, которых не хватает principal'у.
+        principal: Идентификатор principal'а (пусто — anonymous).
+
+    """
+
+    def __init__(
+        self,
+        *,
+        action: str,
+        required: tuple[str, ...] = (),
+        missing: tuple[str, ...] = (),
+        principal: str = "",
+    ) -> None:
+        self.action = action
+        self.required = required
+        self.missing = missing
+        self.principal = principal
+        super().__init__(
+            message=(
+                f"Action '{action}' requires permissions {list(required)}; "
+                f"principal '{principal or 'anonymous'}' lacks {list(missing)}"
+            ),
+            status_code=_FORBIDDEN_STATUS,
+        )
+
+    def to_detail(self) -> dict[str, Any]:
+        """Безопасный ``detail`` для HTTP-ответа (без внутренних деталей).
+
+        Returns:
+            dict[str, Any]: Код ошибки, имя action'а и требуемые permissions.
+
+        """
+        return {
+            "code": "action_permission_denied",
+            "action": self.action,
+            "required": list(self.required),
+        }
+
+
+def required_action_permissions(
+    action: str, metadata: ActionMetadata | None = None
+) -> tuple[str, ...]:
+    """Возвращает требуемые permissions для action'а (ADR-0421).
+
+    Приоритет:
+
+    1. Явно объявленные ``ActionMetadata.permissions``;
+    2. ``admin``-префикс имени action'а → ``role:admin``;
+    3. иначе — пустой кортеж (action не требует прав).
+
+    Args:
+        action: Имя action'а.
+        metadata: Метаданные action'а (если зарегистрированы).
+
+    Returns:
+        Кортеж требуемых permissions.
+
+    """
+    if metadata is not None and metadata.permissions:
+        return tuple(metadata.permissions)
+    if action.startswith(ADMIN_ACTION_PREFIXES):
+        return (ADMIN_PERMISSION,)
+    return ()
+
+
+def resolve_action_permissions(auth: Any) -> tuple[str, ...]:
+    """Собирает эффективные permissions principal'а для action-диспетчеризации.
+
+    User-permissions берутся из ``AuthContext.metadata`` (``permissions``
+    либо OAuth-``scope``), admin-роли — из ``metadata["admin_roles"]``.
+    Каналы разные, а action'у нужно единое множество прав, поэтому
+    наличие хотя бы одной admin-роли добавляет ``role:admin``.
+
+    Args:
+        auth: :class:`AuthContext` (или ``None``).
+
+    Returns:
+        Кортеж permission-строк (пустой — anonymous без прав).
+
+    """
+    from src.backend.core.auth.admin_roles import extract_admin_roles
+    from src.backend.core.auth.auth_context_helpers import extract_user_permissions
+
+    permissions = list(extract_user_permissions(auth))
+    if extract_admin_roles(auth) and ADMIN_PERMISSION not in permissions:
+        permissions.append(ADMIN_PERMISSION)
+    return tuple(permissions)
+
+
+async def enforce_action_permissions(
+    *,
+    action: str,
+    required: tuple[str, ...],
+    granted: tuple[str, ...],
+    principal: str = "",
+) -> None:
+    """Проверяет права на action и эмитит audit-событие при отказе (ADR-0421).
+
+    Семантика совпадает с ``permission_step`` из
+    :class:`AuthorizationGateway`: требуются **все** permissions из
+    ``required``. Пустой ``required`` — allow (backward compat).
+
+    Args:
+        action: Имя action'а.
+        required: Требуемые permissions.
+        granted: Фактические permissions principal'а.
+        principal: Идентификатор principal'а (для логов/audit).
+
+    Raises:
+        ActionPermissionDeniedError: Если не хватает хотя бы одного
+            требуемого permission (fail-closed).
+
+    """
+    if not required:
+        return
+    granted_set = set(granted)
+    missing = tuple(p for p in required if p not in granted_set)
+    if not missing:
+        return
+    await _emit_permission_denied(
+        action=action, principal=principal, required=required, missing=missing
+    )
+    raise ActionPermissionDeniedError(
+        action=action, required=required, missing=missing, principal=principal
+    )
+
+
+async def _emit_permission_denied(
+    *, action: str, principal: str, required: tuple[str, ...], missing: tuple[str, ...]
+) -> None:
+    """Эмитит audit-событие ``action.permission_denied`` (best-effort)."""
+    _logger.warning(
+        "action_permission_denied action=%s principal=%s missing=%s",
+        action,
+        principal or "anonymous",
+        list(missing),
+    )
+    try:
+        from src.backend.core.audit.facade.audit_service import (
+            get_unified_audit_service,
+        )
+
+        await get_unified_audit_service().emit(
+            event="action.permission_denied",
+            actor=principal or "anonymous",
+            resource=f"action/{action}",
+            action="dispatch",
+            outcome="denied",
+            severity="warning",
+            details={"required": list(required), "missing": list(missing)},
+        )
+    except Exception as exc:  # noqa: BLE001 — audit не должен ломать отказ
+        _logger.debug("audit_emit_failed action=%s error=%s", action, exc)
 
 
 @dataclass(slots=True)
@@ -284,12 +477,54 @@ class ActionHandlerRegistry:
         """Возвращает кортеж зарегистрированных middleware в порядке регистрации."""
         return tuple(self._middleware)
 
+    def required_permissions(self, action: str) -> tuple[str, ...]:
+        """Требуемые permissions для action'а (ADR-0421).
+
+        Args:
+            action: Имя action'а.
+
+        Returns:
+            Кортеж требуемых permissions (пустой — action не требует прав).
+
+        """
+        return required_action_permissions(action, self._metadata.get(action))
+
+    def missing_permissions(
+        self, action: str, granted: tuple[str, ...]
+    ) -> tuple[str, ...]:
+        """Permissions, которых не хватает principal'у для action'а (ADR-0421).
+
+        Args:
+            action: Имя action'а.
+            granted: Фактические permissions principal'а.
+
+        Returns:
+            Кортеж недостающих permissions (пустой — доступ разрешён).
+
+        """
+        granted_set = set(granted)
+        return tuple(
+            p for p in self.required_permissions(action) if p not in granted_set
+        )
+
+    async def _enforce_permissions(self, command: ActionCommandSchema) -> None:
+        """ADR-0421: fail-closed проверка прав перед вызовом обработчика."""
+        required = self.required_permissions(command.action)
+        if not required:
+            return
+        await enforce_action_permissions(
+            action=command.action,
+            required=required,
+            granted=tuple(command.meta.permissions or ()),
+            principal=command.meta.principal or "",
+        )
+
     async def dispatch(self, command: ActionCommandSchema) -> Any:
         """Выполняет action-команду.
 
-        Находит обработчик по ``command.action``, валидирует
-        payload (если указана ``payload_model``), вызывает
-        метод сервиса и возвращает результат.
+        Находит обработчик по ``command.action``, **проверяет права**
+        (ADR-0421), валидирует payload (если указана ``payload_model``),
+        вызывает метод сервиса и возвращает результат.
 
         Args:
             command: Команда для выполнения.
@@ -300,9 +535,12 @@ class ActionHandlerRegistry:
         Raises:
             KeyError: Если action не зарегистрирован.
             ValidationError: Если payload не прошёл валидацию.
+            ActionPermissionDeniedError: Если principal не обладает
+                требуемыми permissions (fail-closed, HTTP 403).
 
         """
         spec = self._handlers[command.action]
+        await self._enforce_permissions(command)
 
         service = spec.service_getter()
         method = getattr(service, spec.service_method)

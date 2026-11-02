@@ -7,6 +7,7 @@ handler-функции с явно переданными ``invoker`` / ``regist
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -37,6 +38,15 @@ def _make_invoker(response: InvocationResponse) -> MagicMock:
     return invoker
 
 
+def _request(auth: Any = None) -> Any:
+    """Stub FastAPI-Request: handler читает только ``request.state.auth``.
+
+    ADR-0421: endpoint пробрасывает principal/permissions из auth-контекста
+    и закрывает admin-action'ы проверкой прав.
+    """
+    return SimpleNamespace(state=SimpleNamespace(auth=auth))
+
+
 class TestPostInvocation:
     async def test_sync_ok_returns_200(self) -> None:
         invoker = _make_invoker(
@@ -50,7 +60,7 @@ class TestPostInvocation:
 
         response = Response()
         body = InvocationRequestSchema(action="users.list", mode="sync")
-        result = await post_invocation(body, response, invoker=invoker)
+        result = await post_invocation(body, response, _request(), invoker=invoker)
 
         assert result.status == "ok"
         assert result.invocation_id == "i-1"
@@ -68,7 +78,7 @@ class TestPostInvocation:
 
         response = Response()
         body = InvocationRequestSchema(action="x.y", mode="async-api")
-        result = await post_invocation(body, response, invoker=invoker)
+        result = await post_invocation(body, response, _request(), invoker=invoker)
 
         assert result.status == "accepted"
         assert response.status_code == status.HTTP_202_ACCEPTED
@@ -85,7 +95,7 @@ class TestPostInvocation:
 
         response = Response()
         body = InvocationRequestSchema(action="x.y", mode="sync")
-        result = await post_invocation(body, response, invoker=invoker)
+        result = await post_invocation(body, response, _request(), invoker=invoker)
 
         assert result.status == "error"
         assert result.error == "boom"
@@ -103,7 +113,7 @@ class TestPostInvocation:
         body = InvocationRequestSchema(
             action="x.stream", mode="streaming", reply_channel="ws"
         )
-        await post_invocation(body, response, invoker=invoker)
+        await post_invocation(body, response, _request(), invoker=invoker)
 
         invoker.invoke.assert_awaited_once()
         request = invoker.invoke.call_args[0][0]
@@ -195,7 +205,7 @@ class TestPayloadPassthrough:
 
         payload: dict[str, Any] = {"deeply": {"nested": [1, 2, {"key": "v"}]}}
         body = InvocationRequestSchema(action="deep.test", mode="sync", payload=payload)
-        await post_invocation(body, Response(), invoker=invoker)
+        await post_invocation(body, Response(), _request(), invoker=invoker)
 
         request = invoker.invoke.call_args[0][0]
         assert request.payload == payload

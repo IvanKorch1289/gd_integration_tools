@@ -18,9 +18,12 @@ from typing import Any
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from src.backend.core.auth.auth_context_helpers import extract_user_permissions
 from src.backend.core.logging import get_logger
 from src.backend.core.types.invocation_command import ActionCommandMetaSchema
+from src.backend.dsl.commands.action_registry import (
+    ActionPermissionDeniedError,
+    resolve_action_permissions,
+)
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("register_legacy_aliases",)
@@ -49,8 +52,10 @@ async def _dispatch_with(
         payload.update(body)
         if item_id is not None:
             payload["id"] = item_id  # type: ignore[assignment]
-    except Exception as exc:
-        return JSONResponse(status_code=400, content={"detail": f"Bad request: {exc}"})
+    except Exception:
+        # ADR-0421: наружу — безопасное сообщение, детали — в лог.
+        logger.exception("legacy_alias_bad_request action=%s", action)
+        return JSONResponse(status_code=400, content={"detail": "Bad request"})
 
     try:
         from src.backend.core.api.extensions import action_handler_registry
@@ -62,11 +67,12 @@ async def _dispatch_with(
         # principal/permissions из auth middleware (request.state.auth)
         # в ActionCommandSchema.meta. Legacy aliases — auto-generated
         # CRUD endpoints; наследуют тот же auth context что и явные routes.
+        #
+        # ADR-0421: permissions собираются через
+        # ``resolve_action_permissions`` (user-permissions + admin-роли).
         _auth = getattr(request.state, "auth", None)
         _principal = getattr(_auth, "principal", "")
-        _permissions = (
-            tuple(extract_user_permissions(_auth)) if _auth is not None else ()
-        )
+        _permissions = resolve_action_permissions(_auth)
 
         command = ActionCommandSchema(  # type: ignore[call-arg]
             action=action,
@@ -82,10 +88,20 @@ async def _dispatch_with(
             status_code=404,
             content={"detail": f"Action '{action}' не найден в реестре"},
         )
-    except Exception as exc:
+    except ActionPermissionDeniedError as exc:
+        # ADR-0421: нет прав → 403, детали отказа — в лог/audit.
+        logger.warning(
+            "legacy_alias_permission_denied action=%s required=%s",
+            action,
+            list(exc.required),
+        )
+        return JSONResponse(status_code=403, content={"detail": exc.to_detail()})
+    except Exception:
+        # ADR-0421: внутренние детали ошибки — только в лог, наружу —
+        # безопасное сообщение (без str(exc)).
         logger.exception("legacy_alias_dispatch_failed action=%s", action)
         return JSONResponse(
-            status_code=500, content={"detail": f"Action dispatch failed: {exc}"}
+            status_code=500, content={"detail": "Action dispatch failed"}
         )
 
     return JSONResponse(content={"result": result, "action": action})
