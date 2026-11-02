@@ -6,6 +6,7 @@
 - ``event_store.py``: WorkflowEventStore + _find_last_snapshot, _advisory_lock_key
 - ``instance_store.py``: WorkflowInstanceStore
 - ``workflow_dlq.py``: DLQ-контракт исчерпанных шагов (ADR-0408)
+- ``step_audit.py``: модель аудита шагов workflow (ADR-0414)
 
 Backward-compat: ``from src.backend.infrastructure.workflow.pg_runner_internals import WorkflowState`` works.
 """
@@ -27,6 +28,17 @@ from src.backend.infrastructure.workflow.pg_runner_internals.rows import (
 from src.backend.infrastructure.workflow.pg_runner_internals.state import (
     WorkflowState,  # S55 W3: re-export
 )
+from src.backend.infrastructure.workflow.pg_runner_internals.step_audit import (
+    AUDIT_CAPABILITY,  # ADR-0414: re-export
+    PHASE_CANCELLED,
+    PHASE_FAILED,
+    PHASE_STARTED,
+    PHASE_SUCCEEDED,
+    emit_step_audit,
+    step_audit_enabled,
+    step_start_logged,
+    step_terminal_logged,
+)
 from src.backend.infrastructure.workflow.pg_runner_internals.workflow_dlq import (
     WORKFLOW_DLQ_TRANSPORT,  # ADR-0408: re-export
     WorkflowDLQPublisher,  # ADR-0408: re-export
@@ -34,6 +46,11 @@ from src.backend.infrastructure.workflow.pg_runner_internals.workflow_dlq import
 )
 
 __all__ = (
+    "AUDIT_CAPABILITY",
+    "PHASE_CANCELLED",
+    "PHASE_FAILED",
+    "PHASE_STARTED",
+    "PHASE_SUCCEEDED",
     "WORKFLOW_DLQ_TRANSPORT",
     "WorkflowDLQPublisher",
     "WorkflowEventRow",
@@ -44,4 +61,8 @@ __all__ = (
     "_advisory_lock_key",
     "_find_last_snapshot",
     "build_exhausted_step_envelope",
+    "emit_step_audit",
+    "step_audit_enabled",
+    "step_start_logged",
+    "step_terminal_logged",
 )

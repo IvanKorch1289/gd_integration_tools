@@ -63,11 +63,18 @@ from src.backend.infrastructure.observability.otel.setup import (
     record_workflow_step_retries,
 )
 from src.backend.infrastructure.workflow.pg_runner_internals import (
+    PHASE_CANCELLED,
+    PHASE_FAILED,
+    PHASE_STARTED,
+    PHASE_SUCCEEDED,
     WorkflowEventRow,
     WorkflowEventStore,
     WorkflowInstanceRow,
     WorkflowInstanceStore,
     WorkflowState,
+    emit_step_audit,
+    step_start_logged,
+    step_terminal_logged,
 )
 from src.backend.infrastructure.workflow.pg_runner_internals.workflow_dlq import (
     WorkflowDLQPublisher,
@@ -120,7 +127,7 @@ def _coerce_seconds(raw: Any) -> float | None:
         return None
     try:
         value = float(raw)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return None
     return value if value > 0 else None
 
@@ -357,7 +364,7 @@ class DurableWorkflowRunner:
                 task.cancel()
                 try:
                     await task
-                except asyncio.CancelledError, Exception:
+                except (asyncio.CancelledError, Exception):
                     _logger.debug(
                         "workflow runner task cancellation raised", exc_info=True
                     )
@@ -514,24 +521,8 @@ class DurableWorkflowRunner:
             }:
                 return
 
-            # 3) Отмена финализируется ДО execute_next — шаги не идут.
-            if instance.status == WorkflowStatus.cancelling:
-                seq = await self._event_store.append(
-                    workflow_id=workflow_id,
-                    event_type=WorkflowEventType.cancelled,
-                    payload={"reason": "cancel_requested"},
-                    step_name=None,
-                )
-                await self._state_store.update_status(
-                    workflow_id, WorkflowStatus.cancelled
-                )
-                record_workflow_status(
-                    workflow_name=instance.workflow_name,
-                    status=WorkflowStatus.cancelled.value,
-                )
-                await self._write_snapshot(workflow_id, seq)
-                return
-
+            # 3) Replay событий → state. Читаем ДО проверки отмены:
+            #    отменённый шаг нужно уметь назвать (ADR-0414).
             events = await self._read_all_events(workflow_id)
             state = (
                 WorkflowState.replay(events)
@@ -539,13 +530,20 @@ class DurableWorkflowRunner:
                 else WorkflowState(workflow_id=workflow_id)
             )
 
-            # 4) Transition to 'running' if needed.
+            # 4) Отмена финализируется ДО execute_next — шаги не идут.
+            if instance.status == WorkflowStatus.cancelling:
+                await self._finalize_cancelled(
+                    workflow_id=workflow_id, instance=instance, state=state
+                )
+                return
+
+            # 5) Transition to 'running' if needed.
             if instance.status == WorkflowStatus.pending:
                 await self._state_store.update_status(
                     workflow_id, WorkflowStatus.running
                 )
 
-            # 5) Pre-step событие: пишем ДО выполнения шага, чтобы падение
+            # 6) Pre-step событие: пишем ДО выполнения шага, чтобы падение
             #    между эффектом шага и append'ом результата было
             #    распознаваемо (ADR-0394).
             resolved = self._resolve_step(instance, state)
@@ -570,8 +568,22 @@ class DurableWorkflowRunner:
                 state.apply_event(
                     WorkflowEventType.step_started, started_payload, pre_step_name
                 )
+                # ADR-0414: аудит старта шага — один раз на
+                # (инстанс, шаг, попытка).
+                if not step_start_logged(
+                    events, step_name=pre_step_name, attempt=attempt, step_key=step_key
+                ):
+                    emit_step_audit(
+                        phase=PHASE_STARTED,
+                        route_id=instance.route_id,
+                        step=pre_step_name,
+                        tenant_id=instance.tenant_id,
+                        attempt=attempt,
+                        duration_ms=0.0,
+                        workflow_id=str(workflow_id),
+                    )
 
-            # 6) Execute next step via injected executor.
+            # 7) Execute next step via injected executor.
             step_started_at = time.perf_counter()
             result: StepResult = await self._executor.execute_next(
                 instance=instance, state=state
@@ -585,7 +597,7 @@ class DurableWorkflowRunner:
                 result=result,
             )
 
-            # 7) Append events + синхронизируем in-memory state с event log'ом.
+            # 8) Append events + синхронизируем in-memory state с event log'ом.
             for event_type, payload, step_name in result.events:
                 if (
                     event_type == WorkflowEventType.step_started
@@ -608,17 +620,29 @@ class DurableWorkflowRunner:
                 )
                 state.apply_event(event_type, payload, step_name)
 
-            # 8) Persist snapshot — данные между шагами не теряются.
+            # 9) ADR-0414: терминальный исход шага → audit-событие.
+            self._emit_step_terminal_audit(
+                workflow_id=workflow_id,
+                instance=instance,
+                result=result,
+                pre_step_name=pre_step_name,
+                attempt=attempt,
+                step_key=step_key,
+                duration_ms=step_duration_ms,
+                events=events,
+            )
+
+            # 10) Persist snapshot — данные между шагами не теряются.
             if result.output_state:
                 self._merge_output_state(state, result.output_state)
-            # 9) Snapshot в event log: событие ``snapshotted`` + колонка
-            #    ``snapshot_state`` (её читает admin-API). Replay стартует
-            #    с последнего snapshot'а (ADR-0394).
+            # 11) Snapshot в event log: событие ``snapshotted`` + колонка
+            #     ``snapshot_state`` (её читает admin-API). Replay стартует
+            #     с последнего snapshot'а (ADR-0394).
             await self._event_store.snapshot(
                 workflow_id=workflow_id, state=state.to_snapshot(), at_seq=last_seq
             )
 
-            # 10) Handle outcome.
+            # 12) Handle outcome.
             if result.outcome == StepOutcome.CONTINUE:
                 # CONTINUE не меняет статус — освобождаем lease ДО re-enqueue,
                 # иначе следующий pickup не захватит lease (ADR-0394).
@@ -636,6 +660,111 @@ class DurableWorkflowRunner:
                 await self._state_store.unlock(
                     workflow_id=workflow_id, worker_id=self._config.worker_id
                 )
+
+    async def _finalize_cancelled(
+        self, *, workflow_id: UUID, instance: WorkflowInstanceRow, state: WorkflowState
+    ) -> None:
+        """Финализировать отмену workflow'а + аудит отменённого шага.
+
+        Отмена финализируется ДО ``execute_next`` — шаги не идут. Шаг,
+        который не был выполнен из-за отмены, получает терминальный
+        исход ``cancelled`` в audit-событии (ADR-0414). Если шаг
+        определить нельзя (спека недоступна / курсор за концом) —
+        audit-события нет (нечего аудировать).
+
+        Args:
+            workflow_id: UUID workflow-инстанса.
+            instance: Row workflow-инстанса.
+            state: Materialized state (для определения pending-шага).
+
+        """
+        resolved = self._resolve_step(instance, state)
+        cancelled_step = resolved[0] if resolved is not None else None
+        cancelled_attempt = resolved[1] if resolved is not None else None
+
+        seq = await self._event_store.append(
+            workflow_id=workflow_id,
+            event_type=WorkflowEventType.cancelled,
+            payload={"reason": "cancel_requested"},
+            step_name=None,
+        )
+        await self._state_store.update_status(workflow_id, WorkflowStatus.cancelled)
+        record_workflow_status(
+            workflow_name=instance.workflow_name, status=WorkflowStatus.cancelled.value
+        )
+        if cancelled_step:
+            emit_step_audit(
+                phase=PHASE_CANCELLED,
+                route_id=instance.route_id,
+                step=cancelled_step,
+                tenant_id=instance.tenant_id,
+                attempt=cancelled_attempt,
+                workflow_id=str(workflow_id),
+            )
+        await self._write_snapshot(workflow_id, seq)
+
+    def _emit_step_terminal_audit(
+        self,
+        *,
+        workflow_id: UUID,
+        instance: WorkflowInstanceRow,
+        result: StepResult,
+        pre_step_name: str | None,
+        attempt: int | None,
+        step_key: str | None,
+        duration_ms: float,
+        events: list[WorkflowEventRow],
+    ) -> None:
+        """Эмитит audit-событие терминального исхода шага (ADR-0414).
+
+        Терминальный исход шага — последнее из событий
+        ``step_finished`` / ``step_failed`` в результате executor'а.
+        Повторный запуск шага (переpickup инстанста) событие не
+        дублирует: терминальный исход уже зафиксирован в event log'е.
+
+        Args:
+            workflow_id: UUID workflow-инстанса.
+            instance: Row workflow-инстанса.
+            result: Результат шага от executor'а.
+            pre_step_name: Имя pre-step (по ``describe_next``) — ``None``,
+                если executor работает в legacy-режиме.
+            attempt: Номер попытки шага.
+            step_key: Ключ идемпотентности шага.
+            duration_ms: Длительность выполнения шага в миллисекундах.
+            events: События инстанса, прочитанные до текущего запуска.
+
+        """
+        phase: str | None = None
+        terminal_step: str | None = None
+        terminal_attempt: int | None = None
+        for event_type, payload, step_name in result.events:
+            if event_type == WorkflowEventType.step_finished:
+                phase = PHASE_SUCCEEDED
+            elif event_type == WorkflowEventType.step_failed:
+                phase = PHASE_FAILED
+            else:
+                continue
+            terminal_step = step_name
+            raw_attempt = payload.get("attempt")
+            terminal_attempt = raw_attempt if isinstance(raw_attempt, int) else attempt
+        if phase is None:
+            return
+        step = pre_step_name or terminal_step
+        if not step:
+            return
+        if step_terminal_logged(
+            events, step_name=step, attempt=terminal_attempt, step_key=step_key
+        ):
+            return
+        emit_step_audit(
+            phase=phase,
+            route_id=instance.route_id,
+            step=step,
+            tenant_id=instance.tenant_id,
+            attempt=terminal_attempt,
+            duration_ms=duration_ms,
+            workflow_id=str(workflow_id),
+        )
 
     async def _apply_outcome(
         self,
