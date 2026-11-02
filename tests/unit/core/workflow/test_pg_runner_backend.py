@@ -428,35 +428,59 @@ class TestAwaitCompletion:
 
 @pytest.mark.asyncio
 class TestReplay:
-    """Cycle 29 P2: silent no-op заменён на явный ``NotImplementedError``.
+    """ADR-0408: ``replay()`` реализован как DLQ-replay исчерпанного шага.
 
-    pg-runner backend — dev/staging-only fallback (ADR-045); replay-gate
-    CI работает с :class:`TemporalWorkflowBackend`. Любая попытка
-    вызвать ``replay()`` теперь fail-loud вместо silent skip.
+    До волны 22 метод был fail-loud ``NotImplementedError`` (DLQ для
+    workflow не было). Теперь ``history`` — JSON DLQ-записи: метод
+    сбрасывает retry-бюджет инстанса и возвращает его в ``pending``.
+    Инвариант «не молчать» сохранён: некорректный вход → ``ValueError``.
     """
 
-    async def test_replay_raises_not_implemented(
+    async def test_replay_rejects_unparsable_history(
         self, backend: PgRunnerWorkflowBackend
     ) -> None:
-        """Regression (Cycle 29 P2): silent no-op больше не допустим.
-
-        Cycle 10 (P2-D): message обновлён — DEPRECATED + 'does not implement
-        Temporal-compatible replay' (parity с cycle 10 runtime DeprecationWarning).
-        """
-        with pytest.raises(NotImplementedError, match="does not implement"):
+        """Regression (Cycle 29 P2): silent no-op больше не допустим."""
+        with pytest.raises(ValueError, match="UTF-8 JSON"):
             await backend.replay(workflow_name="wf", history=b"any-bytes")
 
     async def test_replay_raises_for_empty_history(
         self, backend: PgRunnerWorkflowBackend
     ) -> None:
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(ValueError):
             await backend.replay(workflow_name="wf", history=b"")
 
     async def test_replay_raises_for_temporal_format_history(
         self, backend: PgRunnerWorkflowBackend
     ) -> None:
         """Temporal ``WorkflowHistory.from_json`` bytes НЕ должны silent skip'аться."""
-        with pytest.raises(NotImplementedError):
+        with pytest.raises(ValueError, match="workflow_id"):
             await backend.replay(
                 workflow_name="wf", history=b'{"events": [{"eventId": 1}]}'
             )
+
+    async def test_replay_resets_budget_and_requeues_failed_instance(
+        self,
+        backend: PgRunnerWorkflowBackend,
+        stores: tuple[_FakeStateStore, _FakeEventStore],
+    ) -> None:
+        """DLQ-replay: сброс retry-бюджета + возврат инстанса в ``pending``."""
+        import json
+
+        state, events = stores
+        instance_id = await state.create(
+            workflow_name="wf", route_id="wf", input_payload={}, tenant_id="t-1"
+        )
+        await state.update_status(instance_id, WorkflowStatus.failed)
+        history = json.dumps(
+            {"workflow_id": str(instance_id), "step": "charge_card", "attempts": 3}
+        ).encode()
+
+        await backend.replay(workflow_name="wf", history=history)
+
+        assert events.appended, "replay должен записать событие resumed"
+        _wid, event_type, payload, step_name = events.appended[-1]
+        assert event_type is WorkflowEventType.resumed
+        assert payload["attempts_reset"] is True
+        assert payload["step"] == "charge_card"
+        assert step_name == "charge_card"
+        assert state.status_updates[-1] == (instance_id, WorkflowStatus.pending)

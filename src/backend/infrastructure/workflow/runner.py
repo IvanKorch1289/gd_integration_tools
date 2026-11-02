@@ -50,7 +50,12 @@ from uuid import UUID
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.core.domain.models.workflow_instance import WorkflowStatus
 from src.backend.core.logging import get_logger
+from src.backend.core.observability.workflow_sla import (
+    classify_sla_breach,
+    record_workflow_sla_compliance,
+)
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.infrastructure.messaging.dlq_base import DLQWriter
 from src.backend.infrastructure.observability.otel.setup import (
     record_workflow_compensation,
     record_workflow_status,
@@ -64,6 +69,10 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceStore,
     WorkflowState,
 )
+from src.backend.infrastructure.workflow.pg_runner_internals.workflow_dlq import (
+    WorkflowDLQPublisher,
+)
+from src.backend.infrastructure.workflow.registry import workflow_registry
 
 __all__ = (
     "DurableWorkflowRunner",
@@ -95,6 +104,25 @@ def idempotency_key(instance_id: UUID, step_name: str, attempt: int) -> str:
     """
     raw = f"{instance_id}|{step_name}|{attempt}".encode()
     return hashlib.sha256(raw).hexdigest()
+
+
+def _coerce_seconds(raw: Any) -> float | None:
+    """Привести значение к положительному числу секунд.
+
+    Args:
+        raw: Значение из payload'а инстанса (``None`` / str / float).
+
+    Returns:
+        Число секунд либо ``None``, если значение не задано или неположительно.
+
+    """
+    if raw is None:
+        return None
+    try:
+        value = float(raw)
+    except TypeError, ValueError:
+        return None
+    return value if value > 0 else None
 
 
 # -- Типы для step-executor контракта ----------------------------------
@@ -257,6 +285,10 @@ class DurableWorkflowRunner:
         await runner.start()
         ...
         await runner.stop()
+
+    ADR-0408: исчерпавший попытки шаг публикуется в messaging-DLQ
+    (``dlq_writer``). Writer можно задать конструктором или позже —
+    :meth:`set_dlq_writer` (DI-мост, как у ``CDCClient``).
     """
 
     def __init__(
@@ -267,12 +299,15 @@ class DurableWorkflowRunner:
         state_store: WorkflowInstanceStore | None = None,
         event_store: WorkflowEventStore | None = None,
         listener_dsn: str | None = None,
+        dlq_writer: DLQWriter | None = None,
     ) -> None:
         self._config = config
         self._executor = executor
         self._state_store = state_store or WorkflowInstanceStore()
         self._event_store = event_store or WorkflowEventStore()
         self._listener_dsn = listener_dsn
+        # ADR-0408: DLQ-поступление для исчерпавших попыток шагов.
+        self._dlq = WorkflowDLQPublisher(dlq_writer)
         # Runtime state
         self._semaphore = asyncio.Semaphore(config.max_concurrent)
         self._running = False
@@ -616,6 +651,7 @@ class DurableWorkflowRunner:
                 workflow_name=instance.workflow_name,
                 status=WorkflowStatus.succeeded.value,
             )
+            self._record_sla_compliance(instance=instance)
             return
 
         if result.outcome == StepOutcome.FAILED:
@@ -627,6 +663,13 @@ class DurableWorkflowRunner:
             record_workflow_status(
                 workflow_name=instance.workflow_name, status=WorkflowStatus.failed.value
             )
+            await self._publish_exhausted_step(
+                instance=instance,
+                result=result,
+                attempts=result.attempts,
+                max_attempts=result.max_attempts,
+            )
+            self._record_sla_compliance(instance=instance)
             return
 
         if result.outcome == StepOutcome.SUB_SPAWNED:
@@ -656,6 +699,14 @@ class DurableWorkflowRunner:
                     workflow_name=instance.workflow_name,
                     status=WorkflowStatus.failed.value,
                 )
+                # ADR-0408: исчерпанный шаг → DLQ.
+                await self._publish_exhausted_step(
+                    instance=instance,
+                    result=result,
+                    attempts=attempts,
+                    max_attempts=max_attempts,
+                )
+                self._record_sla_compliance(instance=instance)
                 return
             next_at = result.next_attempt_at or (
                 datetime.now(UTC)
@@ -690,6 +741,146 @@ class DurableWorkflowRunner:
         await self._state_store.update_status(
             workflow_id, WorkflowStatus.paused, next_attempt_at=next_at
         )
+
+    # -- DLQ + SLA (ADR-0408) -------------------------------------------
+
+    def set_dlq_writer(self, writer: DLQWriter | None) -> None:
+        """Установить DLQ-writer для исчерпанных шагов (DI-мост).
+
+        Args:
+            writer: Canonical ``DLQWriter`` (например ``InboxDLQWriter``).
+                ``None`` — публикация отключается (fail-loud warning-лог).
+
+        """
+        self._dlq = WorkflowDLQPublisher(writer)
+
+    def _resolve_dlq_writer(self) -> DLQWriter | None:
+        """Определить writer DLQ: инъекция → fallback на PG ``dlq_inbox``.
+
+        Fallback нужен, чтобы контракт работал без правок composition root
+        (вне зоны кластера): pg-runner и DLQ живут в одной PostgreSQL —
+        таблица ``dlq_inbox`` (тот же writer, что у outbox-DLQ). Ошибка
+        построения writer'а workflow не ломает: запись помечается
+        статусом ``no_writer`` (alert-рул, ADR-0408).
+
+        Returns:
+            Writer либо ``None`` — writer недоступен.
+
+        """
+        writer = self._dlq.writer
+        if writer is not None:
+            return writer
+        try:
+            from src.backend.infrastructure.database.session_manager import (
+                main_session_manager,
+            )
+            from src.backend.infrastructure.messaging.dlq.inbox_writer import (
+                InboxDLQWriter,
+            )
+
+            writer = InboxDLQWriter(session_factory=main_session_manager.create_session)
+        except Exception as exc:
+            _logger.warning("workflow.dlq.default_writer_unavailable: %s", exc)
+            return None
+        self.set_dlq_writer(writer)
+        return writer
+
+    async def _publish_exhausted_step(
+        self,
+        *,
+        instance: WorkflowInstanceRow,
+        result: StepResult,
+        attempts: int | None,
+        max_attempts: int | None,
+    ) -> None:
+        """Опубликовать исчерпанный шаг в messaging-DLQ (ADR-0408).
+
+        В DLQ попадает только шаг, исчерпавший retry-бюджет
+        (``attempts >= max_attempts``); прочие терминальные сбои — нет.
+        ``dlq_id`` детерминирован (ключ идемпотентности шага), поэтому
+        повторный запуск того же шага не дублирует запись.
+
+        Args:
+            instance: Row workflow-инстанса.
+            result: Результат шага (источник имени шага и текста ошибки).
+            attempts: Номер последней попытки (``None`` — неизвестен).
+            max_attempts: Размер retry-бюджета (``None`` — неизвестен).
+
+        """
+        if attempts is None or max_attempts is None or attempts < max_attempts:
+            return
+        self._resolve_dlq_writer()
+        step_name = self._failed_step_name(result)
+        payload = instance.input_payload or {}
+        await self._dlq.publish_exhausted_step(
+            dlq_id=idempotency_key(instance.id, step_name, attempts),
+            instance=instance,
+            step_name=step_name,
+            attempts=attempts,
+            max_attempts=max_attempts,
+            error_message=result.error_message,
+            payload_keys=[key for key in payload if not str(key).startswith("__")],
+        )
+
+    @staticmethod
+    def _failed_step_name(result: StepResult) -> str:
+        """Имя шага, породившего результат (по событию ``step_failed``)."""
+        for event_type, _payload, step_name in reversed(result.events):
+            if event_type == WorkflowEventType.step_failed and step_name:
+                return str(step_name)
+        return "unknown"
+
+    def _record_sla_compliance(self, *, instance: WorkflowInstanceRow) -> None:
+        """Оценить SLA инстанса → ``workflow_sla_compliance_total`` (ADR-0408).
+
+        Бюджет времени workflow'а — маркер ``__sla_hard_limit_s`` либо
+        ``__execution_timeout_s`` (ADR-0396: ``execution_timeout`` = SLA
+        hard-limit), либо ``run_timeout_s`` спеки workflow'а. Без бюджета
+        SLA не оценивается (метрика не растёт).
+
+        Args:
+            instance: Row workflow-инстанса.
+
+        """
+        hard = self._sla_budget_seconds(instance=instance)
+        if hard is None:
+            return
+        payload = instance.input_payload or {}
+        created = instance.created_at
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=UTC)
+        elapsed = (datetime.now(UTC) - created).total_seconds()
+        record_workflow_sla_compliance(
+            classify_sla_breach(
+                elapsed_seconds=elapsed,
+                soft_limit_seconds=_coerce_seconds(payload.get("__sla_soft_limit_s")),
+                hard_limit_seconds=hard,
+            )
+        )
+
+    @staticmethod
+    def _sla_budget_seconds(*, instance: WorkflowInstanceRow) -> float | None:
+        """Бюджет времени workflow'а (SLA hard-limit) в секундах.
+
+        Приоритет источников: маркеры payload'а инстанса
+        (``__sla_hard_limit_s`` → ``__execution_timeout_s``, ADR-0396) →
+        ``run_timeout_s`` спеки workflow'а из реестра workflow'ов.
+
+        Args:
+            instance: Row workflow-инстанса.
+
+        Returns:
+            Бюджет в секундах либо ``None`` — бюджет не задан.
+
+        """
+        payload = instance.input_payload or {}
+        budget = _coerce_seconds(payload.get("__sla_hard_limit_s"))
+        if budget is None:
+            budget = _coerce_seconds(payload.get("__execution_timeout_s"))
+        if budget is None:
+            spec = workflow_registry.get_spec(instance.route_id)
+            budget = _coerce_seconds(getattr(spec, "run_timeout_s", None))
+        return budget
 
     # -- Lease heartbeat ------------------------------------------------
 

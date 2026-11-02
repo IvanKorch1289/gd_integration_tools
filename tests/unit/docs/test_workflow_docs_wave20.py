@@ -384,16 +384,23 @@ def test_owner_tasks_summary_dlq_formulation_is_correct() -> None:
 
 
 def test_hitl_runbook_marks_sla_tracker_not_implemented() -> None:
-    """(6) SLA-алертинг помечен «не реализован», а не «не запущен».
+    """(6) SLA-алертинг: метрика + alert-рул реализованы (ADR-0408).
 
-    Волна 21 (ADR-0403): трекер удалён как мёртвый код → runbook говорит
-    «не реализовано», не подразумевая существующий класс.
+    Волна 21 (ADR-0403) удалила трекер как мёртвый код; волна 22
+    (ADR-0408) закрыла gap метрикой и alert-рулом. Runbook обязан
+    описывать фактическую семантику: терминальный FAILED + DLQ + метрика,
+    без устаревшего «не реализовано».
     """
     text = _read(_HITL_RUNBOOK)
     assert "SLA" in text, "runbook не упоминает SLA-алертинг"
-    assert "не реализован" in text, (
-        "runbook должен честно помечать SLA-алертинг как «не реализовано»"
+    assert "не реализован" not in text.lower(), (
+        "runbook не должен утверждать, что SLA/DLQ не реализованы: "
+        "ADR-0408 закрыл gap-WF-4.5 (метрика + alert-рул)"
     )
+    assert "workflow_sla_compliance_total" in text, (
+        "runbook должен называть метрику SLA-compliance"
+    )
+    assert "ADR-0408" in text, "runbook должен ссылаться на ADR-0408"
     assert "owner-задач" in text.lower(), (
         "runbook не ссылается на owner-задачу по SLA-алертингу"
     )

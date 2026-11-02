@@ -1,7 +1,7 @@
-"""ADR-0403: мёртвый SLA-трекер удалён, состояние описано честно.
+"""ADR-0403 → ADR-0408: мёртвый SLA-трекер удалён, метрика эмитится в рантайме.
 
-Дефект (до фикса)
------------------
+Дефект (до фикса волны 21)
+--------------------------
 ``SlaTracker`` (``src/backend/services/workflows/sla_alerting.py``) не был
 инстанцирован **нигде** в ``src/``: ни в lifespan, ни в worker'ах, ни в
 composition root. ``WorkflowFacade`` принимал ``sla_tracker`` только как
@@ -11,16 +11,14 @@ composition root. ``WorkflowFacade`` принимал ``sla_tracker`` тольк
 
 Решение волны 21 — **удалить** исполнитель трекинга (класс
 ``SlaTracker`` + протокол ``SlaAlertDispatcher`` + его in-memory
-реализацию) и явно зафиксировать в ADR-0403 и docstring'ах, что:
+реализацию) и явно зафиксировать в ADR-0403 и docstring'ах, что
+эскалация по SLA (email/Slack) **не реализована**.
 
-* эскалация по SLA (email/Slack) **не реализована**;
-* поднять исполнитель в composition root нельзя в этом кластере:
-  фасад не находится на production-пути старта workflow
-  (``dsl/engine/processors/invoke_workflow.py`` стартует workflow напрямую
-  через backend), а канала эскалации (email/Slack) в репозитории нет;
-* чистая функция оценки ``evaluate_sla`` (метрика
-  ``workflow_sla_compliance_total``) остаётся — она не привязана к
-  исполнителю и используется Grafana-дашбордом.
+Решение волны 22 (ADR-0408) — **GAP-WF-4.5 закрыт метрикой + alert-рулом**:
+оценка SLA выполняется в точке терминального перехода workflow'а
+(pg-runner runner), счётчик ``workflow_sla_compliance_total{level}``
+эмитится в рантайме; канал эскалации (email/Slack) по-прежнему
+отсутствует — уведомление приходит через Prometheus-алерт.
 
 Ожидание
 --------
@@ -28,8 +26,9 @@ composition root. ``WorkflowFacade`` принимал ``sla_tracker`` тольк
   отсутствуют в модуле;
 * ``WorkflowFacade`` больше не принимает ``sla_tracker`` и не ссылается на
   трекер;
-* docstring модуля и ADR-0403 фиксируют, что SLA-алертинг не реализован
-  (идентификатор owner-задачи ``GAP-WF-4.5``).
+* docstring модуля фиксирует честное состояние: SLA-алертинг — это
+  метрика + alert-рул (ADR-0408), эскалация email/Slack — не реализована;
+* owner-задача ``GAP-WF-4.5`` закрыта кодом (ссылка в docstring'е).
 """
 
 from __future__ import annotations
@@ -45,7 +44,8 @@ from src.backend.services.workflows import sla_alerting
 pytestmark = pytest.mark.unit
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-ADR_PATH = REPO_ROOT / "docs" / "adr" / "0403-workflow-sla-dlq-and-prod-validator.md"
+ADR_0403 = REPO_ROOT / "docs" / "adr" / "0403-workflow-sla-dlq-and-prod-validator.md"
+ADR_0408 = REPO_ROOT / "docs" / "adr" / "0408-workflow-dlq-contract-and-sla-alerting.md"
 OWNER_TASK_ID = "GAP-WF-4.5"
 
 
@@ -80,17 +80,32 @@ def test_facade_source_does_not_reference_sla_tracker() -> None:
     assert "_untrack_sla" not in source
 
 
-def test_module_docstring_declares_sla_alerting_not_implemented() -> None:
-    """Docstring модуля фиксирует честное состояние (owner-задача)."""
+def test_module_docstring_declares_metric_based_sla_alerting() -> None:
+    """Docstring модуля фиксирует: SLA-алертинг = метрика + alert-рул."""
     docstring = sla_alerting.__doc__ or ""
     assert OWNER_TASK_ID in docstring, (
         "docstring модуля должен ссылаться на owner-задачу " + OWNER_TASK_ID
     )
-    assert "не реализован" in docstring.lower()
+    assert "ADR-0408" in docstring, "docstring должен ссылаться на ADR-0408"
+    assert "workflow_sla_compliance_total" in docstring, (
+        "docstring должен называть эмитируемую метрику"
+    )
+    assert "не реализовано" in docstring.lower(), (
+        "эскалация email/Slack по-прежнему не реализована — это надо сказать"
+    )
 
 
 def test_adr_documents_sla_alerting_decision() -> None:
     """ADR-0403 описывает решение по SLA-трекингу и owner-задачу."""
-    text = ADR_PATH.read_text(encoding="utf-8")
+    text = ADR_0403.read_text(encoding="utf-8")
     assert OWNER_TASK_ID in text
     assert "SlaTracker" in text
+
+
+def test_adr_0408_closes_gap_with_metric_and_alert_rule() -> None:
+    """ADR-0408 закрывает GAP-WF-4.5 кодом (метрика + alert-рул)."""
+    text = ADR_0408.read_text(encoding="utf-8")
+    assert OWNER_TASK_ID in text
+    assert "workflow_sla_compliance_total" in text
+    assert "workflow_dlq_publish_total" in text
+    assert "docs/ops/workflow-sla-alerts.md" in text

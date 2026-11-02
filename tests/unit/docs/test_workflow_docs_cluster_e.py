@@ -487,18 +487,22 @@ def test_hitl_runbook_matches_real_feature_flag() -> None:
     )
 
 
-def test_hitl_runbook_marks_unimplemented_sla_tracker() -> None:
-    """(10) SLA-алертинг честно помечен «не реализован» (ADR-0403).
+def test_hitl_runbook_marks_sla_alerting_implemented_via_metric() -> None:
+    """(10) SLA-алертинг описан как метрика + alert-рул (ADR-0408).
 
-    В волне 21 трекер удалён как мёртвый код, поэтому runbook обязан
-    говорить «не реализовано», а не намекать на существующий класс.
+    В волне 21 трекер удалён как мёртвый код; в волне 22 gap закрыт
+    эмиссией метрики и alert-рулом. Runbook обязан отражать фактическое
+    состояние и не утверждать, что SLA/DLQ не реализованы.
     """
     from src.backend.services.workflows import sla_alerting
 
     text = _read(_HITL_RUNBOOK)
     assert "SLA" in text, "runbook не упоминает SLA-алертинг"
-    assert "не реализован" in text.lower(), (
-        "runbook должен честно помечать SLA-алертинг как «не реализовано»"
+    assert "не реализован" not in text.lower(), (
+        "runbook не должен утверждать, что SLA/DLQ не реализованы (ADR-0408)"
+    )
+    assert "workflow_sla_compliance_total" in text, (
+        "runbook должен называть эмитируемую метрику SLA-compliance"
     )
     assert not hasattr(sla_alerting, "SlaTracker"), (
         "SlaTracker удалён как мёртвый код (ADR-0403) — runbook не должен "

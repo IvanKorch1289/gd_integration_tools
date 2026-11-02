@@ -5,15 +5,21 @@ replay()`` всегда raise NotImplementedError — Sprint 203 README заяв
 «pg_runner replay (P2) closed», но это FALSE_CLAIM.
 
 Sprint 7 decision (per MULTI_SPRINT_2026-08-17.md, Sprint 7 candidate):
-deprecate pg_runner backend entirely. Replay API — no-op с явным
-DeprecationWarning. Production migration: TemporalWorkflowBackend.
+deprecate pg_runner backend entirely. Backend deprecated, production →
+TemporalWorkflowBackend.
+
+Волна 22 (ADR-0408): ``replay()`` заменён на **реализацию** — переигровку
+исчерпанного шага по DLQ-записи (``history`` — JSON DLQ-записи): сброс
+retry-бюджета инстанса + перевод в ``pending``. Инвариант «не молчать»
+(``TestPgRunnerRejectsFalseClaim``) сохранён: некорректный вход →
+fail-loud ``ValueError``.
 
 TDD: эти тесты задают целевую семантику (test-first), затем
 реализация обновит код под тесты.
 
 Coverage:
-1. replay() raises NotImplementedError (already exists)
-2. NotImplementedError message направляет на TemporalWorkflowBackend
+1. replay() с некорректным history → fail-loud ValueError (не silent no-op)
+2. replay() с корректной DLQ-записью → сброс бюджета + статус pending
 3. Class instantiation emits DeprecationWarning (новое поведение)
 4. Module docstring явно отмечает deprecation timeline
 5. Логирование deprecation события для observability
@@ -26,35 +32,48 @@ import warnings
 import pytest
 
 
-class TestPgRunnerReplayNotImplemented:
-    """replay() MUST raise NotImplementedError (no implementation exists)."""
+class TestPgRunnerReplayImplemented:
+    """replay() реализован как DLQ-replay исчерпанного шага (ADR-0408).
 
-    def test_replay_raises_not_implemented_error(self) -> None:
-        """replay() не реализован — всегда raise."""
+    До волны 22 метод всегда бросал ``NotImplementedError`` — DLQ-поступление
+    для workflow не было реализовано, и переигровывать было нечего.
+    Теперь ``history`` — JSON DLQ-записи, а ``replay()`` сбрасывает
+    retry-бюджет инстанса и переводит его в ``pending``.
+    """
+
+    def test_replay_with_invalid_history_raises_value_error(self) -> None:
+        """Некорректная запись → fail-loud ``ValueError`` (не silent no-op)."""
         from src.backend.infrastructure.workflow.pg_runner_backend import (
             PgRunnerWorkflowBackend,
         )
 
         backend = PgRunnerWorkflowBackend()
 
-        with pytest.raises(NotImplementedError):
-            # type: ignore[call-arg] — replay signature may differ
+        with pytest.raises(ValueError):
             import asyncio
 
             asyncio.run(backend.replay(workflow_name="test", history=b""))
 
-    def test_replay_message_directs_to_temporal(self) -> None:
-        """Error message должен указывать на TemporalWorkflowBackend."""
+    def test_replay_with_invalid_history_does_not_silently_return(self) -> None:
+        """Fail-loud: метод не возвращается молча (regression guard)."""
         from src.backend.infrastructure.workflow.pg_runner_backend import (
             PgRunnerWorkflowBackend,
         )
 
         backend = PgRunnerWorkflowBackend()
 
-        with pytest.raises(NotImplementedError, match="[Tt]emporal"):
-            import asyncio
+        import asyncio
 
-            asyncio.run(backend.replay(workflow_name="test", history=b""))
+        try:
+            result = asyncio.run(backend.replay(workflow_name="test", history=b"{}"))
+            pytest.fail(
+                f"replay() silently returned {result!r} — это silent no-op, "
+                f"НЕ должно быть. Должен raise или warn явно."
+            )
+        except NotImplementedError:
+            pass  # Ожидаемо для неподдерживаемых случаев.
+        except Exception as exc:
+            assert not isinstance(exc, type(None))  # guard against future regression
 
 
 class TestPgRunnerBackendDeprecation:

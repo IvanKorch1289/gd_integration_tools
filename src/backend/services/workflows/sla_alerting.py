@@ -1,4 +1,4 @@
-"""Оценка SLA workflow (GAP-WF-4.5, ADR-0403).
+"""Оценка SLA workflow (GAP-WF-4.5, ADR-0403, ADR-0408).
 
 Модуль содержит **чистую** оценку SLA-состояния workflow:
 
@@ -9,51 +9,42 @@
   ``workflow_sla_compliance_total{level}`` (используется дашбордом
   ``infrastructure/observability/grafana/workflow_sla_compliance.json``).
 
-Честное состояние (ADR-0403, волна 21)
----------------------------------------
-**SLA-алертинг не реализован.** Исполнитель трекинга (класс
-``SlaTracker``) и протокол диспетчера ``SlaAlertDispatcher`` удалены как
-мёртвый код: они не инстанцировались нигде в ``src/`` (ни в lifespan, ни
-в worker'ах, ни в composition root), поэтому soft/hard breach и
-эскалация (email/Slack) в рантайме не происходили. ADR-0396 утверждал
-обратное («SLA-политика перестала быть инертной») — уточнение здесь.
+Состояние после волны 22 (ADR-0408)
+-----------------------------------
+**Gap GAP-WF-4.5 закрыт метрикой + alert-рулом.** Метрика больше не
+мёртвая: pg-runner runner' (``infrastructure/workflow/runner.py``)
+оценивает SLA каждого терминального перехода workflow'а по бюджету
+времени (``__execution_timeout_s`` = SLA hard-limit, ADR-0396) и
+инкрементит ``workflow_sla_compliance_total{level}``. Правило алерта
+(Prometheus/alertmanager) — ``docs/ops/workflow-sla-alerts.md``; порог
+нарушения — из настроек SLO роутов (``route.toml::slo``).
 
-Почему не поднять исполнителя в этой волне:
+Что по-прежнему **не реализовано**: автоматическая эскалация
+(email/Slack) — канала эскалации в репозитории нет. Уведомление об SLA
+нарушении доставляется через Prometheus-алерт, а не через почту/Slack.
 
-* ``WorkflowFacade`` не находится на production-пути старта workflow:
-  ``dsl/engine/processors/invoke_workflow.py`` стартует workflow напрямую
-  через ``WorkflowBackend``, минуя фасад (вне зоны кластера волны 21);
-* канала эскалации (email/Slack) в репозитории нет — единственный
-  dispatcher был in-memory тест-дублем;
-* поднятие трекера без вызывающего кода = фоновая задача, которая
-  ничего не отслеживает (тихое «зелёное» состояние).
-
-Owner-задача: **GAP-WF-4.5** (см. ``docs/roadmap/PROD_READINESS_GAPS.md``,
-``docs/roadmap/OWNER_TASKS.md`` § 8, ADR-0403). Минимальный шаг: создать
-исполнителя SLA-алертинга (реальный dispatcher + подписка на старт/
-завершение workflow) либо удалить ``evaluate_sla`` вместе с дашбордом.
+Исполнитель трекинга (``SlaTracker``) и протокол диспетчера
+(``SlaAlertDispatcher``) остались удалёнными как мёртвый код (ADR-0403) —
+оценка SLA не требует фонового трекера, потому что выполняется в точке
+терминального перехода workflow'а.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from enum import StrEnum
 from typing import Any
 
-from src.backend.core.logging import get_logger
+from src.backend.core.observability.workflow_sla import (
+    WorkflowSlaLevel,
+    classify_sla_breach,
+    record_workflow_sla_compliance,
+)
 
 __all__ = ("SlaBreachLevel", "SlaBreachRecord", "evaluate_sla")
 
-_logger = get_logger("workflow.sla_alerting")
-
-
-class SlaBreachLevel(StrEnum):
-    """SLA breach severity levels."""
-
-    NONE = "none"
-    SOFT = "soft"
-    HARD = "hard"
+SlaBreachLevel = WorkflowSlaLevel
+"""Уровни breach'а SLA (единый источник — ``core.observability.workflow_sla``)."""
 
 
 @dataclass(slots=True)
@@ -101,81 +92,42 @@ def evaluate_sla(
     *,
     workflow_id: str,
     elapsed_seconds: float,
-    soft_limit_seconds: float,
+    soft_limit_seconds: float | None = None,
     hard_limit_seconds: float,
     breach_action: str = "alert",
     tenant_id: str | None = None,
 ) -> SlaBreachRecord:
     """Single-pass оценка SLA одного workflow.
 
-    Sprint 12 K2 W1: дополнительно инкрементирует Prometheus counter
-    ``workflow_sla_compliance_total{level}``.
+    Эмитит Prometheus counter ``workflow_sla_compliance_total{level}``
+    (level=none/soft/hard) — единственный источник данных для
+    Grafana-дашборда и Prometheus-алерта (ADR-0408,
+    ``docs/ops/workflow-sla-alerts.md``).
 
-    .. note::
-       Вызов в рантайме отсутствует: исполнитель трекинга удалён
-       (ADR-0403, owner-задача GAP-WF-4.5). Функция остаётся как чистая
-       точка оценки SLA для будущего исполнителя.
+    Args:
+        workflow_id: Идентификатор workflow'а (в логи, не в labels).
+        elapsed_seconds: Фактическое время выполнения (сек).
+        soft_limit_seconds: Soft-limit SLA (сек). ``None`` — soft-уровень
+            не используется.
+        hard_limit_seconds: Hard-limit SLA (сек).
+        breach_action: Что выполнено при breach'е (``alert``/``cancel``).
+        tenant_id: Tenant workflow'а (в логи, не в labels).
 
     Returns:
         :class:`SlaBreachRecord` с ``level=NONE`` если в пределах SLA.
 
     """
-    if elapsed_seconds >= hard_limit_seconds:
-        level = SlaBreachLevel.HARD
-    elif elapsed_seconds >= soft_limit_seconds:
-        level = SlaBreachLevel.SOFT
-    else:
-        level = SlaBreachLevel.NONE
-    _emit_sla_metric(workflow_id=workflow_id, tenant_id=tenant_id, level=level)
+    level = classify_sla_breach(
+        elapsed_seconds=elapsed_seconds,
+        soft_limit_seconds=soft_limit_seconds,
+        hard_limit_seconds=hard_limit_seconds,
+    )
+    record_workflow_sla_compliance(level)
     return SlaBreachRecord(
         workflow_id=workflow_id,
         level=level,
         elapsed_seconds=elapsed_seconds,
-        soft_limit=soft_limit_seconds,
+        soft_limit=float(soft_limit_seconds or hard_limit_seconds),
         hard_limit=hard_limit_seconds,
         breach_action=breach_action,
     )
-
-
-_sla_counter: Any | None = None
-
-
-def _emit_sla_metric(
-    *, workflow_id: str, tenant_id: str | None, level: SlaBreachLevel
-) -> None:
-    """Increment ``workflow_sla_compliance_total{...,level=...}`` counter.
-
-    Lazy-import prometheus_client; при отсутствии — no-op (тесты не
-    должны зависеть от prometheus_client).
-    """
-    global _sla_counter
-    if _sla_counter is None:
-        try:
-            from src.backend.core.observability.metrics import metrics_registry
-
-            # Per audit 25.09.2026 W9: «Запретить tenant_id, workflow_id как
-            # Prometheus labels. Их можно помещать в traces/logs с
-            # policy-controlled hashing». Cardinality bounded by level only.
-            _sla_counter = metrics_registry.counter(
-                "workflow_sla_compliance_total",
-                "SLA evaluations per workflow (level=none/soft/hard)",
-                labels=("level",),
-            )
-        except (ImportError, ValueError):
-            _sla_counter = False  # sentinel: do not retry
-
-    if _sla_counter and _sla_counter is not False:
-        try:
-            _sla_counter.labels(  # type: ignore[union-attr]
-                level=level.value
-            ).inc()
-        except Exception as exc:
-            _logger.debug(
-                "sla.counter_inc_failed: %s",
-                exc,
-                extra={
-                    "workflow_id": workflow_id,
-                    "tenant_id": tenant_id or "",
-                    "level": level.value,
-                },
-            )

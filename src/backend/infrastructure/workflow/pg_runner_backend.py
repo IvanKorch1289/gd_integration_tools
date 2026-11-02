@@ -26,41 +26,49 @@ Wave D.1 / ADR-045 §«PgRunnerWorkflowBackend (legacy fallback)».
 
 Используется как dev/staging fallback до Wave D.2 (TemporalWorkflowBackend).
 
-Workflow-DLQ (ADR-0403)
-------------------------
-DLQ для workflow **не реализована** (и не является «недостающей
-функцией» — это свойство модели):
+Workflow-DLQ (ADR-0403, ADR-0408)
+---------------------------------
+Исчерпание retry-бюджета шага даёт терминальный
+``WorkflowStatus.failed`` (см. ``infrastructure/workflow/runner.py``) +
+метрику ``record_workflow_status`` + записи об ошибке в
+``workflow_instances.error`` **и** запись исчерпанного шага в
+messaging-DLQ (ADR-0408):
 
-* ``workflow_events`` — append-only event log инстанса, а не очередь
-  недоставленных сообщений; переигровывать в нём нечего;
-* исчерпание retry-бюджета шага приводит к терминальному
-  ``WorkflowStatus.failed`` (см. ``infrastructure/workflow/runner.py``) +
-  метрике ``record_workflow_status`` + записи об ошибке в
-  ``workflow_instances.error``; записи в DLQ не происходит и
-  переигровки шага не существует;
-* ``replay()`` ниже — **не** DLQ, а Temporal-совместимый replay-gate
-  (детерминизм history). Для workflow «DLQ-патформен» в компенсациях —
-  это WARNING-лог + audit-событие
-  (``infrastructure/workflow/compensating_driver.py``), то есть сигнал без
-  потери данных, но не очередь для переигровки.
+* DLQ-запись — обычный ``DLQEnvelope`` с ``transport="workflow"``
+  (``infrastructure/messaging/dlq_base.py``): route_id, tenant_id, имя
+  шага, attempts/max_attempts, причина (``RETRIES_EXHAUSTED``) и
+  payload-метаданные **без значений данных**;
+* ``dlq_id`` детерминирован (ключ идемпотентности шага) — повторный
+  запуск не дублирует запись;
+* ``workflow_events`` при этом остаётся append-only event log'ом
+  инстанса (очередью недоставленных сообщений он не является).
 
-Формулировка про messaging-DLQ (``docs/runbooks/dlq-replay.md``:
+Оговорка про messaging-DLQ (``docs/runbooks/dlq-replay.md``:
 Kafka/RabbitMQ/NATS/Inbox, admin-API ``/api/v1/admin/dlq/*``) волны 20
-не откатывается — она корректна для своего scope. Owner-задача на
-реализацию DLQ для исчерпавших попыток шагов: ADR-0403 §Открытое,
-``docs/roadmap/OWNER_TASKS.md`` § 7.
+не откатывается — она корректна для своего scope; workflow-шаги теперь
+попадают в тот же DLQ под transport'ом ``workflow``.
+
+``replay()`` ниже — **переигровка исчерпанного шага** по DLQ-записи:
+сброс retry-бюджета инстанса (событие ``resumed`` + ``attempts_reset``)
+и перевод в ``pending`` — runner подхватывает инстанс и исполняет шаг
+заново. Это ответ на вопрос ADR-0403 §Открытое «что переигровывается»:
+то, что ушло в DLQ (transport ``workflow``). Temporal-совместимый
+replay history pg-runner по-прежнему не поддерживает (backend
+deprecated, см. ``MULTI_SPRINT_2026-08-17.md`` Sprint 7).
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import warnings
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
 from src.backend.core.domain.models.workflow_instance import WorkflowStatus
+from src.backend.core.logging import get_logger
 from src.backend.core.workflow.backend import (
     WorkflowBackend,
     WorkflowHandle,
@@ -73,6 +81,8 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
 )
 
 __all__ = ("PgRunnerWorkflowBackend",)
+
+_logger = get_logger("workflow.pg_runner_backend")
 
 
 _TERMINAL_STATUSES = frozenset(
@@ -272,18 +282,24 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
             interval = min(interval * 2, self._poll_max_interval_s)
 
     async def replay(self, *, workflow_name: str, history: bytes) -> None:
-        """pg-runner не реализует Temporal-совместимый replay-gate.
+        """Переиграть исчерпанный шаг workflow по DLQ-записи (ADR-0408).
 
         В отличие от :class:`TemporalWorkflowBackend`, pg-runner работает
         через ``DurableWorkflowRunner.read_events`` (event-sourcing из
         ``workflow_events`` table) — у него нет ``WorkflowHistory.from_json``
-        и он не может воспроизводить Temporal history bytes.
+        и он не может воспроизводить Temporal history bytes. Поэтому
+        ``history`` здесь — **JSON DLQ-записи** (или её ``metadata``):
 
-        .. note::
-           **Это не DLQ.** Метод не имеет отношения к очереди недоставленных
-           сообщений: у workflow её нет (см. docstring модуля, ADR-0403).
-           Исчерпание retry-бюджета шага даёт терминальный ``FAILED`` +
-           метрику + запись об ошибке, но не запись в DLQ.
+        .. code-block:: json
+
+            {"workflow_id": "<uuid>", "step": "charge_card", "attempts": 3}
+
+        Реализация (ADR-0408) — **переигровка исчерпанного шага**:
+        сбрасывается retry-бюджет инстанса (событие ``resumed`` +
+        ``attempts_reset``), статус переводится в ``pending`` — runner
+        подхватывает инстанс и исполняет шаг заново. Это и есть ответ на
+        вопрос ADR-0403 §Открытое «что переигровывается»: то, что ушло в
+        DLQ (transport ``workflow``).
 
         .. deprecated::
             DEPRECATED since Sprint 217 (2026-08-17). pg-runner backend
@@ -292,16 +308,79 @@ class PgRunnerWorkflowBackend(WorkflowBackend):
             in Sprint 220+.
 
         Raises:
-            NotImplementedError: всегда (pg-runner не реализует replay API).
+            ValueError: ``history`` не разбирается как DLQ-запись либо
+                инстанс в терминальном статусе (``succeeded``/``cancelled``)
+                — переигровывать нечего.
+            KeyError: workflow-инстанс из записи не найден.
 
         """
-        raise NotImplementedError(
-            "PgRunnerWorkflowBackend.replay() is DEPRECATED since Sprint 217 "
-            "(2026-08-17) — pg-runner backend does not implement Temporal-"
-            "compatible replay. Migrate to TemporalWorkflowBackend. "
-            "Note: this is a replay-gate, not a DLQ — workflow has no DLQ "
-            "(ADR-0403). See MULTI_SPRINT_2026-08-17.md Sprint 7 for "
-            "deprecation timeline."
+        try:
+            raw = json.loads(history.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError(
+                "history must be UTF-8 JSON of a workflow DLQ record "
+                "({'workflow_id': ..., 'step': ..., 'attempts': ...})"
+            ) from exc
+        if not isinstance(raw, dict):
+            raise ValueError("history must be a JSON object of a DLQ record")
+
+        nested = raw.get("metadata")
+        record = nested if isinstance(nested, dict) else raw
+        raw_id = record.get("workflow_id")
+        if not raw_id:
+            raise ValueError("history must contain 'workflow_id'")
+        try:
+            workflow_id = UUID(str(raw_id))
+        except ValueError as exc:
+            raise ValueError(f"invalid workflow_id={raw_id!r}") from exc
+
+        instance = await self._state_store.get(workflow_id)
+        if instance is None:
+            raise KeyError(f"unknown workflow instance run_id={raw_id!r}")
+        if instance.status in {WorkflowStatus.succeeded, WorkflowStatus.cancelled}:
+            raise ValueError(
+                f"workflow {workflow_id} is in terminal status "
+                f"'{instance.status.value}' — nothing to replay"
+            )
+
+        step_name = record.get("step")
+        attempts = record.get("attempts")
+        payload: dict[str, Any] = {
+            "reason": "dlq_replay",
+            "attempts_reset": True,
+            "previous_status": instance.status.value,
+            "workflow_name": workflow_name,
+        }
+        if isinstance(step_name, str) and step_name:
+            payload["step"] = step_name
+        if isinstance(attempts, int):
+            payload["attempts"] = attempts
+
+        await self._event_store.append(
+            workflow_id=workflow_id,
+            event_type=WorkflowEventType.resumed,
+            payload=payload,
+            step_name=step_name if isinstance(step_name, str) and step_name else None,
+        )
+        new_status = (
+            WorkflowStatus.pending
+            if instance.status == WorkflowStatus.failed
+            else instance.status
+        )
+        await self._state_store.update_status(
+            workflow_id=workflow_id,
+            status=new_status,
+            next_attempt_at=datetime.now(UTC),
+        )
+        _logger.info(
+            "workflow.dlq.replayed",
+            extra={
+                "workflow_id": str(workflow_id),
+                "workflow_name": workflow_name,
+                "step": step_name if isinstance(step_name, str) else None,
+                "previous_status": instance.status.value,
+                "new_status": new_status.value,
+            },
         )
 
     async def await_external_signal(

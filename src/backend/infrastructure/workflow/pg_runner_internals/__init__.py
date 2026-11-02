@@ -5,6 +5,7 @@
 - ``state.py``: WorkflowState (state machine, 5 methods)
 - ``event_store.py``: WorkflowEventStore + _find_last_snapshot, _advisory_lock_key
 - ``instance_store.py``: WorkflowInstanceStore
+- ``workflow_dlq.py``: DLQ-контракт исчерпанных шагов (ADR-0408)
 
 Backward-compat: ``from src.backend.infrastructure.workflow.pg_runner_internals import WorkflowState`` works.
 """
@@ -26,8 +27,15 @@ from src.backend.infrastructure.workflow.pg_runner_internals.rows import (
 from src.backend.infrastructure.workflow.pg_runner_internals.state import (
     WorkflowState,  # S55 W3: re-export
 )
+from src.backend.infrastructure.workflow.pg_runner_internals.workflow_dlq import (
+    WORKFLOW_DLQ_TRANSPORT,  # ADR-0408: re-export
+    WorkflowDLQPublisher,  # ADR-0408: re-export
+    build_exhausted_step_envelope,  # ADR-0408: re-export
+)
 
 __all__ = (
+    "WORKFLOW_DLQ_TRANSPORT",
+    "WorkflowDLQPublisher",
     "WorkflowEventRow",
     "WorkflowEventStore",
     "WorkflowInstanceRow",
@@ -35,4 +43,5 @@ __all__ = (
     "WorkflowState",
     "_advisory_lock_key",
     "_find_last_snapshot",
+    "build_exhausted_step_envelope",
 )

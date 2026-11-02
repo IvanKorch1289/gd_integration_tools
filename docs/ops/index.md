@@ -54,6 +54,14 @@ ClickHouse audit + OTel export. Per master_prompt §0: all actions audited.
 
 Prometheus + Starlette Exporter. OpenTelemetry traces.
 
+Workflow-SLA и DLQ-контракт (ADR-0408):
+
+- [Workflow: SLA-алерты и DLQ-поступление](workflow-sla-alerts.md) —
+  alert-рул Prometheus/alertmanager, порог нарушения (из настроек SLO
+  роутов), проверка в рантайме;
+- метрики `workflow_sla_compliance_total{level}` и
+  `workflow_dlq_publish_total{status}`.
+
 ## Logging
 
 - Stdlib structured logging

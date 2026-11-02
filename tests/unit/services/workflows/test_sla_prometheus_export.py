@@ -1,4 +1,9 @@
-"""Unit-тесты Prometheus export для SLA — Sprint 12 K2 W1."""
+"""Unit-тесты Prometheus export для SLA — Sprint 12 K2 W1.
+
+ADR-0408 (волна 22): счётчик переехал в
+``src.backend.core.observability.workflow_sla`` (единый источник
+определения метрики для services и infrastructure).
+"""
 
 from __future__ import annotations
 
@@ -9,15 +14,14 @@ from src.backend.services.workflows.sla_alerting import SlaBreachLevel, evaluate
 prom = pytest.importorskip("prometheus_client", reason="prometheus_client отсутствует")
 
 
-def _reset_counter() -> None:
-    """Reset module-level counter cache (для test isolation)."""
-    from src.backend.services.workflows import sla_alerting as mod
+def _counter() -> object:
+    """Счётчик SLA-compliance (core — единственный источник определения)."""
+    from src.backend.core.observability.workflow_sla import get_workflow_sla_counter
 
-    mod._sla_counter = None
+    return get_workflow_sla_counter()
 
 
 def test_evaluate_sla_none_increments_counter() -> None:
-    _reset_counter()
     breach = evaluate_sla(
         workflow_id="wf-fast",
         elapsed_seconds=1.0,
@@ -27,16 +31,13 @@ def test_evaluate_sla_none_increments_counter() -> None:
     )
     assert breach.level == SlaBreachLevel.NONE
 
-    from src.backend.services.workflows import sla_alerting as mod
-
-    counter = mod._sla_counter
+    counter = _counter()
     assert counter is not None
     samples = list(counter.collect())
     assert any("none" in str(s) for s in samples)
 
 
 def test_evaluate_sla_soft_breach_increments_soft() -> None:
-    _reset_counter()
     breach = evaluate_sla(
         workflow_id="wf-soft",
         elapsed_seconds=120.0,
@@ -48,7 +49,6 @@ def test_evaluate_sla_soft_breach_increments_soft() -> None:
 
 
 def test_evaluate_sla_hard_breach_increments_hard() -> None:
-    _reset_counter()
     breach = evaluate_sla(
         workflow_id="wf-hard",
         elapsed_seconds=400.0,
