@@ -10,6 +10,10 @@
 обязан содержать явный tenant-предикат (``tenant_id = :tenant_id`` с
 значением текущего tenant'а). Всё остальное (таблицы без tenant_id,
 операционные запросы вида ``SELECT 1``) не блокируется.
+
+ADR-0417: если tenant-контекста нет **вообще**, запрос к tenant-aware
+таблице тоже отклоняется — текущий tenant неизвестен, а значит выборка
+не ограничена (раньше guard просто пропускал такой запрос).
 """
 
 from __future__ import annotations
@@ -158,8 +162,12 @@ def test_raw_sql_on_non_tenant_table_is_allowed(seeded: Session) -> None:
     assert [tuple(row) for row in rows] == [(1,)]
 
 
-def test_raw_sql_without_tenant_context_is_allowed(seeded: Session) -> None:
-    """Без tenant в контексте guard не применяется (прежний контракт).
+def test_raw_sql_without_tenant_context_is_blocked(seeded: Session) -> None:
+    """Без tenant-контекста raw SQL отклоняется (fail-closed, ADR-0417).
+
+    Раньше guard пропускал запрос целиком (``if tenant_id:``) — запрос
+    возвращал строки всех tenant'ов (кросс-tenant чтение). Теперь
+    tenant-скоуп неизвестен → запрос не ограничен → отказ.
 
     Args:
         seeded: Сессия с активным ``tenant-a``.
@@ -168,7 +176,7 @@ def test_raw_sql_without_tenant_context_is_allowed(seeded: Session) -> None:
 
     set_tenant(TenantContext(tenant_id=""))
     try:
-        rows = seeded.execute(text("SELECT id, tenant_id FROM x4_docs")).all()
+        with pytest.raises(tf.TenantIsolationError):
+            seeded.execute(text("SELECT id, tenant_id FROM x4_docs"))
     finally:
         set_tenant(TenantContext(tenant_id=TENANT_A))
-    assert len(rows) == 2

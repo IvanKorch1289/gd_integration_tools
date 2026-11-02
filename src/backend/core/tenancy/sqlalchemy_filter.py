@@ -36,6 +36,30 @@ RLS-coverage.
   ORM-фильтр (:func:`_set_tenant_scope_on_begin`). Без этой настройки
   tenant-скоуп не обеспечен (ADR-0386).
 
+Wave 24 (ADR-0417) — границы guard'а (main-контур vs внешние БД):
+
+* **Guard применяется ТОЛЬКО к main-контуру.** Listener стоит на классе
+  ``Session`` (глобальный), поэтому раньше он фильтровал **все** сессии,
+  включая внешние профили БД. Внешний запрос к таблице с tenant-именем
+  (``workflow_instances``) отклонялся с ``TenantIsolationError`` — ломались
+  ``db_query_external`` / ``jdbc_query`` / ``batch_*``. Теперь внешние
+  движки объявляются явно (:func:`register_external_engine`), и к их
+  сессиям guard не применяется: внешняя БД — другой контур со своей
+  схемой и RLS-политиками. Неизвестный движок считается main'ом
+  (fail-closed: изоляция важнее доступности).
+* **Raw-SQL guard fail-closed и без tenant-контекста.** Раньше guard
+  вызывался только при непустом ``tenant_id`` (``if tenant_id:``), поэтому
+  ``text("SELECT * FROM t")`` без tenant'а выполнялся как есть и читал
+  строки чужих tenant'ов. Теперь guard вызывается всегда — как уже
+  сделано в DSL-пути (``databasequeryprocessor``).
+* **Канонический список tenant-таблиц.** Extension-таблицы ``orders`` /
+  ``users`` / ``files`` / ``orderkinds`` описываются моделями в
+  ``extensions/`` (грузятся лениво) и не попадали в
+  :func:`tenant_aware_tables` — raw-SQL guard их не покрывал, а единственная
+  защита была RLS (только PostgreSQL). Список имён вынесен в
+  :mod:`src.backend.core.tenancy.tenant_tables` (источник — миграции) и
+  объединён с динамическим обнаружением.
+
 Wave 18 (ADR-0393) — что изменилось:
 
 * **Tenant-таблицы больше не зависят от ``configure_mappers()``.** Раньше
@@ -70,6 +94,7 @@ from sqlalchemy.orm import Mapped, Mapper, Session, mapped_column
 from src.backend.core.errors import BaseError
 from src.backend.core.logging import get_logger
 from src.backend.core.tenancy import get_tenant_id
+from src.backend.core.tenancy.tenant_tables import TENANT_TABLES
 
 __all__ = (
     "TenantIsolationError",
@@ -77,7 +102,9 @@ __all__ = (
     "apply_tenant_filter",
     "ensure_domain_mappers_configured",
     "guard_raw_sql",
+    "is_main_scope",
     "referenced_tables",
+    "register_external_engine",
     "set_tenant_scope",
     "tenant_aware_tables",
 )
@@ -147,6 +174,97 @@ _TENANT_AWARE_CLASSES: set[type[Any]] = set()
 #: — срабатывает в момент создания таблицы, независимо от того,
 #: сконфигурирован ли mapper.
 _TENANT_AWARE_TABLES: set[str] = set()
+
+#: Движки **внешнего** контура (ADR-0417): ``id()`` движка → сам движок.
+#: К сессиям этих движков tenant-guard не применяется: внешняя БД — другая
+#: СУБД со своей схемой и своими RLS-политиками; её таблицы не
+#: tenant-scoped в смысле приложения. Регистрируется внешним контуром
+#: (:func:`register_external_engine`).
+#:
+#: Движок хранится **по ссылке**: ``id()`` освобождённого объекта может быть
+#: переиспользован Python'ом, и новый (никак не связанный) движок был бы
+#: ошибочно признан внешним.
+_EXTERNAL_ENGINES: dict[int, Any] = {}
+
+#: Максимальная глубина обхода bind-объекта (Engine → sync_engine →
+#: Connection → sessionmaker.kw["bind"]). Ограничение защищает от
+#: бесконечного обхода на «живых» mock-объектах.
+_MAX_BIND_DEPTH: int = 4
+
+
+def _bind_engine_ids(bind: Any) -> set[int]:
+    """Идентификаторы SQLAlchemy-движков, соответствующих ``bind``.
+
+    ``bind`` может быть ``Engine`` / ``AsyncEngine`` / ``Connection`` /
+    ``sessionmaker``. Для ``AsyncEngine`` в набор входит и его
+    ``sync_engine`` — именно его отдаёт ``Session.get_bind()``.
+
+    Args:
+        bind: Объект привязки сессии (или ``None``).
+
+    Returns:
+        Множество ``id()`` найденных движков (пустое, если bind неизвестен).
+
+    """
+    ids: set[int] = set()
+    frontier: list[tuple[Any, int]] = [(bind, 0)]
+    while frontier:
+        current, depth = frontier.pop()
+        if current is None or depth > _MAX_BIND_DEPTH:
+            continue
+        key = id(current)
+        if key in ids:
+            continue
+        ids.add(key)
+        for attr in ("sync_engine", "engine"):
+            child = getattr(current, attr, None)
+            if child is not None and not isinstance(child, type):
+                frontier.append((child, depth + 1))
+        kwargs = getattr(current, "kw", None)
+        if isinstance(kwargs, dict):
+            child = kwargs.get("bind")
+            if child is not None:
+                frontier.append((child, depth + 1))
+    return ids
+
+
+def register_external_engine(engine: Any) -> None:
+    """Объявить движок частью внешнего контура (ADR-0417).
+
+    К сессиям внешнего движка tenant-guard (ORM-фильтр, raw-SQL guard,
+    RLS-скоуп) **не применяется**: внешняя БД — отдельный tenant-контур.
+    Без этого внешний запрос к таблице с tenant-именем
+    (``workflow_instances``) отклонялся бы с ``TenantIsolationError``.
+
+    Args:
+        engine: ``Engine`` / ``AsyncEngine`` / ``Connection`` /
+            ``sessionmaker`` внешнего профиля БД.
+
+    """
+    for engine_id in _bind_engine_ids(engine):
+        _EXTERNAL_ENGINES.setdefault(engine_id, engine)
+
+
+def is_main_scope(session: Any) -> bool:
+    """Относится ли сессия к main-контуру (tenant-guard применяется).
+
+    Движок, объявленный внешним (:func:`register_external_engine`), —
+    внешний контур. Любой другой (в том числе неизвестный) считается
+    main'ом: fail-closed — лучше отклонить запрос, чем пропустить
+    кросс-tenant чтение.
+
+    Args:
+        session: SQLAlchemy-сессия (``Session`` / ``AsyncSession``).
+
+    Returns:
+        ``True`` — guard применяется; ``False`` — внешний контур.
+
+    """
+    try:
+        bind = session.get_bind()
+    except Exception:  # noqa: BLE001 — сессия без bind → main по умолчанию
+        bind = None
+    return not (_bind_engine_ids(bind) & _EXTERNAL_ENGINES.keys())
 
 
 @event.listens_for(Table, "after_parent_attach")
@@ -321,11 +439,18 @@ def tenant_aware_tables() -> frozenset[str]:
        слушателя (порядок импорта не важен);
     3. реестр tenant-aware классов (``TenantMixin`` + ``mapper_configured``).
 
+    ADR-0417: поверх них добавляется **канонический список**
+    (:data:`src.backend.core.tenancy.tenant_tables.TENANT_TABLES`) —
+    extension-таблицы (``orders`` / ``users`` / ``files`` / ``orderkinds``)
+    не имеют ORM-моделей в ядре и грузятся лениво, поэтому динамическое
+    обнаружение их не видит, а raw-SQL guard без них их не покрывал.
+
     Returns:
         Множество имён таблиц, у которых есть колонка ``tenant_id``.
 
     """
     names: set[str] = set(_TENANT_AWARE_TABLES)
+    names.update(TENANT_TABLES)
     for metadata in _known_metadatas():
         for table in metadata.tables.values():
             if "tenant_id" in table.c:
@@ -545,12 +670,17 @@ def _set_tenant_scope_on_begin(
     вложенных savepoint'ах). Значение подставляется bind-параметром —
     SQL-инъекция через ``tenant_id`` невозможна.
 
+    ADR-0417: к сессиям внешнего контура RLS-скоуп не выставляется —
+    внешняя БД имеет собственные политики.
+
     Args:
-        _session: Сессия SQLAlchemy (не используется).
+        _session: Сессия SQLAlchemy.
         _transaction: Транзакция сессии (не используется).
         connection: Соединение с БД.
 
     """
+    if not is_main_scope(_session):
+        return
     set_tenant_scope(connection, get_tenant_id())
 
 
@@ -564,6 +694,8 @@ def apply_tenant_filter(_target: Any = None) -> None:
     * ``do_orm_execute`` → fail-closed guard для raw SQL (``text(...)``):
       запрос по tenant-aware таблице обязан содержать явный
       ``tenant_id``-предикат, иначе — ``TenantIsolationError`` (ADR-0383).
+      Guard вызывается **всегда**: без tenant-контекста tenant-скоуп
+      неизвестен, значит запрос не ограничен (ADR-0417).
     * ``after_begin`` → установка ``app.tenant_id`` из tenant-контекста
       (PostgreSQL-only): RLS-политики читают
       ``current_setting('app.tenant_id', true)`` (ADR-0386).
@@ -571,6 +703,10 @@ def apply_tenant_filter(_target: Any = None) -> None:
 
     Фильтруются **все** tenant-aware сущности запроса, а не только первая:
     join двух tenant-aware таблиц иначе оставлял вторую неограниченной.
+
+    Listener стоит на классе ``Session`` (глобальный), поэтому к сессиям
+    **внешнего** контура guard не применяется — они отсекаются по движку
+    (:func:`is_main_scope`, ADR-0417).
 
     Ідемпотентно: повторний виклик — no-op.
 
@@ -603,12 +739,19 @@ def apply_tenant_filter(_target: Any = None) -> None:
         stmt = orm_execute_state.statement
         tenant_id = get_tenant_id()
 
+        # ADR-0417: внешний контур — другой tenant-контур. Guard к внешним
+        # сессиям не применяется (иначе db_query_external / jdbc_query /
+        # batch_* падают на таблицах с tenant-именами).
+        if not is_main_scope(getattr(orm_execute_state, "session", None)):
+            return
+
         # Raw SQL: ORM-фильтр к нему неприменим — fail-closed (ADR-0383).
+        # Guard вызывается ВСЕГДА (ADR-0417): без tenant-контекста
+        # tenant-скоуп неизвестен, а значит запрос не ограничен — отказ.
         if isinstance(stmt, TextClause):
-            if tenant_id:
-                _guard_raw_sql(
-                    stmt, getattr(orm_execute_state, "parameters", None), tenant_id
-                )
+            _guard_raw_sql(
+                stmt, getattr(orm_execute_state, "parameters", None), tenant_id
+            )
             return
 
         if not (
@@ -648,6 +791,11 @@ def apply_tenant_filter(_target: Any = None) -> None:
             _instances: Инстансы flush (не используются).
 
         """
+        # ADR-0417: внешний контур — свой tenant-контур, его объекты
+        # приложение не размечает.
+        if not is_main_scope(session):
+            return
+
         tenant_id = get_tenant_id()
         if not tenant_id:
             _ensure_rls_scope_for_flush(session)
