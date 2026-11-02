@@ -20,8 +20,7 @@ Direct `from src.backend.infrastructure.*` in core/ is a **layer violation** (cu
 | `cache/` | 24 | Cache backends (Redis/KeyDB/Memcached/Memory) + RAG three-tier + invalidator tiers |
 | `cdc/` | 5 | Change Data Capture: Debezium, poll, listen/notify backends |
 | `chaos/` | 1 | Chaos engineering (resilience testing) |
-| `clients/` | 7473 External service clients (HTTP/SOAP/GRPC/SFTP/SMTP/IMAP/NATS) |
-| `database/` | 44 | Database primitives (SQLAlchemy session, init, dialect types, migrations) |
+| `clients/` | 74 | External service clients (HTTP/SOAP/GRPC/SFTP/SMTP/IMAP/NATS) || `database/` | 44 | Database primitives (SQLAlchemy session, init, dialect types, migrations) |
 | `decorators/` | 6 | Cross-cutting decorators (caching, callbacks) |
 | `di_bridge/` | 6 | DI bridges to core-owned providers (lazy accessors) |
 | `eventing/` | 5 | Event bus + outbox pattern |
