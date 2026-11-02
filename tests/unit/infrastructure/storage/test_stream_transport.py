@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 import pytest
@@ -57,24 +58,28 @@ class TestInMemoryTransport:
 
     async def test_roundtrip(self, stream_client: Any) -> None:
         """Записанная запись читается обратно."""
+        # Уникальное имя потока: in-memory транспорт — общий синглтон, и
+        # параллельные тесты пишут в те же потоки (order-dependent сбой).
+        stream = f"audit:requests:{uuid.uuid4().hex}"
         entry_id = await stream_client.add_to_stream(
-            stream_name="audit:requests", data={"path": "/health"}
+            stream_name=stream, data={"path": "/health"}
         )
         assert entry_id
 
         records = await stream_client.read_stream(
-            stream_name="audit:requests", count=10, start_id="-"
+            stream_name=stream, count=10, start_id="-"
         )
         assert len(records) == 1
         assert records[0]["path"] == "/health"
 
     async def test_streams_are_isolated(self, stream_client: Any) -> None:
         """Разные потоки не смешиваются."""
-        await stream_client.add_to_stream(stream_name="a", data={"x": 1})
-        await stream_client.add_to_stream(stream_name="b", data={"x": 2})
+        suffix = uuid.uuid4().hex
+        await stream_client.add_to_stream(stream_name=f"a:{suffix}", data={"x": 1})
+        await stream_client.add_to_stream(stream_name=f"b:{suffix}", data={"x": 2})
 
-        assert len(await stream_client.read_stream(stream_name="a")) == 1
-        assert len(await stream_client.read_stream(stream_name="b")) == 1
+        assert len(await stream_client.read_stream(stream_name=f"a:{suffix}")) == 1
+        assert len(await stream_client.read_stream(stream_name=f"b:{suffix}")) == 1
 
     async def test_read_from_id_returns_newer_entries(self, stream_client: Any) -> None:
         """Чтение с ``start_id`` возвращает записи строго после указанной."""
