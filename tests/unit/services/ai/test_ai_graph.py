@@ -100,7 +100,6 @@ def test_build_chat_model_falls_back_to_community(
     """При отсутствии ``langchain_litellm`` подхватывается ``langchain_community``."""
     monkeypatch.setitem(sys.modules, "langchain_litellm", None)
     # При попытке `from langchain_litellm import ...` Python увидит None и кинет ImportError
-    sys.modules.pop("langchain_litellm", None)
 
     captured: dict[str, Any] = {}
 
@@ -129,15 +128,9 @@ def test_build_chat_model_raises_when_no_adapter(
 ) -> None:
     """Если ни langchain-litellm ни langchain_community нет — ImportError."""
     # Гарантируем отсутствие обоих модулей.
-    sys.modules.pop("langchain_litellm", None)
-    sys.modules.pop("langchain_community", None)
-    sys.modules.pop("langchain_community.chat_models", None)
     monkeypatch.setitem(sys.modules, "langchain_litellm", None)
     monkeypatch.setitem(sys.modules, "langchain_community", None)
     monkeypatch.setitem(sys.modules, "langchain_community.chat_models", None)
-    sys.modules.pop("langchain_litellm", None)
-    sys.modules.pop("langchain_community", None)
-    sys.modules.pop("langchain_community.chat_models", None)
 
     from src.backend.services.ai.ai_graph import build_chat_model
 
