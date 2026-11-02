@@ -138,12 +138,12 @@ class BaseWebhookChannelSettings(BaseIntegrationSettings):
         ),
         examples=["https://api.example.com/webhooks/express"],
     )
-    signature_secret: SecretStr = Field(
-        default=SecretStr(""),
+    signature_secret: SecretStr | None = Field(
+        default=None,
         title="Секрет подписи",
         description=(
             "Секретный ключ HMAC/JWT для верификации входящих запросов. "
-            "Пустая строка отключает проверку."
+            "None отключает проверку (ADR-0335: секрет без значения — None)."
         ),
     )
     signature_header: str = Field(
@@ -154,7 +154,7 @@ class BaseWebhookChannelSettings(BaseIntegrationSettings):
     )
 
     @field_serializer("signature_secret")
-    def _serialize_signature_secret(self, value: SecretStr) -> str:
+    def _serialize_signature_secret(self, value: SecretStr | None) -> str:
         """Маскирует секрет подписи в дампе модели (ADR-0378).
 
         Пустой секрет остаётся пустой строкой (признак «не настроено»),
@@ -187,10 +187,10 @@ class BaseBotChannelSettings(BaseWebhookChannelSettings):
         title="ID бота",
         description="Идентификатор бота в системе мессенджера",
     )
-    secret_key: SecretStr = Field(
-        default=SecretStr(""),
+    secret_key: SecretStr | None = Field(
+        default=None,
         title="Секретный ключ",
-        description="Секрет для подписи запросов к bot-API",
+        description="Секрет для подписи запросов к bot-API (None — не настроено)",
     )
     base_url: str = Field(
         default="",
@@ -200,7 +200,7 @@ class BaseBotChannelSettings(BaseWebhookChannelSettings):
     )
 
     @field_serializer("secret_key")
-    def _serialize_secret_key(self, value: SecretStr) -> str:
+    def _serialize_secret_key(self, value: SecretStr | None) -> str:
         """Маскирует секрет бота в дампе модели (ADR-0378).
 
         Пустой секрет остаётся пустой строкой (признак «не настроено»),
