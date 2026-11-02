@@ -15,7 +15,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.backend.dsl.commands.action_registry import action_handler_registry
-from src.backend.schemas.invocation import ActionCommandSchema
+from src.backend.schemas.invocation import (
+    ActionCommandMetaSchema,
+    ActionCommandSchema,
+)
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -88,6 +91,9 @@ class TestAdminCacheDslActions:
             command = ActionCommandSchema(
                 action="admin.invalidate_cache_by_pattern",
                 payload={"pattern": "entity:orders:*"},
+                meta=ActionCommandMetaSchema(
+                    principal="admin-test", permissions=["role:admin"]
+                ),
             )
             result = await action_handler_registry.dispatch(command)
 
@@ -105,6 +111,9 @@ class TestAdminCacheDslActions:
             command = ActionCommandSchema(
                 action="admin.invalidate_cache_by_tag",
                 payload={"tags": ["entity:orders", "table:orders"]},
+                meta=ActionCommandMetaSchema(
+                    principal="admin-test", permissions=["role:admin"]
+                ),
             )
             result = await action_handler_registry.dispatch(command)
 
@@ -113,6 +122,29 @@ class TestAdminCacheDslActions:
         mock_invalidator.invalidate_tags.assert_called_once_with(
             "entity:orders", "table:orders"
         )
+
+    async def test_admin_action_denied_without_role(
+        self, mock_invalidator_provider: MagicMock, mock_invalidator: MagicMock
+    ) -> None:
+        """admin.* без role:admin → отказ (ADR-0421, fail-closed)."""
+        from src.backend.dsl.commands.action_registry import (
+            ActionPermissionDeniedError,
+        )
+
+        with patch(
+            "src.backend.core.di.providers.get_cache_invalidator_provider",
+            mock_invalidator_provider,
+        ):
+            command = ActionCommandSchema(
+                action="admin.invalidate_table",
+                payload={"table": "orders"},
+                meta=ActionCommandMetaSchema(principal="anonymous"),
+            )
+            with pytest.raises(ActionPermissionDeniedError) as exc:
+                await action_handler_registry.dispatch(command)
+
+        assert exc.value.status_code == 403
+        mock_invalidator.invalidate_table.assert_not_called()
 
     async def test_invalidate_table_dispatches(
         self, mock_invalidator_provider: MagicMock, mock_invalidator: MagicMock
@@ -123,7 +155,11 @@ class TestAdminCacheDslActions:
             mock_invalidator_provider,
         ):
             command = ActionCommandSchema(
-                action="admin.invalidate_table", payload={"table": "orders"}
+                action="admin.invalidate_table",
+                payload={"table": "orders"},
+                meta=ActionCommandMetaSchema(
+                    principal="admin-test", permissions=["role:admin"]
+                ),
             )
             result = await action_handler_registry.dispatch(command)
 
@@ -144,6 +180,9 @@ class TestAdminCacheDslActions:
             command = ActionCommandSchema(
                 action="admin.invalidate_cache_by_pattern",
                 payload={"pattern": "nonexistent:*"},
+                meta=ActionCommandMetaSchema(
+                    principal="admin-test", permissions=["role:admin"]
+                ),
             )
             result = await action_handler_registry.dispatch(command)
 

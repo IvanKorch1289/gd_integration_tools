@@ -7,7 +7,7 @@ Direct `from src.backend.infrastructure.*` in core/ is a **layer violation** (cu
 ## Navigation Index
 
 Счётчик «Files» — число `.py`-файлов в подкаталоге (рекурсивно, без
-`__pycache__`). Всего в слое — 457 .py-файлов в 32 подкаталогах плюс
+`__pycache__`). Всего в слое — 458 .py-файлов в 458 подкаталогах плюс
 3 файла в корне слоя (`__init__.py`, `registry.py`,
 `registry_vault_bridge.py`).
 
@@ -20,7 +20,7 @@ Direct `from src.backend.infrastructure.*` in core/ is a **layer violation** (cu
 | `cache/` | 24 | Cache backends (Redis/KeyDB/Memcached/Memory) + RAG three-tier + invalidator tiers |
 | `cdc/` | 5 | Change Data Capture: Debezium, poll, listen/notify backends |
 | `chaos/` | 1 | Chaos engineering (resilience testing) |
-| `clients/` | 73 | External service clients (HTTP/SOAP/GRPC/SFTP/SMTP/IMAP/NATS) |
+| `clients/` | 7473 External service clients (HTTP/SOAP/GRPC/SFTP/SMTP/IMAP/NATS) |
 | `database/` | 44 | Database primitives (SQLAlchemy session, init, dialect types, migrations) |
 | `decorators/` | 6 | Cross-cutting decorators (caching, callbacks) |
 | `di_bridge/` | 6 | DI bridges to core-owned providers (lazy accessors) |
