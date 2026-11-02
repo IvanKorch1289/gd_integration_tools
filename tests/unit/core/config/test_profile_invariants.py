@@ -95,11 +95,6 @@ _LOOPBACK_MARKERS: Final[tuple[str, ...]] = ("localhost", "127.0.0.1", "::1")
 
 _LOOPBACK_ALLOWLIST: Final[frozenset[str]] = frozenset(
     {
-        # WAF: loopback-sidecar'ы (clamd/otel) — реальный список хостов
-        # без инфраструктуры вывести нельзя (owner-задача, ADR-0371).
-        "waf.allow_hosts",
-        # ClamAV: демон по умолчанию слушает loopback.
-        "waf.clamav_host",
         # prod-drill: админ-доступ только с loopback (SEC_ADMIN_IPS в проде).
         "security.admin_ips",
         # elasticsearch.enabled=false — сервис выключен.
@@ -113,12 +108,14 @@ _LOOPBACK_ALLOWLIST: Final[frozenset[str]] = frozenset(
         "mqtt.broker_host",
         # jupyter_hub.enabled=false — интеграция выключена.
         "jupyter_hub.base_url",
-        # open_webui: исключён из prod fallback_chain (см. отдельный тест),
-        # реальный host — owner-задача.
-        "open_webui.base_url",
     }
 )
-"""Допустимые loopback-хосты в prod/staging (документированы в ADR-0371)."""
+"""Допустимые loopback-хосты в prod/staging (документированы в ADR-0371).
+
+ADR-0412: ``waf.allow_hosts``, ``waf.clamav_host`` и ``open_webui.base_url``
+больше не в allowlist — sidecar'ы и внутренние endpoint'ы адресуются по
+service-DNS, и loopback в этих полях — нарушение (CRITICAL в валидаторе
+профиля)."""
 
 
 class _ProfileSettings(Settings):

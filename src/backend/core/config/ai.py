@@ -125,7 +125,13 @@ class OpenWebUISettings(BaseSettingsWithLoader):
     )
 
     base_url: str = Field(
-        default="http://localhost:3000", description="URL внутреннего OpenWebUI сервера"
+        default="http://open-webui:3000",
+        description=(
+            "URL внутреннего OpenWebUI сервера. По умолчанию — service-DNS "
+            "имя k8s Service (ADR-0412): в pod'е ``localhost`` — это сам pod, "
+            "а не сервис OpenWebUI. Провайдер не входит в "
+            "``ai_providers.fallback_chain``, пока сервис не развёрнут."
+        ),
     )
 
     use_waf: bool = Field(

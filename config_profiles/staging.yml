@@ -119,20 +119,22 @@ features:
 #
 # Контракт ADR-0407: allow_hosts обязан покрывать хосты всех внешних
 # интеграций (иначе CRITICAL
-# ``waf.allow_hosts_missing_integration_hosts``), а loopback-хост(ы) —
-# только при включённой локальной зависимости (sidecar clamd), иначе
-# CRITICAL ``waf.allow_hosts_loopback_without_local_dependency``.
+# ``waf.allow_hosts_missing_integration_hosts``).
+#
+# ADR-0412: loopback-записи удалены — sidecar'ы (clamd, otel-collector)
+# адресуются по service-DNS (в k8s ``127.0.0.1`` — это сам pod, а не
+# соседний контейнер). Loopback в allowlist — CRITICAL
+# ``waf.allow_hosts_loopback_without_local_dependency``.
 waf:
   strict: true
   allow_hosts:
     - "esbgreendata"
-    # Loopback — локальный sidecar clamd (ADR-0407).
-    - "localhost"
-    - "127.0.0.1"
     # СКБ-Техно (services/integrations/skb.py → skb.prod_url)
     - "api.skb-techno.ru"
     # DaData (services/integrations/dadata.py → dadata.base_url)
     - "suggestions.dadata.ru"
+  # ADR-0412: хост clamd — service-DNS имя sidecar'а (k8s Service ``clamd``).
+  clamav_host: "clamd"
 
 
 # B-12 fix (cycle 37) + cycle 38 Task #1: pre-production enforcement policy
@@ -173,7 +175,9 @@ database:
   # (весь трафик идёт на primary), CRITICAL-не считается. Непустое
   # значение — только реальный (не loopback) хост реплики, иначе CRITICAL
   # ``database.replica_dsn_invalid``. DSN — секрет, маскируется в дампах
-  # (ADR-0378 / ADR-0381).
+  # (ADR-0378 / ADR-0381). Шаблон DSN (ADR-0412) — в комментарии, значение
+  # остаётся null до выдачи реплики:
+  #   replica_dsn: "postgresql+asyncpg://<user>:<pass>@<replica-host>:5432/<db>"
   replica_dsn: null
 
 
@@ -316,3 +320,23 @@ watermark:
 # рассчитан на локальный файл. Как в prod.
 snapshot:
   enabled: false
+
+
+# ADR-0412: AI-провайдеры и endpoint OpenWebUI — по service-DNS.
+# ``open_webui`` исключён из fallback-цепочки (как в prod): сервис не
+# развёрнут, а откат на несуществующий endpoint выглядит как «LLM отвечает»
+# (ADR-0407). Endpoint провайдера объявлен явно — service-DNS имя
+# ``open-webui`` (k8s Service, deploy/k8s/service.yaml). Процедура включения
+# — в docs/config/SETTINGS_GUIDE.md, раздел «Sidecar-DNS и endpoint-контракты».
+ai_providers:
+  fallback_chain:
+    - "perplexity"
+    - "huggingface"
+    - "openrouter"
+    - "nim"
+    - "openai"
+    - "minimax"
+
+
+open_webui:
+  base_url: "http://open-webui:3000"

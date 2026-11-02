@@ -29,6 +29,20 @@ data:
   # OpenTelemetry
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability.svc.cluster.local:4317"
   OTEL_SERVICE_NAME: "gd-integration-tools"
+  # ADR-0412: endpoint'ы sidecar'ов и внутренних сервисов — по service-DNS
+  # (в k8s 127.0.0.1 — это сам pod, а не соседний контейнер). Имена
+  # совпадают с Service'ами в deploy/k8s/service.yaml и со значениями в
+  # config_profiles/{base,prod,staging}.yml.
+  APP_OPENTELEMETRY_ENDPOINT: "http://otel-collector:4317"
+  WAF_CLAMAV_HOST: "clamd"
+  WAF_CLAMAV_PORT: "3310"
+  # ADR-0412: endpoint внутреннего LLM-сервера. Провайдер не входит в
+  # ai_providers.fallback_chain, пока сервис не развёрнут (ADR-0407).
+  OPEN_WEBUI_BASE_URL: "http://open-webui:3000"
+  # ADR-0412: DSN read-реплики — секрет, в ConfigMap не хранится (Secret /
+  # Vault). Значение остаётся null («реплика не развёрнута»); формат при
+  # выдаче реплики:
+  # DB_REPLICA_DSN: "postgresql+asyncpg://<user>:<pass>@<replica-host>:5432/<db>"
   # Vault
   VAULT_ADDR: "https://vault.vault.svc.cluster.local:8200"
   # Granian ASGI

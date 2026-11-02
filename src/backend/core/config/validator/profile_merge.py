@@ -26,7 +26,9 @@
 * ADR-0407 — контракты прод-значений: WAF-allowlist обязан покрывать
   внешние интеграции, loopback в allowlist оправдан локальной
   зависимостью, ``database.replica_dsn=null`` допустим (реплика не
-  развёрнута).
+  развёрнута);
+* ADR-0412 — service-DNS вместо loopback: sidecar'ы (clamd,
+  otel-collector) в prod/staging адресуются по именам их k8s-Service.
 """
 
 from __future__ import annotations
@@ -86,6 +88,28 @@ _EXTERNAL_INTEGRATION_ENDPOINTS: Final[tuple[tuple[str, str], ...]] = (
 _LOCAL_ENDPOINT_PROBES: Final[tuple[tuple[str, str, str], ...]] = (
     ("waf", "clamav_host", "clamav_enabled"),
     ("app", "opentelemetry_endpoint", ""),
+)
+
+#: Sidecar-endpoint'ы, которые в prod/staging обязаны адресоваться по
+#: service-DNS (ADR-0412). Формат: (секция, ключ, ключ флага включения,
+#: код нарушения, имя Service, env-имя для переопределения).
+_SIDECAR_ENDPOINT_PROBES: Final[tuple[tuple[str, str, str, str, str, str], ...]] = (
+    (
+        "waf",
+        "clamav_host",
+        "clamav_enabled",
+        "waf.clamav_host_loopback_in_prod",
+        "clamd",
+        "WAF_CLAMAV_HOST",
+    ),
+    (
+        "app",
+        "opentelemetry_endpoint",
+        "",
+        "app.opentelemetry_endpoint_loopback_in_prod",
+        "otel-collector",
+        "APP_OPENTELEMETRY_ENDPOINT",
+    ),
 )
 
 _CONSTANTS_PROBE: type[BaseModel] = create_model(
@@ -714,6 +738,75 @@ def _check_waf_loopback_allowlist(
     )
 
 
+def _check_sidecar_endpoints_not_loopback(
+    merged: dict[str, Any],
+) -> tuple[ConfigViolation, ...]:
+    """ADR-0412: sidecar'ы в prod/staging — по service-DNS, не по loopback.
+
+    В k8s ``127.0.0.1`` — это сам pod, а не соседний контейнер: sidecar
+    (clamd, otel-collector), вынесенный в отдельный Deployment, по loopback
+    недоступен. Конфиг с loopback-хостом не падает — он молча указывает на
+    несуществующий сервис (AV-сканирование пропускается при ``fail_open``,
+    телеметрия не уходит).
+
+    Проверяются только включённые зависимости: выключенный clamd
+    (``waf.clamav_enabled=false``) не обязан иметь service-DNS-хост, а
+    пустой OTel-эндпоинт (телеметрия выключена) — не endpoint вовсе.
+
+    Args:
+        merged: Слияние ``base.yml`` + overlay профиля.
+
+    Returns:
+        Кортеж нарушений (пустой — если нарушений нет).
+
+    """
+    if not _is_production_like(merged):
+        return ()
+    environment = str((merged.get("app") or {}).get("environment") or "").lower()
+    violations: list[ConfigViolation] = []
+    for (
+        section,
+        key,
+        enabled_key,
+        code,
+        service_name,
+        env_name,
+    ) in _SIDECAR_ENDPOINT_PROBES:
+        config = merged.get(section) or {}
+        if enabled_key and not config.get(enabled_key):
+            continue
+        raw = config.get(key)
+        if not raw:
+            continue
+        host = _endpoint_host(str(raw))
+        if host not in _LOOPBACK_HOSTNAMES:
+            continue
+        violations.append(
+            ConfigViolation(
+                severity=ConfigSeverity.CRITICAL,
+                code=code,
+                message=(
+                    f"В профиле '{environment}' sidecar {service_name} адресуется "
+                    f"на loopback ({host}): в k8s 127.0.0.1 — это сам pod, а не "
+                    f"соседний контейнер, поэтому {section}.{key} молча указывает "
+                    "на несуществующий сервис (ADR-0412)."
+                ),
+                field=f"{section}.{key}",
+                recommendation=(
+                    f"Указать service-DNS имя sidecar'а ({service_name}) в "
+                    f"{section}.{key} или через env {env_name} — см. "
+                    "deploy/k8s/service.yaml."
+                ),
+                context={
+                    "host": host,
+                    "service_name": service_name,
+                    "environment": environment,
+                },
+            )
+        )
+    return tuple(violations)
+
+
 def _check_replica_dsn_contract(merged: dict[str, Any]) -> tuple[ConfigViolation, ...]:
     """ADR-0407: ``database.replica_dsn`` — null допустим, непустое — реальный хост.
 
@@ -1002,6 +1095,9 @@ def validate_profile_config(
     violations.extend(_check_waf_allowlist_covers_integrations(merged))
     violations.extend(_check_waf_loopback_allowlist(merged))
     violations.extend(_check_replica_dsn_contract(merged))
+    # ADR-0412: sidecar'ы (clamd, otel-collector) в prod/staging —
+    # по service-DNS, не по loopback (в k8s 127.0.0.1 — это сам pod).
+    violations.extend(_check_sidecar_endpoints_not_loopback(merged))
     return tuple(
         sorted(
             violations,

@@ -173,6 +173,9 @@ def test_localhost_provider_in_fallback_chain_is_critical(tmp_path: Path) -> Non
         "ai_providers",
         {"fallback_chain": ["perplexity", "open_webui", "openai"]},
     )
+    # ADR-0412: дефолтный endpoint OpenWebUI — service-DNS (``open-webui``),
+    # поэтому loopback-случай проверяется явно (фикстура, а не дефолт).
+    _patch_profile(profiles, "open_webui", {"base_url": "http://localhost:3000"})
 
     violations = validate_profile_config("prod", profiles)
 

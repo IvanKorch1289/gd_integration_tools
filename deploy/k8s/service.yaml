@@ -2,6 +2,18 @@
 #
 # `gd-app` — ClusterIP для FastAPI app (8000:http + 9090:metrics);
 # `temporal-worker-metrics` — headless для scrape Prometheus.
+#
+# ADR-0412: sidecar'ы и внутренние сервисы, к которым обращается приложение
+# по конфигурации (`config_profiles/*.yml`), объявлены как отдельные
+# ClusterIP-Service. В k8s `127.0.0.1` — это сам pod, поэтому адресация
+# sidecar'а по loopback означала бы «молча указывает на несуществующий
+# сервис». Имена Service'ов совпадают со значениями в профилях:
+#   * `clamd`         → `waf.clamav_host` (TCP INSTREAM, 3310);
+#   * `otel-collector`→ `app.opentelemetry_endpoint` (OTLP gRPC 4317,
+#                       OTLP HTTP 4318);
+#   * `open-webui`    → `open_webui.base_url` (внутренний LLM-сервер, 3000).
+# Deployment'ы этих сервисов — инфраструктурная часть (owner-задача);
+# Service-объекты задают контракт имён, на который ссылается конфигурация.
 ---
 apiVersion: v1
 kind: Service
@@ -50,4 +62,71 @@ spec:
     - name: metrics
       port: 9090
       targetPort: metrics
+      protocol: TCP
+---
+# ADR-0412: ClamAV (clamd) — TCP INSTREAM, порт 3310.
+# Конфигурация: `waf.clamav_host` (env `WAF_CLAMAV_HOST`).
+apiVersion: v1
+kind: Service
+metadata:
+  name: clamd
+  namespace: gd-integration
+  labels:
+    app.kubernetes.io/name: clamd
+    app.kubernetes.io/component: sidecar
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: clamd
+  ports:
+    - name: clamav
+      port: 3310
+      targetPort: 3310
+      protocol: TCP
+---
+# ADR-0412: OpenTelemetry-collector — OTLP gRPC (4317) + OTLP HTTP (4318).
+# Конфигурация: `app.opentelemetry_endpoint` (env `APP_OPENTELEMETRY_ENDPOINT`).
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: gd-integration
+  labels:
+    app.kubernetes.io/name: otel-collector
+    app.kubernetes.io/component: sidecar
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: otel-collector
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+---
+# ADR-0412: OpenWebUI — внутренний LLM-сервер (порт 3000).
+# Конфигурация: `open_webui.base_url` (env `OPEN_WEBUI_BASE_URL`).
+# Провайдер НЕ входит в `ai_providers.fallback_chain` prod-профиля, пока
+# сервис не развёрнут (ADR-0407) — см. процедуру включения в
+# docs/config/SETTINGS_GUIDE.md.
+apiVersion: v1
+kind: Service
+metadata:
+  name: open-webui
+  namespace: gd-integration
+  labels:
+    app.kubernetes.io/name: open-webui
+    app.kubernetes.io/component: ai
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: open-webui
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
       protocol: TCP

@@ -162,8 +162,9 @@ database:
   # отсутствовало во **всех** профилях — read-replica-роутинг был выключен
   # и никогда не включался, а ``SmartSessionManager`` молча писал в primary.
   # null = «реплики нет, весь трафик идёт на primary» (поведение по
-  # умолчанию). Чтобы включить — укажите async-DSN реплики, например:
-  #   replica_dsn: "postgresql+asyncpg://user:pwd@pg-replica:5432/main_db"
+  # умолчанию). Чтобы включить — укажите async-DSN реплики. Шаблон
+  # (ADR-0412 — документирован в комментарии, значение — секрет):
+  #   replica_dsn: "postgresql+asyncpg://<user>:<pass>@<replica-host>:5432/<db>"
   # ВНИМАНИЕ (ADR-0377): YAML-конфиги не поддерживают env-подстановку вида
   # ${VAR:-default} — значение задаётся литералом в профиле или через
   # одноимённую env-переменную (DB_REPLICA_DSN), а не шаблоном.
@@ -227,10 +228,15 @@ mongo:
 
 waf:
   # Валидатор waf.strict_required_in_prod: permissive WAF в prod запрещён.
-  # allow_hosts — явный whitelist (esbgreendata из base.yml + loopback).
-  # ADR-0371 (cycle 172): loopback в allowlist оставлен осознанно — реальные
-  # хосты локальных sidecar'ов (clamd/otel) без инфраструктуры вывести
-  # нельзя. Owner-задача: заменить на явные service-DNS имена.
+  # allow_hosts — явный whitelist (esbgreendata из base.yml + внешние
+  # интеграции).
+  #
+  # ADR-0412: loopback-записи удалены. Sidecar'ы (clamd, otel-collector)
+  # адресуются по service-DNS (см. ``waf.clamav_host`` ниже и
+  # ``app.opentelemetry_endpoint``), а в k8s ``127.0.0.1`` — это сам pod,
+  # а не соседний контейнер. Loopback в allowlist теперь означал бы
+  # мёртвую запись либо внешнюю интеграцию, молча указывающую на localhost
+  # (CRITICAL ``waf.allow_hosts_loopback_without_local_dependency``).
   #
   # ADR-0377: добавлены хосты ВНЕШНИХ интеграций
   # (src/backend/services/integrations/**): при strict=true исходящий запрос
@@ -242,22 +248,20 @@ waf:
   # * allow_hosts обязан покрывать хосты ВСЕХ внешних интеграций, иначе
   #   CRITICAL ``waf.allow_hosts_missing_integration_hosts`` — интеграция
   #   в проде заблокирована целиком;
-  # * loopback-хост(ы) в allowlist оправданы только включённой локальной
-  #   зависимостью (sidecar clamd: ``waf.clamav_enabled=true`` +
-  #   ``waf.clamav_host`` на loopback) — иначе CRITICAL
-  #   ``waf.allow_hosts_loopback_without_local_dependency`` (мёртвая запись
-  #   либо внешняя интеграция, молча указывающая на localhost).
+  # * loopback-хост(ы) в allowlist — CRITICAL (ADR-0412: sidecar'ы в
+  #   prod/staging доступны по service-DNS, loopback-зависимости в проде
+  #   больше нет).
   strict: true
   allow_hosts:
     - "esbgreendata"
-    # Loopback — локальный sidecar clamd (ADR-0407: оправдано наличием
-    # локальной зависимости ``waf.clamav_host`` на loopback).
-    - "localhost"
-    - "127.0.0.1"
     # СКБ-Техно (services/integrations/skb.py → skb.prod_url)
     - "api.skb-techno.ru"
     # DaData (services/integrations/dadata.py → dadata.base_url)
     - "suggestions.dadata.ru"
+  # ADR-0412: хост clamd — service-DNS имя sidecar'а (k8s Service ``clamd``,
+  # deploy/k8s/service.yaml). Loopback в prod/staging — CRITICAL
+  # ``waf.clamav_host_loopback_in_prod`` (в k8s это сам pod, а не clamd).
+  clamav_host: "clamd"
 
 
 # ADR-0371 (cycle 172): TLS-проверка и лимиты соединений — prod-уровня.
@@ -366,12 +370,14 @@ snapshot:
 
 
 # ADR-0371 (cycle 172): ``open_webui`` исключён из fallback-цепочки AI.
-# Его ``base_url`` — ``http://localhost:3000`` (внутренний LLM-сервер), и в
-# проде откат с perplexity молча ушёл бы на localhost. Реальный host
-# OpenWebUI без инфраструктуры вывести нельзя — owner-задача.
+# ADR-0412: endpoint провайдера объявлен явно — ``http://open-webui:3000``
+# (service-DNS имя k8s Service, см. deploy/k8s/service.yaml). До развёртывания
+# сервиса провайдер остаётся ВНЕ цепочки: откат на несуществующий endpoint
+# выглядит как «LLM отвечает» (ADR-0407). Процедура включения — в
+# docs/config/SETTINGS_GUIDE.md, раздел «Sidecar-DNS и endpoint-контракты».
 #
 # Контракт ADR-0407: в prod fallback-цепочка не должна содержать провайдера
-# с loopback-``base_url`` (в base.yml ``open_webui`` есть) — иначе CRITICAL
+# с loopback-``base_url`` — иначе CRITICAL
 # ``ai_providers.fallback_chain_localhost``: откат молча ушёл бы на сервис,
 # которого в проде нет. Цепочка ниже — только реально доступные провайдеры.
 ai_providers:
@@ -382,3 +388,9 @@ ai_providers:
     - "nim"
     - "openai"
     - "minimax"
+
+
+# ADR-0412: явный endpoint провайдера OpenWebUI (service-DNS).
+# Провайдер не входит в fallback-цепочку выше, пока сервис не развёрнут.
+open_webui:
+  base_url: "http://open-webui:3000"

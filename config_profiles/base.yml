@@ -41,6 +41,15 @@ app:
   # молча отбрасывались загрузчиком (Wave 13 Q17).
   http3_enabled: false
   http3_port: 8443
+  # ADR-0412: OTLP-экспорт телеметрии — по service-DNS, не по loopback.
+  # В k8s ``127.0.0.1`` — это сам pod, а не соседний контейнер: OTel-
+  # collector как отдельный Deployment доступен под именем своего Service
+  # (``otel-collector``, см. deploy/k8s/service.yaml). Поле обязательное
+  # (AppBaseSettings.opentelemetry_endpoint), поэтому дефолт объявлен
+  # здесь; dev_light переопределяет его на "" (телеметрия выключена).
+  # Контракт: в prod/staging хост не должен быть loopback — иначе CRITICAL
+  # ``app.opentelemetry_endpoint_loopback_in_prod``.
+  opentelemetry_endpoint: "http://otel-collector:4317"
 
 
 security:
@@ -211,6 +220,16 @@ database:
   circuit_breaker_max_failures: 10
   circuit_breaker_reset_timeout: 30
   slow_query_threshold: 1.0
+  # ADR-0412: DSN read-реплики. null = «реплика не развёрнута» (весь
+  # трафик идёт на primary) — это инфраструктурный факт, а не незаполненное
+  # поле. Значение — секрет (SecretStr, маскируется в дампах), поэтому
+  # шаблон приведён в комментарии, а не в значении:
+  #   replica_dsn: "postgresql+asyncpg://<user>:<pass>@<replica-host>:5432/<db>"
+  # Переопределение — литералом в overlay'е профиля или env DB_REPLICA_DSN
+  # (YAML не поддерживает ${VAR:-default}, ADR-0377). Контракт ADR-0407:
+  # непустое значение — только реальный (не loopback) хост реплики, иначе
+  # CRITICAL ``database.replica_dsn_invalid``.
+  replica_dsn: null
 
 
 external_databases:
@@ -498,7 +517,13 @@ huggingface:
 
 open_webui:
   model: "llama3"
-  base_url: "http://localhost:3000"
+  # ADR-0412: endpoint внутреннего LLM-сервера — по service-DNS
+  # (``open-webui``, см. deploy/k8s/service.yaml), не по loopback.
+  # Провайдер НЕ входит в ``ai_providers.fallback_chain`` prod-профиля,
+  # пока сервис не развёрнут: откат на несуществующий endpoint выглядит
+  # как «LLM отвечает» (ADR-0407). Процедура включения — в
+  # docs/config/SETTINGS_GUIDE.md, раздел «Sidecar-DNS и endpoint-контракты».
+  base_url: "http://open-webui:3000"
   use_waf: false
   max_tokens: 4096
   temperature: 0.7
@@ -961,7 +986,14 @@ waf:
   max_payload_bytes: 10485760
   outbound_via_facade: true
   clamav_enabled: true
-  clamav_host: "127.0.0.1"
+  # ADR-0412: хост clamd — по service-DNS (``clamd``, см.
+  # deploy/k8s/service.yaml), а не по loopback. В k8s ``127.0.0.1`` — это сам
+  # pod: clamd как отдельный Deployment недоступен, и при ``fail_open=true``
+  # запросы молча проходили бы без AV-сканирования.
+  # Контракт: в prod/staging хост не должен быть loopback — иначе CRITICAL
+  # ``waf.clamav_host_loopback_in_prod``. Локальный dev без sidecar'а:
+  # ``waf.clamav_enabled: false`` либо env ``WAF_CLAMAV_HOST=127.0.0.1``.
+  clamav_host: "clamd"
   clamav_port: 3310
   clamav_timeout: 30.0
   clamav_fail_open: true

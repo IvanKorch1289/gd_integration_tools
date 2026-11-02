@@ -70,8 +70,13 @@ class WafSettings(BaseSettingsWithLoader):
     )
 
     clamav_host: str = Field(
-        default="127.0.0.1",
-        description="Хост clamd (TCP INSTREAM). По умолчанию localhost.",
+        default="clamd",
+        description=(
+            "Хост clamd (TCP INSTREAM). По умолчанию — service-DNS имя "
+            "sidecar'а в k8s (ADR-0412): ``127.0.0.1`` в pod'е — это сам pod, "
+            "а не соседний контейнер. Локальный dev без sidecar'а: "
+            "``WAF_CLAMAV_HOST=127.0.0.1`` или ``waf.clamav_enabled: false``."
+        ),
     )
 
     clamav_port: int = Field(
