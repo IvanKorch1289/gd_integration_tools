@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 import pytest
@@ -222,3 +223,57 @@ class TestLoadRouteManifest:
         )
         with pytest.raises(RouteManifestError, match="validation failed"):
             load_route_manifest(path)
+
+
+class TestLegacyCapabilitiesForm:
+    """ADR-0405 — legacy-форма capability принимается, но с предупреждением."""
+
+    LEGACY_TOML = """
+name = "legacy_route"
+version = "1.0.0"
+requires_core = ">=0.2,<0.3"
+pipelines = ["pipeline.dsl.yaml"]
+capabilities = ["net.outbound", "audit.write"]
+"""
+
+    def test_legacy_flat_form_warns(self, tmp_path: Path) -> None:
+        """Плоский список строк → DeprecationWarning с указанием миграции."""
+        path = tmp_path / "route.toml"
+        path.write_text(self.LEGACY_TOML, encoding="utf-8")
+        with pytest.warns(DeprecationWarning, match=r"\[\[route\.capabilities\]\]"):
+            manifest = load_route_manifest(path)
+        assert [ref.name for ref in manifest.capabilities] == [
+            "net.outbound",
+            "audit.write",
+        ]
+
+    def test_legacy_flat_form_loses_scope(self, tmp_path: Path) -> None:
+        """Строка без ``:scope`` даёт ``scope=None`` — источник отказа гейта."""
+        path = tmp_path / "route.toml"
+        path.write_text(self.LEGACY_TOML, encoding="utf-8")
+        with pytest.warns(DeprecationWarning):
+            manifest = load_route_manifest(path)
+        assert all(ref.scope is None for ref in manifest.capabilities)
+
+    def test_compact_name_scope_form_warns(self, tmp_path: Path) -> None:
+        """Компактная форма ``"name:scope"`` — тоже legacy."""
+        path = tmp_path / "route.toml"
+        path.write_text(
+            self.LEGACY_TOML.replace(
+                'capabilities = ["net.outbound", "audit.write"]',
+                'capabilities = ["net.outbound:api.test"]',
+            ),
+            encoding="utf-8",
+        )
+        with pytest.warns(DeprecationWarning, match="Legacy capability form"):
+            manifest = load_route_manifest(path)
+        assert manifest.capabilities[0].scope == "api.test"
+
+    def test_structured_form_does_not_warn(self, tmp_path: Path) -> None:
+        """Каноничная форма ``[[route.capabilities]]`` — без предупреждений."""
+        path = tmp_path / "route.toml"
+        path.write_text(VALID_TOML, encoding="utf-8")
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            manifest = load_route_manifest(path)
+        assert manifest.capabilities[0].scope == "credit_db"

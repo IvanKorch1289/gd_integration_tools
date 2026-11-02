@@ -87,12 +87,19 @@ def test_explain_route_no_policy_step_post_fix(hello_route_dir: Path) -> None:
 
 
 def test_explain_route_identifies_missing_capabilities(health_route_dir: Path) -> None:
-    """Missing capabilities вычисляются как required - declared."""
+    """Missing capabilities вычисляются как required - declared.
+
+    ADR-0405: манифест роута разворачивается из конверта ``[route]``, поэтому
+    объявленные capability видны (раньше инструмент читал только top-level
+    ключ и объявлял reference-роут «без capability» — ложное срабатывание,
+    зафиксированное в artifacts/current_audit/RE_AUDIT_2026-10-15_post_fix.md).
+    """
     explanation = explain_route(health_route_dir)
-    # health_proxy_demo has empty capabilities declared.
     assert "net.outbound" in explanation.capabilities_required
-    assert explanation.capabilities_declared == ()
-    assert "net.outbound" in explanation.capabilities_missing
+    # Объявлены в [[route.capabilities]]: net.inbound + net.outbound.
+    assert set(explanation.capabilities_declared) == {"net.inbound", "net.outbound"}
+    # Шаг audit: требует audit.write — она не объявлена.
+    assert explanation.capabilities_missing == ("audit.write",)
     # Issue message mentions missing capabilities.
     assert any(
         "MISSING" in issue or "не объявлены" in issue for issue in explanation.issues

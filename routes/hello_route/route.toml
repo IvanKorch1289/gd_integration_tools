@@ -1,8 +1,22 @@
 # route.toml (V11): manifest for route 'hello_route' (S33 W1 wizard).
+#
+# ADR-0405: capability объявляются структурированно — [[route.capabilities]]
+# с отдельными полями name/scope (ADR-0078/ADR-0366). Плоская форма
+# capabilities = [...] молча теряла scope (scope=None), а
+# CapabilityVocabulary.validate_ref отвергает scope=None для capability с
+# scope_required=True → CapabilityGate.declare бросал ValueError, и роут
+# не загружался вовсе ("capability_error: Capability 'net.outbound' requires
+# explicit scope"). Дефект был замаскирован выключенным feature-flag.
+[route]
 name = "hello_route"
 version = "0.1.0"
 requires_core = ">=0.20,<0.21"
 pipelines = ["main.dsl.yaml"]
+tenant_aware = true
+feature_flag = { enabled = true, gate = "hello_route_enabled" }
+slo = { p95_ms = 500, timeout_ms = 5000 }
+schedule = "never"
+
 # db.write удалён 2026-10-06 (least privilege): в пайплайне нет ни одного
 # шага записи в БД (crud_*/db_query*/db_persist*/db_call_procedure).
 # db_call_procedure в списке — потому что шаг существует, но по умолчанию
@@ -12,19 +26,28 @@ pipelines = ["main.dsl.yaml"]
 # ai.invoke удалён вместе с неработавшим LLM-шагом (см. main.dsl.yaml):
 # у LLM-процессоров нет рантайм capability-guard, поэтому объявлять её
 # публичной значило бы снять контроль, не добавив взамен ничего.
-capabilities = ["net.outbound", "audit.write"]
-tenant_aware = true
-feature_flag = { enabled = true, gate = "hello_route_enabled" }
-slo = { p95_ms = 500, timeout_ms = 5000 }
-schedule = "never"
+
+# net.outbound — внешний sink шага http_call (main.dsl.yaml:
+# https://api.test/sink). Runtime-гейт сверяет scope по hostname
+# (core/net/outbound_http.py → CapabilityGate.check(plugin, "net.outbound",
+# host)), поэтому scope — хост, а не полный URL.
+[[route.capabilities]]
+name = "net.outbound"
+scope = "api.test"
+
+# audit.write — семейство audit-sink'ов (vocabulary: scope = tenant-id,
+# audit-sink или '*'). Шаг audit: пишет событие роута.
+[[route.capabilities]]
+name = "audit.write"
+scope = "audit:*"
 
 # S163 W17: per-transport overrides (читаются DslService.get_route_overrides).
 # Дефолты — из WSSettings / GRPCSettings / GraphQLSettings.
-[transport]
+[route.transport]
 pool_size = 100              # WS max_connections, gRPC max_concurrent_streams
 message_timeout_s = 5.0      # WS per-message timeout
 max_message_size = 65536    # WS max message size (bytes)
 default_timeout_s = 30.0    # gRPC unary call timeout
 
-[feature_flags]
+[route.feature_flags]
 default = ["default"]

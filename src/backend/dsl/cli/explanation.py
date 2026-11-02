@@ -327,6 +327,50 @@ def _parse_toml_manifest(toml_path: Path) -> dict[str, Any]:
         raise ValueError(f"failed to parse {toml_path}: {exc}") from exc
 
 
+def _manifest_fields(manifest: dict[str, Any]) -> dict[str, Any]:
+    """Поля манифеста независимо от формы (ADR-0405).
+
+    Манифест маршрута существует в двух формах: плоская (ADR-043) и
+    конверт ``[route]`` (ADR-0079 Form B, ADR-0405). Каноничная форма
+    ``[[route.capabilities]]`` живёт внутри конверта, поэтому плоский
+    доступ к ``capabilities``/``slo``/``feature_flag`` для неё молча
+    возвращал пустоту (роут выглядел «без объявлений»).
+
+    Args:
+        manifest: Разобранный TOML манифеста.
+
+    Returns:
+        Словарь полей манифеста (конверт ``[route]`` либо сам TOML).
+
+    """
+    section = manifest.get("route")
+    if isinstance(section, dict):
+        return section
+    return manifest
+
+
+def _declared_capability_names(fields: dict[str, Any]) -> tuple[str, ...]:
+    """Имена объявленных capability из манифеста.
+
+    Поддерживает обе формы декларации: legacy-плоские строки
+    (``capabilities = ["net.outbound"]``) и структурированную
+    ``[[route.capabilities]]`` (ADR-0405) с полями ``name``/``scope``.
+
+    Args:
+        fields: Поля манифеста (см. :func:`_manifest_fields`).
+
+    Returns:
+        Кортеж имён capability (без дублей, в порядке объявления).
+
+    """
+    names: list[str] = []
+    for entry in fields.get("capabilities") or []:
+        name = entry.get("name") if isinstance(entry, dict) else entry
+        if isinstance(name, str) and name and name not in names:
+            names.append(name)
+    return tuple(names)
+
+
 def explain_route(route_dir: Path) -> RouteExplanation:
     """Build structured explanation of a route.
 
@@ -349,7 +393,8 @@ def explain_route(route_dir: Path) -> RouteExplanation:
         raise ValueError(f"route.toml не найден в {route_dir}")
 
     manifest = _parse_toml_manifest(toml_path)
-    declared_caps = tuple(manifest.get("capabilities", []) or [])
+    fields = _manifest_fields(manifest)
+    declared_caps = _declared_capability_names(fields)
 
     yaml_files = sorted(route_dir.glob("*.dsl.yaml"))
     if not yaml_files:
@@ -398,7 +443,7 @@ def explain_route(route_dir: Path) -> RouteExplanation:
         )
 
     timeout_ms = None
-    slo = manifest.get("slo", {}) or {}
+    slo = fields.get("slo", {}) or {}
     if isinstance(slo, dict):
         to = slo.get("timeout_ms")
         if isinstance(to, int):
@@ -409,12 +454,12 @@ def explain_route(route_dir: Path) -> RouteExplanation:
             f"({timeout_ms}ms) — risk of timeout under load"
         )
 
-    feature_flag_block = manifest.get("feature_flag", {}) or {}
+    feature_flag_block = fields.get("feature_flag", {}) or {}
     if not isinstance(feature_flag_block, dict):
         feature_flag_block = {}
 
     return RouteExplanation(
-        route_id=str(manifest.get("name", route_dir.name)),
+        route_id=str(fields.get("name", route_dir.name)),
         route_dir=str(route_dir),
         manifest=manifest,
         steps=step_explanations,
@@ -425,6 +470,6 @@ def explain_route(route_dir: Path) -> RouteExplanation:
         total_estimated_duration_ms=total_duration,
         timeout_ms=timeout_ms,
         feature_flags=feature_flag_block,
-        tenant_aware=bool(manifest.get("tenant_aware", False)),
+        tenant_aware=bool(fields.get("tenant_aware", False)),
         issues=issues,
     )

@@ -1,4 +1,10 @@
 # route.toml (V11): manifest for route 'jupyter_hub_run' (S170 NEW).
+#
+# ADR-0405: capability объявляются структурированно — [[route.capabilities]]
+# с отдельными полями name/scope (ADR-0078/ADR-0366). Legacy-форма прятала
+# scope внутрь имени ("jupyter.hub:run"), из-за чего имя capability не
+# совпадало с vocabulary ("jupyter.hub" — двухсегментное <resource>.<verb>).
+[route]
 name = "jupyter_hub_run"
 version = "0.1.0"
 requires_core = ">=0.20,<0.21"
@@ -12,6 +18,10 @@ pipelines = [
     "run_file.dsl.yaml",
     "run_inline.dsl.yaml",
 ]
+tenant_aware = true
+feature_flag = { enabled = true, gate = "jupyter_hub_enabled" }
+slo = { p95_ms = 60000, timeout_ms = 600000 }
+schedule = "never"
 
 # Capability gate: выполнение ноутбуков на Jupyter Hub.
 # ADR-044 grammar — ровно 2 сегмента <resource>.<verb>, поэтому исходное
@@ -24,18 +34,30 @@ pipelines = [
 # покроет capability через [requires_plugins]. Публичность capability не
 # выглядела бы разумной заменой: она отдала бы удалённое выполнение кода
 # любому маршруту без провайдера.
-capabilities = ["net.outbound", "jupyter.hub:run", "audit.write"]
+#
+# net.outbound — host Jupyter Hub из jupyter_hub.base_url (по умолчанию
+# http://localhost:8000 → host "localhost"); runtime-гейт сверяет scope
+# по hostname (core/net/outbound_http.py).
+[[route.capabilities]]
+name = "net.outbound"
+scope = "localhost"
 
-tenant_aware = true
-feature_flag = { enabled = true, gate = "jupyter_hub_enabled" }
+# jupyter.hub — verb запуска ноутбука; scope обязателен
+# (vocabulary: scope_required=True для двухсегментных имён).
+[[route.capabilities]]
+name = "jupyter.hub"
+scope = "run"
 
-slo = { p95_ms = 60000, timeout_ms = 600000 }
-schedule = "never"
+# audit.write — семейство audit-sink'ов (vocabulary: scope = tenant-id,
+# audit-sink или '*'). Шаги audit: пишут события роута.
+[[route.capabilities]]
+name = "audit.write"
+scope = "audit:*"
 
-[transport]
+[route.transport]
 pool_size = 8
 message_timeout_s = 600.0
 default_timeout_s = 600.0
 
-[feature_flags]
+[route.feature_flags]
 default = ["default"]

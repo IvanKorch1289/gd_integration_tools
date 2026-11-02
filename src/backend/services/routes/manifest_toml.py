@@ -8,21 +8,25 @@ Pydantic-модель + TOML-loader для V11-манифеста маршрут
 :class:`RouteLoader` будет реализован в Wave R1.2a-импл и
 интегрирован в lifespan после :class:`PluginLoader`.
 
-Связанные ADR: ADR-042, ADR-043, ADR-044.
+Связанные ADR: ADR-042, ADR-043, ADR-044, ADR-0405.
 """
 
 from __future__ import annotations
 
 import tomllib
+import warnings
 from pathlib import Path
 
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from src.backend.core.logging import get_logger
 from src.backend.core.security.capabilities import CapabilityRef
 from src.backend.core.utils.route_timeout import RouteTimeoutSpec
 
 __all__ = ("RouteManifest", "RouteManifestError", "load_route_manifest")
+
+_logger = get_logger("services.routes.manifest_toml")
 
 _FEATURE_FLAG_TABLE_KEYS = ("enabled", "gate", "name")
 """Допустимые ключи табличной формы ``feature_flag`` в route.toml."""
@@ -285,13 +289,17 @@ class RouteManifest(BaseModel):
 
         Поддерживаются обе авторские формы:
 
-        * ``capabilities = ["net.outbound", "db.write"]`` — плоские строки
-          (генерируются route-wizard'ом и ``tools/scaffold_route.py``);
-        * ``capabilities = ["net.outbound:*.example.com"]`` — компактная
-          форма ``"name:scope"``; разделитель — первое ``":"``, ровно как
-          в ``tools/codegen_plugin.py`` (``cap.split(":", 1)``);
-        * ``[[capabilities]] name/scope`` — табличная форма ADR-044
-          (используется в ``plugin.toml`` и в тестах).
+        * ``[[route.capabilities]] name/scope`` — каноничная табличная форма
+          ADR-0405 (ADR-0078/ADR-0366); именно её объявляют все роуты
+          репозитория;
+        * ``capabilities = ["net.outbound", "db.write"]`` — **legacy**
+          плоские строки (генерируются route-wizard'ом и
+          ``tools/scaffold_route.py``). Форма принимается, но
+          :func:`load_route_manifest` предупреждает о миграции
+          (``DeprecationWarning`` + запись в лог);
+        * ``capabilities = ["net.outbound:*.example.com"]`` — **legacy**
+          компактная форма ``"name:scope"``; разделитель — первое ``":"``,
+          ровно как в ``tools/codegen_plugin.py`` (``cap.split(":", 1)``).
 
         Имя ДОЛЖНО соответствовать грамматике ``<resource>.<verb>``
         из :data:`CAPABILITY_NAME_PATTERN` — проверку выполняет
@@ -447,6 +455,46 @@ def _unwrap_route_envelope(
     return envelope
 
 
+def _warn_legacy_capabilities(flat: dict[str, object], file_path: Path) -> None:
+    """Предупредить о legacy-форме объявления capability (ADR-0405).
+
+    Legacy-форма — плоский список строк (``capabilities = ["net.outbound",
+    "audit.write"]``) либо компактная строка ``"name:scope"``. Она не
+    только расходится с каноничной ``[[route.capabilities]]``, но и
+    **теряет scope**: строка без ``":"`` превращается в
+    ``CapabilityRef(scope=None)``, а
+    :meth:`CapabilityVocabulary.validate_ref` отвергает ``scope=None``
+    для capability с ``scope_required=True`` → ``CapabilityGate.declare``
+    бросает ``ValueError``, и роут не загружается вовсе.
+
+    Форма пока принимается (её ещё генерируют route-wizard и
+    ``tools/scaffold_route.py``), но с явным предупреждением о миграции.
+
+    Args:
+        flat: Развёрнутый манифест (плоская форма или конверт ``[route]``).
+        file_path: Путь к манифесту (для сообщения).
+
+    Returns:
+        None.
+
+    """
+    capabilities = flat.get("capabilities")
+    if not isinstance(capabilities, list):
+        return
+    legacy = [item for item in capabilities if isinstance(item, str)]
+    if not legacy:
+        return
+    message = (
+        f"Legacy capability form in {file_path}: {legacy!r}. "
+        "Плоские строки неявно теряют scope (scope=None) и приводят к "
+        "отказу capability-гейта для scope_required capability. "
+        "Мигрируйте на [[route.capabilities]] с отдельными name/scope "
+        "(ADR-0405)."
+    )
+    _logger.warning(message)
+    warnings.warn(message, DeprecationWarning, stacklevel=3)
+
+
 def load_route_manifest(path: Path | str) -> RouteManifest:
     """Прочитать и валидировать ``route.toml``.
 
@@ -462,6 +510,10 @@ def load_route_manifest(path: Path | str) -> RouteManifest:
       ``{ name }``) сводится к ``str``/``bool``, строковые
       ``capabilities`` (``"name"`` / ``"name:scope"``) — к
       ``{name, scope}``; см. соответствующие валидаторы модели.
+
+    Legacy-форма (``capabilities = [...]``) принимается, но
+    :func:`_warn_legacy_capabilities` предупреждает о миграции на
+    ``[[route.capabilities]]`` (ADR-0405).
 
     Args:
         path: Путь к файлу манифеста.
@@ -488,6 +540,7 @@ def load_route_manifest(path: Path | str) -> RouteManifest:
         )
     try:
         flat = _unwrap_route_envelope(raw, file_path)
+        _warn_legacy_capabilities(flat, file_path)
         return RouteManifest.model_validate(flat)
     except RouteManifestError:
         raise
