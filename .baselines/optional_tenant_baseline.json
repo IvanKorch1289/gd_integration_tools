@@ -416,21 +416,21 @@
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/infrastructure/resilience/snapshot_job.py",
-    "line": 278,
+    "line": 465,
     "qualified_name": "sync_pg_to_sqlite"
   },
   {
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/infrastructure/resilience/snapshot_job.py",
-    "line": 370,
+    "line": 734,
     "qualified_name": "run_snapshot_now"
   },
   {
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/infrastructure/resilience/snapshot_job.py",
-    "line": 480,
+    "line": 872,
     "qualified_name": "register_snapshot_job"
   },
   {
@@ -481,6 +481,13 @@
     "file": "src/backend/infrastructure/policy/casbin_tenant_scoped.py",
     "line": 100,
     "qualified_name": "TenantScopedCasbin.enforce"
+  },
+  {
+    "annotation": "str | None",
+    "arg": "tenant_id",
+    "file": "src/backend/infrastructure/workflow/pg_runner_internals/step_audit.py",
+    "line": 111,
+    "qualified_name": "emit_step_audit"
   },
   {
     "annotation": "str | None",

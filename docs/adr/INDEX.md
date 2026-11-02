@@ -197,9 +197,14 @@
 | [ADR-0408](0408-workflow-dlq-contract-and-sla-alerting.md) | Workflow-DLQ: контракт для исчерпавших попыток шагов + SLA-алертинг (волна 22, кластер B4) | Accepted |
 | [ADR-0409](0409-multi-tenant-snapshot-and-credit-pipeline-agents.md) | Multi-tenant снапшот (fail-closed tenant-скоуп) и честные агенты credit_pipeline (волна 22, кластер B5) | Accepted |
 | [ADR-0410](0410-order-dependent-pollution-final.md) | Финальное закрытие order-dependent падений (волна 22, кластер B6) | Accepted |
+| [ADR-0411](0411-jwt-rs256-jwks-support.md) | RS256/JWKS: поддержка асимметричного режима JWT, генерация ключевой пары и контракт ротации (волна 23, кластер C1) | Accepted |
+| [ADR-0412](0412-sidecar-dns-and-endpoint-contracts.md) | Service-DNS для sidecar'ов и endpoint-контракты (волна 23, кластер C2) | Accepted |
+| [ADR-0413](0413-multi-tenant-snapshot-modes.md) | Режимы межtenant-снапшота (single-tenant / per-tenant / service-role) | Accepted |
+| [ADR-0414](0414-workflow-step-audit-model.md) | Модель аудита шагов workflow (волна 23, кластер C4) | Accepted |
+| [ADR-0415](0415-jupyter-hub-provider-and-capability-generators.md) | Провайдер capability `jupyter.hub` и миграция генераторов capability | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 195 ADRs.
+**Total:** 200 ADRs.
 

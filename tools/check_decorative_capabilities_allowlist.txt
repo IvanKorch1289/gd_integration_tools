@@ -26,7 +26,6 @@ src/backend/dsl/engine/processors/geo.py::GeoProcessor  # owner=dsl | reason=S-1
 src/backend/dsl/engine/processors/get_setting.py::GetSettingProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
 src/backend/dsl/engine/processors/graphql_query.py::GraphQLQueryProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
 src/backend/dsl/engine/processors/infra_clickhouse.py::InfraClickHouseQueryProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
-src/backend/dsl/engine/processors/infra_db.py::InfraDbQueryProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
 src/backend/dsl/engine/processors/infra_elasticsearch.py::InfraElasticsearchIndexProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
 src/backend/dsl/engine/processors/infra_elasticsearch.py::InfraElasticsearchSearchProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных
 src/backend/dsl/engine/processors/infra_kafka.py::InfraKafkaProduceProcessor  # owner=dsl | reason=S-18 baseline: capability проверяется только в метаданных

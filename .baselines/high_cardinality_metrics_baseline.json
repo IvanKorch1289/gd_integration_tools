@@ -571,7 +571,7 @@
     "file": "src/backend/infrastructure/resilience/snapshot_job.py",
     "full_call": "_rows_gauge.labels(table=table_name)",
     "label": "table",
-    "line": 163,
+    "line": 228,
     "reason": "label 'table' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
