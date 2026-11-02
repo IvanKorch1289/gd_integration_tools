@@ -44,9 +44,7 @@ class TestConfigClient:
         c = ConfigClient()
         with patch.object(c, "_request", return_value=[{"trace": "x"}]) as req:
             assert c.get_trace_logs() == [{"trace": "x"}]
-        req.assert_called_once_with(
-            "GET", "/api/v1/admin/trace-logs", params={"limit": 100}
-        )
+        req.assert_called_once_with("GET", "/api/v1/search/logs", params={"limit": 100})
 
     def test_get_trace_logs_custom_limit(self) -> None:
         from src.frontend.streamlit_app.api_clients.config import ConfigClient
@@ -54,9 +52,7 @@ class TestConfigClient:
         c = ConfigClient()
         with patch.object(c, "_request", return_value=[]) as req:
             c.get_trace_logs(limit=50)
-        req.assert_called_once_with(
-            "GET", "/api/v1/admin/trace-logs", params={"limit": 50}
-        )
+        req.assert_called_once_with("GET", "/api/v1/search/logs", params={"limit": 50})
 
     def test_get_trace_logs_exception_returns_empty_list(self) -> None:
         from src.frontend.streamlit_app.api_clients.config import ConfigClient
@@ -133,7 +129,7 @@ class TestOrdersClient:
             result = c.get_orders()
         assert result == {"items": []}
         req.assert_called_once_with(
-            "GET", "/api/v1/orders/all/", params={"page": 1, "size": 50}
+            "GET", "/api/v1/order/all/", params={"page": 1, "size": 50}
         )
 
     def test_get_orders_custom_pagination(self) -> None:
@@ -143,7 +139,7 @@ class TestOrdersClient:
         with patch.object(c, "_request", return_value={}) as req:
             c.get_orders(page=3, size=100)
         req.assert_called_once_with(
-            "GET", "/api/v1/orders/all/", params={"page": 3, "size": 100}
+            "GET", "/api/v1/order/all/", params={"page": 3, "size": 100}
         )
 
     def test_create_order(self) -> None:
@@ -154,7 +150,7 @@ class TestOrdersClient:
         with patch.object(c, "_request", return_value={"id": 1}) as req:
             result = c.create_order(data)
         assert result == {"id": 1}
-        req.assert_called_once_with("POST", "/api/v1/orders/create/", json=data)
+        req.assert_called_once_with("POST", "/api/v1/order/create/", json=data)
 
     def test_update_order(self) -> None:
         from src.frontend.streamlit_app.api_clients.orders import OrdersClient
@@ -166,7 +162,7 @@ class TestOrdersClient:
         ) as req:
             result = c.update_order(42, data)
         assert result == {"id": 1, "name": "Updated"}
-        req.assert_called_once_with("PUT", "/api/v1/orders/update/42", json=data)
+        req.assert_called_once_with("PUT", "/api/v1/order/update/42", json=data)
 
     def test_delete_order(self) -> None:
         from src.frontend.streamlit_app.api_clients.orders import OrdersClient
@@ -175,7 +171,7 @@ class TestOrdersClient:
         with patch.object(c, "_request", return_value=None) as req:
             result = c.delete_order(42)
         assert result is None
-        req.assert_called_once_with("DELETE", "/api/v1/orders/delete/42")
+        req.assert_called_once_with("DELETE", "/api/v1/order/delete/42")
 
 
 # ============================================================
@@ -196,6 +192,7 @@ class TestChatClient:
             assert c.chat("hi") == "Hello!"
 
     def test_chat_string_response(self) -> None:
+        """Строка без SSE-разметки возвращается как есть."""
         from src.frontend.streamlit_app.api_clients.chat import ChatClient
 
         c = ChatClient()
@@ -221,8 +218,8 @@ class TestChatClient:
             c.chat("hi", session_id="my_session")
         req.assert_called_once_with(
             "POST",
-            "/api/v1/ai/chat",
-            json={"message": "hi", "session_id": "my_session"},
+            "/api/v1/ai/llm/stream",
+            json={"messages": [{"role": "user", "content": "hi"}]},
         )
 
     def test_chat_default_session_id(self) -> None:
@@ -232,8 +229,24 @@ class TestChatClient:
         with patch.object(c, "_request", return_value={}) as req:
             c.chat("hi")
         req.assert_called_once_with(
-            "POST", "/api/v1/ai/chat", json={"message": "hi", "session_id": "default"}
+            "POST",
+            "/api/v1/ai/llm/stream",
+            json={"messages": [{"role": "user", "content": "hi"}]},
         )
+
+    def test_chat_parses_sse_tokens(self) -> None:
+        """ADR-0422: ответ приходит SSE-потоком — дельты склеиваются."""
+        from src.frontend.streamlit_app.api_clients.chat import ChatClient
+
+        sse = (
+            'event: start\ndata: {"model": "gpt"}\n\n'
+            'event: token\ndata: {"delta": "При"}\n\n'
+            'event: token\ndata: {"delta": "вет"}\n\n'
+            'event: done\ndata: {"finish_reason": "stop"}\n\n'
+        )
+        c = ChatClient()
+        with patch.object(c, "_request", return_value=sse):
+            assert c.chat("hi") == "Привет"
 
 
 # ============================================================
@@ -251,7 +264,7 @@ class TestMetricsClient:
         with patch.object(c, "_request", return_value={"orders": 42}) as req:
             result = c.get_metrics()
         assert result == {"orders": 42}
-        req.assert_called_once_with("GET", "/api/v1/admin/metrics")
+        req.assert_called_once_with("GET", "/api/v1/admin/system-info")
 
     def test_get_metrics_exception_returns_empty(self) -> None:
         from src.frontend.streamlit_app.api_clients.metrics import MetricsClient

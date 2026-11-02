@@ -24,7 +24,11 @@ from src.backend.infrastructure.clients.storage.clickhouse import get_clickhouse
 from src.backend.infrastructure.clients.storage.redis import get_redis_client
 from src.backend.infrastructure.clients.storage.s3_pool import get_s3_client
 from src.backend.infrastructure.database.database import get_db_initializer
-from src.backend.plugins.composition.setup_infra.pools import _clickhouse_enabled
+from src.backend.plugins.composition.setup_infra.pools import (
+    _clickhouse_enabled,
+    _redis_enabled,
+    _s3_enabled,
+)
 from src.backend.services.sources.registry import get_sink_registry, get_source_registry
 
 app_logger = get_logger("application")
@@ -35,6 +39,34 @@ def _get_watcher_manager():
     from src.backend.entrypoints.filewatcher.watcher_manager import watcher_manager
 
     return watcher_manager
+
+
+def _nats_endpoint() -> tuple[str, int]:
+    """Определить ``host:port`` NATS из настроек текущего профиля.
+
+    NATS опционален: если в профиле он не настроен, проверка должна
+    вернуть ``skipped``, а не ``error`` (иначе ``/health/ready`` на
+    профилях без NATS всегда отдаёт 503).
+
+    Returns:
+        Кортеж ``(host, port)``; пустой ``host`` — NATS не настроен.
+    """
+    from src.backend.core.config.settings import settings
+
+    nats_cfg = getattr(settings, "nats", None)
+    if nats_cfg is not None:
+        host = str(getattr(nats_cfg, "host", "") or "")
+        port = int(getattr(nats_cfg, "port", 4222) or 4222)
+        return host, port
+
+    queue_cfg = getattr(settings, "queue", None)
+    broker_url = str(getattr(queue_cfg, "broker_url", "") or "")
+    if broker_url.startswith("nats://"):
+        from urllib.parse import urlparse
+
+        parsed = urlparse(broker_url)
+        return parsed.hostname or "", parsed.port or 4222
+    return "", 4222
 
 
 async def _register_health_checks() -> None:
@@ -57,11 +89,20 @@ async def _register_health_checks() -> None:
     async def _redis_health() -> dict[str, Any]:
         import time
 
+        # Отключённый Redis — такой же опциональный компонент, как
+        # S3/queue/kafka: помечаем ``skipped``, а не ``error``.
+        if not _redis_enabled():
+            return {"status": "skipped", "reason": "Redis отключён (redis.enabled=false)"}
+
         start = time.monotonic()
         try:
             redis_client = get_redis_client()
             raw = getattr(redis_client, "_raw_client", None) or redis_client
-            await raw.ping()
+            alive = await raw.ping()
+            if not alive:
+                # Раньше результат ``ping()`` игнорировался — проверка
+                # сообщала ``ok`` даже при недоступном Redis.
+                return {"status": "error", "error": "redis ping вернул False"}
             return {
                 "status": "ok",
                 "latency_ms": round((time.monotonic() - start) * 1000, 2),
@@ -89,6 +130,17 @@ async def _register_health_checks() -> None:
     # S3
     async def _s3_health() -> dict[str, Any]:
         import time
+
+        # Отключённый/несконфигурированный S3-совместимый бэкенд —
+        # такой же опциональный компонент, как redis/queue/kafka:
+        # помечаем ``skipped``, а не ``error`` (иначе ``/health/ready``
+        # отдаёт 503 на профилях без S3, напр. dev_light с
+        # ``fs.provider=local``).
+        if not _s3_enabled():
+            return {
+                "status": "skipped",
+                "reason": "S3 отключён (fs.enabled=false или fs.provider=local)",
+            }
 
         start = time.monotonic()
         try:
@@ -140,15 +192,19 @@ async def _register_health_checks() -> None:
         except Exception as exc:
             return {"status": "error", "error": str(exc)[:200]}
 
-    # NATS — lightweight TCP probe
+    # NATS — lightweight TCP probe (только если NATS настроен в профиле)
     async def _nats_health() -> dict[str, Any]:
         import asyncio
         import time
 
+        host, port = _nats_endpoint()
+        if not host:
+            return {"status": "skipped", "reason": "NATS не настроен в профиле"}
+
         start = time.monotonic()
         try:
             _reader, writer = await asyncio.wait_for(
-                asyncio.open_connection("localhost", 4222), timeout=2.0
+                asyncio.open_connection(host, port), timeout=2.0
             )
             writer.close()
             await writer.wait_closed()

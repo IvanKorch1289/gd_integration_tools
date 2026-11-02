@@ -49,7 +49,9 @@ class TestFlagsClient:
         with patch.object(c, "_request", return_value={"ok": True}) as req:
             assert c.toggle_flag("my_flag", True) is True
         req.assert_called_once_with(
-            "POST", "/api/v1/admin/feature-flags/my_flag/toggle", json={"enabled": True}
+            "POST",
+            "/api/v1/admin/feature-flags/toggle",
+            params={"flag_name": "my_flag", "enable": True},
         )
 
     def test_toggle_flag_false(self) -> None:
@@ -58,7 +60,10 @@ class TestFlagsClient:
         c = FlagsClient()
         with patch.object(c, "_request", return_value={"ok": True}) as req:
             assert c.toggle_flag("my_flag", False) is True
-        assert req.call_args.kwargs["json"] == {"enabled": False}
+        assert req.call_args.kwargs["params"] == {
+            "flag_name": "my_flag",
+            "enable": False,
+        }
 
     def test_toggle_flag_exception_returns_false(self) -> None:
         from src.frontend.streamlit_app.api_clients.flags import FlagsClient
@@ -629,7 +634,7 @@ class TestK4APIClient:
         with patch.object(c, "_request", return_value={"requests": 1000}) as req:
             result = c.litellm_gateway_stats()
         assert result == {"requests": 1000}
-        req.assert_called_once_with("GET", "/api/v1/admin/litellm-gateway/stats")
+        req.assert_called_once_with("GET", "/api/v1/admin/ai-costs")
 
     def test_litellm_gateway_stats_exception(self) -> None:
         from src.frontend.streamlit_app.api_clients.k4 import K4APIClient

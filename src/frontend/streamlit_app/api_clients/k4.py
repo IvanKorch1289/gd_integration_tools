@@ -62,15 +62,25 @@ class K4APIClient(APIClient):
             return []
 
     def litellm_gateway_stats(self) -> dict[str, Any]:
-        """Получить litellm-gateway usage stats (tokens, cost)."""
+        """Статистика LLM-шлюза (tokens, cost).
+
+        ADR-0422: путь выровнен с роутером сервера (канон) — эндпоинта
+        ``/admin/litellm-gateway/stats`` не существует; cost-телеметрия
+        шлюза отдаётся в ``GET /api/v1/admin/ai-costs``.
+        """
         try:
-            return self._request("GET", "/api/v1/admin/litellm-gateway/stats")
+            return self._request("GET", "/api/v1/admin/ai-costs")
         except Exception as exc:
             logger.warning("litellm_gateway_stats failed: %s", exc)
             return {}
 
     def list_embedding_providers(self) -> list[str]:
-        """Список зарегистрированных embedding providers."""
+        """Список зарегистрированных embedding providers.
+
+        ADR-0422: путь выровнен с роутером сервера (канон) — эндпоинт
+        ``GET /api/v1/admin/embedding-providers`` добавлен на сервере
+        (раньше клиент ходил в несуществующий путь и получал 404).
+        """
         try:
             payload = self._request("GET", "/api/v1/admin/embedding-providers")
             if isinstance(payload, list):

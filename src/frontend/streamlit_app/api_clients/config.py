@@ -32,11 +32,14 @@ class ConfigClient(BaseAPIClient):
             return {}
 
     def get_trace_logs(self, limit: int = 100) -> list[dict[str, Any]]:
-        """Метод get_trace_logs (см. signature)."""
+        """Поиск по audit-логам (Elasticsearch).
+
+        ADR-0422: путь выровнен с роутером сервера (канон) — эндпоинта
+        ``/admin/trace-logs`` не существует; поиск по audit-логам живёт в
+        ``GET /api/v1/search/logs``.
+        """
         try:
-            return self._request(
-                "GET", "/api/v1/admin/trace-logs", params={"limit": limit}
-            )
+            return self._request("GET", "/api/v1/search/logs", params={"limit": limit})
         except CLIENT_SAFE_DEFAULT_ERRORS as trace_exc:
             # cycle-9/D-AUDIT-1069: см. выше — mirror для trace-logs.
             import logging

@@ -50,7 +50,7 @@ class TestAdminListWorkflowTemplates:
             result = admin_client.list_workflow_templates()
 
         assert result == [{"name": "customer_onboarding"}]
-        mock_req.assert_called_once_with("GET", "/api/v1/admin/workflow-templates")
+        mock_req.assert_called_once_with("GET", "/api/v1/admin/workflow-templates/")
 
     def test_returns_empty_on_non_list(self, admin_client: Any) -> None:
         """Non-list response (e.g. dict error) → return []."""

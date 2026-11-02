@@ -42,10 +42,13 @@ def cached_get_metrics() -> dict[str, Any]:
     """Metrics dashboard: route counts, actions, services.
 
     TTL=10s — monitoring data, 10s staleness acceptable.
+
+    ADR-0422: путь выровнен с роутером сервера (канон) — ``/admin/metrics``
+    не зарегистрирован, сводка счётчиков живёт в ``/admin/system-info``.
     """
     client = BaseAPIClient()
     try:
-        return client._request("GET", "/api/v1/admin/metrics")
+        return client._request("GET", "/api/v1/admin/system-info")
     except CLIENT_SAFE_DEFAULT_ERRORS as metrics_exc:
         # cycle-9/D-AUDIT-1048: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
@@ -83,11 +86,15 @@ def cached_get_orders(page: int = 1, size: int = 50) -> Any:
     """Orders list с pagination.
 
     TTL=15s — order data, 15s staleness acceptable для list view.
+
+    ADR-0422: канонический CRUD-путь — ``/api/v1/order/all/`` (роутер
+    сервера). ``/api/v1/orders/all/`` — скрытый legacy-алиас, который
+    скоро будет удалён.
     """
     client = BaseAPIClient()
     try:
         return client._request(
-            "GET", "/api/v1/orders/all/", params={"page": page, "size": size}
+            "GET", "/api/v1/order/all/", params={"page": page, "size": size}
         )
     except CLIENT_SAFE_DEFAULT_ERRORS as orders_exc:
         # cycle-9/D-AUDIT-1064: narrow exceptions + observability.

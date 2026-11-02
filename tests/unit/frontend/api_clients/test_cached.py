@@ -125,6 +125,6 @@ def test_cached_get_orders_pagination(mock_streamlit: MagicMock) -> None:
         mock_request.assert_called_once()
         call_args = mock_request.call_args
         assert call_args[0][0] == "GET"
-        assert call_args[0][1] == "/api/v1/orders/all/"
+        assert call_args[0][1] == "/api/v1/order/all/"
         assert call_args[1]["params"]["page"] == 3
         assert call_args[1]["params"]["size"] == 25

@@ -108,6 +108,17 @@ class SecureSettings(BaseSettingsWithLoader):
         le=60.0,
         description="HTTP-таймаут для fetch JWKS-документа (сек).",
     )
+    jwks_max_stale_seconds: int = Field(
+        default=600,
+        ge=0,
+        le=86400,
+        description=(
+            "Предельное окно stale-fallback для JWKS (сек). После истечения "
+            "TTL старый JWKS допустим не дольше этого окна — отозванный kid "
+            "не остаётся валидным бессрочно (ADR-0419). 0 — fail-closed без "
+            "stale-fallback."
+        ),
+    )
     jwt_leeway: int = Field(
         default=60,
         ge=0,
@@ -118,9 +129,7 @@ class SecureSettings(BaseSettingsWithLoader):
 
     # API-безопасность
     api_key: SecretStr = Field(
-        ...,
-        description="Основной API-ключ приложения",
-        examples=["your_api_key_123"],
+        ..., description="Основной API-ключ приложения", examples=["your_api_key_123"]
     )
     allowed_hosts: list[str] = Field(
         ...,
@@ -128,10 +137,13 @@ class SecureSettings(BaseSettingsWithLoader):
         examples=["example.com", "api.example.com"],
     )
     cors_origins: list[str] = Field(
-        default_factory=list,
+        default_factory=lambda: ["http://localhost:8501", "http://127.0.0.1:8501"],
         description=(
             "CORS allow-origins whitelist. В prod-окружении запрещён '*' — "
-            "список должен быть явным."
+            "список должен быть явным. ADR-0422: дефолт непустой (локальный "
+            "Streamlit), иначе любой cross-origin запрос отклонялся бы с "
+            "400 'Disallowed CORS origin'. Переопределяется env SEC_CORS_ORIGINS "
+            "или секцией security.cors_origins профиля."
         ),
         examples=[["https://app.example.com", "https://admin.example.com"]],
     )
@@ -149,6 +161,11 @@ class SecureSettings(BaseSettingsWithLoader):
             "Content-Type",
             "X-Request-ID",
             "X-API-Key",
+            # ADR-0422: CSRF (cookie-auth) требует заголовок X-CSRF-Token;
+            # без него в allowlist браузерный preflight мутации с cookie
+            # получает 400 «Disallowed headers» — cross-origin CSRF-флоу
+            # невозможен.
+            "X-CSRF-Token",
         ],
         description="Разрешённые заголовки для cross-origin",
     )

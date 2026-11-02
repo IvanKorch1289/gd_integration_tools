@@ -43,8 +43,13 @@ class TestExternalDatabaseReplicaSettings:
             slow_query_threshold=1.0,
             replica_dsn="postgresql+asyncpg://user:pwd@replica:5432/test",
         )
-        assert cfg.replica_dsn == "postgresql+asyncpg://user:pwd@replica:5432/test"
-        assert cfg.replica_async_connection_url == cfg.replica_dsn
+        # ADR-0419: replica_dsn — SecretStr (секрет); рабочее значение
+        # доступно через get_secret_value(), в дампе — замаскировано.
+        assert (
+            cfg.replica_dsn.get_secret_value()
+            == "postgresql+asyncpg://user:pwd@replica:5432/test"
+        )
+        assert cfg.replica_async_connection_url == cfg.replica_dsn.get_secret_value()
 
     def test_replica_dsn_optional(self) -> None:
         cfg = ExternalDatabaseConnectionSettings(

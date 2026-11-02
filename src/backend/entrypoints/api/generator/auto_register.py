@@ -35,6 +35,10 @@ from __future__ import annotations
 
 Вызывается из ``app_factory.create_app`` после регистрации основных
 роутов (см. Wave 1.2 в ``PLAN.md``).
+
+ADR-0421: auto-поверхность — универсальный вход к любому action'у, поэтому
+endpoint проверяет права: action с ``permissions``/``admin``-префиксом
+требует соответствующего права, иначе HTTP 403 (fail-closed).
 """
 
 
@@ -42,14 +46,19 @@ import inspect
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
+from pydantic import ValidationError
 
 from src.backend.core.api.extensions import (
     ActionHandlerRegistry,
     action_handler_registry,
 )
 from src.backend.core.types.invocation_command import ActionCommandMetaSchema
+from src.backend.dsl.commands.action_registry import (
+    ActionPermissionDeniedError,
+    resolve_action_permissions,
+)
 from src.backend.schemas.invocation import ActionCommandSchema
 
 __all__ = ("auto_register_unrouted_actions",)
@@ -68,6 +77,21 @@ _VERB_TO_METHOD: dict[str, str] = {
 
 # Префикс для авто-роутов; защищает от коллизий с ручными ``/api/v1/...``.
 _AUTO_PREFIX = "/api/v1/auto"
+
+#: HTTP-статус для тела, не совпадающего с формой action'а (422 — тело
+#: syntactically корректно, но не проходит контракт action'а).
+_UNPROCESSABLE_ENTITY: int = 422
+
+#: Маркеры ошибок связывания аргументов (``method(**payload)``).
+#:
+#: Отличают «тело не подходит по форме» (→ 422) от настоящего бага внутри
+#: бизнес-логики action'а (→ 500, проброс TypeError без изменений).
+_BINDING_ERROR_MARKERS: tuple[str, ...] = (
+    "unexpected keyword argument",
+    "got multiple values for argument",
+    "missing required argument",
+    "required positional argument",
+)
 
 
 def _infer_method_for_action(action: str) -> str:
@@ -119,6 +143,124 @@ def _jsonable(value: Any) -> Any:
     return value
 
 
+async def _read_payload(request: Request) -> tuple[dict[str, Any], str]:
+    """Читает тело запроса и приводит его к payload action'а.
+
+    Args:
+        request: Текущий FastAPI Request.
+
+    Returns:
+        tuple: ``(payload, body_kind)``, где ``body_kind`` описывает вид
+        исходного тела (``"query"``/``"object"``/``"empty"``/``"list"``/...) —
+        используется для описания ожидаемой формы тела в ответе 422.
+
+    """
+    if request.method.upper() in {"GET", "DELETE", "HEAD", "OPTIONS"}:
+        return dict(request.query_params), "query"
+    try:
+        body = await request.json()
+    except ValueError, RuntimeError:
+        # Тело отсутствует или не валидный JSON — допустимо для
+        # action'а без payload_model; падать не нужно.
+        body = None
+    if isinstance(body, dict):
+        return body, "object"
+    if body is None:
+        return {}, "empty"
+    # Если клиент прислал не-dict (список/строку), кладём как
+    # ``{"data": ...}``; это приемлемый default для RPC-обёртки.
+    # Если у action'а нет параметра ``data`` — dispatch упадёт с TypeError,
+    # который ниже превращается в 422 с описанием ожидаемой формы тела.
+    return {"data": body}, type(body).__name__
+
+
+def _expected_fields(registry: ActionHandlerRegistry, action: str) -> list[str]:
+    """Возвращает имена полей payload-схемы action'а (пусто — схемы нет).
+
+    Args:
+        registry: Реестр action-обработчиков.
+        action: Имя action'а.
+
+    Returns:
+        list[str]: Отсортированные имена полей payload-модели.
+
+    """
+    metadata = registry.get_metadata(action)
+    input_model = getattr(metadata, "input_model", None)
+    model_fields = getattr(input_model, "model_fields", None)
+    if not model_fields:
+        return []
+    return sorted(model_fields)
+
+
+def _is_binding_error(exc: TypeError) -> bool:
+    """Проверяет, что TypeError — ошибка связывания аргументов вызова.
+
+    Args:
+        exc: Исключение из ``method(**payload)``.
+
+    Returns:
+        ``True``, если ошибка вызвана несовпадением формы тела и сигнатуры
+        action'а (→ 422), иначе ``False`` (настоящий баг → 500).
+
+    """
+    message = str(exc)
+    return any(marker in message for marker in _BINDING_ERROR_MARKERS)
+
+
+def _invalid_body_detail(
+    *,
+    action: str,
+    body_kind: str,
+    payload: dict[str, Any],
+    expected_fields: list[str],
+    reason: str,
+    error: str | None = None,
+) -> dict[str, Any]:
+    """Собирает ``detail`` для ответа 422 (описание ожидаемой формы тела).
+
+    Args:
+        action: Имя action'а.
+        body_kind: Вид исходного тела запроса.
+        payload: Payload, который ушёл в dispatch.
+        expected_fields: Ожидаемые поля (пусто — payload-схемы нет).
+        reason: Машиночитаемый код причины.
+        error: Текст исходной ошибки (для диагностики).
+
+    Returns:
+        dict[str, Any]: Тело ``detail`` для HTTPException.
+
+    """
+    if body_kind == "object":
+        expected = expected_fields or "не заданы (у action нет payload-схемы)"
+        message = (
+            f"Тело запроса не соответствует action '{action}': "
+            f"ожидаемые поля: {expected}."
+        )
+    elif body_kind == "empty":
+        message = (
+            f"Тело запроса пусто, а action '{action}' ожидает параметры: "
+            f"{expected_fields or 'не заданы (у action нет payload-схемы)'}."
+        )
+    else:
+        message = (
+            "Ожидается JSON-объект в теле запроса "
+            '(например {"field": "value"}), '
+            f"получено: {body_kind}."
+        )
+    detail: dict[str, Any] = {
+        "code": "invalid_request_body",
+        "action": action,
+        "reason": reason,
+        "detail": message,
+        "expected_fields": expected_fields,
+        "received_fields": sorted(payload),
+    }
+    if error:
+        detail["error"] = error
+    return detail
+
+
 def _build_auto_endpoint(
     *, action: str, registry: ActionHandlerRegistry
 ) -> Callable[..., Awaitable[Any]]:
@@ -132,37 +274,20 @@ def _build_auto_endpoint(
 
     async def endpoint(request: Request) -> Any:
         # Тело может быть как dict, так и пустым (для GET/DELETE).
-        payload: dict[str, Any]
-        if request.method.upper() in {"GET", "DELETE", "HEAD", "OPTIONS"}:
-            payload = dict(request.query_params)
-        else:
-            try:
-                body = await request.json()
-            except (ValueError, RuntimeError):
-                # Тело отсутствует или не валидный JSON — допустимо для
-                # action'а без payload_model; падать не нужно.
-                body = None
-            if isinstance(body, dict):
-                payload = body
-            elif body is None:
-                payload = {}
-            else:
-                # Если клиент прислал не-dict (список/строку), кладём как
-                # ``{"data": ...}``; это приемлемый default для RPC-обёртки.
-                payload = {"data": body}
+        payload, body_kind = await _read_payload(request)
 
         # P0 (cycle 59, parity с cycle 4/5/24): пробрасываем
         # principal/permissions из auth middleware (request.state.auth)
         # в ActionCommandSchema.meta. Auto-endpoints наследуют тот же
         # auth context что и явные routes (auth middleware ставит
         # ``request.state.auth`` перед handler).
-        from src.backend.core.auth.auth_context_helpers import extract_user_permissions
-
+        #
+        # ADR-0421: permissions собираются через
+        # ``resolve_action_permissions`` — он учитывает и user-permissions,
+        # и admin-роли (``metadata["admin_roles"]`` → ``role:admin``).
         _auth = getattr(request.state, "auth", None)
         _principal = getattr(_auth, "principal", "")
-        _permissions = (
-            tuple(extract_user_permissions(_auth)) if _auth is not None else ()
-        )
+        _permissions = resolve_action_permissions(_auth)
 
         command = ActionCommandSchema(
             action=action,
@@ -171,9 +296,45 @@ def _build_auto_endpoint(
                 principal=_principal, permissions=list(_permissions)
             ),
         )
-        result = registry.dispatch(command)
-        if inspect.isawaitable(result):
-            result = await result
+        try:
+            result = registry.dispatch(command)
+            if inspect.isawaitable(result):
+                result = await result
+        except ActionPermissionDeniedError as exc:
+            # ADR-0421: action без прав → 403 (fail-closed), детали — в лог/audit.
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail=exc.to_detail()
+            ) from exc
+        except ValidationError as exc:
+            # Payload не прошёл payload-схему action'а → 422 (не 500).
+            raise HTTPException(
+                status_code=_UNPROCESSABLE_ENTITY,
+                detail=_invalid_body_detail(
+                    action=action,
+                    body_kind=body_kind,
+                    payload=payload,
+                    expected_fields=_expected_fields(registry, action),
+                    reason="schema_validation_failed",
+                    error=str(exc),
+                ),
+            ) from exc
+        except TypeError as exc:
+            # Ошибка связывания аргументов (``method(**payload)``) → тело не
+            # подходит по форме → 422. Прочие TypeError — настоящий баг
+            # внутри action'а → пробрасываем как 500.
+            if not _is_binding_error(exc):
+                raise
+            raise HTTPException(
+                status_code=_UNPROCESSABLE_ENTITY,
+                detail=_invalid_body_detail(
+                    action=action,
+                    body_kind=body_kind,
+                    payload=payload,
+                    expected_fields=_expected_fields(registry, action),
+                    reason="unexpected_body_fields",
+                    error=str(exc),
+                ),
+            ) from exc
         # Auto-endpoint без response_model: FastAPI 0.141 сериализует возврат
         # pydantic-путём и падает на SQLAlchemy-моделях — нормализуем в dict.
         return jsonable_encoder(_jsonable(result))

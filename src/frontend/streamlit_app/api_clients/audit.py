@@ -1,10 +1,13 @@
 """Audit-replay HTTP client (S34 W1, Phase C close-out).
 
-``AuditClient`` обёртка для ``GET /api/v1/admin/audit/capability``
+``AuditClient`` обёртка для ``GET /api/v1/audit/capability``
 endpoint. Используется UI page 34 (DSL Отладчик → Аудит Replay) для
 drill-down на конкретные HTTP requests в Redis audit stream.
 
 Sprint 34 W1: заменяет ``list_audit_records`` facade direct import.
+
+ADR-0422: путь выровнен с роутером сервера (канон) — audit-replay
+ смонтирован как ``/audit/capability`` (без ``/admin``).
 """
 
 from __future__ import annotations
@@ -25,7 +28,7 @@ class AuditClient(BaseAPIClient):
     def list_records(
         self, *, count: int = 100, start_id: str = "-"
     ) -> list[dict[str, Any]]:
-        """GET /api/v1/admin/audit/capability — последние N audit records.
+        """GET /api/v1/audit/capability — последние N audit records.
 
         Args:
             count: Максимум записей (1..1000, server-side clamp).
@@ -37,7 +40,7 @@ class AuditClient(BaseAPIClient):
         try:
             result = self._request(
                 "GET",
-                "/api/v1/admin/audit/capability",
+                "/api/v1/audit/capability",
                 params={"count": count, "start_id": start_id},
             )
             return result if isinstance(result, list) else []

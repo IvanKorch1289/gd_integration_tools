@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from src.backend.core.logging import get_logger
+
 if TYPE_CHECKING:
     from fastapi import FastAPI
 
@@ -33,7 +35,6 @@ def build_default_registry() -> MiddlewareRegistry:
 
     Порядок применения совпадает с историческим жёстким списком.
     """
-    from fastapi.middleware.cors import CORSMiddleware
     from fastapi.middleware.trustedhost import TrustedHostMiddleware
     from starlette_exporter import PrometheusMiddleware
 
@@ -58,6 +59,7 @@ def build_default_registry() -> MiddlewareRegistry:
         CircuitBreakerMiddleware,  # S81 W2: restored
     )
     from src.backend.entrypoints.middlewares.correlation import CorrelationIdMiddleware
+    from src.backend.entrypoints.middlewares.cors import PreflightCORSMiddleware
     from src.backend.entrypoints.middlewares.data_masking import DataMaskingMiddleware
     from src.backend.entrypoints.middlewares.degradation import DegradationMiddleware
     from src.backend.entrypoints.middlewares.exception_handler import (
@@ -104,19 +106,6 @@ def build_default_registry() -> MiddlewareRegistry:
         GlobalRateLimitMiddleware,
         {"checker": build_rate_limit_checker()},
         order=20,
-    )
-    registry.register_builtin(
-        "cors",
-        CORSMiddleware,
-        {
-            "allow_origins": settings.secure.cors_origins,
-            "allow_credentials": settings.secure.cors_allow_credentials,
-            "allow_methods": settings.secure.cors_allow_methods,
-            "allow_headers": settings.secure.cors_allow_headers,
-            "expose_headers": ["X-Request-ID"],
-            "max_age": 600,
-        },
-        order=30,
     )
     registry.register_builtin(
         "trusted_host",
@@ -208,6 +197,32 @@ def build_default_registry() -> MiddlewareRegistry:
     )
     # V7: глобальный defense-in-depth auth-guard.
     registry.register_builtin("auth_required", AuthRequiredMiddleware, order=620)
+    # S184: CSRF protection для cookie-based auth.
+    # ADR-0422: порядок исправлен — CSRF перенесён ВНУТРЬ auth-guard'а
+    # (order 590 < 620, при LIFO это означает «выполняется ПОСЛЕ»).
+    # Раньше CSRF стоял на 740 (выше auth_required) и отвечал 403
+    # ``csrf_token_missing`` раньше, чем auth-guard успевал ответить 401
+    # на запрос без ключа — то есть 253 мутации отдавали неверный код.
+    # Теперь: нет ключа → 401; ключ есть, CSRF-токена нет → 403.
+    #
+    # Double-Submit Cookie pattern для state-changing methods.
+    from src.backend.entrypoints.middlewares.csrf import CSRFMiddleware
+
+    registry.register_builtin(
+        "csrf",
+        CSRFMiddleware,
+        {
+            "enabled": settings.secure.csrf_enabled
+            if hasattr(settings.secure, "csrf_enabled")
+            else True,
+            "safe_paths": (
+                "/api/v1/webhook/",
+                "/api/v1/auth/login",
+                "/api/v1/auth/step-up-request",
+            ),  # M6-#3: pre-auth issuance
+        },
+        order=590,
+    )
     # S183: AI tool whitelist enforcement (S-3 fix — Master Prompt §3.3).
     # Layer 3 — после auth, до DSL execution.
     from src.backend.entrypoints.middlewares.ai_tool_whitelist import (
@@ -265,25 +280,6 @@ def build_default_registry() -> MiddlewareRegistry:
     from src.backend.entrypoints.middlewares.rpa_policy import RpaPolicyMiddleware
 
     registry.register_builtin("rpa_policy", RpaPolicyMiddleware, order=720)
-    # S184: CSRF protection для cookie-based auth (Layer 3, after auth).
-    # Double-Submit Cookie pattern для state-changing methods.
-    from src.backend.entrypoints.middlewares.csrf import CSRFMiddleware
-
-    registry.register_builtin(
-        "csrf",
-        CSRFMiddleware,
-        {
-            "enabled": settings.secure.csrf_enabled
-            if hasattr(settings.secure, "csrf_enabled")
-            else True,
-            "safe_paths": (
-                "/api/v1/webhook/",
-                "/api/v1/auth/login",
-                "/api/v1/auth/step-up-request",
-            ),  # M6-#3: pre-auth issuance
-        },
-        order=740,
-    )
 
     # Layer 4: logging / metrics (750-999) --------------------------------- #
     registry.register_builtin("audit_log", AuditLogMiddleware, order=760)
@@ -382,6 +378,45 @@ def build_default_registry() -> MiddlewareRegistry:
             "compresslevel": settings.app.gzip_compresslevel,
         },
         order=900,
+    )
+
+    # ── CORS: самый ВНЕШНИЙ middleware (950) ───────────────────────────── #
+    #
+    # ADR-0422: CORS стоял на order=30 — при LIFO-семантике add_middleware
+    # это САМЫЙ ВНУТРЕННИЙ built-in, то есть он выполнялся ПОСЛЕ
+    # api_key (110) и auth_required (620). Браузер шлёт preflight (OPTIONS)
+    # без credentials → запрос гасился 401 раньше, чем CORS успевал
+    # ответить, и cross-origin UI не работал вовсе.
+    #
+    # Теперь CORS — внешний слой: preflight гасится сразу (204 +
+    # Access-Control-*), а любой ответ (401/403/429/503) получает
+    # CORS-заголовки и читается браузером.
+    #
+    # Порядок относительно сжатия (900/920) не важен для тела: CORS
+    # добавляет только заголовки, тело не переписывает.
+    cors_origins = list(settings.secure.cors_origins)
+    if not cors_origins:
+        # Не пустой список «молча»: оператор должен увидеть причину
+        # (cross-origin запросы будут отклоняться с 400).
+        get_logger("entrypoints.middlewares.cors").warning(
+            "cors.origins_empty",
+            extra={
+                "event": "cors.origins_empty",
+                "hint": "задайте SEC_CORS_ORIGINS или security.cors_origins в профиле",
+            },
+        )
+    registry.register_builtin(
+        "cors",
+        PreflightCORSMiddleware,
+        {
+            "allow_origins": cors_origins,
+            "allow_credentials": settings.secure.cors_allow_credentials,
+            "allow_methods": settings.secure.cors_allow_methods,
+            "allow_headers": settings.secure.cors_allow_headers,
+            "expose_headers": ["X-Request-ID"],
+            "max_age": 600,
+        },
+        order=950,
     )
 
     return registry

@@ -84,6 +84,14 @@ class APIKeyMiddleware:
 
         path = scope.get("path", "")
 
+        # ADR-0422: CORS preflight (OPTIONS) не несёт credentials — браузер
+        # не отправляет X-API-Key. Ответ 401 на preflight ломал cross-origin
+        # UI целиком (браузер не мог прочитать даже ответ CORS-слоя).
+        # Пропускаем OPTIONS так же, как это делает AuthRequiredMiddleware.
+        if scope.get("method") == "OPTIONS":
+            await self.app(scope, receive, send)
+            return
+
         # Пропускаем для excluded routes.
         if self._is_excluded_route(path):
             await self.app(scope, receive, send)

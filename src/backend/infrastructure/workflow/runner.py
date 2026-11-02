@@ -127,7 +127,7 @@ def _coerce_seconds(raw: Any) -> float | None:
         return None
     try:
         value = float(raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
     return value if value > 0 else None
 
@@ -364,7 +364,7 @@ class DurableWorkflowRunner:
                 task.cancel()
                 try:
                     await task
-                except (asyncio.CancelledError, Exception):
+                except asyncio.CancelledError, Exception:
                     _logger.debug(
                         "workflow runner task cancellation raised", exc_info=True
                     )
@@ -397,6 +397,17 @@ class DurableWorkflowRunner:
         assert (  # nosec
             self._listener_dsn is not None
         )  # mypy narrowing (проверка осуществлена выше через ImportError-guard)
+
+        # LISTEN/NOTIFY — механизм PostgreSQL. Для других СУБД (SQLite в
+        # dev_light) asyncpg не понимает DSN и падает с «invalid DSN» —
+        # push-path отключаем, worker работает в backup-polling режиме.
+        if not self._listener_dsn.startswith(("postgresql://", "postgres://")):
+            _logger.warning(
+                "LISTEN path disabled: DSN scheme %r is not PostgreSQL",
+                self._listener_dsn.split("://", 1)[0],
+            )
+            return
+
         conn = None
         try:
             conn = await asyncpg.connect(self._listener_dsn)

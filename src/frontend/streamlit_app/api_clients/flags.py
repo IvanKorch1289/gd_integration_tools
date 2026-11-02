@@ -32,12 +32,17 @@ class FlagsClient(BaseAPIClient):
             return []
 
     def toggle_flag(self, name: str, enabled: bool) -> bool:
-        """Метод toggle_flag (см. signature)."""
+        """Переключить feature-flag (POST /api/v1/admin/feature-flags/toggle).
+
+        ADR-0422: путь выровнен с роутером сервера (канон) — сервер
+        регистрирует ``POST /admin/feature-flags/toggle`` с query-параметрами
+        ``flag_name``/``enable`` (а не ``/{name}/toggle`` с телом).
+        """
         try:
             self._request(
                 "POST",
-                f"/api/v1/admin/feature-flags/{name}/toggle",
-                json={"enabled": enabled},
+                "/api/v1/admin/feature-flags/toggle",
+                params={"flag_name": name, "enable": enabled},
             )
             return True
         except CLIENT_SAFE_DEFAULT_ERRORS as toggle_exc:

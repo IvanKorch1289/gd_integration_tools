@@ -66,11 +66,13 @@ def test_page_disabled_by_flag() -> None:
 
 
 def test_filter_params_pass_to_api() -> None:
-    """``list_step_logs`` собирает все непустые фильтры в query params.
+    """``list_step_logs`` собирает фильтры в query params канонического пути.
 
-    Проверяет, что workflow_name/tenant_id/date_*/status/limit
-    корректно сериализуются и попадают в HTTP GET-запрос. status
-    конвертируется в comma-separated string.
+    ADR-0422: эндпоинта ``/api/v1/admin/workflow/step-logs`` на сервере нет —
+    канон ``GET /api/v1/admin/workflows`` (фильтры ``workflow_name`` /
+    ``tenant_id`` / ``status_filter`` / ``limit``). Статусы UI-вида
+    (``ok``/``fail``) мапятся на ``WorkflowStatus`` сервера, даты в этом
+    эндпоинте не фильтруются.
     """
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -111,14 +113,14 @@ def test_filter_params_pass_to_api() -> None:
     # Проверяем переданный URL и query params.
     call_args = mock_client.request.call_args
     assert call_args.args[0] == "GET"
-    assert "/api/v1/admin/workflow/step-logs" in call_args.args[1]
+    assert "/api/v1/admin/workflows" in call_args.args[1]
     params = call_args.kwargs.get("params", {})
     assert params["workflow_name"] == "credit_assessment"
     assert params["tenant_id"] == "t-001"
-    assert params["date_from"] == "2026-05-13"
-    assert params["date_to"] == "2026-05-14"
-    assert params["status"] == "ok,fail"
+    assert params["status_filter"] == "succeeded"
     assert params["limit"] == 50
+    assert "date_from" not in params
+    assert "date_to" not in params
 
 
 # ---------------------------------------------------------------------------

@@ -20,9 +20,14 @@ class MetricsClient(BaseAPIClient):
     """Клиент для health-check + admin metrics endpoints."""
 
     def get_metrics(self) -> dict[str, Any]:
-        """Метод get_metrics (см. signature)."""
+        """Сводка системы: сервисы / actions / маршруты / feature-флаги.
+
+        ADR-0422: путь выровнен с роутером сервера (канон) — эндпоинта
+        ``/admin/metrics`` не существует; ближайший по смыслу —
+        ``GET /admin/system-info`` (та же сводка счётчиков).
+        """
         try:
-            return self._request("GET", "/api/v1/admin/metrics")
+            return self._request("GET", "/api/v1/admin/system-info")
         except CLIENT_SAFE_DEFAULT_ERRORS as metrics_exc:
             # cycle-9/D-AUDIT-1065: narrow exceptions + observability.
             # ConnectionError/TimeoutError — server unreachable, RuntimeError

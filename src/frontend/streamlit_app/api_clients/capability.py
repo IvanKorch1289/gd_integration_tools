@@ -37,16 +37,18 @@ class CapabilityClient(BaseAPIClient):
     def get_audit_events(
         self, plugin: str | None = None, tenant: str | None = None, limit: int = 100
     ) -> list[dict[str, Any]]:
-        """Sprint 14 K1 W4: GET /api/v1/admin/audit/capability."""
-        params: dict[str, Any] = {"limit": limit}
+        """Sprint 14 K1 W4: GET /api/v1/audit/capability.
+
+        ADR-0422: путь выровнен с роутером сервера (канон). Лимит
+        передаётся query-параметром ``count`` — так его называет сервер.
+        """
+        params: dict[str, Any] = {"count": limit}
         if plugin:
             params["plugin"] = plugin
         if tenant:
             params["tenant"] = tenant
         try:
-            response = self._request(
-                "GET", "/api/v1/admin/audit/capability", params=params
-            )
+            response = self._request("GET", "/api/v1/audit/capability", params=params)
             if isinstance(response, list):
                 return response
             return response.get("events", []) if isinstance(response, dict) else []

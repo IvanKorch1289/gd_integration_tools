@@ -197,8 +197,8 @@ class TestAdminClientAdminOnlyMethods:
         with patch.object(admin_client, "get", return_value=[]) as get:
             admin_client.get_audit_events(plugin="p1", tenant="t1", limit=50)
         get.assert_called_once_with(
-            "/api/v1/admin/audit/capability",
-            params={"limit": 50, "plugin": "p1", "tenant": "t1"},
+            "/api/v1/audit/capability",
+            params={"count": 50, "plugin": "p1", "tenant": "t1"},
         )
 
     def test_get_audit_events_exception(self, admin_client: AdminClient) -> None:

@@ -17,10 +17,11 @@ from pathlib import Path
 from src.backend.services.workflows.template_registry import WorkflowTemplateRegistry
 
 
-def test_load_all_returns_10_templates() -> None:
+def test_load_all_returns_full_catalog() -> None:
+    """Каталог шаблонов: 18 файлов (10 базовых + 8 из ADR-0424)."""
     registry = WorkflowTemplateRegistry()
     templates = registry.load_all()
-    assert len(templates) == 10
+    assert len(templates) == 18
     names = {t.name for t in templates}
     expected_names = {
         "data_quality_pipeline",
@@ -33,6 +34,15 @@ def test_load_all_returns_10_templates() -> None:
         "data_migration",
         "webhook_pipeline",
         "scheduled_audit",
+        # ADR-0424 — каталог шаблонов workflow.
+        "agent_pipeline",
+        "call_function_ingest",
+        "checkpoint_continue_as_new",
+        "guardrail_cost_budget",
+        "hitl_approval_chain",
+        "saga_compensation_map",
+        "sensor_polling",
+        "sla_retry_policy",
     }
     assert names == expected_names
 
