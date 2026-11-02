@@ -110,6 +110,37 @@ async def test_image_resize_rejects_non_bytes_body() -> None:
     assert "bytes" in (ex.error or "")
 
 
+# ─── Pillow 13: 32-битный целый (mode "I") → PNG (ADR-0406) ─────────────────
+
+
+@pytest.mark.asyncio
+async def test_image_resize_handles_i32_source_for_png_output() -> None:
+    """mode "I" (32-битный int) → PNG: Pillow 13 больше не обрезает молча.
+
+    Pillow 12.3.0 сохранял mode "I" в PNG с обрезанием значений до 16 бит
+    (и предупреждением). Pillow 13.0.0 это поведение удалил — теперь
+    ``OSError: cannot write mode I as PNG``. Шаг обязан конвертировать
+    изображение в "I;16" сам, иначе 32-битный TIFF падает с трейсбеком.
+    """
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("I", (8, 8), 70000).save(buf, format="TIFF")
+
+    proc = ImageResizeProcessor(width=4, height=4, output_format="PNG")
+    _allow(proc)
+    ex = _exchange_with(buf.getvalue())
+
+    await proc.process(ex, context=MagicMock())
+
+    assert ex.status != ExchangeStatus.failed, ex.error
+    out = ex.out_message.body
+    assert isinstance(out, bytes)
+    with Image.open(io.BytesIO(out)) as result:
+        assert result.size == (4, 4)
+        assert result.format == "PNG"
+
+
 # ─── to_spec сериализация ───────────────────────────────────────────────────
 
 

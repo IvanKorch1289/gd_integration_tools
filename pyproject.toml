@@ -152,7 +152,10 @@ dependencies = [
     # S66 W1: pendulum УЖЕ pinned в [project].dependencies:48 с явной
     # версией "pendulum>=3.2.0,<4.0.0". Удалён дубль (была строка 107
     # без версии — старый baseline до S57 W1).
-    "streamlit>=1.58.0,<2.0.0",  # cycle-4/D-AUDIT-03: upper bound, 95 frontend imports
+    # ADR-0406: пол >=1.66.1 — первая версия streamlit, снявшая ограничение
+    # ``pillow<13`` (1.64.0/1.65.0 → pillow>=7.1.0,<13; 1.66.0 → pillow>=9.2.0,<13;
+    # 1.66.1 → pillow>=9.2.0,<14). Ниже 1.66.1 pillow>=13 неразрешим.
+    "streamlit>=1.66.1,<2.0.0",  # cycle-4/D-AUDIT-03: upper bound, 95 frontend imports
     # SECURITY: transitive dependency constraints (patches Dependabot vulns).
     # Force-pinned to bypass transitive constraints from streamlit/typer/uvicorn.
     "click>=8.3.3,<9.0.0",  # PYSEC-2026-2132 (transitive via streamlit/typer)
@@ -270,11 +273,10 @@ rpa = [
     # параллельно с playwright (legacy), полная миграция — Sprint 9 K3.
     "patchright>=1.40.0,<2.0",
     "pdfplumber>=0.11.0,<1.0.0",
-    # ADR-0385 (A5): пин <13.0.0 УДЕРЖИВАЕТСЯ — streamlit (core-зависимость,
-    # locked 1.63.0) требует pillow<13,>=7.1.0, поэтому pillow>=13 делает
-    # lock-файл неразрешимым. 59 CVE Pillow 12.x (5 CRIT) приняты осознанно,
-    # отложены до обновления streamlit — см. docs/adr/0385-*.md.
-    "pillow>=12.3.0,<13.0.0",
+    # ADR-0406: пин <13.0.0 СНЯТ — streamlit обновлён до 1.66.1 (первая
+    # версия с ``pillow>=9.2.0,<14``), поэтому pillow>=13 разрешим.
+    # Закрывает 59 CVE Pillow 12.3.0 (5 CRIT); см. docs/adr/0406-*.md.
+    "pillow>=13.0.0,<14.0.0",
     "playwright>=1.48.0,<2.0.0",
     "pytesseract>=0.3.10,<1.0.0",
     "watchdog>=6.0.0,<7.0.0",
@@ -309,7 +311,7 @@ rpa-ocr = [
 # sidecar; на Linux/macOS sidecar возвращает 503.
 rpa-windows = [
     "pywinauto>=0.6.8,<1.0",
-    "pillow>=12.3.0,<13.0.0",  # ADR-0385 (A5): пин удерживается из-за streamlit (pillow<13); 59 CVE отложены
+    "pillow>=13.0.0,<14.0.0",  # ADR-0406: пин <13.0.0 снят (streamlit 1.66.1); 59 CVE Pillow 12.x закрыты
 ]
 # Sprint 8 — HTTP/3 + WebTransport opt-in.
 # aioquic — pure-Python QUIC/HTTP3 stack; cp314 wheels с 1.1.0 (cryptography>=42).
@@ -620,7 +622,8 @@ compression = [
 # activate via: `uv pip install gd_advanced_tools[frontend]`
 # или полная установка: `[ai,ai-2026,rag,rpa,frontend,search-providers,...]`
 frontend = [
-    "streamlit>=1.30.0,<2.0.0",
+    # ADR-0406: пол >=1.66.1 — первая версия streamlit, допускающая pillow>=13.
+    "streamlit>=1.66.1,<2.0.0",
     "streamlit-autorefresh>=1.0.0,<2.0.0",
     "altair>=5.0.0,<6.0.0",
     "plotly>=5.18.0,<6.0.0",
@@ -659,7 +662,7 @@ multimodal-rag = [
     "docling>=2.132.0,<3.0.0",
     "paddleocr>=2.8.0,<4.0.0",
     "pypdfium2>=4.30.0,<5.0.0",
-    "Pillow>=10.0.0,<13.0.0",  # ADR-0385 (A5): <13.0.0 удерживается из-за streamlit (pillow<13,>=7.1.0) — 59 CVE отложены
+    "Pillow>=13.0.0,<14.0.0",  # ADR-0406: пин <13.0.0 снят (streamlit 1.66.1); 59 CVE Pillow 12.x закрыты
     # Sprint 11 K4 W1: BLIP2 image captioning (HF transformers).
     # Lazy-import внутри services/ai/rag/multimodal/blip2_captioner.py;
     # extra включается только при использовании.

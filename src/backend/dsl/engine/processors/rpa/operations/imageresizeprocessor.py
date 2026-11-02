@@ -70,6 +70,12 @@ class ImageResizeProcessor(BaseProcessor):
                 else:
                     resized = src.copy()
                 buf = io.BytesIO()
+                # ADR-0406: Pillow 13 больше не обрезает значения mode "I"
+                # (32-битный int) при сохранении в PNG — вместо этого
+                # OSError. Конвертируем в "I;16" (16 бит на канал — как
+                # делал Pillow 12) явно, чтобы 32-битный TIFF не падал.
+                if self._format == "PNG" and getattr(resized, "mode", None) == "I":
+                    resized = resized.convert("I;16")
                 resized.save(buf, format=self._format)
             return buf.getvalue()
 
