@@ -13,6 +13,8 @@ from __future__ import annotations
 import sys
 from unittest.mock import MagicMock
 
+_saved_temporalio: dict[str, object] = {}
+
 
 def _install_fake_temporalio() -> MagicMock:
     """Подменяем ``temporalio.workflow`` на MagicMock (lazy import).
@@ -23,15 +25,25 @@ def _install_fake_temporalio() -> MagicMock:
     workflow_mock = MagicMock()
     temporalio_module = MagicMock()
     temporalio_module.workflow = workflow_mock
+    # ВОССТАНАВЛИВАЕМ, а не удаляем: pop("temporalio") оставлял пакет
+    # в несогласованном состоянии (temporalio.client и др. оставались в
+    # sys.modules) → последующие тесты падали на этапе setup (ADR-0404/0410).
+    _saved_temporalio.clear()
+    for name in ("temporalio", "temporalio.workflow"):
+        _saved_temporalio[name] = sys.modules.get(name)
     sys.modules["temporalio"] = temporalio_module
     sys.modules["temporalio.workflow"] = workflow_mock
     return workflow_mock
 
 
 def _uninstall_fake_temporalio() -> None:
-    """Убираем подмену sys.modules."""
-    sys.modules.pop("temporalio", None)
-    sys.modules.pop("temporalio.workflow", None)
+    """Возвращает исходные модули temporalio (а не удаляет их)."""
+    for name in ("temporalio", "temporalio.workflow"):
+        saved = _saved_temporalio.pop(name, None)
+        if saved is None:
+            sys.modules.pop(name, None)
+        else:
+            sys.modules[name] = saved
 
 
 def _build_handler_with_marker(
