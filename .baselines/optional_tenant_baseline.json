@@ -415,6 +415,27 @@
   {
     "annotation": "str | None",
     "arg": "tenant_id",
+    "file": "src/backend/infrastructure/resilience/snapshot_job.py",
+    "line": 278,
+    "qualified_name": "sync_pg_to_sqlite"
+  },
+  {
+    "annotation": "str | None",
+    "arg": "tenant_id",
+    "file": "src/backend/infrastructure/resilience/snapshot_job.py",
+    "line": 370,
+    "qualified_name": "run_snapshot_now"
+  },
+  {
+    "annotation": "str | None",
+    "arg": "tenant_id",
+    "file": "src/backend/infrastructure/resilience/snapshot_job.py",
+    "line": 480,
+    "qualified_name": "register_snapshot_job"
+  },
+  {
+    "annotation": "str | None",
+    "arg": "tenant_id",
     "file": "src/backend/infrastructure/workflow/saga_state.py",
     "line": 245,
     "qualified_name": "WorkflowStateRepository.list_compensating"
@@ -661,7 +682,7 @@
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/services/workflows/sla_alerting.py",
-    "line": 100,
+    "line": 91,
     "qualified_name": "evaluate_sla"
   },
   {

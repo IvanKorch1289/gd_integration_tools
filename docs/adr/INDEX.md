@@ -191,9 +191,15 @@
 | [ADR-0402](0402-dependency-placement-and-dead-duplicate-removal.md) | Размещение зависимостей по extras и удаление мёртвого дубля OCR (волна 21, кластер A1) | Accepted |
 | [ADR-0403](0403-workflow-sla-dlq-and-prod-validator.md) | Workflow-SLA/DLQ: удаление мёртвого трекера, честная фиксация DLQ, прод-валидатор JWT/AI-fallback (волна 21, кластер A2) | Accepted |
 | [ADR-0404](0404-order-dependent-test-pollution.md) | Order-dependent тесты: диагностика, устранение загрязнения и гейт | Accepted |
+| [ADR-0405](0405-route-capabilities-namespace-migration.md) | Миграция `route.toml` под namespace capability: структурированная форма `[[route.capabilities]]` | Accepted |
+| [ADR-0406](0406-pillow-13-blocker-and-criteria.md) | Pillow 13: разблокировка пина, streamlit 1.66.1 и критерии приёмки | Accepted |
+| [ADR-0407](0407-production-values-contracts.md) | Прод-значения: контракты HS256, WAF allow_hosts, AI-fallback и replica_dsn (волна 22, кластер B3) | Accepted |
+| [ADR-0408](0408-workflow-dlq-contract-and-sla-alerting.md) | Workflow-DLQ: контракт для исчерпавших попыток шагов + SLA-алертинг (волна 22, кластер B4) | Accepted |
+| [ADR-0409](0409-multi-tenant-snapshot-and-credit-pipeline-agents.md) | Multi-tenant снапшот (fail-closed tenant-скоуп) и честные агенты credit_pipeline (волна 22, кластер B5) | Accepted |
+| [ADR-0410](0410-order-dependent-pollution-final.md) | Финальное закрытие order-dependent падений (волна 22, кластер B6) | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 189 ADRs.
+**Total:** 195 ADRs.
 
