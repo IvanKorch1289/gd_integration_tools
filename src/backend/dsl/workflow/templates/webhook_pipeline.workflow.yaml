@@ -3,6 +3,11 @@ version: "1.0"
 description: |
   Webhook Pipeline — webhook trigger → validate sig → process → respond.
   Template tags: webhook, integration, signature, hmac.
+tags:
+  - webhook
+  - integration
+  - signature
+  - hmac
 steps:
   # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity

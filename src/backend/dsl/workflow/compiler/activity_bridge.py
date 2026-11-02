@@ -44,6 +44,7 @@ from src.backend.dsl.workflow.spec import (
 from src.backend.schemas.invocation import ActionCommandMetaSchema, ActionCommandSchema
 
 __all__ = (
+    "INTERNAL_ACTIVITY_NAMES",
     "LANGGRAPH_CHECKPOINT_GET_ACTIVITY",
     "LANGGRAPH_CHECKPOINT_PUT_ACTIVITY",
     "ActivityBridge",
@@ -64,6 +65,19 @@ _logger = get_logger("workflow.compiler.activity_bridge")
 # them via :func:`register_langgraph_checkpoint_activities`.
 LANGGRAPH_CHECKPOINT_GET_ACTIVITY = "_langgraph_checkpoint_get"
 LANGGRAPH_CHECKPOINT_PUT_ACTIVITY = "_langgraph_checkpoint_put"
+
+#: Внутренние activity-функции моста: их нет в action-реестре, но они
+#: регистрируются самим мостом (:meth:`ActivityBridge.get`). ADR-0424:
+#: build-time валидация (``collect_activities(validate=True)``) обязана их
+#: принимать — иначе любой workflow с ``agent_invoke``-шагом падает с
+#: ``UnknownActivityError`` на старте worker'а.
+INTERNAL_ACTIVITY_NAMES: frozenset[str] = frozenset(
+    {
+        "_agent_invoke",
+        LANGGRAPH_CHECKPOINT_GET_ACTIVITY,
+        LANGGRAPH_CHECKPOINT_PUT_ACTIVITY,
+    }
+)
 
 
 async def _agent_invoke_activity(payload: dict[str, Any]) -> Any:
@@ -256,7 +270,7 @@ class UnknownActivityError(ValueError):
 
 
 #: Куда резолвится имя activity-шага.
-ActivityTarget = Literal["action", "call_function"]
+ActivityTarget = Literal["action", "call_function", "internal"]
 
 
 def resolve_activity_target(
@@ -272,7 +286,8 @@ def resolve_activity_target(
     Returns:
         ``"action"`` — имя зарегистрировано в
         :data:`action_handler_registry`; ``"call_function"`` — это
-        ссылка ``module:fn``.
+        ссылка ``module:fn``; ``"internal"`` — внутренняя activity-функция
+        моста (:data:`INTERNAL_ACTIVITY_NAMES`).
 
     Raises:
         UnknownActivityError: Если имя не резолвится ни одним из способов.
@@ -280,6 +295,8 @@ def resolve_activity_target(
     """
     if is_call_function_ref(name):
         return "call_function"
+    if name in INTERNAL_ACTIVITY_NAMES:
+        return "internal"
     if action_handler_registry.is_registered(name):
         return "action"
 

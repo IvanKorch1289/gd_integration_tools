@@ -1,0 +1,31 @@
+name: checkpoint_continue_as_new
+version: "1.0"
+description: |
+  Checkpoint + Continue-As-New — снапшот состояния → пересоздание
+  execution с чистой историей (Temporal best practice для долгоживущих
+  workflow). include_steps ссылается на output_key предыдущих шагов.
+  Template tags: checkpoint, continue-as-new, temporal, long-running.
+tags:
+  - checkpoint
+  - continue-as-new
+  - temporal
+  - long-running
+steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
+  - type: activity
+    name: orders.list
+    args:
+      limit: 1000
+    timeout_s: 300
+    output_key: batch
+  - type: checkpoint
+    checkpoint_id: wf_chk_001
+    include_steps:
+      - batch
+    metadata:
+      stage: pre_rotate
+    output_key: checkpoint
+  - type: continue_as_new
+    same_workflow_id: true
+    same_input: true
+    search_attributes: {}

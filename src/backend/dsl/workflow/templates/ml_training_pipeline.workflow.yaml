@@ -3,6 +3,11 @@ version: "1.0"
 description: |
   ML Training Pipeline — data prep → train → eval → register model with retry.
   Template tags: ml, training, model-registry, retry.
+tags:
+  - ml
+  - training
+  - model-registry
+  - retry
 default_retry_policy:
   initial_interval_s: 2.0
   backoff_coefficient: 2.0

@@ -1,0 +1,34 @@
+name: call_function_ingest
+version: "1.0"
+description: |
+  Call Function Ingest — ingest payload → нормализация Python-функцией
+  (идиома ADR-0395 `module:fn`) → сохранение события → отчёт.
+  Template tags: ingest, call-function, python, transformation.
+tags:
+  - ingest
+  - call-function
+  - python
+  - transformation
+steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398);
+  # build-time валидация резолвит их против action-реестра.
+  - type: activity
+    name: connector.import
+    args:
+      payload: {}
+    timeout_s: 120
+  # call_function: прямой вызов module-level функции (ADR-0395).
+  # Функция принимает payload (содержимое args) и возвращает результат.
+  # Замените ref на свою функцию — формат строго `module.path:function_name`.
+  - type: call_function
+    ref: src.backend.core.utils.json_utils:dumps_str
+    args:
+      payload: {}
+    timeout_s: 30
+    output_key: canonical_json
+  - type: activity
+    name: analytics.insert_event
+    args:
+      table: ingest_events
+      event: {}
+    timeout_s: 60

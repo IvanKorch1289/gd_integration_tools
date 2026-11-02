@@ -1,0 +1,23 @@
+name: sensor_polling
+version: "1.0"
+description: |
+  Sensor Polling — периодический опрос предиката (`module:fn`) до
+  готовности. timeout_s обязателен: без него — SensorTimeoutRequiredError
+  (D-A8-10, защита от бесконечного polling). Предикат получает payload
+  активности и возвращает bool; замените на свою проверку готовности.
+  Template tags: sensor, polling, readiness, timeout.
+tags:
+  - sensor
+  - polling
+  - readiness
+  - timeout
+steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
+  - type: activity
+    name: tech.check_redis
+    timeout_s: 30
+  # Предикат — module-level callable (`module.path:function_name`).
+  - type: sensor
+    predicate: src.backend.dsl.helpers.banking:validate_inn
+    poll_interval_s: 30
+    timeout_s: 900

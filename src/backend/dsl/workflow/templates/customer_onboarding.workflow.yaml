@@ -3,6 +3,11 @@ version: "1.0"
 description: |
   Customer Onboarding — collect docs → KYC → AML → approve (parallel KYC+AML).
   Template tags: kyc, aml, onboarding, customer.
+tags:
+  - kyc
+  - aml
+  - onboarding
+  - customer
 steps:
   # Activity-имена — зарегистрированные actions ядра (ADR-0398):
   # build-time валидация резолвит их против action-реестра.

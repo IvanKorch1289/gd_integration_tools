@@ -3,6 +3,11 @@ version: "1.0"
 description: |
   Multi-Step Approval — request → manager → director → finance (HITL chain).
   Template tags: approval, hitl, hierarchy, signoff.
+tags:
+  - approval
+  - hitl
+  - hierarchy
+  - signoff
 steps:
   # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity

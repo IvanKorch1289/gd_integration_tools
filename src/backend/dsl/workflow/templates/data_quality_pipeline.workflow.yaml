@@ -3,6 +3,11 @@ version: "1.0"
 description: |
   Data Quality Pipeline — ingest → validate → enrich → publish (parallel branches).
   Template tags: data, ingest, etl, parallel.
+tags:
+  - data
+  - ingest
+  - etl
+  - parallel
 steps:
   # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity

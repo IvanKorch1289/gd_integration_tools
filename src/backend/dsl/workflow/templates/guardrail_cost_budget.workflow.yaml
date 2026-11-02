@@ -1,0 +1,41 @@
+name: guardrail_cost_budget
+version: "1.0"
+description: |
+  Guardrail Cost Budget — AI-вызов под лимитом стоимости → guardrail
+  (on_exceed: fail|warn) → escalate к старшему агенту → reflect (memory).
+  Template tags: ai, guardrail, cost-budget, escalation.
+tags:
+  - ai
+  - guardrail
+  - cost-budget
+  - escalation
+steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
+  - type: activity
+    name: ai.run_agent
+    args:
+      prompt: summarize the cost report
+      tools: []
+    timeout_s: 600
+  - type: guardrail
+    rule: max_cost_usd
+    threshold: 0.5
+    on_exceed: fail
+    output_key: cost_guard
+  - type: guardrail
+    rule: max_tokens
+    threshold: 4000
+    on_exceed: warn
+    output_key: tokens_guard
+  - type: escalate
+    to_agent: senior_advisor
+    reason: cost_budget_exceeded
+    output_key: escalation
+  - type: reflect
+    source_step: agent_answer
+    memory_writes:
+      - episodic
+      - semantic
+    consolidation_policy: reflect
+    async_mode: true
+    output_key: reflection

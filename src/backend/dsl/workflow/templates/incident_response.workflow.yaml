@@ -3,6 +3,11 @@ version: "1.0"
 description: |
   Incident Response — detect → triage → notify → mitigate (HITL approve).
   Template tags: ops, incident, alerting, hitl.
+tags:
+  - ops
+  - incident
+  - alerting
+  - hitl
 steps:
   # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity

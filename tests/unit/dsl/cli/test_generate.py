@@ -87,17 +87,35 @@ class TestBuildProcessorCode:
 
 
 class TestBuildWorkflowTemplate:
+    """ADR-0424: заготовка workflow валидна по workflow-спеке."""
+
     def test_workflow_with_steps(self) -> None:
         template = _build_workflow_template("test-workflow", steps=3)
 
-        assert template["workflow"]["name"] == "test-workflow"
-        assert len(template["workflow"]["steps"]) == 3
-        assert "error_handling" in template["workflow"]
+        assert template["name"] == "test-workflow"
+        assert len(template["steps"]) == 3
+        assert template["tags"]
 
     def test_workflow_default_steps(self) -> None:
         template = _build_workflow_template("default-workflow", steps=5)
 
-        assert len(template["workflow"]["steps"]) == 5
+        assert len(template["steps"]) == 5
+
+    def test_workflow_steps_are_call_function_placeholders(self) -> None:
+        template = _build_workflow_template("placeholder-workflow", steps=2)
+
+        for step in template["steps"]:
+            assert step["type"] == "call_function"
+            assert ":" in step["ref"]
+
+    def test_workflow_is_valid_workflow_declaration(self) -> None:
+        from src.backend.dsl.workflow.spec import WorkflowDeclaration
+
+        template = _build_workflow_template("spec-workflow", steps=2)
+
+        decl = WorkflowDeclaration.model_validate(template)
+        assert decl.name == "spec-workflow"
+        assert len(decl.steps) == 2
 
 
 class TestGenerateRouteIntegration:

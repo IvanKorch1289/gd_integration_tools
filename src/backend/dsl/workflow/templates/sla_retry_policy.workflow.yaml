@@ -1,0 +1,30 @@
+name: sla_retry_policy
+version: "1.0"
+description: |
+  SLA + Retry Policy — полный top-level контракт workflow: sla (soft/hard
+  limit + канал эскалации), default_timeout_s, default_retry_policy, tags.
+  Template tags: sla, retry, reliability, timeouts.
+tags:
+  - sla
+  - retry
+  - reliability
+  - timeouts
+default_timeout_s: 300
+default_retry_policy:
+  initial_interval_s: 2.0
+  backoff_coefficient: 2.0
+  maximum_interval_s: 60.0
+  max_attempts: 3
+sla:
+  soft_limit_seconds: 60
+  hard_limit_seconds: 300
+  escalation_email: ops@example.com
+  escalation_slack: "#wf-alerts"
+  breach_action: alert
+steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
+  - type: activity
+    name: orders.list
+    args:
+      limit: 100
+    timeout_s: 120

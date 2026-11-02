@@ -1,0 +1,40 @@
+name: saga_compensation_map
+version: "1.0"
+description: |
+  Saga Compensation Map — forward-цепочка → явная карта компенсаций
+  (compensate_map) → strict_compensate (ошибка компенсации не теряется).
+  Template tags: saga, compensation, rollback, strict.
+tags:
+  - saga
+  - compensation
+  - rollback
+  - strict
+steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
+  # compensate_map: forward_step_name → compensate_step_name (Phase 6).
+  - type: saga
+    strict_compensate: true
+    forward:
+      - name: users.add
+        args:
+          data: {email: user@example.com, status: pending}
+        timeout_s: 60
+      - name: orders.add
+        args:
+          data: {status: draft}
+        timeout_s: 60
+    compensate:
+      - name: users.update
+        args:
+          key: id
+          value: 0
+          data: {status: rolled_back}
+        timeout_s: 30
+      - name: orders.delete
+        args:
+          key: id
+          value: 0
+        timeout_s: 30
+    compensate_map:
+      users.add: users.update
+      orders.add: orders.delete

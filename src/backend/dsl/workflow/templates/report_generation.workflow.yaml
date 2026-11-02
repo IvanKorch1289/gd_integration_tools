@@ -3,6 +3,11 @@ version: "1.0"
 description: |
   Report Generation — schedule cron → fetch → aggregate → render → send.
   Template tags: reporting, scheduled, etl, render.
+tags:
+  - reporting
+  - scheduled
+  - etl
+  - render
 steps:
   # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity

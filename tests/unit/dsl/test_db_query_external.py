@@ -35,6 +35,10 @@ def _make_session_mock(
     mappings = MagicMock()
     mappings.all.return_value = rows or []
     mappings.first.return_value = (rows or [None])[0]
+    # ADR-0418: лимит выборки применяется **на базе** — из курсора берётся
+    # ``limit + 1`` строк через ``fetchmany()``, а не весь результат через
+    # ``all()``. ``all()`` остаётся для совместимости, но шаг его не зовёт.
+    mappings.fetchmany.return_value = rows or []
     result.mappings.return_value = mappings
     result.scalar_one_or_none.return_value = scalar
 

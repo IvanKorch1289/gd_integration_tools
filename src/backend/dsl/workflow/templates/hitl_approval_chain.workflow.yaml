@@ -1,0 +1,34 @@
+name: hitl_approval_chain
+version: "1.0"
+description: |
+  HITL Approval Chain — заявка → approve (fail-loud) → approve (soft) →
+  фиксация результата. on_timeout: raise — падать при отсутствии сигнала,
+  on_timeout: continue — идти дальше с payload=None.
+  Template tags: hitl, approval, signal, escalation.
+tags:
+  - hitl
+  - approval
+  - signal
+  - escalation
+steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
+  - type: activity
+    name: orders.create_skb_order
+    args:
+      order_id: 0
+    timeout_s: 30
+  - type: wait_signal
+    signal_name: risk_approved
+    timeout_s: 86400
+    on_timeout: raise
+    output_key: risk_decision
+  - type: wait_signal
+    signal_name: ops_approved
+    timeout_s: 3600
+    on_timeout: continue
+    output_key: ops_decision
+  - type: activity
+    name: orders.send_order_data
+    args:
+      order_id: 0
+    timeout_s: 30

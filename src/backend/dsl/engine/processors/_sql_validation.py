@@ -41,10 +41,16 @@
 по **фактическому типу результата** (``result.returns_rows``), а не по первой
 букве SQL: ``WITH ... SELECT`` — чтение, а ``INSERT ... RETURNING`` — DML,
 который обязан быть зафиксирован.
+
+ADR-0418: лимит выборки применяется **до** материализации результата —
+``fetch_limited_rows`` забирает из курсора ``limit + 1`` строк
+(``fetchmany``) вместо ``fetchall()``. «Лишняя» строка — маркер усечения
+(``TRUNCATED_PROPERTY`` в ``Exchange.properties``).
 """
 
 from __future__ import annotations
 
+import inspect
 import re
 from typing import Any, Final
 
@@ -52,7 +58,9 @@ __all__ = (
     "FORBIDDEN_FUNCTIONS",
     "FORBIDDEN_SQL",
     "MAX_RESULT_ROWS",
+    "TRUNCATED_PROPERTY",
     "db_capability_for_sql",
+    "fetch_limited_rows",
     "limit_rows",
     "needs_commit",
     "result_returns_rows",
@@ -67,6 +75,13 @@ __all__ = (
 #: один ``SELECT * FROM big_table`` вытягивал в память процесса весь
 #: результат — DoS через DSL-роут (и «съедание» памяти воркера).
 MAX_RESULT_ROWS: int = 1000
+
+#: Имя маркера усечения выборки в ``Exchange.properties`` (ADR-0418).
+#:
+#: Лимит теперь применяется **до** материализации результата, поэтому
+#: «лишняя» строка не попадает в payload. Чтобы вызывающий знал, что
+#: выборка обрезана, шаг выставляет этот флаг (``True``).
+TRUNCATED_PROPERTY: str = "db_truncated"
 
 #: SQL-команды, запрещённые для DSL-процессоров (DDL + privilege-management
 #: + файловые/загрузочные команды).
@@ -223,6 +238,51 @@ def limit_rows(
     if limit <= 0 or len(rows) <= limit:
         return rows, False
     return rows[:limit], True
+
+
+async def _maybe_await(value: Any) -> Any:
+    """Дождаться значения, если это awaitable (sync/async-результат).
+
+    Args:
+        value: Значение — обычное или coroutine/awaitable.
+
+    Returns:
+        Значение (для awaitable — результат ожидания).
+
+    """
+    if inspect.isawaitable(value):
+        return await value
+    return value
+
+
+async def fetch_limited_rows(
+    result: Any, *, limit: int = MAX_RESULT_ROWS
+) -> tuple[list[Any], bool]:
+    """Получить строки с лимитом, **не вытягивая весь результат** (ADR-0418).
+
+    Лимит применяется к курсору: из результата забирается ``limit + 1``
+    строк (``fetchmany``), а не весь результат (``fetchall``). «Лишняя»
+    строка — маркер усечения: если вернулось ``limit + 1`` строк, значит
+    в выборке есть ещё данные, и результат помечается усечённым (сама
+    ``limit``-я строка в payload не попадает).
+
+    До ADR-0418 лимит применялся **после** ``fetchall()`` — т.е. весь
+    результат сначала оказывался в памяти процесса, и только потом
+    обрезался. Один ``SELECT * FROM big_table`` = DoS по памяти.
+
+    Args:
+        result: Результат ``execute`` (sync ``CursorResult`` или async-аналог).
+        limit: Максимум строк (``<= 0`` — без ограничения, весь результат).
+
+    Returns:
+        Кортеж ``(строки, усечено_ли)``.
+
+    """
+    if limit <= 0:
+        rows = list(await _maybe_await(result.fetchall()))
+        return rows, False
+    fetched = await _maybe_await(result.fetchmany(limit + 1))
+    return limit_rows(list(fetched), limit=limit)
 
 
 #: SQL-команды, изменяющие данные (нужен ``commit``).

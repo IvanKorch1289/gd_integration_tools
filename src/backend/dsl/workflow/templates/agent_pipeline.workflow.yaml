@@ -1,0 +1,37 @@
+name: agent_pipeline
+version: "1.0"
+description: |
+  Agent Pipeline — вызов AI-агента со scoped-memory (read/write episodic,
+  semantic) → запись эпизода → escalate при нестандартном кейсе.
+  Template tags: ai, agent, memory, escalation.
+tags:
+  - ai
+  - agent
+  - memory
+  - escalation
+steps:
+  # Activity-имена — зарегистрированные actions ядра (ADR-0398).
+  - type: agent_invoke
+    agent_id: credit_advisor
+    input_context: "${body.user_input}"
+    durable: true
+    max_turns: 8
+    timeout_s: 600
+    output_key: agent_answer
+    memory_scope:
+      read:
+        - episodic
+        - semantic
+      write:
+        - episodic
+      mode: scoped
+      write_strategy: background
+    write_episode: true
+    namespace_template: "tenant:${tenant_id}:wf:${workflow_name}"
+    inject_memory: true
+    recall_on: body.query
+  - type: escalate
+    to_agent: senior_advisor
+    to_model: "minimax:m2.5"
+    reason: complex_case_requires_specialist
+    output_key: escalation

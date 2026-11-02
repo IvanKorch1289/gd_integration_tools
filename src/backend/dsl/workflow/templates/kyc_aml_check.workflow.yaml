@@ -3,6 +3,12 @@ version: "1.0"
 description: |
   KYC/AML Check — 3 parallel checks → consolidate → decide (saga compensation).
   Template tags: kyc, aml, compliance, parallel, saga.
+tags:
+  - kyc
+  - aml
+  - compliance
+  - parallel
+  - saga
 steps:
   # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: saga

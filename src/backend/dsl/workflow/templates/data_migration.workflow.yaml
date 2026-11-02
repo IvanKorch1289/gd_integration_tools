@@ -3,6 +3,11 @@ version: "1.0"
 description: |
   Data Migration — snapshot → transform → upsert → verify → rollback-on-fail.
   Template tags: migration, snapshot, saga, verification.
+tags:
+  - migration
+  - snapshot
+  - saga
+  - verification
 steps:
   # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: saga

@@ -23,6 +23,7 @@ SRC_DIR = BACKEND_DIR.parent
 sys.path.insert(0, str(SRC_DIR))
 
 from src.backend.dsl.blueprint_loader import discover_blueprints
+from src.backend.dsl.workflow.spec import WorkflowDeclaration
 
 app = typer.Typer(help="DSL Code Generation CLI.")
 
@@ -151,8 +152,14 @@ def generate_workflow(
     output: str | None = typer.Option(None, "--output", "-o"),
     steps: int = typer.Option(3, "--steps", "-s", help="Number of initial steps"),
 ) -> None:
-    """Generate a workflow DSL definition."""
+    """Generate a workflow DSL definition (валидно по workflow-спеке)."""
+    if steps < 1:
+        raise typer.BadParameter("--steps должен быть >= 1 (steps: min_length=1)")
+
     workflow_template = _build_workflow_template(workflow_name, steps)
+
+    # Валидация по спеке: на диск не должен уйти невалидный workflow.
+    WorkflowDeclaration.model_validate(workflow_template)
 
     yaml_content = yaml.dump(
         workflow_template, default_flow_style=False, sort_keys=False
@@ -168,6 +175,10 @@ def generate_workflow(
 
     typer.echo(f"Generated workflow: {output_path}")
     typer.echo(f"  Steps: {steps}")
+    typer.echo(
+        "  NOTE: placeholder-ссылки 'your.module:step_N' замените на реальные "
+        "module.path:function_name (ADR-0395) либо зарегистрированные actions."
+    )
 
 
 def _build_route_template(name: str, template: str, protocol: str) -> dict[str, Any]:
@@ -290,25 +301,43 @@ def _get_side_effect(ptype: str) -> str:
 
 
 def _build_workflow_template(name: str, steps: int) -> dict[str, Any]:
-    """Build workflow template."""
-    workflow_steps = []
-    for i in range(steps):
-        workflow_steps.append(
-            {
-                "name": f"step_{i + 1}",
-                "processor": "log",
-                "params": {"message": f"Step {i + 1} of {name}"},
-            }
-        )
+    """Собрать заготовку workflow, валидную по workflow-спеке.
+
+    ADR-0424: прежняя версия отдавала ``{"workflow": {...}}`` с route-DSL
+    шагами (``processor``/``params``) — такой файл не загружается
+    :class:`WorkflowDeclaration` (``extra="forbid"`` + обязательный
+    ``type`` у шага) и вводит в заблуждение.
+
+    Args:
+        name: Имя workflow (попадает в ``name`` декларации).
+        steps: Количество шагов-заготовок (>= 1).
+
+    Returns:
+        Dict, пригодный для ``WorkflowDeclaration.model_validate`` и
+        для сериализации в YAML. Шаги — ``call_function`` с placeholder-ссылкой
+        ``your.module:step_N``: такой шаг резолвится на build-time
+        (формат ``module:fn``, ADR-0395) и не требует зарегистрированного
+        action'а.
+
+    """
+    workflow_steps: list[dict[str, Any]] = [
+        {
+            "type": "call_function",
+            "ref": f"your.module:step_{i + 1}",
+            "args": {},
+            "timeout_s": 60,
+            "output_key": f"step_{i + 1}",
+        }
+        for i in range(steps)
+    ]
 
     return {
-        "workflow": {
-            "name": name,
-            "description": f"Auto-generated workflow: {name}",
-            "version": "1.0",
-            "steps": workflow_steps,
-            "error_handling": {"strategy": "retry", "max_attempts": 3},
-        }
+        "name": name,
+        "version": "1.0",
+        "description": f"Auto-generated workflow: {name}",
+        "tags": ["scaffold"],
+        "default_timeout_s": 300,
+        "steps": workflow_steps,
     }
 
 
