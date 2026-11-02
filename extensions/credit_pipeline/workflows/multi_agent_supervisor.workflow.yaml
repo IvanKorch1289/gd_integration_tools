@@ -1,49 +1,63 @@
 # Workflow DSL: multi_agent_supervisor
 #
-# ADR-0403 (волна 21): activity-имена приведены к реально существующим
-# targets. До фикса шаги ссылались на несуществующие activity
-# (``collect_loan_inputs``, ``supervisor_dispatch``, ``risk_agent``,
-# ``compliance_agent``, ``scoring_agent``, ``consolidate_results``,
-# ``final_decision``) — build-time резолв (ADR-0398,
-# ``collect_activities(declarations, validate=True)``) ронял подъём
-# Temporal-Worker'а со списком неизвестных имён.
+# ADR-0409 (волна 22): шаги приведены к реально существующим targets и
+# к реальной семантике потока.
 #
 # Соответствие (порядок шагов и бизнес-логика потока не менялись):
-#   collect_loan_inputs → skb:fetch_result              (входные данные)
-#   supervisor_dispatch → ai.run_agent                  (диспетчеризация)
-#   risk_agent          → agents:scoring_agent          (risk-скоринг)
-#   compliance_agent    → agents:document_parser_agent  (комплаенс-разбор)
-#   scoring_agent       → agents:scoring_agent          (скоринг)
-#   consolidate_results → normalize:apply_rules          (консолидация)
-#   final_decision      → agents:decision_agent          (решение)
+#   collect_loan_inputs → skb:fetch_result        (входные данные)
+#   supervisor_dispatch → supervisor:supervise     (диспетчеризация)
+#   risk_agent          → agents:scoring_agent     (risk-скоринг)
+#   compliance_agent    → agents:document_parser_agent (разбор документов)
+#   scoring_agent       → agents:scoring_agent     (скоринг)
+#   consolidate_results → normalize:apply_rules     (консолидация)
+#   final_decision      → agents:decision_agent    (решение)
 #
-# Отдельных risk/compliance-агентов в расширении нет — использованы
-# реальные агенты credit_pipeline (scoring / document_parser).
+# ADR-0409, две честные правки:
+#   1. «supervisor-диспетчеризация» больше не подменяется LLM-вызовом
+#      ``ai.run_agent`` (тот ничего не распределял) — шаг вызывает
+#      реальный core-супервизор ``MultiAgentSupervisor`` с реальными
+#      агентами расширения (``extensions/credit_pipeline/supervisor.py``).
+#   2. ``decision_agent`` получает РЕАЛЬНЫЙ вывод ``scoring_agent``
+#      (steps.2), а не результат ``normalize`` — раньше credit_score=0,
+#      то есть кредит отклонялся всегда (fail-closed не туда).
+#
+# Отдельных risk/compliance-агентов в расширении нет: роли risk и
+# разбора документов закрывают реальные агенты scoring/document_parser.
 # Owner-задача: выделенные risk/compliance-агенты (ADR-0403 §Открытое).
+#
+# Ограничение (owner-задача, вне зоны кластера): подстановка
+# ``${{ ... }}`` между шагами не реализована в workflow-компиляторе ядра
+# (``src/backend/dsl/workflow/compiler/step_compilers/activity.py``) —
+# до её реализации поток исполняется внешним оркестратором, который
+# подставляет значения himself. Шаги и их targets при этом реальны.
 name: multi_agent_supervisor
 version: "1.0"
 description: |
-  Multi-agent supervisor для loan approval (Sprint 12 K4 W1).
+  Multi-agent supervisor для loan approval.
 
-  Supervisor LLM (Opus) распределяет работу между 3 specialist agents
-  (risk / compliance / scoring) и консолидирует решение.
+  Supervisor (core MultiAgentSupervisor) распределяет заявку между
+  специализированными агентами расширения (risk-скоринг и разбор
+  документов), после чего консолидируется оценка и принимается решение.
 
-  Template tags: ai, multi-agent, supervisor, loan, parallel.
+  Template tags: ai, multi-agent, supervisor, loan.
 default_timeout_s: 600
 steps:
   - type: activity
     name: extensions.credit_pipeline.services.clients.skb:fetch_result
     args:
-      body:
-        order_uuid: "${{ order_uuid }}"
-        response_type_str: "JSON"
+      order_uuid: "${{ order_uuid }}"
+      response_type_str: "JSON"
     timeout_s: 60
   - type: activity
-    name: ai.run_agent
+    name: extensions.credit_pipeline.supervisor:supervise
     args:
       prompt: "${{ steps.0 }}"
-      agent_id: "credit_supervisor"
-    timeout_s: 30
+      applicant_id: "${{ applicant_id }}"
+      amount: "${{ loan_amount }}"
+      duration_months: "${{ term_months }}"
+      monthly_income: "${{ monthly_income }}"
+      purpose: "${{ purpose }}"
+    timeout_s: 120
   - type: activity
     name: extensions.credit_pipeline.agents:scoring_agent
     args:
@@ -61,23 +75,14 @@ steps:
       purpose: "${{ purpose }}"
     timeout_s: 60
   - type: activity
-    name: extensions.credit_pipeline.agents:scoring_agent
-    args:
-      applicant_id: "${{ applicant_id }}"
-      amount: "${{ loan_amount }}"
-      duration_months: "${{ term_months }}"
-      monthly_income: "${{ monthly_income }}"
-    timeout_s: 30
-  - type: activity
     name: extensions.credit_pipeline.functions.normalize:apply_rules
     args:
-      body:
-        score: "${{ steps.4.credit_score }}"
-        decision: "${{ steps.4.risk_class }}"
+      score: "${{ steps.2.credit_score }}"
+      decision: "${{ steps.2.risk_class }}"
     timeout_s: 5
   - type: activity
     name: extensions.credit_pipeline.agents:decision_agent
     args:
       applicant_id: "${{ applicant_id }}"
-      scoring_agent: "${{ steps.5 }}"
+      scoring_agent: "${{ steps.2 }}"
     timeout_s: 30

@@ -17,6 +17,7 @@ B-103 (P0): routes/test_route_w1/main.dsl.yaml аналогично.
 
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 
 import pytest
@@ -68,12 +69,15 @@ class TestBrokenYAMLRefsFixed:
         Схема шага изменилась: было ``activities[].function``, стало
         ``steps[]`` с ``type`` ("activity") и ``name``, где ``name`` несёт
         dotted-ссылку ``module:function``. Охраняемый инвариант прежний.
+
+        ADR-0409 (волна 22): ожидалось ровно 2 fetch-шага (SKB + «nbki»),
+        но второй был фиктивным дублем SKB-клиента — адаптера НБКИ в
+        расширении нет. Теперь fetch-шаг один, а инвариант — «refs ведут на
+        существующие module-level callable».
         """
         refs = [s["name"] for s in credit_assessment_yaml["steps"]]
         fetch_refs = [r for r in refs if r.endswith(":fetch_result")]
-        assert len(fetch_refs) == 2, (
-            f"ожидались 2 fetch-шага на :fetch_result, найдено {len(fetch_refs)}: {refs}"
-        )
+        assert fetch_refs, f"ожидался хотя бы 1 fetch-шаг на :fetch_result: {refs}"
         for fn in fetch_refs:
             assert "fetch_for_workflow" not in fn, (
                 f"fetch-шаг всё ещё ссылается на несуществующую fetch_for_workflow: {fn}"
@@ -81,6 +85,13 @@ class TestBrokenYAMLRefsFixed:
         assert not any("fetch_for_workflow" in r for r in refs), (
             f"credit_assessment всё ещё ссылается на fetch_for_workflow: {refs}"
         )
+        # ADR-0409: каждый ref ведёт на реальный module-level callable.
+        for ref in fetch_refs:
+            module_name, _, attr = ref.partition(":")
+            module = importlib.import_module(module_name)
+            assert callable(getattr(module, attr, None)), (
+                f"{ref} — цель не является module-level callable"
+            )
 
     def test_credit_assessment_publish_uses_existing_function(
         self, credit_assessment_yaml: dict

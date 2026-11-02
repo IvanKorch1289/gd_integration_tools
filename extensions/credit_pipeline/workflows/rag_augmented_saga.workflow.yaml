@@ -17,6 +17,18 @@
 #   fund_account               → webhook.schedule        (forward)
 #   refund_account             → webhook.cancel          (компенсация)
 #
+# ADR-0409 (волна 22): приведён к реальной семантике.
+#   * payload передаётся ПЛОСКИМ (``call_function`` → ``fn(payload)``):
+#     вложенный ``body``/``responses`` больше не используются — они не
+#     доходили до цели (fetch_result/apply_rules читали ключи верхнего
+#     уровня и падали/молчали);
+#   * decision_agent получает РЕАЛЬНЫЙ вывод scoring_agent (steps.2),
+#     а не RAG-выдачу — раньше credit_score=0, то есть кредит
+#     отклонялся всегда (fail-closed не туда);
+#   * saga-компенсация (``webhook.cancel``) берёт schedule_id из входа
+#     workflow: результат forward-шага в compensate не передаётся
+#     (в workflow-DSL нет передачи result'а между шагами).
+#
 # Ledger-операции кредитного конвейера (fund/refund) в расширении не
 # реализованы — пара forward/компенсация переведена на единственную
 # реальную пару «создать/отменить» ядра (webhook.schedule/webhook.cancel).
@@ -29,8 +41,9 @@ description: |
   Шаги:
     1. Fetch credit data (внешний bureau).
     2. RAG query — legal/policy база через ``rag.search``.
-    3. LLM-decision через decision_agent (structured output).
-    4. Saga: fund_account / compensate refund_account.
+    3. Scoring — rule-based score заявки.
+    4. LLM-decision через decision_agent (structured output).
+    5. Saga: fund_account / compensate refund_account.
 
   Template tags: ai, rag, saga, credit, compensation.
 default_timeout_s: 300
@@ -38,9 +51,8 @@ steps:
   - type: activity
     name: extensions.credit_pipeline.services.clients.skb:fetch_result
     args:
-      body:
-        order_uuid: "${{ order_uuid }}"
-        response_type_str: "JSON"
+      order_uuid: "${{ order_uuid }}"
+      response_type_str: "JSON"
     timeout_s: 60
   - type: activity
     name: rag.search
@@ -50,10 +62,18 @@ steps:
       top_k: 5
     timeout_s: 30
   - type: activity
+    name: extensions.credit_pipeline.agents:scoring_agent
+    args:
+      applicant_id: "${{ applicant_id }}"
+      amount: "${{ loan_amount }}"
+      duration_months: "${{ term_months }}"
+      monthly_income: "${{ monthly_income }}"
+    timeout_s: 60
+  - type: activity
     name: extensions.credit_pipeline.agents:decision_agent
     args:
       applicant_id: "${{ applicant_id }}"
-      scoring_agent: "${{ steps.1 }}"
+      scoring_agent: "${{ steps.2 }}"
     timeout_s: 60
   - type: saga
     forward:
@@ -66,5 +86,5 @@ steps:
     compensate:
       - name: webhook.cancel
         args:
-          schedule_id: "${{ steps.3 }}"
+          schedule_id: "${{ schedule_id }}"
         timeout_s: 30

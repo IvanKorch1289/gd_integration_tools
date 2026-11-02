@@ -162,7 +162,9 @@ def test_sync_pg_to_sqlite_success(
     insert_stmt = MagicMock()
     mock_insert.return_value = insert_stmt
 
-    result = sj.sync_pg_to_sqlite(pg_engine, sqlite_engine, [mock_table.name])
+    result = sj.sync_pg_to_sqlite(
+        pg_engine, sqlite_engine, [mock_table.name], tenant_id="acme"
+    )
 
     assert result == {mock_table.name: 2}
     mock_select.assert_called_once_with(mock_table)
@@ -255,7 +257,9 @@ def test_sync_pg_to_sqlite_empty_rows(
     delete_stmt = MagicMock()
     mock_delete.return_value = delete_stmt
 
-    result = sj.sync_pg_to_sqlite(pg_engine, sqlite_engine, [mock_table.name])
+    result = sj.sync_pg_to_sqlite(
+        pg_engine, sqlite_engine, [mock_table.name], tenant_id="acme"
+    )
 
     assert result == {mock_table.name: 0}
     mock_delete.assert_called_once_with(mock_table)
@@ -286,7 +290,7 @@ def test_sync_pg_to_sqlite_skips_unknown_table(
 
     with caplog.at_level("WARNING"):
         result = sj.sync_pg_to_sqlite(
-            pg_engine, sqlite_engine, ["unknown_tbl", mock_table.name]
+            pg_engine, sqlite_engine, ["unknown_tbl", mock_table.name], tenant_id="acme"
         )
 
     assert mock_table.name in result
@@ -311,6 +315,201 @@ def test_sync_pg_to_sqlite_no_tables(
 
     assert result == {}
     assert any("пуст" in rec.message.lower() for rec in caplog.records)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# ADR-0409: tenant-скоуп snapshot'а (fail-closed)
+# ──────────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.unit
+@patch("src.backend.infrastructure.resilience.snapshot_job.insert")
+@patch("src.backend.infrastructure.resilience.snapshot_job.delete")
+@patch("src.backend.infrastructure.resilience.snapshot_job.select")
+@patch("src.backend.core.domain.models.base.metadata")
+def test_sync_pg_to_sqlite_without_tenant_scope_fails_closed(
+    mock_metadata: MagicMock,
+    mock_select: MagicMock,
+    mock_delete: MagicMock,
+    mock_insert: MagicMock,
+    mock_engines: tuple[MagicMock, MagicMock, MagicMock, MagicMock],
+    mock_table: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Без tenant-скоупа snapshot падает, а не пишет «пустой» снимок.
+
+    ADR-0409: контракт «снапшот — в пределах одного tenant_id». Раньше
+    при отсутствии tenant-контекста job работал в системном tenant'е и
+    молча получал 0 строк под RLS (тихая потеря fallback'а db_main).
+    Теперь — fail-closed с понятной ошибкой, SQLite-файл не трогается.
+    """
+    mock_metadata.tables = {mock_table.name: mock_table}
+    pg_engine, _, sqlite_engine, sqlite_conn = mock_engines
+    monkeypatch.setattr(
+        "src.backend.core.tenancy.get_tenant_id", lambda: "", raising=True
+    )
+
+    with pytest.raises(sj.SnapshotTenantScopeError) as exc_info:
+        sj.sync_pg_to_sqlite(pg_engine, sqlite_engine, [mock_table.name])
+
+    assert "tenant" in str(exc_info.value).lower()
+
+    # Ни одна строка не записана и ни одна таблица не очищена.
+    mock_delete.assert_not_called()
+    mock_insert.assert_not_called()
+    sqlite_conn.execute.assert_not_called()
+
+
+@pytest.mark.unit
+@patch("src.backend.infrastructure.resilience.snapshot_job.insert")
+@patch("src.backend.infrastructure.resilience.snapshot_job.delete")
+@patch("src.backend.infrastructure.resilience.snapshot_job.select")
+@patch("src.backend.core.domain.models.base.metadata")
+def test_sync_pg_to_sqlite_uses_explicit_tenant_id(
+    mock_metadata: MagicMock,
+    mock_select: MagicMock,
+    mock_delete: MagicMock,
+    mock_insert: MagicMock,
+    mock_engines: tuple[MagicMock, MagicMock, MagicMock, MagicMock],
+    mock_table: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Явный ``tenant_id`` — источник tenant-скоупа (приоритет над контекстом)."""
+    mock_metadata.tables = {mock_table.name: mock_table}
+    pg_engine, pg_conn, sqlite_engine, _ = mock_engines
+    monkeypatch.setattr(
+        "src.backend.core.tenancy.get_tenant_id", lambda: "from-context", raising=True
+    )
+
+    sj.sync_pg_to_sqlite(
+        pg_engine, sqlite_engine, [mock_table.name], tenant_id="explicit-tenant"
+    )
+
+    scope_call = pg_conn.execute.call_args_list[0]
+    assert "app.tenant_id" in str(scope_call.args[0])
+    assert scope_call.args[1] == {"tenant_id": "explicit-tenant"}
+
+
+@pytest.mark.unit
+@patch("src.backend.infrastructure.resilience.snapshot_job.insert")
+@patch("src.backend.infrastructure.resilience.snapshot_job.delete")
+@patch("src.backend.infrastructure.resilience.snapshot_job.select")
+@patch("src.backend.core.domain.models.base.metadata")
+def test_sync_pg_to_sqlite_uses_context_tenant(
+    mock_metadata: MagicMock,
+    mock_select: MagicMock,
+    mock_delete: MagicMock,
+    mock_insert: MagicMock,
+    mock_engines: tuple[MagicMock, MagicMock, MagicMock, MagicMock],
+    mock_table: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Tenant-контекст процесса — источник скоупа, если не задан явный."""
+    mock_metadata.tables = {mock_table.name: mock_table}
+    pg_engine, pg_conn, sqlite_engine, _ = mock_engines
+    monkeypatch.setattr(
+        "src.backend.core.tenancy.get_tenant_id", lambda: "acme", raising=True
+    )
+
+    sj.sync_pg_to_sqlite(pg_engine, sqlite_engine, [mock_table.name])
+
+    scope_call = pg_conn.execute.call_args_list[0]
+    assert scope_call.args[1] == {"tenant_id": "acme"}
+
+
+@pytest.mark.unit
+@patch("src.backend.infrastructure.resilience.snapshot_job.insert")
+@patch("src.backend.infrastructure.resilience.snapshot_job.delete")
+@patch("src.backend.infrastructure.resilience.snapshot_job.select")
+@patch("src.backend.core.domain.models.base.metadata")
+def test_sync_pg_to_sqlite_empty_snapshot_is_logged(
+    mock_metadata: MagicMock,
+    mock_select: MagicMock,
+    mock_delete: MagicMock,
+    mock_insert: MagicMock,
+    mock_engines: tuple[MagicMock, MagicMock, MagicMock, MagicMock],
+    mock_table: MagicMock,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Пустой снимок (0 строк по всем таблицам) — WARNING, не «тихий ноль»."""
+    mock_metadata.tables = {mock_table.name: mock_table}
+    pg_engine, pg_conn, sqlite_engine, _ = mock_engines
+    pg_conn.execute.return_value.mappings.return_value.all.return_value = []
+
+    with caplog.at_level("WARNING"):
+        result = sj.sync_pg_to_sqlite(
+            pg_engine, sqlite_engine, [mock_table.name], tenant_id="acme"
+        )
+
+    assert result == {mock_table.name: 0}
+    assert any("пуст" in rec.message.lower() for rec in caplog.records)
+
+
+@pytest.mark.unit
+@patch("src.backend.infrastructure.resilience.snapshot_job.create_engine")
+@patch("src.backend.infrastructure.resilience.snapshot_job.sync_pg_to_sqlite")
+@patch("src.backend.core.config.settings.settings")
+def test_run_snapshot_now_without_tenant_scope_fails_closed(
+    mock_settings: MagicMock,
+    mock_sync: MagicMock,
+    mock_create_engine: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+    mock_metrics: Any,
+) -> None:
+    """``run_snapshot_now`` без скоупа падает и НЕ создаёт SQLite-движок.
+
+    Fail-closed: существующий snapshot-файл не перезаписывается пустым.
+    """
+    mock_settings.snapshot = MagicMock(
+        enabled=True,
+        tables=["users"],
+        target_path="var/db/test.sqlite",
+        fresh_threshold_seconds=300,
+        interval_minutes=10,
+    )
+    mock_settings.database.sync_connection_url = "postgresql://test"
+    monkeypatch.setattr(
+        "src.backend.core.tenancy.get_tenant_id", lambda: "", raising=True
+    )
+
+    sj._ensure_metrics()
+    sj._errors_counter = mock_metrics["errors"]
+
+    with pytest.raises(sj.SnapshotTenantScopeError):
+        sj.run_snapshot_now()
+
+    mock_sync.assert_not_called()
+    # Ни одного create_engine для SQLite: файл snapshot'а не тронут.
+    assert all(
+        call.args and call.args[0] != "sqlite+pysqlite:///var/db/test.sqlite"
+        for call in mock_create_engine.call_args_list
+    )
+    mock_metrics["errors"].inc.assert_called_once()
+
+
+@pytest.mark.unit
+@patch("src.backend.infrastructure.resilience.snapshot_job.create_engine")
+@patch("src.backend.infrastructure.resilience.snapshot_job.sync_pg_to_sqlite")
+@patch("src.backend.core.config.settings.settings")
+def test_run_snapshot_now_passes_tenant_scope(
+    mock_settings: MagicMock,
+    mock_sync: MagicMock,
+    mock_create_engine: MagicMock,
+) -> None:
+    """Явный tenant-скоуп пробрасывается в ``sync_pg_to_sqlite``."""
+    mock_settings.snapshot = MagicMock(
+        enabled=True,
+        tables=["users"],
+        target_path="var/db/test.sqlite",
+        fresh_threshold_seconds=300,
+        interval_minutes=10,
+    )
+    mock_settings.database.sync_connection_url = "postgresql://test"
+    mock_sync.return_value = {"users": 3}
+
+    sj.run_snapshot_now(tenant_id="acme")
+
+    assert mock_sync.call_args.kwargs["tenant_id"] == "acme"
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -345,7 +544,7 @@ def test_run_snapshot_now_success(
         patch("time.time", return_value=fixed_ts),
         patch("time.perf_counter", side_effect=[0.0, 1.23]),
     ):
-        result = sj.run_snapshot_now()
+        result = sj.run_snapshot_now(tenant_id="acme")
 
     assert result == {"users": 5}
     assert sj._last_sync_ts == fixed_ts
@@ -403,7 +602,7 @@ def test_run_snapshot_now_error_increments_counter(
     mock_sync.side_effect = RuntimeError("pg connection lost")
 
     with pytest.raises(RuntimeError, match="pg connection lost"):
-        sj.run_snapshot_now()
+        sj.run_snapshot_now(tenant_id="acme")
 
     mock_metrics["errors"].inc.assert_called_once()
     assert any("sync упал" in rec.message for rec in caplog.records)

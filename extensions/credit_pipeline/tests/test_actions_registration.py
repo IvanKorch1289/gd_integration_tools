@@ -175,4 +175,4 @@ async def test_double_registration_is_idempotent_or_raises() -> None:
     await plugin.on_register_actions(registry)
     second_count = len(registry.registered)  # type: ignore[attr-defined]
     # Action count не увеличился (mock перезаписал, не append).
-    assert first_count == second_count == 3
+    assert first_count == second_count == 5

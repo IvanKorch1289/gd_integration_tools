@@ -26,6 +26,17 @@ models_module = [
     "extensions.credit_pipeline.domain.models",
 ]
 
+# Whitelist модулей для DSL-шага call_function (ADR-0409, волна 22).
+# Без декларации шаг call_function падает с PermissionError в
+# strict-режиме (call_function_whitelist_strict=True — дефолт).
+call_function_modules = [
+    "extensions.credit_pipeline.agents",
+    "extensions.credit_pipeline.functions.normalize",
+    "extensions.credit_pipeline.sandbox",
+    "extensions.credit_pipeline.services.clients.skb",
+    "extensions.credit_pipeline.supervisor",
+]
+
 [[capabilities]]
 name = "db.read"
 scope = "credit_reports"
@@ -62,11 +73,16 @@ scope = "*.nbki.ru"
 # Cycle-15 (D-AUDIT-1506): ``endpoints`` секция — декларативная
 # per-protocol регистрация. tools/check_protocol_sync использует для
 # parity-гейта (REST/GraphQL/gRPC/MCP).
+# ADR-0409 (волна 22): +2 actions — исполнение кода в изолированном
+# sandbox'е (sandbox.py) и supervisor-диспетчеризация (supervisor.py).
+# Реализованы поверх core-контрактов CodeSandbox / MultiAgentSupervisor.
 [provides]
 actions = [
     "credit_pipeline.score",
     "credit_pipeline.parse",
     "credit_pipeline.decide",
+    "credit_pipeline.execute_code",
+    "credit_pipeline.supervise",
 ]
 repositories = []
 processors = []

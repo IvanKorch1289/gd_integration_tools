@@ -17,8 +17,8 @@ Background-задача периодически реплицирует read-onl
 * Регистрация APScheduler-job'а через ``IntervalTrigger`` —
   совместимо с уже существующим ``scheduler_manager``.
 
-Tenant-скоуп (ADR-0400)
------------------------
+Tenant-скоуп (ADR-0400, ADR-0409)
+---------------------------------
 Таблицы ``users`` / ``orders`` / ``orderkinds`` защищены PostgreSQL-RLS
 (политика ``tenant_id = current_setting('app.tenant_id', true)``).
 Чтение без выставленного ``app.tenant_id`` возвращает **0 строк** —
@@ -27,12 +27,21 @@ Tenant-скоуп (ADR-0400)
 (:func:`_apply_tenant_scope`): ``set_config('app.tenant_id', ..., true)``
 — transaction-local, значение не «залипает» в пуле.
 
-Ограничение (требует владельца): под RLS снимок покрывает ОДИН tenant.
-Для межtenant-снимка соединение snapshot'а должно использовать служебную
-роль с ``BYPASSRLS`` (ADR-0393, «BYPASSRLS-роль для служебных
-соединений»). Пока такой роли нет — tenant-скоуп берётся из
-tenant-контекста процесса, а при его отсутствии — из системного tenant'а
-(с WARNING в лог).
+Контракт скоупа (ADR-0409)
+--------------------------
+**Снапшот покрывает ровно один tenant.** Межtenant-режима нет:
+
+* tenant-скоуп определяется как ``явный аргумент → tenant-контекст
+  процесса`` (:func:`_resolve_snapshot_tenant`);
+* если скоупа нет — job падает с :class:`SnapshotTenantScopeError`
+  (fail-closed), а **не** пишет «пустой» снимок в системном tenant'е:
+  под RLS это дало бы 0 строк без ошибки (тихая потеря fallback'а);
+* SQLite-файл при отказе не трогается — предыдущий (непустой) снимок
+  остаётся валидным.
+
+Межtenant-снимок (все tenant'ы) требует служебной роли с ``BYPASSRLS``
+(ADR-0393, «BYPASSRLS-роль для служебных соединений») — эксплуатационное
+решение владельца БД, не реализовано в ядре.
 
 Метрики Prometheus:
 
@@ -60,6 +69,7 @@ from src.backend.core.logging import get_logger
 
 __all__ = (
     "SnapshotJob",
+    "SnapshotTenantScopeError",
     "get_snapshot_job",
     "is_snapshot_fresh",
     "register_snapshot_job",
@@ -68,6 +78,15 @@ __all__ = (
 )
 
 logger = get_logger(__name__)
+
+
+class SnapshotTenantScopeError(RuntimeError):
+    """Snapshot запущен без tenant-скоупа (fail-closed, ADR-0409).
+
+    Снапшот покрывает ровно один tenant: под PostgreSQL-RLS выборка без
+    ``app.tenant_id`` возвращает 0 строк (тихий пустой fallback). Поэтому
+    отсутствие tenant-скоупа — ошибка, а не «снимок в системном tenant'е».
+    """
 
 
 #: Время последнего успешного sync (monotonic-aware: wall-clock UNIX timestamp).
@@ -187,28 +206,39 @@ def _select_tables(metadata_tables: dict[str, Table], wanted: list[str]) -> list
     return result
 
 
-def _resolve_snapshot_tenant() -> str:
-    """Определить tenant для snapshot-снимка (ADR-0400).
+def _resolve_snapshot_tenant(explicit_tenant_id: str | None = None) -> str:
+    """Определить tenant-скоуп snapshot'а (ADR-0409).
 
-    Приоритет: активный tenant-контекст процесса → системный tenant
-    (``_system``). Без явного tenant-скоупа PostgreSQL-RLS отдаёт 0 строк,
-    поэтому пустое значение недопустимо.
+    Приоритет: явный аргумент → tenant-контекст процесса. Системный
+    tenant **не подставляется**: под RLS это дало бы 0 строк без ошибки
+    (тихая потеря fallback'а ``db_main``).
+
+    Args:
+        explicit_tenant_id: Явный tenant_id (приоритет над контекстом).
 
     Returns:
         Идентификатор tenant'а для ``app.tenant_id``.
-    """
-    from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID
-    from src.backend.core.tenancy import get_tenant_id
 
-    tenant_id = get_tenant_id()
+    Raises:
+        SnapshotTenantScopeError: Tenant-скоуп не определён.
+
+    """
+    tenant_id = (explicit_tenant_id or "").strip()
     if tenant_id:
         return tenant_id
-    logger.warning(
-        "Snapshot: нет активного tenant-контекста — снимок ограничен "
-        "системным tenant=%s; для межtenant-снимка нужна роль с BYPASSRLS",
-        SYSTEM_TENANT_ID,
+
+    from src.backend.core.tenancy import get_tenant_id
+
+    context_tenant = (get_tenant_id() or "").strip()
+    if context_tenant:
+        return context_tenant
+
+    raise SnapshotTenantScopeError(
+        "Snapshot: tenant-скоуп не определён. Снапшот покрывает ровно "
+        "один tenant (ADR-0409) — передайте tenant_id явно или выполните "
+        "job в tenant-контексте. Межtenant-снимок требует служебной роли "
+        "с BYPASSRLS (ADR-0393)."
     )
-    return SYSTEM_TENANT_ID
 
 
 def _apply_tenant_scope(pg_conn: Connection, tenant_id: str) -> None:
@@ -246,7 +276,11 @@ def _replicate_table(pg_conn: Connection, sqlite_conn: Connection, table: Table)
 
 
 def sync_pg_to_sqlite(
-    pg_engine: Engine, sqlite_engine: Engine, tables: list[str]
+    pg_engine: Engine,
+    sqlite_engine: Engine,
+    tables: list[str],
+    *,
+    tenant_id: str | None = None,
 ) -> dict[str, int]:
     """Реплицирует список таблиц из PG в SQLite-snapshot.
 
@@ -254,12 +288,16 @@ def sync_pg_to_sqlite(
         pg_engine: SYNC SQLAlchemy engine, указывающий на PostgreSQL.
         sqlite_engine: SYNC SQLAlchemy engine, указывающий на SQLite-файл.
         tables: упорядоченный список имён таблиц (FK-таблицы первыми).
+        tenant_id: Явный tenant-скоуп снимка. Если не задан — берётся
+            из tenant-контекста процесса.
 
     Returns:
         Словарь ``{table_name: rows_replicated}`` для всех успешно
         реплицированных таблиц.
 
     Raises:
+        SnapshotTenantScopeError: Tenant-скоуп не определён (fail-closed,
+            ADR-0409) — снимок не пишется.
         Любое исключение SQLAlchemy. Вызывающая сторона (планировщик
         или ``run_snapshot_now``) обязана обработать его и
         инкрементировать ``snapshot_sync_errors_total``.
@@ -295,6 +333,10 @@ def sync_pg_to_sqlite(
         logger.warning("Snapshot: список таблиц пуст — нечего реплицировать")
         return {}
 
+    # ADR-0409: tenant-скоуп обязателен и определяется ДО записи в SQLite —
+    # при отсутствии скоупа файл snapshot'а остаётся нетронутым (fail-closed).
+    resolved_tenant = _resolve_snapshot_tenant(tenant_id)
+
     # DDL: создаём только нужные таблицы в SQLite (idempotent).
     metadata.create_all(sqlite_engine, tables=target_tables, checkfirst=True)
 
@@ -303,22 +345,46 @@ def sync_pg_to_sqlite(
     with pg_engine.connect() as pg_conn, sqlite_engine.begin() as sqlite_conn:
         # ADR-0400: tenant-скоуп ДО выборки — иначе RLS вернёт 0 строк
         # (тихая потеря снапшота).
-        tenant_id = _resolve_snapshot_tenant()
-        _apply_tenant_scope(pg_conn, tenant_id)
+        _apply_tenant_scope(pg_conn, resolved_tenant)
         for table in target_tables:
             count = _replicate_table(pg_conn, sqlite_conn, table)
             rows_per_table[table.name] = count
-            logger.info("Snapshot: '%s' реплицирована (%d строк)", table.name, count)
+            logger.info(
+                "Snapshot: '%s' реплицирована (%d строк, tenant=%s)",
+                table.name,
+                count,
+                resolved_tenant,
+            )
+
+    if not any(rows_per_table.values()):
+        logger.warning(
+            "Snapshot: снимок пуст (0 строк по всем таблицам, tenant=%s) — "
+            "fallback db_main отдаст пустые данные; проверьте tenant-скоуп "
+            "и наличие данных в PG",
+            resolved_tenant,
+        )
 
     return rows_per_table
 
 
-def run_snapshot_now() -> dict[str, int]:
+def run_snapshot_now(tenant_id: str | None = None) -> dict[str, int]:
     """Синхронный entry-point для startup hook / manual-trigger.
 
     Создаёт engine'ы, выполняет sync, обновляет внутреннее состояние и
     публикует метрики. Безопасен к повторным вызовам (idempotent —
     DELETE+INSERT в одной транзакции).
+
+    Args:
+        tenant_id: Явный tenant-скоуп снимка. Если не задан — берётся из
+            tenant-контекста процесса; если скоупа нет — fail-closed
+            (ADR-0409), snapshot-файл не перезаписывается.
+
+    Returns:
+        Словарь ``{table_name: rows_replicated}``.
+
+    Raises:
+        SnapshotTenantScopeError: Tenant-скоуп не определён.
+
     """
     global _last_sync_ts, _last_sync_duration, _last_sync_rows
 
@@ -338,10 +404,19 @@ def run_snapshot_now() -> dict[str, int]:
     started = time.perf_counter()
     _ensure_metrics()
     try:
+        # ADR-0409: скоуп обязателен — определяем ДО создания движков,
+        # чтобы при отказе snapshot-файл остался нетронутым.
+        resolved_tenant = _resolve_snapshot_tenant(tenant_id)
+
         pg_engine = create_engine(_build_pg_url(), pool_pre_ping=True)
         sqlite_engine = create_engine(_build_sqlite_url(snapshot_cfg.target_path))
 
-        rows = sync_pg_to_sqlite(pg_engine, sqlite_engine, snapshot_cfg.tables)
+        rows = sync_pg_to_sqlite(
+            pg_engine,
+            sqlite_engine,
+            snapshot_cfg.tables,
+            tenant_id=resolved_tenant,
+        )
 
         _last_sync_ts = time.time()
         _last_sync_duration = time.perf_counter() - started
@@ -402,7 +477,7 @@ def get_snapshot_age_seconds() -> float | None:
 SNAPSHOT_JOB_ID = "resilience_snapshot_pg_to_sqlite"
 
 
-def register_snapshot_job(scheduler: Any) -> None:
+def register_snapshot_job(scheduler: Any, tenant_id: str | None = None) -> None:
     """Регистрирует snapshot job в APScheduler-инстансе.
 
     Использует ``IntervalTrigger`` (cron-like период
@@ -411,6 +486,14 @@ def register_snapshot_job(scheduler: Any) -> None:
     ``SNAPSHOT_JOB_ID`` для idempotent-перезапуска.
 
     Если ``snapshot.enabled=false`` — job НЕ регистрируется.
+
+    Args:
+        scheduler: APScheduler-инстанс.
+        tenant_id: Tenant-скоуп для периодического job'а. Если не задан —
+            job работает в tenant-контексте процесса, а при его
+            отсутствии каждый запуск падает fail-closed (ADR-0409).
+            Межtenant-снапшот не поддерживается (нужна роль с BYPASSRLS).
+
     """
     from src.backend.core.config.settings import settings
 
@@ -418,6 +501,16 @@ def register_snapshot_job(scheduler: Any) -> None:
     if not snapshot_cfg.enabled:
         logger.info("Snapshot: job не регистрируется (snapshot.enabled=false)")
         return
+
+    job_kwargs: dict[str, Any] = {}
+    if tenant_id:
+        job_kwargs["tenant_id"] = tenant_id
+    else:
+        logger.warning(
+            "Snapshot: job зарегистрирован без tenant-скоупа — каждый запуск "
+            "завершится fail-closed ошибкой (ADR-0409), если процесс не "
+            "исполняется в tenant-контексте"
+        )
 
     scheduler.add_job(
         func=run_snapshot_now,
@@ -430,6 +523,7 @@ def register_snapshot_job(scheduler: Any) -> None:
         executor="default",  # threadpool — sync-логика.
         max_instances=1,
         coalesce=True,
+        kwargs=job_kwargs,
     )
     logger.info(
         "Snapshot: job '%s' зарегистрирован (interval=%d min, %d таблиц)",

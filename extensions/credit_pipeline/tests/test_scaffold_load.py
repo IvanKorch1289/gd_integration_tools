@@ -24,8 +24,8 @@ from src.backend.core.api import (
     ActionRegistryProtocol,
     BasePlugin,
     PluginContext,
+    load_plugin_manifest,
 )
-from src.backend.core.api import load_plugin_manifest
 
 _MANIFEST_PATH = (
     Path(__file__).resolve().parents[3]
@@ -36,11 +36,17 @@ _MANIFEST_PATH = (
 
 
 def test_credit_pipeline_manifest_loads_and_is_core_compatible() -> None:
-    """``plugin.toml`` парсится и совместим с ядром ``0.2.5``."""
+    """``plugin.toml`` парсится и совместим с ядром ``0.20.0``.
+
+    ADR-0409: было ``"0.2.5"`` — такой версии в репозитории нет
+    (``v11.core_version = "0.20.0"`` в config_profiles/base.yml), и
+    ``SpecifierSet(">=0.20,<0.21")`` её не содержит. Проверяем реальную
+    версию ядра.
+    """
     manifest = load_plugin_manifest(_MANIFEST_PATH)
     assert manifest.name == "credit_pipeline"
     assert manifest.version == "0.1.0"
-    assert manifest.is_compatible_with_core("0.2.5") is True
+    assert manifest.is_compatible_with_core("0.20.0") is True
     assert manifest.tenant_aware is True
 
 
@@ -68,14 +74,16 @@ def test_credit_pipeline_plugin_is_base_plugin_subclass() -> None:
     assert plugin.version == "0.1.0"
 
 
-def test_credit_pipeline_manifest_declares_three_actions() -> None:
-    """v0.1.0: ``[provides].actions`` содержит 3 real actions."""
+def test_credit_pipeline_manifest_declares_five_actions() -> None:
+    """``[provides].actions`` содержит 5 real actions (ADR-0409)."""
     manifest = load_plugin_manifest(_MANIFEST_PATH)
     actions = set(manifest.provides.actions)
     assert actions == {
         "credit_pipeline.score",
         "credit_pipeline.parse",
         "credit_pipeline.decide",
+        "credit_pipeline.execute_code",
+        "credit_pipeline.supervise",
     }
 
 
@@ -124,11 +132,13 @@ async def test_credit_pipeline_plugin_lifecycle_runs() -> None:
     await plugin.on_register_repositories(other_registry)  # type: ignore[arg-type]
     await plugin.on_register_processors(other_registry)  # type: ignore[arg-type]
     await plugin.on_shutdown()
-    # v0.1.0: 3 actions зарегистрированы (не stubs).
+    # ADR-0409: 5 actions зарегистрированы (не stubs).
     assert set(actions_registry.registered) == {  # type: ignore[attr-defined]
         "credit_pipeline.score",
         "credit_pipeline.parse",
         "credit_pipeline.decide",
+        "credit_pipeline.execute_code",
+        "credit_pipeline.supervise",
     }
     for action_id, handler in actions_registry.registered.items():  # type: ignore[attr-defined]
         assert callable(handler), f"{action_id} handler is not callable"

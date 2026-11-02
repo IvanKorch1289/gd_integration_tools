@@ -1,34 +1,41 @@
 # Workflow DSL: credit_assessment (schema updated to S176+)
 #
-# Кредитная оценка по запросу SKB-Техно + НБКИ + scoring правила.
+# Кредитная оценка по запросу SKB-Техно + scoring правила.
 # Schema updated: top-level activities/compensation → steps[] (B-101 fix).
 # D-AUDIT-B-101 fix: call_function refs указывают на module-level
 # fetch_result (skb.py:152) и apply_rules (normalize.py).
+#
+# ADR-0409 (волна 22): приведён к реальной семантике.
+#   * payload передаётся ПЛОСКИМ: call_function вызывает цель как
+#     ``fn(payload)``, поэтому ``order_uuid``/``score`` лежат на верхнем
+#     уровне args, а не внутри вложенного ``body`` (раньше вложенный
+#     ``body`` не доходил до цели — ``fetch_result`` падал по KeyError);
+#   * «nbki»-шаг (второй запрос к bureau НБКИ) удалён: адаптера НБКИ в
+#     расширении нет, а вызов SKB-клиента дважды был фиктивным дублем.
+#     Owner-задача: интеграция с НБКИ (capability net.outbound *.nbki.ru
+#     уже объявлена в plugin.toml).
 name: credit_assessment
 version: "1.0"
-description: Кредитная оценка по запросу SKB-Техно + НБКИ + scoring правила.
+description: Кредитная оценка по запросу SKB-Техно + scoring правила.
 
 steps:
   - type: activity
     name: extensions.credit_pipeline.services.clients.skb:fetch_result
     args:
-      body:
-        applicant_id: "${{ applicant_id }}"
-        loan_amount: "${{ loan_amount }}"
-        term_months: "${{ term_months }}"
+      order_uuid: "${{ order_uuid }}"
+      response_type_str: "JSON"
     timeout_s: 30
   - type: activity
-    name: extensions.credit_pipeline.services.clients.skb:fetch_result
+    name: extensions.credit_pipeline.agents:scoring_agent
     args:
-      body:
-        applicant_id: "${{ applicant_id }}"
-        loan_amount: "${{ loan_amount }}"
-        term_months: "${{ term_months }}"
+      applicant_id: "${{ applicant_id }}"
+      amount: "${{ loan_amount }}"
+      duration_months: "${{ term_months }}"
+      monthly_income: "${{ monthly_income }}"
     timeout_s: 30
   - type: activity
     name: extensions.credit_pipeline.functions.normalize:apply_rules
     args:
-      responses:
-        skb: "${{ steps.0 }}"
-        nbki: "${{ steps.1 }}"
+      score: "${{ steps.1.credit_score }}"
+      decision: "${{ steps.1.risk_class }}"
     timeout_s: 5

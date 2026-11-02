@@ -1,14 +1,16 @@
 """V11 plugin entry для credit_pipeline (S76 W2 — real actions).
 
-Плагин кредитного конвейера (real impl, S76 W1 + W2). Регистрирует 3
-actions для интеграции scoring/document_parser/decision агентов в
-основной DSL через ``on_register_actions`` hook.
+Плагин кредитного конвейера (real impl, S76 W1 + W2). Регистрирует
+actions для интеграции scoring/document_parser/decision агентов, а также
+sandbox-исполнителя и supervisor-диспетчеризации в основной DSL через
+``on_register_actions`` hook.
 
 Связанные ADR:
 
 * ADR-042 — формат ``plugin.toml`` (V11);
 * ADR-044 — capability vocabulary;
-* ADR-0099 — v28 reconciliation (S76 W1 closeout context).
+* ADR-0099 — v28 reconciliation (S76 W1 closeout context);
+* ADR-0409 — e2b-sandbox / supervisor-агенты (волна 22).
 
 Wave: ``[wave:s76/w2-plugin-action-registration]``.
 """
@@ -23,6 +25,8 @@ from extensions.credit_pipeline.agents import (
     document_parser_agent,
     scoring_agent,
 )
+from extensions.credit_pipeline.sandbox import execute_code
+from extensions.credit_pipeline.supervisor import supervise
 from src.backend.core.api import BasePlugin
 
 if TYPE_CHECKING:
@@ -47,12 +51,19 @@ def _make_handler(agent: _ActionHandler) -> _ActionHandler:
     Извлекает ``payload`` из kwargs (default — пустой dict) и вызывает
     agent. Единый шаблон для всех actions кредитного pipeline.
     Используется в ``on_register_actions`` для устранения copy-paste.
+
+    Контракт payload'а (ADR-0409): вложенный ключ ``payload`` —
+    основной; если его нет — используются сами kwargs (плоский payload
+    DSL-действия). Так action корректно работает и из route-DSL
+    (``call_function``/action с плоскими аргументами), и из workflow.
     """
 
     async def _handler(**kwargs: Any) -> dict[str, Any]:
-        payload = kwargs.get("payload")
-        if payload is None:
-            payload = {}
+        nested = kwargs.get("payload")
+        if isinstance(nested, dict):
+            payload = nested
+        else:
+            payload = {key: value for key, value in kwargs.items() if key != "payload"}
         return await agent(payload)
 
     return _handler
@@ -94,24 +105,32 @@ class CreditPipelinePlugin(BasePlugin):
         )
 
     async def on_register_actions(self, registry: ActionRegistryProtocol) -> None:
-        """Регистрирует 3 actions, оборачивающих real agents.
+        """Регистрирует actions кредитного конвейера.
 
         Action IDs:
         * ``credit_pipeline.score`` — scoring_agent.
         * ``credit_pipeline.parse`` — document_parser_agent.
         * ``credit_pipeline.decide`` — decision_agent.
+        * ``credit_pipeline.execute_code`` — исполнение кода в
+          изолированном sandbox'е (ADR-0409, заменяет фиктивный
+          «e2b-sandbox»-шаг на ``ai.run_agent``).
+        * ``credit_pipeline.supervise`` — диспетчеризация заявки между
+          агентами через core-супервизор (ADR-0409, заменяет фиктивную
+          «supervisor-диспетчеризацию» через LLM-вызов).
 
         Каждый handler создаётся через ``_make_handler`` factory
-        (единый шаблон: извлечение payload из kwargs → вызов agent).
+        (единый шаблон: извлечение payload из kwargs → вызов функции).
         """
 
         registry.register("credit_pipeline.score", _make_handler(scoring_agent))
         registry.register("credit_pipeline.parse", _make_handler(document_parser_agent))
         registry.register("credit_pipeline.decide", _make_handler(decision_agent))
+        registry.register("credit_pipeline.execute_code", _make_handler(execute_code))
+        registry.register("credit_pipeline.supervise", _make_handler(supervise))
 
         logger.info(
-            "credit_pipeline: 3 actions registered "
-            "(credit_pipeline.{score,parse,decide})"
+            "credit_pipeline: 5 actions registered "
+            "(credit_pipeline.{score,parse,decide,execute_code,supervise})"
         )
 
     async def on_register_repositories(

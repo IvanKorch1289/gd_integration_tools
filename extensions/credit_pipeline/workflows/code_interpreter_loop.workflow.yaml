@@ -1,32 +1,34 @@
 # Workflow DSL: code_interpreter_loop
 #
-# ADR-0403 (волна 21): activity-имена приведены к реально существующим
-# targets. До фикса шаги ссылались на несуществующие activity
-# (``receive_dataset``, ``llm_propose_code``, ``execute_code_sandboxed``,
-# ``evaluate_results``, ``format_final_report``) — build-time резолв
-# (ADR-0398, ``collect_activities(declarations, validate=True)``) ронял
-# подъём Temporal-Worker'а со списком неизвестных имён.
+# ADR-0409 (волна 22): шаги приведены к реально существующим targets и
+# к реальной семантике потока.
 #
-# Соответствие (порядок шагов, wait_signal и бизнес-логика потока не
-# менялись):
-#   receive_dataset       → skb:fetch_result   (получение данных)
-#   llm_propose_code      → ai.chat             (LLM-предложение)
-#   execute_code_sandboxed→ ai.run_agent       (исполнение агентом)
-#   evaluate_results      → normalize:apply_rules(оценка результата)
-#   format_final_report   → export.to_pdf       (формирование отчёта)
+# Соответствие (порядок шагов и бизнес-логика потока не менялись):
+#   receive_dataset        → skb:fetch_result        (получение данных)
+#   llm_propose_code       → ai.chat                 (LLM-предложение кода)
+#   execute_code_sandboxed → sandbox:execute_code    (исполнение в sandbox)
+#   evaluate_results       → sandbox:evaluate_result (оценка результата)
+#   format_final_report    → export.to_pdf           (формирование отчёта)
 #
-# e2b-sandbox в расширении не реализован — исполнение делегировано
-# реальному AI-агенту ядра. Owner-задача: sandbox-исполнитель
-# (ADR-0403 §Открытое).
+# ADR-0409: шаг исполнения кода больше НЕ подменяется LLM-вызовом
+# ``ai.run_agent`` (тот ничего не исполнял). Исполнение — реальный
+# изолированный sandbox ядра (``CodeSandbox``/E2B, ADR-0409 §Решение);
+# при недоступном sandbox'е действие падает fail-closed, а не возвращает
+# «пустой» результат.
+#
+# Ограничение (owner-задача, вне зоны кластера): подстановка
+# ``${{ ... }}`` между шагами не реализована в workflow-компиляторе ядра
+# (``src/backend/dsl/workflow/compiler/step_compilers/activity.py``) —
+# до её реализации поток исполняется внешним оркестратором, который
+# подставляет значения himself. Шаги и их targets при этом реальны.
 name: code_interpreter_loop
 version: "1.0"
 description: |
-  Data analysis loop через e2b sandbox (Sprint 12 K4 W1).
+  Data analysis loop: LLM предлагает Python-код → исполнение в
+  изолированном sandbox'е → оценка результата → (сигнал continue_loop)
+  → отчёт.
 
-  LLM предлагает Python код → e2b sandbox исполняет → eval → если
-  not_done — цикл (через signal + activity).
-
-  Template tags: ai, code-execution, sandbox, loop, e2b.
+  Template tags: ai, code-execution, sandbox, loop.
 default_timeout_s: 1800
 default_retry_policy:
   initial_interval_s: 1.0
@@ -37,9 +39,8 @@ steps:
   - type: activity
     name: extensions.credit_pipeline.services.clients.skb:fetch_result
     args:
-      body:
-        order_uuid: "${{ order_uuid }}"
-        response_type_str: "JSON"
+      order_uuid: "${{ order_uuid }}"
+      response_type_str: "JSON"
     timeout_s: 60
   - type: activity
     name: ai.chat
@@ -50,17 +51,17 @@ steps:
       model: "claude-opus-4-7"
     timeout_s: 90
   - type: activity
-    name: ai.run_agent
+    name: extensions.credit_pipeline.sandbox:execute_code
     args:
-      prompt: "${{ steps.1 }}"
-      agent_id: "code_interpreter"
+      code: "${{ steps.1.content }}"
+      timeout_s: 60
     timeout_s: 120
   - type: activity
-    name: extensions.credit_pipeline.functions.normalize:apply_rules
+    name: extensions.credit_pipeline.sandbox:evaluate_result
     args:
-      body:
-        score: "${{ steps.2.credit_score }}"
-        decision: "${{ steps.2.risk_class }}"
+      exit_code: "${{ steps.2.exit_code }}"
+      stdout: "${{ steps.2.stdout }}"
+      stderr: "${{ steps.2.stderr }}"
     timeout_s: 60
   - type: wait_signal
     signal_name: continue_loop
