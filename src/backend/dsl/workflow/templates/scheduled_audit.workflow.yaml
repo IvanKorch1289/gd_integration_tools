@@ -3,6 +3,11 @@ version: "1.0"
 description: |
   Scheduled Audit — daily cron → collect events → aggregate → report.
   Template tags: scheduled, audit, daily, compliance.
+tags:
+  - scheduled
+  - audit
+  - daily
+  - compliance
 steps:
   # Activity-имена — зарегистрированные actions ядра (ADR-0398).
   - type: activity

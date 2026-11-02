@@ -97,22 +97,34 @@ def set_workflow_state_store_provider(cls: Any) -> None:
 
 
 def get_workflow_state_row_class_provider() -> Any:
-    """Получить ``WorkflowStateRow`` class (ORM)."""
+    """Получить row-DTO class (ORM → DTO).
+
+    Regression 2026-10-29: резолвилось несуществующее ``WorkflowStateRow``
+    → ``AttributeError`` → ``GET /api/v1/admin/workflows`` отдавал 500.
+    В пакете есть ``WorkflowInstanceRow`` (DTO c ``from_orm``) — именно он
+    и нужен потребителю (``admin_workflows/helpers.py``).
+    """
     if "workflow_state_row_class" in _overrides:
         return _overrides["workflow_state_row_class"]
     module = resolve_module("workflow.pg_runner_internals")
-    return module.WorkflowStateRow
+    return module.WorkflowInstanceRow
 
 
 # ─────────────── Workflow DB session + ORM models + enums ───────────────
 
 
 def get_workflow_main_session_provider() -> Any:
-    """Получить main workflow session manager (DB session factory)."""
+    """Получить main workflow session manager (DB session factory).
+
+    Regression 2026-10-29: резолвилось несуществующее ``module.get_main_session``
+    → ``AttributeError`` → ``GET /api/v1/admin/workflows`` отдавал 500.
+    В модуле есть ``get_main_session_manager()`` → ``DatabaseSessionManager``
+    (у него есть ``create_session()``, как и ожидает потребитель).
+    """
     if "workflow_main_session" in _overrides:
         return _overrides["workflow_main_session"]
     module = resolve_module("database.session_manager")
-    return module.get_main_session
+    return module.get_main_session_manager()
 
 
 def set_workflow_main_session_provider(manager: Any) -> None:

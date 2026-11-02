@@ -221,6 +221,18 @@ def _resolve_listener_dsn() -> str | None:
     ``async_connection_url`` у ``DatabaseConnectionSettings`` имеет префикс
     ``postgresql+asyncpg://`` (SQLAlchemy-style); для ``asyncpg.connect``
     нужен чистый ``postgresql://``. Переводим.
+
+    LISTEN/NOTIFY — механизм **PostgreSQL**. На других СУБД (SQLite в
+    ``dev_light``) push-path невозможен: asyncpg не понимает DSN вида
+    ``sqlite+aiosqlite://`` и падает с ``invalid DSN``. Поэтому для
+    не-PG DSN возвращаем ``None`` — worker работает в backup-polling
+    режиме (polling pending-инстансов), а в лог уходит понятное
+    сообщение вместо ошибки подключения.
+
+    Returns:
+        str | None: DSN для asyncpg либо ``None``, если push-path
+        неприменим (не-PostgreSQL).
+
     """
     try:
         from src.backend.core.config.settings import settings
@@ -230,7 +242,14 @@ def _resolve_listener_dsn() -> str | None:
             return "postgresql://" + url[len("postgresql+asyncpg://") :]
         if url.startswith("postgresql+psycopg://"):
             return "postgresql://" + url[len("postgresql+psycopg://") :]
-        return url
+        if url.startswith(("postgresql://", "postgres://")):
+            return url
+        _logger.warning(
+            "LISTEN/NOTIFY push-path отключён: схема DSN %r не поддерживается "
+            "(требуется PostgreSQL) — worker работает в backup-polling режиме",
+            url.split("://", 1)[0],
+        )
+        return None
     except Exception as exc:
         _logger.warning("cannot resolve listener DSN: %s", exc)
         return None

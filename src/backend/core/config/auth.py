@@ -82,7 +82,7 @@ def build_auth_config(
         ),
         express_jwt=ExpressJwtConfig(
             bot_id=express.bot_id,
-            secret_key=express.secret_key,
+            secret_key=_secret_value(express.secret_key),
             botx_host=express.botx_host,
             enabled=express.enabled,
         ),

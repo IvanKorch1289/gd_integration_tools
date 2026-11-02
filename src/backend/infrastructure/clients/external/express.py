@@ -234,10 +234,11 @@ class ExpressClient:
 
 def _create_express_client() -> ExpressClient:
     from src.backend.core.config.express import express_settings
+    from src.backend.core.config.secret import secret_value
 
     return ExpressClient(
         bot_id=express_settings.bot_id,
-        secret_key=express_settings.secret_key,
+        secret_key=secret_value(express_settings.secret_key),
         botx_url=express_settings.botx_url,
         enabled=express_settings.enabled,
     )

@@ -18,10 +18,11 @@ from __future__ import annotations
 
 from typing import ClassVar, Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, field_serializer, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from src.backend.core.config.config_loader import BaseSettingsWithLoader
+from src.backend.core.config.secret import secret_value
 
 __all__ = (
     "BaseBotChannelSettings",
@@ -123,6 +124,8 @@ class BaseWebhookChannelSettings(BaseIntegrationSettings):
             сторона (полный публичный URL, включая префикс роутера).
         signature_secret: Секрет для проверки подписи входящих
             запросов. Пустая строка означает отсутствие проверки.
+            ADR-0378: значение — реальный секрет → ``SecretStr`` +
+            маскирование в ``model_dump()``.
         signature_header: Имя HTTP-заголовка с подписью.
     """
 
@@ -135,8 +138,8 @@ class BaseWebhookChannelSettings(BaseIntegrationSettings):
         ),
         examples=["https://api.example.com/webhooks/express"],
     )
-    signature_secret: str = Field(
-        default="",
+    signature_secret: SecretStr = Field(
+        default=SecretStr(""),
         title="Секрет подписи",
         description=(
             "Секретный ключ HMAC/JWT для верификации входящих запросов. "
@@ -149,6 +152,16 @@ class BaseWebhookChannelSettings(BaseIntegrationSettings):
         description="Имя HTTP-заголовка, в котором приходит подпись",
         examples=["X-Hub-Signature-256", "X-Signature"],
     )
+
+    @field_serializer("signature_secret")
+    def _serialize_signature_secret(self, value: SecretStr) -> str:
+        """Маскирует секрет подписи в дампе модели (ADR-0378).
+
+        Пустой секрет остаётся пустой строкой (признак «не настроено»),
+        непустой — ``***``. Рантайм-значение доступно через
+        :func:`src.backend.core.config.secret.secret_value`.
+        """
+        return "***" if secret_value(value) else ""
 
 
 class BaseBotChannelSettings(BaseWebhookChannelSettings):
@@ -164,6 +177,8 @@ class BaseBotChannelSettings(BaseWebhookChannelSettings):
             числовой ID для Telegram перед двоеточием в токене).
         secret_key: Секретный ключ бота (для подписи JWT/HMAC при
             обращениях к bot-API). Для Telegram — часть после ":".
+            ADR-0378: значение — реальный секрет → ``SecretStr`` +
+            маскирование в ``model_dump()``.
         base_url: Базовый URL bot-API (HTTP-сервиса мессенджера).
     """
 
@@ -172,8 +187,8 @@ class BaseBotChannelSettings(BaseWebhookChannelSettings):
         title="ID бота",
         description="Идентификатор бота в системе мессенджера",
     )
-    secret_key: str = Field(
-        default="",
+    secret_key: SecretStr = Field(
+        default=SecretStr(""),
         title="Секретный ключ",
         description="Секрет для подписи запросов к bot-API",
     )
@@ -183,6 +198,16 @@ class BaseBotChannelSettings(BaseWebhookChannelSettings):
         description="Базовый URL bot-API мессенджера",
         examples=["https://botx.corp.example.ru", "https://api.telegram.org"],
     )
+
+    @field_serializer("secret_key")
+    def _serialize_secret_key(self, value: SecretStr) -> str:
+        """Маскирует секрет бота в дампе модели (ADR-0378).
+
+        Пустой секрет остаётся пустой строкой (признак «не настроено»),
+        непустой — ``***``. Рантайм-значение доступно через
+        :func:`src.backend.core.config.secret.secret_value`.
+        """
+        return "***" if secret_value(value) else ""
 
 
 class BaseConnectorSettings(BaseIntegrationSettings):

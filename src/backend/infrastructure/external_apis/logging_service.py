@@ -8,6 +8,7 @@ from logging import (
     Handler,
     Logger,
     LogRecord,
+    NullHandler,
     StreamHandler,
     getLogger,
 )
@@ -35,6 +36,12 @@ __all__ = (
     "stream_logger",
     "tasks_logger",
 )
+
+#: Логгер самого модуля. Используется только для диагностических сообщений
+#: (например, «файловый лог недоступен») — без инициализации нового
+#: structlog-бэкенда, который пересобирает handlers и стирает конфигурацию
+#: legacy-очереди логов.
+_module_logger = getLogger(__name__)
 
 
 class LoggerManager:
@@ -159,20 +166,37 @@ class LoggerManager:
         if self.debug:
             self.handlers.append(self._create_console_handler())
 
-    def _create_file_handler(self) -> TimedRotatingFileHandler:
-        """Настраивает ротируемый по времени файловый обработчик."""
+    def _create_file_handler(self) -> Handler:
+        """Настраивает ротируемый по времени файловый обработчик.
+
+        Недоступный (нет прав на запись) лог-файл НЕ поднимает исключение:
+        иначе падает весь процесс — инициализация middleware-ов тянет логгер
+        (регрессия стенда 2026-10-29: bind-mount ``.run`` принадлежал
+        uid=1000, процесс в контейнере работал как uid=10001 → 500 на
+        каждый HTTP-запрос). В этом случае возвращается
+        :class:`logging.NullHandler` — консольное/структурированное
+        логирование продолжает работать.
+        """
         import os
 
         log_dir = self.log_config.dir_log_name
-        os.makedirs(log_dir, exist_ok=True)
-
-        handler = TimedRotatingFileHandler(
-            filename=os.path.join(log_dir, self.log_config.name_log_file),
-            when="midnight",
-            interval=1,
-            backupCount=7,
-            encoding="utf-8",
-        )
+        filename = os.path.join(log_dir, self.log_config.name_log_file)
+        try:
+            os.makedirs(log_dir, exist_ok=True)
+            handler = TimedRotatingFileHandler(
+                filename=filename,
+                when="midnight",
+                interval=1,
+                backupCount=7,
+                encoding="utf-8",
+            )
+        except OSError as exc:
+            _module_logger.warning(
+                "Файловый лог недоступен (%s): %s — запись в файл отключена",
+                filename,
+                exc,
+            )
+            return NullHandler()
         handler.setFormatter(self.formatter)
         handler.addFilter(self.ContextFilter(self.environment, self.hostname))
         return handler

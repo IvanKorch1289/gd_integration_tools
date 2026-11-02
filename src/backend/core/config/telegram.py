@@ -66,10 +66,16 @@ class TelegramBotSettings(BaseBotChannelSettings):
 
         Возвращает пустую строку, если bot_id или secret_key не заданы,
         чтобы при ``enabled=False`` не падать на пустых полях.
+
+        ADR-0378: ``secret_key`` — ``SecretStr``, поэтому значение
+        достаётся через :func:`secret_value` (публичный контракт — строка).
         """
-        if not self.bot_id or not self.secret_key:
+        from src.backend.core.config.secret import secret_value
+
+        secret = secret_value(self.secret_key)
+        if not self.bot_id or not secret:
             return ""
-        return f"{self.bot_id}:{self.secret_key}"
+        return f"{self.bot_id}:{secret}"
 
 
 telegram_bot_settings = TelegramBotSettings()

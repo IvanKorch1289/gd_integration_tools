@@ -153,14 +153,21 @@ class AdminClient(BaseAPIClient):
     def get_audit_events(
         self, plugin: str | None = None, tenant: str | None = None, limit: int = 100
     ) -> list[dict[str, Any]]:
-        """GET /api/v1/admin/audit/capability."""
-        params: dict[str, Any] = {"limit": limit}
+        """GET /api/v1/audit/capability — последние N записей audit-stream.
+
+        ADR-0422: путь выровнен с роутером сервера (канон) — audit-replay
+        смонтирован как ``/audit/capability``, а не ``/admin/audit/capability``.
+        Параметры ``plugin``/``tenant`` сервер не поддерживает (эндпоинт
+        фильтрует только по ``count``/``start_id``) и оставлены в сигнатуре
+        ради совместимости вызывающего кода.
+        """
+        params: dict[str, Any] = {"count": limit}
         if plugin:
             params["plugin"] = plugin
         if tenant:
             params["tenant"] = tenant
         try:
-            response = self.get("/api/v1/admin/audit/capability", params=params)
+            response = self.get("/api/v1/audit/capability", params=params)
             if isinstance(response, list):
                 return response
             return response.get("events", []) if isinstance(response, dict) else []
@@ -225,12 +232,16 @@ class AdminClient(BaseAPIClient):
             return {"sessions": [], "count": 0, "error": str(exc)}
 
     def list_workflow_templates(self) -> list[Any]:
-        """GET /api/v1/admin/workflow-templates — список DSL-шаблонов.
+        """GET /api/v1/admin/workflow-templates/ — список DSL-шаблонов.
 
         Backend endpoint существует и смонтирован
         (``entrypoints/api/v1/routers.py`` → ``admin_workflow_templates``),
         но frontend-метод отсутствовал: контракт из cycle-208 покрывался
         тестом, который падал с ``AttributeError``.
+
+        ADR-0422: путь с trailing slash — сервер регистрирует именно
+        ``/admin/workflow-templates/``; без слэша клиент получал 307-редирект,
+        который httpx не следует.
 
         Returns:
             Список шаблонов; ``[]`` при недоступности API или если ответ
@@ -238,7 +249,7 @@ class AdminClient(BaseAPIClient):
 
         """
         try:
-            result = self.get("/api/v1/admin/workflow-templates")
+            result = self.get("/api/v1/admin/workflow-templates/")
         except CLIENT_SAFE_DEFAULT_ERRORS as exc:
             # cycle-9/D-AUDIT-1070: narrow exceptions + observability —
             # тот же контракт, что у остальных методов этого клиента.

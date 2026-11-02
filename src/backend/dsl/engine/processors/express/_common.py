@@ -122,6 +122,7 @@ def get_express_client(bot_name: str = "main_bot") -> ExpressBotClient:
 
     """
     from src.backend.core.config.express import express_settings
+    from src.backend.core.config.secret import secret_value
 
     # S87 M2-#11 final batch: DI provider.
     from src.backend.core.di.providers.cache import get_express_bot_module_provider
@@ -139,7 +140,7 @@ def get_express_client(bot_name: str = "main_bot") -> ExpressBotClient:
         host = express_settings.botx_host or _host_from_url(express_settings.botx_url)
         config = BotConfig(
             bot_id=express_settings.bot_id,
-            secret_key=express_settings.secret_key,
+            secret_key=secret_value(express_settings.secret_key),
             botx_host=host,
             base_url=express_settings.botx_url,
         )

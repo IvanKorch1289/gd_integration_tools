@@ -41,9 +41,26 @@ services:
     cpus: ${APP_CPUS:-0.5}
     volumes:
       - ../../.run:/app/.run  # logs, sqlite, runtime state
+    # 2026-10-29 hotfix: bind-mount ``.run`` принадлежит uid/gid хоста
+    # (1000:1000), а процесс в образе работает как appuser (uid=10001)
+    # → запись в ``.run/logs/*.log`` падала с PermissionError и убивала
+    # весь app (500 на всех эндпоинтах). Добавляем gid хоста в
+    # supplementary-группы: USER образа (appuser, uid=10001) сохраняется
+    # (иначе uid=1000 не прочитает /app с правами 0750 appuser:appuser),
+    # а group-writable файлы (0664) становятся доступны на запись.
+    # Переопределяется через DOCKER_GID=$(id -g).
+    group_add:
+      - "${DOCKER_GID:-1000}"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8000), timeout=3)"]
+      # 2026-10-29 hotfix: TCP-check врал — контейнер числился healthy,
+      # хотя приложение падало и отдавало 500 на всех эндпоинтах.
+      # Проверяем HTTP-эндпоинт liveness: не-2xx/таймаут → exit 1.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=3).status==200 else 1)"
       interval: 30s
       timeout: 5s
       retries: 3
@@ -72,6 +89,10 @@ services:
       SHUTDOWN_GRACE_SECONDS: ${SHUTDOWN_GRACE_SECONDS:-10}
     volumes:
       - ../../.run:/app/.run
+    # 2026-10-29 hotfix: см. app-сервис — supplementary gid хоста для
+    # записи в bind-mount ``.run`` (логи worker'а) без смены USER.
+    group_add:
+      - "${DOCKER_GID:-1000}"
     restart: unless-stopped
     deploy:
       replicas: ${WORKER_COUNT:-1}
@@ -116,6 +137,9 @@ services:
       GRPC_MAX_WORKERS: "10"
     volumes:
       - ../../.run:/app/.run
+    # 2026-10-29 hotfix: см. app-сервис — supplementary gid хоста.
+    group_add:
+      - "${DOCKER_GID:-1000}"
     restart: unless-stopped
     mem_limit: 512m
     healthcheck:

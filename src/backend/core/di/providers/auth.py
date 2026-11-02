@@ -158,11 +158,15 @@ def _build_jwks_cache_or_none() -> Any:
     url = getattr(secure_settings, "jwks_url", None)
     if not url:
         return None
-    from src.backend.core.auth.jwks_cache import JwksCache
+    from src.backend.core.auth.jwks_cache import DEFAULT_MAX_STALE_SECONDS, JwksCache
 
     ttl = getattr(secure_settings, "jwks_cache_ttl", 300)
     timeout = getattr(secure_settings, "jwks_fetch_timeout", 5.0)
-    return JwksCache(url, ttl=ttl, timeout=timeout)
+    # ADR-0419: stale-fallback ограничен предельным окном.
+    max_stale = getattr(
+        secure_settings, "jwks_max_stale_seconds", DEFAULT_MAX_STALE_SECONDS
+    )
+    return JwksCache(url, ttl=ttl, timeout=timeout, max_stale_seconds=max_stale)
 
 
 def _load_public_key_or_none() -> Any:

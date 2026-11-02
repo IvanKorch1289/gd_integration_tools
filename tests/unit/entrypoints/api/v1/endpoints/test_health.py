@@ -168,3 +168,32 @@ class TestComponentsHealth:
             mock_get.side_effect = RuntimeError("fail")
             resp = await health_mod.components_health(mode="fast")
         assert resp.status_code == 503
+
+
+class TestSkippedComponents:
+    """``skipped``-компонент (отключённый опциональный сервис) не роняет health.
+
+    Контракт компонентов (стенд 2026-10-29): отключённые S3/Redis/NATS
+    помечаются ``skipped`` и не переводят агрегатор в ``down`` — иначе
+    профиль без этих сервисов никогда не становится ready.
+    """
+
+    @pytest.mark.asyncio
+    async def test_skipped_component_keeps_health_ok(self) -> None:
+        from src.backend.infrastructure.application.health_aggregator import (
+            HealthAggregator,
+        )
+
+        aggregator = HealthAggregator()
+
+        async def _skipped() -> dict[str, str]:
+            return {"status": "skipped", "reason": "not configured"}
+
+        aggregator.register("s3", _skipped)
+        with patch(
+            "src.backend.core.di.providers.get_health_aggregator_provider"
+        ) as mock_get:
+            mock_get.return_value = aggregator
+            resp = await health_mod.components_health(mode="fast")
+        assert resp.status_code == 200
+        assert b"skipped" in resp.body

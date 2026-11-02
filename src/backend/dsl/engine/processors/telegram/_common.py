@@ -35,6 +35,7 @@ def get_telegram_client(bot_name: str = "main_bot") -> TelegramBotClient:
         RuntimeError: Если Telegram отключён или бот не найден.
 
     """
+    from src.backend.core.config.secret import secret_value
     from src.backend.core.config.telegram import telegram_bot_settings
 
     # S85 M2-#11 accelerated batch: DI provider вместо inline infrastructure import.
@@ -56,7 +57,7 @@ def get_telegram_client(bot_name: str = "main_bot") -> TelegramBotClient:
 
     config = TelegramBotConfig(
         bot_id=telegram_bot_settings.bot_id,
-        secret_key=telegram_bot_settings.secret_key,
+        secret_key=secret_value(telegram_bot_settings.secret_key),
         base_url=telegram_bot_settings.base_url,
     )
     return TelegramBotClient(config)

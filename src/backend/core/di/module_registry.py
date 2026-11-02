@@ -109,6 +109,10 @@ INFRA_MODULES: Final[dict[str, str]] = {
     # ─── Storage clients ────────────────────────────────────────────
     "clients.storage.redis": f"{_INFRA}.clients.storage.redis",
     "clients.storage.redis_coordinator": f"{_INFRA}.clients.storage.redis_coordinator",
+    # Stream-транспорт audit/телеметрии: Redis Streams или in-memory
+    # (Redis выключен). Ключ отсутствовал → резолв падал с
+    # «Неизвестный ключ infrastructure-модуля» (smoke 2026-10-29).
+    "clients.storage.redis_streams": f"{_INFRA}.clients.storage.redis_streams",
     "clients.storage.mongodb": f"{_INFRA}.clients.storage.mongodb",
     "clients.storage.clickhouse": f"{_INFRA}.clients.storage.clickhouse",
     "clients.storage.s3_pool": f"{_INFRA}.clients.storage.s3_pool",  # R1+ fix (S95): missing key for claim_check tests
@@ -350,7 +354,7 @@ def validate_modules() -> dict[str, str]:
     for key, dotted_path in INFRA_MODULES.items():
         try:
             spec = importlib.util.find_spec(dotted_path)
-        except (ImportError, ModuleNotFoundError, ValueError):
+        except ImportError, ModuleNotFoundError, ValueError:
             # Родительский пакет может бросать ImportError из-за
             # отсутствующих в окружении тяжёлых зависимостей
             # (psycopg, faststream и т.п.). Считаем такой случай

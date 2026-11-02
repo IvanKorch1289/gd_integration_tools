@@ -31,6 +31,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Literal
 
+from src.backend.core.config.secret import secret_value
 from src.backend.core.logging import get_logger
 from src.backend.infrastructure.clients.base_connector import HealthResult
 from src.backend.infrastructure.notifications.adapters.base import NotificationChannel
@@ -175,7 +176,7 @@ class TelegramAdapter:
             )
         return TelegramBotConfig(
             bot_id=telegram_bot_settings.bot_id,
-            secret_key=telegram_bot_settings.secret_key,
+            secret_key=secret_value(telegram_bot_settings.secret_key),
             base_url=telegram_bot_settings.base_url,
         )
 

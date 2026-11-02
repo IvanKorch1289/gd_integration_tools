@@ -314,15 +314,28 @@ class StructlogGraylogBackend(BaseLoggerBackend):
             from pathlib import Path
 
             log_path = Path(log_dir)
-            log_path.mkdir(parents=True, exist_ok=True)
-            file_handler = logging.handlers.TimedRotatingFileHandler(
-                filename=str(log_path / log_file),
-                when="midnight",
-                interval=1,
-                backupCount=7,
-                encoding="utf-8",
-            )
-            handlers.append(file_handler)
+            filename = str(log_path / log_file)
+            try:
+                log_path.mkdir(parents=True, exist_ok=True)
+                file_handler = logging.handlers.TimedRotatingFileHandler(
+                    filename=filename,
+                    when="midnight",
+                    interval=1,
+                    backupCount=7,
+                    encoding="utf-8",
+                )
+            except OSError as exc:
+                # Недоступный лог-файл не должен ронять конфигурацию
+                # logging-стека (регрессия стенда 2026-10-29: bind-mount
+                # ``.run`` принадлежал uid=1000, процесс работал как
+                # uid=10001 → весь logging-стек падал на старте).
+                logging.getLogger(__name__).warning(
+                    "Файловый лог недоступен (%s): %s — запись в файл отключена",
+                    filename,
+                    exc,
+                )
+            else:
+                handlers.append(file_handler)
 
         # Configure stdlib root logger.
         # Cycle 271 (audit HIGH-09): раньше здесь стоял
