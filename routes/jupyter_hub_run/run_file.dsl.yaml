@@ -12,6 +12,13 @@
 # * `call_function.kwargs`/`kwargs_from` → `payload_from` (актуальное имя);
 # * `audit.details` → `metadata_from`;
 # * шаг `to:` удалён — response-binding в DSL не реализован.
+#
+# ADR-0415: шаг вызывает capability-провайдера Jupyter Hub
+# (extensions/jupyter_hub/plugin.py) — он держит jupyter.hub:run и
+# проверяет capability через CapabilityGate до обращения к Hub.
+# Раньше здесь был services-адаптер, который принимал payload-dict как
+# notebook_name (см. docstring hub_run_adapter) — вызов из YAML был
+# некорректен; провайдер принимает payload-dict и разбирает его сам.
 
 route_id: jupyter_hub_run_file
 source:
@@ -22,7 +29,7 @@ steps:
 - log:
     level: info
 - call_function:
-    ref: src.backend.services.jupyter.hub_run_adapter:run
+    ref: extensions.jupyter_hub.plugin:run_notebook
     payload_from: body
     result_property: hub_result
 - audit:

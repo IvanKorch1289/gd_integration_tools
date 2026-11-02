@@ -1,11 +1,11 @@
-# OWNER_TASKS — Известные ограничения и owner-задачи (волны 20 → 22)
+# OWNER_TASKS — Известные ограничения и owner-задачи (волны 20 → 23)
 
 > Реестр позиций, которые **нельзя закрыть кодом** без решения владельца:
 > внешние зависимости, эксплуатационные решения, сознательно отложенные
 > миграции. Позиции, закрытые кодом, помечены **✅ ЗАКРЫТО** со ссылкой на ADR
 > и доказательством — они остаются здесь как traceability, а не как долг.
 >
-> Источник правды по волнам 13–22 — `docs/adr/` (ADR-0357…ADR-0410).
+> Источник правды по волнам 13–23 — `docs/adr/` (ADR-0357…ADR-0414).
 > Реестр прод-готовности — [PROD_READINESS_GAPS.md](PROD_READINESS_GAPS.md).
 
 ## Как читать
@@ -59,29 +59,66 @@
 
 ## 3. Прод-значения, оставленные осознанно
 
-* **Статус.** ⚙️ контракты ✅ **ЗАКРЫТО** (ADR-0407): четыре «прод-значения»
-  переведены из комментариев в исполняемые проверки `profile_merge.py`:
+* **Статус.** ⚙️ контракты ✅ **ЗАКРЫТО** (ADR-0407, ADR-0412): пять
+  «прод-значений» переведены из комментариев в исполняемые проверки
+  `profile_merge.py`:
   HS256 допустим только при гарантированном `SEC_SECRET_KEY` (иначе CRITICAL);
   WAF `allow_hosts` обязан покрывать хосты внешних интеграций (SKB, Dadata),
   loopback — только при включённой локальной зависимости; `fallback_chain` без
-  недоступных в проде сервисов (open_webui уже исключён); `replica_dsn=null` =
+  недоступных в проде сервисов (open_webui исключён); `replica_dsn=null` =
   «реплики нет» (не CRITICAL), непустое значение → реальный не-loopback хост и
-  маскирование (ADR-0378). Проверка: `tests/unit/core/config/test_prod_values_contracts.py` (24 теста);
+  маскирование (ADR-0378); **sidecar'ы в prod/staging — по service-DNS**
+  (`clamd`, `otel-collector`), loopback-хост sidecar'а — CRITICAL
+  (`waf.clamav_host_loopback_in_prod`,
+  `app.opentelemetry_endpoint_loopback_in_prod`). Проверка:
+  `tests/unit/core/config/test_prod_values_contracts.py` (24 теста) +
+  `tests/unit/core/config/test_adr0412_sidecar_dns.py` (32 теста);
   `manage.py validate-profile prod|staging` → 0 CRITICAL.
 * **Осталось владельцу** (инфраструктурные решения, кодом не закрываются):
   * **3.1. Переход prod на RS256.** Требует RSA-keypair + JWKS/IdP и
     `security.algorithm=RS256` + `jwks_url`. Критерий: prod работает с
     внешним IdP; `validate-profile prod` → 0 CRITICAL.
-  * **3.2. Service-DNS вместо loopback для sidecar'ов.** Сейчас `waf.clamav_host`
-    и otel-экспорт указывают на loopback → в pod-сети это другой контейнер.
-    Критерий: `waf.clamav_fail_open: false` в prod + хосты sidecar'ов в
-    Service-DNS.
-  * **3.3. Прод-endpoint OpenWebUI.** Провайдер исключён из `fallback_chain`
-    (сервис не развёрнут). Критерий: endpoint развёрнут и провайдер возвращён в
-    цепочку.
-  * **3.4. DSN read-реплики.** `replica_dsn: null` = реплики нет. Критерий:
-    DSN указывает на реальную реплику, покрыт тестом «не-loopback хост» и
-    маскируется в дампах.
+  * **3.2. Service-DNS вместо loopback для sidecar'ов.** ✅ контракт закрыт
+    кодом (ADR-0412), осталось — инфраструктура. Хосты sidecar'ов
+    конфигурируемы и по умолчанию равны service-DNS именам (`clamd`,
+    `otel-collector`); в prod/staging loopback-хост sidecar'а — CRITICAL
+    (`waf.clamav_host_loopback_in_prod`,
+    `app.opentelemetry_endpoint_loopback_in_prod`); `Service`-объекты для
+    sidecar'ов и значения хостов — в `deploy/k8s/{service,configmap}.yaml`.
+    **Критерии приёмки:** (1) развёрнуты Deployment'ы clamd и
+    otel-collector с лейблами `app.kubernetes.io/name: clamd` /
+    `otel-collector`; (2) `kubectl get svc clamd otel-collector` — оба
+    ClusterIP в namespace приложения; (3) из pod'а приложения
+    `nc -z clamd 3310` и `nc -z otel-collector 4317` — успех; (4)
+    выбран режим отказа clamd в prod: `waf.clamav_fail_open: false`
+    (недоступный clamd = блокировка запроса) либо осознанно `true`
+    (тогда запросы проходят без сканирования — риск, который сейчас
+    отмечает WARNING `waf.clamav_fail_open_in_prod`); (5)
+    `python manage.py validate-profile prod` → 0 CRITICAL.
+  * **3.3. Прод-endpoint OpenWebUI.** ✅ контракт закрыт кодом (ADR-0412),
+    осталось — инфраструктура. Endpoint провайдера объявлен явно
+    (`open_webui.base_url`, env `OPEN_WEBUI_BASE_URL`) со значением по
+    умолчанию `http://open-webui:3000` (service-DNS); `Service`
+    `open-webui` объявлен в `deploy/k8s/service.yaml`; провайдер **не**
+    входит в `ai_providers.fallback_chain` prod/staging-профиля, пока
+    сервис не развёрнут. **Критерии приёмки:** (1) развёрнут OpenWebUI
+    (Deployment + Service `open-webui`); (2) из pod'а приложения
+    `curl -sf http://open-webui:3000/api/v1/config` — 200; (3) провайдер
+    возвращён в `ai_providers.fallback_chain` prod-профиля;
+    (4) `python manage.py validate-profile prod` → 0 CRITICAL.
+    Процедура включения — `docs/config/SETTINGS_GUIDE.md`, раздел
+    «Sidecar-DNS и endpoint-контракты (ADR-0412)».
+  * **3.4. DSN read-реплики.** ✅ контракт закрыт кодом (ADR-0407 +
+    ADR-0412), осталось — инфраструктура. `replica_dsn: null` — валидное
+    прод-значение («реплика не развёрнута»), непустое значение проверяется
+    валидатором (реальный не-loopback хост) и маскируется в дампах; шаблон
+    DSN задокументирован в комментариях профилей, в `SETTINGS_GUIDE.md` и
+    закомментированным примером в `deploy/k8s/configmap.yaml`:
+    `postgresql+asyncpg://<user>:<pass>@<replica-host>:5432/<db>`.
+    **Критерии приёмки:** (1) выдан async-DSN реплики (Secret/Vault);
+    (2) `database.replica_dsn` (или env `DB_REPLICA_DSN`) указывает на
+    реальный хост реплики; (3) `snapshot.enabled: true` в prod включён по
+    runbook'у; (4) `python manage.py validate-profile prod` → 0 CRITICAL.
 
 ## 4. Baseline `missing-secret` / `missing-non-secret`
 
@@ -131,15 +168,33 @@
 
 ## 9. Step-level audit-события workflow
 
-* **Статус.** ⚙️ инженерно: аудит **процессоров** закрыт (ADR-0401: базовый
-  класс эмитит `audit_event` — только метаданные capability/route/tenant, без
-  значений данных). События именно **шагов workflow** в pg-runner не
-  эмитятся — нужен контракт «что считать шагом» (ADR-0391: текущая семантика
-  `step_started/step_finished` в событийном логе не доходит до audit-сервиса).
-* **Минимальный шаг.** Определить, что является шагом для аудита (событие
-  pg-runner или DSL-шаг), и эмитить единообразно с уже реализованным
-  процессорным аудитом.
-* **Требует владельца.** Да — выбор модели аудита шагов.
+* **Статус.** ✅ **ЗАКРЫТО** (ADR-0414, волна 23, кластер C4). Модель шага
+  зафиксирована: **шаг** = переход между `step_started` и терминальным
+  исходом (`step_finished` / `step_failed` / отмена workflow'а). На шаг
+  эмитятся события `workflow.step.started` и `workflow.step.succeeded` /
+  `.failed` / `.cancelled` через unified audit-service
+  (`core.audit.facade.emit_audit`) — **только метаданные**
+  (route_id / step / tenant / attempt / outcome / duration_ms /
+  capability / workflow_id), без значений данных и payload'а шага (тот же
+  принцип «без данных», что ADR-0401 для процессоров). Гейт включения —
+  декларация capability `audit.write` роутом (opt-in, как `audit_event` у
+  процессоров): без декларации событий нет. Событие старта
+  идемпотентно — один раз на (инстанс, шаг, попытка); дедупликация по
+  event log'у (`idempotency_key`), поэтому переживает перезапуск
+  процесса.
+* **Проверка.** 8 тестов в
+  `tests/unit/infrastructure/workflow/test_step_audit_wave23.py`
+  (started/succeeded/failed/cancelled с метаданными; payload шага не
+  попадает в событие; повторный запуск не дублирует событие старта; без
+  декларации `audit.write` событий нет) + регресс
+  `tests/unit/infrastructure/workflow/` и `tests/unit/core/workflow/` —
+  358 passed, 5 skipped.
+* **Осталось владельцу.** Да, вне кода: (1) аудит шагов
+  Temporal-backend'а (production-путь не покрыт — у Temporal своя
+  history-модель); (2) декларация `audit.write` в `routes/*/route.toml`
+  роутов с workflow-спеками — без неё шаги не аудируются; (3) флаг
+  `audit_clickhouse_enabled` в проде — иначе события не сохраняются.
+  Критерии приёмки — в ADR-0414 §Открытое.
 
 ## 10. `extensions/credit_pipeline` — activity-имена не резолвятся
 
@@ -155,19 +210,39 @@
   консистентности workflow — команды в ADR-0409 §Проверка) плюс тесты
   расширения в `extensions/credit_pipeline/tests/`.
 
-## 11. Межtenant-снимок под RLS требует роли `BYPASSRLS`
+## 11. Межtenant-снимок под RLS: режимы выгрузки и роль `BYPASSRLS`
 
-* **Статус.** ⚙️ контракт ✅ **ЗАКРЫТО** (ADR-0409): проход по тенантам с
-  per-tenant `SET` невозможен (реестра tenant'ов нет, `SELECT DISTINCT tenant_id`
-  под RLS видит только текущего) → контракт «снапшот в пределах одного
-  `tenant_id`; без скоупа — fail-closed» (`SnapshotTenantScopeError`); скоуп
-  определяется **до** создания движка/транзакции → отказ не затирает файл
-  снимка; пустой снимок → WARNING.
-* **Осталось владельцу.** Да — если нужен межtenant-снимок: роль с
-  `BYPASSRLS` + DSN, либо per-tenant job'ы (по одному на тенанта) с
-  `register_snapshot_job(scheduler, tenant_id=...)`. Критерий: снапшот всех
-  тенантов без «тихих 0 строк» и без обхода RLS в привилегированном режиме
-  без явного решения.
+* **Статус.** ⚙️ кодовая часть ✅ **ЗАКРЫТО** (ADR-0409 + ADR-0413, волна 23,
+  кластер C3). Контракт ADR-0409 («снапшот в пределах одного `tenant_id`;
+  без скоупа — fail-closed») сохранён и расширен явной настройкой режима
+  в модели `SnapshotSettings` (`snapshot.mode`):
+  * `single-tenant` (по умолчанию, прежнее поведение) — скоуп из явного
+    аргумента → tenant-контекста процесса, без скоупа —
+    `SnapshotTenantScopeError`;
+  * `per-tenant` — **безопасная** альтернатива `BYPASSRLS`: явный список
+    `snapshot.tenants`, для каждого tenant'а свой `SET app.tenant_id`;
+    пустой список — fail-closed (`SnapshotModeError`), снимок не пишется;
+  * `service-role` — чтение служебной ролью с `BYPASSRLS` по DSN из
+    `snapshot.service_dsn` (`SecretStr`, `SNAPSHOT_SERVICE_DSN`); DSN не
+    задан — fail-closed; наличие `BYPASSRLS` у роли проверяется **до**
+    выборки (`_assert_bypassrls`).
+* **Проверка.** 16 новых тестов в
+  `tests/unit/infrastructure/resilience/test_snapshot_job_modes.py` + 24
+  существующих (регрессия `single-tenant`) — оба файла зелёные; «тихих 0
+  строк» нет ни в одном режиме (пустой результат в межtenant-режимах —
+  ошибка, файл снимка не затирается пустым). Операционный артефакт (SQL
+  роли + шаблон DSN + проверки + откат + критерии приёмки) —
+  `docs/ops/snapshot-bypassrls-role.md`.
+* **Осталось владельцу.** Да — эксплуатационная часть (ADR-0393): если
+  выбран режим `service-role`, владелец БД выдаёт роль (`NOLOGIN` +
+  `BYPASSRLS` + `GRANT SELECT` только на таблицы снимка), заводит логин и
+  кладёт DSN в секрет-хранилище по процедуре
+  `docs/ops/snapshot-bypassrls-role.md`. Критерий приёмки: (1) у роли нет
+  прав на запись; (2) `SNAPSHOT_SERVICE_DSN` не в YAML/репозитории;
+  (3) при отзыве `BYPASSRLS` job падает с `SnapshotModeError`, а снимок не
+  перезаписывается пустым; (4) RLS-политики остальных пользователей не
+  изменены. Без выдачи роли работоспособен режим `per-tenant` (список
+  tenant'ов — эксплуатационные данные владельца).
 
 ## 12. `jupyter.hub` — capability без plugin-провайдера
 
@@ -200,5 +275,8 @@
 * [ADR-0408](../adr/0408-workflow-dlq-contract-and-sla-alerting.md) — DLQ workflow и SLA-алертинг.
 * [ADR-0409](../adr/0409-multi-tenant-snapshot-and-credit-pipeline-agents.md) — скоуп снапшота и честные агенты расширения.
 * [ADR-0410](../adr/0410-order-dependent-pollution-final.md) — закрытие order-dependent загрязнения.
+* [ADR-0412](../adr/0412-sidecar-dns-and-endpoint-contracts.md) — service-DNS для sidecar'ов и endpoint-контракты.
+* [ADR-0413](../adr/0413-multi-tenant-snapshot-modes.md) — режимы межtenant-снапшота (закрывает кодовую часть §11).
+* [ADR-0414](../adr/0414-workflow-step-audit-model.md) — модель аудита шагов workflow (закрывает §9).
 * [ADR-0403](../adr/0403-workflow-sla-dlq-and-prod-validator.md) — SLA-алертинг, workflow-DLQ, прод-валидатор.
 * [PROD_READINESS_GAPS.md](PROD_READINESS_GAPS.md) — реестр прод-готовности.

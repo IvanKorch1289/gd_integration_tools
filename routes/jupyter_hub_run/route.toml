@@ -27,13 +27,13 @@ schedule = "never"
 # ADR-044 grammar — ровно 2 сегмента <resource>.<verb>, поэтому исходное
 # "jupyter.hub.run" объявляется как resource "jupyter.hub" + scope "run".
 #
-# 2026-10-06: jupyter.hub намеренно НЕ публична (запуск ноутбука = удалённое
-# выполнение произвольного кода с сервисной учёткой), а плагина-провайдера
-# jupyter/notebook в проекте нет. Поэтому этот роут честно остаётся
-# незагруженным по capability-гиту, пока такой плагин не появится и не
-# покроет capability через [requires_plugins]. Публичность capability не
-# выглядела бы разумной заменой: она отдала бы удалённое выполнение кода
-# любому маршруту без провайдера.
+# ADR-0415: capability jupyter.hub остаётся НЕ публичной (запуск ноутбука =
+# удалённое выполнение произвольного кода с сервисной учёткой), но теперь у
+# неё есть владелец — расширение extensions/jupyter_hub/ объявляет
+# [[capabilities]] name = "jupyter.hub", scope = "run" (ADR-0078). Роут
+# запрашивает capability у провайдера через [route.requires_plugins], поэтому
+# subset-инвариант ADR-044 (route.capabilities ⊆ union(requires_plugins) ∪
+# public) выполняется и роут грузится.
 #
 # net.outbound — host Jupyter Hub из jupyter_hub.base_url (по умолчанию
 # http://localhost:8000 → host "localhost"); runtime-гейт сверяет scope
@@ -43,7 +43,8 @@ name = "net.outbound"
 scope = "localhost"
 
 # jupyter.hub — verb запуска ноутбука; scope обязателен
-# (vocabulary: scope_required=True для двухсегментных имён).
+# (vocabulary: scope_required=True для двухсегментных имён) и совпадает
+# со scope, объявленным провайдером (extensions/jupyter_hub/plugin.toml).
 [[route.capabilities]]
 name = "jupyter.hub"
 scope = "run"
@@ -53,6 +54,12 @@ scope = "run"
 [[route.capabilities]]
 name = "audit.write"
 scope = "audit:*"
+
+# ВНИМАНИЕ (TOML): в конверте [route] bare-ключи обязаны идти ДО любой
+# вложенной таблицы — иначе они поглощаются последней открытой таблицей.
+# Провайдер capability jupyter.hub:run — extensions/jupyter_hub (ADR-0415).
+[route.requires_plugins]
+jupyter_hub = ">=0.1,<1.0"
 
 [route.transport]
 pool_size = 8

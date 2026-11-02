@@ -41,12 +41,11 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 ROUTES_DIR = REPO_ROOT / "routes"
 CORE_VERSION = "0.20.0"
 
-#: Роут, который честно остаётся незагруженным: ``jupyter.hub`` — непубличная
-#: capability (запуск ноутбука = удалённое выполнение произвольного кода),
-#: а плагина-провайдера jupyter в проекте нет. Отказ фиксирован в
-#: ``routes/jupyter_hub_run/route.toml`` и в
-#: ``src/backend/core/security/capabilities/vocabulary/defaults/base.py``.
-EXPECTED_UNCOVERED_ROUTES = frozenset({"jupyter_hub_run"})
+#: Роуты, которые честно остаются незагруженными: capability без
+#: плагина-провайдера. После ADR-0415 список пуст — у ``jupyter.hub``
+#: появился владелец ``extensions/jupyter_hub/`` (см.
+#: ``tests/unit/services/routes/test_jupyter_hub_capability_provider.py``).
+EXPECTED_UNCOVERED_ROUTES = frozenset()
 
 
 def _manifest_paths() -> list[Path]:

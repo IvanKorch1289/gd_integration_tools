@@ -1,0 +1,40 @@
+# Capability-провайдер Jupyter Hub (ADR-0415).
+#
+# Владелец capability ``jupyter.hub`` (scope ``run``). Capability намеренно
+# НЕ входит в публичный набор ядра: запуск ноутбука на удалённом Jupyter Hub =
+# выполнение произвольного пользовательского кода с сервисной учёткой, поэтому
+# публичность отдала бы привилегированную операцию любому роуту без
+# провайдера (ADR-0405 §Альтернативы, вариант C).
+#
+# Форма объявления — ``[[capabilities]]`` с отдельными name/scope (ADR-0078).
+# Scope = verb (``run``) — тот же scope, который запрашивает роут
+# ``routes/jupyter_hub_run``.
+
+name = "jupyter_hub"
+version = "0.1.0"
+requires_core = ">=0.20,<0.21"
+entry_class = "extensions.jupyter_hub.plugin.JupyterHubPlugin"
+tenant_aware = true
+description = "Capability-провайдер Jupyter Hub: запуск ноутбуков (jupyter.hub:run)"
+trust_tier = "B"
+
+# Whitelist модулей для DSL-шага ``call_function``: провайдер разрешает
+# вызов собственного entry-point (extensions.jupyter_hub.plugin:run_notebook).
+# Роут ``routes/jupyter_hub_run`` вызывает именно его.
+call_function_modules = [
+    "extensions.jupyter_hub.plugin",
+]
+
+[[capabilities]]
+name = "jupyter.hub"
+scope = "run"
+
+[provides]
+actions = [
+    "jupyter.hub.run",
+]
+repositories = []
+processors = []
+sources = []
+sinks = []
+schemas = []

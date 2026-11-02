@@ -4,6 +4,10 @@ DX-8.2: Typer-prompt спрашивает source / sink / AI? / retry?, зате
 генерирует ``routes/<name>/route.toml`` + ``*.dsl.yaml`` с минимально
 рабочим скелетом.
 
+Манифест генерируется в каноничной форме ADR-0405/ADR-0415: конверт
+``[route]`` + таблицы ``[[route.capabilities]]`` с отдельными ``name``/
+``scope`` (генератор — ``tools/wizards/route_templates.py``).
+
 Запуск:
 
 .. code-block:: bash
@@ -27,11 +31,20 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from textwrap import dedent
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 ROUTES_DIR = ROOT / "routes"
+
+# Канонический генератор манифеста — в tools/wizards/route_templates.py
+# (ADR-0405/ADR-0415). ``sys.path`` дополняется, чтобы скрипт работал и как
+# ``python tools/scaffold_route.py``.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.wizards.route_templates import (  # noqa: E402
+    build_route_toml as build_route_toml_shared,
+)
 
 SOURCE_CHOICES = ("http", "cron", "kafka", "webhook", "file_watch", "cdc")
 SINK_CHOICES = ("http", "kafka", "db", "file", "dlq", "log")
@@ -134,30 +147,19 @@ def build_dsl_yaml(*, source: str, sink: str, ai: bool, retry: bool, name: str) 
     return yaml.safe_dump(route, allow_unicode=True, sort_keys=False)
 
 
-def build_route_toml(*, name: str, ai: bool) -> str:
-    """Собирает route.toml manifest."""
-    capabilities = ["net.outbound", "db.write", "audit.write"]
-    if ai:
-        capabilities.append("ai.llm")
-    cap_toml = "[" + ", ".join(f'"{c}"' for c in capabilities) + "]"
-    return dedent(
-        f"""\
-        # route.toml (V11): manifest для route '{name}' (S10 K5 W2 scaffold).
-        name = "{name}"
-        version = "0.1.0"
-        requires_core = ">=15.0,<16"
-        capabilities = {cap_toml}
-        tenant_aware = true
+def build_route_toml(*, name: str, ai: bool, sink: str = "http") -> str:
+    """Собрать route.toml manifest (каноничная форма ADR-0405/ADR-0415).
 
-        [slo]
-        p95_ms = 500
-        timeout_ms = 5000
+    Args:
+        name: Имя роута (snake_case).
+        ai: Добавить AI-шаг (``llm_call``) — требует capability ``ai.invoke``.
+        sink: Sink шага сгенерированного DSL — определяет набор capability.
 
-        [feature_flag]
-        enabled = true
-        gate = "{name}_enabled"
-        """
-    )
+    Returns:
+        TOML-текст манифеста.
+
+    """
+    return build_route_toml_shared(name=name, ai=ai, sink=sink)
 
 
 def write_scaffold(
@@ -179,7 +181,7 @@ def write_scaffold(
     target.mkdir(parents=True, exist_ok=True)
 
     (target / "route.toml").write_text(
-        build_route_toml(name=name, ai=ai), encoding="utf-8"
+        build_route_toml(name=name, ai=ai, sink=sink), encoding="utf-8"
     )
     (target / "main.dsl.yaml").write_text(
         build_dsl_yaml(source=source, sink=sink, ai=ai, retry=retry, name=name),

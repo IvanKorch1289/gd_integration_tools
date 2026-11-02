@@ -46,15 +46,22 @@ def test_build_dsl_yaml_with_ai_and_retry() -> None:
 
 
 def test_route_toml_contains_capabilities() -> None:
+    """Манифест объявляет capability в каноничной форме (ADR-0405/ADR-0415)."""
     text = mod.build_route_toml(name="x", ai=True)
     assert 'name = "x"' in text
-    assert "ai.llm" in text
+    # ai.llm никогда не было в vocabulary — каноническое имя ai.invoke.
+    assert "ai.llm" not in text
+    assert "ai.invoke" in text
     assert "net.outbound" in text
+    assert "audit.write" in text
+    # Legacy-форма (плоский список строк) больше не генерируется.
+    assert "capabilities = [" not in text
 
 
 def test_route_toml_without_ai_skips_capability() -> None:
+    """Без AI-шага подсказка про ai.invoke не выводится."""
     text = mod.build_route_toml(name="x", ai=False)
-    assert "ai.llm" not in text
+    assert "ai.invoke" not in text
 
 
 def test_write_scaffold_creates_files(tmp_path: Path) -> None:

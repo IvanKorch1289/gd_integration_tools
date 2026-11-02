@@ -31,6 +31,14 @@ from rich.syntax import Syntax
 ROOT = Path(__file__).resolve().parents[2]
 ROUTES_DIR = ROOT / "routes"
 
+# Каноничный генератор манифеста живёт в tools/wizards/route_templates.py
+# (ADR-0405/ADR-0415). ``sys.path`` дополняется, чтобы скрипт работал и как
+# ``python tools/wizards/route_wizard.py`` (без editable-установки пакета).
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.wizards.route_templates import build_route_toml  # noqa: E402
+
 # Round 11 fix: импортируем shared helper для синхронизации с pyproject.toml.
 # Аналогично Round 8 (plugin_wizard.py) — избегаем дублирования.
 
@@ -114,28 +122,24 @@ def _build_toml(
     tenant_aware: bool,
     p95_ms: int,
     timeout_ms: int,
+    sink: str = "http",
 ) -> str:
-    capabilities = ["net.outbound", "db.write", "audit.write"]
-    if ai:
-        capabilities.append("ai.llm")
-    if retry:
-        capabilities.append("retry.enabled")
-    cap_str = "[" + ", ".join(f'"{c}"' for c in capabilities) + "]"
+    """Собрать route.toml manifest.
 
-    return f"""\
-# route.toml (V11): manifest for route '{name}' (S33 W1 wizard).
-name = "{name}"
-version = "0.1.0"
-requires_core = ">=0.20,<0.21"
-capabilities = {cap_str}
-tenant_aware = {str(tenant_aware).lower()}
-feature_flag = {{ enabled = true, gate = "{name}_enabled" }}
-slo = {{ p95_ms = {p95_ms}, timeout_ms = {timeout_ms} }}
-schedule = "never"
-
-[feature_flags]
-default = ["default"]
-"""
+    Каноничная форма ADR-0405/ADR-0415 (конверт ``[route]`` + таблицы
+    ``[[route.capabilities]]``) — генератор общий с ``tools/scaffold_route.py``
+    (``tools/wizards/route_templates.py``), чтобы legacy-форма
+    ``capabilities = [...]`` не могла вернуться в одном из CLI.
+    """
+    return build_route_toml(
+        name=name,
+        ai=ai,
+        retry=retry,
+        tenant_aware=tenant_aware,
+        p95_ms=p95_ms,
+        timeout_ms=timeout_ms,
+        sink=sink,
+    )
 
 
 def _build_yaml(
@@ -194,7 +198,13 @@ def _build_yaml(
 def _preview(name: str, source: str, sink: str, *, ai: bool, retry: bool) -> None:
     """Print diff preview in rich."""
     toml_content = _build_toml(
-        name, ai=ai, retry=retry, tenant_aware=True, p95_ms=500, timeout_ms=5000
+        name,
+        ai=ai,
+        retry=retry,
+        tenant_aware=True,
+        p95_ms=500,
+        timeout_ms=5000,
+        sink=sink,
     )
     yaml_content = _build_yaml(name, source, sink, ai=ai, retry=retry, retry_attempts=3)
 
@@ -237,6 +247,7 @@ def _write_scaffold(
         tenant_aware=tenant_aware,
         p95_ms=p95_ms,
         timeout_ms=timeout_ms,
+        sink=sink,
     )
     yaml_content = _build_yaml(
         name,

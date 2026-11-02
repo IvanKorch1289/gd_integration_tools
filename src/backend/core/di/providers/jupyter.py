@@ -34,9 +34,32 @@ def get_notebook_execution_service_provider() -> Any:
     return svc
 
 
-def set_notebook_execution_service_provider(impl: Any) -> None:
-    """Test-override для NotebookExecutionService."""
-    _overrides["notebook_execution_service"] = impl
+def get_hub_run_provider() -> Any:
+    """Вернуть ``run_hub_notebook`` — мост core→services для провайдера.
+
+    ADR-0415: capability-провайдер ``jupyter.hub`` живёт в расширении
+    (``extensions/jupyter_hub/``), а расширения по правилам слоёв не могут
+    импортировать ``services/*`` напрямую. Этот DI-провайдер — sanctioned
+    composition root (``core/di/providers/``), через который провайдер
+    получает оркестратор запуска ноутбуков.
+
+    Импорт late (внутри функции), чтобы не тянуть services-модуль при
+    импорте core.
+
+    Returns:
+        Callable ``run_hub_notebook`` (async).
+    """
+    if "hub_run" in _overrides:
+        return _overrides["hub_run"]
+    from src.backend.services.jupyter.hub_run_orchestrator import run_hub_notebook
+
+    _overrides["hub_run"] = run_hub_notebook
+    return run_hub_notebook
+
+
+def set_hub_run_provider(impl: Any) -> None:
+    """Test-override для ``run_hub_notebook``."""
+    _overrides["hub_run"] = impl
 
 
 def reset_notebook_execution_service_overrides() -> None:
