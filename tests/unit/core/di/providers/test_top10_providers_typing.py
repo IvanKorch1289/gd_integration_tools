@@ -331,11 +331,15 @@ class TestPublicApiUnchanged:
 
         expected = {
             "DatabaseSessionManager",
+            "RETRYABLE_PG_CODES",
+            "RetryableTransactionError",
             "get_external_session_manager",
             "get_main_session_manager",
             "get_smart_read_session",
             "get_smart_write_session",
+            "is_retryable_transaction_error",
             "main_session_manager",
+            "pg_sqlstate",
         }
         assert set(session_manager.__all__) == expected, (
             f"__all__ session_manager изменился: "

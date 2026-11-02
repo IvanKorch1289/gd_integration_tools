@@ -275,6 +275,52 @@
   банка — `tests/unit/test_order_dependent_pollution_gate.py`.
 * **Проверка.** Полный прогон `pytest tests/unit` → **0 failed / 23484 passed**.
 
+## 14. Мультироевое ревью (волны 24–25): что закрыто кодом
+
+Ревью 6 агентами (безопасность, БД, workflow/DSL, инфраструктура, API,
+качество) дало 2 critical + 12 high + ряд medium. Закрыто:
+
+* **[critical] Авторизация на action-поверхности** (ADR-0421): `ActionMetadata.permissions`
+  не проверялся нигде → 253 из 470 роутов без auth-зависимости, а
+  `POST /api/v1/auto/admin.get_config` отдавал `settings.model_dump()`. Теперь
+  права проверяются в `dispatch()` и на auto-/invocation-поверхности (без права —
+  403, конфигурация не выдаётся).
+* **[high] Дрейф контракта клиент↔сервер** (ADR-0422): 18 путей `api_clients/*` давали 404 →
+  выровнены с роутером сервера + CI-гейт (AST-сверка 62 путей).
+* **[high] CORS/CSRF-порядок** (ADR-0422): preflight → 401 → 204 без auth; CSRF перенесён
+  внутрь auth-слоя → без ключа 401, без CSRF-токена 403.
+* **[high] Tenant-guard** (ADR-0417): guard применялся к ВНЕШНИМ БД и пропускался без
+  tenant-контекста → только main-движок, без tenant → fail-closed; единый канон
+  tenant-таблиц (в т.ч. orders/users/files/orderkinds с RLS).
+* **[high] Capability-контур** (ADR-0416): capability скиллов не проверялись (мёртвый
+  `_global_capability_check`); baseline-флаг обходился; wildcard-scope `**` в baseline
+  отключал scope-проверку storage.*/fs.read/net.outbound.
+* **[high] Лимиты и надёжность БД** (ADR-0418): лимит выборки применялся ПОСЛЕ `fetchall()`
+  (DoS через `SELECT *`); нет retry на 40001/40P01 и savepoint'ов; `connect/command_timeout`
+  мертвы для mysql/mssql; batch-шаги без capability/квот/лимита.
+* **[high] OpenAPI и загрузка файлов** (ADR-0423): 206 операций без 4xx, 188 мутаций без
+  `requestBody`; загрузка файлов без лимита и content-type-проверки.
+* **[medium] Ротация кредов БД** (ADR-0420): DSN менялся только с рестартом → отпечаток +
+  dispose + пересоздание, подключено к hot-reload.
+* **[medium] Прочее** (ADR-0419): JWKS без предельного окна stale и без https-проверки;
+  Jinja без sandbox (SSTI); `pickle.loads` без provenance; `waf.clamav_fail_open` в проде;
+  внешний `replica_dsn` без маскирования; CDC-DDL без валидации идентификаторов;
+  deprecated `VALUES(col)` в MySQL-UPSERT.
+
+### 14.1. Что осталось открытым из этого аудита
+
+* **D-4 (critical)** — UNION/CTE обходят ORM tenant-фильтр → G13.
+* **WS/GraphQL admin-действия** — fail-closed и для легитимного админа (там не
+  добавляется `role:admin` из `admin_roles`) → требует правки WS/GraphQL-слоёв.
+* **Namespace фасадов** — `StorageFacade`/`UnifiedCacheFacade`/`ExternalDatabaseFacade`
+  работают с `plugin="system"`, `OutboundHttpClient` — с `"core"` → проверка идёт под
+  namespace'ом вызывающего, а не пользователя (ADR-0416 §Открытое).
+* **Пустые capability-декларации в роутах** — ни одного `storage.*`/`db.*`/`cache.*`
+  в `route.toml`/`plugin.toml` → автор обязан объявлять права сам.
+* **Streamlit вызывает скрытый `/api/v1/users/all`** (вне `api_clients/`, гейт его не видит).
+* **CI-скан зависимостей** — `uv audit --frozen` покрывает весь lock, но job `pip-audit`
+  в CI сканирует только default-venv → расширить на extras.
+
 ---
 
 ## Связанные документы

@@ -242,5 +242,25 @@
 | auth_login admin_roles claim | `817eff4c1` |
 | Temporal runtime app fix | `5ee45d8db` |
 
+## G13. D-4: UNION/CTE обходят ORM tenant-фильтр (кросс-tenant чтение)
+
+- **Тип**: security / multi-tenancy. **Owner**: platform-team.
+- **Статус**: 🔴 ОТКРЫТ (подтверждено на реальном SQLAlchemy 2.0.52 + SQLite;
+  strict-xfail `tests/unit/core/tenancy/test_tenant_filter_union_cte_d4.py`, 4 кейса).
+- **Суть**: фильтр добавляет tenant-предикат только к верхнему уровню statement;
+  в `CompoundSelect`/CTE сущности живут в ветвях → под tenant-a `union_all`
+  возвращает строки tenant-b. Попытка починки через `replacement_traverse`
+  отклонена: обход не заходит в ветви, пересборка CompoundSelect требует
+  приватного API SQLAlchemy.
+- **Что сделано в волнах 24–25**: raw-SQL guard стал fail-closed без tenant-контекста
+  и ограничен main-движком (ADR-0417); добавлен единый канон tenant-таблиц
+  (`core/tenancy/tenant_tables.py`), из него же импортируется RLS-политика миграции.
+  Остаточная дыра — только ORM-ветвление.
+- **Критерии приёмки**: (1) кейсы `test_tenant_filter_union_cte_d4.py` переходят
+  из strict-xfail в XPASS; (2) проверка на реальном SQLAlchemy 2.0 (не на моках);
+  (3) решение без приватного API (пункт 3 — либо патч-слой с явной поддержкой
+  CompoundSelect/CTE, либо отказ от text()-пути для tenant-aware таблиц);
+  (4) версия SQLAlchemy и sqlite-режим зафиксированы в ADR.
+
 Оставшиеся инфраструктурные: G1/G2/G6 — требуют CI-runner, prod-стенд, брокеры.
-Оставшиеся кодовые: G5(a) proto v2 (backlog), G8 docs хвост (backlog), G10 nav debt (backlog).
+Оставшиеся кодовые: G5(a) proto v2 (backlog), G8 docs хвост (backlog), G10 nav debt (backlog), G13 D-4 (tenant-фильтр в UNION/CTE).

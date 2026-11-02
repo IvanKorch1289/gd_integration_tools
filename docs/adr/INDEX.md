@@ -202,9 +202,18 @@
 | [ADR-0413](0413-multi-tenant-snapshot-modes.md) | Режимы межtenant-снапшота (single-tenant / per-tenant / service-role) | Accepted |
 | [ADR-0414](0414-workflow-step-audit-model.md) | Модель аудита шагов workflow (волна 23, кластер C4) | Accepted |
 | [ADR-0415](0415-jupyter-hub-provider-and-capability-generators.md) | Провайдер capability `jupyter.hub` и миграция генераторов capability | Accepted |
+| [ADR-0416](0416-capability-skill-checks-and-wildcard-scope.md) | Capability-проверка скиллов, честный core-baseline и отказ от wildcard-scope | Accepted |
+| [ADR-0417](0417-tenant-guard-scope-and-external-sessions.md) | Границы tenant-guard'а: main-контур, внешние БД и fail-closed | Accepted |
+| [ADR-0418](0418-db-limits-retries-savepoints-and-batch-guards.md) | Лимиты выборки, retry на сериализацию, savepoint'ы и гварды batch-шагов (волна 24, кластер F3) | Accepted |
+| [ADR-0419](0419-jwks-hardening-sandbox-and-masking.md) | JWKS-hardening, Jinja2 sandbox, безопасный pickle и маскирование DSN (волна 24, кластер F4) | Accepted |
+| [ADR-0420](0420-db-credential-rotation-and-dead-pool-registrar.md) | Ротация кредов БД без рестарта и подключение регистратора пулов | Accepted |
+| [ADR-0421](0421-action-permission-enforcement.md) | Авторизация на action-поверхности (permissions + admin-префикс) | Accepted |
+| [ADR-0422](0422-api-contract-and-cors-csrf-ordering.md) | Контракт клиент↔сервер и порядок CORS/CSRF/auth | Accepted |
+| [ADR-0423](0423-openapi-completeness-and-upload-limits.md) | Полнота OpenAPI-схемы и лимиты загрузки файлов (кластер F6b-2) | Accepted |
+| [ADR-0424](0424-workflow-template-catalog.md) | Каталог шаблонов workflow для быстрой разработки (волна 25, кластер P5) | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 200 ADRs.
+**Total:** 209 ADRs.
 
