@@ -319,6 +319,18 @@
 * **Namespace фасадов** — `StorageFacade`/`UnifiedCacheFacade`/`ExternalDatabaseFacade`
   работают с `plugin="system"`, `OutboundHttpClient` — с `"core"` → проверка идёт под
   namespace'ом вызывающего, а не пользователя (ADR-0416 §Открытое).
+  * **Следствие:** декларация `storage.*`/`db.*`/`cache.*` в `route.toml` сейчас
+    не влияет на проверку — фасад проверяет capability под baseline'ом платформы
+    ("system"/"core" объявляют те же capability, ADR-0416). Права проверяются,
+    но по namespace'у платформы, а не роута.
+  * **Направление решения:** caller-aware capability — контекст вызывающего
+    (namespace роута) должен доходить до фасада (напр. ContextVar рядом с
+    tenant-контекстом, как в `core/tenancy`), либо capability запрашивается
+    у вызывающего слоя явно. Требует ADR: меняется семантика capability-контура
+    для 4 фасадов + `OutboundHttpClient` (риск: ломает baseline-декларации и
+    гейт `check_decorative_capabilities`).
+  * **Статус:** требует решения владельца (безопасность × удобство), кодом
+    в одиночку не закрывается.
 * **Пустые capability-декларации в роутах** — ни одного `storage.*`/`db.*`/`cache.*`
   в `route.toml`/`plugin.toml` → автор обязан объявлять права сам.
 * ~~**CI-скан зависимостей**~~ — закрыто: job `uv audit --frozen` + gate
