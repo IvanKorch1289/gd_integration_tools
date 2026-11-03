@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import importlib
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
@@ -66,11 +67,20 @@ def _command(
 
 @pytest.fixture(autouse=True)
 def _no_audit_backend(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Отключает реальный ClickHouse-audit в тестах (нет сетевых вызовов)."""
+    """Отключает реальный ClickHouse-audit в тестах (нет сетевых вызовов).
+
+    Патчится ОБЪЕКТ модуля, а не dotted-путь: pytest резолвит dotted-путь через
+    ``getattr(parent_package, "audit_service")`` — при подмене объекта пакета
+    ``core.audit.facade`` (бывший bare ``sys.modules.pop`` в
+    ``tests/unit/core/test_no_audit_proxy.py``) атрибут не выставлен → setup
+    падал с ``AttributeError`` (ADR-0404/0410).
+    """
+    audit_module = importlib.import_module(
+        "src.backend.core.audit.facade.audit_service"
+    )
     audit_service = AsyncMock()
     monkeypatch.setattr(
-        "src.backend.core.audit.facade.audit_service.get_unified_audit_service",
-        lambda: audit_service,
+        audit_module, "get_unified_audit_service", lambda: audit_service
     )
 
 

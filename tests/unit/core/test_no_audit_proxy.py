@@ -13,7 +13,6 @@ Verified: 3 call sites (2 prod entrypoints + 1 test mock unaffected).
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
@@ -29,11 +28,16 @@ def test_core_audit_get_audit_log_raises_attribute_error() -> None:
     Asserts:
     - ``from src.backend.core.audit import get_audit_log`` raises AttributeError
     - ``core.audit`` остаётся namespace package (facade subdir accessible)
-    """
-    # Clear any cached imports (defensive — pytest collection order может vary)
-    sys.modules.pop("src.backend.core.audit", None)
-    sys.modules.pop("src.backend.core.audit.facade", None)
 
+    ADR-0404/0410: ``sys.modules`` НЕ чистится. Раньше тест делал bare
+    ``sys.modules.pop("src.backend.core.audit[.facade]")`` — после этого любой
+    последующий импорт пересоздавал пакет/namespace-объект, а кэшированный
+    подмодуль ``facade.audit_service`` не переустанавливал атрибут на
+    родителе. Из-за этого чужие тесты, патчащие
+    ``src.backend.core.audit.facade.audit_service.*`` по dotted-пути, падали
+    в setup с ``AttributeError`` (18 ERROR в wave 25). Proxy удалён из
+    исходников → кэш чистить не требуется.
+    """
     with pytest.raises(ImportError) as exc_info:
         from src.backend.core.audit import get_audit_log  # noqa: F401
 

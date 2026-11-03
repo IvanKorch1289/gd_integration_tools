@@ -285,22 +285,36 @@ def fresh_app() -> MagicMock:
     return MagicMock()
 
 
+def _outbox_module() -> _types.ModuleType:
+    """Возвращает реальный модуль ``core.config.services.outbox``.
+
+    Патчить атрибут нужно НА МОДУЛЕ, а не по dotted-пути: пакет ``services``
+    использует lazy ``__getattr__`` со статической картой символов, поэтому
+    ``services.outbox`` (имя подмодуля) в ней отсутствует и разрешается только
+    как побочный эффект импорта подмодуля. После ``importlib.reload`` пакета
+    (другие тесты) атрибут пропадает → ``monkeypatch.setattr`` по пути падает.
+    """
+    import importlib
+
+    module = importlib.import_module("src.backend.core.config.services.outbox")
+    parent = sys.modules["src.backend.core.config.services"]
+    if not hasattr(parent, "outbox"):
+        parent.outbox = module  # noqa: B010 — восстанавливаем import-system side effect
+    return module
+
+
 @pytest.fixture
 def enable_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
     """Включает ``outbox_settings.enabled = True`` (для теста new path)."""
     settings = MagicMock(enabled=True)
-    monkeypatch.setattr(
-        "src.backend.core.config.services.outbox.outbox_settings", settings
-    )
+    monkeypatch.setattr(_outbox_module(), "outbox_settings", settings)
 
 
 @pytest.fixture
 def disable_dispatcher(monkeypatch: pytest.MonkeyPatch) -> None:
     """Оставляет ``outbox_settings.enabled = False`` (для теста legacy path)."""
     settings = MagicMock(enabled=False)
-    monkeypatch.setattr(
-        "src.backend.core.config.services.outbox.outbox_settings", settings
-    )
+    monkeypatch.setattr(_outbox_module(), "outbox_settings", settings)
 
 
 @pytest.mark.asyncio
