@@ -317,9 +317,40 @@
   namespace'ом вызывающего, а не пользователя (ADR-0416 §Открытое).
 * **Пустые capability-декларации в роутах** — ни одного `storage.*`/`db.*`/`cache.*`
   в `route.toml`/`plugin.toml` → автор обязан объявлять права сам.
-* **Streamlit вызывает скрытый `/api/v1/users/all`** (вне `api_clients/`, гейт его не видит).
 * **CI-скан зависимостей** — `uv audit --frozen` покрывает весь lock, но job `pip-audit`
   в CI сканирует только default-venv → расширить на extras.
+
+---
+
+## 15. Контракт путей портала (волна 26, ADR-0425)
+
+Гейт ADR-0422 сканировал только `api_clients/`; страницы `pages/**` ходили в API
+напрямую и вне гейта держали **39 запросов, которых сервер не регистрирует**
+(404, съеденные `except`). Закрыто кодом:
+
+* гейт расширен на `pages/**` (`test_api_contract_paths.py`) — путь страницы
+  обязан существовать на сервере, legacy-алиасы запрещены;
+* 22 вызова переведены на канонические пути (префикс `/api/v1`, `/api/v1/routes/inventory`,
+  `/api/v1/audit/capability`, `/api/v1/user/all/`, `/api/v1/admin/cron/list`,
+  `/api/v1/admin/workflow-audit/events`, `/api/v1/admin/resilience-profiles`);
+* 17 панелей без серверного endpoint'а показывают явное «endpoint не реализован»
+  вместо swallowed 404.
+
+Осталось закрыть (требует capability — **⚙️ инженерно**, но с решениями владельца):
+
+| # | Endpoint | Что нужно | Статус сервиса |
+|---|---|---|---|
+| 1 | `GET /api/v1/admin/guardrails-metrics` + `POST …/{tenant_id}/false-positive` | подключить `GuardrailsMetricsService` к DI + HTTP-обёртка | сервис есть, DI нет |
+| 2 | `GET /api/v1/admin/prompt-versions*` (list/activate/compare) | расширить `PromptRegistry` (list/activate) + обёртка | сервис есть, методов нет |
+| 3 | `GET /api/v1/webhooks/scheduled`, `POST /api/v1/webhook/schedule` | `WebhookScheduler` → DI + обёртка (с SSRF-валидацией) | сервис есть, DI нет |
+| 4 | `GET /api/v1/storage/list|get|download` (по ключу) | операции по `file_uuid` есть, по ключу — нет | частично |
+| 5 | `GET /api/v1/admin/pools/snapshot` | pool-менеджер умеет `get_metrics` | частично |
+| 6 | `GET /api/v1/admin/processes/active`, `GET /api/v1/admin/queues/summary` | новая capability (для Kafka/RabbitMQ — нет) | нет |
+| 7 | `POST /api/v1/admin/sql/query` | read-only SELECT с валидацией + аудитом | сознательно не поднимался |
+
+**Требует владельца:** решение по п. 7 (SQL-консоль — расширение поверх БД в
+проде) и по п. 6 (инфраструктурные метрики процессов/очередей).
+
 
 ---
 
