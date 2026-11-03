@@ -211,9 +211,11 @@
 | [ADR-0422](0422-api-contract-and-cors-csrf-ordering.md) | Контракт клиент↔сервер и порядок CORS/CSRF/auth | Accepted |
 | [ADR-0423](0423-openapi-completeness-and-upload-limits.md) | Полнота OpenAPI-схемы и лимиты загрузки файлов (кластер F6b-2) | Accepted |
 | [ADR-0424](0424-workflow-template-catalog.md) | Каталог шаблонов workflow для быстрой разработки (волна 25, кластер P5) | Accepted |
+| [ADR-0425](0425-streamlit-portal-api-path-contract.md) | Контракт API-путей портала: гейт по `pages/` + честные панели | Accepted |
+| [ADR-0426](0426-test-isolation-module-object-patching.md) | Тестовая изоляция: патч по объекту модуля, без `sys.modules.pop` | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 209 ADRs.
+**Total:** 211 ADRs.
 
