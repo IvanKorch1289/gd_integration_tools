@@ -137,17 +137,6 @@ class TestPlainSelectStillFiltered:
 class TestUnionBypass:
     """UNION — составной запрос; атрибуты результата не описывают сущности."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "D-4 (CRITICAL): UNION/CTE обходят ORM tenant-фильтр — дыра ПОДТВЕРЖДЕНА на "
-            "реальном SQLAlchemy 2.0.52 + SQLite: под tenant-a union_all возвращает строки "
-            "tenant-b. Фильтр добавляет условие только к верхнему уровню statement, а у "
-            "CompoundSelect/CTE сущности живут в ветвях. Попытка починки через "
-            "replacement_traverse отклонена: обход не заходит в ветви, а пересборка "
-            "CompoundSelect требует приватного API. strict=True: дыра закроется → XPASS."
-        ),
-    )
     def test_union_same_entity_hides_foreign_tenant(self, seeded: Session) -> None:
         """UNION двух выборок одной tenant-aware сущности."""
         own = select(Order.name).where(Order.name == "a-1")
@@ -156,17 +145,6 @@ class TestUnionBypass:
         leaked = [r[0] for r in rows if r[0] == "b-1"]
         assert not leaked, f"UNION вернул строку чужого tenant'а: {leaked}"
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "D-4 (CRITICAL): UNION/CTE обходят ORM tenant-фильтр — дыра ПОДТВЕРЖДЕНА на "
-            "реальном SQLAlchemy 2.0.52 + SQLite: под tenant-a union_all возвращает строки "
-            "tenant-b. Фильтр добавляет условие только к верхнему уровню statement, а у "
-            "CompoundSelect/CTE сущности живут в ветвях. Попытка починки через "
-            "replacement_traverse отклонена: обход не заходит в ветви, а пересборка "
-            "CompoundSelect требует приватного API. strict=True: дыра закроется → XPASS."
-        ),
-    )
     def test_union_different_entities_hides_foreign_tenant(
         self, seeded: Session
     ) -> None:
@@ -174,25 +152,16 @@ class TestUnionBypass:
         orders = select(Order.name)
         users = select(User.id.cast(String))
         rows = seeded.execute(orders.union_all(users)).all()
-        assert [r[0] for r in rows] == ["a-1"], (
-            "UNION разных сущностей утёк чужой tenant"
+        values = {r[0] for r in rows}
+        # Обе ветви отдают по одной строке tenant-a: Order.name и User.id.
+        assert values == {"a-1", "1"}, (
+            f"UNION разных сущностей утёк чужой tenant: {sorted(values)}"
         )
 
 
 class TestCteBypass:
     """CTE — вложенный подзапрос; фильтр должен применяться внутри."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "D-4 (CRITICAL): UNION/CTE обходят ORM tenant-фильтр — дыра ПОДТВЕРЖДЕНА на "
-            "реальном SQLAlchemy 2.0.52 + SQLite: под tenant-a union_all возвращает строки "
-            "tenant-b. Фильтр добавляет условие только к верхнему уровню statement, а у "
-            "CompoundSelect/CTE сущности живут в ветвях. Попытка починки через "
-            "replacement_traverse отклонена: обход не заходит в ветви, а пересборка "
-            "CompoundSelect требует приватного API. strict=True: дыра закроется → XPASS."
-        ),
-    )
     def test_cte_hides_foreign_tenant(self, seeded: Session) -> None:
         """CTE поверх tenant-aware таблицы."""
         cte = select(Order.id, Order.name).cte("mine")
@@ -200,20 +169,11 @@ class TestCteBypass:
         rows = seeded.execute(stmt).all()
         assert not rows, f"CTE вернул строку чужого tenant'а: {rows}"
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "D-4 (CRITICAL): UNION/CTE обходят ORM tenant-фильтр — дыра ПОДТВЕРЖДЕНА на "
-            "реальном SQLAlchemy 2.0.52 + SQLite: под tenant-a union_all возвращает строки "
-            "tenant-b. Фильтр добавляет условие только к верхнему уровню statement, а у "
-            "CompoundSelect/CTE сущности живут в ветвях. Попытка починки через "
-            "replacement_traverse отклонена: обход не заходит в ветви, а пересборка "
-            "CompoundSelect требует приватного API. strict=True: дыра закроется → XPASS."
-        ),
-    )
     def test_cte_then_union_hides_foreign_tenant(self, seeded: Session) -> None:
         """CTE + UNION — самая частая форма отчётных запросов."""
         cte = select(Order.name).cte("names")
         stmt = select(cte.c.name).union_all(select(User.id.cast(String)))
         rows = seeded.execute(stmt).all()
-        assert [r[0] for r in rows] == ["a-1"], "CTE+UNION утёк чужой tenant"
+        values = {r[0] for r in rows}
+        # CTE-ветвь (Order.name) и UNION-ветвь (User.id) — обе tenant-a.
+        assert values == {"a-1", "1"}, f"CTE+UNION утёк чужой tenant: {sorted(values)}"

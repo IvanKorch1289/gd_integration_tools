@@ -309,12 +309,12 @@ class Doc(tf.TenantMixin, _Base):
     name: Mapped[str] = mapped_column(String(50))
 
 
-def test_union_is_known_unfiltered_gap() -> None:
-    """N-2: ``UNION`` обходит фильтр — зафиксировано как открытый пробел.
+def test_union_is_filtered_after_d4_fix() -> None:
+    """N-2 закрыт (ADR-0428): ``UNION`` фильтруется по tenant'у.
 
-    Тест НЕ требует, чтобы сейчас было утечкой: он фиксирует текущее
-    известное поведение, чтобы при исправлении пробел стал виден как
-    регрессия, а не как тихая ломка.
+    Тест раньше фиксировал утечку (2 строки) как «известный пробел». После
+    патча D-4 составные запросы фильтруются по ветвям → остаётся только
+    строка своего tenant'а.
     """
     engine = create_engine("sqlite://")
     _Base.metadata.create_all(engine)
@@ -328,13 +328,11 @@ def test_union_is_known_unfiltered_gap() -> None:
         )
         session.commit()
         set_tenant(TenantContext(tenant_id="tenant-a"))
-        leaked = session.execute(
+        rows = session.execute(
             select(Doc.id, Doc.name).union(select(Doc.id, Doc.name))
         ).all()
-        assert len(leaked) == 2, (
-            "ожидаемая текущая картина: UNION не фильтруется (N-2, открыто). "
-            "Если тест упал — пробел закрыт, обновите finding и этот тест."
-        )
+        assert len(rows) == 1, f"UNION вернул строки чужого tenant'а: {rows}"
+        assert rows[0][1] == "a"
         set_tenant(TenantContext(tenant_id="tenant-a"))
 
 

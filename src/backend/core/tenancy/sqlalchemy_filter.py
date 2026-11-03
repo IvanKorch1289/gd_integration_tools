@@ -90,6 +90,9 @@ from typing import Any
 
 from sqlalchemy import MetaData, String, Table, TextClause, event, inspect, text
 from sqlalchemy.orm import Mapped, Mapper, Session, mapped_column
+from sqlalchemy.sql import visitors
+from sqlalchemy.sql.selectable import CTE as SQLCTE
+from sqlalchemy.sql.selectable import CompoundSelect
 
 from src.backend.core.errors import BaseError
 from src.backend.core.logging import get_logger
@@ -377,6 +380,62 @@ def _tenant_aware_entities(stmt: Any) -> list[Any]:
         if entity and _is_tenant_aware(entity):
             entities.append(entity)
     return entities
+
+
+def _filter_statement(stmt: Any, tenant_id: str) -> Any:
+    """Добавить tenant-предикаты с учётом составных конструкций (D-4).
+
+    Обычный ``Select`` фильтруется предикатом по ``tenant_id`` сущности.
+    Составные конструкции требуют явной поддержки:
+
+    * ``CompoundSelect`` (UNION/UNION ALL/INTERSECT/EXCEPT) — сущности живут
+      в **ветвях**, а не в верхнеуровневом statement: предикат верхнего
+      уровня не покрывает ветви → кросс-tenant чтение (D-4). Фильтруем
+      каждую ветвь и подменяем её через
+      :func:`sqlalchemy.sql.visitors.replacement_traverse` (публичный API,
+      deprecated-``replace_selectable`` не используется);
+    * ``CTE`` — определение CTE является отдельным select'ом, внешний запрос
+      ссылается только на его колонки. Фильтруем определение и подменяем
+      сам CTE (то же имя → внешние ссылки остаются валидными).
+
+    Args:
+        stmt: SQLAlchemy statement (select/DML/compound).
+        tenant_id: Идентификатор tenant'а.
+
+    Returns:
+        Statement с tenant-предикатами (исходный объект, если фильтр не
+        применим).
+
+    """
+    if isinstance(stmt, CompoundSelect):
+        branches = list(stmt.selects)
+        if not branches:
+            return stmt
+        filtered = [_filter_statement(branch, tenant_id) for branch in branches]
+
+        def _replace_branch(elem: Any) -> Any:
+            for old, new in zip(branches, filtered):
+                if elem is old:
+                    return new
+            return None
+
+        return visitors.replacement_traverse(stmt, {}, _replace_branch)
+
+    ctes = [frm for frm in _final_froms(stmt) if isinstance(frm, SQLCTE)]
+    if ctes:
+
+        def _replace_cte(elem: Any) -> Any:
+            for cte in ctes:
+                if elem is cte:
+                    inner = _filter_statement(cte.element, tenant_id)
+                    return inner.cte(cte.name)
+            return None
+
+        stmt = visitors.replacement_traverse(stmt, {}, _replace_cte)
+
+    for entity in _tenant_aware_entities(stmt):
+        stmt = stmt.where(entity.tenant_id == tenant_id)
+    return stmt
 
 
 def _table_name(cls: type[Any]) -> str | None:
@@ -764,8 +823,10 @@ def apply_tenant_filter(_target: Any = None) -> None:
         if not tenant_id:
             return
 
-        for entity in _tenant_aware_entities(stmt):
-            stmt = stmt.where(entity.tenant_id == tenant_id)
+        # D-4: составные конструкции (UNION/CTE) фильтруются явно —
+        # tenant-предикат добавляется в ветви/определения, а не только
+        # в верхнеуровневый statement.
+        stmt = _filter_statement(stmt, tenant_id)
         orm_execute_state.statement = stmt
 
     @event.listens_for(Session, "before_flush")
