@@ -111,7 +111,7 @@ strict-xfail в обычные тесты; фиксация «известног
 | Прогон | Результат |
 |---|---|
 | `tests/unit` (волна 25, до правок) | 0 failed, 23960 passed, **23 errors** |
-| `tests/unit` (волна 26, полный) | 0 failed, 0 errors (см. лог `.run/wave13-logs/reg_final_26b.txt`) |
+| `tests/unit` (волна 26, полный) | **23994 passed, 180 skipped, 51 xfailed, 46 xpassed, 0 failed, 0 errors** (45:37; лог `.run/wave13-logs/reg_final_26b.txt`) |
 | `tests/unit/core/` + `tests/unit/infrastructure/database/` | 7783 passed (после патча D-4) |
 | `tests/unit/entrypoints/` + `tests/unit/api/` | 1743 passed (WS/GraphQL auth) |
 | mypy-бюджет | 17 ошибок при бюджете 30 |
