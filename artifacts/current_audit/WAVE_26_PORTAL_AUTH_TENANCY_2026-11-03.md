@@ -86,6 +86,26 @@ strict-xfail в обычные тесты; фиксация «известног
 
 ---
 
+## 4б. Функциональный smoke (локальный стенд из рабочего дерева, порт 8010)
+
+| Проверка | Результат |
+|---|---|
+| `GET /health` | 200 |
+| `GET /ready` | 200 |
+| `GET /api/v1/user/all/` (канон портала) | 401 — маршрут есть (не 404) |
+| `GET /api/v1/audit/capability` | 401 |
+| `GET /api/v1/routes/inventory` | 401 |
+| `GET /api/v1/admin/cron/list` | 401 |
+| `GET /api/v1/admin/workflow-audit/events` | 401 |
+| `GET /api/v1/tech/degradation/snapshot` | 401 |
+| `GET /api/v1/admin/resilience-profiles` | 401 |
+| `POST /graphql` | 401 (require_auth), роутер смонтирован |
+| `POST /api/v1/auto/admin.get_config` | 401 (без токена), поверхность смонтирована |
+| GraphQL auto-schema (вручную, 2 action'а) | поля `adminGetConfig`/`ordersCreate` → args только `payload`; псевдо-аргумента `info` нет |
+
+Вывод: приложение стартует с правками волны 26; все канонические пути портала
+зарегистрированы сервером (401 вместо прежних 404).
+
 ## 5. Регрессия
 
 | Прогон | Результат |
