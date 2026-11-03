@@ -5,7 +5,7 @@ feature-flags (Sprint 7 Team T4).
 
 * **Plugins** — список установленных плагинов с toggle enable/disable
   (через ``/api/v1/admin/plugins``).
-* **Users** — read-only список пользователей (через ``/api/v1/users/all``).
+* **Users** — read-only список пользователей (через ``/api/v1/user/all/``).
 * **Фича-флаги** — toggle переключатели (через
   ``/api/v1/admin/feature-flags``).
 
@@ -100,7 +100,7 @@ with tab_users:
 
     try:
         with st.spinner("Загрузка пользователей..."):
-            users = client._request("GET", "/api/v1/users/all")
+            users = client._request("GET", "/api/v1/user/all/")
         if not isinstance(users, list):
             users = []
     except Exception as exc:

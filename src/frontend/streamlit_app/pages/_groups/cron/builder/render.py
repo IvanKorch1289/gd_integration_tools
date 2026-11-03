@@ -78,7 +78,7 @@ def _render_body() -> None:
         try:
             resp = client._request(
                 "POST",
-                "/admin/cron/validate",
+                "/api/v1/admin/cron/validate",
                 json={
                     "expression": expression,
                     "timezone": timezone,

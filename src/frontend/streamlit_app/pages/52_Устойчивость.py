@@ -147,9 +147,19 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
         from src.frontend.streamlit_app.api_clients import get_api_client
 
         _client = get_api_client()
-        _data = _client._request("GET", "/api/v1/admin/resilience/snapshot")
-        if isinstance(_data, dict) and _data:
-            return _data, True
+        _data = _client._request("GET", "/api/v1/admin/resilience-profiles")
+        if isinstance(_data, list) and _data:
+            # Runtime-снапшота (circuit_breakers/rate_limiters/bulkheads)
+            # сервер не отдаёт — доступны только профили. Матрица ниже
+            # остаётся mock-данными (is_live=False), счётчик — живой.
+            st.caption(f"Профилей resilience на сервере: {len(_data)}")
+            return {
+                "timestamp": None,
+                "circuit_breakers": [],
+                "rate_limiters": [],
+                "bulkheads": [],
+                "degradation_chains": [],
+            }, True
     except (
         ConnectionError,
         TimeoutError,

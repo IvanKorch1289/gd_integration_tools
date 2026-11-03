@@ -50,7 +50,7 @@ with tab_status:
     @st.cache_data(ttl=5)
     def _load_snapshot():
         try:
-            return client.get("/tech/degradation/snapshot")
+            return client.get("/api/v1/tech/degradation/snapshot")
         except Exception as exc:
             return {"error": str(exc)}
 
@@ -87,37 +87,22 @@ with tab_switch:
         if not reason.strip():
             st.error("Поле reason обязательно для compliance.")
         else:
-            try:
-                client.patch(
-                    "/tech/degradation/level",
-                    json={"mode": new_mode, "reason": reason.strip()},
-                )
-                st.success(f"Переключено на {new_mode}")
-                st.cache_data.clear()
-            except Exception as exc:
-                st.error(f"Переключение не удалось: {exc}")
+            st.info(
+                "Переключение режима недоступно: серверный endpoint "
+                "`PATCH /api/v1/tech/degradation/level` не реализован "
+                "(ADR-0425)."
+            )
 
 
 with tab_history:
     st.subheader("Недавние переходы")
-    try:
-        with st.spinner("Загрузка истории..."):
-            history = client.get("/tech/degradation/history")
-        items = history.get("transitions", [])
-        if not items:
-            st.info("История пуста.")
-        else:
-            for t in items[-20:]:
-                with st.container():
-                    st.markdown(
-                        f"**{t.get('timestamp_utc', '?')}** — "
-                        f"`{t.get('from_mode', '?')}` → `{t.get('to_mode', '?')}` "
-                        f"by **{t.get('actor', '?')}**"
-                    )
-                    if t.get("reason"):
-                        st.caption(t["reason"])
-                    st.divider()
-    except Exception as exc:
-        st.error(f"Не удалось получить историю переходов режима: {exc}")
+    st.info(
+        "История переходов недоступна: серверный endpoint "
+        "`GET /api/v1/tech/degradation/history` не реализован (ADR-0425)."
+    )
+    history: dict[str, object] = {}
+    items = history.get("transitions", [])
+    if not items:
+        st.info("История пуста.")
 
 related_pages_footer("78_Плавная_деградация")

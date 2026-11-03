@@ -37,24 +37,9 @@ limit = st.number_input(
 )
 
 if st.button("Выполнить", type="primary"):
-    try:
-        with st.spinner("Выполнение SQL..."):
-            result = client._request(
-                "POST",
-                "/api/v1/admin/sql/query",
-                json={"query": sql, "limit": int(limit)},
-            )
-        if isinstance(result, dict):
-            rows = result.get("rows") or []
-            columns = result.get("columns") or []
-            st.caption(f"Строк: {len(rows)}, колонок: {len(columns)}")
-            if rows:
-                st.dataframe(rows, width="stretch", height=500)
-            else:
-                st.info("Запрос выполнен, но вернул 0 строк.")
-            if result.get("error"):
-                st.error(result["error"])
-    except Exception as exc:
-        st.error(str(exc))
+    st.info(
+        "SQL-консоль недоступна: серверный endpoint "
+        "`POST /api/v1/admin/sql/query` не реализован (ADR-0425)."
+    )
 
 related_pages_footer("64_SQL_Админ")

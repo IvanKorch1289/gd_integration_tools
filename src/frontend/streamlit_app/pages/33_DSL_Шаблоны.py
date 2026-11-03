@@ -44,13 +44,11 @@ client = get_api_client()
 
 def _render_route_blueprints() -> None:
     """Legacy route blueprints из /api/v1/admin/templates."""
-    try:
-        templates = client._request("GET", "/api/v1/admin/templates")
-        if not isinstance(templates, list):
-            templates = []
-    except Exception as exc:
-        templates = []
-        st.warning(f"Каталог шаблонов недоступен: {exc}")
+    st.info(
+        "Каталог route-шаблонов недоступен: серверный endpoint "
+        "`GET /api/v1/admin/templates` не реализован (ADR-0425)."
+    )
+    templates: list[dict[str, object]] = []
 
     if not templates:
         st.info(
@@ -72,13 +70,11 @@ def _render_route_blueprints() -> None:
             if yaml_content:
                 st.code(yaml_content, language="yaml")
             if st.button("Инстанциировать", key=f"inst_{name}"):
-                try:
-                    resp = client._request(
-                        "POST", f"/api/v1/admin/templates/{name}/instantiate", json={}
-                    )
-                    st.success(f"Создан route: {resp}")
-                except Exception as exc:
-                    st.error(str(exc))
+                st.info(
+                    "Инстанцирование недоступно: серверный endpoint "
+                    "`POST /api/v1/admin/templates/{name}/instantiate` "
+                    "не реализован (ADR-0425)."
+                )
 
 
 def _render_workflow_templates() -> None:

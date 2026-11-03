@@ -39,25 +39,18 @@ tab_list, tab_compare, tab_create = st.tabs(
 
 
 with tab_list:
-    try:
-        names_response = client.get("/admin/prompt-versions")
-        names_response.raise_for_status()
-        names = names_response.json().get("items", [])
-    except Exception as exc:
-        st.error(f"Не удалось получить список prompt'ов: {exc}")
-        names = []
+    st.info(
+        "Prompt Lab недоступен: серверные endpoint'ы "
+        "`/api/v1/admin/prompt-versions*` не реализованы (ADR-0425)."
+    )
+    names: list[str] = []
 
     selected_name = st.selectbox(
         "Имя prompt'а", options=[""] + names, key="prompt-name"
     )
     if selected_name:
-        try:
-            versions_resp = client.get(f"/admin/prompt-versions/{selected_name}")
-            versions_resp.raise_for_status()
-            versions = versions_resp.json().get("items", [])
-        except Exception as exc:
-            st.error(f"Не удалось получить версии: {exc}")
-            versions = []
+        st.info("Список версий недоступен: endpoint не реализован (ADR-0425).")
+        versions: list[dict[str, object]] = []
 
         for ver in versions:
             badge = ":green_circle: АКТИВНАЯ" if ver["is_active"] else ":white_circle:"
@@ -78,18 +71,10 @@ with tab_list:
                     st.metric(
                         "Стоимость USD/1k", ver["metrics"].get("cost_usd_per_1k", "—")
                     )
-                    if not ver["is_active"] and st.button(
-                        f"Активировать v{ver['version']}", key=f"act-{ver['version']}"
-                    ):
-                        try:
-                            client.post(
-                                f"/admin/prompt-versions/{selected_name}/activate",
-                                json={"version": ver["version"]},
-                            ).raise_for_status()
-                            st.success(f"v{ver['version']} активирована")
-                            st.rerun()
-                        except Exception as exc:
-                            st.error(f"Ошибка активации: {exc}")
+                    st.caption(
+                        "Активация версии недоступна: endpoint не реализован "
+                        "(ADR-0425)."
+                    )
 
 
 with tab_compare:
@@ -99,22 +84,9 @@ with tab_compare:
     version_a = col_va.number_input("Версия A", min_value=1, value=1)
     version_b = col_vb.number_input("Версия B", min_value=1, value=2)
     if st.button("Сравнить") and compare_name:
-        try:
-            resp = client.get(
-                f"/admin/prompt-versions/{compare_name}/compare",
-                params={"a": int(version_a), "b": int(version_b)},
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            st.subheader("Разница метрик (B − A)")
-            for metric, diff in data.get("metric_diffs", {}).items():
-                color = ":green_circle:" if diff < 0 else ":red_circle:"
-                st.metric(metric, f"{diff:+.4f}", delta_color="inverse")
-                st.write(f"{color} {metric}")
-            with st.expander("Сырое сравнение"):
-                st.json(data)
-        except Exception as exc:
-            st.error(f"Ошибка сравнения: {exc}")
+        st.info(
+            "A/B-сравнение недоступно: серверный endpoint не реализован (ADR-0425)."
+        )
 
 
 with tab_create:
@@ -133,22 +105,9 @@ with tab_create:
             st.error(f"Некорректный JSON: {exc}")
             params_dict = None
         if params_dict is not None and new_name and new_body:
-            try:
-                resp = client.post(
-                    "/admin/prompt-versions",
-                    json={
-                        "name": new_name,
-                        "body": new_body,
-                        "model": new_model,
-                        "parameters": params_dict,
-                        "created_by": new_author or None,
-                    },
-                )
-                resp.raise_for_status()
-                created = resp.json()
-                st.success(f"Создано {created['name']}:v{created['version']}")
-                st.json(created)
-            except Exception as exc:
-                st.error(f"Ошибка создания: {exc}")
+            st.info(
+                "Создание версии недоступно: серверный endpoint не реализован "
+                "(ADR-0425)."
+            )
 
 related_pages_footer("48_Лаборатория_промптов")

@@ -174,14 +174,11 @@ with tab_api:
     if api_bucket:
         params["bucket"] = api_bucket
 
-    try:
-        with st.spinner("Загрузка..."):
-            items = client._request("GET", "/api/v1/storage/list", params=params)
-        if not isinstance(items, list):
-            items = []
-    except Exception as exc:
-        items = []
-        st.error(f"Не удалось получить список файлов: {exc}")
+    st.info(
+        "Список объектов S3 недоступен: серверный endpoint "
+        "`GET /api/v1/storage/list` не реализован (ADR-0425)."
+    )
+    items: list[dict[str, object]] = []
 
     st.caption(f"Найдено: {len(items)}")
 
@@ -198,44 +195,15 @@ with tab_api:
             cols[2].write(modified)
 
             if cols[3].button("Предпросмотр", key=f"prev_{idx}_{key}"):
-                try:
-                    content = client._request(
-                        "GET",
-                        "/api/v1/storage/get",
-                        params={
-                            "key": key,
-                            **({"bucket": api_bucket} if api_bucket else {}),
-                        },
-                    )
-                    preview = (
-                        content[:10_000]
-                        if isinstance(content, str)
-                        else str(content)[:10_000]
-                    )
-                    st.code(preview)
-                except Exception as exc:
-                    st.error(f"Предпросмотр не удался: {exc}")
+                st.info(
+                    "Предпросмотр недоступен: серверный endpoint "
+                    "`GET /api/v1/storage/get` не реализован (ADR-0425)."
+                )
 
             if cols[4].button("Скачать", key=f"dl_{idx}_{key}"):
-                try:
-                    resp = client._request(
-                        "GET",
-                        "/api/v1/storage/download",
-                        params={
-                            "key": key,
-                            **({"bucket": api_bucket} if api_bucket else {}),
-                        },
-                    )
-                    if isinstance(resp, dict) and "url" in resp:
-                        st.markdown(f"[Скачать]({resp['url']})")
-                    else:
-                        st.download_button(
-                            "Сохранить как файл",
-                            data=resp if isinstance(resp, (bytes, str)) else str(resp),
-                            file_name=key.rsplit("/", 1)[-1] or "file",
-                            key=f"save_{idx}_{key}",
-                        )
-                except Exception as exc:
-                    st.error(f"Скачивание не удалось: {exc}")
+                st.info(
+                    "Скачивание недоступно: серверный endpoint "
+                    "`GET /api/v1/storage/download` не реализован (ADR-0425)."
+                )
 
 related_pages_footer("57_Файлы_S3")

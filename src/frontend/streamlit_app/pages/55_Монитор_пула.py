@@ -141,9 +141,13 @@ def _fetch_snapshot() -> tuple[dict[str, Any], bool]:
         from src.frontend.streamlit_app.api_clients import get_api_client
 
         _client = get_api_client()
-        _data = _client._request("GET", "/api/v1/admin/pools/snapshot")
-        if isinstance(_data, dict) and _data:
-            return _data, True
+        # Snapshot-endpoint пулов не реализован (ADR-0425) — страница
+        # показывает mock-данные с явной пометкой is_live=False.
+        st.info(
+            "Live-снапшот пулов недоступен: серверный endpoint "
+            "`GET /api/v1/admin/pools/snapshot` не реализован — "
+            "показаны mock-данные."
+        )
     except (
         ConnectionError,
         TimeoutError,

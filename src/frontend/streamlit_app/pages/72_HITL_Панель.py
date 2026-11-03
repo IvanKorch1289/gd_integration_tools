@@ -34,7 +34,7 @@ def _fetch_pending(tenant: str | None) -> list[dict]:
     if tenant:
         params["tenant_id"] = tenant
     try:
-        response = client.get("/hitl/pending", params=params)
+        response = client.get("/api/v1/hitl/pending", params=params)
         response.raise_for_status()
         return response.json().get("items", [])
     except Exception as exc:
@@ -93,7 +93,7 @@ def _resolve(signal_id: str, action: str, operator: str, comment: str) -> None:
         return
     try:
         response = client.post(
-            f"/hitl/{signal_id}/resolve",
+            f"/api/v1/hitl/{signal_id}/resolve",
             json={
                 "action": action,
                 "resolved_by": operator.strip(),
@@ -138,7 +138,7 @@ if st.button("Загрузить историю", type="primary"):
             params["action"] = hist_action
         if hist_operator:
             params["operator"] = hist_operator
-        resp = client.get("/hitl/history", params=params)
+        resp = client.get("/api/v1/hitl/history", params=params)
         resp.raise_for_status()
         body = resp.json()
         items = body.get("items", [])

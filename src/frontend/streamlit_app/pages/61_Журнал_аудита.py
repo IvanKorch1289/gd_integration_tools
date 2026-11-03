@@ -1,9 +1,10 @@
 """Audit Log — поиск по аудит-журналу с фильтрами периода.
 
 Аудит пишется через :class:`AuditLogMiddleware` (audit_log.py). Эндпоинт
-``GET /api/v1/admin/audit`` возвращает записи в обратном хронологическом
-порядке; фильтры — ``from``/``to`` (ISO-datetime), ``route``, ``user_id``,
-``status``.
+``GET /api/v1/audit/capability`` возвращает последние N записей audit-stream
+в обратном хронологическом порядке. Серверных фильтров у него нет, поэтому
+период/маршрут/пользователь/статус применяются локально (ADR-0422:
+``GET /api/v1/admin/audit`` не существует → был 404).
 """
 
 from __future__ import annotations
@@ -37,23 +38,41 @@ route_filter = col3.text_input("Подстрока ID маршрута")
 user_filter = col4.text_input("User ID")
 status_filter = col5.selectbox("Status", ["all", "success", "error"])
 
-params: dict[str, object] = {
-    "from": f"{dt_from}T00:00:00",
-    "to": f"{dt_to}T23:59:59",
-    "limit": 200,
-}
-if route_filter:
-    params["route"] = route_filter
-if user_filter:
-    params["user_id"] = user_filter
-if status_filter != "all":
-    params["status"] = status_filter
+params: dict[str, object] = {"count": 500}
+
+
+def _apply_filters(records: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Локальная фильтрация audit-записей.
+
+    ``GET /api/v1/audit/capability`` отдаёт только последние N записей без
+    фильтров, поэтому период/маршрут/пользователь/статус применяются здесь.
+    """
+    result: list[dict[str, object]] = []
+    for rec in records:
+        stamp = str(rec.get("timestamp") or "")[:10]
+        if stamp and not (dt_from.isoformat() <= stamp <= dt_to.isoformat()):
+            continue
+        if route_filter and route_filter not in str(rec.get("path") or ""):
+            continue
+        if user_filter and user_filter not in str(rec.get("user_id") or ""):
+            continue
+        code = rec.get("status_code")
+        is_error = isinstance(code, int) and code >= 400
+        if status_filter == "success" and is_error:
+            continue
+        if status_filter == "error" and not is_error:
+            continue
+        result.append(rec)
+    return result
+
 
 try:
     with st.spinner("Загрузка audit-логов..."):
-        records = client._request("GET", "/api/v1/admin/audit", params=params)
+        records = client._request("GET", "/api/v1/audit/capability", params=params)
     if not isinstance(records, list):
         records = []
+    else:
+        records = _apply_filters(records)
 except Exception as exc:
     st.error(f"Ошибка: {exc}")
     records = []

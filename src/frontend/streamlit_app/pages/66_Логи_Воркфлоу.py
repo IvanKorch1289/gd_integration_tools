@@ -22,6 +22,27 @@ from src.frontend.streamlit_app.shared.components import (
 )
 from src.frontend.streamlit_app.shared.streamlit_config import config
 
+#: Допустимые типы событий workflow-audit (allowlist серверного эндпоинта
+#: ``GET /api/v1/admin/workflow-audit/events``).
+_WORKFLOW_EVENT_TYPES = frozenset(
+    {
+        "workflow.start",
+        "workflow.signal",
+        "workflow.cancel",
+        "workflow.complete",
+        "workflow.fail",
+        "workflow.query",
+        "workflow.compensation_start",
+        "workflow.compensation_complete",
+        "workflow.compensation_fail",
+        "hitl.approved",
+        "hitl.rejected",
+        "hitl.requested_info",
+        "activity.start",
+        "activity.complete",
+    }
+)
+
 setup_page()
 if not feature_flags.frontend_workflow_logs_page:
     st.warning(
@@ -174,11 +195,11 @@ with tab_live:
         help="Фильтр по имени workflow или route. Пусто — все события.",
         key="live_workflow",
     )
-    severity_filter = st.selectbox(
-        "Уровень важности",
-        options=["all", "info", "warning", "error"],
+    event_type_filter = st.selectbox(
+        "Тип события",
+        options=["all", *sorted(_WORKFLOW_EVENT_TYPES)],
         index=0,
-        key="live_severity",
+        key="live_event_type",
     )
     tail_size = st.number_input(
         "Размер tail",
@@ -194,11 +215,13 @@ with tab_live:
     def _fetch_audit_tail() -> list[dict]:
         params: dict[str, object] = {"limit": int(tail_size)}
         if workflow_filter:
-            params["route"] = workflow_filter
-        if severity_filter != "all":
-            params["severity"] = severity_filter
+            params["workflow_id"] = workflow_filter
+        if event_type_filter != "all":
+            params["event_type"] = event_type_filter
         try:
-            records = api._request("GET", "/api/v1/admin/audit/tail", params=params)
+            records = api._request(
+                "GET", "/api/v1/admin/workflow-audit/events", params=params
+            )
             if isinstance(records, list):
                 return records
         except ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError:
@@ -208,7 +231,9 @@ with tab_live:
             # wrong type.
             st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
             try:
-                records = api._request("GET", "/api/v1/admin/audit", params=params)
+                records = api._request(
+                    "GET", "/api/v1/admin/workflow-audit/events", params=params
+                )
                 if isinstance(records, list):
                     return records
             except ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError:

@@ -32,13 +32,13 @@ def _render_queue_monitor() -> None:
 
     st.caption("Страница обновится автоматически")
 
-    try:
-        with st.spinner("Загрузка очередей..."):
-            summary = client._request("GET", "/api/v1/admin/queues/summary")
-    except Exception as exc:
-        st.error(f"Ошибка: {exc}")
-        summary = {}
-        st.warning(f"Не удалось получить сводку: {exc}")
+    # Сводка очередей на сервере не реализована (ADR-0425) — показываем
+    # честное состояние вместо swallowed 404.
+    st.info(
+        "Сводка очередей недоступна: серверный endpoint "
+        "`GET /api/v1/admin/queues/summary` не реализован."
+    )
+    summary: dict[str, object] = {}
 
     if not summary:
         st.info("Нет данных от backend. Проверьте регистрацию queue-адаптеров.")

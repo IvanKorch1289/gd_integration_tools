@@ -163,7 +163,7 @@ st.caption(
 
 dlq_entries: list[dict] = []
 try:
-    raw = client.get("/admin/scheduler/dlq", params={"limit": 10})
+    raw = client.get("/api/v1/admin/scheduler/dlq", params={"limit": 10})
     if isinstance(raw, list):
         dlq_entries = raw
 except ConnectionError, TimeoutError, RuntimeError, ValueError, TypeError:

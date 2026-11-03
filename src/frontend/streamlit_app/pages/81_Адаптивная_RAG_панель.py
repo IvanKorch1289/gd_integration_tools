@@ -31,7 +31,7 @@ def _fetch() -> dict | None:
         st.error("APIClient недоступен.")
         return None
     try:
-        return APIClient().get("/admin/rag/strategy-stats")
+        return APIClient().get("/api/v1/admin/rag/strategy-stats")
     except Exception as exc:
         st.error(f"Не удалось получить stats: {exc}")
         return None

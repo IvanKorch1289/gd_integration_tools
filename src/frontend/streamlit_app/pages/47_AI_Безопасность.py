@@ -35,13 +35,17 @@ client = get_api_client()
 
 
 def _fetch_metrics() -> list[dict]:
-    try:
-        resp = client.get("/admin/guardrails-metrics")
-        resp.raise_for_status()
-        return resp.json().get("items", [])
-    except Exception as exc:
-        st.error(f"Не удалось получить метрики: {exc}")
-        return []
+    """Метрики guardrails — серверный endpoint не реализован (ADR-0425).
+
+    ``GuardrailsMetricsService`` есть в кодовой базе, но не подключён к DI
+    и не имеет HTTP-обёртки, поэтому запрос к нему всегда давал 404.
+    """
+    st.info(
+        "Метрики guardrails недоступны: серверный endpoint "
+        "`GET /api/v1/admin/guardrails-metrics` не реализован "
+        "(сервис `GuardrailsMetricsService` не подключён к DI)."
+    )
+    return []
 
 
 metrics = _fetch_metrics()
@@ -89,17 +93,9 @@ else:
                 value=0,
                 key=f"fp-{metric['tenant_id']}",
             )
-            if fp_count > 0 and st.button(
-                "Отправить FP-ревью", key=f"submit-fp-{metric['tenant_id']}"
-            ):
-                try:
-                    client.post(
-                        f"/admin/guardrails-metrics/{metric['tenant_id']}/false-positive",
-                        json={"count": int(fp_count)},
-                    ).raise_for_status()
-                    st.success(f"Записано {fp_count} FP для {metric['tenant_id']}")
-                    st.rerun()
-                except Exception as exc:
-                    st.error(f"Ошибка отправки: {exc}")
+            st.caption(
+                "Отметка false-positive недоступна: серверный endpoint "
+                "не реализован (ADR-0425)."
+            )
 
 related_pages_footer("47_AI_Безопасность")

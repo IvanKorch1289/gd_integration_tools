@@ -20,11 +20,12 @@ tab1, tab2, tab3 = st.tabs(["Запланированные", "Глубина о
 
 with tab1:
     st.subheader("Задачи APScheduler")
+    # Канонический источник cron-задач — admin-cron (ADR-0425); прежний
+    # ``/api/v1/admin/scheduler/jobs`` не существовал (404).
     try:
         with st.spinner("Загрузка задач..."):
-            jobs = client._request("GET", "/api/v1/admin/scheduler/jobs")
-    except Exception as exc:
-        st.error(f"Ошибка: {exc}")
+            jobs = client._request("GET", "/api/v1/admin/cron/list")
+    except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
         jobs = []
 
     if jobs:
@@ -40,10 +41,11 @@ with tab1:
 
 with tab2:
     st.subheader("Глубина очередей (RabbitMQ/Kafka)")
-    try:
-        queues = client._request("GET", "/api/v1/admin/queue/stats")
-    except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
-        queues = {}
+    st.info(
+        "Статистика очередей недоступна: серверный endpoint "
+        "`GET /api/v1/admin/queue/stats` не реализован (ADR-0425)."
+    )
+    queues: dict[str, object] = {}
 
     if queues:
         cols = st.columns(min(len(queues), 4))
@@ -57,10 +59,11 @@ with tab2:
 
 with tab3:
     st.subheader("Запланированные webhooks")
-    try:
-        hooks = client._request("GET", "/api/v1/webhooks/scheduled")
-    except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
-        hooks = []
+    st.info(
+        "Список запланированных webhooks недоступен: серверный endpoint "
+        "`GET /api/v1/webhooks/scheduled` не реализован (ADR-0425)."
+    )
+    hooks: list[dict[str, object]] = []
 
     if hooks:
         import polars as pl
@@ -90,20 +93,14 @@ with tab3:
             import json
 
             try:
-                payload_dict = json.loads(payload)
-                result = client._request(
-                    "POST",
-                    "/api/v1/webhook/schedule",
-                    json={
-                        "url": url,
-                        "payload": payload_dict,
-                        "cron": cron or None,
-                        "delay_seconds": delay if delay > 0 else None,
-                    },
+                json.loads(payload)
+            except json.JSONDecodeError as exc:
+                st.error(f"Некорректный JSON payload: {exc}")
+            else:
+                st.info(
+                    "Планирование webhook недоступно: серверный endpoint "
+                    "`POST /api/v1/webhook/schedule` не реализован (ADR-0425)."
                 )
-                st.success(f"Запланировано: {result}")
-            except Exception as exc:
-                st.error(f"Ошибка: {exc}")
 
 if st.button("Обновить"):
     st.rerun()

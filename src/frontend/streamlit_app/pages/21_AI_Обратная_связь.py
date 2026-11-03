@@ -166,7 +166,7 @@ def _render_dspy_tab() -> None:
         "Активируется feature-flag `dspy_feedback_loop`."
     )
     try:
-        data = client.get("/admin/feedback/training-runs?limit=10")
+        data = client.get("/api/v1/admin/feedback/training-runs", params={"limit": 10})
     except Exception as exc:
         st.error(f"Ошибка: {exc}")
         data = {"runs": [], "count": 0}
@@ -186,7 +186,7 @@ def _render_counts_tab() -> None:
     tenant = st.text_input("Tenant ID (опционально)", key="counts_tenant")
     try:
         data = client.get(
-            f"/admin/feedback/labeled-count{('?tenant_id=' + tenant) if tenant else ''}"
+            f"/api/v1/admin/feedback/labeled-count{('?tenant_id=' + tenant) if tenant else ''}"
         )
         count = data.get("count", 0) if isinstance(data, dict) else 0
         st.metric("Размеченные ответы", count)

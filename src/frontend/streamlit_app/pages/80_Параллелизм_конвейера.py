@@ -31,7 +31,7 @@ with tab_route:
     st.subheader("Отчёт о параллелизме маршрута")
     try:
         with st.spinner("Загрузка маршрутов..."):
-            routes = client.get("/api/v1/routes")
+            routes = client.get("/api/v1/routes/inventory")
         names = [r.get("route_id", "") for r in routes.get("routes", []) if r]
     except (
         ConnectionError,
@@ -97,7 +97,7 @@ with tab_topn:
     n = st.slider("Top-N", 5, 50, 10)
     if st.button("Вычислить"):
         try:
-            routes = client.get("/api/v1/routes")
+            routes = client.get("/api/v1/routes/inventory")
             names = [r.get("route_id", "") for r in routes.get("routes", []) if r]
             results = []
             for rid in names[: n * 3]:  # Анализируем больше чем top-N

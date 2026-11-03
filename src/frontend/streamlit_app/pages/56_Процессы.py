@@ -6,7 +6,6 @@ correlation-id. Данные берутся из ExecutionEngine trace-buffer'а
 
 from __future__ import annotations
 
-import httpx
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
@@ -21,12 +20,12 @@ st.header(":arrows_clockwise: Выполняющиеся процессы")
 
 client = get_api_client()
 
-try:
-    with st.spinner("Загрузка процессов..."):
-        active = client._request("GET", "/api/v1/admin/processes/active")
-except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
-    st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
-    active = []
+# Активные инстансы на сервере не отдаются (ADR-0425) — endpoint'а нет.
+st.info(
+    "Активные pipeline-инстансы недоступны: серверный endpoint "
+    "`GET /api/v1/admin/processes/active` не реализован."
+)
+active: list[dict[str, object]] = []
 
 if not active:
     st.info("Сейчас нет активных pipeline-инстансов.")
@@ -45,18 +44,11 @@ else:
 
 st.divider()
 st.subheader("Статистика за 60 секунд")
-try:
-    stats = client._request("GET", "/api/v1/admin/processes/stats")
-    metric_row(
-        [
-            ("Запущено", stats.get("started", 0)),
-            ("Успешно", stats.get("succeeded", 0)),
-            ("Ошибок", stats.get("failed", 0)),
-            ("p95, мс", stats.get("p95_ms", 0)),
-        ]
-    )
-except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
-    st.error("Не удалось выполнить запрос — проверьте подключение к серверу")
-    st.caption("Статистика недоступна.")
+# Статистика процессов на сервере не отдаётся (ADR-0425) — endpoint'а нет.
+st.info(
+    "Статистика процессов недоступна: серверный endpoint "
+    "`GET /api/v1/admin/processes/stats` не реализован."
+)
+metric_row([("Запущено", 0), ("Успешно", 0), ("Ошибок", 0), ("p95, мс", 0)])
 
 related_pages_footer("56_Процессы")

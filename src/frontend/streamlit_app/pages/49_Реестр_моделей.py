@@ -37,7 +37,7 @@ def _client() -> APIClient:
 
 def _list_models() -> list[dict]:
     try:
-        resp = _client().get("/admin/model-registry/models")
+        resp = _client().get("/api/v1/admin/model-registry/models")
     except Exception as exc:
         st.error(f"Не удалось получить модели: {exc}")
         return []
@@ -80,7 +80,7 @@ def main() -> None:
         if st.button("📋 Использовать в route", type="primary"):
             try:
                 resp = _client().post(
-                    f"/admin/model-registry/models/{chosen['name']}/use-in-route",
+                    f"/api/v1/admin/model-registry/models/{chosen['name']}/use-in-route",
                     json={"version": chosen["version"]},
                 )
                 st.success("Сгенерирован DSL snippet:")
