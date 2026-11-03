@@ -42,6 +42,15 @@ from src.backend.entrypoints.api.v1.routers import get_v1_routers
 #: Каталог клиентских HTTP-клиентов Streamlit.
 _CLIENTS_DIR = Path("src/frontend/streamlit_app/api_clients")
 
+#: Каталог Streamlit-страниц. ADR-0425: страницы тоже ходят в API напрямую
+#: (``client._request`` / ``client.get``), минуя слой ``api_clients`` — раньше
+#: гейт сканировал только клиентов, поэтому 39 «скрытых» путей давали 404.
+_PAGES_DIR = Path("src/frontend/streamlit_app/pages")
+
+#: Путь-шаблон, собираемый из префикса и переменной (``f"/api/v1{path}"``) —
+#: статически нерезолвится → проверке не подлежит.
+_DYNAMIC_PREFIX = "/api/v1"
+
 #: Имена методов клиента, первым аргументом которых является путь.
 _PATH_CALLS = frozenset({"get", "post", "put", "patch", "delete"})
 
@@ -100,14 +109,14 @@ def _path_literal(node: ast.expr) -> str | None:
     return None
 
 
-def _client_paths() -> dict[str, set[str]]:
-    """Собрать ``{нормализованный путь → {файлы-источники}}`` по AST клиентов.
+def _scan_paths(directory: Path) -> dict[str, set[str]]:
+    """Собрать ``{нормализованный путь → {файлы-источники}}`` по AST каталога.
 
-    Разбор идёт по AST, а не по regex: docstring'и клиентов тоже содержат
-    пути, и regex-скан по ним давал бы ложные срабатывания.
+    Общий сканер для ``api_clients/`` и ``pages/`` (ADR-0425): страницы
+    обращаются к API напрямую и раньше были вне зоны гейта.
     """
     found: dict[str, set[str]] = {}
-    for source in sorted(_CLIENTS_DIR.glob("*.py")):
+    for source in sorted(directory.rglob("*.py")):
         tree = ast.parse(source.read_text(encoding="utf-8"), filename=str(source))
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
@@ -123,8 +132,26 @@ def _client_paths() -> dict[str, set[str]]:
             raw = _path_literal(node.args[index])
             if raw is None or not raw.startswith("/"):
                 continue
-            found.setdefault(_normalize(raw), set()).add(source.name)
+            normalized = _normalize(raw)
+            if normalized == _DYNAMIC_PREFIX:
+                # Путь собирается из префикса и переменной — нерезолвим.
+                continue
+            found.setdefault(normalized, set()).add(source.name)
     return found
+
+
+def _client_paths() -> dict[str, set[str]]:
+    """Собрать ``{нормализованный путь → {файлы-источники}}`` по AST клиентов.
+
+    Разбор идёт по AST, а не по regex: docstring'и клиентов тоже содержат
+    пути, и regex-скан по ним давал бы ложные срабатывания.
+    """
+    return _scan_paths(_CLIENTS_DIR)
+
+
+def _page_paths() -> dict[str, set[str]]:
+    """Пути, которые страницы Streamlit запрашивают напрямую (ADR-0425)."""
+    return _scan_paths(_PAGES_DIR)
 
 
 def _iter_router_paths(router: APIRouter, prefix: str = "") -> Iterator[str]:
@@ -188,3 +215,34 @@ class TestClientServerPathContract:
             path for path in _client_paths() if path.startswith(legacy_prefixes)
         )
         assert not offenders, f"клиент зависит от legacy-алиасов: {offenders}"
+
+    def test_page_paths_are_discovered(self) -> None:
+        """Сканер находит пути страниц (защита от «пустого» теста)."""
+        paths = _page_paths()
+        assert len(paths) >= 20, f"ожидалось ≥20 путей страниц, найдено {len(paths)}"
+        assert "/api/v1/audit/capability" in paths
+
+    def test_every_page_path_exists_on_server(self) -> None:
+        """Нет пути страницы, который сервер не регистрирует (ADR-0425).
+
+        Страницы ходят в API напрямую мимо ``api_clients``; раньше такие
+        пути были вне гейта и молча давали 404 (39 случаев).
+        """
+        server = {_normalize(path) for path in _server_paths()}
+        missing: dict[str, set[str]] = {}
+        for path, sources in _page_paths().items():
+            if path in server or path in _APP_LEVEL_PATHS:
+                continue
+            missing[path] = sources
+        assert not missing, (
+            "пути страниц отсутствуют на сервере (канон — роутер сервера): "
+            f"{ {k: sorted(v) for k, v in sorted(missing.items())} }"
+        )
+
+    def test_no_legacy_alias_dependency_in_pages(self) -> None:
+        """Страницы не должны зависеть от скрытых legacy-алиасов."""
+        legacy_prefixes = ("/api/v1/orders/", "/api/v1/users/", "/api/v1/files/")
+        offenders = sorted(
+            path for path in _page_paths() if path.startswith(legacy_prefixes)
+        )
+        assert not offenders, f"страница зависит от legacy-алиасов: {offenders}"
