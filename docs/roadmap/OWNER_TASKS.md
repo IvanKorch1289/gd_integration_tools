@@ -321,8 +321,10 @@
   namespace'ом вызывающего, а не пользователя (ADR-0416 §Открытое).
 * **Пустые capability-декларации в роутах** — ни одного `storage.*`/`db.*`/`cache.*`
   в `route.toml`/`plugin.toml` → автор обязан объявлять права сам.
-* **CI-скан зависимостей** — `uv audit --frozen` покрывает весь lock, но job `pip-audit`
-  в CI сканирует только default-venv → расширить на extras.
+* ~~**CI-скан зависимостей**~~ — закрыто: job `uv audit --frozen` + gate
+  `tools/uv_audit_gate.py` разбирают **весь** `uv.lock` (все extras) и
+  блокируют новые advisory-ID (канон — `.security/uv-audit-allowlist.txt`);
+  job `pip-audit` остаётся вторым эшелоном на default-venv.
 
 ---
 
