@@ -27,6 +27,7 @@ from collections.abc import Callable
 from typing import Any
 
 from strawberry.scalars import JSON
+from strawberry.types import Info
 
 from src.backend.core.logging import get_logger
 
@@ -87,14 +88,26 @@ def _build_resolver(action_id: str) -> Callable[..., Any]:
     а не ``Any``.
     """
 
-    async def resolver(payload: JSON | None = None) -> JSON:
+    async def resolver(info: Info[Any, Any], payload: JSON | None = None) -> JSON:
         from src.backend.entrypoints.base import dispatch_action
+        from src.backend.entrypoints.graphql.schema import (
+            _permissions_from_info,
+            _principal_from_info,
+        )
+
+        # ADR-0427: auth-контекст GraphQL-клиента propag'ится в action.
+        # Без principal/permissions action с admin-префиксом отклонялся бы
+        # даже для легитимного админа (fail-closed + over-restrictive).
+        principal = _principal_from_info(info)
+        permissions = _permissions_from_info(info)
 
         try:
             data = await dispatch_action(
                 action=action_id,
                 payload=payload if isinstance(payload, dict) else {},
                 source="graphql",
+                principal=principal,
+                permissions=permissions,
             )
         except KeyError:
             return JSON(
@@ -119,7 +132,11 @@ def _build_resolver(action_id: str) -> Callable[..., Any]:
     # Принудительно прописываем аннотации — Strawberry резолвит через
     # get_type_hints, и для closure-функций с from __future__-нет-аннотаций
     # это надёжный способ донести типы.
-    resolver.__annotations__ = {"payload": JSON | None, "return": JSON}
+    resolver.__annotations__ = {
+        "payload": JSON | None,
+        "info": Info[Any, Any],
+        "return": JSON,
+    }
     resolver.__name__ = f"auto_{_action_to_field_name(action_id)}"
     resolver.__doc__ = f"Авто-резолвер для action '{action_id}' (Wave 1.4)."
     return resolver

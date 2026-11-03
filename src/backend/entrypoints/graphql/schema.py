@@ -32,8 +32,8 @@ from src.backend.core.api.extensions import (
     get_dsl_service,
     route_registry,
 )
-from src.backend.core.auth.auth_context_helpers import extract_user_permissions
 from src.backend.core.logging import get_logger
+from src.backend.dsl.commands.action_registry import resolve_action_permissions
 from src.backend.entrypoints.graphql.types import (  # noqa: F401
     FileType,
     OrderKindType,
@@ -125,12 +125,10 @@ __all__ = (
 # S44 W1 step 2: Query class with dsl_query + dsl_execute resolvers
 # (L5 Security Chain — Round 87 verbatim pattern). Strawberry class
 # with auth propagated to DslService.dispatch via ExecutionContext.
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from strawberry.scalars import JSON
-
-if TYPE_CHECKING:
-    from strawberry.types import Info  # noqa: F401 — forward ref in resolvers
+from strawberry.types import Info
 
 
 class Query:
@@ -142,7 +140,7 @@ class Query:
     """
 
     async def dsl_query(
-        self, route_id: str, payload: JSON | None = None, info: "Info | None" = None
+        self, info: Info[Any, Any], route_id: str, payload: JSON | None = None
     ) -> JSON:
         """DSL read: extract auth → dispatch → return JSON."""
         principal = _principal_from_info(info)
@@ -157,7 +155,7 @@ class Query:
         return cast("JSON", _serialize_exchange(exchange))
 
     async def dsl_execute(
-        self, route_id: str, payload: JSON | None = None, info: "Info | None" = None
+        self, info: Info[Any, Any], route_id: str, payload: JSON | None = None
     ) -> JSON:
         """DSL execute: same as dsl_query but for write/mutation operations."""
         principal = _principal_from_info(info)
@@ -192,7 +190,7 @@ def _serialize_exchange(exchange: Any) -> dict[str, Any]:
             "status": str(getattr(exchange, "status", "unknown")),
             "body": getattr(getattr(exchange, "out_message", None), "body", None),
         }
-    except (AttributeError, TypeError):
+    except AttributeError, TypeError:
         return {"status": "error", "body": None}
 
 
@@ -204,7 +202,7 @@ class Mutation:
     """
 
     async def dsl_execute(
-        self, route_id: str, payload: JSON | None = None, info: "Info | None" = None
+        self, info: Info[Any, Any], route_id: str, payload: JSON | None = None
     ) -> JSON:
         """Dispatch DSL-маршрута (canonical mutation surface GraphQL).
 
@@ -269,7 +267,8 @@ def _principal_from_info(info: Any) -> str:
 def _permissions_from_info(info: Any) -> tuple[str, ...]:
     """Extract ``permissions`` из ``info.context.auth.metadata``.
 
-    Uses canonical ``extract_user_permissions`` (parity с REST/SOAP).
+    Uses canonical ``resolve_action_permissions`` (parity с REST/SOAP/WS):
+    user-permissions + ``role:admin`` при наличии admin-роли (ADR-0427).
     Returns ``()`` (fail-closed) если auth/context/info отсутствует.
     """
     context = _context_getter(info)
@@ -282,7 +281,7 @@ def _permissions_from_info(info: Any) -> tuple[str, ...]:
     )
     if auth is None:
         return ()
-    return tuple(extract_user_permissions(auth))
+    return resolve_action_permissions(auth)
 
 
 async def _dispatch_dsl(

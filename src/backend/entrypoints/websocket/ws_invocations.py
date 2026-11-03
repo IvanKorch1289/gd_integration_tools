@@ -40,6 +40,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from src.backend.core.config.services.websocket import ws_settings
 from src.backend.core.interfaces.invoker import InvocationMode, InvocationRequest
 from src.backend.core.logging import get_logger
+from src.backend.dsl.commands.action_registry import ADMIN_PERMISSION
 from src.backend.entrypoints.websocket.ws_handler import _authenticate_handshake
 
 __all__ = ("ws_invocations_router",)
@@ -89,6 +90,15 @@ async def websocket_invocations(websocket: WebSocket) -> None:
     # Список invocation_id, привязанных к этому соединению — чтобы
     # корректно unregister'нуть всё на disconnect.
     bound: list[str] = []
+
+    # ADR-0427: principal/permissions аутентифицированной WS-сессии.
+    # Без них action с admin-префиксом отклонялся бы даже для легитимного
+    # админа (fail-closed + over-restrictive).
+    ws_session = getattr(websocket.state, "ws_session", None)
+    raw_principal = getattr(ws_session, "principal", "")
+    principal = raw_principal if isinstance(raw_principal, str) else ""
+    is_admin = getattr(ws_session, "is_admin", False) is True
+    permissions: list[str] = [ADMIN_PERMISSION] if is_admin else []
 
     try:
         while True:
@@ -154,6 +164,8 @@ async def websocket_invocations(websocket: WebSocket) -> None:
                 reply_channel="ws",
                 invocation_id=invocation_id,
                 correlation_id=invocation_id,
+                principal=principal,
+                permissions=permissions,
             )
             response = await invoker.invoke(request)
             if mode is InvocationMode.SYNC:
