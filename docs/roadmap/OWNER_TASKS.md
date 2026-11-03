@@ -309,7 +309,9 @@
 
 ### 14.1. Что осталось открытым из этого аудита
 
-* **D-4 (critical)** — UNION/CTE обходят ORM tenant-фильтр → G13.
+* ~~**D-4 (critical)**~~ — закрыто ADR-0428: patch-слой `_filter_statement`
+  фильтрует ветви UNION/CTE (публичный API `visitors.replacement_traverse`);
+  G13 переведён в «закрыт».
 * ~~**WS/GraphQL admin-действия**~~ — закрыто ADR-0427: WS и GraphQL
   передают `principal`/`permissions` в action-диспетчер, `role:admin`
   добавляется из `admin_roles`; аннотация `info` исправлена (больше не
