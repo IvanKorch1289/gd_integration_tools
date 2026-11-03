@@ -310,8 +310,10 @@
 ### 14.1. Что осталось открытым из этого аудита
 
 * **D-4 (critical)** — UNION/CTE обходят ORM tenant-фильтр → G13.
-* **WS/GraphQL admin-действия** — fail-closed и для легитимного админа (там не
-  добавляется `role:admin` из `admin_roles`) → требует правки WS/GraphQL-слоёв.
+* ~~**WS/GraphQL admin-действия**~~ — закрыто ADR-0427: WS и GraphQL
+  передают `principal`/`permissions` в action-диспетчер, `role:admin`
+  добавляется из `admin_roles`; аннотация `info` исправлена (больше не
+  псевдо-аргумент GraphQL-схемы).
 * **Namespace фасадов** — `StorageFacade`/`UnifiedCacheFacade`/`ExternalDatabaseFacade`
   работают с `plugin="system"`, `OutboundHttpClient` — с `"core"` → проверка идёт под
   namespace'ом вызывающего, а не пользователя (ADR-0416 §Открытое).
