@@ -64,7 +64,8 @@
 
 | Гейт | Результат |
 |---|---|
-| `tests/unit` (волна 28, полный) | см. `.run/wave13-logs/reg_final_28.txt` |
+| `tests/unit` (волна 28, полный) | см. `.run/wave13-logs/reg_final_28b.txt` |
+| smoke локального стенда (порт 8010) | `/api/v1/admin/guardrails-metrics`, `/api/v1/webhooks/scheduled`, `/api/v1/webhook/schedule` → 401 (маршрут есть); канонические пути портала (`/api/v1/user/all/`, `/api/v1/routes/inventory`, `/api/v1/admin/cron/list`, `/api/v1/admin/workflow-audit/events`, `/api/v1/tech/degradation/snapshot`) → 401 (не 404) |
 | ruff `src/` | All checks passed |
 | mypy-бюджет | 16 ошибок при бюджете 30 |
 | `check_layers.py --strict` | 41 (прежний долг, без регресса) |
