@@ -7,7 +7,7 @@ Direct `from src.backend.infrastructure.*` in core/ is a **layer violation** (cu
 ## Navigation Index
 
 Счётчик «Files» — число `.py`-файлов в подкаталоге (рекурсивно, без
-`__pycache__`). Всего в слое — 458 .py-файлов в 458 подкаталогах плюс
+`__pycache__`). Всего в слое — 459 .py-файлов в 458 подкаталогах плюс
 3 файла в корне слоя (`__init__.py`, `registry.py`,
 `registry_vault_bridge.py`).
 
@@ -43,7 +43,7 @@ Direct `from src.backend.infrastructure.*` in core/ is a **layer violation** (cu
 | `sources/` | 24 | Source adapters (HTTP/Kafka/CDC/IMAP/file/etc.) |
 | `storage/` | 10 | Object storage (S3/MinIO/LocalFS) + fallback chain + quotas |
 | `watermark/` | 4 | Watermark store (memory/postgres) for incremental processing |
-| `workflow/` | 34 | Workflow backends (Temporal/LiteTemporal/pg_runner/fake) + builder + executor |
+| `workflow/` | 35 | Workflow backends (Temporal/LiteTemporal/pg_runner/fake) + builder + executor |
 
 ## Layer Position
 
