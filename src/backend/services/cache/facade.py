@@ -40,6 +40,7 @@ from src.backend.core.cache.facade import UnifiedCacheFacade as _CoreUnifiedCach
 from src.backend.core.config.services.cache import cache_settings
 from src.backend.core.interfaces.cache import CacheBackend
 from src.backend.core.logging import get_logger
+from src.backend.core.security.capabilities.caller import effective_plugin
 
 __all__ = ("CacheResult", "UnifiedCacheFacade")
 
@@ -54,17 +55,11 @@ _logger = get_logger("services.cache.facade")
 # выводится на WARNING; последующие — на DEBUG. Через 60s counter
 # сбрасывается. Это сохраняет видимость инцидента без flooding.
 _LOG_THROTTLE_WINDOW_SECONDS = 60.0
-_log_throttle_counters: dict[str, tuple[float, int]] = defaultdict(
-    lambda: (0.0, 0)
-)
+_log_throttle_counters: dict[str, tuple[float, int]] = defaultdict(lambda: (0.0, 0))
 
 
 def _throttled_warning(
-    *,
-    backend: str,
-    operation: str,
-    key: str,
-    error: BaseException,
+    *, backend: str, operation: str, key: str, error: BaseException
 ) -> None:
     """WARNING первый за window; остальные DEBUG (throttle).
 
@@ -167,7 +162,7 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
 
     def _assert(self, capability: str, namespace: str) -> None:
         if self._check is not None:
-            self._check(self._plugin, capability, namespace)
+            self._check(effective_plugin(self._plugin), capability, namespace)
 
     # ─────────────── ABC methods (core cache interface) ───────────────
 
@@ -190,9 +185,7 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
 
         Если переданы ``tags``, регистрирует в ``_tag_index['default']``.
         """
-        await self.set_ns(
-            key, value, ttl=ttl_seconds, tags=tags, namespace="default"
-        )
+        await self.set_ns(key, value, ttl=ttl_seconds, tags=tags, namespace="default")
 
     async def delete(self, *keys: str) -> None:
         """ABC impl: delete(*keys) — namespace='default'."""
@@ -236,7 +229,9 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
                 if value is not None:
                     return CacheResult(value=value, hit=True, backend="memory")
             except Exception as exc:
-                _throttled_warning(backend="memory", operation="get", key=full, error=exc)
+                _throttled_warning(
+                    backend="memory", operation="get", key=full, error=exc
+                )
 
         if self._disk is not None:
             try:
@@ -310,9 +305,7 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
                 f"or reduce payload size."
             )
 
-    async def _bind_tags_to_backends(
-        self, full_key: str, tags: list[str]
-    ) -> None:
+    async def _bind_tags_to_backends(self, full_key: str, tags: list[str]) -> None:
         """Регистрирует ключ в tag-индексах backend'ов (дефект 5).
 
         Backend'ы с нативной поддержкой тегов (``RedisBackend``) хранят
@@ -356,7 +349,9 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
             try:
                 await backend.delete(*full_keys)
             except Exception as exc:
-                _throttled_warning(backend=name, operation="delete", key=str(full_keys), error=exc)
+                _throttled_warning(
+                    backend=name, operation="delete", key=str(full_keys), error=exc
+                )
 
         # Очищаем key из tag_index (во всех namespace).
         for ns_tags in self._tag_index.values():
@@ -380,7 +375,9 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
                 if await backend.exists(full):
                     return True
             except Exception as exc:
-                _throttled_warning(backend=name, operation="exists", key=full, error=exc)
+                _throttled_warning(
+                    backend=name, operation="exists", key=full, error=exc
+                )
         return False
 
     async def delete_pattern_ns(self, pattern: str, namespace: str = "default") -> None:
@@ -412,7 +409,12 @@ class UnifiedCacheFacade(_CoreUnifiedCacheFacade):
             try:
                 await backend.delete_pattern(full_pattern)
             except Exception as exc:
-                _throttled_warning(backend=name, operation="delete_pattern", key=full_pattern, error=exc)
+                _throttled_warning(
+                    backend=name,
+                    operation="delete_pattern",
+                    key=full_pattern,
+                    error=exc,
+                )
 
     async def delete_by_tag_ns(self, tag: str, namespace: str = "default") -> int:
         """Namespace-aware delete_by_tag (facade-level tracking).

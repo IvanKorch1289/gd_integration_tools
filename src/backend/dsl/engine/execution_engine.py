@@ -4,6 +4,10 @@ from typing import Any, Callable, cast
 
 from src.backend.core.errors import RouteDisabledError, TenantContextRequiredError
 from src.backend.core.logging import get_logger
+from src.backend.core.security.capabilities.caller import (
+    bind_caller_namespace,
+    reset_caller_namespace,
+)
 from src.backend.core.state.runtime import disabled_feature_flags
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
@@ -153,6 +157,28 @@ class ExecutionEngine:
     def pool(self) -> ProcessorPool:
         """Returns the processor pool used by this engine."""
         return self._pool
+
+    @staticmethod
+    def _caller_namespace(pipeline: Pipeline | None) -> str | None:
+        """Namespace вызывающего для capability-проверок (ADR-0430).
+
+        Args:
+            pipeline: Исполняемый pipeline (у него есть ``route_id``).
+
+        Returns:
+            ``route_id`` — если у роута есть декларации capability; иначе
+            ``None`` (проверка идёт под платформенным namespace'ом).
+
+        """
+        route_id = getattr(pipeline, "route_id", None)
+        if not route_id:
+            return None
+        try:
+            from src.backend.core.security.capabilities.gate import get_capability_gate
+
+            return route_id if get_capability_gate().has_plugin(route_id) else None
+        except Exception:  # noqa: BLE001 — capability-контур не должен ронять маршрут
+            return None
 
     @staticmethod
     def _check_feature_flag(pipeline: Pipeline) -> None:
@@ -461,6 +487,11 @@ class ExecutionEngine:
         )
         runtime_context = context or ExecutionContext()
 
+        # ADR-0430: namespace вызывающего для capability-проверок. Привязывается
+        # только если у роута есть декларации — иначе проверка идёт под
+        # платформенным namespace'ом (регрессия не ломает существующие роуты).
+        namespace_token = bind_caller_namespace(self._caller_namespace(pipeline))
+
         try:
             trace_log = await self._pool.execute_parallel(
                 processors, current_exchange, runtime_context, timeout=timeout
@@ -481,6 +512,9 @@ class ExecutionEngine:
                 current_exchange.status = ExchangeStatus.completed
         finally:
             # ADR-0368: finalizers выполняются всегда (в т.ч. после падения).
-            await self._run_finalizers(current_exchange)
+            try:
+                await self._run_finalizers(current_exchange)
+            finally:
+                reset_caller_namespace(namespace_token)
 
         return current_exchange

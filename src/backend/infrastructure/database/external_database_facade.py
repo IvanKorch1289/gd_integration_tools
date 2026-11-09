@@ -23,6 +23,7 @@ from sqlalchemy import text
 
 from src.backend.core.errors import DatabaseError
 from src.backend.core.logging import get_logger
+from src.backend.core.security.capabilities.caller import effective_plugin
 from src.backend.infrastructure.database.session_manager import DatabaseSessionManager
 
 __all__ = (
@@ -182,7 +183,7 @@ class ExternalDatabaseTransactionContext:
 
     def _assert_write(self) -> None:
         if self._check is not None:
-            self._check(self._plugin, "db.write", self._profile)
+            self._check(effective_plugin(self._plugin), "db.write", self._profile)
 
     async def query(
         self, sql: str, params: dict[str, Any] | None = None
@@ -253,15 +254,15 @@ class ExternalDatabaseFacade:
 
     def _assert_read(self, profile: str) -> None:
         if self._check is not None:
-            self._check(self._plugin, "db.read", profile)
+            self._check(effective_plugin(self._plugin), "db.read", profile)
 
     def _assert_write(self, profile: str) -> None:
         if self._check is not None:
-            self._check(self._plugin, "db.write", profile)
+            self._check(effective_plugin(self._plugin), "db.write", profile)
 
     def _assert_execute_procedure(self, profile: str) -> None:
         if self._check is not None:
-            self._check(self._plugin, "db.execute_procedure", profile)
+            self._check(effective_plugin(self._plugin), "db.execute_procedure", profile)
 
     def _get_manager(self, profile: str) -> DatabaseSessionManager:
         return self._session_manager_factory(profile)

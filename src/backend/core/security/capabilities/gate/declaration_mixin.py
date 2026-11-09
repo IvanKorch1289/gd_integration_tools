@@ -91,6 +91,22 @@ class DeclarationMixin(_CapabilityGateProtocol):
         """
         return capability in self._declarations.get(plugin, {})
 
+    def has_plugin(self, plugin: str) -> bool:
+        """Объявлена ли хотя бы одна capability для плагина/route'а.
+
+        Используется caller-aware выбором namespace'а (ADR-0430): если у
+        вызывающего нет деклараций, проверка идёт под платформенным
+        namespace'ом (регрессия не ломает существующие роуты).
+
+        Args:
+            plugin: Имя плагина / route'а (namespace).
+
+        Returns:
+            ``True`` если у ``plugin`` есть хотя бы одна декларация.
+
+        """
+        return bool(self._declarations.get(plugin))
+
     def declare_tenant(
         self, capability: CapabilityRef, tenant: str, principal: str
     ) -> None:

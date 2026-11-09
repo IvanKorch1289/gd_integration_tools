@@ -31,6 +31,7 @@ from typing import Any
 from src.backend.core.errors import ServiceError
 from src.backend.core.interfaces.storage import ObjectStorage
 from src.backend.core.logging import get_logger
+from src.backend.core.security.capabilities.caller import effective_plugin
 
 __all__ = ("StorageFacade",)
 
@@ -194,16 +195,16 @@ class StorageFacade:
 
     def _assert_read(self, key: str) -> None:
         if self._check is not None:
-            self._check(self._plugin, "storage.read", key)
+            self._check(effective_plugin(self._plugin), "storage.read", key)
 
     def _assert_write(self, key: str) -> None:
         if self._check is not None:
-            self._check(self._plugin, "storage.write", key)
+            self._check(effective_plugin(self._plugin), "storage.write", key)
 
     def _assert_presign(self, key: str) -> None:
         """Проверка capability для выдачи presigned-ссылки (Wave 13, Q6)."""
         if self._check is not None:
-            self._check(self._plugin, "storage.presign", key)
+            self._check(effective_plugin(self._plugin), "storage.presign", key)
 
     async def _check_quota(self, key: str, size_bytes: int) -> None:
         """Per-tenant upload quota gate (cycle 271, CRITICAL-02).
@@ -235,17 +236,14 @@ class StorageFacade:
         except Exception as exc:
             # Проверка квоты не должна ронять запись: fail-open с видимым логом.
             _logger.warning(
-                "storage.quota_check_failed tenant=%s key=%s: %s",
-                tenant_id,
-                key,
-                exc,
+                "storage.quota_check_failed tenant=%s key=%s: %s", tenant_id, key, exc
             )
             return
 
         if result.allowed:
             return
 
-        _record_quota_violation(self._plugin, key)
+        _record_quota_violation(effective_plugin(self._plugin), key)
 
         if self._enforce_quota:
             raise ServiceError(
@@ -327,7 +325,9 @@ class StorageFacade:
                     # Собрать async-stream в bytes (для backends без streaming)
                     chunks: list[bytes] = []
                     async for chunk in data:
-                        chunks.append(chunk if isinstance(chunk, bytes) else chunk.encode())
+                        chunks.append(
+                            chunk if isinstance(chunk, bytes) else chunk.encode()
+                        )
                     data = b"".join(chunks)
                 location = await self._storage.upload(
                     key, bytes(data), content_type=content_type

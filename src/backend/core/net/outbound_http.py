@@ -24,6 +24,7 @@ from typing import Any
 import httpx
 
 from src.backend.core.net.waf import WafBypassError, WafDecision, WafPolicy
+from src.backend.core.security.capabilities.caller import effective_plugin
 
 __all__ = ("CORRELATION_ID_HEADER", "AuditCallback", "OutboundHttpClient")
 
@@ -179,7 +180,9 @@ class OutboundHttpClient:
             raise WafBypassError(decision)
 
         if self._capability_check is not None:
-            self._capability_check(self._plugin, "net.outbound", decision.host)
+            self._capability_check(
+                effective_plugin(self._plugin), "net.outbound", decision.host
+            )
 
         # S17 K3 W3 (D12): inject X-Correlation-ID из ContextVar в outgoing
         # headers. Caller-override (явный header) имеет приоритет.
@@ -243,7 +246,9 @@ class OutboundHttpClient:
             raise WafBypassError(decision)
 
         if self._capability_check is not None:
-            self._capability_check(self._plugin, "net.outbound", decision.host)
+            self._capability_check(
+                effective_plugin(self._plugin), "net.outbound", decision.host
+            )
 
         effective_headers = self._inject_correlation_id(headers)
 
@@ -334,7 +339,7 @@ class OutboundHttpClient:
             self._audit(
                 {
                     "event": "waf.evaluate",
-                    "plugin": self._plugin,
+                    "plugin": effective_plugin(self._plugin),
                     "method": method,
                     "url": url,
                     "host": decision.host,
@@ -353,7 +358,10 @@ class OutboundHttpClient:
 
         try:
             coro = emit_waf_evaluation(
-                decision=decision, plugin=self._plugin, method=method, url=url
+                decision=decision,
+                plugin=effective_plugin(self._plugin),
+                method=method,
+                url=url,
             )
             if asyncio.iscoroutine(coro):
                 try:
