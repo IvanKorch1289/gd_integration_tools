@@ -216,9 +216,12 @@
 | [ADR-0427](0427-auth-propagation-ws-graphql.md) | Проброс principal/permissions на WS- и GraphQL-поверхности | Accepted |
 | [ADR-0428](0428-tenant-filter-compound-statements.md) | Tenant-фильтр для составных запросов: UNION/CTE (D-4, G13) | Accepted |
 | [ADR-0429](0429-fail-loud-semantics.md) | «Громкая» семантика провала: ошибка не должна выглядеть как успех | Accepted |
+| [ADR-0430](0430-caller-aware-capability-namespace.md) | Caller-aware namespace для capability-проверок + гейт деклараций | Accepted |
+| [ADR-0431](0431-workflow-idempotency-and-compensation.md) | Идемпотентность внешних вызовов и единая семантика компенсации | Accepted |
+| [ADR-0432](0432-guardrails-metrics-and-webhook-scheduler-endpoints.md) | HTTP-поверхности для метрик guardrails и планировщика webhook'ов | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 214 ADRs.
+**Total:** 217 ADRs.
 
