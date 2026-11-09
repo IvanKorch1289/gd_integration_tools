@@ -126,7 +126,14 @@ async def test_send_5xx_returns_false() -> None:
 
 
 @pytest.mark.asyncio
-async def test_send_network_exception() -> None:
+async def test_send_network_exception_is_retried_then_raised() -> None:
+    """Transport-ошибка доходит до ``with_retry`` и пробрасывается (ADR-0429).
+
+    Раньше broad ``except Exception`` превращал ошибку в ``ok=False`` —
+    retry (3 попытки) не срабатывал ни разу, а вызывающий получал «успех».
+    Теперь transient-ошибка повторяется, а после исчерпания попыток
+    пробрасывается: маршрут падает явно, шаг уходит в retry/DLQ.
+    """
     client = _fake_client(side_effect=httpx.ConnectError("timeout"))
 
     with (
@@ -134,10 +141,11 @@ async def test_send_network_exception() -> None:
         patched_auth_allow(),
     ):
         sink = HttpSink(sink_id="h5", url="http://api.test/")
-        result = await sink.send({})
+        with pytest.raises(httpx.ConnectError):
+            await sink.send({})
 
-    assert result.ok is False
-    assert "timeout" in result.details["error"]
+    # 3 попытки (max_attempts=3) — retry сработал, а не был обойдён.
+    assert client.request.await_count == 3
 
 
 @pytest.mark.asyncio

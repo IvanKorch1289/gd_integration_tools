@@ -88,6 +88,12 @@ class MqSink(Sink):
                 await broker.publish(body, self.topic, **self.extra)
             finally:
                 await broker.close()
+        except ConnectionError, TimeoutError, OSError:
+            # ADR-0429: transient-ошибка транспорта должна дойти до
+            # ``with_retry`` — broad except превращал её в ``ok=False``,
+            # и retry (5 попыток) не срабатывал ни разу: сообщение
+            # терялось на первой попытке, без DLQ.
+            raise
         except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}

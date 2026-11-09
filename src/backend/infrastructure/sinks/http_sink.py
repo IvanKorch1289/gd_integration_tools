@@ -6,6 +6,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+import httpx
+
 from src.backend.core.interfaces.sink import Sink, SinkKind, SinkResult
 from src.backend.core.resilience.connector_breaker import with_breaker
 from src.backend.core.resilience.retry import with_retry
@@ -15,6 +17,15 @@ from src.backend.infrastructure.security.connector_rate_limiter import (
     get_connector_rate_limiter,
 )
 from src.backend.infrastructure.sinks._timeouts import DEFAULT_SINK_TIMEOUT_S
+
+#: Ошибки транспорта, которые имеет смысл повторять (ADR-0429). httpx-типы
+#: включены явно: ``httpx.TransportError`` не наследует ``OSError``.
+_RETRYABLE_TRANSPORT_ERRORS = (
+    ConnectionError,
+    TimeoutError,
+    OSError,
+    httpx.TransportError,
+)
 
 __all__ = ("HttpSink",)
 
@@ -46,7 +57,7 @@ class HttpSink(Sink):
     kind: SinkKind = field(default=SinkKind.HTTP, init=False)
 
     @with_breaker("http_sink")
-    @with_retry(max_attempts=3, retry_on=(ConnectionError, TimeoutError, OSError))
+    @with_retry(max_attempts=3, retry_on=_RETRYABLE_TRANSPORT_ERRORS)
     @require_capability("http.send", action="write")
     async def send(  # type: ignore[override]  # R2.MYPY: Sink.send signature mismatch,
         self, payload: Any
@@ -75,6 +86,10 @@ class HttpSink(Sink):
                     content=payload if isinstance(payload, (bytes, str)) else None,  # type: ignore[arg-type]
                     headers=self.headers,
                 )
+        except _RETRYABLE_TRANSPORT_ERRORS:
+            # ADR-0429: transient-ошибка транспорта доходит до with_retry
+            # (broad except превращал её в ok=False → retry не срабатывал).
+            raise
         except Exception as exc:
             return SinkResult(
                 ok=False, details={"error": str(exc) or exc.__class__.__name__}
