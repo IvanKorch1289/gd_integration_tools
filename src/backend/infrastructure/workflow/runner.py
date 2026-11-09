@@ -37,7 +37,6 @@ Unit-testable без Postgres: pluggable `InstanceSource` + `StateStore` +
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import os
 import random
 import time
