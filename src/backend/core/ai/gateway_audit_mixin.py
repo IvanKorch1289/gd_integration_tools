@@ -123,23 +123,15 @@ class _AuditContext:
         """
         try:
             from src.backend.core.di.providers.guardrails import (
-                get_guardrails_metrics_service_provider,
+                record_guardrail_verdict,
             )
-            from src.backend.services.ai.guardrails_metrics import GuardrailVerdict
 
             verdict = (getattr(resp, "guardrails_verdict", None) or {}).get("output")
-            if verdict not in ("safe", "blocked", "warn", "redact"):
+            if not verdict:
                 return
-            service = get_guardrails_metrics_service_provider()
-            await service.record(
+            await record_guardrail_verdict(
                 tenant_id=self.request.tenant_id or "unknown",
-                verdict=(
-                    GuardrailVerdict.BLOCK
-                    if verdict == "blocked"
-                    else GuardrailVerdict.REDACT
-                    if verdict == "redact"
-                    else GuardrailVerdict.ALLOW
-                ),
+                verdict=str(verdict),
                 model_used=getattr(resp, "model_used", "") or "unknown",
             )
         except Exception as exc:  # noqa: BLE001 — метрики не ломают вызов
