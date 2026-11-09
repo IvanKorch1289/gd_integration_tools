@@ -75,11 +75,13 @@
 
 | Гейт | Результат |
 |---|---|
-| `tests/unit` (волна 28, полный) | см. `.run/wave13-logs/reg_final_28b.txt` |
+| `tests/unit` (волна 28, полный) | **24024 passed, 180 skipped, 51 xfailed, 46 xpassed, 0 failed, 0 errors** (44:24; лог `.run/wave13-logs/reg_final_28d.txt`) |
 | smoke локального стенда (порт 8010) | `/api/v1/admin/guardrails-metrics`, `/api/v1/webhooks/scheduled`, `/api/v1/webhook/schedule` → 401 (маршрут есть); канонические пути портала (`/api/v1/user/all/`, `/api/v1/routes/inventory`, `/api/v1/admin/cron/list`, `/api/v1/admin/workflow-audit/events`, `/api/v1/tech/degradation/snapshot`) → 401 (не 404) |
 | ruff `src/` | All checks passed |
 | mypy-бюджет | 16 ошибок при бюджете 30 |
 | `check_layers.py --strict` | 41 (прежний долг, без регресса) |
 | `check_docstrings.py src --max-allowed 0` | 0 missing |
 | `check_route_capabilities.py` | OK (8 легаси в baseline) |
+| `check_workflow_specs.py` | OK (22 спе-файла) |
+| `classify_object_authorization.py --strict` | OK (0 unknown из 119) |
 | гейт контракта путей портала | 6 passed |
