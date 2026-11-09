@@ -64,7 +64,7 @@ allowlist:
     added_at: "2026-09-24"
 
   - file: src/backend/dsl/workflow/compiler/step_compilers/flow.py
-    line: 155
+    line: 158
     reason: >
       Workflow step compilation — local ``outputs.get(sid)`` dict для
       tracking step outputs в compile-time. НЕ persistent, no user data.
