@@ -372,6 +372,47 @@
 
 ---
 
+## 16. Повторный аудит волны 27 (ADR-0429): что закрыто кодом, что осталось
+
+Три агента (workflow-движок, эргономика DSL, отказоустойчивость) + целевые
+тесты нашли класс «тихого успеха». Закрыто кодом (ADR-0429):
+
+* ошибка процессора → `exchange.status = failed` (было `completed` при
+  `error` в теле) — 117 процессоров DSL;
+* неуспешная публикация (`ok=False`) → шаг проваливается (было: маршрут
+  «успешен», сообщение терялось без DLQ) — все sink-процессоры;
+* transient-ошибки HTTP/MQ sink'ов доходят до `with_retry` (было: broad-except
+  → `ok=False`, retry не срабатывал ни разу);
+* неожиданное исключение в workflow-runner'е → инстанс переводится в
+  `failed` (было: навсегда `running`, backup-poll по кругу);
+* шаблон `guardrail_cost_budget` получил числовой источник и явные `target`-ы
+  (было: `GuardrailValueTypeError` при запуске) + гейт «у guardrail-шага есть
+  `target`»;
+* теги шаблонов читаются из YAML-поля `tags:` (было: пустые теги у всех 18 —
+  поиск по тегам не работал, регресс ADR-0424);
+* ruff-гейт по `src/` снова зелёный (5 pre-existing ошибок).
+
+Осталось (⚙️ инженерно, кроме отмеченного):
+
+| # | Находка | Что нужно | Severity |
+|---|---|---|---|
+| 1 | `memory.reflect` и `workflow.checkpoint.put` не зарегистрированы как activity | регистрация во внутренних activity + проверка в гейте каталога | high |
+| 2 | Компенсация откатывает разные шаги в Temporal- и pg-runner'е (индекс в списке **выполненных** vs **всех** forward-шагов) | выровнять семантику (ADR) | high |
+| 3 | `idempotency_key` не доходит до внешнего вызова | падение worker'а после успешного внешнего вызова → повтор → дубликат платежа/события | high |
+| 4 | Линтер `*.workflow.yaml` отсутствует (только route-DSL) | `dsl lint` для workflow-спеки: spec + `collect_activities(validate=True)` + `file:step.field` | medium |
+| 5 | `workflow_setup.py` глотает ошибку загрузки workflow (`warning` + `str(exc)[:200]`) | `logger.error` с путём файла и полным текстом | medium |
+| 6 | `bulkhead`/`circuit-breaker` не подключены к DSL-процессорам (фасад есть) | подключение по аналогии с `core/api` | medium |
+| 7 | `core/api/__init__.py` не экспортирует CB/RateLimiter/Bulkhead (в AGENTS.md заявлены «17 primitives») | привести экспорт в соответствие с докстрингом | medium |
+| 8 | Нет cookbook'а «как написать workflow YAML» (шаблон → правка → dryrun → запуск) | `docs/cookbooks/07-write-workflow-yaml.md` | low |
+| 9 | `manage.py dsl --help` не показывает `generate` | discoverability CLI-генератора | low |
+| 10 | `dsl/cli/lint.py` и `dsl/engine/dry_run.py` дублируют `dsl/workflow/dryrun.py` | удалить дубли (deletion over addition) | low |
+
+**Требует решения владельца:** п. 3 (дубликаты внешних эффектов — нужна
+политика idempotency на стороне получателя: ключ в заголовке/теле) и п. 2
+(семантика компенсации: откатывать только выполненное или весь forward-план).
+
+---
+
 ## Связанные документы
 
 * [ADR-0405](../adr/0405-route-capabilities-namespace-migration.md) — миграция capability-деклараций роутов.

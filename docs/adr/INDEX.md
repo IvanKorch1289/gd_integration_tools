@@ -215,9 +215,10 @@
 | [ADR-0426](0426-test-isolation-module-object-patching.md) | Тестовая изоляция: патч по объекту модуля, без `sys.modules.pop` | Accepted |
 | [ADR-0427](0427-auth-propagation-ws-graphql.md) | Проброс principal/permissions на WS- и GraphQL-поверхности | Accepted |
 | [ADR-0428](0428-tenant-filter-compound-statements.md) | Tenant-фильтр для составных запросов: UNION/CTE (D-4, G13) | Accepted |
+| [ADR-0429](0429-fail-loud-semantics.md) | «Громкая» семантика провала: ошибка не должна выглядеть как успех | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 213 ADRs.
+**Total:** 214 ADRs.
 
