@@ -413,9 +413,7 @@ def _install_audit_emitter(cls: type[BaseProcessor]) -> None:
 
     @functools.wraps(target)
     async def _process_with_audit(
-        self: BaseProcessor,
-        exchange: Exchange[Any],
-        context: ExecutionContext,
+        self: BaseProcessor, exchange: Exchange[Any], context: ExecutionContext
     ) -> None:
         """Выполняет шаг и эмитит его audit-событие."""
         try:
@@ -610,10 +608,12 @@ def handle_processor_error(process_method):
         try:
             return await process_method(self, exchange, context)
         except ImportError as exc:
-            exchange.set_error(f"{exc}")
+            # ADR-0429: статус exchange'а = failed, иначе ошибка процессора
+            # маскировалась под успех (status=completed, trace «ok»).
+            exchange.fail(f"{exc}")
             exchange.stop()
         except Exception as exc:
-            exchange.set_error(f"{self.name} error: {exc}")
+            exchange.fail(f"{self.name} error: {exc}")
             exchange.stop()
 
     return wrapper
