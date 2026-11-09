@@ -44,12 +44,23 @@ class _Exchange:
         self.in_message = _Message(body=body)
         self.properties: dict[str, Any] = {}
         self._out_message: _Message | None = None
+        # ADR-0429: неуспешная публикация проваливает exchange.
+        self.error: str | None = None
+        self.status = "processing"
+        self.stopped = False
 
     def set_property(self, key: str, value: Any) -> None:
         self.properties[key] = value
 
     def set_out(self, *, body: Any, headers: dict[str, str]) -> None:
         self._out_message = _Message(body=body, headers=headers)
+
+    def fail(self, reason: str) -> None:
+        self.status = "failed"
+        self.error = reason
+
+    def stop(self) -> None:
+        self.stopped = True
 
 
 class _Context:
@@ -294,6 +305,9 @@ class TestMqttPublishProcessor:
 
         assert exchange.properties["mqtt_publish_result"]["ok"] is False
         assert "conn lost" in exchange.properties["mqtt_publish_result"]["error"]
+        # ADR-0429: неуспешная публикация проваливает шаг, а не «ok».
+        assert exchange.status == "failed"
+        assert exchange.stopped is True
 
     async def test_string_payload_sent_directly(self) -> None:
         proc = MqttPublishProcessor(host="broker", topic="t")
@@ -369,6 +383,8 @@ class TestGenericSinkPublishProcessor:
 
         assert exchange.properties["sink_publish_result"]["ok"] is False
         assert "bad config" in exchange.properties["sink_publish_result"]["error"]
+        # ADR-0429: неуспешная публикация проваливает шаг.
+        assert exchange.status == "failed"
 
     def test_invalid_kind_raises(self) -> None:
         with pytest.raises(ValueError, match="kind must be one of"):

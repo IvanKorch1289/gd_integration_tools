@@ -114,7 +114,18 @@ def _resolve_payload(exchange: Exchange[Any], payload_property: str | None) -> A
 
 
 def _store_result(exchange: Exchange[Any], spec: _OutSpec, result: Any) -> None:
-    """Сохраняет result в property и опционально в out_message."""
+    """Сохраняет result в property и опционально в out_message.
+
+    ADR-0429: неуспешная отправка (``ok=False``) — это **провал шага**, а не
+    «успех с флагом в свойствах». Раньше маршрут завершался успешно, и
+    сообщение (событие в MQ, файл в S3, вебхук) терялось без DLQ и без
+    компенсации. Теперь exchange проваливается явно — workflow-шаг уходит в
+    retry/DLQ.
+    """
     exchange.set_property(spec.result_property, result)
     if spec.set_out:
         exchange.set_out(body=result, headers=dict(exchange.in_message.headers))
+    if isinstance(result, dict) and result.get("ok") is False:
+        details = result.get("error") or result.get("details") or "unknown error"
+        exchange.fail(f"sink_publish failed: {details}")
+        exchange.stop()
