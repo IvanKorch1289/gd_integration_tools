@@ -1,0 +1,12 @@
+# Легаси-манифесты без обязательных capability-деклараций (ADR-0430, рэтчет).
+# Формат: <kind>:<name> (kind = route | plugin).
+# Новые роуты/плагины обязаны декларировать — гейт блокирует.
+# Файл уменьшается по мере миграции; обновление: --update-baseline
+plugin:core_admin
+plugin:dadata
+plugin:skb
+plugin:test_plug
+route:hello_route
+route:jupyter_hub_run
+route:osint_agent
+route:test_route_w1

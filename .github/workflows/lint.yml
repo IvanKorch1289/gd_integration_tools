@@ -119,6 +119,12 @@ jobs:
         # работающим required_capability; baseline долга — allowlist рядом.
         run: uv run python tools/check_decorative_capabilities.py --ci
 
+      - name: Route capabilities declarations gate (check_route_capabilities)
+        # ADR-0430: роут обязан декларировать net.inbound, плагин — хотя бы
+        # одну capability. Легаси-манифесты — в baseline (рэтчет, файл
+        # .security/route-capabilities-baseline.txt).
+        run: uv run python tools/check_route_capabilities.py
+
       - name: Config audit gate (config_audit)
         # Wave 13 Q16: YAML-конфиг ↔ модели настроек. Неизвестные YAML-ключи
         # (опечатки) и секции без Settings-класса = тихая потеря настройки.
