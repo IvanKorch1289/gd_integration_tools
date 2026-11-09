@@ -47,9 +47,10 @@ ADR: `docs/adr/0429-fail-loud-semantics.md`.
 
 | Прогон | Результат |
 |---|---|
-| `tests/unit` (волна 27, полный) | см. лог `.run/wave13-logs/reg_final_27.txt` |
+| `tests/unit` (волна 27, полный) | **23999 passed, 180 skipped, 51 xfailed, 46 xpassed, 0 failed, 0 errors** (43:16; лог `.run/wave13-logs/reg_final_27.txt`) |
 | `tests/unit/dsl/engine/` | 2929 passed (после фикса статуса exchange) |
 | `tests/unit/infrastructure/sinks/` | 137 passed (после разблокировки retry) |
 | `tests/unit/infrastructure/workflow/` | 243 passed (после терминального перехода runner'а) |
 | `tests/unit/dsl/workflow/` (каталог шаблонов) | 27 passed (включая гейт guardrail-`target`) |
 | ruff `src/` | All checks passed |
+| mypy-бюджет | 16 ошибок при бюджете 30 |
