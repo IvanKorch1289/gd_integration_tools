@@ -12,7 +12,7 @@
 | 5 | Ключ идемпотентности → заголовок внешнего вызова | ADR-0431 | ✅ код |
 | 6 | Компенсация откатывает только выполненные шаги | ADR-0431 | ✅ код |
 | 7 | Инфраструктурные долги — пакет «инфра-решения» | — | ⚙️ кодом не закрывается |
-| 8 | Волна 28 = «стойкость» | ADR-0431 | ✅ код |
+| 8 | Волна 28 = «стойкость» | ADR-0431, ADR-0433 | ✅ код (идемпотентность, компенсация, линтер workflow-спецификаций, внутренние activity `memory.reflect`/`workflow.checkpoint.put`) |
 
 ## 1. Caller-aware capability (ADR-0430)
 
@@ -47,15 +47,26 @@
 * Страницы портала 47 и 67 переведены на живые пути; гейт контракта путей
   (ADR-0425) подтверждает их существование.
 
+## 3б. Линтер workflow-спецификаций и внутренние activity (ADR-0433)
+
+* `tools/check_workflow_specs.py` (+ шаг в `lint.yml`): для каждого
+  `*.workflow.yaml` — валидация спеки и резолв имён activity; диагностика
+  `file:step.field: текст`. Отдельно проверяются activity, генерируемые
+  компилятором (`memory.reflect`, `workflow.checkpoint.put`).
+* Обе activity реализованы и зарегистрированы в мосте и в Temporal Worker'е:
+  `memory.reflect` пишет снимок в LangMem (episodic/procedural; semantic
+  требует embedding и пропускается явно), `workflow.checkpoint.put` —
+  best-effort персистенция с явным `persisted=False` + warning компилятора.
+
 ## 4. Что осталось (owner-задачи)
 
 * `OWNER_TASKS.md` §15: prompt-versions (нужны методы `PromptRegistry`),
   storage list/get/download по ключу, pools-snapshot, processes/queues.
-* `OWNER_TASKS.md` §16: линтер `*.workflow.yaml`, `workflow_setup.py` глотает
-  ошибку загрузки, `bulkhead`/`CB` не подключены к DSL-процессорам, `core/api`
-  не экспортирует примитивы устойчивости, cookbook «как написать workflow YAML»,
-  дубли `lint.py`/`dry_run.py`, регистрация `memory.reflect` и
-  `workflow.checkpoint.put`.
+* `OWNER_TASKS.md` §16: `workflow_setup.py` глотает ошибку загрузки workflow,
+  `bulkhead`/`CB` не подключены к DSL-процессорам, `core/api` не экспортирует
+  примитивы устойчивости, cookbook «как написать workflow YAML», дубли
+  `lint.py`/`dry_run.py`. ✅ Закрыто: линтер `*.workflow.yaml`,
+  регистрация `memory.reflect` и `workflow.checkpoint.put` (ADR-0433).
 * `OWNER_TASKS.md` §17 (решения владельца) — п. 7: инфраструктурные долги
   (`.env:92`, образ от 18.08, Prometheus-правила SLA, `audit.write` в роутах,
   JWKS RS256, service-DNS, OpenWebUI, replica DSN, BYPASSRLS, `jupyter.hub`).
