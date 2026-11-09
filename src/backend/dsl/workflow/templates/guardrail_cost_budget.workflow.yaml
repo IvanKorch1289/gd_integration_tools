@@ -17,16 +17,31 @@ steps:
       prompt: summarize the cost report
       tools: []
     timeout_s: 600
-  - type: guardrail
-    rule: max_cost_usd
-    threshold: 0.5
-    on_exceed: fail
-    output_key: cost_guard
+  # Числовой источник для guardrail (ADR-0429): guardrail сравнивает ТОЛЬКО
+  # число — без `target` он берёт последний output шага (строку ответа
+  # агента) и падает с GuardrailValueTypeError (fail-closed, D-A8-07).
+  # `target` поддерживает dot-path: `usage.tokens` / `usage.cost_usd`.
+  - type: call_function
+    ref: src.backend.services.ai.usage_meter:estimate_usage
+    args:
+      messages:
+        - role: user
+          content: summarize the cost report
+      model: gpt-4o-mini
+    timeout_s: 30
+    output_key: usage
   - type: guardrail
     rule: max_tokens
     threshold: 4000
+    target: usage.tokens
     on_exceed: warn
     output_key: tokens_guard
+  - type: guardrail
+    rule: max_cost_usd
+    threshold: 0.5
+    target: usage.cost_usd
+    on_exceed: fail
+    output_key: cost_guard
   - type: escalate
     to_agent: senior_advisor
     reason: cost_budget_exceeded

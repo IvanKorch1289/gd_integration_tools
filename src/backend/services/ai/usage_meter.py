@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-__all__ = ("UsageStats", "estimate_tokens", "extract_usage")
+__all__ = ("UsageStats", "estimate_tokens", "estimate_usage", "extract_usage")
 
 # Cycle 128: lazy import — tiktoken not in pyproject deps (optional,
 # install via ``uv sync --extra tokencount``). Module is importable
@@ -108,3 +108,37 @@ def estimate_tokens(
                 if isinstance(chunk, dict) and "text" in chunk:
                     total_tokens += len(encoding.encode(chunk["text"]))
     return max(1, int(total_tokens * factor))
+
+
+def estimate_usage(
+    messages: list[dict[str, Any]], *, model: str = "gpt-4o-mini"
+) -> dict[str, Any]:
+    """Оценка usage запроса: ``{"tokens": int, "cost_usd": float}``.
+
+    Числовой источник для workflow-guardrail'ов (шаблон
+    ``guardrail_cost_budget``, ADR-0429): guardrail сравнивает **только
+    число**, поэтому шаблон обязан передать числовой ``target`` (в т.ч.
+    dot-path вида ``usage.cost_usd``).
+
+    Оценка токенов — эвристика ``len(text) // 4`` (≈4 символа на токен):
+    не требует ``tiktoken`` (optional pip-only dep) и детерминирована.
+    Стоимость — по реестру цен за 1K токенов
+    (:class:`LLMModelPricing`).
+
+    Args:
+        messages: Список сообщений (``{"role": ..., "content": ...}``).
+        model: Модель для выбора цены.
+
+    Returns:
+        ``{"tokens": int, "cost_usd": float}``.
+
+    """
+    from src.backend.services.ai.costs.llm_model_pricing import LLMModelPricing
+
+    chars = 0
+    for message in messages:
+        content = message.get("content") if isinstance(message, dict) else None
+        chars += len(str(content or ""))
+    tokens = max(1, chars // 4)
+    price_per_1k = float(LLMModelPricing().get_price(model))
+    return {"tokens": tokens, "cost_usd": round(tokens / 1000.0 * price_per_1k, 6)}

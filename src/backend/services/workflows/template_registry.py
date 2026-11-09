@@ -56,8 +56,17 @@ class WorkflowTemplate:
         return len(self.raw.get("steps", []))
 
 
-def _extract_tags(description: str) -> tuple[str, ...]:
-    """Парсит ``Template tags: a, b, c.`` из description."""
+def _extract_tags(description: str, raw_tags: Any = None) -> tuple[str, ...]:
+    """Теги шаблона.
+
+    Канон — YAML-поле ``tags:`` (ADR-0424: машинночитаемые теги шаблона).
+    Fallback — разбор маркера ``Template tags: a, b, c.`` из description
+    (обратная совместимость со старыми шаблонами).
+    """
+    if isinstance(raw_tags, (list, tuple)):
+        tags = tuple(str(t).strip() for t in raw_tags if str(t).strip())
+        if tags:
+            return tags
     if not description:
         return ()
     marker = "Template tags:"
@@ -101,7 +110,7 @@ class WorkflowTemplateRegistry:
             tmpl = WorkflowTemplate(
                 name=str(raw.get("name", yaml_path.stem)),
                 description=str(raw.get("description", "")),
-                tags=_extract_tags(str(raw.get("description", ""))),
+                tags=_extract_tags(str(raw.get("description", "")), raw.get("tags")),
                 file_path=str(yaml_path),
                 raw=raw,
             )

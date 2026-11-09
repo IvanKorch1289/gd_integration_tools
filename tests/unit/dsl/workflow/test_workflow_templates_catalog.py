@@ -464,6 +464,26 @@ def test_hitl_approval_chain_template_contract() -> None:
 
 
 @pytest.mark.unit
+def test_every_guardrail_step_has_explicit_target() -> None:
+    """Guardrail-шаг обязан иметь явный числовой ``target`` (ADR-0429).
+
+    Без ``target`` guardrail берёт последний output шага — обычно строку
+    ответа агента → ``GuardrailValueTypeError`` (fail-closed, D-A8-07),
+    т.е. шаблон не запускается. Явный ``target`` (в т.ч. dot-path
+    ``usage.cost_usd``) делает проверку детерминированной.
+    """
+    for path in _template_paths():
+        raw = _raw(path)
+        for step in raw.get("steps", []):
+            if step.get("type") != "guardrail":
+                continue
+            assert step.get("target"), (
+                f"{path.name}: guardrail без target → берёт последний output "
+                "(обычно нечисловой) и падает с GuardrailValueTypeError"
+            )
+
+
+@pytest.mark.unit
 def test_guardrail_cost_budget_template_contract() -> None:
     """``guardrail_cost_budget``: guardrail (fail|warn) + escalate + reflect."""
     raw = _raw(_TEMPLATES_DIR / "guardrail_cost_budget.workflow.yaml")
