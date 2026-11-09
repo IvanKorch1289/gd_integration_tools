@@ -23,6 +23,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 from collections.abc import Awaitable, Callable
 from typing import Any, Literal
 
@@ -71,11 +72,21 @@ LANGGRAPH_CHECKPOINT_PUT_ACTIVITY = "_langgraph_checkpoint_put"
 #: build-time валидация (``collect_activities(validate=True)``) обязана их
 #: принимать — иначе любой workflow с ``agent_invoke``-шагом падает с
 #: ``UnknownActivityError`` на старте worker'а.
+#: Activity, которую генерирует компилятор шага ``reflect``
+#: (``dsl/workflow/compiler/step_compilers/governance.py``).
+MEMORY_REFLECT_ACTIVITY = "memory.reflect"
+
+#: Activity, которую генерирует компилятор шага ``checkpoint``
+#: (``dsl/workflow/compiler/step_compilers/flow.py``).
+WORKFLOW_CHECKPOINT_PUT_ACTIVITY = "workflow.checkpoint.put"
+
 INTERNAL_ACTIVITY_NAMES: frozenset[str] = frozenset(
     {
         "_agent_invoke",
         LANGGRAPH_CHECKPOINT_GET_ACTIVITY,
         LANGGRAPH_CHECKPOINT_PUT_ACTIVITY,
+        MEMORY_REFLECT_ACTIVITY,
+        WORKFLOW_CHECKPOINT_PUT_ACTIVITY,
     }
 )
 
@@ -143,6 +154,101 @@ async def _langgraph_checkpoint_put_activity(state: dict[str, Any]) -> bool:
     # saver удалён — checkpoint нельзя сохранить, возвращаем False
     # (best-effort: durable mode degraded до stateless).
     return False
+
+
+async def _memory_reflect_activity(payload: dict[str, Any]) -> dict[str, Any]:
+    """Temporal activity: запись reflection в memory-слой (ADR-0433).
+
+    Пишет снимок outputs в LangMem по видам памяти из ``memory_writes``:
+    ``episodic`` → ``remember_episode``, ``procedural`` → ``remember_procedure``.
+    ``semantic`` требует embedding-вектора, который activity не считает —
+    запись пропускается и попадает в ``skipped``.
+
+    Args:
+        payload: Поля ``source_step`` / ``memory_writes`` /
+            ``outputs_snapshot`` / ``consolidation_policy``.
+
+    Returns:
+        ``{"reflected": bool, "written": [...], "skipped": [...]}``.
+
+    """
+    snapshot = payload.get("outputs_snapshot") or {}
+    source_step = str(payload.get("source_step") or "workflow")
+    requested = [str(item) for item in (payload.get("memory_writes") or [])]
+    content = json.dumps(snapshot, default=str)[:8000]
+    written: list[str] = []
+    skipped: list[str] = []
+    try:
+        from src.backend.services.ai.memory.langmem_service import get_langmem_service
+
+        service = get_langmem_service()
+    except Exception as exc:  # noqa: BLE001 — memory недоступна → без записи
+        _logger.warning("memory.reflect unavailable: %s", exc)
+        return {"reflected": False, "written": [], "skipped": requested}
+
+    for kind in requested:
+        try:
+            if kind == "episodic":
+                await service.remember_episode(
+                    agent_id=source_step,
+                    content=content,
+                    metadata={"source_step": source_step},
+                )
+                written.append(kind)
+            elif kind == "procedural":
+                await service.remember_procedure(
+                    agent_id=source_step, name=source_step, steps=[content]
+                )
+                written.append(kind)
+            else:
+                # semantic требует embedding-вектора — считает AI-провайдер.
+                skipped.append(kind)
+        except Exception as exc:  # noqa: BLE001 — один вид памяти не роняет шаг
+            _logger.warning("memory.reflect write failed (%s): %s", kind, exc)
+            skipped.append(kind)
+    return {"reflected": bool(written), "written": written, "skipped": skipped}
+
+
+async def _workflow_checkpoint_put_activity(payload: dict[str, Any]) -> dict[str, Any]:
+    """Temporal activity: явный checkpoint состояния workflow (ADR-0433).
+
+    Durable-состояние в Temporal-пути обеспечивает собственный history
+    Temporal'а, поэтому activity — best-effort: при отсутствии доступного
+    хранилища возвращает ``{"persisted": False, ...}``, а компилятор шага
+    пишет warning (не молчаливую потерю).
+
+    Args:
+        payload: Поля ``checkpoint_id`` / ``snapshot`` / ``metadata``.
+
+    Returns:
+        ``{"persisted": bool, "checkpoint_id": str, "reason": str | None}``.
+
+    """
+    checkpoint_id = str(payload.get("checkpoint_id") or "")
+    if not checkpoint_id:
+        return {
+            "persisted": False,
+            "checkpoint_id": "",
+            "reason": "checkpoint_id отсутствует",
+        }
+    try:
+        from src.backend.core.di.providers.workflow import (
+            get_workflow_state_store_provider,
+        )
+
+        store = get_workflow_state_store_provider()
+        save = getattr(store, "save_checkpoint", None)
+        if callable(save):
+            await save(checkpoint_id, payload.get("snapshot") or {})
+            return {"persisted": True, "checkpoint_id": checkpoint_id, "reason": None}
+        return {
+            "persisted": False,
+            "checkpoint_id": checkpoint_id,
+            "reason": "хранилище checkpoint'ов не поддерживает save_checkpoint",
+        }
+    except Exception as exc:  # noqa: BLE001 — checkpoint best-effort
+        _logger.warning("workflow.checkpoint.put unavailable: %s", exc)
+        return {"persisted": False, "checkpoint_id": checkpoint_id, "reason": str(exc)}
 
 
 def register_langgraph_checkpoint_activities(bridge: ActivityBridge) -> None:
@@ -374,6 +480,12 @@ class ActivityBridge:
                 wrapper.__activity_name__ = action_id  # type: ignore[attr-defined]
             elif action_id == LANGGRAPH_CHECKPOINT_PUT_ACTIVITY:
                 wrapper = _langgraph_checkpoint_put_activity
+                wrapper.__activity_name__ = action_id  # type: ignore[attr-defined]
+            elif action_id == MEMORY_REFLECT_ACTIVITY:
+                wrapper = _memory_reflect_activity
+                wrapper.__activity_name__ = action_id  # type: ignore[attr-defined]
+            elif action_id == WORKFLOW_CHECKPOINT_PUT_ACTIVITY:
+                wrapper = _workflow_checkpoint_put_activity
                 wrapper.__activity_name__ = action_id  # type: ignore[attr-defined]
             elif is_call_function_ref(action_id):
                 # call_function-шаг (module:fn) — прямой вызов функции,

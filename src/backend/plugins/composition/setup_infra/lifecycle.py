@@ -311,6 +311,16 @@ async def _build_temporal_activities() -> list[Any]:
 
     bridge = ActivityBridge()
     register_langgraph_checkpoint_activities(bridge)
+    # ADR-0433: activity, которые генерирует компилятор шагов (``reflect``,
+    # ``checkpoint``) — без них Temporal Worker не знает этих имён и шаг
+    # падает с ActivityNotRegisteredError в рантайме.
+    from src.backend.dsl.workflow.compiler.activity_bridge import (
+        MEMORY_REFLECT_ACTIVITY,
+        WORKFLOW_CHECKPOINT_PUT_ACTIVITY,
+    )
+
+    bridge.get(MEMORY_REFLECT_ACTIVITY)
+    bridge.get(WORKFLOW_CHECKPOINT_PUT_ACTIVITY)
     try:
         # ADR-0398: validate=True — build-time резолв имён activity против
         # action-реестра. Без него неизвестное имя молча регистрировалось

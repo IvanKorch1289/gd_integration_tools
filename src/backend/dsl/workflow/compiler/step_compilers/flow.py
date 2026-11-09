@@ -11,6 +11,9 @@ from datetime import timedelta
 from typing import Any
 
 from src.backend.core.logging import get_logger
+from src.backend.dsl.workflow.compiler.activity_bridge import (
+    WORKFLOW_CHECKPOINT_PUT_ACTIVITY,
+)
 from src.backend.dsl.workflow.compiler.step_compilers._retry import (
     _build_retry_policy,  # noqa: F401
 )
@@ -157,8 +160,8 @@ async def compile_checkpoint_step(
     else:
         snapshot = dict(outputs)
 
-    await workflow.execute_activity(
-        "workflow.checkpoint.put",
+    checkpoint_result = await workflow.execute_activity(
+        WORKFLOW_CHECKPOINT_PUT_ACTIVITY,
         {
             "checkpoint_id": checkpoint_id,
             "snapshot": snapshot,
@@ -166,6 +169,14 @@ async def compile_checkpoint_step(
         },
         start_to_close_timeout=timedelta(seconds=30),
     )
+    # ADR-0433: несохранённый checkpoint — не «тихий успех»: пишем warning
+    # (durable-состояние всё равно обеспечивает history Temporal'а).
+    if isinstance(checkpoint_result, dict) and not checkpoint_result.get("persisted"):
+        workflow.logger.warning(
+            "workflow checkpoint not persisted: id=%s reason=%s",
+            checkpoint_id,
+            checkpoint_result.get("reason"),
+        )
     if decl.output_key:
         ctx.setdefault("_outputs", {})[decl.output_key] = checkpoint_id
     return checkpoint_id

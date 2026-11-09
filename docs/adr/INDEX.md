@@ -219,9 +219,10 @@
 | [ADR-0430](0430-caller-aware-capability-namespace.md) | Caller-aware namespace для capability-проверок + гейт деклараций | Accepted |
 | [ADR-0431](0431-workflow-idempotency-and-compensation.md) | Идемпотентность внешних вызовов и единая семантика компенсации | Accepted |
 | [ADR-0432](0432-guardrails-metrics-and-webhook-scheduler-endpoints.md) | HTTP-поверхности для метрик guardrails и планировщика webhook'ов | Accepted |
+| [ADR-0433](0433-workflow-spec-linter-and-internal-activities.md) | Линтер workflow-спецификаций и внутренние activity `reflect`/`checkpoint` | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 217 ADRs.
+**Total:** 218 ADRs.
 

@@ -125,6 +125,11 @@ jobs:
         # .security/route-capabilities-baseline.txt).
         run: uv run python tools/check_route_capabilities.py
 
+      - name: Workflow specs lint gate (check_workflow_specs)
+        # ADR-0433: опечатка в имени activity или невалидное поле шага
+        # обнаруживались только в рантайме (build-time падал Worker).
+        run: uv run python tools/check_workflow_specs.py
+
       - name: Config audit gate (config_audit)
         # Wave 13 Q16: YAML-конфиг ↔ модели настроек. Неизвестные YAML-ключи
         # (опечатки) и секции без Settings-класса = тихая потеря настройки.
