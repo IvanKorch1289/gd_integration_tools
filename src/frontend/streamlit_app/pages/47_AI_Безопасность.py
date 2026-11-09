@@ -40,11 +40,6 @@ def _fetch_metrics() -> list[dict]:
     ``GuardrailsMetricsService`` есть в кодовой базе, но не подключён к DI
     и не имеет HTTP-обёртки, поэтому запрос к нему всегда давал 404.
     """
-    st.info(
-        "Метрики guardrails недоступны: серверный endpoint "
-        "`GET /api/v1/admin/guardrails-metrics` не реализован "
-        "(сервис `GuardrailsMetricsService` не подключён к DI)."
-    )
     return []
 
 
@@ -93,9 +88,6 @@ else:
                 value=0,
                 key=f"fp-{metric['tenant_id']}",
             )
-            st.caption(
-                "Отметка false-positive недоступна: серверный endpoint "
-                "не реализован (ADR-0425)."
-            )
+
 
 related_pages_footer("47_AI_Безопасность")

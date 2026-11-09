@@ -115,6 +115,36 @@ class _AuditContext:
         )
         await _emit_wrapper(event, self.audit_service)
 
+    async def _record_guardrails_metrics(self, resp: Any) -> None:
+        """Записать вердикт guardrails в агрегатор метрик (ADR-0432).
+
+        Best-effort: метрики не должны ломать AI-вызов. Агрегатор отдаётся
+        через ``GET /api/v1/admin/guardrails-metrics``.
+        """
+        try:
+            from src.backend.core.di.providers.guardrails import (
+                get_guardrails_metrics_service_provider,
+            )
+            from src.backend.services.ai.guardrails_metrics import GuardrailVerdict
+
+            verdict = (getattr(resp, "guardrails_verdict", None) or {}).get("output")
+            if verdict not in ("safe", "blocked", "warn", "redact"):
+                return
+            service = get_guardrails_metrics_service_provider()
+            await service.record(
+                tenant_id=self.request.tenant_id or "unknown",
+                verdict=(
+                    GuardrailVerdict.BLOCK
+                    if verdict == "blocked"
+                    else GuardrailVerdict.REDACT
+                    if verdict == "redact"
+                    else GuardrailVerdict.ALLOW
+                ),
+                model_used=getattr(resp, "model_used", "") or "unknown",
+            )
+        except Exception as exc:  # noqa: BLE001 — метрики не ломают вызов
+            logger.debug("guardrails metrics record failed: %s", exc)
+
     async def _emit_final(self, start_ms: int) -> None:
         """Emit завершающее событие: completed / denied / failed."""
         from src.backend.core.audit.schema.ai_invocation import (
@@ -135,6 +165,8 @@ class _AuditContext:
             event_type = AIInvocationEventType.COMPLETED
             error_class = None
             error_message = None
+
+        await self._record_guardrails_metrics(resp)
 
         total_ms = int(time.monotonic() * 1000) - start_ms
         tokens_total = (resp.tokens_prompt if resp else 0) + (

@@ -45,6 +45,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_feedback import (
         router as admin_feedback_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_guardrails import (
+        router as admin_guardrails_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_ip_restriction import (
         router as admin_ip_restriction_router,
     )
@@ -173,6 +176,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.skb import router as skb_router
     from src.backend.entrypoints.api.v1.endpoints.tech import router as tech_router
     from src.backend.entrypoints.api.v1.endpoints.users import router as users_router
+    from src.backend.entrypoints.api.v1.endpoints.webhook_scheduler import (
+        router as webhook_scheduler_router,
+    )
 
     api_router_v1 = APIRouter()
 
@@ -246,6 +252,12 @@ def get_v1_routers() -> APIRouter:
     api_router_v1.include_router(
         admin_capabilities_router, prefix="/admin", tags=["Admin · Capabilities"]
     )
+    # ADR-0432: метрики guardrails (были в UI, но эндпоинта не было).
+    api_router_v1.include_router(
+        admin_guardrails_router, prefix="/admin", tags=["Admin · Guardrails"]
+    )
+    # ADR-0432: планировщик webhook'ов (был сервис без HTTP-поверхности).
+    api_router_v1.include_router(webhook_scheduler_router)
     # Sprint 16 Wave 9 (CP-15 / B-6): runtime feature-flag overrides.
     api_router_v1.include_router(
         admin_feature_flags_router, prefix="/admin", tags=["Admin · Feature Flags"]

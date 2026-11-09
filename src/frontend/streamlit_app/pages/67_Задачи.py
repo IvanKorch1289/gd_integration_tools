@@ -59,11 +59,10 @@ with tab2:
 
 with tab3:
     st.subheader("Запланированные webhooks")
-    st.info(
-        "Список запланированных webhooks недоступен: серверный endpoint "
-        "`GET /api/v1/webhooks/scheduled` не реализован (ADR-0425)."
-    )
-    hooks: list[dict[str, object]] = []
+    try:
+        hooks = client._request("GET", "/api/v1/webhooks/scheduled")
+    except httpx.HTTPError:  # narrow — все HTTP errors (4xx/5xx/timeout/connect)
+        hooks = []
 
     if hooks:
         import polars as pl
@@ -93,14 +92,24 @@ with tab3:
             import json
 
             try:
-                json.loads(payload)
+                payload_dict = json.loads(payload)
             except json.JSONDecodeError as exc:
                 st.error(f"Некорректный JSON payload: {exc}")
             else:
-                st.info(
-                    "Планирование webhook недоступно: серверный endpoint "
-                    "`POST /api/v1/webhook/schedule` не реализован (ADR-0425)."
-                )
+                try:
+                    result = client._request(
+                        "POST",
+                        "/api/v1/webhook/schedule",
+                        json={
+                            "url": url,
+                            "payload": payload_dict,
+                            "cron": cron or None,
+                            "delay_seconds": delay if delay > 0 else None,
+                        },
+                    )
+                    st.success(f"Запланировано: {result}")
+                except Exception as exc:
+                    st.error(f"Ошибка: {exc}")
 
 if st.button("Обновить"):
     st.rerun()
