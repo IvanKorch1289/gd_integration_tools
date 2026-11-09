@@ -358,9 +358,9 @@
 
 | # | Endpoint | Что нужно | Статус сервиса |
 |---|---|---|---|
-| 1 | `GET /api/v1/admin/guardrails-metrics` + `POST …/{tenant_id}/false-positive` | подключить `GuardrailsMetricsService` к DI + HTTP-обёртка | сервис есть, DI нет |
+| 1 | `GET /api/v1/admin/guardrails-metrics` + `POST …/{tenant_id}/false-positive` | — | ✅ **закрыто ADR-0432** (DI + эндпоинты + наполнение из AI-шлюза) |
 | 2 | `GET /api/v1/admin/prompt-versions*` (list/activate/compare) | расширить `PromptRegistry` (list/activate) + обёртка | сервис есть, методов нет |
-| 3 | `GET /api/v1/webhooks/scheduled`, `POST /api/v1/webhook/schedule` | `WebhookScheduler` → DI + обёртка (с SSRF-валидацией) | сервис есть, DI нет |
+| 3 | `GET /api/v1/webhooks/scheduled`, `POST /api/v1/webhook/schedule` | — | ✅ **закрыто ADR-0432** (DI + эндпоинты + SSRF-guard) |
 | 4 | `GET /api/v1/storage/list|get|download` (по ключу) | операции по `file_uuid` есть, по ключу — нет | частично |
 | 5 | `GET /api/v1/admin/pools/snapshot` | pool-менеджер умеет `get_metrics` | частично |
 | 6 | `GET /api/v1/admin/processes/active`, `GET /api/v1/admin/queues/summary` | новая capability (для Kafka/RabbitMQ — нет) | нет |
@@ -397,8 +397,8 @@
 | # | Находка | Что нужно | Severity |
 |---|---|---|---|
 | 1 | `memory.reflect` и `workflow.checkpoint.put` не зарегистрированы как activity | регистрация во внутренних activity + проверка в гейте каталога | high |
-| 2 | Компенсация откатывает разные шаги в Temporal- и pg-runner'е (индекс в списке **выполненных** vs **всех** forward-шагов) | выровнять семантику (ADR) | high |
-| 3 | `idempotency_key` не доходит до внешнего вызова | падение worker'а после успешного внешнего вызова → повтор → дубликат платежа/события | high |
+| 2 | ~~Компенсация откатывает разные шаги в Temporal- и pg-runner'е~~ | выровнять семантику (ADR) | ✅ закрыто ADR-0431 |
+| 3 | ~~`idempotency_key` не доходит до внешнего вызова~~ | проброс ключа в заголовок activity | ✅ закрыто ADR-0431 |
 | 4 | Линтер `*.workflow.yaml` отсутствует (только route-DSL) | `dsl lint` для workflow-спеки: spec + `collect_activities(validate=True)` + `file:step.field` | medium |
 | 5 | `workflow_setup.py` глотает ошибку загрузки workflow (`warning` + `str(exc)[:200]`) | `logger.error` с путём файла и полным текстом | medium |
 | 6 | `bulkhead`/`circuit-breaker` не подключены к DSL-процессорам (фасад есть) | подключение по аналогии с `core/api` | medium |
@@ -410,6 +410,23 @@
 **Требует решения владельца:** п. 3 (дубликаты внешних эффектов — нужна
 политика idempotency на стороне получателя: ключ в заголовке/теле) и п. 2
 (семантика компенсации: откатывать только выполненное или весь forward-план).
+
+---
+
+## 17. Решения владельца волны 28 (2026-11-09) — что закрыто кодом
+
+Владелец согласовал все рекомендации (A/B/C/D → A). Реализовано:
+
+| # | Решение | Статус |
+|---|---|---|
+| 1 | **Caller-aware capability** (namespace вызывающего вместо платформенного; безопасная деградация) | ✅ ADR-0430 |
+| 2 | **SQL-консоль** (`POST /api/v1/admin/sql/query`) не поднимается | ✅ зафиксировано: панель выключена, threat model отложен |
+| 3 | **7 отсутствующих эндпоинтов портала** — поднять только живые capability | ✅ ADR-0432: guardrails-метрики + webhook-планировщик; остальные — бэклог (§15) |
+| 4 | **Capability-декларации обязательны + CI-гейт** (рэтчет, baseline легаси) | ✅ ADR-0430: `tools/check_route_capabilities.py` + шаг в `lint.yml` |
+| 5 | **Идемпотентность внешних вызовов** — ключ в заголовке activity | ✅ ADR-0431 |
+| 6 | **Семантика компенсации** — откатывать только выполненное (как в Temporal) | ✅ ADR-0431 |
+| 7 | **Инфраструктурные долги** — единый пакет «инфра-решения» с владельцами | ⚙️ **кодом не закрывается**: `.env:92`, образ `gd-integration-tools:light` от 18.08, Prometheus-правила SLA, `audit.write`-декларации + `audit_clickhouse_enabled` в проде, JWKS RS256+keypair, service-DNS для sidecar'ов, OpenWebUI endpoint, replica DSN, BYPASSRLS для межtenant-снапшота, `jupyter.hub` без провайдера |
+| 8 | **Волна 28 = «стойкость»** | ✅ идемпотентность + компенсация; линтер `*.workflow.yaml` и регистрация `memory.reflect`/`workflow.checkpoint.put` — бэклог §16 |
 
 ---
 
