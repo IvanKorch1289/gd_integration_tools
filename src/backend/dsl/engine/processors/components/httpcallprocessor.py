@@ -64,11 +64,18 @@ class HttpCallProcessor(BaseProcessor):
             with contextlib.suppress(KeyError, IndexError):
                 url = url.format(**exchange.in_message.body)
 
+        # ADR-0431: ключ идемпотентности шага (если он есть в exchange'е)
+        # уходит в заголовок — получатель может отбросить дубликат запроса.
+        headers = dict(self._headers)
+        idempotency_key = exchange.get_property("idempotency_key")
+        if idempotency_key:
+            headers.setdefault("Idempotency-Key", str(idempotency_key))
+
         try:
             result = await client.make_request(
                 method=self._method,
                 url=url,
-                headers=self._headers or None,
+                headers=headers or None,
                 json=json_body,
                 auth_token=self._auth_token,
                 total_timeout=self._timeout,

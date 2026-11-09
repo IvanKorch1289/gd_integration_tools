@@ -76,6 +76,9 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
     step_start_logged,
     step_terminal_logged,
 )
+from src.backend.infrastructure.workflow.pg_runner_internals.step_keys import (
+    idempotency_key as _idempotency_key,
+)
 from src.backend.infrastructure.workflow.pg_runner_internals.workflow_dlq import (
     WorkflowDLQPublisher,
 )
@@ -93,24 +96,9 @@ __all__ = (
 _logger = get_logger("workflow.runner")
 
 
-def idempotency_key(instance_id: UUID, step_name: str, attempt: int) -> str:
-    """Ключ идемпотентности шага.
-
-    Детерминированная функция от (инстанс, шаг, попытка): одинаковые
-    входы дают одинаковый ключ, поэтому повторное исполнение того же
-    шага той же попытки распознаётся в event log'е (ADR-0394).
-
-    Args:
-        instance_id: UUID инстанса workflow'а.
-        step_name: Имя шага.
-        attempt: Номер попытки.
-
-    Returns:
-        hex-хеш ``sha256(instance_id|step_name|attempt)``.
-
-    """
-    raw = f"{instance_id}|{step_name}|{attempt}".encode()
-    return hashlib.sha256(raw).hexdigest()
+# ADR-0431: функция вынесена в общий модуль — её использует и runner,
+# и executor (проброс ключа во внешний вызов).
+idempotency_key = _idempotency_key
 
 
 def _coerce_seconds(raw: Any) -> float | None:

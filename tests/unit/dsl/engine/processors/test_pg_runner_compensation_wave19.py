@@ -499,3 +499,58 @@ async def test_driver_keeps_saga_with_pending_compensations() -> None:
 
     assert fake_repo.signal_calls == []
 
+
+
+# ── ADR-0431: семантика компенсации выровнена с Temporal-путём ────
+
+
+def _partial_saga_spec(calls: list[str]) -> WorkflowSpec:
+    """Spec саги: три forward-шага + три rollback-шага (позиционный маппинг)."""
+    return WorkflowSpec(
+        name="wf-partial-saga",
+        steps=(
+            WorkflowStep(
+                kind="sequential", name="reserve", processors=(_proc("reserve", calls),)
+            ),
+            WorkflowStep(
+                kind="sequential", name="ship", processors=(_proc("ship", calls),)
+            ),
+            WorkflowStep(
+                kind="sequential", name="charge", processors=(_proc("charge", calls),)
+            ),
+            WorkflowStep(
+                kind="compensate",
+                name="undo_reserve",
+                processors=(_proc("undo_reserve", calls),),
+            ),
+            WorkflowStep(
+                kind="compensate",
+                name="undo_ship",
+                processors=(_proc("undo_ship", calls),),
+            ),
+            WorkflowStep(
+                kind="compensate",
+                name="undo_charge",
+                processors=(_proc("undo_charge", calls),),
+            ),
+        ),
+    )
+
+
+def test_compensation_plan_index_counts_completed_steps_only() -> None:
+    """Индекс позиционного маппинга — по **выполненным** шагам (ADR-0431).
+
+    Кейс частичного падения: forward [reserve, ship, charge], выполнены
+    [reserve, charge] (упал ``ship``). Позиционный маппинг: N-й **выполненный**
+    forward-шаг ↔ N-й compensate-шаг → reserve→undo_reserve (0),
+    charge→undo_ship (1); исполняется в обратном порядке. Temporal-путь
+    даёт тот же результат (индекс в списке выполненных). Раньше pg-runner
+    считал индекс по всем forward-шагам (charge→undo_charge) — семантика
+    расходилась между движками.
+    """
+    spec = _partial_saga_spec([])
+
+    plan = build_compensation_plan(spec, completed_names=["reserve", "charge"])
+
+    assert [action.forward_name for action in plan] == ["charge", "reserve"]
+    assert [action.step.name for action in plan] == ["undo_ship", "undo_reserve"]

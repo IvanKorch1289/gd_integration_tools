@@ -150,10 +150,15 @@ def build_compensation_plan(
                 continue
             pairs.append((forward.name, step))
     else:
-        # Позиционный fallback (совпадает с Temporal-путём):
-        # i-й compensate-шаг откатывает i-й forward-шаг.
-        for index, forward in enumerate(forward_steps):
-            if forward.name not in completed or index >= len(compensate_steps):
+        # Позиционный fallback — индекс считается по списку **выполненных**
+        # forward-шагов (как в Temporal-пути, ADR-0431). Раньше индекс
+        # считался по всем forward-шагам: при частичном падении цепочки
+        # откатывались разные шаги в зависимости от движка.
+        completed_forward = [
+            forward for forward in forward_steps if forward.name in completed
+        ]
+        for index, forward in enumerate(completed_forward):
+            if index >= len(compensate_steps):
                 continue
             pairs.append((forward.name, compensate_steps[index]))
 

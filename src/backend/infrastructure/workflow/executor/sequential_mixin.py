@@ -40,6 +40,9 @@ from src.backend.infrastructure.workflow.pg_runner_internals import (
     WorkflowInstanceRow,
     WorkflowState,
 )
+from src.backend.infrastructure.workflow.pg_runner_internals.step_keys import (
+    idempotency_key,
+)
 from src.backend.infrastructure.workflow.runner import StepOutcome, StepResult
 
 _logger = get_logger("workflow.executor")
@@ -81,7 +84,11 @@ def _is_exchange_wrapping_enabled() -> bool:
 
 
 async def _run_processor(
-    proc: Any, body: dict[str, Any], timeout: float
+    proc: Any,
+    body: dict[str, Any],
+    timeout: float,
+    *,
+    idempotency_key: str | None = None,
 ) -> dict[str, Any]:
     """Вызвать processor с dict или Exchange (зависит от feature-flag).
 
@@ -105,6 +112,8 @@ async def _run_processor(
     from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 
     exchange = Exchange(in_message=Message(body=body), status=ExchangeStatus.pending)
+    if idempotency_key:
+        exchange.set_property("idempotency_key", idempotency_key)
     result = await safe_wait_for(proc(exchange), timeout=timeout)
     if isinstance(result, Exchange):
         return (
@@ -132,9 +141,16 @@ class SequentialMixin:
         """Запускает processors-chain. B1-phase-2: Exchange wrapping опционален."""
         body = dict(state.exchange_snapshot)
         attempt = next_attempt(state)
+        # ADR-0431: ключ идемпотентности шага доступен внешним вызовам.
+        step_key = idempotency_key(instance.id, step.name, attempt)
         for proc in step.processors:
             try:
-                body = await _run_processor(proc, body, self._timeout_per_step_s)
+                body = await _run_processor(
+                    proc,
+                    body,
+                    self._timeout_per_step_s,
+                    idempotency_key=step_key,
+                )
             except TimeoutError:
                 _logger.warning(
                     "step processor timed out after %.1fs",
