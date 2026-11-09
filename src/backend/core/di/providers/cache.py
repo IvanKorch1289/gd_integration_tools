@@ -25,7 +25,7 @@ Singleton cache ``_overrides`` is per-domain (NOT shared) — каждый domai
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di.module_registry import resolve_module
 
@@ -380,11 +380,15 @@ def set_redis_lock_class_provider(lock_class: Any) -> None:
 
 # S165 W1: UnifiedCacheFacade (Rule 1, Rule 6) + S170 ADR-0354 re-export.
 from src.backend.core.di.providers.infrastructure_locator import (  # noqa: F401
-    get_unified_cache_facade_provider, set_unified_cache_facade_provider,
+    get_unified_cache_facade_provider,
+    set_unified_cache_facade_provider,
 )
-def get_cache_facade(
-    enable_fallback: bool = True,
-) -> "MemoryBackend | None":
+
+if TYPE_CHECKING:  # pragma: no cover — только для аннотаций
+    from src.backend.infrastructure.cache.backends.memory import MemoryBackend
+
+
+def get_cache_facade(enable_fallback: bool = True) -> "MemoryBackend | None":
     """Dev/test helper: returns ``MemoryBackend`` (NOT ``UnifiedCacheFacade``).
 
     Cycle 168 (PROD_READINESS §1.7): production canonical — это
@@ -395,9 +399,7 @@ def get_cache_facade(
     if not enable_fallback:
         return None
     try:
-        from src.backend.infrastructure.cache.backends.memory import (
-            MemoryBackend,
-        )
+        from src.backend.infrastructure.cache.backends.memory import MemoryBackend
     except ImportError:
         return None
     return MemoryBackend(maxsize=1000, default_ttl=3600)

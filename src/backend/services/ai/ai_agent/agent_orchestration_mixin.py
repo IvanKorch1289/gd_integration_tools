@@ -213,10 +213,10 @@ class AgentOrchestrationMixin:
         sanitized = self._sanitizer.sanitize_text(prompt)
 
         try:
-            from src.backend.services.ai.ai_graph import build_and_run_agent
             from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
                 CheckpointBackendUnavailable,
             )
+            from src.backend.services.ai.ai_graph import build_and_run_agent
 
             result = await build_and_run_agent(
                 prompt=sanitized.sanitized, tool_actions=tools or [], durable=durable

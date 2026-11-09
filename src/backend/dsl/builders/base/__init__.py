@@ -62,13 +62,13 @@ from src.backend.dsl.builders.deferred_execution_mixin import (
 )
 from src.backend.dsl.builders.eip import EIPMixin as EIPMixin
 from src.backend.dsl.builders.eventbus_mixin import EventBusMixin as EventBusMixin
+from src.backend.dsl.builders.infra_logging_mixin import (
+    InfraLoggingMixin as InfraLoggingMixin,
+)
 from src.backend.dsl.builders.infrastructure_dsl import (
     InfrastructureDSL as InfrastructureDSL,
 )
 from src.backend.dsl.builders.integration import IntegrationMixin as IntegrationMixin
-from src.backend.dsl.builders.infra_logging_mixin import (
-    InfraLoggingMixin as InfraLoggingMixin,
-)
 from src.backend.dsl.builders.ip_restriction_mixin import (
     IPRestrictionMixin as IPRestrictionMixin,
 )
