@@ -497,6 +497,22 @@ class DurableWorkflowRunner:
                 _logger.exception(
                     "unexpected error executing workflow %s: %s", workflow_id, exc
                 )
+                # ADR-0429: без терминального перехода инстанс навсегда
+                # оставался бы в статусе running (backup-poll подхватывал бы
+                # его снова и снова, счётчик попыток рос, DLQ/компенсация не
+                # срабатывали). Помечаем инстанс failed с текстом ошибки;
+                # если и это не удалось (напр. БД недоступна) — инстанс
+                # подхватит backup-poll после восстановления БД.
+                try:
+                    await self._state_store.update_status(
+                        workflow_id, WorkflowStatus.failed, error=str(exc)
+                    )
+                except Exception as status_exc:  # noqa: BLE001 — best-effort
+                    _logger.warning(
+                        "workflow_status_update_failed workflow=%s error=%s",
+                        workflow_id,
+                        status_exc,
+                    )
             finally:
                 async with self._active_lock:
                     self._active_executions.discard(workflow_id)
