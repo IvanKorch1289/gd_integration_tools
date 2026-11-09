@@ -396,10 +396,10 @@
 
 | # | Находка | Что нужно | Severity |
 |---|---|---|---|
-| 1 | `memory.reflect` и `workflow.checkpoint.put` не зарегистрированы как activity | регистрация во внутренних activity + проверка в гейте каталога | high |
+| 1 | ~~`memory.reflect` и `workflow.checkpoint.put` не зарегистрированы как activity~~ | регистрация во внутренних activity | ✅ закрыто ADR-0433 (реализованы + зарегистрированы в Worker'е) |
 | 2 | ~~Компенсация откатывает разные шаги в Temporal- и pg-runner'е~~ | выровнять семантику (ADR) | ✅ закрыто ADR-0431 |
 | 3 | ~~`idempotency_key` не доходит до внешнего вызова~~ | проброс ключа в заголовок activity | ✅ закрыто ADR-0431 |
-| 4 | Линтер `*.workflow.yaml` отсутствует (только route-DSL) | `dsl lint` для workflow-спеки: spec + `collect_activities(validate=True)` + `file:step.field` | medium |
+| 4 | ~~Линтер `*.workflow.yaml` отсутствует (только route-DSL)~~ | `dsl lint` для workflow-спеки: spec + `collect_activities(validate=True)` + `file:step.field` | ✅ закрыто ADR-0433 (`tools/check_workflow_specs.py` + шаг в `lint.yml`) |
 | 5 | `workflow_setup.py` глотает ошибку загрузки workflow (`warning` + `str(exc)[:200]`) | `logger.error` с путём файла и полным текстом | medium |
 | 6 | `bulkhead`/`circuit-breaker` не подключены к DSL-процессорам (фасад есть) | подключение по аналогии с `core/api` | medium |
 | 7 | `core/api/__init__.py` не экспортирует CB/RateLimiter/Bulkhead (в AGENTS.md заявлены «17 primitives») | привести экспорт в соответствие с докстрингом | medium |
@@ -426,7 +426,7 @@
 | 5 | **Идемпотентность внешних вызовов** — ключ в заголовке activity | ✅ ADR-0431 |
 | 6 | **Семантика компенсации** — откатывать только выполненное (как в Temporal) | ✅ ADR-0431 |
 | 7 | **Инфраструктурные долги** — единый пакет «инфра-решения» с владельцами | ⚙️ **кодом не закрывается**: `.env:92`, образ `gd-integration-tools:light` от 18.08, Prometheus-правила SLA, `audit.write`-декларации + `audit_clickhouse_enabled` в проде, JWKS RS256+keypair, service-DNS для sidecar'ов, OpenWebUI endpoint, replica DSN, BYPASSRLS для межtenant-снапшота, `jupyter.hub` без провайдера |
-| 8 | **Волна 28 = «стойкость»** | ✅ идемпотентность + компенсация; линтер `*.workflow.yaml` и регистрация `memory.reflect`/`workflow.checkpoint.put` — бэклог §16 |
+| 8 | **Волна 28 = «стойкость»** | ✅ закрыто полностью: идемпотентность (ADR-0431) + компенсация (ADR-0431) + линтер workflow-спецификаций и внутренние activity (ADR-0433) |
 
 ---
 
