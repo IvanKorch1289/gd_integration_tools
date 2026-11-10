@@ -16,7 +16,7 @@ http/https, без private/loopback/link-local адресов) — иначе п
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
@@ -31,6 +31,12 @@ __all__ = ("router",)
 logger = get_logger("entrypoints.webhook_scheduler")
 
 _ADMIN_GUARD = Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))
+
+#: Зависимость admin-операции для доступа к контексту авторизации (tenant
+#: берётся из него — ADR-0345). Инлайн-``Depends`` вместо module-level
+#: Annotated-алиаса: при ``from __future__ import annotations`` алиас остаётся
+#: forward-ref'ом и ломает генерацию OpenAPI-схемы всего приложения.
+_ADMIN_DEP = Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))
 
 router = APIRouter(dependencies=[_ADMIN_GUARD])
 
@@ -78,7 +84,7 @@ async def list_scheduled_webhooks(
 )
 async def schedule_webhook(
     request: WebhookScheduleRequest,
-    auth: _AdminCtx,
+    auth: AuthContext = _ADMIN_DEP,
     tenant_id: str = Query(default="", description="Тенант-владелец."),
 ) -> dict[str, Any]:
     """Запланировать webhook'а.
