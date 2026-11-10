@@ -164,13 +164,10 @@ def test_call_function_targets_accept_single_payload(
         positional = [
             param
             for param in signature.parameters.values()
-            if param.kind
-            in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD)
+            if param.kind in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD)
         ]
         required = [
-            param
-            for param in positional
-            if param.default is inspect.Parameter.empty
+            param for param in positional if param.default is inspect.Parameter.empty
         ]
         assert len(required) <= 1, (
             f"{workflow_yaml.name}: {name} принимает {len(required)} обязательных "
@@ -246,7 +243,8 @@ def test_ai_workflows_use_real_implementations(workflow_name: str) -> None:
     matches = [
         path
         for path in _workflow_files()
-        if load_workflow_from_yaml(path.read_text(encoding="utf-8")).name == workflow_name
+        if load_workflow_from_yaml(path.read_text(encoding="utf-8")).name
+        == workflow_name
     ]
     assert matches, f"workflow '{workflow_name}' не найден"
 

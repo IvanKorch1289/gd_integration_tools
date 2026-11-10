@@ -11,8 +11,8 @@ import pytest
 
 from src.backend.services.ai.document_parsers import _network as mod_pkg
 from src.backend.services.ai.document_parsers._network import (
-    _NetworkDeniedError,
     _denied_urlopen,
+    _NetworkDeniedError,
     markitdown_network_disabled,
 )
 

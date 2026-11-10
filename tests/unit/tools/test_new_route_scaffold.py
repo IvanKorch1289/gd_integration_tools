@@ -86,9 +86,7 @@ def test_scaffold_manifest_loads_by_route_loader(repo_root: Path) -> None:
 
     result = _run_scaffold(repo_root, "order_status")
     assert result.returncode == 0, result.stderr
-    manifest = load_route_manifest(
-        repo_root / "routes" / "order_status" / "route.toml"
-    )
+    manifest = load_route_manifest(repo_root / "routes" / "order_status" / "route.toml")
     assert manifest.name == "order_status"
     assert manifest.pipelines == ("main.dsl.yaml",)
 

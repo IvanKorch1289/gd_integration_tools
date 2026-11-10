@@ -93,8 +93,7 @@ async def phase_ai_safety_cleanup(app: FastAPI) -> None:
         await start_ai_safety(app)
     except Exception as exc:
         _logger.warning(
-            "AI safety cleanup-loop не запущен (R-V15-11 TTL не применяется): %s",
-            exc,
+            "AI safety cleanup-loop не запущен (R-V15-11 TTL не применяется): %s", exc
         )
 
 

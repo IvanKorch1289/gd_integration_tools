@@ -280,8 +280,7 @@ def test_unknown_step_is_reported(tmp_path: Path) -> None:
 def test_wrong_kwarg_is_reported(tmp_path: Path) -> None:
     """Неверный kwarg шага → INVALID_PIPELINE."""
     route_dir = _write_route(
-        tmp_path,
-        yaml_body="steps:\n  - transform:\n      wrong_param: body\n",
+        tmp_path, yaml_body="steps:\n  - transform:\n      wrong_param: body\n"
     )
     issues = DSLLinter().lint_route(route_dir)
     pipeline_issues = [i for i in issues if i.code == "INVALID_PIPELINE"]
@@ -360,10 +359,7 @@ def test_db_step_with_wrong_scope_is_reported(tmp_path: Path) -> None:
 def test_rpa_step_requires_capability(tmp_path: Path) -> None:
     """rpa_click требует rpa.browser.click (карта из required_capability)."""
     route_dir = _write_route(
-        tmp_path,
-        yaml_body=(
-            "steps:\n  - rpa_click:\n      selector: '#submit'\n"
-        ),
+        tmp_path, yaml_body=("steps:\n  - rpa_click:\n      selector: '#submit'\n")
     )
     issues = DSLLinter().lint_route(route_dir)
     cap_issues = [i for i in issues if i.code == "MISSING_CAPABILITY"]

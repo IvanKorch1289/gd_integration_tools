@@ -173,7 +173,7 @@ class PayloadOptimizer:
 
         try:
             return len(json.dumps(data, default=str))
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return 0
 
     @classmethod

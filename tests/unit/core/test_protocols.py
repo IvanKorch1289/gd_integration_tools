@@ -106,6 +106,7 @@ class TestAgentMemoryBackend:
     Disambiguates from cache MemoryBackend
     (src.backend.infrastructure.cache.backends.memory.MemoryBackend).
     """
+
     def test_is_runtime_checkable(self) -> None:
         class Fake:
             async def get_conversation(

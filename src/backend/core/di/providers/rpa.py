@@ -76,7 +76,8 @@ def get_browser_pool_provider() -> Any:
 
         _browser_pool = PlaywrightBrowserPool()
         _logger.info(
-            "RPA browser pool created (lazy): size=%s", getattr(_browser_pool, "size", "?")
+            "RPA browser pool created (lazy): size=%s",
+            getattr(_browser_pool, "size", "?"),
         )
     return _browser_pool
 

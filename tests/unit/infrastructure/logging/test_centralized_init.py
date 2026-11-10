@@ -36,7 +36,7 @@ def _reset_factory_and_router() -> None:
     reset_router()
     try:
         shutdown_logging()
-    except (OSError, RuntimeError):
+    except OSError, RuntimeError:
         pass
 
 
@@ -57,9 +57,7 @@ class TestInitApplicationLogging:
     def test_init_with_explicit_profile(self) -> None:
         """``profile`` параметр принимается и не вызывает ошибки."""
         backend = init_application_logging(
-            level="DEBUG",
-            environment="test",
-            profile="dev",
+            level="DEBUG", environment="test", profile="dev"
         )
         assert isinstance(backend, StructlogGraylogBackend)
         assert is_router_configured()
@@ -162,10 +160,7 @@ class TestCentralizedInitInLifespanContext:
         assert not is_router_configured()
 
         # init (lifespan startup pattern)
-        init_application_logging(
-            level="INFO",
-            environment="production",
-        )
+        init_application_logging(level="INFO", environment="production")
 
         # После init
         assert factory._backend is not None

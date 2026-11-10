@@ -13,13 +13,10 @@ DSL-слой зависит ТОЛЬКО от структурных Protocol, �
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.core.ai.workflow_protocol import (
     WorkflowDescriptorProtocol,
     WorkflowRegistryProtocol,
 )
-
 
 # ── WorkflowDescriptorProtocol ──────────────────────────────────────
 

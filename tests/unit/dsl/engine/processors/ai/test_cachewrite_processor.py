@@ -12,7 +12,9 @@ from src.backend.dsl.engine.processors.ai.cachewrite_processor import (
 )
 
 # Провайдер unified cache facade (core DI) — патчится в тестах деградации.
-_FACADE_PROVIDER = "src.backend.core.di.providers.cache.get_unified_cache_facade_provider"
+_FACADE_PROVIDER = (
+    "src.backend.core.di.providers.cache.get_unified_cache_facade_provider"
+)
 
 
 class _Message:

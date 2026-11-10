@@ -27,7 +27,6 @@ from src.backend.dsl.engine.processors.eip.transformation import (
 REAL_CAPABILITY_GATE = True
 
 
-
 def _ex(body: Any = None, headers: dict[str, Any] | None = None) -> Exchange[Any]:
     return Exchange(in_message=Message(body=body, headers=headers or {}))
 
@@ -143,8 +142,7 @@ def _patch_capability_gate(
         _legacy_check,
     )
     monkeypatch.setattr(
-        "src.backend.core.security.capabilities.runtime_resolver.check",
-        _runtime_check,
+        "src.backend.core.security.capabilities.runtime_resolver.check", _runtime_check
     )
 
 

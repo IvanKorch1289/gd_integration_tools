@@ -29,8 +29,6 @@ After Stage 4 (cycle 167):
 
 from __future__ import annotations
 
-import asyncio
-
 
 class TestMemoryBackendInfrastructureRole:
     """``MemoryBackend`` (infrastructure) — CacheBackend interface impl."""
@@ -109,10 +107,7 @@ class TestLruMemoryCacheRouterRole:
         await cache.set("k2", [1, 2, 3])
         await cache.set("k3", "string-value")
 
-        assert await cache.get("k1") == {
-            "vector": [0.1, 0.2, 0.3],
-            "id": "doc-1",
-        }
+        assert await cache.get("k1") == {"vector": [0.1, 0.2, 0.3], "id": "doc-1"}
         assert await cache.get("k2") == [1, 2, 3]
         assert await cache.get("k3") == "string-value"
 
@@ -211,18 +206,14 @@ class TestNoUnintendedConsolidation:
 
     def test_two_classes_are_distinct_objects(self) -> None:
         """Sanity: 2 distinct classes, no aliases."""
-        from src.backend.infrastructure.cache.backends.memory import (
-            MemoryBackend as MB,
-        )
+        from src.backend.infrastructure.cache.backends.memory import MemoryBackend as MB
         from src.backend.infrastructure.cache.lru_cache import LruMemoryCache as LMC
 
         assert MB is not LMC
 
     def test_import_paths_distinct(self) -> None:
         """Each class lives in a distinct module path."""
-        from src.backend.infrastructure.cache.backends.memory import (
-            MemoryBackend as MB,
-        )
+        from src.backend.infrastructure.cache.backends.memory import MemoryBackend as MB
         from src.backend.infrastructure.cache.lru_cache import LruMemoryCache as LMC
 
         assert MB.__module__ == "src.backend.infrastructure.cache.backends.memory"

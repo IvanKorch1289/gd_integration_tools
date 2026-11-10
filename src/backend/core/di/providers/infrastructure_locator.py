@@ -419,7 +419,7 @@ def get_unified_cache_facade_provider() -> Any:
         from src.backend.services.cache import UnifiedCacheFacade
 
         return get_service(UnifiedCacheFacade)
-    except (KeyError, ImportError):
+    except KeyError, ImportError:
         return None
 
 

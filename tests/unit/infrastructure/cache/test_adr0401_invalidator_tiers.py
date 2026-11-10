@@ -154,8 +154,7 @@ def test_fallback_tiers_registered_in_invalidator(tmp_path: Path) -> None:
     )
 
     memory, disk = create_cache_fallback_backends(
-        fake_settings,
-        disk_path=str(tmp_path / "disk"),
+        fake_settings, disk_path=str(tmp_path / "disk")
     )
 
     assert memory is not None, "L1 (memory) не создан"

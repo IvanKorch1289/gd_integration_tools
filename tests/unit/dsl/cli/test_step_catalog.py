@@ -62,7 +62,9 @@ def test_lsp_completions_have_no_drift() -> None:
     from tools.dsl_lsp.schema_completion import STEP_COMPLETIONS
 
     steps = set(builder_step_names())
-    unknown = [label for label, _detail, _snippet in STEP_COMPLETIONS if label not in steps]
+    unknown = [
+        label for label, _detail, _snippet in STEP_COMPLETIONS if label not in steps
+    ]
     assert unknown == [], f"LSP-completion предлагает несуществующие шаги: {unknown}"
 
 

@@ -86,13 +86,10 @@ def _reset_throttle_counters() -> None:
 
 
 class TestLogThrottling:
-    async def test_first_failure_logs_warning(
-        self, counter: CountingHandler
-    ) -> None:
+    async def test_first_failure_logs_warning(self, counter: CountingHandler) -> None:
         """Первое падение за window = WARNING с описанием."""
         facade = UnifiedCacheFacade(
-            primary=FailingBackend(),
-            memory_fallback=MemoryBackend(maxsize=10),
+            primary=FailingBackend(), memory_fallback=MemoryBackend(maxsize=10)
         )
         await facade.get_ns("k1")
         assert len(counter.warnings) == 1
@@ -104,8 +101,7 @@ class TestLogThrottling:
     ) -> None:
         """50 последующих failures = 1 short summary + остальные DEBUG."""
         facade = UnifiedCacheFacade(
-            primary=FailingBackend(),
-            memory_fallback=MemoryBackend(maxsize=10),
+            primary=FailingBackend(), memory_fallback=MemoryBackend(maxsize=10)
         )
         for i in range(50):
             await facade.get_ns(f"k{i}")
@@ -114,13 +110,10 @@ class TestLogThrottling:
         assert len(counter.warnings) == 2
         assert len(counter.debugs) >= 48
 
-    async def test_throttle_counter_increments(
-        self, counter: CountingHandler
-    ) -> None:
+    async def test_throttle_counter_increments(self, counter: CountingHandler) -> None:
         """Counter растёт с каждым suppressed failure."""
         facade = UnifiedCacheFacade(
-            primary=FailingBackend(),
-            memory_fallback=MemoryBackend(maxsize=10),
+            primary=FailingBackend(), memory_fallback=MemoryBackend(maxsize=10)
         )
         for i in range(10):
             await facade.get_ns(f"k{i}")
@@ -152,10 +145,7 @@ class TestLogThrottling:
         from src.backend.services.cache.facade import CacheResult
 
         memory = MemoryBackend(maxsize=10)
-        facade = UnifiedCacheFacade(
-            primary=FailingBackend(),
-            memory_fallback=memory,
-        )
+        facade = UnifiedCacheFacade(primary=FailingBackend(), memory_fallback=memory)
         # Pre-populate memory with the namespaced key (facade prefixes with
         # ``namespace:key``).
         await memory.set("default:k1", b"value_from_memory")

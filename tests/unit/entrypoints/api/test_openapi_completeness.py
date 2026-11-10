@@ -111,9 +111,10 @@ class TestRequestBodyContract:
         apply_security_to_openapi(app)
         operation = app.openapi()["paths"]["/api/v1/items"]["post"]
 
-        assert operation["requestBody"]["content"]["application/json"]["schema"][
-            "type"
-        ] == "object"
+        assert (
+            operation["requestBody"]["content"]["application/json"]["schema"]["type"]
+            == "object"
+        )
 
 
 @pytest.mark.unit
@@ -126,8 +127,7 @@ class TestDocumentedExceptions:
         """Гейт: ни одна мутация без тела не осталась без объяснения."""
         undocumented = undocumented_mutations_without_request_body(app_schema)
         assert not undocumented, (
-            "мутации без requestBody и без документированной причины: "
-            f"{undocumented}"
+            f"мутации без requestBody и без документированной причины: {undocumented}"
         )
 
     def test_every_mutation_has_4xx_response(self, app_schema: dict[str, Any]) -> None:

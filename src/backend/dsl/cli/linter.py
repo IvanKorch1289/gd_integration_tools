@@ -320,9 +320,7 @@ class DSLLinter:
             return [], None, issues
 
         flat = route_section if isinstance(route_section, dict) else data
-        missing = [
-            field for field in _REQUIRED_MANIFEST_FIELDS if not flat.get(field)
-        ]
+        missing = [field for field in _REQUIRED_MANIFEST_FIELDS if not flat.get(field)]
         for field in missing:
             issues.append(
                 LintIssue(
@@ -377,7 +375,7 @@ class DSLLinter:
                 import tomllib
 
                 data = tomllib.loads(toml_path.read_text(encoding="utf-8"))
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 return []
 
         found: list[tuple[str, str | None]] = []
@@ -401,7 +399,9 @@ class DSLLinter:
                     found.append((name.strip(), scope.strip() if sep else None))
         return found
 
-    def _discover_plugin_capabilities(self, yaml_path: Path) -> list[tuple[str, str | None]]:
+    def _discover_plugin_capabilities(
+        self, yaml_path: Path
+    ) -> list[tuple[str, str | None]]:
         """Plugin-aware: ищет ``extensions/<name>/plugin.toml``.
 
         Если *.dsl.yaml внутри ``extensions/<name>/.../`` — поднимаемся
@@ -610,9 +610,7 @@ class DSLLinter:
                     ),
                     file=yaml_path,
                     processor=proc_name,
-                    suggestion=self._capability_suggestion(
-                        capability, required_scope
-                    ),
+                    suggestion=self._capability_suggestion(capability, required_scope),
                 )
             )
             return issues
@@ -637,8 +635,7 @@ class DSLLinter:
                     )
                 )
             elif not any(
-                _scope_matches(capability, required_scope, scope)
-                for scope in matching
+                _scope_matches(capability, required_scope, scope) for scope in matching
             ):
                 severity = "error" if self._strict else "warning"
                 issues.append(

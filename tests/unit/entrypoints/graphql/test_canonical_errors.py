@@ -6,7 +6,7 @@ status_code, category, retryable.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from typing import Any
 
 import pytest
 from graphql.error import GraphQLError
@@ -51,7 +51,9 @@ class TestErrorCategory:
     def test_all_seven_categories(self) -> None:
         # 7 categories
         attrs = [a for a in dir(ErrorCategory) if not a.startswith("_")]
-        assert len(attrs) == 8  # 7 categories + class itself has 0 attrs, only constants
+        assert (
+            len(attrs) == 8
+        )  # 7 categories + class itself has 0 attrs, only constants
 
         values = [getattr(ErrorCategory, a) for a in attrs]
         # All values are strings
@@ -413,7 +415,9 @@ class TestIntegration:
             ("ProductionWiringError", "WIRING_ERROR", 500),
         ],
     )
-    def test_all_known_base_errors(self, cls_name: str, expected_code: str, expected_status: int) -> None:
+    def test_all_known_base_errors(
+        self, cls_name: str, expected_code: str, expected_status: int
+    ) -> None:
         # Real class with custom name
         _Cls = type(cls_name, (Exception,), {"status_code": expected_status})
         orig = _Cls("test")

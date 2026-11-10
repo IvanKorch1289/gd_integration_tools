@@ -190,7 +190,9 @@ class NATSJetStreamSource:
             # не Pydantic, поэтому # type: ignore[call-arg] скрывал реальный bug).
             ts: datetime | None = nats_msg.timestamp
             event_time = (
-                datetime.fromtimestamp(ts, tz=UTC) if isinstance(ts, (int, float)) else datetime.now(UTC)
+                datetime.fromtimestamp(ts, tz=UTC)
+                if isinstance(ts, (int, float))
+                else datetime.now(UTC)
             )
             event = SourceEvent(
                 source_id=self.source_id,

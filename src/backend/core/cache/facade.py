@@ -25,11 +25,7 @@ from typing import ClassVar
 
 from pydantic import BaseModel, Field
 
-__all__ = (
-    "CacheError",
-    "CacheInvalidationPolicy",
-    "UnifiedCacheFacade",
-)
+__all__ = ("CacheError", "CacheInvalidationPolicy", "UnifiedCacheFacade")
 
 
 class CacheError(Exception):

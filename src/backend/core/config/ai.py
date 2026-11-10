@@ -49,9 +49,7 @@ class PerplexitySettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "perplexity"
     model_config = SettingsConfigDict(env_prefix="PERPLEXITY_", extra="forbid")
 
-    api_key: SecretStr | None = Field(
-        default=None, description="API-ключ Perplexity"
-    )
+    api_key: SecretStr | None = Field(default=None, description="API-ключ Perplexity")
 
     model: str = Field(
         default="sonar",
@@ -80,9 +78,7 @@ class HuggingFaceSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "huggingface"
     model_config = SettingsConfigDict(env_prefix="HUGGINGFACE_", extra="forbid")
 
-    api_key: SecretStr | None = Field(
-        default=None, description="HuggingFace API токен"
-    )
+    api_key: SecretStr | None = Field(default=None, description="HuggingFace API токен")
 
     model: str = Field(
         default="mistralai/Mixtral-8x7B-Instruct-v0.1",
@@ -114,9 +110,7 @@ class OpenWebUISettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "open_webui"
     model_config = SettingsConfigDict(env_prefix="OPEN_WEBUI_", extra="forbid")
 
-    api_key: SecretStr | None = Field(
-        default=None, description="API-ключ OpenWebUI"
-    )
+    api_key: SecretStr | None = Field(default=None, description="API-ключ OpenWebUI")
 
     model: str = Field(
         default="llama3",
@@ -157,9 +151,7 @@ class OpenRouterSettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "openrouter"
     model_config = SettingsConfigDict(env_prefix="OPENROUTER_", extra="forbid")
 
-    api_key: SecretStr | None = Field(
-        default=None, description="API-ключ OpenRouter"
-    )
+    api_key: SecretStr | None = Field(default=None, description="API-ключ OpenRouter")
     model: str = Field(
         default="openrouter/auto",
         description="Slug модели (см. https://openrouter.ai/models).",
@@ -203,9 +195,7 @@ class OpenAISettings(BaseSettingsWithLoader):
     yaml_group: ClassVar[str] = "openai"
     model_config = SettingsConfigDict(env_prefix="OPENAI_", extra="forbid")
 
-    api_key: SecretStr | None = Field(
-        default=None, description="API-ключ провайдера."
-    )
+    api_key: SecretStr | None = Field(default=None, description="API-ключ провайдера.")
     model: str = Field(
         default="gpt-4o-mini", description="Имя/slug модели у выбранного провайдера."
     )

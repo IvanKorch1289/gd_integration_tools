@@ -163,8 +163,7 @@ class CDCCaptureProcessor(BaseProcessor):
         exchange.set_property("cdc_subscription_id", subscription_id)
         exchange.set_property(self._result_property, self._result_payload())
         exchange.set_out(
-            body=self._result_payload(),
-            headers=dict(exchange.in_message.headers),
+            body=self._result_payload(), headers=dict(exchange.in_message.headers)
         )
 
     def to_spec(self) -> dict[str, Any] | None:

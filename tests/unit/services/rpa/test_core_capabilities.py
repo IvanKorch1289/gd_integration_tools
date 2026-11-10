@@ -78,7 +78,9 @@ def test_core_capability_refs_cover_required() -> None:
     """
     declared = {ref.name for ref in core_capability_refs()}
     leaked = sorted(set(REQUIRED) & RESOURCE_SCOPED_CAPABILITIES)
-    assert not (declared & set(leaked)), f"resource-scoped capability в baseline: {leaked}"
+    assert not (declared & set(leaked)), (
+        f"resource-scoped capability в baseline: {leaked}"
+    )
 
 
 def test_required_capabilities_granted_by_core_baseline(

@@ -65,11 +65,7 @@ class CompensationError(RuntimeError):
     """
 
     def __init__(
-        self,
-        message: str,
-        *,
-        original: BaseException,
-        errors: Sequence[BaseException],
+        self, message: str, *, original: BaseException, errors: Sequence[BaseException]
     ) -> None:
         super().__init__(message)
         self.original = original
@@ -110,9 +106,7 @@ class CompensationOutcome:
 
 
 def build_compensation_plan(
-    spec: WorkflowSpec,
-    *,
-    completed_names: Sequence[str],
+    spec: WorkflowSpec, *, completed_names: Sequence[str]
 ) -> list[CompensationAction]:
     """Построить план компенсаций для уже выполненных forward-шагов.
 
@@ -169,10 +163,7 @@ def build_compensation_plan(
 
 
 async def execute_compensation_step(
-    step: WorkflowStep,
-    *,
-    body: dict[str, Any],
-    timeout_s: float,
+    step: WorkflowStep, *, body: dict[str, Any], timeout_s: float
 ) -> dict[str, Any]:
     """Исполнить processors компенсационного шага (rollback-действие).
 

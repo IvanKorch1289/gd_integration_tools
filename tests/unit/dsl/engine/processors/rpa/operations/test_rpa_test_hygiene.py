@@ -124,9 +124,7 @@ def test_no_shared_tmp_paths() -> None:
                 resolved = _resolve(arg, bindings)
                 if resolved is not None and resolved.startswith("/tmp/"):
                     offenders.append(f"{path.name}:{node.lineno} → {resolved}")
-    assert not offenders, (
-        "RPA-тесты пишут в общий /tmp вместо tmp_path: " f"{offenders}"
-    )
+    assert not offenders, f"RPA-тесты пишут в общий /tmp вместо tmp_path: {offenders}"
 
 
 def test_operation_processor_mocks_verify_values() -> None:
@@ -141,6 +139,5 @@ def test_operation_processor_mocks_verify_values() -> None:
         ):
             offenders.append(f"{node.func.attr} @ line {node.lineno}")
     assert not offenders, (
-        "value-less mock-assertions (используй assert_called_once_with): "
-        f"{offenders}"
+        f"value-less mock-assertions (используй assert_called_once_with): {offenders}"
     )

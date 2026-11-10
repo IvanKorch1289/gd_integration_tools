@@ -36,10 +36,7 @@ class TestCoreUnifiedCacheFacadeExists:
     def test_reexport_from_core_cache(self) -> None:
         """``UnifiedCacheFacade`` re-exported from ``src.backend.core.cache``."""
         from src.backend.core.cache import UnifiedCacheFacade
-
-        from src.backend.core.cache.facade import (
-            UnifiedCacheFacade as CoreDirect,
-        )
+        from src.backend.core.cache.facade import UnifiedCacheFacade as CoreDirect
 
         assert UnifiedCacheFacade is CoreDirect
 
@@ -67,10 +64,7 @@ class TestCoreUnifiedCacheFacadeExists:
         # Direct submodule imports should fail.
         for name in ("MemoryCacheFacade", "FallbackCacheFacade", "RedisCacheFacade"):
             with pytest.raises(ImportError):
-                __import__(
-                    "src.backend.core.cache.facade",
-                    fromlist=[name],
-                )
+                __import__("src.backend.core.cache.facade", fromlist=[name])
                 from src.backend.core.cache.facade import name  # noqa: F401
 
     def test_concrete_impls_removed_via_core_cache(self) -> None:
@@ -119,7 +113,6 @@ class TestServicesUnifiedCacheFacadeExists:
     def test_reexport_from_services_cache(self) -> None:
         """``UnifiedCacheFacade`` re-exported from ``src.backend.services.cache``."""
         from src.backend.services.cache import UnifiedCacheFacade
-
         from src.backend.services.cache.facade import (
             UnifiedCacheFacade as ServicesDirect,
         )

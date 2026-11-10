@@ -29,7 +29,7 @@ def _is_port_open(host: str, port: int) -> bool:
     try:
         with socket.create_connection((host, port), timeout=2):
             return True
-    except (ConnectionRefusedError, socket.timeout, OSError):
+    except ConnectionRefusedError, socket.timeout, OSError:
         return False
 
 

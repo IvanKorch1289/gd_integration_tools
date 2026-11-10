@@ -92,7 +92,10 @@ async def _register_health_checks() -> None:
         # Отключённый Redis — такой же опциональный компонент, как
         # S3/queue/kafka: помечаем ``skipped``, а не ``error``.
         if not _redis_enabled():
-            return {"status": "skipped", "reason": "Redis отключён (redis.enabled=false)"}
+            return {
+                "status": "skipped",
+                "reason": "Redis отключён (redis.enabled=false)",
+            }
 
         start = time.monotonic()
         try:

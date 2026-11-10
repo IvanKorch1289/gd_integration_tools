@@ -176,7 +176,7 @@ class TestApplyToSingleton:
     def test_apply_constants_updates_all_mapped_fields(self) -> None:
         """``apply_constants`` переносит все сопоставленные поля."""
         source = ConstantsSettings.model_construct(
-            **dict.fromkeys(FIELD_TO_CONSTANT, 7),
+            **dict.fromkeys(FIELD_TO_CONSTANT, 7)
         )
         apply_constants(source)
         for constant_name in FIELD_TO_CONSTANT.values():
@@ -242,9 +242,10 @@ class TestHotReload:
 
         assert report["failed"] == []
         assert consts.INITIAL_DELAY == _base_section()["initial_delay"]
-        assert consts.DEFAULT_RETRY_MAX_ATTEMPTS == _base_section()[
-            "default_retry_max_attempts"
-        ]
+        assert (
+            consts.DEFAULT_RETRY_MAX_ATTEMPTS
+            == _base_section()["default_retry_max_attempts"]
+        )
 
     def test_module_singleton_is_reloaded(self) -> None:
         """Модульный синглтон констант участвует в hot-reload."""

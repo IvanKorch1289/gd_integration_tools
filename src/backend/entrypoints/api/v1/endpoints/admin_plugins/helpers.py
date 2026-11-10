@@ -54,7 +54,7 @@ def _get_plugin_registry() -> Any:
         if get_instance is None:  # ponytail: нет singleton-фабрики → mock fallback
             return None
         return get_instance()
-    except (ImportError, AttributeError, RuntimeError):
+    except ImportError, AttributeError, RuntimeError:
         logger.warning("PluginLoader недоступен — используется mock")
         return None
 

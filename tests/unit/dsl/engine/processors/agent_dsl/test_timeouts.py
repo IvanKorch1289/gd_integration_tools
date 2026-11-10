@@ -62,6 +62,8 @@ class TestAllExports:
         # Можно импортировать оба константы
         from src.backend.dsl.engine.processors.agent_dsl._timeouts import (
             DEFAULT_AGENT_TIMEOUT_S as a,
+        )
+        from src.backend.dsl.engine.processors.agent_dsl._timeouts import (
             DEFAULT_MCP_TIMEOUT_S as m,
         )
 

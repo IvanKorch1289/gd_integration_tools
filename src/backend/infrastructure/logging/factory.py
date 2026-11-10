@@ -302,7 +302,7 @@ def init_application_logging(
                 required_fields = list(
                     getattr(_settings.logging, "required_fields", None) or []
                 )
-        except (ImportError, AttributeError):
+        except ImportError, AttributeError:
             # settings не доступны (например, в unit-test минимальном окружении) —
             # используем явные defaults. Backend уже инициализирован с ними.
             pass

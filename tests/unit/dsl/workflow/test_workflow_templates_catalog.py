@@ -491,9 +491,7 @@ def test_guardrail_cost_budget_template_contract() -> None:
     assert "guardrail" in types
     assert "escalate" in types
     assert "reflect" in types
-    actions = {
-        s["on_exceed"] for s in raw["steps"] if s["type"] == "guardrail"
-    }
+    actions = {s["on_exceed"] for s in raw["steps"] if s["type"] == "guardrail"}
     assert actions == {"fail", "warn"}, actions
 
 

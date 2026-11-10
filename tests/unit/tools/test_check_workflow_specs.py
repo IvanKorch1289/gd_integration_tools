@@ -17,10 +17,7 @@ _TOOL = Path("tools/check_workflow_specs.py")
 def _run(*args: str) -> subprocess.CompletedProcess[str]:
     """Запустить линтер в текущем репозитории."""
     return subprocess.run(
-        [sys.executable, str(_TOOL), *args],
-        capture_output=True,
-        text=True,
-        check=False,
+        [sys.executable, str(_TOOL), *args], capture_output=True, text=True, check=False
     )
 
 
@@ -62,7 +59,9 @@ def test_linter_detects_invalid_step_field(tmp_path: Path) -> None:
             {
                 "name": "bad_field",
                 "version": "1.0",
-                "steps": [{"type": "activity", "name": "ai.run_agent", "timeout_s": "soon"}],
+                "steps": [
+                    {"type": "activity", "name": "ai.run_agent", "timeout_s": "soon"}
+                ],
             }
         ),
         encoding="utf-8",

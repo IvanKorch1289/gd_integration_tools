@@ -155,7 +155,9 @@ async def _verify_ownership(
         logger.debug(
             "ownership_check_stub",
             extra={
-                "resource_model": getattr(resource_model, "__name__", str(resource_model)),
+                "resource_model": getattr(
+                    resource_model, "__name__", str(resource_model)
+                ),
                 "resource_id": resource_id,
                 "tenant_field": tenant_field,
                 "reason": "missing session_factory OR explicit_tenant_id",

@@ -97,7 +97,9 @@ async def test_poll_backend_advances_cursor() -> None:
     last_event = events[-1] if events else None
     assert last_event is not None
     # ADR-0384: курсор — составной (timestamp, PK).
-    assert last_event.cursor.value == "2026-08-19T10:01:00.000000|i:00000000000000000002"
+    assert (
+        last_event.cursor.value == "2026-08-19T10:01:00.000000|i:00000000000000000002"
+    )
 
 
 @pytest.mark.asyncio

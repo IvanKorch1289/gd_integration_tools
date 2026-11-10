@@ -153,10 +153,7 @@ class CDCClient:
 
         """
         self._validate_subscription(
-            strategy=strategy,
-            tables=tables,
-            interval=interval,
-            batch_size=batch_size,
+            strategy=strategy, tables=tables, interval=interval, batch_size=batch_size
         )
 
         sub = CDCSubscription(
@@ -194,12 +191,7 @@ class CDCClient:
         return sub.id
 
     def _validate_subscription(
-        self,
-        *,
-        strategy: str,
-        tables: list[str],
-        interval: float,
-        batch_size: int,
+        self, *, strategy: str, tables: list[str], interval: float, batch_size: int
     ) -> None:
         """Проверить параметры подписки (ADR-0384 — явные лимиты).
 
@@ -255,10 +247,7 @@ class CDCClient:
         return self._STRATEGIES[strategy]()
 
     async def _handle_poison_message(
-        self,
-        sub: CDCSubscription,
-        payload: dict[str, Any],
-        exc: BaseException,
+        self, sub: CDCSubscription, payload: dict[str, Any], exc: BaseException
     ) -> None:
         """Передать poison-сообщение Kafka в DLQ (ADR-0384).
 
@@ -295,7 +284,7 @@ class CDCClient:
             task.cancel()
             try:
                 await task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 logger.debug("CDC subscription task cancellation raised", exc_info=True)
 
         logger.info("CDC подписка удалена: %s", subscription_id)

@@ -29,8 +29,7 @@ __all__ = ("SQLAlchemyRepository",)
 
 
 class SQLAlchemyRepository[ConcreteTable: BaseModel](
-    CRUDMixin[ConcreteTable],
-    VersioningMixin[ConcreteTable],
+    CRUDMixin[ConcreteTable], VersioningMixin[ConcreteTable]
 ):
     """Базовый класс для взаимодействия с БД с использованием SQLAlchemy.
 
@@ -50,7 +49,5 @@ class SQLAlchemyRepository[ConcreteTable: BaseModel](
         self.model = model
         self.load_joined_models = load_joined_models
         self.helper = self.HelperMethods(
-            model=model,
-            load_joined_models=load_joined_models,
-            main_class=self,
+            model=model, load_joined_models=load_joined_models, main_class=self
         )

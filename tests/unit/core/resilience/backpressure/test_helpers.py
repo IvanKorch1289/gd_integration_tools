@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import pytest
 
+from src.backend.core.resilience.backpressure import helpers
 from src.backend.core.resilience.backpressure.controller import (
     StreamingBackpressureController,
 )
-from src.backend.core.resilience.backpressure import helpers
 
 
 @pytest.fixture(autouse=True)

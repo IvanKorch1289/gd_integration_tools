@@ -185,7 +185,7 @@ class RedisHitlSignalStore:
             try:
                 data = json.loads(raw)
                 sig = HitlPendingSignal.from_dict(data)
-            except (json.JSONDecodeError, KeyError, TypeError):
+            except json.JSONDecodeError, KeyError, TypeError:
                 continue
             if sig.is_resolved:
                 continue
@@ -307,7 +307,7 @@ class RedisHitlSignalStore:
                     return data
                 except asyncio.CancelledError:
                     raise
-                except (KeyError, TypeError, ValueError):
+                except KeyError, TypeError, ValueError:
                     raise
                 except WatchError:
                     # WATCH conflict → retry the compare-and-set transaction.
@@ -367,7 +367,7 @@ class RedisHitlSignalStore:
                     continue
                 try:
                     payload = json.loads(msg.get("data") or "{}")
-                except (TypeError, json.JSONDecodeError):
+                except TypeError, json.JSONDecodeError:
                     continue
                 if payload.get("signal_id") == signal_id:
                     return True

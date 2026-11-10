@@ -41,7 +41,9 @@ class TestTenantWrapperFallback:
         r = await facade.get("k1")
         assert r == b"v1"
 
-    async def test_cross_tenant_isolation_in_facade(self, disk: DiskCacheBackend) -> None:
+    async def test_cross_tenant_isolation_in_facade(
+        self, disk: DiskCacheBackend
+    ) -> None:
         """Tenant A и B хранят разные значения под одним ключом.
 
         Без TenantCacheWrapper facade использует полный ``namespace:key`` ключ,

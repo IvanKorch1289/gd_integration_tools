@@ -95,12 +95,13 @@ def _restore_stubbed_modules() -> None:
     for _key, _original in _ORIGINAL_MODULES.items():
         if _original is None:
             for _name in [
-                _n for _n in list(sys.modules) if _n == _key or _n.startswith(f"{_key}.")
+                _n
+                for _n in list(sys.modules)
+                if _n == _key or _n.startswith(f"{_key}.")
             ]:
                 del sys.modules[_name]
         else:
             sys.modules[_key] = _original
-
 
 
 # Mock polars.
@@ -189,9 +190,7 @@ def _load_page_module() -> object:
     global _load_counter
     _load_counter += 1
     module_name = f"_operational_costs_page_{_load_counter}"
-    _saved_modules = {
-        _key: sys.modules.get(_key) for _key in ("streamlit", "polars")
-    }
+    _saved_modules = {_key: sys.modules.get(_key) for _key in ("streamlit", "polars")}
     sys.modules["streamlit"] = _build_streamlit_mock()
     sys.modules["polars"] = _build_polars_mock()
     spec = importlib.util.spec_from_file_location(module_name, _page_path())

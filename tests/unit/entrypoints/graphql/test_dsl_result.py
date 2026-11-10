@@ -85,9 +85,7 @@ class TestDispatchActionSuccess:
     async def test_simple_dict_result(self) -> None:
         mock_dispatch = AsyncMock(return_value={"result": "ok"})
 
-        with patch(
-            "src.backend.entrypoints.base.dispatch_action", mock_dispatch
-        ):
+        with patch("src.backend.entrypoints.base.dispatch_action", mock_dispatch):
             result = await dispatch_action("test_action", {"k": "v"})
 
         assert isinstance(result, ActionResult)
@@ -104,9 +102,7 @@ class TestDispatchActionSuccess:
 
         mock_dispatch = AsyncMock(return_value=mock_pydantic)
 
-        with patch(
-            "src.backend.entrypoints.base.dispatch_action", mock_dispatch
-        ):
+        with patch("src.backend.entrypoints.base.dispatch_action", mock_dispatch):
             result = await dispatch_action("get_item", {"id": 1})
 
         assert result.success is True
@@ -122,9 +118,7 @@ class TestDispatchActionSuccess:
 
         mock_dispatch = AsyncMock(return_value=mock_obj)
 
-        with patch(
-            "src.backend.entrypoints.base.dispatch_action", mock_dispatch
-        ):
+        with patch("src.backend.entrypoints.base.dispatch_action", mock_dispatch):
             result = await dispatch_action("complex_action")
 
         assert result.success is True
@@ -135,9 +129,7 @@ class TestDispatchActionSuccess:
     async def test_no_payload(self) -> None:
         mock_dispatch = AsyncMock(return_value={"ok": True})
 
-        with patch(
-            "src.backend.entrypoints.base.dispatch_action", mock_dispatch
-        ):
+        with patch("src.backend.entrypoints.base.dispatch_action", mock_dispatch):
             result = await dispatch_action("ping")
 
         assert result.success is True
@@ -151,9 +143,7 @@ class TestDispatchActionSuccess:
         # source="graphql" передаётся в unified dispatch
         mock_dispatch = AsyncMock(return_value={})
 
-        with patch(
-            "src.backend.entrypoints.base.dispatch_action", mock_dispatch
-        ):
+        with patch("src.backend.entrypoints.base.dispatch_action", mock_dispatch):
             await dispatch_action("a", {})
 
         # Проверяем source
@@ -168,9 +158,7 @@ class TestDispatchActionKeyError:
     async def test_keyerror_returns_failure(self) -> None:
         mock_dispatch = AsyncMock(side_effect=KeyError("action not found"))
 
-        with patch(
-            "src.backend.entrypoints.base.dispatch_action", mock_dispatch
-        ):
+        with patch("src.backend.entrypoints.base.dispatch_action", mock_dispatch):
             result = await dispatch_action("unknown_action")
 
         assert result.success is False
@@ -181,9 +169,7 @@ class TestDispatchActionKeyError:
     async def test_keyerror_data_is_none(self) -> None:
         mock_dispatch = AsyncMock(side_effect=KeyError("missing"))
 
-        with patch(
-            "src.backend.entrypoints.base.dispatch_action", mock_dispatch
-        ):
+        with patch("src.backend.entrypoints.base.dispatch_action", mock_dispatch):
             result = await dispatch_action("missing")
 
         assert result.data is None
@@ -197,9 +183,7 @@ class TestDispatchActionGenericError:
     async def test_value_error_caught(self) -> None:
         mock_dispatch = AsyncMock(side_effect=ValueError("bad value"))
 
-        with patch(
-            "src.backend.entrypoints.base.dispatch_action", mock_dispatch
-        ):
+        with patch("src.backend.entrypoints.base.dispatch_action", mock_dispatch):
             result = await dispatch_action("explode")
 
         assert result.success is False
@@ -210,9 +194,7 @@ class TestDispatchActionGenericError:
     async def test_runtime_error_caught(self) -> None:
         mock_dispatch = AsyncMock(side_effect=RuntimeError("boom"))
 
-        with patch(
-            "src.backend.entrypoints.base.dispatch_action", mock_dispatch
-        ):
+        with patch("src.backend.entrypoints.base.dispatch_action", mock_dispatch):
             result = await dispatch_action("explode")
 
         assert result.success is False
@@ -222,9 +204,7 @@ class TestDispatchActionGenericError:
     async def test_generic_exception_caught(self) -> None:
         mock_dispatch = AsyncMock(side_effect=Exception("generic"))
 
-        with patch(
-            "src.backend.entrypoints.base.dispatch_action", mock_dispatch
-        ):
+        with patch("src.backend.entrypoints.base.dispatch_action", mock_dispatch):
             result = await dispatch_action("explode")
 
         assert result.success is False

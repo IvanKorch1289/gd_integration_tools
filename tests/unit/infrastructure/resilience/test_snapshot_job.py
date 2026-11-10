@@ -493,9 +493,7 @@ def test_run_snapshot_now_without_tenant_scope_fails_closed(
 @patch("src.backend.infrastructure.resilience.snapshot_job.sync_pg_to_sqlite")
 @patch("src.backend.core.config.settings.settings")
 def test_run_snapshot_now_passes_tenant_scope(
-    mock_settings: MagicMock,
-    mock_sync: MagicMock,
-    mock_create_engine: MagicMock,
+    mock_settings: MagicMock, mock_sync: MagicMock, mock_create_engine: MagicMock
 ) -> None:
     """Явный tenant-скоуп пробрасывается в ``sync_pg_to_sqlite``."""
     mock_settings.snapshot = MagicMock(

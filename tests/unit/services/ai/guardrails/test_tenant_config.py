@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from src.backend.services.ai.guardrails import tenant_config as mod
 from src.backend.services.ai.guardrails.tenant_config import (
+    _DEFAULT,
     GuardrailsConfig,
     GuardrailsThresholds,
-    _DEFAULT,
     get_default_config,
 )
 
@@ -57,9 +57,11 @@ class TestGuardrailsThresholdsFrozen:
         import dataclasses
 
         t = GuardrailsThresholds()
-        with __import__("dataclasses").FrozenInstanceError if False else __import__(
-            "pytest"
-        ).raises(dataclasses.FrozenInstanceError):
+        with (
+            __import__("dataclasses").FrozenInstanceError
+            if False
+            else __import__("pytest").raises(dataclasses.FrozenInstanceError)
+        ):
             t.lakera_threshold = 0.9  # type: ignore[misc]
 
 

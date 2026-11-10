@@ -26,11 +26,7 @@ from __future__ import annotations
 
 from src.backend.services.cache.facade import CacheResult, UnifiedCacheFacade
 
-__all__ = (
-    "CacheResult",
-    "UnifiedCacheFacade",
-    "get_unified_cache_facade",
-)
+__all__ = ("CacheResult", "UnifiedCacheFacade", "get_unified_cache_facade")
 
 
 _DEFAULT_PLUGIN = "extension"
@@ -87,7 +83,4 @@ def get_unified_cache_facade(plugin: str = _DEFAULT_PLUGIN) -> UnifiedCacheFacad
     # Non-default plugin: build new isolated instance.
     from src.backend.infrastructure.cache.backends.memory import MemoryBackend
 
-    return UnifiedCacheFacade(
-        primary=MemoryBackend(),
-        plugin=plugin,
-    )
+    return UnifiedCacheFacade(primary=MemoryBackend(), plugin=plugin)

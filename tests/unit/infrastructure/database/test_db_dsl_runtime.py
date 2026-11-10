@@ -137,12 +137,10 @@ def test_ssl_mode_enables_tls(ssl_mode: str) -> None:
     context = args["ssl"]
     # Проект запрещает ssl.CERT_NONE / check_hostname=False (CLAUDE.md, V1).
     assert context.check_hostname is True, (
-        f"ssl_mode={ssl_mode!r} отключил проверку hostname — "
-        "запрещено правилом V1"
+        f"ssl_mode={ssl_mode!r} отключил проверку hostname — запрещено правилом V1"
     )
     assert context.verify_mode.name != "CERT_NONE", (
-        f"ssl_mode={ssl_mode!r} отключил проверку сертификата — "
-        "запрещено правилом V1"
+        f"ssl_mode={ssl_mode!r} отключил проверку сертификата — запрещено правилом V1"
     )
 
 
@@ -165,7 +163,9 @@ def test_unknown_ssl_mode_is_rejected() -> None:
 async def sqlite_engine() -> AsyncEngine:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
-        await conn.execute(text("CREATE TABLE widgets (id INTEGER PRIMARY KEY, name TEXT)"))
+        await conn.execute(
+            text("CREATE TABLE widgets (id INTEGER PRIMARY KEY, name TEXT)")
+        )
     try:
         yield engine
     finally:
@@ -207,9 +207,7 @@ def _exchange(body: Any = None) -> Exchange[Any]:
 
 def _assert_ok(exchange: Exchange[Any]) -> None:
     """Провалившийся шаг ДБЛЖЕН валить тест, а не молча проходить дальше."""
-    assert exchange.status != ExchangeStatus.failed, (
-        f"шаг упал: {exchange.error}"
-    )
+    assert exchange.status != ExchangeStatus.failed, f"шаг упал: {exchange.error}"
 
 
 @pytest.mark.asyncio
@@ -297,9 +295,7 @@ async def test_db_crud_delete_binds_parameters(db_manager: Any) -> None:
     async with sqlite_engine.begin() as conn:
         await conn.execute(text("INSERT INTO widgets (name) VALUES ('doomed')"))
 
-    processor = DbCrudProcessor(
-        operation="DELETE", table="widgets", where={"id": 1}
-    )
+    processor = DbCrudProcessor(operation="DELETE", table="widgets", where={"id": 1})
     exchange = _exchange()
     await processor.process(exchange, ExecutionContext())
 

@@ -110,7 +110,7 @@ async def _authenticate_handshake(websocket: WebSocket) -> bool:
     # Добавлен Origin check против ws_settings.allowed_origins.
     try:
         origin = websocket.headers.get("origin")
-    except (AttributeError, TypeError, ValueError):
+    except AttributeError, TypeError, ValueError:
         origin = None
     allowed_origins = getattr(ws_settings, "allowed_origins", [])
     if allowed_origins and origin is not None and origin not in allowed_origins:

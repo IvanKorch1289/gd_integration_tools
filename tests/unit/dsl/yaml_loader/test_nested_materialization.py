@@ -78,9 +78,7 @@ def test_switch_cases_materialized() -> None:
     processor = pipeline.processors[0]
     cases = processor._cases  # type: ignore[attr-defined]
     default = processor._default  # type: ignore[attr-defined]
-    assert all(
-        isinstance(p, BaseProcessor) for procs in cases.values() for p in procs
-    )
+    assert all(isinstance(p, BaseProcessor) for procs in cases.values() for p in procs)
     assert default is None or all(isinstance(p, BaseProcessor) for p in default)
 
 

@@ -679,4 +679,35 @@ def test_prometheusrule_labels_match_servicemonitor_selector() -> None:
     """
     rule = _load_helm_yaml(HELM_PROMETHEUSRULE_FILE)[0]
     monitor = _load_helm_yaml(HELM_SERVICEMONITOR_FILE)[0]
-    assert rule["metadata"]["labels"]["release"] == monitor["metadata"]["labels"]["release"]
+    assert (
+        rule["metadata"]["labels"]["release"]
+        == monitor["metadata"]["labels"]["release"]
+    )
+
+
+# ── ADR-0444: плейсхолдеры в Helm Secret запрещены для prod ─────────────
+
+
+def test_helm_secret_template_refuses_placeholder_vault_token() -> None:
+    """Secret-шаблон валидирует VAULT_TOKEN: плейсхолдер → падение рендера.
+
+    До ADR-0444 chart устанавливался в прод с ``VAULT_TOKEN: CHANGEME`` —
+    «helm install прошёл, креды неверные».
+    """
+    raw = HELM_PROMETHEUSRULE_FILE.parent.joinpath("secret.yaml").read_text(
+        encoding="utf-8"
+    )
+    assert "fail" in raw, "шаблон Secret обязан валидировать плейсхолдеры"
+    assert "allowPlaceholders" in raw
+    assert "CHANGEME" in raw
+
+
+def test_helm_values_have_secrets_section() -> None:
+    """values.yaml содержит секцию secrets с флагом allowPlaceholders."""
+    values = yaml.safe_load(
+        HELM_PROMETHEUSRULE_FILE.parent.parent.joinpath("values.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert "secrets" in values, "нет секции secrets в values.yaml"
+    assert values["secrets"]["allowPlaceholders"] is False

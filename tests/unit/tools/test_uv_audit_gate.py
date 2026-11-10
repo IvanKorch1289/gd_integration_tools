@@ -77,9 +77,13 @@ class TestParsing:
 class TestGate:
     """Поведение гейта."""
 
-    def test_known_ids_pass(self, tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+    def test_known_ids_pass(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture
+    ) -> None:
         """Известный долг (allowlist) — гейт зелёный."""
-        allowlist = _write_allowlist(tmp_path, ["GHSA-65qm-jvmh-6pqg", "PYSEC-2026-311"])
+        allowlist = _write_allowlist(
+            tmp_path, ["GHSA-65qm-jvmh-6pqg", "PYSEC-2026-311"]
+        )
         report = tmp_path / "report.txt"
         report.write_text(REPORT_SAMPLE, encoding="utf-8")
         code = module.run_gate(report, allowlist)
@@ -120,7 +124,9 @@ class TestCli:
 
     def test_cli_exit_code(self, tmp_path: Path) -> None:
         """CLI возвращает exit code гейта."""
-        allowlist = _write_allowlist(tmp_path, ["GHSA-65qm-jvmh-6pqg", "PYSEC-2026-311"])
+        allowlist = _write_allowlist(
+            tmp_path, ["GHSA-65qm-jvmh-6pqg", "PYSEC-2026-311"]
+        )
         report = tmp_path / "report.txt"
         report.write_text(REPORT_SAMPLE, encoding="utf-8")
         result = subprocess.run(

@@ -68,9 +68,7 @@ def _proc(
 
 
 def _instance(
-    *,
-    created_at: datetime | None = None,
-    input_payload: dict[str, Any] | None = None,
+    *, created_at: datetime | None = None, input_payload: dict[str, Any] | None = None
 ) -> WorkflowInstanceRow:
     """WorkflowInstanceRow для юнит-тестов executor'а."""
     now = datetime.now(UTC)
@@ -102,11 +100,12 @@ def _state(*, current_step: int = 0, history: list[str] | None = None) -> Workfl
     )
 
 
-def _executor(spec: WorkflowSpec, *, timeout_per_step_s: float = 5.0) -> DSLStepExecutor:
+def _executor(
+    spec: WorkflowSpec, *, timeout_per_step_s: float = 5.0
+) -> DSLStepExecutor:
     """DSLStepExecutor с фиксированным spec'ом."""
     return DSLStepExecutor(
-        spec_loader=lambda _route_id: spec,
-        timeout_per_step_s=timeout_per_step_s,
+        spec_loader=lambda _route_id: spec, timeout_per_step_s=timeout_per_step_s
     )
 
 
@@ -191,10 +190,7 @@ async def test_execute_compensation_chains_exceptions() -> None:
 
     with pytest.raises(CompensationError) as exc_info:
         await execute_compensation(
-            plan=plan,
-            execute=_execute,
-            original_error=original,
-            strict=True,
+            plan=plan, execute=_execute, original_error=original, strict=True
         )
 
     err = exc_info.value
@@ -253,9 +249,7 @@ async def test_executor_runs_compensation_on_failed_step() -> None:
     executor = _executor(spec, timeout_per_step_s=0.05)
     state = _state(current_step=1, history=["reserve"])
 
-    result = await executor.execute_next(
-        instance=_instance(), state=state
-    )
+    result = await executor.execute_next(instance=_instance(), state=state)
 
     assert result.outcome == StepOutcome.FAILED
     assert "undo_reserve" in calls
@@ -299,7 +293,9 @@ async def test_executor_compensation_failure_is_reported() -> None:
             WorkflowStep(
                 kind="compensate",
                 name="undo_reserve",
-                processors=(_proc("undo_reserve", calls, fail_with=ValueError("nope")),),
+                processors=(
+                    _proc("undo_reserve", calls, fail_with=ValueError("nope")),
+                ),
             ),
         ),
     )
@@ -425,9 +421,7 @@ async def test_finished_workflow_is_not_failed_by_budget() -> None:
     """Исчерпанный бюджет не превращает уже завершённый workflow в FAILED."""
     spec = WorkflowSpec(
         name="wf-plain",
-        steps=(
-            WorkflowStep(kind="sequential", name="charge", processors=()),
-        ),
+        steps=(WorkflowStep(kind="sequential", name="charge", processors=()),),
         run_timeout_s=1.0,
     )
     executor = _executor(spec)
@@ -450,7 +444,9 @@ class _FakeSagaRepo:
         self._sagas = sagas
         self.signal_calls: list[str] = []
 
-    async def list_compensating(self, *, tenant_id: Any = None, limit: int = 100) -> list:
+    async def list_compensating(
+        self, *, tenant_id: Any = None, limit: int = 100
+    ) -> list:
         """Вернуть застрявшие саги."""
         return list(self._sagas)
 
@@ -498,7 +494,6 @@ async def test_driver_keeps_saga_with_pending_compensations() -> None:
         await worker._scan_once()
 
     assert fake_repo.signal_calls == []
-
 
 
 # ── ADR-0431: семантика компенсации выровнена с Temporal-путём ────

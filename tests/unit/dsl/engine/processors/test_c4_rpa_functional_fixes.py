@@ -71,7 +71,9 @@ class TestHttpRequestProcessorTarget:
             await p.process(ex, MagicMock())
 
         payload = ex.in_message.body
-        assert isinstance(payload, dict), f"body должен быть dict, got {type(payload)!r}"
+        assert isinstance(payload, dict), (
+            f"body должен быть dict, got {type(payload)!r}"
+        )
         assert payload["status"] == 200
         assert payload["data"] == {"ok": True}
         # target == "body" → НЕ set_property (иначе payload теряется для маршрута).

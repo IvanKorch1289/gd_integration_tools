@@ -139,3 +139,11 @@ securityContext:
   readOnlyRootFilesystem: true
   capabilitiesDrop:
     - ALL
+
+secrets:
+  # ADR-0444: плейсхолдеры в Secret запрещены для prod — рендер падает.
+  # Для dev/staging: --set secrets.allowPlaceholders=true.
+  allowPlaceholders: false
+  vaultToken: ""
+  openaiApiKey: ""
+  anthropicApiKey: ""

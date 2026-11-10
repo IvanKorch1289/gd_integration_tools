@@ -116,14 +116,16 @@ class TestGateHasPlugin:
 
     def test_has_plugin_reflects_declarations(self) -> None:
         """Декларированный плагин виден, недекларированный — нет."""
-        from src.backend.core.security.capabilities.gate import CapabilityGate
         from src.backend.core.security.capabilities import (
             CapabilityRef,
             build_default_vocabulary,
         )
+        from src.backend.core.security.capabilities.gate import CapabilityGate
 
         gate = CapabilityGate(vocabulary=build_default_vocabulary())
-        gate.declare("orders.get", [CapabilityRef(name="storage.read", scope="bucket/*")])
+        gate.declare(
+            "orders.get", [CapabilityRef(name="storage.read", scope="bucket/*")]
+        )
 
         assert gate.has_plugin("orders.get") is True
         assert gate.has_plugin("orders.unknown") is False
@@ -144,16 +146,18 @@ class TestEngineBindsNamespace:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Роут с декларациями → namespace вызывающего = route_id."""
-        from src.backend.core.security.capabilities.gate import CapabilityGate
         from src.backend.core.security.capabilities import (
             CapabilityRef,
             build_default_vocabulary,
         )
+        from src.backend.core.security.capabilities.gate import CapabilityGate
         from src.backend.dsl.engine.execution_engine import ExecutionEngine
         from src.backend.dsl.engine.pipeline import Pipeline
 
         gate = CapabilityGate(vocabulary=build_default_vocabulary())
-        gate.declare("orders.get", [CapabilityRef(name="storage.read", scope="bucket/*")])
+        gate.declare(
+            "orders.get", [CapabilityRef(name="storage.read", scope="bucket/*")]
+        )
         monkeypatch.setattr(
             "src.backend.core.security.capabilities.gate.get_capability_gate",
             lambda: gate,

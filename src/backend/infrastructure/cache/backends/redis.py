@@ -47,10 +47,7 @@ class RedisBackend(CacheBackend):
     _breaker_recovery_timeout: ClassVar[float] = 30.0
 
     def __init__(
-        self,
-        client: Redis,
-        *,
-        breaker: ClientCircuitBreaker | None = None,
+        self, client: Redis, *, breaker: ClientCircuitBreaker | None = None
     ) -> None:
         """Args:
         client: raw ``redis.asyncio.Redis`` (НЕ обёртка RedisClient).

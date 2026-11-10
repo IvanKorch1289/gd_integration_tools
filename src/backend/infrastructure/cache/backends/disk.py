@@ -83,7 +83,7 @@ class DiskCacheBackend(CacheBackend):
             return False
         try:
             expires_at = int(raw.decode("utf-8").strip())
-        except (ValueError, UnicodeDecodeError):
+        except ValueError, UnicodeDecodeError:
             return False
         return time.time() >= expires_at
 

@@ -1,14 +1,14 @@
 {
-  "coverage_percent": 52.25,
-  "updated": "2026-09-28",
-  "note": "measured on tests/unit (20162 of 20711 tests); 62374/119376 lines; run had 206 failing tests so this is a lower bound",
+  "coverage_percent": 74.0,
+  "updated": "2026-11-10",
+  "note": "последнее валидное измерение: 74 % (branch, нижняя граница — полный прогон с coverage на этой машине падает с OOM, см. artifacts/current_audit/COVERAGE_2026-10-09.md); line/XML — 76.50 %. Прежнее значение 52.25 % получено на прогоне с 206 упавшими тестами и не отражало состояние кода.",
   "threshold": 70.0,
   "target_threshold": 75.0,
   "notes": [
-    "Previous value 0 (written by the removed orphan tools/checks/coverage_budget.py in eef33aa29) disabled drop-detection entirely: baseline - current can never exceed the 0.5% tolerance when baseline is 0.",
-    "coverage_percent 52.25 is far below threshold 70 — the gate now fails honestly. It did not detect this before because .github/workflows/test.yml invoked a flat CLI that no longer existed and exited 2 (usage error) without measuring anything."
+    "Previous value 0 (written by the removed orphan tools/checks/coverage_budget.py in eef33aa29) disabled drop-detection entirely.",
+    "ADR-0443: baseline пересчитан по последнему валидному замеру (74 %); порог гейта берётся из этого файла (single source of truth) — CI больше не задаёт --threshold 75 явно, из-за чего гейт был красным при coverage 74 %."
   ],
   "next_wave_todo": [
-    "raise threshold from 70 to 75"
+    "перемерить coverage на CI-раннере без OOM (разбиение на группы) и поднять threshold"
   ]
 }

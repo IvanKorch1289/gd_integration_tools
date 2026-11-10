@@ -10,10 +10,7 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from src.backend.core.models.connector_configs import (
-    ConnectorConfigEntry,
-    _utc_now,
-)
+from src.backend.core.models.connector_configs import ConnectorConfigEntry, _utc_now
 
 
 class TestUtcNowHelper:
@@ -95,11 +92,7 @@ class TestConnectorConfigEntryExtra:
     """Поведение extra=ignore — лишние поля тихо отбрасываются."""
 
     def test_extra_fields_ignored(self) -> None:
-        entry = ConnectorConfigEntry(
-            name="x",
-            unknown_field="foo",
-            another=42,
-        )
+        entry = ConnectorConfigEntry(name="x", unknown_field="foo", another=42)
         assert not hasattr(entry, "unknown_field")
         assert not hasattr(entry, "another")
 
@@ -152,11 +145,7 @@ class TestConnectorConfigEntryMutability:
 
     def test_model_copy_preserves_values(self) -> None:
         original = ConnectorConfigEntry(
-            name="x",
-            config={"k": "v"},
-            enabled=False,
-            updated_by="admin",
-            version=3,
+            name="x", config={"k": "v"}, enabled=False, updated_by="admin", version=3
         )
         copy = original.model_copy()
         assert copy.name == "x"

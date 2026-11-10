@@ -35,7 +35,7 @@ def _reset_factory_and_router() -> None:
     reset_router()
     try:
         shutdown_logging()
-    except (OSError, RuntimeError):
+    except OSError, RuntimeError:
         pass
 
 
@@ -49,7 +49,13 @@ class TestSettingsDrivenInitDefault:
         backend = init_application_logging()
         # StructlogGraylogBackend имеет _level attribute.
         assert backend is not None
-        assert settings.logging.level in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        assert settings.logging.level in {
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        }
 
     def test_init_reads_environment_from_settings(self) -> None:
         """``environment`` параметр = ``settings.app.environment``."""
@@ -190,10 +196,7 @@ class TestSettingsDrivenInitLogsSettingsRead:
         """Если settings полностью отсутствует — backend всё равно init."""
         # Создаём backend без settings через explicit args.
         backend = init_application_logging(
-            level="INFO",
-            environment="test",
-            profile="dev",
-            use_settings=False,
+            level="INFO", environment="test", profile="dev", use_settings=False
         )
         assert isinstance(backend, StructlogGraylogBackend)
 
@@ -214,10 +217,7 @@ class TestSettingsDrivenInitWithCustomGraylog:
     def test_custom_disk_path(self) -> None:
         """Custom log_dir="/var/log/myapp" → disk_path="/var/log/myapp/app.jsonl"."""
         # Init с явным log_dir.
-        backend = init_application_logging(
-            profile="dev",
-            log_dir="/tmp/test_logs",
-        )
+        backend = init_application_logging(profile="dev", log_dir="/tmp/test_logs")
         assert isinstance(backend, StructlogGraylogBackend)
 
 

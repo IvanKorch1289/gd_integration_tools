@@ -37,7 +37,9 @@ class TestGetSchedulerProvider:
         mod._overrides["scheduler"] = sentinel
         assert get_scheduler_provider() is sentinel
 
-    def test_no_override_calls_resolve_module(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_no_override_calls_resolve_module(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         called = {"yes": False, "name": None}
 
         def fake_resolve(name: str) -> Any:

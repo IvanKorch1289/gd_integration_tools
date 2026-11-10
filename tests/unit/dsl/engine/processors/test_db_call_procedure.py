@@ -102,8 +102,7 @@ def _install_session(
         return lambda _profile: manager
 
     monkeypatch.setattr(
-        "src.backend.core.di.providers.get_external_session_manager_provider",
-        _provider,
+        "src.backend.core.di.providers.get_external_session_manager_provider", _provider
     )
     return session
 
@@ -217,7 +216,9 @@ async def test_injection_in_schema_is_not_executed(
     monkeypatch: pytest.MonkeyPatch, bad_schema: str
 ) -> None:
     """Инъекция в ``schema`` (YAML-роут) не должна дойти до БД."""
-    session = _install_session(monkeypatch, _FakeSession(_FakeResult(returns_rows=True)))
+    session = _install_session(
+        monkeypatch, _FakeSession(_FakeResult(returns_rows=True))
+    )
     proc = DbCallProcedureProcessor(
         profile="p", name="recalc", schema=bad_schema, dialect="postgres"
     )
@@ -243,7 +244,9 @@ async def test_injection_in_name_is_not_executed(
     monkeypatch: pytest.MonkeyPatch, bad_name: str
 ) -> None:
     """Инъекция в ``name`` (YAML-роут) не должна дойти до БД."""
-    session = _install_session(monkeypatch, _FakeSession(_FakeResult(returns_rows=True)))
+    session = _install_session(
+        monkeypatch, _FakeSession(_FakeResult(returns_rows=True))
+    )
     proc = DbCallProcedureProcessor(profile="p", name=bad_name, dialect="postgres")
     ex = _ex({"id": 1})
 
@@ -258,11 +261,11 @@ async def test_plsql_injection_in_name_is_not_executed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """PL/SQL-инъекция в ``name`` (oracle) не должна дойти до БД."""
-    session = _install_session(monkeypatch, _FakeSession(_FakeResult(returns_rows=True)))
+    session = _install_session(
+        monkeypatch, _FakeSession(_FakeResult(returns_rows=True))
+    )
     proc = DbCallProcedureProcessor(
-        profile="oracle_1",
-        name="recalc; DROP TABLE users; END; --",
-        dialect="oracle",
+        profile="oracle_1", name="recalc; DROP TABLE users; END; --", dialect="oracle"
     )
     ex = _ex({"id": 1})
 
@@ -277,7 +280,9 @@ async def test_injection_in_bind_param_key_is_not_executed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Ключ bind-параметра из runtime-body не должен попасть в SQL."""
-    session = _install_session(monkeypatch, _FakeSession(_FakeResult(returns_rows=True)))
+    session = _install_session(
+        monkeypatch, _FakeSession(_FakeResult(returns_rows=True))
+    )
     proc = DbCallProcedureProcessor(profile="p", name="recalc", dialect="postgres")
     ex = _ex({"id) ; DROP TABLE users --": 1})
 
@@ -292,7 +297,9 @@ async def test_sql_guard_blocks_forbidden_command(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Общий SQL-guard (``validate_sql``) включён в контур вызова."""
-    session = _install_session(monkeypatch, _FakeSession(_FakeResult(returns_rows=True)))
+    session = _install_session(
+        monkeypatch, _FakeSession(_FakeResult(returns_rows=True))
+    )
     proc = DbCallProcedureProcessor(profile="p", name="drop", dialect="postgres")
     ex = _ex({"id": 1})
 
@@ -310,7 +317,9 @@ async def test_feature_flag_unavailable_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Недоступный ``feature_flags`` → шаг не исполняется (fail-closed)."""
-    session = _install_session(monkeypatch, _FakeSession(_FakeResult(returns_rows=True)))
+    session = _install_session(
+        monkeypatch, _FakeSession(_FakeResult(returns_rows=True))
+    )
     monkeypatch.setitem(sys.modules, "src.backend.core.config.features", None)
     proc = DbCallProcedureProcessor(profile="p", name="recalc", dialect="postgres")
     ex = _ex({"id": 1})
@@ -368,11 +377,11 @@ async def test_returns_rows_branch_materializes_payload(
 async def test_schema_taken_from_profile(monkeypatch: pytest.MonkeyPatch) -> None:
     """Схема по умолчанию берётся из профиля внешней БД, а не ``public``."""
     _install_profile(
-        monkeypatch,
-        db_type=DatabaseTypeChoices.oracle,
-        db_schema="REPORTING",
+        monkeypatch, db_type=DatabaseTypeChoices.oracle, db_schema="REPORTING"
     )
-    session = _install_session(monkeypatch, _FakeSession(_FakeResult(returns_rows=True)))
+    session = _install_session(
+        monkeypatch, _FakeSession(_FakeResult(returns_rows=True))
+    )
     proc = DbCallProcedureProcessor(profile="oracle_1", name="recalc")
     ex = _ex({"id": 1})
 
@@ -387,14 +396,12 @@ async def test_explicit_schema_overrides_profile(
 ) -> None:
     """Явная схема шага приоритетнее схемы профиля."""
     _install_profile(
-        monkeypatch,
-        db_type=DatabaseTypeChoices.oracle,
-        db_schema="REPORTING",
+        monkeypatch, db_type=DatabaseTypeChoices.oracle, db_schema="REPORTING"
     )
-    session = _install_session(monkeypatch, _FakeSession(_FakeResult(returns_rows=True)))
-    proc = DbCallProcedureProcessor(
-        profile="oracle_1", name="recalc", schema="OTHER"
+    session = _install_session(
+        monkeypatch, _FakeSession(_FakeResult(returns_rows=True))
     )
+    proc = DbCallProcedureProcessor(profile="oracle_1", name="recalc", schema="OTHER")
     ex = _ex({"id": 1})
 
     await proc.process(ex, AsyncMock())

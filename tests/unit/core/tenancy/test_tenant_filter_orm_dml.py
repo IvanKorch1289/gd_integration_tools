@@ -114,9 +114,7 @@ def _raw_orders(session: Session) -> list[tuple[object, ...]]:
     with session.get_bind().connect() as conn:
         return [
             tuple(row)
-            for row in conn.execute(
-                text("SELECT id, name, tenant_id FROM am_orders")
-            )
+            for row in conn.execute(text("SELECT id, name, tenant_id FROM am_orders"))
         ]
 
 

@@ -35,9 +35,7 @@ def _backend() -> MagicMock:
 
 
 def _provider(tenant_id: str | None):
-    return lambda: (
-        SimpleNamespace(tenant_id=tenant_id) if tenant_id else None
-    )
+    return lambda: SimpleNamespace(tenant_id=tenant_id) if tenant_id else None
 
 
 async def test_keys_are_scoped_per_tenant() -> None:
@@ -132,9 +130,7 @@ async def test_download_after_list_keys_does_not_double_prefix() -> None:
         ("presigned_url", "tenants/bank_a/k.bin"),
     ],
 )
-async def test_read_and_delete_ops_are_scoped(
-    call: str, expected: str
-) -> None:
+async def test_read_and_delete_ops_are_scoped(call: str, expected: str) -> None:
     """Ни одна операция не должна обходить tenant-префикс."""
     backend = _backend()
     storage = TenantObjectStorage(backend, _provider("bank_a"))
@@ -144,7 +140,9 @@ async def test_read_and_delete_ops_are_scoped(
     else:
         await getattr(storage, call)("k.bin")
 
-    method = backend.presigned_url if call == "presigned_url" else getattr(backend, call)
+    method = (
+        backend.presigned_url if call == "presigned_url" else getattr(backend, call)
+    )
     assert method.await_args.args[0] == expected
 
 

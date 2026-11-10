@@ -57,7 +57,9 @@ class TestDiskCacheTTL:
         result = await tmp_disk.get("key")
         assert result == b"value"
 
-    async def test_zero_ttl_treated_as_no_expiry_sidecar(self, tmp_disk: DiskCacheBackend) -> None:
+    async def test_zero_ttl_treated_as_no_expiry_sidecar(
+        self, tmp_disk: DiskCacheBackend
+    ) -> None:
         """set(..., ttl=0) — sidecar с expires_at=now → expired сразу.
 
         Это edge case: ``ttl=0`` — невалидное значение, но Pydantic-валидаторы

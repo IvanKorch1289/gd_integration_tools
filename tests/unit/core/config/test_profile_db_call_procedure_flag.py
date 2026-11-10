@@ -95,9 +95,7 @@ class TestDbCallProcedureFlagInvariant:
         _patch_features(directory, {"db_call_procedure_enabled": True})
         assert _violations("dev", directory) == []
 
-    def test_profile_without_external_db_has_no_violation(
-        self, tmp_path: Path
-    ) -> None:
+    def test_profile_without_external_db_has_no_violation(self, tmp_path: Path) -> None:
         """Внешних БД нет — нарушения нет (dev_light: ``connections: []``)."""
         directory = _profiles_dir(tmp_path, "dev_light.yml")
         assert _violations("dev_light", directory) == []
@@ -113,7 +111,9 @@ class TestDbCallProcedureFlagInvariant:
             if not path.is_file():
                 continue
             data = yaml.safe_load(path.read_text()) or {}
-            connections = (data.get("external_databases") or {}).get("connections") or []
+            connections = (data.get("external_databases") or {}).get(
+                "connections"
+            ) or []
             flags = (data.get("features") or {}).get("db_call_procedure_enabled")
             if connections and not flags:
                 assert _violations(profile, PROFILES_DIR), (

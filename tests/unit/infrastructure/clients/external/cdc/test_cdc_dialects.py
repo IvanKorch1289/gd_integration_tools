@@ -216,9 +216,7 @@ async def test_logminer_rejects_non_oracle_dialect(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_logminer_calls_start_logmnr(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+async def test_logminer_calls_start_logmnr(monkeypatch: pytest.MonkeyPatch) -> None:
     """Перед чтением ``V$LOGMNR_CONTENTS`` вызывается ``START_LOGMNR``."""
     harness = _SqlHarness()
     sub = CDCSubscription(

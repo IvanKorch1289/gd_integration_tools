@@ -88,12 +88,7 @@ class CacheProcessor(BaseProcessor):
                 )
                 exchange.set_property("cached", True)
                 return
-        except (
-            redis.exceptions.RedisError,
-            ConnectionError,
-            TimeoutError,
-            OSError,
-        ):
+        except redis.exceptions.RedisError, ConnectionError, TimeoutError, OSError:
             pass
         except Exception as exc:
             # Wave 18 (ADR-0391), дефект 4: недоступность кэша = cache miss,
@@ -125,14 +120,10 @@ class CacheProcessor(BaseProcessor):
 
             return get_unified_cache_facade_provider()
         except Exception as exc:
-            _logger.warning(
-                "Cache facade недоступен, деградация в cache miss: %s", exc
-            )
+            _logger.warning("Cache facade недоступен, деградация в cache miss: %s", exc)
             return None
 
-    async def _legacy_cache_get(
-        self, exchange: Exchange[Any], full_key: str
-    ) -> None:
+    async def _legacy_cache_get(self, exchange: Exchange[Any], full_key: str) -> None:
         """Legacy fallback для tests без svcs registry.
 
         Не использовать в production: отсутствует tenant prefix.
@@ -145,17 +136,11 @@ class CacheProcessor(BaseProcessor):
             cached = await redis_client.cache_get(full_key)
             if cached is not None:
                 exchange.set_out(
-                    body=orjson.loads(cached),
-                    headers=dict(exchange.in_message.headers),
+                    body=orjson.loads(cached), headers=dict(exchange.in_message.headers)
                 )
                 exchange.set_property("cached", True)
                 return
-        except (
-            redis.exceptions.RedisError,
-            ConnectionError,
-            TimeoutError,
-            OSError,
-        ):
+        except redis.exceptions.RedisError, ConnectionError, TimeoutError, OSError:
             pass
         except Exception as exc:
             # Legacy-fallback — best effort: любой сбой провайдера (например

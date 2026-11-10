@@ -442,9 +442,7 @@ class SkillRegistry:
                 # ImportError — features module missing, AttributeError —
                 # config not initialized, RuntimeError — feature_flags
                 # unavailable.
-                logger.debug(
-                    "skill_registry.feature_flag_fallback: %s", ff_exc
-                )
+                logger.debug("skill_registry.feature_flag_fallback: %s", ff_exc)
                 strict = True  # fail-closed
             if strict:
                 raise PermissionError(
@@ -543,7 +541,7 @@ class SkillRegistry:
             sibling = repo_root / "extensions"
             if sibling.exists():
                 return sibling.resolve()
-        except (OSError, ValueError):  # noqa: violation-check — filesystem walk failure → return None
+        except OSError, ValueError:  # noqa: violation-check — filesystem walk failure → return None
             pass
 
         return None

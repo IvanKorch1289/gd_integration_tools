@@ -265,7 +265,9 @@ class CdcSourcesMixin:
             batch_size = config["batch_size"]
             channel = config["channel"]
         except KeyError as exc:
-            raise ValueError(f"CDC capture config is incomplete: missing {exc}") from exc
+            raise ValueError(
+                f"CDC capture config is incomplete: missing {exc}"
+            ) from exc
         return self._add_lazy(  # type: ignore[attr-defined]
             "src.backend.dsl.engine.processors.cdc_capture",
             "CDCCaptureProcessor",

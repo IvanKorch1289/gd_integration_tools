@@ -83,7 +83,13 @@ def save_baseline(errors: int) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--max", type=int, default=30, help="абсолютный budget (default 30)"
+        "--max",
+        type=int,
+        default=None,
+        help=(
+            "абсолютный budget; по умолчанию — значение из baseline "
+            "(.baselines/mypy.json), т.е. рэтчет «не хуже baseline»"
+        ),
     )
     parser.add_argument(
         "--ratchet",
@@ -106,8 +112,9 @@ def main(argv: list[str] | None = None) -> int:
 
     errors = count_errors(output)
     baseline = load_baseline()
+    max_errors = args.max if args.max is not None else baseline
 
-    print(f"mypy errors: {errors} (max={args.max}, baseline={baseline})")
+    print(f"mypy errors: {errors} (max={max_errors}, baseline={baseline})")
 
     if code not in (0, 1) or (code == 1 and errors == 0):
         # Tool failure: mypy crashed без валидного результата.
@@ -117,8 +124,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
-    if errors > args.max:
-        print(f"FAIL: {errors} errors exceeds budget {args.max}", file=sys.stderr)
+    if errors > max_errors:
+        print(
+            f"FAIL: {errors} errors exceeds budget {max_errors}", file=sys.stderr
+        )
         return 1
 
     if baseline is not None and errors > baseline:

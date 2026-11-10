@@ -37,7 +37,7 @@ def _reset_factory_backend() -> None:
     factory._backend = None
     try:
         shutdown_logging()
-    except (OSError, RuntimeError):
+    except OSError, RuntimeError:
         pass
 
 

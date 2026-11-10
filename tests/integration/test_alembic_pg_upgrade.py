@@ -114,7 +114,9 @@ class TestAlembicPgUpgrade:
             import psycopg
 
             # strip driver prefix: psycopg.connect ждёт чистый postgresql://
-            conn = psycopg.connect(sync_url.replace("postgresql+psycopg2://", "postgresql://"))
+            conn = psycopg.connect(
+                sync_url.replace("postgresql+psycopg2://", "postgresql://")
+            )
             try:
                 with conn.cursor() as cur:
                     cur.execute(

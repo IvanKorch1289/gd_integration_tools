@@ -51,11 +51,7 @@ def _make_initializer(*, pool_size: int = 2) -> DatabaseInitializer:
 
 def _operational_error() -> OperationalError:
     """Строит ``OperationalError`` как при недоступной БД."""
-    return OperationalError(
-        "SELECT 1",
-        {},
-        Exception("connection refused"),
-    )
+    return OperationalError("SELECT 1", {}, Exception("connection refused"))
 
 
 class _StubConnection:
@@ -125,9 +121,9 @@ class TestAsyncPoolGracefulDegradation:
         await initializer.initialize_async_pool()
 
         warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
-        assert any(
-            "прогреть асинхронный пул" in r.getMessage() for r in warnings
-        ), "не залогирован warning о неудачном прогреве пула"
+        assert any("прогреть асинхронный пул" in r.getMessage() for r in warnings), (
+            "не залогирован warning о неудачном прогреве пула"
+        )
 
     @pytest.mark.asyncio
     async def test_operational_error_closes_opened_connections(

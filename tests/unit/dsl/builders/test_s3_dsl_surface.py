@@ -24,10 +24,7 @@ def _builder() -> RouteBuilder:
     return RouteBuilder.from_("s3_yaml_probe", source="timer:1s")
 
 
-@pytest.mark.parametrize(
-    "method",
-    ["to_s3", "s3_presign", "s3_delete", "s3_list"],
-)
+@pytest.mark.parametrize("method", ["to_s3", "s3_presign", "s3_delete", "s3_list"])
 def test_s3_step_methods_exist(method: str) -> None:
     """Методы, соответствующие op_name процессоров, доступны на builder'е."""
     assert hasattr(_builder(), method), f"RouteBuilder.{method} отсутствует"

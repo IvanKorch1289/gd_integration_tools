@@ -14,14 +14,11 @@
 
 from __future__ import annotations
 
-import pytest
-
 from src.backend.core.auth.ldap_contract import (
     AdDirectoryClientFactory,
     AdDirectoryClientProtocol,
     AdServerConfig,
 )
-
 
 # ── AdServerConfig ───────────────────────────────────────────────────
 
@@ -201,10 +198,7 @@ class TestAdDirectoryClientFactory:
 
         factory: AdDirectoryClientFactory = FakeFactory()
         cfg = AdServerConfig(
-            server_uri="ldap://x",
-            bind_dn="a",
-            bind_password="b",
-            search_base="c",
+            server_uri="ldap://x", bind_dn="a", bind_password="b", search_base="c"
         )
         client = factory(config=cfg)
         assert client.is_available() is True
@@ -235,10 +229,7 @@ class TestAdDirectoryClientFactory:
 
         factory: AdDirectoryClientFactory = FakeFactory()
         cfg = AdServerConfig(
-            server_uri="ldap://x",
-            bind_dn="a",
-            bind_password="b",
-            search_base="c",
+            server_uri="ldap://x", bind_dn="a", bind_password="b", search_base="c"
         )
         fake_conn_factory = FakeConnFactory()
         factory(config=cfg, connection_factory=fake_conn_factory)

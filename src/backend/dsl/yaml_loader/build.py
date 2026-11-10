@@ -191,8 +191,7 @@ def _is_spec_list(value: Any) -> bool:
     if not isinstance(value, list):
         return False
     return all(
-        isinstance(item, str)
-        or (isinstance(item, dict) and len(item) == 1)
+        isinstance(item, str) or (isinstance(item, dict) and len(item) == 1)
         for item in value
     )
 
@@ -221,7 +220,7 @@ def _nested_param_kinds(builder: RouteBuilder, proc_name: str) -> dict[str, str]
         return {}
     try:
         signature = inspect.signature(method)
-    except (TypeError, ValueError):  # pragma: no cover — C-фичи без сигнатуры
+    except TypeError, ValueError:  # pragma: no cover — C-фичи без сигнатуры
         return {}
     kinds: dict[str, str] = {}
     for name, param in signature.parameters.items():

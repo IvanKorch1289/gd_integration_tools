@@ -147,9 +147,7 @@ def _register_storage_facade() -> None:
             quota_manager = get_tenant_file_quota_manager()
             from src.backend.core.config.settings import settings
 
-            enforce_quota = bool(
-                getattr(settings.storage, "enforce_quota", False)
-            )
+            enforce_quota = bool(getattr(settings.storage, "enforce_quota", False))
         except Exception as exc:
             _logger.warning("storage.quota_manager_unavailable: %s", exc)
 
@@ -197,8 +195,7 @@ def _register_cache_facade() -> None:
         # поля). disk_fallback_enabled позволяет отключить L3 tier
         # (например, для in-cluster production, где диск — anti-pattern).
         memory, disk = create_cache_fallback_backends(
-            cache_settings,
-            disk_path=cache_settings.disk_fallback_path,
+            cache_settings, disk_path=cache_settings.disk_fallback_path
         )
 
         capability_check = None

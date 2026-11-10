@@ -33,9 +33,7 @@ def _reload_sftp_module(monkeypatch: pytest.MonkeyPatch):
 
     raw_path = os.environ.get("TRANSPORT_SFTP_KNOWN_HOSTS_PATH", "")
     monkeypatch.setattr(
-        settings_module.settings.transport,
-        "sftp_known_hosts_path",
-        raw_path or None,
+        settings_module.settings.transport, "sftp_known_hosts_path", raw_path or None
     )
     return sftp_module
 

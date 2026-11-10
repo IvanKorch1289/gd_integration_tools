@@ -40,12 +40,10 @@ class CDCSubscribeRequest(BaseModel):
 
     profile: str = Field(min_length=1, description="Имя профиля внешней БД.")
     tables: list[str] = Field(
-        min_length=1,
-        description="Список таблиц для отслеживания (не пустой).",
+        min_length=1, description="Список таблиц для отслеживания (не пустой)."
     )
     strategy: Literal["polling", "listen_notify", "logminer", "kafka"] = Field(
-        default="polling",
-        description="Стратегия обнаружения изменений.",
+        default="polling", description="Стратегия обнаружения изменений."
     )
     interval: float = Field(
         default=5.0,
@@ -65,8 +63,7 @@ class CDCSubscribeRequest(BaseModel):
         description="Колонка с временем изменения (для polling).",
     )
     channel: str | None = Field(
-        default=None,
-        description="Канал PostgreSQL LISTEN/NOTIFY (для listen_notify).",
+        default=None, description="Канал PostgreSQL LISTEN/NOTIFY (для listen_notify)."
     )
     target_action: str | None = Field(
         default=None, description="Action для вызова при обнаружении изменений."

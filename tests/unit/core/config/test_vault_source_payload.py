@@ -126,18 +126,14 @@ def _enable_vault(monkeypatch: pytest.MonkeyPatch) -> None:
 class TestVaultPayloadShape:
     """Формат payload источника Vault (ADR-0376)."""
 
-    def test_flat_payload_is_applied(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_flat_payload_is_applied(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Плоский payload (``ключ = имя поля``) применяется к модели."""
         _enable_vault(monkeypatch)
         _VAULT_PAYLOAD.update({"value": 42})
 
         assert _ProbeSettings().value == 42
 
-    def test_nested_payload_is_applied(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_nested_payload_is_applied(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Вложенный payload (``payload[yaml_group]``) тоже применяется."""
         _enable_vault(monkeypatch)
         _VAULT_PAYLOAD.update({"probe": {"value": 42}})
@@ -213,9 +209,7 @@ class TestVaultCacheTTL:
         """TTL кэша по умолчанию — 300 секунд."""
         assert cl._VAULT_CACHE_TTL_SECONDS == 300.0
 
-    def test_expired_entry_is_reread(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_expired_entry_is_reread(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Истёкший кэш приводит к повторному чтению секрета."""
         _enable_vault(monkeypatch)
         _VAULT_PAYLOAD.update({"value": 42})

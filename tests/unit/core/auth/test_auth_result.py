@@ -13,7 +13,6 @@ Pure data class, no behavior, no I/O. Frozen + slots + dataclass.
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError, fields
-from typing import Any
 
 import pytest
 
@@ -117,16 +116,8 @@ class TestAuthResultEquality:
     """Dataclass auto-__eq__ — два инстанса с одинаковыми полями равны."""
 
     def test_equal_when_same_fields(self) -> None:
-        r1 = AuthResult(
-            is_authenticated=True,
-            method="jwt",
-            subject="user-1",
-        )
-        r2 = AuthResult(
-            is_authenticated=True,
-            method="jwt",
-            subject="user-1",
-        )
+        r1 = AuthResult(is_authenticated=True, method="jwt", subject="user-1")
+        r2 = AuthResult(is_authenticated=True, method="jwt", subject="user-1")
         assert r1 == r2
 
     def test_not_equal_when_different(self) -> None:
@@ -202,9 +193,7 @@ class TestAuthResultFields:
             ("metadata", "dict[str, Any]"),
         ],
     )
-    def test_field_type_annotation(
-        self, name: str, expected_type_str: str
-    ) -> None:
+    def test_field_type_annotation(self, name: str, expected_type_str: str) -> None:
         """Аннотации (как строки из-за future-annotations) совпадают с контрактом."""
         f = next(f for f in fields(AuthResult) if f.name == name)
         assert f.type == expected_type_str

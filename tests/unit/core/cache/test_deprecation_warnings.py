@@ -73,9 +73,7 @@ class TestUnifiedCacheFacadeCanonicalUnchanged:
 
         with warnings.catch_warnings(record=True) as record:
             warnings.simplefilter("always", DeprecationWarning)
-            from src.backend.core.cache.facade import (
-                UnifiedCacheFacade as CoreABC,
-            )
+            from src.backend.core.cache.facade import UnifiedCacheFacade as CoreABC
 
             assert CoreABC is not None
         # No DeprecationWarning for ABC.
@@ -160,9 +158,9 @@ class TestMigrationGuideExists:
         content = guide_path.read_text(encoding="utf-8")
 
         # Warning text mentions Stage 4 removal.
-        assert (
-            "Will be removed" in content or "Stage 4" in content
-        ), "Migration guide must document Stage 4 REMOVE"
+        assert "Will be removed" in content or "Stage 4" in content, (
+            "Migration guide must document Stage 4 REMOVE"
+        )
 
 
 class TestFilterWarningsForBackwardCompat:
@@ -181,9 +179,7 @@ class TestFilterWarningsForBackwardCompat:
         """
         from pathlib import Path
 
-        pyproject = (
-            Path(__file__).parents[4] / "pyproject.toml"
-        )
+        pyproject = Path(__file__).parents[4] / "pyproject.toml"
         content = pyproject.read_text(encoding="utf-8")
         # Pattern was added cycle 166, removed cycle 167.
         # Verify it is NOT in pyproject.toml anymore.

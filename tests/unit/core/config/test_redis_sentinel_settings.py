@@ -35,7 +35,6 @@ def test_sentinel_mode_default_off() -> None:
         db_queue=1,
         db_limits=2,
         db_tasks=3,
-
         max_connections=20,
         use_ssl=False,
         max_stream_len=100000,
@@ -65,7 +64,6 @@ def test_sentinel_nodes_field_accepts_host_port() -> None:
         db_queue=1,
         db_limits=2,
         db_tasks=3,
-
         max_connections=20,
         use_ssl=False,
         max_stream_len=100000,
@@ -102,7 +100,6 @@ def test_sentinel_mode_requires_non_empty_nodes() -> None:
             db_queue=1,
             db_limits=2,
             db_tasks=3,
-
             max_connections=20,
             use_ssl=False,
             max_stream_len=100000,
@@ -134,7 +131,6 @@ def test_sentinel_nodes_validates_host_port_format() -> None:
             db_queue=1,
             db_limits=2,
             db_tasks=3,
-
             max_connections=20,
             use_ssl=False,
             max_stream_len=100000,
@@ -165,7 +161,6 @@ def test_sentinel_nodes_validates_port_is_numeric() -> None:
             db_queue=1,
             db_limits=2,
             db_tasks=3,
-
             max_connections=20,
             use_ssl=False,
             max_stream_len=100000,
@@ -196,7 +191,6 @@ def test_cluster_mode_and_sentinel_mode_mutually_exclusive() -> None:
             db_queue=1,
             db_limits=2,
             db_tasks=3,
-
             max_connections=20,
             use_ssl=False,
             max_stream_len=100000,
@@ -234,7 +228,6 @@ def test_production_sentinel_config_example() -> None:
         db_queue=1,
         db_limits=2,
         db_tasks=3,
-
         max_connections=50,
         use_ssl=True,
         ca_bundle="/etc/ssl/ca-bundle.crt",

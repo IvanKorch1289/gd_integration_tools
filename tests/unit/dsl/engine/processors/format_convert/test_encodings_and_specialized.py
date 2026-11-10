@@ -40,7 +40,7 @@ class _Spec(SpecializedFormatsMixin):
     def __init__(
         self,
         *,
-        secret: str | None = "test-secret-32-chars-min-length!",
+        secret: str | None = "test-secret-32-chars-min-length!",  # noqa: S107 — тестовая фикстура JWT
         algorithm: str | None = "HS256",
         claims: dict | None = None,
         schema: dict | None = None,

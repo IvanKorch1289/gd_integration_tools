@@ -73,6 +73,5 @@ def test_rpa_flag_descriptions_match_defaults() -> None:
         if field.default is True and _DEFAULT_OFF.search(description):
             contradictions.append(name)
     assert not contradictions, (
-        "описание утверждает default-OFF при default=True: "
-        f"{contradictions}"
+        f"описание утверждает default-OFF при default=True: {contradictions}"
     )

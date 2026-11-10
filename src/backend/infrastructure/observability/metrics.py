@@ -198,9 +198,7 @@ _storage_fallback_counter = metrics_registry.counter(
 )
 
 
-def record_storage_fallback(
-    chain: str, operation: str, *, is_write: bool
-) -> None:
+def record_storage_fallback(chain: str, operation: str, *, is_write: bool) -> None:
     """Инкрементирует счётчик fallback-событий object storage.
 
     Args:
@@ -210,9 +208,7 @@ def record_storage_fallback(
             потому что данные окажутся на временном носителе.
     """
     _storage_fallback_counter.labels(
-        chain=chain,
-        operation=operation,
-        severity="write" if is_write else "read",
+        chain=chain, operation=operation, severity="write" if is_write else "read"
     ).inc()
 
 

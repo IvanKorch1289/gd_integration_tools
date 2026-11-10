@@ -10,11 +10,7 @@ Disk-tier покрывается DiskCacheBackend (infrastructure):
 
 from __future__ import annotations
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
-
 
 # ─────────────── Mock impl of ABC ───────────────
 
@@ -25,7 +21,6 @@ class _MockUnifiedCacheFacadeImpl:
     def __init__(
         self, primary_should_fail: bool = False, return_value: bytes | None = None
     ) -> None:
-        from src.backend.core.cache.facade import UnifiedCacheFacade
 
         # Verify ABC inheritance at runtime.
         self._facade = self  # use self as the impl

@@ -132,10 +132,7 @@ class TestExtractUserPermissions:
 
     def test_returns_permissions_list(self) -> None:
         auth = _Auth({"permissions": ["role:admin", "scope:credit.read"]})
-        assert extract_user_permissions(auth) == (
-            "role:admin",
-            "scope:credit.read",
-        )
+        assert extract_user_permissions(auth) == ("role:admin", "scope:credit.read")
 
     def test_returns_permissions_tuple(self) -> None:
         auth = _Auth({"permissions": ("a", "b")})
@@ -179,12 +176,7 @@ class TestExtractUserPermissions:
 
     def test_permissions_takes_priority_over_scope(self) -> None:
         """Если оба ключа есть — permissions выигрывает."""
-        auth = _Auth(
-            {
-                "permissions": ["from-list"],
-                "scope": "from-scope",
-            }
-        )
+        auth = _Auth({"permissions": ["from-list"], "scope": "from-scope"})
         assert extract_user_permissions(auth) == ("from-list",)
 
     def test_non_list_permissions_falls_back_to_scope(self) -> None:

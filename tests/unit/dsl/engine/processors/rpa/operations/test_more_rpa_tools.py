@@ -136,7 +136,8 @@ class TestCsvWriteProcessor:
         monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
         out = tmp_path / "out.csv"
         p = CsvWriteProcessor(
-            dst=str(out), rows=[{"n": 30, "f": -1.5, "z": 0}, {"n": 7, "f": 0.25, "z": 0}]
+            dst=str(out),
+            rows=[{"n": 30, "f": -1.5, "z": 0}, {"n": 7, "f": 0.25, "z": 0}],
         )
         p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
@@ -207,8 +208,7 @@ class TestCsvWriteProcessor:
 
         monkeypatch.setenv("DSL_ALLOWED_PATHS", str(tmp_path))
         p = CsvWriteProcessor(
-            dst=str(tmp_path / "out.csv"),
-            rows=[{"=x": "1", "'=x": "2"}],
+            dst=str(tmp_path / "out.csv"), rows=[{"=x": "1", "'=x": "2"}]
         )
         p.auth_check = AsyncMock(return_value=True)
         ex = MagicMock()
@@ -516,7 +516,9 @@ class TestHttpRequestProcessor:
             await p.process(ex, MagicMock())
 
         payload = ex.in_message.body
-        assert isinstance(payload, dict), f"body должен быть dict, got {type(payload)!r}"
+        assert isinstance(payload, dict), (
+            f"body должен быть dict, got {type(payload)!r}"
+        )
         assert payload["status"] == 200
         assert payload["data"] == {"ok": True}
         # target == "body" → payload НЕ должен уходить в property.

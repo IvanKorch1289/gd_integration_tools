@@ -88,9 +88,7 @@ async def repo() -> AsyncIterator[SQLAlchemyRepository[_Wave4Item]]:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_get_all_versions_works(
-    repo: SQLAlchemyRepository[_Wave4Item],
-) -> None:
+async def test_get_all_versions_works(repo: SQLAlchemyRepository[_Wave4Item]) -> None:
     """``get_all_versions`` отдаёт версии объекта.
 
     Раньше метод падал с ``TypeError: got multiple values for keyword
@@ -107,9 +105,7 @@ async def test_get_all_versions_works(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_get_latest_version_works(
-    repo: SQLAlchemyRepository[_Wave4Item],
-) -> None:
+async def test_get_latest_version_works(repo: SQLAlchemyRepository[_Wave4Item]) -> None:
     """``get_latest_version`` отдаёт последнюю версию объекта.
 
     Раньше — тот же ``TypeError``, что и в ``get_all_versions``.
@@ -123,9 +119,7 @@ async def test_get_latest_version_works(
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_restore_to_version_works(
-    repo: SQLAlchemyRepository[_Wave4Item],
-) -> None:
+async def test_restore_to_version_works(repo: SQLAlchemyRepository[_Wave4Item]) -> None:
     """``restore_to_version`` восстанавливает объект до указанной версии.
 
     Раньше падал с ``TypeError`` — внутри он вызывает ``self.update(...)``,

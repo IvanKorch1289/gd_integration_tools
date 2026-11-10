@@ -222,9 +222,7 @@ class TestCDCCaptureProcessorProcess:
     async def test_cdc_event_reaches_result_property(self) -> None:
         """ADR-0384: событие CDC доходит до result_property."""
         processor = CDCCaptureProcessor(
-            profile="oracle_prod",
-            tables=["orders"],
-            result_property="cdc_events",
+            profile="oracle_prod", tables=["orders"], result_property="cdc_events"
         )
 
         mock_client = MagicMock()

@@ -116,8 +116,7 @@ def test_workflows_index_documents_retry_budget_reset() -> None:
     """(1) ADR-0398: admin-retry сбрасывает retry-бюджет."""
     text = _read(_WORKFLOWS_INDEX)
     assert "attempts_reset" in text, (
-        "не документирован сброс счётчика попыток при admin-retry "
-        "(attempts_reset)"
+        "не документирован сброс счётчика попыток при admin-retry (attempts_reset)"
     )
 
 
@@ -125,8 +124,7 @@ def test_workflows_index_documents_for_each_per_item_results() -> None:
     """(1) ADR-0398: per-item результаты ``for_each`` доступны в exchange."""
     text = _read(_WORKFLOWS_INDEX)
     assert "for_each_results" in text, (
-        "не документирован ключ с per-item результатами for_each "
-        "(for_each_results)"
+        "не документирован ключ с per-item результатами for_each (for_each_results)"
     )
 
 
@@ -238,7 +236,7 @@ def test_reference_index_links_processor_schemas() -> None:
         "docs/reference/index.md не ссылается на каталог схем процессоров"
     )
     assert "ADR-0399" in text, "docs/reference/index.md не ссылается на ADR-0399"
-    assert ( _DOCS / "reference" / "schemas" / "processors" ).is_dir(), (
+    assert (_DOCS / "reference" / "schemas" / "processors").is_dir(), (
         "каталог публикации схем процессоров отсутствует — "
         "make schemas (ADR-0399) не отработал"
     )
@@ -265,7 +263,9 @@ def test_reference_index_step_count_matches_catalog() -> None:
 def test_tenancy_model_documents_snapshot_under_rls() -> None:
     """(4a) ADR-0400: snapshot с tenant-скоупом под RLS."""
     text = _read(_TENANCY)
-    assert "ADR-0400" in text, "docs/explanation/tenancy_model.md не ссылается на ADR-0400"
+    assert "ADR-0400" in text, (
+        "docs/explanation/tenancy_model.md не ссылается на ADR-0400"
+    )
     assert "set_config" in text, (
         "не документирована установка tenant-скоупа перед выборкой (set_config)"
     )
@@ -303,9 +303,7 @@ def test_rpa_guide_documents_runtime_wiring() -> None:
     assert "get_browser_pool_provider" in text, (
         "не назван DI-провайдер RPA-runtime (get_browser_pool_provider)"
     )
-    assert "audit_event" in text, (
-        "не документирована эмиссия audit-событий процессоров"
-    )
+    assert "audit_event" in text, "не документирована эмиссия audit-событий процессоров"
 
 
 def test_cache_audit_documents_invalidation_and_quotas() -> None:
@@ -414,7 +412,7 @@ def test_workflow_facade_is_never_instantiated() -> None:
     for path in (_PROJECT_ROOT / "src").rglob("*.py"):
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"))
-        except (SyntaxError, UnicodeDecodeError):
+        except SyntaxError, UnicodeDecodeError:
             continue
         for node in ast.walk(tree):
             if (
@@ -468,9 +466,7 @@ def test_infra_readme_counts_match_repository() -> None:
 
     actual = {
         f"{child.name}/": sum(
-            1
-            for f in child.rglob("*.py")
-            if "__pycache__" not in f.parts
+            1 for f in child.rglob("*.py") if "__pycache__" not in f.parts
         )
         for child in infra.iterdir()
         if child.is_dir() and child.name != "__pycache__"
@@ -480,7 +476,9 @@ def test_infra_readme_counts_match_repository() -> None:
         f"репозиторием: лишние {sorted(set(rows) - set(actual))}, "
         f"пропущенные {sorted(set(actual) - set(rows))}"
     )
-    wrong = {name: (rows[name], actual[name]) for name in rows if rows[name] != actual[name]}
+    wrong = {
+        name: (rows[name], actual[name]) for name in rows if rows[name] != actual[name]
+    }
     assert not wrong, "счётчики .py-файлов в README infrastructure неверны: " + str(
         wrong
     )
@@ -490,9 +488,7 @@ def test_infra_readme_total_matches() -> None:
     """(8) Итог по .py-файлам совпадает с фактом."""
     text = _read(_INFRA_README)
     infra = _PROJECT_ROOT / "src" / "backend" / "infrastructure"
-    actual_total = sum(
-        1 for f in infra.rglob("*.py") if "__pycache__" not in f.parts
-    )
+    actual_total = sum(1 for f in infra.rglob("*.py") if "__pycache__" not in f.parts)
     match = re.search(r"(\d+)\s*\.py-файл", text)
     assert match, "README infrastructure не содержит итогового счётчика .py-файлов"
     assert int(match.group(1)) == actual_total, (
@@ -520,11 +516,7 @@ def test_gap_wf_4_5_is_registered_in_gaps_registry() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "doc",
-    _WAVE20_DOCS,
-    ids=lambda path: path.name,
-)
+@pytest.mark.parametrize("doc", _WAVE20_DOCS, ids=lambda path: path.name)
 def test_referenced_adr_exists(doc: Path) -> None:
     """(10) Каждая упомянутая ADR существует в docs/adr/."""
     text = _read(doc)
@@ -536,11 +528,7 @@ def test_referenced_adr_exists(doc: Path) -> None:
     assert not missing, f"{doc.name}: ссылки на несуществующие ADR {missing}"
 
 
-@pytest.mark.parametrize(
-    "doc",
-    _WAVE20_DOCS,
-    ids=lambda path: path.name,
-)
+@pytest.mark.parametrize("doc", _WAVE20_DOCS, ids=lambda path: path.name)
 def test_relative_markdown_links_resolve(doc: Path) -> None:
     """(10) Относительные markdown-ссылки существуют."""
     text = _read(doc)
@@ -554,11 +542,7 @@ def test_relative_markdown_links_resolve(doc: Path) -> None:
     assert not broken, f"{doc.name}: битые ссылки {sorted(set(broken))}"
 
 
-@pytest.mark.parametrize(
-    "doc",
-    _WAVE20_DOCS,
-    ids=lambda path: path.name,
-)
+@pytest.mark.parametrize("doc", _WAVE20_DOCS, ids=lambda path: path.name)
 def test_referenced_src_paths_exist(doc: Path) -> None:
     """(10) Упомянутые в документах пути src/ и extensions/ существуют."""
     text = _read(doc)

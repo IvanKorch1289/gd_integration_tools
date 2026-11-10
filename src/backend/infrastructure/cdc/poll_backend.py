@@ -305,9 +305,7 @@ class PollCDCBackend(CDCSource):
                 rows = await coro if coro is not None else []
             except Exception as exc:
                 _logger.error(
-                    "PollCDCBackend executor failed: %s (table=%s)",
-                    exc,
-                    target_table,
+                    "PollCDCBackend executor failed: %s (table=%s)", exc, target_table
                 )
                 await asyncio.sleep(self._interval_s)
                 continue
@@ -337,9 +335,7 @@ class PollCDCBackend(CDCSource):
                 ts = _parse_timestamp(row.get(self._timestamp_column))
                 pk_value = row.get(pk_column) if pk_column else None
                 if ts is not None:
-                    new_cursor = PollCursor(
-                        ts=ts, pk=pk_value if pk_column else None
-                    )
+                    new_cursor = PollCursor(ts=ts, pk=pk_value if pk_column else None)
                 if pk_column:
                     dedup_key = f"pk:{pk_value!r}"
                 else:

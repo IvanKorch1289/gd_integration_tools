@@ -82,7 +82,9 @@ class TestRedactMultiplePIIInOneString:
     """Несколько PII в одной строке."""
 
     def test_email_and_phone(self) -> None:
-        result = redact_for_observability("contact user@example.com or +7 905 123 45 67")
+        result = redact_for_observability(
+            "contact user@example.com or +7 905 123 45 67"
+        )
         # Оба маскируются
         assert "<email>" in result
         assert "<phone>" in result
@@ -171,11 +173,7 @@ class TestMaskPii:
         assert set(result.keys()) == {"k1", "k2"}
 
     def test_redacts_nested_pii(self) -> None:
-        result = mask_pii(
-            None,
-            "info",
-            {"user": {"email": "a@b.com", "name": "John"}},
-        )
+        result = mask_pii(None, "info", {"user": {"email": "a@b.com", "name": "John"}})
         assert result == {"user": {"email": "<email>", "name": "John"}}
 
     def test_logger_and_method_name_ignored(self) -> None:

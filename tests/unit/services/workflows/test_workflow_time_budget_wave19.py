@@ -64,8 +64,7 @@ class _RecordingBackend(FakeWorkflowBackend):
 
 
 def _facade(
-    *,
-    sla_policy: SlaPolicy | None = None,
+    *, sla_policy: SlaPolicy | None = None
 ) -> tuple[WorkflowFacade, _RecordingBackend]:
     """Фасад с capability-gate и (опциональным) SLA-резолвером."""
     gate = CapabilityGate()
@@ -81,9 +80,7 @@ def _facade(
     if sla_policy is not None:
         resolver = lambda _name: sla_policy  # noqa: E731 — локальный stub-резолвер
     facade = WorkflowFacade(
-        backend=backend,
-        capability_gate=gate,
-        sla_resolver=resolver,
+        backend=backend, capability_gate=gate, sla_resolver=resolver
     )
     return facade, backend
 

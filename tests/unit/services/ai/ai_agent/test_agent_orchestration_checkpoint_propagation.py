@@ -24,11 +24,11 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.backend.services.ai.ai_agent.agent_orchestration_mixin import (
-    AgentOrchestrationMixin,
-)
 from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
     CheckpointBackendUnavailable,
+)
+from src.backend.services.ai.ai_agent.agent_orchestration_mixin import (
+    AgentOrchestrationMixin,
 )
 
 

@@ -94,9 +94,7 @@ class ListenNotifyCDCBackend(CDCSource):
             f"{profile.host}:{profile.port}/{profile.db_name}"
         )
 
-    def _parse_event(
-        self, payload: str, tables: list[str]
-    ) -> CDCEvent | None:
+    def _parse_event(self, payload: str, tables: list[str]) -> CDCEvent | None:
         """Разобрать notify-payload в :class:`CDCEvent`.
 
         Args:
@@ -125,7 +123,9 @@ class ListenNotifyCDCBackend(CDCSource):
             source="listen_notify",
             table=table or "_unknown",
             timestamp=ensure_utc(timestamp),
-            cursor=CDCCursor(value=str(raw_ts or table or "0"), backend="listen_notify"),
+            cursor=CDCCursor(
+                value=str(raw_ts or table or "0"), backend="listen_notify"
+            ),
             new=data.get("new"),
             old=data.get("old"),
             metadata={"channel": self._channel},

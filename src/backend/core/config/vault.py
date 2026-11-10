@@ -28,12 +28,7 @@ from src.backend.core.config.config_loader import (
     vault_yaml_config,
 )
 
-__all__ = (
-    "VaultSettings",
-    "vault_endpoint",
-    "vault_secret_path",
-    "vault_settings",
-)
+__all__ = ("VaultSettings", "vault_endpoint", "vault_secret_path", "vault_settings")
 
 
 def vault_endpoint() -> str:

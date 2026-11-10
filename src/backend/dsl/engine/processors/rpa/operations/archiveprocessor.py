@@ -100,9 +100,7 @@ class ArchiveProcessor(BaseProcessor):
 
         """
         if len(sizes) > _MAX_ENTRIES:
-            raise ValueError(
-                f"archive too many entries: {len(sizes)} > {_MAX_ENTRIES}"
-            )
+            raise ValueError(f"archive too many entries: {len(sizes)} > {_MAX_ENTRIES}")
         total = sum(sizes)
         if total > _MAX_UNPACK_BYTES:
             raise ValueError(
@@ -139,11 +137,7 @@ class ArchiveProcessor(BaseProcessor):
                                 f"> {_MAX_UNPACK_BYTES} bytes"
                             )
                         files.append(
-                            {
-                                "name": name,
-                                "data": payload,
-                                "size": info.file_size,
-                            }
+                            {"name": name, "data": payload, "size": info.file_size}
                         )
         else:
             import tarfile
@@ -164,11 +158,7 @@ class ArchiveProcessor(BaseProcessor):
                                 f"> {_MAX_UNPACK_BYTES} bytes"
                             )
                         files.append(
-                            {
-                                "name": name,
-                                "data": payload,
-                                "size": member.size,
-                            }
+                            {"name": name, "data": payload, "size": member.size}
                         )
         return files
 

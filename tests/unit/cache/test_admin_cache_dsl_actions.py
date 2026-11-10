@@ -15,10 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.backend.dsl.commands.action_registry import action_handler_registry
-from src.backend.schemas.invocation import (
-    ActionCommandMetaSchema,
-    ActionCommandSchema,
-)
+from src.backend.schemas.invocation import ActionCommandMetaSchema, ActionCommandSchema
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -127,9 +124,7 @@ class TestAdminCacheDslActions:
         self, mock_invalidator_provider: MagicMock, mock_invalidator: MagicMock
     ) -> None:
         """admin.* без role:admin → отказ (ADR-0421, fail-closed)."""
-        from src.backend.dsl.commands.action_registry import (
-            ActionPermissionDeniedError,
-        )
+        from src.backend.dsl.commands.action_registry import ActionPermissionDeniedError
 
         with patch(
             "src.backend.core.di.providers.get_cache_invalidator_provider",

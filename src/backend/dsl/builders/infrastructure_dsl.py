@@ -498,10 +498,7 @@ class InfrastructureDSL:
         )
 
     def s3_get(
-        self,
-        *,
-        key_from: str = "s3_key",
-        result_property: str = "body",
+        self, *, key_from: str = "s3_key", result_property: str = "body"
     ) -> RouteBuilder:
         """Скачать объект S3; содержимое → ``result_property``.
 
@@ -540,10 +537,7 @@ class InfrastructureDSL:
         )
 
     def s3_list(
-        self,
-        *,
-        prefix_from: str | None = None,
-        result_property: str = "s3_keys",
+        self, *, prefix_from: str | None = None, result_property: str = "s3_keys"
     ) -> RouteBuilder:
         """Получить список ключей с optional prefix → ``result_property``."""
         return self._add_lazy(  # type: ignore[attr-defined]

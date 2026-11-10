@@ -184,7 +184,9 @@ def check(
         return _deny(request, "no_declaration", principal=principal)
 
     if not request.tenant:
-        return _deny(request, "tenant_missing", principal=principal, namespace=namespace)
+        return _deny(
+            request, "tenant_missing", principal=principal, namespace=namespace
+        )
 
     if namespace == CORE_NAMESPACE:
         # Core-baseline: capability выдаётся по явному флагу (ADR-0366 §2).
@@ -322,10 +324,7 @@ def _emit_deny_audit(
 
 
 def _emit_grant_audit(
-    request: CapabilityRequest,
-    *,
-    principal: str | None,
-    namespace: str,
+    request: CapabilityRequest, *, principal: str | None, namespace: str
 ) -> None:
     """Audit-событие ``capability.check`` для выдачи core-baseline (никогда не raise).
 

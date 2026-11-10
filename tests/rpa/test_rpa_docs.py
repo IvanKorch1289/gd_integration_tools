@@ -43,7 +43,7 @@ def _processor_names() -> set[str]:
             continue
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"))
-        except (SyntaxError, UnicodeDecodeError):
+        except SyntaxError, UnicodeDecodeError:
             continue
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef) and node.name.endswith("Processor"):
@@ -108,7 +108,9 @@ def test_rpa_guide_mentions_only_existing_processors() -> None:
 def test_dsl_audit_existing_section_lists_existing_processors() -> None:
     """Раздел «Существующие процессоры» содержит только реальные классы."""
     existing = _processor_names()
-    section = _section(_DSL_AUDIT.read_text(encoding="utf-8"), "## Существующие процессоры")
+    section = _section(
+        _DSL_AUDIT.read_text(encoding="utf-8"), "## Существующие процессоры"
+    )
     unknown = sorted(_backticked_processor_names(section) - existing)
     assert not unknown, f"DSL_AUDIT.md упоминает несуществующие процессоры: {unknown}"
 

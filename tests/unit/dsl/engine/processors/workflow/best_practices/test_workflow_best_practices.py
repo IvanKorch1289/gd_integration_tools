@@ -13,7 +13,6 @@ import pytest
 REAL_CAPABILITY_GATE = True
 
 
-
 def _patch_capability_gate(
     monkeypatch: pytest.MonkeyPatch,
     *,
@@ -83,8 +82,7 @@ def _patch_capability_gate(
         _legacy_check,
     )
     monkeypatch.setattr(
-        "src.backend.core.security.capabilities.runtime_resolver.check",
-        _runtime_check,
+        "src.backend.core.security.capabilities.runtime_resolver.check", _runtime_check
     )
 
 

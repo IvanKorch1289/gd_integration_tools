@@ -121,9 +121,7 @@ class TestContractTestResultExplicit:
         assert r.schema_errors == ["missing x", "wrong type"]
 
     def test_output_mismatch_true(self) -> None:
-        r = ContractTestResult(
-            test_name="t1", passed=False, output_mismatch=True
-        )
+        r = ContractTestResult(test_name="t1", passed=False, output_mismatch=True)
         assert r.output_mismatch is True
 
     def test_expected_error_and_actual_error(self) -> None:

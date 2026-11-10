@@ -40,11 +40,7 @@ from typing import Any
 
 import pytest
 
-__all__ = (
-    "MAX_BANK_ENTRIES",
-    "XFAIL_ENVIRONMENT",
-    "apply_xfail_environment_bank",
-)
+__all__ = ("MAX_BANK_ENTRIES", "XFAIL_ENVIRONMENT", "apply_xfail_environment_bank")
 
 #: Максимально допустимое число записей в банке (только уменьшаемо).
 MAX_BANK_ENTRIES = 8
@@ -60,7 +56,7 @@ XFAIL_ENVIRONMENT: dict[str, tuple[str, str, bool]] = {
         "OWNER-TASK: PROD-READINESS gaps — perf-бенчмарки в отдельный "
         "профиль CI (docs/roadmap/PROD_READINESS_GAPS.md)",
         False,
-    ),
+    )
 }
 
 
@@ -81,9 +77,4 @@ def apply_xfail_environment_bank(items: list[pytest.Item]) -> None:
         item = by_id.get(node_id)
         if item is None:
             continue
-        item.add_marker(
-            pytest.mark.xfail(
-                reason=f"{reason} | {owner}",
-                strict=strict,
-            ),
-        )
+        item.add_marker(pytest.mark.xfail(reason=f"{reason} | {owner}", strict=strict))

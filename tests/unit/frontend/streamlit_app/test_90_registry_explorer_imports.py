@@ -101,7 +101,9 @@ def _restore_stubbed_modules() -> None:
     for _key, _original in _ORIGINAL_MODULES.items():
         if _original is None:
             for _name in [
-                _n for _n in list(sys.modules) if _n == _key or _n.startswith(f"{_key}.")
+                _n
+                for _n in list(sys.modules)
+                if _n == _key or _n.startswith(f"{_key}.")
             ]:
                 del sys.modules[_name]
         else:
@@ -188,9 +190,7 @@ def _load_page_module() -> object:
 
     # Always REPLACE sys.modules['streamlit'] with a fresh full mock
     # (previous tests may have replaced it with a minimal mock).
-    _saved_modules = {
-        _key: sys.modules.get(_key) for _key in ("streamlit", "polars")
-    }
+    _saved_modules = {_key: sys.modules.get(_key) for _key in ("streamlit", "polars")}
     sys.modules["streamlit"] = _build_streamlit_mock()
 
     # polars — опциональный extra «dataframes», в core test env его нет, а

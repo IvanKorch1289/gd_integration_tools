@@ -29,10 +29,7 @@ pytestmark = pytest.mark.unit
 _PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 #: Каталоги бизнес-слоя, где привилегированный raw-вызов запрещён.
-SCAN_ROOTS: tuple[str, ...] = (
-    "src/backend/dsl",
-    "src/backend/services",
-)
+SCAN_ROOTS: tuple[str, ...] = ("src/backend/dsl", "src/backend/services")
 
 #: Session-получатели: ``Session.execute`` проходит через tenant-guard.
 _SESSION_RECEIVERS: frozenset[str] = frozenset(
@@ -133,13 +130,7 @@ def find_violations(root: Path) -> list[Finding]:
                 relative = path.relative_to(_PROJECT_ROOT).as_posix()
             except ValueError:
                 relative = path.as_posix()
-            findings.append(
-                Finding(
-                    path=relative,
-                    line=node.lineno,
-                    receiver=receiver,
-                )
-            )
+            findings.append(Finding(path=relative, line=node.lineno, receiver=receiver))
     return findings
 
 
@@ -158,7 +149,9 @@ def test_no_unclassified_privileged_execute_calls() -> None:
 
     assert not unclassified, (
         "Привилегированный raw-вызов в бизнес-слое (ADR-0386): "
-        + "; ".join(f"{f.path}:{f.line} ({f.receiver}.execute(text(...)))" for f in unclassified)
+        + "; ".join(
+            f"{f.path}:{f.line} ({f.receiver}.execute(text(...)))" for f in unclassified
+        )
         + ". Используйте Session (ORM/raw-SQL guard) либо добавьте обоснование "
         "в ALLOWLIST гейта."
     )
@@ -195,4 +188,4 @@ def test_allowlist_entries_have_reason() -> None:
     """Каждая запись allowlist объясняет, почему вызов привилегированный."""
     for path, reason in ALLOWLIST.items():
         assert reason.strip(), f"Пустое обоснование для {path}"
-        assert ( _PROJECT_ROOT / path).is_file(), f"Allowlist-путь не найден: {path}"
+        assert (_PROJECT_ROOT / path).is_file(), f"Allowlist-путь не найден: {path}"

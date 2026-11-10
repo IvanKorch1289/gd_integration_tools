@@ -23,14 +23,7 @@ def _store(table_name: str) -> ImmutableAuditStore:
 
 @pytest.mark.parametrize(
     "bad_name",
-    [
-        "audit; DROP TABLE x",
-        "audit log",
-        "audit'--",
-        "1audit",
-        "",
-        "audit\n",
-    ],
+    ["audit; DROP TABLE x", "audit log", "audit'--", "1audit", "", "audit\n"],
 )
 def test_invalid_table_name_rejected(bad_name: str) -> None:
     """Невалидное имя таблицы → ValueError на конструкторе (fail-fast)."""

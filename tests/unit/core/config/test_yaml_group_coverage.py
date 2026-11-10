@@ -227,8 +227,7 @@ class TestYamlGroupCoverage:
             if group not in base and group not in allowlist
         )
         assert uncovered == [], (
-            "yaml-группы без секции в base.yml и без записи в allowlist: "
-            f"{uncovered}"
+            f"yaml-группы без секции в base.yml и без записи в allowlist: {uncovered}"
         )
 
     def test_allowlist_has_no_stale_entries(self) -> None:
@@ -245,7 +244,9 @@ class TestYamlGroupCoverage:
 
     def test_allowlist_entries_have_reason(self) -> None:
         """У каждой записи allowlist есть непустая причина."""
-        empty = sorted(group for group, reason in _read_allowlist().items() if not reason)
+        empty = sorted(
+            group for group, reason in _read_allowlist().items() if not reason
+        )
         assert empty == [], f"allowlist-записи без причины: {empty}"
 
     def test_allowlist_is_not_empty(self) -> None:
@@ -274,7 +275,9 @@ class TestNewSectionsMatchModelDefaults:
                 continue
             if _normalize(value) != _normalize(defaults[key]):
                 mismatches[key] = (value, defaults[key])
-        assert mismatches == {}, f"{group}: значения YAML != дефолты модели: {mismatches}"
+        assert mismatches == {}, (
+            f"{group}: значения YAML != дефолты модели: {mismatches}"
+        )
 
     @pytest.mark.parametrize("group", YAML_GROUPS_MATCHING_DEFAULTS)
     def test_section_keys_are_model_fields(self, group: str) -> None:

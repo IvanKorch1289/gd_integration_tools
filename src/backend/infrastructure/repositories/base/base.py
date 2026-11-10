@@ -89,9 +89,7 @@ class AbstractRepository[ConcreteTable: BaseModel](ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(
-        self, session: AsyncSession, key: str, value: Any
-    ) -> int | None:
+    async def delete(self, session: AsyncSession, key: str, value: Any) -> int | None:
         """Удалить объект из таблицы по ключу и значению.
 
         Возвращает ID удалённого объекта (или ``None``), чтобы вызывающий

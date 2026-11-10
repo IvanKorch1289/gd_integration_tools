@@ -10,9 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.backend.infrastructure.resilience.components import (
-    object_storage_chain as mod,
-)
+from src.backend.infrastructure.resilience.components import object_storage_chain as mod
 from src.backend.infrastructure.resilience.components.object_storage_chain import (
     StorageGetCallable,
     _local_fs_get,

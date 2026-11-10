@@ -260,11 +260,7 @@ class LogProcessor(BaseProcessor):
     """
 
     def __init__(
-        self,
-        *,
-        level: str = "info",
-        message: str = "",
-        name: str | None = None,
+        self, *, level: str = "info", message: str = "", name: str | None = None
     ) -> None:
         super().__init__(name=name or "log")
         self._level = level

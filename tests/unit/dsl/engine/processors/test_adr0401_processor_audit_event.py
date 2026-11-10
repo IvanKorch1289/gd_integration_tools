@@ -120,9 +120,7 @@ async def test_audit_details_have_capability_but_no_data(
 
 
 @pytest.mark.asyncio
-async def test_failed_step_emits_failure_outcome(
-    emitted: list[dict[str, Any]],
-) -> None:
+async def test_failed_step_emits_failure_outcome(emitted: list[dict[str, Any]]) -> None:
     """Упавший шаг эмитит событие с outcome=failure."""
     with pytest.raises(RuntimeError):
         await _FailingProcessor().process(_exchange(), MagicMock())
@@ -174,9 +172,7 @@ async def test_real_rpa_processor_emits_audit_event(
         HashProcessor,
     )
 
-    monkeypatch.setattr(
-        HashProcessor, "auth_check", AsyncMock(return_value=True)
-    )
+    monkeypatch.setattr(HashProcessor, "auth_check", AsyncMock(return_value=True))
     exchange = _exchange()
     exchange.in_message.body = {"a": 1}
 

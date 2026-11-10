@@ -47,7 +47,9 @@ class TestExecutionEngineFinalizers:
     async def test_execute_runs_finalizers(self) -> None:
         calls: list[str] = []
         engine = ExecutionEngine(validate_before_execute=False)
-        pipeline = Pipeline(route_id="rpa.finalizers", processors=[_FinalizerProcessor(calls)])
+        pipeline = Pipeline(
+            route_id="rpa.finalizers", processors=[_FinalizerProcessor(calls)]
+        )
 
         exchange = await engine.execute(pipeline)
 
@@ -80,9 +82,7 @@ class TestExecutionEngineFinalizers:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Зависший finalizer не должен держать движок (таймаут + shield)."""
-        monkeypatch.setattr(
-            execution_engine_module, "_FINALIZER_TIMEOUT_SECONDS", 0.05
-        )
+        monkeypatch.setattr(execution_engine_module, "_FINALIZER_TIMEOUT_SECONDS", 0.05)
         calls: list[str] = []
 
         async def _slow_finalizer() -> None:

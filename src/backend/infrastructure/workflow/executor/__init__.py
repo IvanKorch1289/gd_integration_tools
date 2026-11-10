@@ -274,10 +274,7 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
                     # Терминальный FAILED → компенсации уже выполненных
                     # forward-шагов (ADR-0396).
                     return await self._compensate_on_failure(
-                        spec=spec,
-                        state=state,
-                        instance=instance,
-                        result=result,
+                        spec=spec, state=state, instance=instance, result=result
                     )
                 return result
             unknown_kind = StepResult(
@@ -298,10 +295,7 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
                 max_attempts=spec.max_attempts,
             )
             return await self._compensate_on_failure(
-                spec=spec,
-                state=state,
-                instance=instance,
-                result=unknown_kind,
+                spec=spec, state=state, instance=instance, result=unknown_kind
             )
         except Exception as exc:
             _logger.exception("step execution failed")
@@ -358,7 +352,7 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
                 return None
             try:
                 budget = float(raw)
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 return None
         if budget <= 0:
             return None
@@ -444,7 +438,8 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
                             "status": "failed",
                             "steps": [action.step.name for action in plan],
                             "errors": [
-                                f"{type(err).__name__}: {err}" for err in comp_exc.errors
+                                f"{type(err).__name__}: {err}"
+                                for err in comp_exc.errors
                             ],
                             "original_error": str(comp_exc.original),
                         },
@@ -462,19 +457,14 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
                 *result.events,
                 (
                     WorkflowEventType.compensated,
-                    {
-                        "status": "completed",
-                        "steps": list(outcome.executed),
-                    },
+                    {"status": "completed", "steps": list(outcome.executed)},
                     None,
                 ),
             ],
         )
 
     async def _run_compensation_step(
-        self,
-        step: WorkflowStep,
-        state: WorkflowState,
+        self, step: WorkflowStep, state: WorkflowState
     ) -> None:
         """Исполнить один compensate-шаг (rollback-действие).
 
@@ -488,7 +478,5 @@ class DSLStepExecutor(SequentialMixin, ControlFlowMixin, SubFlowMixin, EvalMixin
 
         """
         await execute_compensation_step(
-            step,
-            body=dict(state.exchange_snapshot),
-            timeout_s=self._timeout_per_step_s,
+            step, body=dict(state.exchange_snapshot), timeout_s=self._timeout_per_step_s
         )

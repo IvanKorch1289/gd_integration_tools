@@ -66,9 +66,7 @@ class TestGetServiceForModel:
     @pytest.mark.asyncio
     async def test_success_path(self) -> None:
         UserModel = type(  # noqa: N806
-            "UserModel",
-            (),
-            {"__tablename__": "users"},
+            "UserModel", (), {"__tablename__": "users"}
         )
 
         # Создаём fake service module в sys.modules
@@ -87,9 +85,7 @@ class TestGetServiceForModel:
     @pytest.mark.asyncio
     async def test_import_error_raises_value_error(self) -> None:
         UnknownModel = type(  # noqa: N806
-            "UnknownModel",
-            (),
-            {"__tablename__": "unknown_table_for_test_xyz"},
+            "UnknownModel", (), {"__tablename__": "unknown_table_for_test_xyz"}
         )
 
         # Не регистрируем в sys.modules → ImportError
@@ -104,9 +100,7 @@ class TestGetServiceForModel:
     @pytest.mark.asyncio
     async def test_attribute_error_raises_value_error(self) -> None:
         UserModel = type(  # noqa: N806
-            "UserModel",
-            (),
-            {"__tablename__": "users_no_service_test"},
+            "UserModel", (), {"__tablename__": "users_no_service_test"}
         )
 
         # Module без UserModelService
@@ -125,13 +119,13 @@ class TestGetServiceForModel:
     async def test_service_name_convention(self) -> None:
         # {model.__name__}Service — convention: имя класса используется
         OrderModel = type(  # noqa: N806 — динамическое создание
-            "OrderModel",
-            (),
-            {"__tablename__": "orders_convention_test"},
+            "OrderModel", (), {"__tablename__": "orders_convention_test"}
         )
 
         mock_service_class = MagicMock()
-        fake_svc_module = types.ModuleType("src.backend.services.orders_convention_test")
+        fake_svc_module = types.ModuleType(
+            "src.backend.services.orders_convention_test"
+        )
         fake_svc_module.OrderModelService = mock_service_class  # convention
         sys.modules["src.backend.services.orders_convention_test"] = fake_svc_module
 
@@ -205,9 +199,7 @@ class TestEdgeCases:
     async def test_get_service_error_message_includes_cause(self) -> None:
         # Создаём класс с явным __name__
         TestModel = type(  # noqa: N806
-            "TestModel",
-            (),
-            {"__tablename__": "test_table_xyz_edge"},
+            "TestModel", (), {"__tablename__": "test_table_xyz_edge"}
         )
 
         # Не регистрируем → ImportError → ValueError

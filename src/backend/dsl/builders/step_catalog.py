@@ -107,9 +107,7 @@ def builder_step_names() -> tuple[str, ...]:
     return tuple(sorted(names))
 
 
-def _resolve_class_expr(
-    node: ast.AST, namespace: dict[str, Any]
-) -> type[Any] | None:
+def _resolve_class_expr(node: ast.AST, namespace: dict[str, Any]) -> type[Any] | None:
     """Найти класс процессора в AST-выражении по namespace'у модуля."""
     if isinstance(node, ast.Call):
         return _resolve_class_expr(node.func, namespace)
@@ -141,9 +139,7 @@ def _processor_class_in_return(
 
     """
     for child in ast.walk(node):
-        if not isinstance(child, ast.Call) or not isinstance(
-            child.func, ast.Attribute
-        ):
+        if not isinstance(child, ast.Call) or not isinstance(child.func, ast.Attribute):
             continue
         if child.func.attr == "_add_lazy" and len(child.args) >= 2:
             module_path = _literal_str(child.args[0])
@@ -182,7 +178,7 @@ def _processor_class_for_step(step: str) -> type[Any] | None:
         return None
     try:
         source = textwrap.dedent(inspect.getsource(method))
-    except (OSError, TypeError):
+    except OSError, TypeError:
         return None
     try:
         tree = ast.parse(source)
@@ -411,7 +407,7 @@ def _signature_schema(step: str) -> dict[str, Any]:
     if method is not None and callable(method):
         try:
             signature = inspect.signature(method)
-        except (TypeError, ValueError):  # pragma: no cover
+        except TypeError, ValueError:  # pragma: no cover
             signature = None
         if signature is not None:
             for name, param in signature.parameters.items():

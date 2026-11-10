@@ -6,7 +6,6 @@ S13 K3 W4: DLQ class resolver для envelope на основании route mani
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 from unittest.mock import MagicMock
 
 from src.backend.infrastructure.messaging.dlq import policy_resolver as mod
@@ -55,9 +54,7 @@ class TestResolveClassRouteManifest:
     def test_manifest_explicit_override(self) -> None:
         env = _FakeEnvelope(dlq_class="operational")
         manifest = _FakeManifest(dlq=_FakeDLQConfig(dlq_class="critical"))
-        assert (
-            resolve_class_for_envelope(env, route_manifest=manifest) == "critical"
-        )
+        assert resolve_class_for_envelope(env, route_manifest=manifest) == "critical"
 
     def test_manifest_overrides_dispatch_category(self) -> None:
         env = _FakeEnvelope(dlq_class="operational")
@@ -94,39 +91,29 @@ class TestResolveClassDispatchCategory:
 
     def test_financial_category(self) -> None:
         env = _FakeEnvelope(dlq_class="operational")
-        result = resolve_class_for_envelope(
-            env, dispatch_action_category="financial"
-        )
+        result = resolve_class_for_envelope(env, dispatch_action_category="financial")
         assert result == "financial"
 
     def test_analytics_category(self) -> None:
         env = _FakeEnvelope(dlq_class="operational")
-        result = resolve_class_for_envelope(
-            env, dispatch_action_category="analytics"
-        )
+        result = resolve_class_for_envelope(env, dispatch_action_category="analytics")
         assert result == "analytics"
 
     def test_operational_category(self) -> None:
         env = _FakeEnvelope(dlq_class="financial")
-        result = resolve_class_for_envelope(
-            env, dispatch_action_category="operational"
-        )
+        result = resolve_class_for_envelope(env, dispatch_action_category="operational")
         assert result == "operational"
 
     def test_unknown_category_falls_back_to_envelope(self) -> None:
         env = _FakeEnvelope(dlq_class="financial")
-        result = resolve_class_for_envelope(
-            env, dispatch_action_category="unknown_xyz"
-        )
+        result = resolve_class_for_envelope(env, dispatch_action_category="unknown_xyz")
         # mapping.get('unknown_xyz') → None → falls through
         assert result == "financial"
 
     def test_category_lowercased(self) -> None:
         # "FINANCIAL" → "financial" (lowercase перед mapping.get)
         env = _FakeEnvelope(dlq_class="operational")
-        result = resolve_class_for_envelope(
-            env, dispatch_action_category="FINANCIAL"
-        )
+        result = resolve_class_for_envelope(env, dispatch_action_category="FINANCIAL")
         assert result == "financial"
 
 
@@ -137,17 +124,13 @@ class TestResolveClassPriority:
         env = _FakeEnvelope(dlq_class="envelope_value")
         manifest = _FakeManifest(dlq=_FakeDLQConfig(dlq_class="manifest_value"))
         result = resolve_class_for_envelope(
-            env,
-            route_manifest=manifest,
-            dispatch_action_category="financial",
+            env, route_manifest=manifest, dispatch_action_category="financial"
         )
         assert result == "manifest_value"
 
     def test_no_manifest_category_overrides_envelope(self) -> None:
         env = _FakeEnvelope(dlq_class="envelope_value")
-        result = resolve_class_for_envelope(
-            env, dispatch_action_category="financial"
-        )
+        result = resolve_class_for_envelope(env, dispatch_action_category="financial")
         assert result == "financial"
 
     def test_no_manifest_no_category_uses_envelope(self) -> None:
@@ -158,17 +141,13 @@ class TestResolveClassPriority:
     def test_none_manifest_uses_category(self) -> None:
         env = _FakeEnvelope(dlq_class="envelope_value")
         result = resolve_class_for_envelope(
-            env,
-            route_manifest=None,
-            dispatch_action_category="financial",
+            env, route_manifest=None, dispatch_action_category="financial"
         )
         assert result == "financial"
 
     def test_none_category_uses_envelope(self) -> None:
         env = _FakeEnvelope(dlq_class="envelope_value")
-        result = resolve_class_for_envelope(
-            env, dispatch_action_category=None
-        )
+        result = resolve_class_for_envelope(env, dispatch_action_category=None)
         assert result == "envelope_value"
 
 
@@ -179,9 +158,7 @@ class TestResolveClassEmptyStringManifest:
         env = _FakeEnvelope(dlq_class="envelope_value")
         manifest = _FakeManifest(dlq=_FakeDLQConfig(dlq_class=""))
         result = resolve_class_for_envelope(
-            env,
-            route_manifest=manifest,
-            dispatch_action_category="financial",
+            env, route_manifest=manifest, dispatch_action_category="financial"
         )
         # Empty falsy → falls through to category
         assert result == "financial"
@@ -215,9 +192,7 @@ class TestResolvePolicyFor:
         registry.get_or_default.return_value = sentinel
         manifest = _FakeManifest(dlq=_FakeDLQConfig(dlq_class="critical"))
 
-        result = resolve_policy_for(
-            env, registry=registry, route_manifest=manifest
-        )
+        result = resolve_policy_for(env, registry=registry, route_manifest=manifest)
         assert result is sentinel
         registry.get_or_default.assert_called_once_with("critical")
 

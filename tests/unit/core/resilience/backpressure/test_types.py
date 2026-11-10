@@ -151,16 +151,10 @@ class TestStateEquality:
         # Явное значение для last_state_change_at — тогда equality работает
         ts = 12345.0
         a = BackpressureState(
-            queue_size=10,
-            queue_limit=100,
-            is_paused=True,
-            last_state_change_at=ts,
+            queue_size=10, queue_limit=100, is_paused=True, last_state_change_at=ts
         )
         b = BackpressureState(
-            queue_size=10,
-            queue_limit=100,
-            is_paused=True,
-            last_state_change_at=ts,
+            queue_size=10, queue_limit=100, is_paused=True, last_state_change_at=ts
         )
         assert a == b
 

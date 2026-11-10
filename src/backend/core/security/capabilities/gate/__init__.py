@@ -233,7 +233,7 @@ def _declaration_hint(capability: str, scope: str | None) -> str:
     """
     scope_hint = f'scope = "{scope}"' if scope else 'scope = "<scope>"'
     hint = (
-        f'Объявите capability в routes/<route>/route.toml (или в plugin.toml '
+        f"Объявите capability в routes/<route>/route.toml (или в plugin.toml "
         f'владельца): [[capabilities]] name = "{capability}" {scope_hint}'
     )
     if capability.startswith("db."):
@@ -268,9 +268,7 @@ def _with_declaration_hint(
         correlation_id=exc.correlation_id,
     )
     base = exc.args[0] if exc.args else str(exc)
-    enriched.args = (
-        f"{base}. {_declaration_hint(capability, exc.requested_scope)}",
-    )
+    enriched.args = (f"{base}. {_declaration_hint(capability, exc.requested_scope)}",)
     del plugin  # plugin уже присутствует в тексте исходной ошибки
     return enriched
 
@@ -316,9 +314,7 @@ def check_capabilities_subset(
     if offending:
         error = CapabilitySupersetError(route=route, offending=tuple(offending))
         names = ", ".join(f"{c.name}({c.scope!r})" for c in offending)
-        hints = "; ".join(
-            _declaration_hint(ref.name, ref.scope) for ref in offending
-        )
+        hints = "; ".join(_declaration_hint(ref.name, ref.scope) for ref in offending)
         error.args = (
             f"Route {route!r} requests capabilities not covered by "
             f"requires_plugins or core public set: {names}. {hints}",

@@ -27,7 +27,6 @@ from src.backend.core.types.invocation_command import (
     InvocationResultSchema,
 )
 
-
 # ── InvocationOptionsSchema ─────────────────────────────────────────
 
 
@@ -113,9 +112,7 @@ class TestInvocationResultSchema:
 
     def test_completed_with_result(self) -> None:
         r = InvocationResultSchema(
-            status="completed",
-            transport="direct",
-            result={"output": "ok"},
+            status="completed", transport="direct", result={"output": "ok"}
         )
         assert r.status == "completed"
         assert r.result == {"output": "ok"}
@@ -127,9 +124,7 @@ class TestInvocationResultSchema:
 
     def test_command_field(self) -> None:
         r = InvocationResultSchema(
-            status="queued",
-            transport="redis",
-            command={"action": "x", "payload": {}},
+            status="queued", transport="redis", command={"action": "x", "payload": {}}
         )
         assert r.command == {"action": "x", "payload": {}}
 
@@ -166,8 +161,7 @@ class TestActionCommandMetaSchema:
 
     def test_principal_and_permissions(self) -> None:
         meta = ActionCommandMetaSchema(
-            principal="user-123",
-            permissions=["read", "write"],
+            principal="user-123", permissions=["read", "write"]
         )
         assert meta.principal == "user-123"
         assert meta.permissions == ["read", "write"]
@@ -197,10 +191,7 @@ class TestActionCommandSchema:
         assert cmd.payload == {}
 
     def test_payload_set(self) -> None:
-        cmd = ActionCommandSchema(
-            action="x",
-            payload={"key": "value", "count": 42},
-        )
+        cmd = ActionCommandSchema(action="x", payload={"key": "value", "count": 42})
         assert cmd.payload == {"key": "value", "count": 42}
 
     def test_meta_explicit(self) -> None:

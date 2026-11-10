@@ -95,9 +95,7 @@ class LangGraphAgentProcessor(BaseAIProcessor):
         # только mock'ом в test_invoke_calls_build_and_run_agent).
         # Правильные имена: prompt, tool_actions, session_id.
         result = await build_and_run_agent(
-            prompt=self.query,
-            tool_actions=[],
-            session_id=self.thread_id,
+            prompt=self.query, tool_actions=[], session_id=self.thread_id
         )
         output = result.get("output", "") if isinstance(result, dict) else str(result)
         self.set_result(exchange, self.target, output)

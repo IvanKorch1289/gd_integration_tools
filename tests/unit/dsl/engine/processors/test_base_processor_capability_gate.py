@@ -83,7 +83,9 @@ def baseline_on(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(feature_flags, "dsl_capability_core_baseline_enabled", True)
 
 
-def _exchange(*, route_id: str | None = None, tenant_id: str | None = None) -> Exchange[Any]:
+def _exchange(
+    *, route_id: str | None = None, tenant_id: str | None = None
+) -> Exchange[Any]:
     exchange = Exchange()
     exchange.meta.route_id = route_id
     exchange.meta.tenant_id = tenant_id
@@ -168,18 +170,26 @@ async def test_auth_check_denies_tenant_aware_request_without_tenant(
 
 @pytest.mark.asyncio
 async def test_auth_check_passes_tenant_and_principal_from_exchange_meta(
-    gate: CapabilityGate, gate_enabled: None, baseline_off: None, monkeypatch: pytest.MonkeyPatch
+    gate: CapabilityGate,
+    gate_enabled: None,
+    baseline_off: None,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Tenant и principal пробрасываются из ``exchange.meta`` в резолвер."""
     from src.backend.core.security.capabilities import runtime_resolver
 
     captured: dict[str, Any] = {}
 
-    def _capture(request: Any, *, principal: str | None = None, gate: Any = None) -> Any:
+    def _capture(
+        request: Any, *, principal: str | None = None, gate: Any = None
+    ) -> Any:
         captured["request"] = request
         captured["principal"] = principal
         return runtime_resolver.CapabilityDecision(
-            allowed=True, plugin="my_route", reason="granted", capability=request.capability
+            allowed=True,
+            plugin="my_route",
+            reason="granted",
+            capability=request.capability,
         )
 
     monkeypatch.setattr(runtime_resolver, "check", _capture)

@@ -922,7 +922,9 @@ def _env_vars_for_source(
         if not real_values:
             continue  # значение только из ``.env`` → его отдаёт dotenv-source
         chosen = real_values[-1]
-        env_vars[key] = None if parse_none_str is not None and chosen == parse_none_str else chosen
+        env_vars[key] = (
+            None if parse_none_str is not None and chosen == parse_none_str else chosen
+        )
     return env_vars
 
 

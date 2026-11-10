@@ -34,8 +34,15 @@ COPY pyproject.toml uv.lock ./
 # в нём psycopg3 (sync/async-драйвер PostgreSQL по умолчанию, ADR-0363).
 # Без него образ стартует, но любой sync-движок БД падает на отсутствии
 # драйвера, а контейнер с Oracle/MSSQL/MySQL — на том же.
+#
+# ADR-0442: набор extras задаётся build-ARG'ом. Для prod/compose нужен
+# extra ``workflow`` (temporalio): без него workflow-воркер стартует
+# fail-closed (ADR-0267 F-AT1) и workflow'и не исполняются вообще.
+#   docker build --build-arg UV_EXTRAS="dev-light sources-cdc workflow" ...
+ARG UV_EXTRAS="dev-light sources-cdc"
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-project --extra dev-light --extra sources-cdc && \
+    uv sync --frozen --no-dev --no-install-project \
+        $(for extra in $UV_EXTRAS; do printf -- "--extra %s " "$extra"; done) && \
     uv pip install ruamel-yaml
 
 COPY src ./src

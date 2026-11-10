@@ -9,8 +9,6 @@ body/properties/secret.
 
 from __future__ import annotations
 
-import asyncio
-import os
 from typing import Any
 
 import pytest
@@ -21,7 +19,6 @@ from src.backend.core.dsl.expression_resolver import (
     resolve_expression,
 )
 from src.backend.core.dsl.variables import DSLVariableStore, VariableScope
-
 
 # ── Fake variable store ────────────────────────────────────────────
 
@@ -249,7 +246,9 @@ class TestEnvResolution:
         assert result == "test-value"
 
     @pytest.mark.asyncio
-    async def test_missing_env_returns_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def test_missing_env_returns_empty(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Отсутствующий env var → пустая строка (не raise)."""
         monkeypatch.delenv("DEFINITELY_NOT_SET_VAR_12345", raising=False)
         store, _ = _make_store()

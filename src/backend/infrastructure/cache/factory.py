@@ -98,15 +98,12 @@ def register_backend_in_invalidator(backend: CacheBackend) -> None:
         return
     invalidator.add_backend(backend)
     logger.debug(
-        "cache backend %s зарегистрирован в CacheInvalidator",
-        type(backend).__name__,
+        "cache backend %s зарегистрирован в CacheInvalidator", type(backend).__name__
     )
 
 
 def create_cache_fallback_backends(
-    settings: CacheSettings | None = None,
-    *,
-    disk_path: str | Path | None = None,
+    settings: CacheSettings | None = None, *, disk_path: str | Path | None = None
 ) -> tuple[CacheBackend | None, CacheBackend | None]:
     """Создаёт fallback-уровни кэша (L1 memory, L3 disk) с tenant-изоляцией.
 
@@ -146,8 +143,8 @@ def create_cache_fallback_backends(
 
     disk: CacheBackend | None = None
     if cfg.disk_fallback_enabled:
-        resolved_path = Path(disk_path) if disk_path is not None else Path(
-            cfg.disk_fallback_path
+        resolved_path = (
+            Path(disk_path) if disk_path is not None else Path(cfg.disk_fallback_path)
         )
         disk = TenantCacheBackend(DiskCacheBackend(resolved_path))
         register_backend_in_invalidator(disk)

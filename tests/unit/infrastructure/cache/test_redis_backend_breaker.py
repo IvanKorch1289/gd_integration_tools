@@ -42,10 +42,7 @@ class _FailingClient:
 def _breaker(name: str) -> ClientCircuitBreaker:
     """Изолированный breaker (уникальное имя — без влияния на глобальный)."""
     return ClientCircuitBreaker(
-        name=name,
-        failure_threshold=3,
-        recovery_timeout=60.0,
-        host="test",
+        name=name, failure_threshold=3, recovery_timeout=60.0, host="test"
     )
 
 
@@ -94,9 +91,7 @@ async def test_redis_backend_successful_call_keeps_circuit_closed() -> None:
             """GET — успех."""
             return b"v"
 
-    backend = RedisBackend(
-        client=_OkClient(), breaker=_breaker("test.cache.redis.ok")
-    )
+    backend = RedisBackend(client=_OkClient(), breaker=_breaker("test.cache.redis.ok"))
 
     assert await backend.get("k") == b"v"
     assert backend.breaker.is_open() is False

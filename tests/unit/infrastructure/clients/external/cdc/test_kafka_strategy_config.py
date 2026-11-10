@@ -214,9 +214,7 @@ async def test_poison_message_is_sent_to_dlq_and_offset_committed(
     consumer = _StubConsumer()
     strategy._consumer = consumer
     consumer._sub = sub
-    consumer.messages = {
-        tp: [_FakeMessage({"op": "c", "after": {"id": 1}}, offset=42)]
-    }
+    consumer.messages = {tp: [_FakeMessage({"op": "c", "after": {"id": 1}}, offset=42)]}
 
     async def _dispatch(_sub: CDCSubscription, _event: CDCEvent) -> None:
         raise RuntimeError("downstream failed")
@@ -258,9 +256,7 @@ async def test_client_sends_kafka_poison_message_to_dlq(
 
     consumer = _StubConsumer.instances[0]
     tp = _FakeTopicPartition("pg_prod.orders")
-    consumer.messages = {
-        tp: [_FakeMessage({"op": "c", "after": {"id": 1}}, offset=7)]
-    }
+    consumer.messages = {tp: [_FakeMessage({"op": "c", "after": {"id": 1}}, offset=7)]}
 
     for _ in range(100):
         if dlq.envelopes:
@@ -311,11 +307,7 @@ async def test_consumer_is_stopped_when_subscribe_fails(
 def test_parse_debezium_keeps_source_timestamp() -> None:
     """Timestamp события сохраняется исходным (без подмены на now())."""
     strategy = _KafkaDebeziumStrategy(bootstrap_servers="broker:9092")
-    payload = {
-        "op": "c",
-        "after": {"id": 1},
-        "ts_ms": 1700000000000,
-    }
+    payload = {"op": "c", "after": {"id": 1}, "ts_ms": 1700000000000}
     event = strategy._parse_debezium_event(payload, table="orders", profile="pg_prod")
     assert event is not None
     assert event.timestamp == "2023-11-14T22:13:20+00:00"

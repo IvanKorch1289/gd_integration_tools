@@ -38,7 +38,7 @@ from typing import Final, Protocol, runtime_checkable
 # дерева тестов, импортирующих этот модуль после подмены.
 try:
     HAS_PURGATORY: Final = importlib.util.find_spec("purgatory") is not None
-except (ImportError, ValueError):
+except ImportError, ValueError:
     # Пакет либо отсутствует, либо уже импортирован как подмена — в обоих
     # случаях считаем его доступным и полагаемся на реальный импорт ниже.
     HAS_PURGATORY = "purgatory" in sys.modules

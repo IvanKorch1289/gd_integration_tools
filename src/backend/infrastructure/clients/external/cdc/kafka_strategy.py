@@ -57,7 +57,9 @@ DEFAULT_GROUP_ID = "gd_cdc_consumer"
 DEFAULT_MAX_POLL_RECORDS = 100
 
 #: Обработчик poison-сообщения: ``(sub, payload, exc) -> None``.
-PoisonHandler = Callable[[CDCSubscription, dict[str, Any], BaseException], Awaitable[None]]
+PoisonHandler = Callable[
+    [CDCSubscription, dict[str, Any], BaseException], Awaitable[None]
+]
 
 
 def resolve_bootstrap_servers() -> str:

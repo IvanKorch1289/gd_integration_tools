@@ -15,10 +15,7 @@ from typing import Any
 
 import pytest
 
-__all__ = (
-    "TestWorkflowMainSessionProvider",
-    "TestWorkflowStateRowClassProvider",
-)
+__all__ = ("TestWorkflowMainSessionProvider", "TestWorkflowStateRowClassProvider")
 
 
 class TestWorkflowMainSessionProvider:

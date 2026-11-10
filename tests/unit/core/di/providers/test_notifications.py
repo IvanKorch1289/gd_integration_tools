@@ -71,7 +71,9 @@ class TestResolveModuleBranch:
     resolve_module('infrastructure.notifications.gateway').get_gateway().
     """
 
-    def test_calls_resolve_module_when_no_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_calls_resolve_module_when_no_override(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         called = {"yes": False}
 
         class FakeGateway:

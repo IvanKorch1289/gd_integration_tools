@@ -19,10 +19,7 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
-from src.backend.core.config.services.cache import (
-    CacheSettings,
-    cache_settings,
-)
+from src.backend.core.config.services.cache import CacheSettings, cache_settings
 
 
 class TestDiskFallbackFieldExists:
@@ -52,28 +49,20 @@ class TestDiskFallbackDefaults:
         in-cluster production disk=off). См. ``TestSingletonExposesFields``
         для проверки runtime значения.
         """
-        field_default = CacheSettings.model_fields[
-            "disk_fallback_enabled"
-        ].default
+        field_default = CacheSettings.model_fields["disk_fallback_enabled"].default
         assert field_default is True
 
 
 class TestDiskFallbackEnvOverride:
     def test_disk_fallback_path_env_override(self) -> None:
         """CACHE_DISK_FALLBACK_PATH overrides the default path."""
-        with patch.dict(
-            os.environ,
-            {"CACHE_DISK_FALLBACK_PATH": "/tmp/test_cache"},
-        ):
+        with patch.dict(os.environ, {"CACHE_DISK_FALLBACK_PATH": "/tmp/test_cache"}):
             settings = CacheSettings()
         assert settings.disk_fallback_path == "/tmp/test_cache"
 
     def test_disk_fallback_enabled_env_override(self) -> None:
         """CACHE_DISK_FALLBACK_ENABLED=False disables L3."""
-        with patch.dict(
-            os.environ,
-            {"CACHE_DISK_FALLBACK_ENABLED": "false"},
-        ):
+        with patch.dict(os.environ, {"CACHE_DISK_FALLBACK_ENABLED": "false"}):
             settings = CacheSettings()
         assert settings.disk_fallback_enabled is False
 
@@ -124,10 +113,10 @@ class TestSingletonExposesFields:
         # The old getattr pattern was:
         #   getattr(cache_settings, "disk_fallback_path", None)
         # After the fix, this should be a direct attribute access.
-        assert (
-            'getattr(cache_settings, "disk_fallback_path"' not in source
-        ), "Cycle 163 regression: service_setup.py still uses getattr fallback."
+        assert 'getattr(cache_settings, "disk_fallback_path"' not in source, (
+            "Cycle 163 regression: service_setup.py still uses getattr fallback."
+        )
         # The field should be referenced directly.
-        assert (
-            "cache_settings.disk_fallback_path" in source
-        ), "service_setup.py must read disk_fallback_path directly."
+        assert "cache_settings.disk_fallback_path" in source, (
+            "service_setup.py must read disk_fallback_path directly."
+        )

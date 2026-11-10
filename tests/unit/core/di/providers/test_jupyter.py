@@ -80,7 +80,6 @@ class TestLateImport:
     ) -> None:
         # Без override: идём в ветку resolve_module/late-import
         # Подменяем Config и NotebookExecutionService
-        sentinel_instance = object()
         captured: dict[str, Any] = {}
 
         class FakeSettings:
@@ -154,9 +153,7 @@ class TestLateImport:
         )
         fake_exec_svc.NotebookExecutionService = FakeService
         monkeypatch.setitem(
-            sys.modules,
-            "src.backend.services.jupyter.execution_service",
-            fake_exec_svc,
+            sys.modules, "src.backend.services.jupyter.execution_service", fake_exec_svc
         )
 
         first = get_notebook_execution_service_provider()

@@ -206,9 +206,7 @@ def _install_registry(
     )
 
 
-async def _run_polling(
-    sub: CDCSubscription,
-) -> list[CDCEvent]:
+async def _run_polling(sub: CDCSubscription) -> list[CDCEvent]:
     """Прогнать polling-стратегию и собрать все события."""
     events: list[CDCEvent] = []
 
@@ -245,18 +243,16 @@ async def test_polling_does_not_lose_rows_on_batch_boundary(
     table.max_queries = 8
 
     sub = CDCSubscription(
-        profile="pg_prod",
-        tables=["events"],
-        interval=0,
-        batch_size=2,
-        primary_key="id",
+        profile="pg_prod", tables=["events"], interval=0, batch_size=2, primary_key="id"
     )
     _install_registry(monkeypatch, table, sub)
 
     events = await _run_polling(sub)
 
     got_ids = [event.new["id"] for event in events if event.new]
-    assert got_ids == [1, 2, 3], f"LOST rows: {[i for i in (1, 2, 3) if i not in got_ids]}"
+    assert got_ids == [1, 2, 3], (
+        f"LOST rows: {[i for i in (1, 2, 3) if i not in got_ids]}"
+    )
 
 
 @pytest.mark.unit
@@ -275,10 +271,7 @@ async def test_polling_detects_primary_key_without_explicit_config(
     table.max_queries = 8
 
     sub = CDCSubscription(
-        profile="pg_prod",
-        tables=["events"],
-        interval=0,
-        batch_size=2,
+        profile="pg_prod", tables=["events"], interval=0, batch_size=2
     )
     _install_registry(monkeypatch, table, sub)
 
@@ -304,11 +297,7 @@ async def test_polling_emits_no_duplicates_across_batches(
     table.max_queries = 8
 
     sub = CDCSubscription(
-        profile="pg_prod",
-        tables=["events"],
-        interval=0,
-        batch_size=2,
-        primary_key="id",
+        profile="pg_prod", tables=["events"], interval=0, batch_size=2, primary_key="id"
     )
     _install_registry(monkeypatch, table, sub)
 

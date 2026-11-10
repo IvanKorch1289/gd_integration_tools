@@ -108,7 +108,7 @@ class AuthorizationFacade:
                 # check()/check_tenant(), а протокол шире.
                 capability_gateway=FacadeCapabilityAdapter(  # type: ignore[arg-type]
                     get_capability_facade()
-                ),
+                )
             )
         return self._gateway
 

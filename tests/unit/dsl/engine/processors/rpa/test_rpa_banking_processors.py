@@ -100,7 +100,9 @@ _HAPPY_CASES: list[tuple[object, dict[str, object]]] = [
 @pytest.mark.parametrize(
     ("processor", "expected"), _HAPPY_CASES, ids=lambda case: type(case).__name__
 )
-async def test_process_sets_properties(processor: object, expected: dict[str, object]) -> None:
+async def test_process_sets_properties(
+    processor: object, expected: dict[str, object]
+) -> None:
     """auth_check → True: процессор выставляет ожидаемые свойства."""
     processor.auth_check = AsyncMock(return_value=True)  # type: ignore[attr-defined]
     exchange = _exchange()

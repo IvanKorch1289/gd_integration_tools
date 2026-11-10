@@ -81,12 +81,7 @@ class CacheWriteProcessor(BaseProcessor):
             await facade.set_ns(
                 key, data.encode("utf-8"), ttl=self._ttl, namespace=self._NAMESPACE
             )
-        except (
-            redis.exceptions.RedisError,
-            ConnectionError,
-            TimeoutError,
-            OSError,
-        ):
+        except redis.exceptions.RedisError, ConnectionError, TimeoutError, OSError:
             pass
         except Exception as exc:
             # Wave 18 (ADR-0391), дефект 4/7: ошибка записи в кэш (в т.ч.
@@ -127,12 +122,7 @@ class CacheWriteProcessor(BaseProcessor):
 
             redis_client = get_redis_client_provider()
             await redis_client.cache_set(key=key, value=data, expire=self._ttl)
-        except (
-            redis.exceptions.RedisError,
-            ConnectionError,
-            TimeoutError,
-            OSError,
-        ):
+        except redis.exceptions.RedisError, ConnectionError, TimeoutError, OSError:
             pass
         except Exception as exc:
             # Legacy-fallback — best effort: любой сбой провайдера не должен

@@ -48,8 +48,7 @@ def _collect_fieldnames(rows: list[Any]) -> list[Any]:
     for row in rows:
         if not isinstance(row, Mapping):
             raise ValueError(
-                "csv_write expects rows as mappings (dict), got "
-                f"{type(row).__name__}"
+                f"csv_write expects rows as mappings (dict), got {type(row).__name__}"
             )
     return list(dict.fromkeys(key for row in rows for key in row))
 
@@ -70,9 +69,7 @@ def _header_names(fieldnames: list[Any]) -> list[Any]:
     """
     names = [_neutralize_formula(name) for name in fieldnames]
     if len(set(names)) != len(names):
-        raise ValueError(
-            "csv_write: column names collide after formula neutralization"
-        )
+        raise ValueError("csv_write: column names collide after formula neutralization")
     return names
 
 

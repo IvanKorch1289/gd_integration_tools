@@ -12,15 +12,10 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import FrozenInstanceError, fields
-from typing import Any
 
 import pytest
 
-from src.backend.core.ai.agent_sandbox_protocol import (
-    AgentSandbox,
-    AgentSandboxResult,
-)
-
+from src.backend.core.ai.agent_sandbox_protocol import AgentSandbox, AgentSandboxResult
 
 # ── AgentSandboxResult ───────────────────────────────────────────────
 
@@ -31,9 +26,7 @@ class TestAgentSandboxResultConstruction:
     def test_construction_with_required_fields(self) -> None:
         """Все 3 поля обязательны (нет defaults)."""
         result = AgentSandboxResult(
-            success=True,
-            data={"output": "answer"},
-            backend="e2b",
+            success=True, data={"output": "answer"}, backend="e2b"
         )
         assert result.success is True
         assert result.data == {"output": "answer"}
@@ -42,9 +35,7 @@ class TestAgentSandboxResultConstruction:
     def test_failure_case(self) -> None:
         """``success=False`` + data с error key."""
         result = AgentSandboxResult(
-            success=False,
-            data={"error": "tool timeout"},
-            backend="pyodide",
+            success=False, data={"error": "tool timeout"}, backend="pyodide"
         )
         assert result.success is False
         assert result.data == {"error": "tool timeout"}
@@ -153,9 +144,7 @@ class TestAgentSandboxProtocol:
                 session_id: str | None,
             ) -> AgentSandboxResult:
                 return AgentSandboxResult(
-                    success=True,
-                    data={"echo": prompt},
-                    backend="fake",
+                    success=True, data={"echo": prompt}, backend="fake"
                 )
 
         sandbox: AgentSandbox = FakeSandbox()
@@ -187,9 +176,7 @@ class TestAgentSandboxProtocol:
                 durable: bool,
                 session_id: str | None,
             ) -> AgentSandboxResult:
-                return AgentSandboxResult(
-                    success=True, data={}, backend="good"
-                )
+                return AgentSandboxResult(success=True, data={}, backend="good")
 
         class BadSandbox:
             pass
@@ -242,7 +229,6 @@ class TestAgentSandboxProtocolSignature:
         # В самом Protocol ``default`` = ``inspect._empty`` (нет default),
         # потому что Protocol — это contract, не конкретная реализация.
         # Реальные реализации могут задавать ``default=None``.
-        import inspect as _inspect
 
         # Контракт: session_id — Optional (Union со None) — допускает None.
         assert "None" in str(non_self["session_id"].annotation)

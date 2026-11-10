@@ -160,9 +160,7 @@ class TestSecretFieldsAreTyped:
         TYPED_SECRET_FIELDS,
         ids=[f"{m.__name__}.{f}" for m, f in TYPED_SECRET_FIELDS],
     )
-    def test_secret_is_masked_in_repr(
-        self, model_cls: type, field_name: str
-    ) -> None:
+    def test_secret_is_masked_in_repr(self, model_cls: type, field_name: str) -> None:
         """Значение секрета не попадает в ``repr`` модели."""
         instance = _instance(model_cls, **{field_name: SecretStr("s3cr3t-value")})
         assert "s3cr3t-value" not in repr(instance)
@@ -210,8 +208,7 @@ class TestPublicContractsPreserved:
     def test_storage_has_credentials_still_works(self) -> None:
         """``FileStorageSettings.has_credentials`` работает с ``SecretStr``."""
         settings = FileStorageSettings.model_construct(
-            access_key=SecretStr("AKIA"),
-            secret_key=SecretStr("secret"),
+            access_key=SecretStr("AKIA"), secret_key=SecretStr("secret")
         )
         assert settings.has_credentials() is True
 

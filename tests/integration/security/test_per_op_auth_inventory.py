@@ -85,7 +85,7 @@ def _route_source(route: Any) -> str:
     try:
         src_file = inspect.getsourcefile(endpoint)
         _, src_line = inspect.getsourcelines(endpoint)
-    except (OSError, TypeError):
+    except OSError, TypeError:
         return endpoint.__module__
     if src_file is None:
         return f"{endpoint.__module__}:?"

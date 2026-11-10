@@ -46,23 +46,16 @@ def builder() -> RouteBuilder:
 class TestD6StepsReachableFromYaml:
     """Каждый D6-шаг собирается из YAML (имя шага = имя метода builder'а)."""
 
-    @pytest.mark.parametrize(
-        ("step_name", "params"), sorted(D6_STEP_PARAMS.items())
-    )
+    @pytest.mark.parametrize(("step_name", "params"), sorted(D6_STEP_PARAMS.items()))
     def test_step_is_public_builder_method(
         self, builder: RouteBuilder, step_name: str, params: dict[str, Any]
     ) -> None:
         method = getattr(builder, step_name, None)
         assert callable(method), f"RouteBuilder.{step_name} отсутствует"
 
-    @pytest.mark.parametrize(
-        ("step_name", "params"), sorted(D6_STEP_PARAMS.items())
-    )
+    @pytest.mark.parametrize(("step_name", "params"), sorted(D6_STEP_PARAMS.items()))
     def test_step_loads_from_yaml(self, step_name: str, params: dict[str, Any]) -> None:
-        spec = {
-            "route_id": f"c4_{step_name}",
-            "steps": [{step_name: params}],
-        }
+        spec = {"route_id": f"c4_{step_name}", "steps": [{step_name: params}]}
         pipeline = load_pipeline_from_yaml(yaml.safe_dump(spec))
         assert len(pipeline.processors) == 1
 

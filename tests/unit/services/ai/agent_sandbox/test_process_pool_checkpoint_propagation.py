@@ -14,14 +14,12 @@ Bug: broad ``except Exception`` (ранее) ловил :class:`CheckpointBacken
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from src.backend.core.ai.agent_sandbox_protocol import AgentSandboxResult
-from src.backend.services.ai.agent_sandbox._process_pool import (
-    ProcessPoolAgentSandbox,
-)
+from src.backend.services.ai.agent_sandbox._process_pool import ProcessPoolAgentSandbox
 from src.backend.services.ai.agents.langgraph_checkpoint_exceptions import (
     CheckpointBackendUnavailable,
 )
@@ -66,9 +64,7 @@ class TestCheckpointBackendUnavailablePropagation:
         async def fake_wait_for(coro, timeout):
             return await coro
 
-        monkeypatch.setattr(
-            _process_pool.asyncio, "wait_for", fake_wait_for
-        )
+        monkeypatch.setattr(_process_pool.asyncio, "wait_for", fake_wait_for)
 
         sandbox = ProcessPoolAgentSandbox()
 
@@ -115,9 +111,7 @@ class TestCheckpointBackendUnavailablePropagation:
         async def fake_wait_for(coro, timeout):
             return await coro
 
-        monkeypatch.setattr(
-            _process_pool.asyncio, "wait_for", fake_wait_for
-        )
+        monkeypatch.setattr(_process_pool.asyncio, "wait_for", fake_wait_for)
 
         sandbox = ProcessPoolAgentSandbox()
 
@@ -154,9 +148,7 @@ class TestCheckpointBackendUnavailablePropagation:
         async def fake_wait_for(coro, timeout):
             raise TimeoutError("wall_time exceeded")
 
-        monkeypatch.setattr(
-            _process_pool.asyncio, "wait_for", fake_wait_for
-        )
+        monkeypatch.setattr(_process_pool.asyncio, "wait_for", fake_wait_for)
 
         sandbox = ProcessPoolAgentSandbox()
         result = await sandbox.run_react(
@@ -206,9 +198,7 @@ class TestCheckpointContractCompliance:
         async def fake_wait_for(coro, timeout):
             return await coro
 
-        monkeypatch.setattr(
-            _process_pool.asyncio, "wait_for", fake_wait_for
-        )
+        monkeypatch.setattr(_process_pool.asyncio, "wait_for", fake_wait_for)
 
         sandbox = ProcessPoolAgentSandbox()
 

@@ -47,7 +47,7 @@ def _resolve_default_environment() -> str:
         value = settings.app.environment
         if isinstance(value, str) and value:
             return value
-    except (ImportError, AttributeError, RuntimeError, ValueError):
+    except ImportError, AttributeError, RuntimeError, ValueError:
         # settings недоступны на этом этапе загрузки — пробуем лёгкий
         # источник (тот же singleton ``app_base_settings``).
         pass
@@ -57,7 +57,7 @@ def _resolve_default_environment() -> str:
         value = app_base_settings.environment
         if isinstance(value, str) and value:
             return value
-    except (ImportError, AttributeError, RuntimeError, ValueError):
+    except ImportError, AttributeError, RuntimeError, ValueError:
         pass
     return "production"
 
@@ -113,7 +113,7 @@ class StructlogLogger(LoggerProtocol):
         try:
             formatted = msg % args
             return formatted, kwargs
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             # msg не содержит %-placeholders ИЛИ args не подходят — отдаём как есть
             # (structlog не упадёт; при рендере JSON просто увидит str)
             return msg, {**kwargs, "args": list(args)}
@@ -381,7 +381,7 @@ class StructlogGraylogBackend(BaseLoggerBackend):
                     event_dict.setdefault("request_id", rid)
                 if tid := get_tenant_id():
                     event_dict.setdefault("tenant_id", tid)
-            except (ImportError, AttributeError):
+            except ImportError, AttributeError:
                 pass
             return event_dict
 

@@ -25,9 +25,7 @@ __all__ = ("router",)
 
 logger = get_logger("entrypoints.admin_prompts")
 
-_ADMIN_GUARD = Depends(
-    require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN))
-)
+_ADMIN_GUARD = Depends(require_admin((AdminRole.OPERATOR, AdminRole.SUPER_ADMIN)))
 
 router = APIRouter(dependencies=[_ADMIN_GUARD])
 
@@ -37,7 +35,9 @@ class PromptVersionCreate(BaseModel):
 
     name: str = Field(min_length=1, max_length=200)
     body: str = Field(min_length=1, description="Шаблон промпта.")
-    version: int | None = Field(default=None, ge=1, description="Номер версии (по умолчанию — следующий).")
+    version: int | None = Field(
+        default=None, ge=1, description="Номер версии (по умолчанию — следующий)."
+    )
     model: str | None = None
     parameters: dict[str, Any] = Field(default_factory=dict)
     created_by: str | None = None
@@ -92,8 +92,7 @@ async def list_prompt_name_versions(name: str) -> dict[str, Any]:
     versions = registry.list_versions(name)
     if not versions:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Промпт {name!r} не найден",
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Промпт {name!r} не найден"
         )
     return {
         "name": name,
@@ -129,10 +128,7 @@ async def create_prompt_version(request: PromptVersionCreate) -> dict[str, Any]:
     if request.created_by:
         labels["created_by"] = request.created_by
     registry.register(
-        request.name,
-        template=request.body,
-        version=version,
-        labels=labels,
+        request.name, template=request.body, version=version, labels=labels
     )
     return {"name": request.name, "version": version, "created": True}
 
@@ -173,9 +169,7 @@ async def activate_prompt_version(name: str, request: PromptActivate) -> dict[st
     },
 )
 async def compare_prompt_versions(
-    name: str,
-    a: int = Query(ge=1),
-    b: int = Query(ge=1),
+    name: str, a: int = Query(ge=1), b: int = Query(ge=1)
 ) -> dict[str, Any]:
     """Сравнить две версии промпта."""
     registry = _registry()

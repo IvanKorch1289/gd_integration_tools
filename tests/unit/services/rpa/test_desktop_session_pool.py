@@ -186,7 +186,9 @@ def _mock_client() -> MagicMock:
 
 
 @pytest.mark.asyncio
-async def test_session_affinity_returns_same_client(pool: DesktopRPASessionPool) -> None:
+async def test_session_affinity_returns_same_client(
+    pool: DesktopRPASessionPool,
+) -> None:
     """Повторный acquire того же app_name возвращает тот же client."""
     with patch(
         "src.backend.services.rpa.desktop_session_pool.make_http_client"
@@ -201,7 +203,9 @@ async def test_session_affinity_returns_same_client(pool: DesktopRPASessionPool)
 
 
 @pytest.mark.asyncio
-async def test_different_apps_get_different_clients(pool: DesktopRPASessionPool) -> None:
+async def test_different_apps_get_different_clients(
+    pool: DesktopRPASessionPool,
+) -> None:
     """Разные app_name → разные clients."""
     with patch(
         "src.backend.services.rpa.desktop_session_pool.make_http_client"
@@ -255,4 +259,3 @@ async def test_force_reconnect_removes_session(pool: DesktopRPASessionPool) -> N
         stats_after = await pool.stats()
         assert stats_after.total == 0
         assert "notepad" not in stats_after.by_app
-

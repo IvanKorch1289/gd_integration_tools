@@ -160,10 +160,7 @@ class TestSkillSpecCapabilities:
             handler="m:f",
             capabilities=["db.read.orders", "ai.invoke.credit_check"],
         )
-        assert spec.capabilities == [
-            "db.read.orders",
-            "ai.invoke.credit_check",
-        ]
+        assert spec.capabilities == ["db.read.orders", "ai.invoke.credit_check"]
 
     def test_capabilities_factory_isolation(self) -> None:
         """``default_factory=list`` — каждый инстанс получает свой list."""
@@ -188,12 +185,7 @@ class TestSkillSpecTenantAllowlist:
 
     def test_tenant_allowlist_empty_list(self) -> None:
         """Пустой list ≠ None: ``[]`` — нет разрешённых тенантов, ``None`` — все."""
-        spec = SkillSpec(
-            id="x",
-            version="1.0.0",
-            handler="m:f",
-            tenant_allowlist=[],
-        )
+        spec = SkillSpec(id="x", version="1.0.0", handler="m:f", tenant_allowlist=[])
         assert spec.tenant_allowlist == []
 
 
@@ -219,10 +211,7 @@ class TestSkillSpecSerialization:
         import json
 
         spec = SkillSpec(
-            id="x",
-            version="1.0.0",
-            handler="m:f",
-            capabilities=["a", "b"],
+            id="x", version="1.0.0", handler="m:f", capabilities=["a", "b"]
         )
         json_str = spec.model_dump_json()
         parsed = json.loads(json_str)

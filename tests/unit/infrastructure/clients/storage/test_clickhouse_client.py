@@ -199,8 +199,7 @@ async def test_insert_accepts_valid_table_name() -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "bad_table",
-    ["db.events", "events; DROP TABLE x", "1events", "events\n", ""],
+    "bad_table", ["db.events", "events; DROP TABLE x", "1events", "events\n", ""]
 )
 async def test_aggregate_rejects_invalid_table_identifier(bad_table: str) -> None:
     """aggregate(): невалидное имя таблицы → ValueError, запрос не уходит.

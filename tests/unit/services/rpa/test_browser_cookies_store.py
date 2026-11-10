@@ -234,16 +234,10 @@ class TestMultiTenantIsolation:
         store = BrowserCookieStore(redis, fernet_key=_TEST_FERNET_KEY)
 
         await store.save_cookies(
-            tenant_id="bank_a",
-            user_id="u",
-            domain="d.com",
-            cookies=[{"name": "tok_a"}],
+            tenant_id="bank_a", user_id="u", domain="d.com", cookies=[{"name": "tok_a"}]
         )
         await store.save_cookies(
-            tenant_id="bank_b",
-            user_id="u",
-            domain="d.com",
-            cookies=[{"name": "tok_b"}],
+            tenant_id="bank_b", user_id="u", domain="d.com", cookies=[{"name": "tok_b"}]
         )
 
         assert await store.restore_cookies(
@@ -286,4 +280,3 @@ class TestWorkerRestart:
             tenant_id="t", user_id="u", domain="d.com"
         )
         assert restored == [{"name": "auth", "value": "tok"}]
-

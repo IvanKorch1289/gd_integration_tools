@@ -99,9 +99,7 @@ class RepositoryHelper[ConcreteTable: BaseModel]:
 
             if is_return_list:
                 # Возвращаем список объектов
-                objects = cast(
-                    "list[ConcreteTable]", result.scalars().unique().all()
-                )
+                objects = cast("list[ConcreteTable]", result.scalars().unique().all())
                 return objects or []
             # Возвращаем один объект
             obj: ConcreteTable | None = result.scalars().first()
@@ -154,9 +152,7 @@ class RepositoryHelper[ConcreteTable: BaseModel]:
         limit: int | None = None,
     ) -> Sequence[ConcreteTable]:
         """Общий метод для получения версий объекта."""
-        obj = await self.main_class.get(
-            session=session, key="id", value=object_id
-        )
+        obj = await self.main_class.get(session=session, key="id", value=object_id)
 
         if not obj or (isinstance(obj, list) and not obj):
             return []

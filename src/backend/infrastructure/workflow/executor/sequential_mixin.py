@@ -146,10 +146,7 @@ class SequentialMixin:
         for proc in step.processors:
             try:
                 body = await _run_processor(
-                    proc,
-                    body,
-                    self._timeout_per_step_s,
-                    idempotency_key=step_key,
+                    proc, body, self._timeout_per_step_s, idempotency_key=step_key
                 )
             except TimeoutError:
                 _logger.warning(

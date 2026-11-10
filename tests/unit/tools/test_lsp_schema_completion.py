@@ -65,7 +65,9 @@ class TestStepCompletionApiFidelity:
         from tools.dsl_lsp.schema_completion import STEP_COMPLETIONS
 
         phantom = [
-            label for label, _, _ in STEP_COMPLETIONS if not hasattr(RouteBuilder, label)
+            label
+            for label, _, _ in STEP_COMPLETIONS
+            if not hasattr(RouteBuilder, label)
         ]
         assert not phantom, f"шаги без метода RouteBuilder: {phantom}"
 

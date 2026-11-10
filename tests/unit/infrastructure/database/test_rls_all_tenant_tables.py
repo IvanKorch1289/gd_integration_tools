@@ -26,8 +26,7 @@ pytestmark = pytest.mark.unit
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[4]
 _VERSIONS_DIR = (
-    _PROJECT_ROOT
-    / "src/backend/infrastructure/database/migrations/versions"
+    _PROJECT_ROOT / "src/backend/infrastructure/database/migrations/versions"
 )
 
 migration = import_module(
@@ -269,9 +268,7 @@ class TestDowngradeSQL:
 
         for table in migration.RLS_TABLES:
             if table.legacy_policy:
-                assert (
-                    f"CREATE POLICY {table.legacy_policy} ON {table.name}" in joined
-                )
+                assert f"CREATE POLICY {table.legacy_policy} ON {table.name}" in joined
 
     def test_noop_on_non_postgres(self) -> None:
         """На других диалектах — no-op."""

@@ -208,7 +208,11 @@ class TestRoundTrip:
     def test_roundtrip_dict(self) -> None:
         original = {"a": "hello", "b": "world", "c": 42}
         # int 42 проходит unchanged оба раза
-        assert decode_base64(encode_base64(original)) == {"a": "hello", "b": "world", "c": 42}
+        assert decode_base64(encode_base64(original)) == {
+            "a": "hello",
+            "b": "world",
+            "c": 42,
+        }
 
 
 class TestAll:

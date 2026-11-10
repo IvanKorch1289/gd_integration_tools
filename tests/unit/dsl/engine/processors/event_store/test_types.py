@@ -151,10 +151,7 @@ class TestEventToDict:
 
     def test_field_values_match(self) -> None:
         e = Event(
-            aggregate_id="a1",
-            event_type="order.placed",
-            payload={"x": 1},
-            version=5,
+            aggregate_id="a1", event_type="order.placed", payload={"x": 1}, version=5
         )
         d = e.to_dict()
         assert d["aggregate_id"] == "a1"
@@ -189,18 +186,8 @@ class TestEventEquality:
     """Event equality (dataclass)."""
 
     def test_equal_when_all_fields_match(self) -> None:
-        e1 = Event(
-            aggregate_id="a",
-            event_type="x",
-            event_id="fixed",
-            timestamp=1.0,
-        )
-        e2 = Event(
-            aggregate_id="a",
-            event_type="x",
-            event_id="fixed",
-            timestamp=1.0,
-        )
+        e1 = Event(aggregate_id="a", event_type="x", event_id="fixed", timestamp=1.0)
+        e2 = Event(aggregate_id="a", event_type="x", event_id="fixed", timestamp=1.0)
         assert e1 == e2
 
     def test_not_equal_when_different(self) -> None:

@@ -309,9 +309,7 @@ class _PollingStrategy(_CDCStrategy):
             if detected:
                 self._pk_columns[key] = detected
                 logger.info(
-                    "CDC polling: primary key detected table=%s pk=%s",
-                    table,
-                    detected,
+                    "CDC polling: primary key detected table=%s pk=%s", table, detected
                 )
                 if len(rows) >= sub.batch_size:
                     # Батч заполнен — могли остаться строки с тем же ts.
@@ -380,13 +378,7 @@ class _PollingStrategy(_CDCStrategy):
                 try:
                     async with engine.connect() as conn:
                         rows = await self._fetch_rows(
-                            conn,
-                            sub,
-                            table,
-                            cursor,
-                            key,
-                            limit_prefix,
-                            limit_suffix,
+                            conn, sub, table, cursor, key, limit_prefix, limit_suffix
                         )
                         pk_column = self._pk_columns.get(key)
                         seen = self._seen.setdefault(key, SeenKeys())
@@ -394,7 +386,11 @@ class _PollingStrategy(_CDCStrategy):
 
                         for row in rows:
                             ts_raw = row.get(sub.timestamp_column)
-                            ts = ensure_utc(ts_raw) if isinstance(ts_raw, datetime) else None
+                            ts = (
+                                ensure_utc(ts_raw)
+                                if isinstance(ts_raw, datetime)
+                                else None
+                            )
                             pk_value = row.get(pk_column) if pk_column else None
                             if ts is not None:
                                 new_cursor = PollCursor(

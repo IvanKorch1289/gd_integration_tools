@@ -10,7 +10,9 @@ import pytest
 from src.backend.dsl.engine.processors.ai.cache_processor import CacheProcessor
 
 # Провайдер unified cache facade (core DI) — патчится в тестах деградации.
-_FACADE_PROVIDER = "src.backend.core.di.providers.cache.get_unified_cache_facade_provider"
+_FACADE_PROVIDER = (
+    "src.backend.core.di.providers.cache.get_unified_cache_facade_provider"
+)
 
 
 class _Message:
@@ -166,7 +168,9 @@ class TestCacheProcessorDegradation:
     async def test_facade_hit_sets_cached_true(self) -> None:
         """Успешный hit → cached=True (регрессия на деградацию)."""
         facade = MagicMock()
-        facade.get_ns = AsyncMock(return_value=MagicMock(value=b'{"ok": true}', hit=True))
+        facade.get_ns = AsyncMock(
+            return_value=MagicMock(value=b'{"ok": true}', hit=True)
+        )
         proc = CacheProcessor(key_fn=lambda e: "k1")
         exchange = _Exchange(body="x")
 

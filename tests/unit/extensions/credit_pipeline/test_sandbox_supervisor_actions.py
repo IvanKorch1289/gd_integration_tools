@@ -39,7 +39,9 @@ class _StubSandbox:
         self._result = result
         self.calls: list[tuple[str, float]] = []
 
-    async def run(self, code: str, *, timeout_s: float = 30.0, **_: Any) -> SandboxResult:
+    async def run(
+        self, code: str, *, timeout_s: float = 30.0, **_: Any
+    ) -> SandboxResult:
         """Запомнить вызов и вернуть подготовленный результат."""
         self.calls.append((code, timeout_s))
         return self._result
@@ -54,19 +56,14 @@ def stub_sandbox(monkeypatch: pytest.MonkeyPatch) -> _StubSandbox:
     """
     sandbox = _StubSandbox(
         SandboxResult(
-            stdout="42",
-            stderr="",
-            exit_code=0,
-            artifacts={"report.csv": b"a,b"},
+            stdout="42", stderr="", exit_code=0, artifacts={"report.csv": b"a,b"}
         )
     )
     _register_sandbox(monkeypatch, lambda: sandbox)
     return sandbox
 
 
-def _register_sandbox(
-    monkeypatch: pytest.MonkeyPatch, factory: Any
-) -> None:
+def _register_sandbox(monkeypatch: pytest.MonkeyPatch, factory: Any) -> None:
     """Зарегистрировать sandbox-фабрику с авто-откатом.
 
     Args:

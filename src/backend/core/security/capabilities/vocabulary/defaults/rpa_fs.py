@@ -120,15 +120,13 @@ def register(vocab: CapabilityVocabulary) -> None:
         vocab.register(
             CapabilityDef(
                 name=name,
-                matcher=_path_glob if ".file." in name or ".directory." in name else _dot_glob,
+                matcher=_path_glob
+                if ".file." in name or ".directory." in name
+                else _dot_glob,
                 description=description,
             )
         )
     for name, description in _CONNECTOR_CAPABILITIES.items():
         vocab.register(
-            CapabilityDef(
-                name=name,
-                matcher=_dot_glob,
-                description=description,
-            )
+            CapabilityDef(name=name, matcher=_dot_glob, description=description)
         )

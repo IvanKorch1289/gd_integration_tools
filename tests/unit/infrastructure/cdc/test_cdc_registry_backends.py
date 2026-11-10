@@ -80,7 +80,9 @@ async def test_poll_backend_does_not_lose_rows_on_batch_boundary() -> None:
             break
 
     got_ids = [event.new["id"] for event in events if event.new]
-    assert got_ids == [1, 2, 3], f"LOST rows: {[i for i in (1, 2, 3) if i not in got_ids]}"
+    assert got_ids == [1, 2, 3], (
+        f"LOST rows: {[i for i in (1, 2, 3) if i not in got_ids]}"
+    )
 
 
 @pytest.mark.unit
@@ -229,7 +231,9 @@ class _FakeAsyncpgConnection:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_listen_notify_subscribe_yields_event(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_listen_notify_subscribe_yields_event(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """LISTEN/NOTIFY-backend эмитит CDC-событие из notify-payload'а."""
     import asyncpg
 

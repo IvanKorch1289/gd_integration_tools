@@ -14,15 +14,13 @@ Bugfix contract: SourceEvent требует ``event_time`` и ``event_id``;
 
 from __future__ import annotations
 
-from datetime import datetime, UTC
-from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from src.backend.core.interfaces.source import SourceEvent
-from src.backend.infrastructure.sources.nats_jetstream import (
-    NATSJetStreamSource,
-)
+from src.backend.infrastructure.sources.nats_jetstream import NATSJetStreamSource
 
 
 class TestNatsJetStreamSourceEventKwargs:
@@ -45,10 +43,9 @@ class TestNatsJetStreamSourceEventKwargs:
         nats_msg.reply = None
 
         source = NATSJetStreamSource(
-            subject="test.subject",
-            stream="TEST",
-            durable="durable-1",
+            subject="test.subject", stream="TEST", durable="durable-1"
         )
+
         async def fake_stream():
             yield nats_msg
             return
@@ -82,9 +79,7 @@ class TestNatsJetStreamSourceEventKwargs:
         nats_msg.reply = None
 
         source = NATSJetStreamSource(
-            subject="test.subject",
-            stream="TEST",
-            durable="durable-1",
+            subject="test.subject", stream="TEST", durable="durable-1"
         )
 
         # Capture event
@@ -128,10 +123,7 @@ class TestSourceEventKwargsContract:
         """SourceEvent принимает ``event_time`` kwarg."""
         ts = datetime(2026, 10, 19, 12, 0, 0, tzinfo=UTC)
         event = SourceEvent(
-            source_id="src-1",
-            kind="nats",
-            payload=b"data",
-            event_time=ts,
+            source_id="src-1", kind="nats", payload=b"data", event_time=ts
         )
         assert event.event_time == ts
 

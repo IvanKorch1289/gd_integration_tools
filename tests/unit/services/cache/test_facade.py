@@ -243,7 +243,7 @@ async def test_abc_healthcheck(facade: UnifiedCacheFacade) -> None:
 async def test_abc_healthcheck_no_backends(tmp_path: Path) -> None:
     """ABC-style healthcheck() → False если все backends None/мертвы."""
     facade = UnifiedCacheFacade(
-        primary=_SimpleBackend(),  # без primary
+        primary=_SimpleBackend()  # без primary
     )
     # Не запускаем ни один backend — healthcheck False.
     # (но наш facade требует primary, поэтому только проверяем логику.)

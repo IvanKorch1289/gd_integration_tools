@@ -171,7 +171,9 @@ class PromptRegistry:
                 "labels": self._labels.get(f"{name}:{version}", {"source": "fallback"}),
                 "is_active": version == active,
             }
-            for version, template in sorted(store.items(), key=lambda item: str(item[0]))
+            for version, template in sorted(
+                store.items(), key=lambda item: str(item[0])
+            )
         ]
 
     def list_prompts(self) -> list[str]:
@@ -215,7 +217,9 @@ class PromptRegistry:
         if version not in store:
             return False
         for existing in store:
-            labels = dict(self._labels.get(f"{name}:{existing}", {"source": "fallback"}))
+            labels = dict(
+                self._labels.get(f"{name}:{existing}", {"source": "fallback"})
+            )
             labels["label"] = "production" if existing == version else "staging"
             self._labels[f"{name}:{existing}"] = labels
         return True

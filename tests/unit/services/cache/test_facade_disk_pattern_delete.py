@@ -43,9 +43,7 @@ async def test_disk_delete_pattern_removes_matching_keys(
 
 
 @pytest.mark.asyncio
-async def test_facade_delete_pattern_ns_clears_disk_tier(
-    tmp_path: Path,
-) -> None:
+async def test_facade_delete_pattern_ns_clears_disk_tier(tmp_path: Path) -> None:
     """delete_pattern_ns чистит disk-tier (иначе stale при падении Redis)."""
     facade = UnifiedCacheFacade(
         primary=MemoryBackend(maxsize=10),

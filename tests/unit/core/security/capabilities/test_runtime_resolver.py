@@ -109,9 +109,7 @@ def test_resolve_plugin_ignores_capability_outside_core_baseline(
 ) -> None:
     """Baseline открывает только capability из CORE_CAPABILITIES."""
     request = CapabilityRequest(
-        capability="audit.write",
-        plugin="my_route",
-        tenant="tenant-1",
+        capability="audit.write", plugin="my_route", tenant="tenant-1"
     )
 
     assert resolve_plugin(request, gate=gate) is None
@@ -204,17 +202,14 @@ def test_check_denies_request_without_tenant(
     gate.declare("my_route", [CapabilityRef(name="rpa.file.list", scope="**")])
 
     decision = check(
-        CapabilityRequest(capability="rpa.file.list", plugin="my_route"),
-        gate=gate,
+        CapabilityRequest(capability="rpa.file.list", plugin="my_route"), gate=gate
     )
 
     assert decision.allowed is False
     assert decision.reason == "tenant_missing"
 
 
-def test_check_denies_scope_mismatch(
-    gate: CapabilityGate, baseline_off: None
-) -> None:
+def test_check_denies_scope_mismatch(gate: CapabilityGate, baseline_off: None) -> None:
     """Запрошенный scope не покрывается декларацией → DENY."""
     gate.declare("my_route", [CapabilityRef(name="rpa.file.list", scope="/data/in")])
 
@@ -275,7 +270,9 @@ def test_check_denies_stale_declaration_outside_vocabulary(
     )
 
     decision = check(
-        CapabilityRequest(capability="audit.gone", plugin="my_route", tenant="tenant-1"),
+        CapabilityRequest(
+            capability="audit.gone", plugin="my_route", tenant="tenant-1"
+        ),
         gate=gate,
     )
 
@@ -328,8 +325,7 @@ def test_check_core_baseline_still_requires_tenant(
 ) -> None:
     """Core-baseline не отменяет tenant-атрибуцию (ADR-0366 §3)."""
     decision = check(
-        CapabilityRequest(capability="rpa.browser.launch", plugin="core"),
-        gate=gate,
+        CapabilityRequest(capability="rpa.browser.launch", plugin="core"), gate=gate
     )
 
     assert decision.allowed is False

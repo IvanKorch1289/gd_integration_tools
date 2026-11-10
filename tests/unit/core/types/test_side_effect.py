@@ -37,11 +37,7 @@ class TestSideEffectKindMembers:
         assert len(SideEffectKind) == 3
 
     def test_all_members_listed(self) -> None:
-        assert set(SideEffectKind.__members__) == {
-            "PURE",
-            "STATEFUL",
-            "SIDE_EFFECTING",
-        }
+        assert set(SideEffectKind.__members__) == {"PURE", "STATEFUL", "SIDE_EFFECTING"}
 
 
 class TestSideEffectKindValues:

@@ -129,7 +129,9 @@ def test_profile_has_no_orphan_groups(
     profile: str, settings_classes: dict[str, tuple[Any, dict[str, Any], str]]
 ) -> None:
     """В профиле нет top-level секций без соответствующего класса настроек."""
-    _, orphan_groups = config_audit._audit_profile(profile, settings_classes, set(), PROFILES_DIR)
+    _, orphan_groups = config_audit._audit_profile(
+        profile, settings_classes, set(), PROFILES_DIR
+    )
     assert orphan_groups == [], (
         f"профиль {profile}: секции без модели (yaml_group): {orphan_groups}"
     )
@@ -140,7 +142,9 @@ def test_profile_has_no_orphan_keys(
     profile: str, settings_classes: dict[str, tuple[Any, dict[str, Any], str]]
 ) -> None:
     """В профиле нет ключей внутри секций, которым нет полей в модели."""
-    reports, _ = config_audit._audit_profile(profile, settings_classes, set(), PROFILES_DIR)
+    reports, _ = config_audit._audit_profile(
+        profile, settings_classes, set(), PROFILES_DIR
+    )
     orphans = {r.group: r.orphan_keys for r in reports if r.orphan_keys}
     assert orphans == {}, f"профиль {profile}: orphan-ключи: {orphans}"
 

@@ -125,8 +125,7 @@ class MemoryBackend(CacheBackend):
         """
         async with self._lock:
             self._cache[key] = _CacheEntry(
-                value=value,
-                expires_at=self._resolve_expires_at(ttl),
+                value=value, expires_at=self._resolve_expires_at(ttl)
             )
 
     async def delete(self, *keys: str) -> None:

@@ -42,7 +42,9 @@ class TestGetWorkflowFactoryModuleProvider:
         result = get_workflow_factory_module_provider()
         assert result is sentinel
 
-    def test_no_override_calls_resolve_module(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_no_override_calls_resolve_module(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         called = {"yes": False}
 
         def fake_resolve(name: str) -> Any:
@@ -87,7 +89,9 @@ class TestGetNotificationsModuleProvider:
         result = get_notifications_module_provider()
         assert result is sentinel
 
-    def test_no_override_calls_resolve_module(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_no_override_calls_resolve_module(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         called = {"yes": False}
 
         def fake_resolve(name: str) -> Any:

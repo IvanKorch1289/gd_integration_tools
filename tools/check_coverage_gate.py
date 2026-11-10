@@ -51,7 +51,10 @@ EXIT_OK = 0
 EXIT_THRESHOLD_FAIL = 1
 EXIT_ERROR = 2
 
-_DEFAULT_THRESHOLD = 75.0
+#: Fallback-порог, если baseline недоступен. Канонический порог берётся из
+#: ``.baselines/coverage.json`` (ADR-0443: single source of truth — CI не должен
+#: задавать ``--threshold`` явно, иначе гейт краснеет на рассинхроне).
+_DEFAULT_THRESHOLD = 70.0
 _BASELINE_DROP_TOLERANCE = 0.5  # допустимое снижение от baseline (в %)
 
 app = typer.Typer(
@@ -239,10 +242,14 @@ def main(
     baseline: str = typer.Option(
         ".baselines/coverage.json", "--baseline", help="Путь к baseline-snapshot."
     ),
-    threshold: float = typer.Option(
-        _DEFAULT_THRESHOLD,
+    threshold: float | None = typer.Option(
+        None,
         "--threshold",
-        help=f"Минимальный coverage в %% (default: {_DEFAULT_THRESHOLD}).",
+        help=(
+            "Минимальный coverage в %%; по умолчанию — порог из baseline "
+            "(.baselines/coverage.json → threshold), fallback "
+            f"{_DEFAULT_THRESHOLD}. ADR-0443: single source of truth."
+        ),
     ),
     update_baseline: bool = typer.Option(
         False,
@@ -277,10 +284,14 @@ def main(
         console_err.print(f"[red]ERROR: {exc}[red]")
         raise typer.Exit(EXIT_ERROR) from exc
 
+    baseline_data = _load_baseline(baseline_path)
+    if threshold is None:
+        raw_threshold = baseline_data.get("threshold")
+        threshold = float(raw_threshold) if raw_threshold is not None else _DEFAULT_THRESHOLD
+
     console.print(f"Coverage: [bold]{current:.2f}%[/bold]")
     console.print(f"Threshold: [bold]{threshold:.2f}%[/bold]")
 
-    baseline_data = _load_baseline(baseline_path)
     baseline_value = baseline_data.get("coverage_percent")
     if baseline_value is not None:
         console.print(f"Baseline: [bold]{baseline_value:.2f}%[/bold]")

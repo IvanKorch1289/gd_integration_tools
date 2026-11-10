@@ -45,6 +45,7 @@ class _CapabilityGateProtocol(Protocol):
         reason: str | None = None,
         event: str = "capability.check",
     ) -> None: ...
+
     """Emission capability-audit события.
 
     Cycle 172 (Wave 5): сигнатура приведена в соответствие с

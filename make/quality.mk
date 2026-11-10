@@ -20,9 +20,9 @@ type-check: check-env ## Run non-blocking mypy type check
 		--cache-dir=/dev/null -p src || printf '%s\n' "Mypy found issues or crashed"
 	@$(SUCCESS) "Type check finished!"
 
-type-check-budget: check-env ## Sprint 10 K2: mypy budget gate (max 5 errors, ratcheting; S9 был 30)
-	@$(INFO) "Running mypy budget gate (max 5 errors)..."
-	@$(UV_RUN) python tools/checks/mypy_budget.py --max 5
+type-check-budget: check-env ## Sprint 10 K2: mypy budget gate (рэтчет от baseline)
+	@$(INFO) "Running mypy budget gate (baseline из .baselines/mypy.json)..."
+	@$(UV_RUN) python tools/checks/mypy_budget.py
 	@$(SUCCESS) "Mypy budget OK"
 
 migration-preview: check-env ## Sprint 175+ W3: SQL migration preview (CRITICAL/HIGH detection)

@@ -48,10 +48,10 @@ class TestLangGraphAgentProcessorKwargs:
         неправильными kwarg names. Это приводит к ``TypeError`` при
         реальном вызове (если build_and_run_agent не замокан).
         """
-        from src.backend.services.ai.ai_graph import build_and_run_agent
         from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
             LangGraphAgentProcessor,
         )
+        from src.backend.services.ai.ai_graph import build_and_run_agent
 
         # Реальный signature — source of truth
         real_sig = inspect.signature(build_and_run_agent)
@@ -104,10 +104,10 @@ class TestLangGraphAgentProcessorKwargs:
         LangGraphAgentProcessor должен передавать ``tool_actions=`` (даже
         если пустой list) для корректного вызова.
         """
-        from src.backend.services.ai import ai_graph
         from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
             LangGraphAgentProcessor,
         )
+        from src.backend.services.ai import ai_graph
 
         captured_kwargs: dict[str, object] = {}
 
@@ -146,10 +146,10 @@ class TestLangGraphAgentProcessorKwargs:
 
         Старое имя параметра — bug. Правильное имя — ``prompt``.
         """
-        from src.backend.services.ai import ai_graph
         from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
             LangGraphAgentProcessor,
         )
+        from src.backend.services.ai import ai_graph
 
         captured_kwargs: dict[str, object] = {}
 
@@ -194,10 +194,10 @@ class TestLangGraphAgentProcessorKwargs:
         build_and_run_agent не принимает ``thread_id`` (это параметр
         LangGraph checkpointer, не нашего wrapper).
         """
-        from src.backend.services.ai import ai_graph
         from src.backend.dsl.engine.processors.agent_dsl.langgraph_agent import (
             LangGraphAgentProcessor,
         )
+        from src.backend.services.ai import ai_graph
 
         captured_kwargs: dict[str, object] = {}
 

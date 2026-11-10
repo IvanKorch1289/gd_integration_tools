@@ -177,9 +177,7 @@ def _auth(tenant_id: str = "tenant-a"):
     from src.backend.core.auth import AuthContext, AuthMethod
 
     return AuthContext(
-        method=AuthMethod.JWT,
-        principal="ops",
-        metadata={"tenant_id": tenant_id},
+        method=AuthMethod.JWT, principal="ops", metadata={"tenant_id": tenant_id}
     )
 
 
@@ -218,7 +216,9 @@ async def test_schedule_webhook_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
     request = WebhookScheduleRequest(url="https://example.test/hook")
-    auth = AuthContext(method=AuthMethod.JWT, principal="ops", metadata={"tenant_id": "tenant-a"})
+    auth = AuthContext(
+        method=AuthMethod.JWT, principal="ops", metadata={"tenant_id": "tenant-a"}
+    )
     result = await schedule_webhook(request, auth=auth, tenant_id="tenant-a")
     assert result["schedule_id"] == "sched-1"
     assert scheduler.scheduled[0]["url"] == "https://example.test/hook"

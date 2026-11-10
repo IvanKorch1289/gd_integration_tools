@@ -127,9 +127,7 @@ async def test_desktop_rpa_resolves_client_from_di(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Без клиента в контексте процессор берёт client из DI-провайдера."""
-    monkeypatch.setattr(
-        DesktopRpaProcessor, "auth_check", AsyncMock(return_value=True)
-    )
+    monkeypatch.setattr(DesktopRpaProcessor, "auth_check", AsyncMock(return_value=True))
     client = AsyncMock()
     client.execute.return_value = {"ok": True}
     rpa_providers.set_desktop_rpa_client_provider(client)

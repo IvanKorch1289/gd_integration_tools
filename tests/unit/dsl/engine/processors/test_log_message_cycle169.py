@@ -63,7 +63,9 @@ async def infra_logger() -> CapturingHandler:
 
 
 class TestLogProcessorMessage:
-    async def test_legacy_mode_no_message(self, pipeline_logger: CapturingHandler) -> None:
+    async def test_legacy_mode_no_message(
+        self, pipeline_logger: CapturingHandler
+    ) -> None:
         """``message=""`` → логируется тип body + property keys (legacy)."""
         exchange = Exchange(in_message=Message(body={"foo": "bar"}, headers={}))
         exchange.set_property("key1", "value1")
@@ -137,9 +139,7 @@ class TestLogProcessorMessage:
         """Несколько placeholders в одном message — все резолвятся."""
         exchange = Exchange(in_message=Message(body={"x": "X"}, headers={}))
         exchange.set_property("y", "Y")
-        proc = LogProcessor(
-            level="info", message="body=${body.x} prop=${properties.y}"
-        )
+        proc = LogProcessor(level="info", message="body=${body.x} prop=${properties.y}")
 
         await proc.process(exchange, ExecutionContext(route_id="r"))
 
@@ -175,7 +175,9 @@ class TestInfraLogWriteInterpolation:
         exchange = Exchange(in_message=Message(body={}, headers={}))
         exchange.set_property("order_id", "ORD-456")
         ctx = ExecutionContext(route_id="r")
-        proc = InfraLogWriteProcessor(level="info", message="Order=${properties.order_id}")
+        proc = InfraLogWriteProcessor(
+            level="info", message="Order=${properties.order_id}"
+        )
 
         await proc.process(exchange, ctx)
 
@@ -184,9 +186,7 @@ class TestInfraLogWriteInterpolation:
 
     async def test_message_with_body_path(self, infra_logger: CapturingHandler) -> None:
         """``message="${body.foo.bar}"`` → nested path из body."""
-        exchange = Exchange(
-            in_message=Message(body={"foo": {"bar": "B"}}, headers={})
-        )
+        exchange = Exchange(in_message=Message(body={"foo": {"bar": "B"}}, headers={}))
         proc = InfraLogWriteProcessor(level="warning", message="bar=${body.foo.bar}")
 
         await proc.process(exchange, ExecutionContext(route_id="r"))
@@ -198,9 +198,7 @@ class TestInfraLogWriteInterpolation:
     ) -> None:
         """Message без placeholders — логируется as-is."""
         exchange = Exchange(in_message=Message(body={}, headers={}))
-        proc = InfraLogWriteProcessor(
-            level="error", message="Something went wrong"
-        )
+        proc = InfraLogWriteProcessor(level="error", message="Something went wrong")
 
         await proc.process(exchange, ExecutionContext(route_id="r"))
 

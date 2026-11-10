@@ -66,7 +66,7 @@ class LLMModelPricing:
             model_id = key.removeprefix("LLM_PRICE_").lower().replace("_", "-")
             try:
                 self._cache[model_id] = Decimal(value)
-            except (ValueError, ArithmeticError):
+            except ValueError, ArithmeticError:
                 continue
 
     def get_price(self, model_id: str) -> Decimal:

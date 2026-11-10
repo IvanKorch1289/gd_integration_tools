@@ -128,5 +128,5 @@ def _duration_ms(row: dict[str, Any]) -> int | None:
         return None
     try:
         return int((finished - created).total_seconds() * 1000)
-    except (AttributeError, TypeError, ValueError):
+    except AttributeError, TypeError, ValueError:
         return None

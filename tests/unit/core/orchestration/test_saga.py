@@ -7,7 +7,6 @@ saga с forward/compensate Activity шагами.
 from __future__ import annotations
 
 import inspect
-from collections.abc import Awaitable, Callable
 from typing import Any
 
 import pytest
@@ -76,9 +75,7 @@ class TestSagaStepExplicit:
 
     def test_with_compensate(self) -> None:
         step = SagaStep(
-            name="step1",
-            forward=_dummy_forward,
-            compensate=_dummy_compensate,
+            name="step1", forward=_dummy_forward, compensate=_dummy_compensate
         )
         assert step.compensate is _dummy_compensate
 
@@ -88,9 +85,7 @@ class TestSagaStepExplicit:
 
     def test_idempotency_key_path(self) -> None:
         step = SagaStep(
-            name="step1",
-            forward=_dummy_forward,
-            idempotency_key_path="order.id",
+            name="step1", forward=_dummy_forward, idempotency_key_path="order.id"
         )
         assert step.idempotency_key_path == "order.id"
 

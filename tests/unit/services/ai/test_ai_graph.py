@@ -425,6 +425,5 @@ async def test_saver_removed_error_message_does_not_suggest_git_checkout(
         f"Got: {fix_msg!r}"
     )
     assert "restore" not in fix_msg.lower() or "do not" in fix_msg.lower(), (
-        f"Error context suggests `restore` as fix — misleading. "
-        f"Got: {fix_msg!r}"
+        f"Error context suggests `restore` as fix — misleading. Got: {fix_msg!r}"
     )

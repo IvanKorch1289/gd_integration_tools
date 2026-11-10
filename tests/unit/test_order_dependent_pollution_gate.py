@@ -164,10 +164,7 @@ KNOWN_POLLUTER_PAIRS: tuple[tuple[str, str], ...] = (
     # ADR-0410: импорт приложения поднимает bootstrap и регистрирует
     # ~190 legacy-action'ов (минимальные метаданные, transports=()) в
     # глобальном реестре → контракт метаданных падает на «transports пуст».
-    (
-        "tests/unit/test_main.py",
-        "tests/unit/dsl/test_action_metadata_contract.py",
-    ),
+    ("tests/unit/test_main.py", "tests/unit/dsl/test_action_metadata_contract.py"),
 )
 
 #: Файлы, где модульная подмена глобального состояния допустима
@@ -443,7 +440,7 @@ class TestOrderDependentRegistry:
                 continue
             try:
                 head = path.read_text(encoding="utf-8")[:4000]
-            except (OSError, UnicodeDecodeError):
+            except OSError, UnicodeDecodeError:
                 continue
             if ORDER_DEPENDENT_MARKER in head:
                 newly_affected.append(rel)
@@ -513,7 +510,7 @@ class TestGlobalStateMutationScan:
                 continue
             try:
                 source = path.read_text(encoding="utf-8")
-            except (OSError, UnicodeDecodeError):
+            except OSError, UnicodeDecodeError:
                 continue
             try:
                 found = self._module_level_mutations(source)
@@ -547,7 +544,7 @@ class TestReservedExtraKeys:
             rel = _relative(path)
             try:
                 source = path.read_text(encoding="utf-8")
-            except (OSError, UnicodeDecodeError):
+            except OSError, UnicodeDecodeError:
                 continue
             try:
                 found = _reserved_extra_sites(source)
@@ -591,9 +588,7 @@ class TestReservedExtraKeys:
         """Каждая запись реестра объясняет, почему место допустимо."""
         for rel, reason in KNOWN_RESERVED_EXTRA_SITES.items():
             assert reason.strip(), f"{rel}: пустое обоснование"
-            assert "ADR-0410" in reason, (
-                f"{rel}: нет ссылки на ADR-0410 в обосновании"
-            )
+            assert "ADR-0410" in reason, f"{rel}: нет ссылки на ADR-0410 в обосновании"
 
 
 class TestPolluterPairs:

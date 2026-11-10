@@ -206,7 +206,7 @@ class TemporalWorkerRuntime:
             task.cancel()
             try:
                 await asyncio.wait_for(task, timeout=timeout)
-            except (TimeoutError, asyncio.CancelledError):
+            except TimeoutError, asyncio.CancelledError:
                 pass
 
         _logger.info("temporal.worker_runtime.stopped")

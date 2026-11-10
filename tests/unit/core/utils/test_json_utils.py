@@ -18,7 +18,6 @@ import pytest
 
 from src.backend.core.utils.json_utils import dumps_bytes, dumps_str, loads
 
-
 # ── dumps_str ────────────────────────────────────────────────────────
 
 
@@ -121,7 +120,7 @@ class TestLoads:
         assert loads('{"x": 1}') == {"x": 1}
 
     def test_loads_bytearray(self) -> None:
-        assert loads(bytearray(b'[1, 2, 3]')) == [1, 2, 3]
+        assert loads(bytearray(b"[1, 2, 3]")) == [1, 2, 3]
 
     def test_loads_memoryview(self) -> None:
         assert loads(memoryview(b'"hello"')) == "hello"
@@ -166,14 +165,7 @@ class TestRoundTrip:
         # После round-trip int keys стали str
         assert parsed == {"1": "a", "2": "b"}
 
-    @pytest.mark.parametrize(
-        "data",
-        [
-            {},
-            {"a": 1},
-            {"list": [1, 2, 3]},
-        ],
-    )
+    @pytest.mark.parametrize("data", [{}, {"a": 1}, {"list": [1, 2, 3]}])
     def test_round_trip_via_bytes(self, data: object) -> None:
         out = dumps_bytes(data)
         assert loads(out) == data

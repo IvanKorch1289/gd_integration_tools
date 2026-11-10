@@ -122,12 +122,7 @@ _RAW_BODY_RULES: tuple[tuple[str, str, str, dict[str, Any]], ...] = (
         "application/octet-stream",
         {"type": "string", "format": "binary"},
     ),
-    (
-        "suffix",
-        "/saml/acs",
-        "application/x-www-form-urlencoded",
-        _SAML_FORM_SCHEMA,
-    ),
+    ("suffix", "/saml/acs", "application/x-www-form-urlencoded", _SAML_FORM_SCHEMA),
     ("suffix", "/graphql", "application/json", _GRAPHQL_SCHEMA),
     ("prefix", "/soap", "application/xml", {"type": "string"}),
     ("prefix", "/express/", "application/json", _JSON_OBJECT_SCHEMA),
@@ -179,7 +174,7 @@ _OPERATION_ERRORS: dict[tuple[str, str], dict[str, str]] = {
         "429": "Превышен лимит попыток входа (rate-limit per IP).",
     },
     ("post", "/api/v1/auth/step-up-request"): {
-        "429": "Превышен лимит запросов step-up-токена (rate-limit per IP).",
+        "429": "Превышен лимит запросов step-up-токена (rate-limit per IP)."
     },
 }
 
@@ -194,10 +189,7 @@ _FASTAPI_ERROR_SCHEMA: dict[str, Any] = {
 #: ``{"error": "...", "detail": "..."}``.
 _MIDDLEWARE_ERROR_SCHEMA: dict[str, Any] = {
     "type": "object",
-    "properties": {
-        "error": {"type": "string"},
-        "detail": {"type": "string"},
-    },
+    "properties": {"error": {"type": "string"}, "detail": {"type": "string"}},
 }
 
 
@@ -212,15 +204,10 @@ def _path_placeholders(path: str) -> list[str]:
 
 def _request_body(media_type: str, body_schema: dict[str, Any]) -> dict[str, Any]:
     """Собрать блок ``requestBody`` для media-type и схемы тела."""
-    return {
-        "required": False,
-        "content": {media_type: {"schema": body_schema}},
-    }
+    return {"required": False, "content": {media_type: {"schema": body_schema}}}
 
 
-def _error_response(
-    description: str, body_schema: dict[str, Any]
-) -> dict[str, Any]:
+def _error_response(description: str, body_schema: dict[str, Any]) -> dict[str, Any]:
     """Собрать описание 4xx-ответа с inline-схемой тела."""
     return {
         "description": description,
@@ -243,9 +230,7 @@ def _resolve_request_body(path: str) -> dict[str, Any] | None:
         # Auto-registered action: ``await request.json()`` (POST/PUT/PATCH).
         return _request_body("application/json", _JSON_OBJECT_SCHEMA)
     for kind, marker, media_type, body_schema in _RAW_BODY_RULES:
-        matched = (
-            path.startswith(marker) if kind == "prefix" else path.endswith(marker)
-        )
+        matched = path.startswith(marker) if kind == "prefix" else path.endswith(marker)
         if matched:
             return _request_body(media_type, body_schema)
     return None
@@ -280,8 +265,7 @@ def annotate_request_bodies(schema: dict[str, Any]) -> dict[str, Any]:
             added += 1
 
     _logger.info(
-        "openapi_completeness.request_bodies_added",
-        extra={"operations": added},
+        "openapi_completeness.request_bodies_added", extra={"operations": added}
     )
     return schema
 
@@ -336,8 +320,7 @@ def annotate_path_parameters(schema: dict[str, Any]) -> dict[str, Any]:
                 added += 1
 
     _logger.info(
-        "openapi_completeness.path_parameters_added",
-        extra={"parameters": added},
+        "openapi_completeness.path_parameters_added", extra={"parameters": added}
     )
     return schema
 
@@ -396,21 +379,18 @@ def annotate_legacy_aliases(app: FastAPI, schema: dict[str, Any]) -> dict[str, A
             )
             responses.setdefault(
                 "404",
-                _error_response(
-                    "Action не найден в реестре.",
-                    _FASTAPI_ERROR_SCHEMA,
-                ),
+                _error_response("Action не найден в реестре.", _FASTAPI_ERROR_SCHEMA),
             )
             if method in _BODY_METHODS:
                 # ``legacy_aliases._dispatch_with`` читает JSON-тело вручную.
                 operation.setdefault(
-                    "requestBody", _request_body("application/json", _JSON_OBJECT_SCHEMA)
+                    "requestBody",
+                    _request_body("application/json", _JSON_OBJECT_SCHEMA),
                 )
             published += 1
 
     _logger.info(
-        "openapi_completeness.legacy_aliases_published",
-        extra={"operations": published},
+        "openapi_completeness.legacy_aliases_published", extra={"operations": published}
     )
     return schema
 
@@ -479,16 +459,11 @@ def classify_missing_request_body(
         if isinstance(parameter, dict)
     }
     if "path" in kinds:
-        return (
-            "Идентификатор передаётся в пути — тело контрактом не предусмотрено."
-        )
+        return "Идентификатор передаётся в пути — тело контрактом не предусмотрено."
     if "query" in kinds:
         return "Параметры передаются в query — тело контрактом не предусмотрено."
     if path.startswith(AUTO_ACTION_PREFIX):
-        return (
-            "Auto-registered action: payload передаётся в query "
-            "(метод без тела)."
-        )
+        return "Auto-registered action: payload передаётся в query (метод без тела)."
     return _NO_BODY_BY_CONTRACT.get(path)
 
 

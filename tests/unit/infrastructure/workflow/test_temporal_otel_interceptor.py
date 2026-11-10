@@ -31,7 +31,9 @@ def _clean_temporal_sdk() -> Any:
     import sys
 
     for _name in [
-        _n for _n in list(sys.modules) if _n == "temporalio" or _n.startswith("temporalio.")
+        _n
+        for _n in list(sys.modules)
+        if _n == "temporalio" or _n.startswith("temporalio.")
     ]:
         del sys.modules[_name]
     module = importlib.import_module("temporalio.client")

@@ -47,7 +47,7 @@ def _find_py_with_pattern(pattern: str, root: Path) -> list[Path]:
             continue
         try:
             text = path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
+        except UnicodeDecodeError, OSError:
             continue
         if compiled.search(text):
             hits.append(path)

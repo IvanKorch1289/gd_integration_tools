@@ -50,10 +50,7 @@ class TestCacheExpireSecondsInCacheSettings:
 
     def test_env_override(self) -> None:
         """``CACHE_CACHE_EXPIRE_SECONDS`` env override."""
-        with patch.dict(
-            os.environ,
-            {"CACHE_CACHE_EXPIRE_SECONDS": "600"},
-        ):
+        with patch.dict(os.environ, {"CACHE_CACHE_EXPIRE_SECONDS": "600"}):
             settings = CacheSettings()
         assert settings.cache_expire_seconds == 600
 
@@ -122,7 +119,9 @@ class TestDecoratorUsesCacheSettings:
         # Old pattern should NOT be the primary read path
         # (RedisSettings.cache_expire_seconds still exists as property but
         # production code should not use it directly).
-        assert "self.expire = expire or settings.redis.cache_expire_seconds" not in source, (
+        assert (
+            "self.expire = expire or settings.redis.cache_expire_seconds" not in source
+        ), (
             "Cycle 164 regression: decorator.py still reads from "
             "settings.redis.cache_expire_seconds directly."
         )
@@ -131,9 +130,7 @@ class TestDecoratorUsesCacheSettings:
 class TestConfigProfilesYaml:
     def test_cache_expire_seconds_in_cache_section(self) -> None:
         """``config_profiles/base.yml``: cache_expire_seconds в cache: section, не redis:."""
-        config_path = (
-            Path(__file__).parents[5] / "config_profiles" / "base.yml"
-        )
+        config_path = Path(__file__).parents[5] / "config_profiles" / "base.yml"
         assert config_path.exists()
         config_text = config_path.read_text(encoding="utf-8")
 

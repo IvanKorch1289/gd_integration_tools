@@ -15,7 +15,6 @@ positives (negative cases).
 from __future__ import annotations
 
 import importlib.util
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -91,24 +90,15 @@ class TestImportable:
 class TestDetectsUnauthorizedDefinition:
     def test_unauthorized_class_caught(self) -> None:
         """Создаём временный файл с class UnifiedCacheFacade вне whitelist."""
-        fixture = (
-            PROJECT_ROOT
-            / "src"
-            / "backend"
-            / "_test_cache_violation_fixture.py"
-        )
+        fixture = PROJECT_ROOT / "src" / "backend" / "_test_cache_violation_fixture.py"
         fixture.write_text(
-            '"""Test fixture."""\n'
-            "\n"
-            "class UnifiedCacheFacade:\n"
-            "    pass\n",
+            '"""Test fixture."""\n\nclass UnifiedCacheFacade:\n    pass\n',
             encoding="utf-8",
         )
         try:
             result = _run_tool("--strict")
             assert result.returncode == 1, (
-                "Expected violation but got clean state. "
-                f"stdout: {result.stdout}"
+                f"Expected violation but got clean state. stdout: {result.stdout}"
             )
             assert "unauthorized_definition" in result.stdout
             assert "_test_cache_violation_fixture.py" in result.stdout
@@ -122,26 +112,20 @@ class TestDetectsUnauthorizedDefinition:
         result = _run_tool("--strict")
         # Если сам whitelist работает, мы не должны видеть эти файлы
         # в violations.
-        assert (
-            "core/cache/facade.py:" not in result.stdout
-            or "CLEAN" in result.stdout
-        )
+        assert "core/cache/facade.py:" not in result.stdout or "CLEAN" in result.stdout
 
 
 class TestDetectsMissingReexport:
     def test_missing_reexport_caught(self) -> None:
         """Меняем services/cache/__init__.py — убираем UnifiedCacheFacade."""
         init_path = (
-            PROJECT_ROOT
-            / "src"
-            / "backend"
-            / "services"
-            / "cache"
-            / "__init__.py"
+            PROJECT_ROOT / "src" / "backend" / "services" / "cache" / "__init__.py"
         )
         backup = init_path.read_text(encoding="utf-8")
         # Strip UnifiedCacheFacade из __all__.
-        bad_content = '"""Cache services package."""\n__all__ = ("get_unified_cache_facade",)\n'
+        bad_content = (
+            '"""Cache services package."""\n__all__ = ("get_unified_cache_facade",)\n'
+        )
         try:
             init_path.write_text(bad_content, encoding="utf-8")
             result = _run_tool("--strict")
@@ -161,12 +145,7 @@ class TestDetectsMissingReexport:
 class TestDetectsUnauthorizedSingleton:
     def test_unauthorized_singleton_caught(self) -> None:
         """Создаём файл с module-level cache_settings вне whitelist."""
-        fixture = (
-            PROJECT_ROOT
-            / "src"
-            / "backend"
-            / "_test_cache_settings_violation.py"
-        )
+        fixture = PROJECT_ROOT / "src" / "backend" / "_test_cache_settings_violation.py"
         fixture.write_text(
             '"""Test fixture."""\n'
             "\n"

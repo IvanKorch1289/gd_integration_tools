@@ -14,6 +14,7 @@ from src.backend.dsl.engine.processors.event_store.helpers import (
     set_event_store,
 )
 from src.backend.dsl.engine.processors.event_store.store import (
+    EventStore,
     InMemoryEventStore,
 )
 

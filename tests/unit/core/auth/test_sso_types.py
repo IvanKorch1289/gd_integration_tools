@@ -24,7 +24,6 @@ from src.backend.core.auth.sso_types import (
     SSOUserInfo,
 )
 
-
 # ── GROUPS_TO_CAPABILITIES_KEY constant ──────────────────────────────
 
 
@@ -129,11 +128,7 @@ class TestGroupsToCapabilitiesResolve:
 
     def test_resolve_preserves_input_order(self) -> None:
         g2c = GroupsToCapabilities(
-            mappings={
-                "z": ["z-cap"],
-                "a": ["a-cap"],
-                "m": ["m-cap"],
-            }
+            mappings={"z": ["z-cap"], "a": ["a-cap"], "m": ["m-cap"]}
         )
         result = g2c.resolve(["z", "a", "m"])
         # Порядок по input groups (z, a, m), не по алфавиту
@@ -184,20 +179,11 @@ class TestIdpConfigValidation:
     """Pydantic constraints (min_length=1, extra='forbid')."""
 
     @pytest.mark.parametrize(
-        "field,empty_value",
-        [
-            ("entity_id", ""),
-            ("sso_url", ""),
-            ("x509_cert", ""),
-        ],
+        "field,empty_value", [("entity_id", ""), ("sso_url", ""), ("x509_cert", "")]
     )
     def test_min_length_one(self, field: str, empty_value: str) -> None:
         """min_length=1 — пустая строка rejected."""
-        valid = {
-            "entity_id": "eid",
-            "sso_url": "url",
-            "x509_cert": "cert",
-        }
+        valid = {"entity_id": "eid", "sso_url": "url", "x509_cert": "cert"}
         valid[field] = empty_value
         with pytest.raises(ValidationError) as exc_info:
             IdpConfig(**valid)  # type: ignore[arg-type]
