@@ -1,3 +1,28 @@
+# Object Authorization Classifier — FALSE_POSITIVE Allowlist (v6 W3.4)
+#
+# Per v6 spec: «Исключения хранятся в versioned allowlist с owner, причиной
+# и сроком пересмотра. FALSE_POSITIVE: файл, строка и аргументированное
+# объяснение».
+#
+# Файл загружается tools/classify_object_authorization.py через
+# _load_false_positive_allowlist() — каждый entry классифицируется
+# как FALSE_POSITIVE вместо UNKNOWN. Строгий gate (--strict) пропускает
+# такие callsites (per v6: UNKNOWN всегда блокирует; FALSE_POSITIVE —
+# документированное исключение).
+#
+# Format:
+#   - file: relative путь от project root
+#   - line: 1-based line number
+#   - reason: human-readable объяснение почему НЕ user-data
+#   - owner: владелец кода (team или отдельный contributor)
+#   - review_date: ISO дата следующего пересмотра (max +6 months)
+#   - added_at: ISO дата добавления
+#
+# v6 W3.4 (2026-09-24): initial allowlist for 5 FALSE_POSITIVE sites
+# из docs/roadmap/W3_UNKNOWN_OWNERSHIP_CLASSIFICATION_2026-09-24.md.
+# ADR-0445: добавлено поле snippet — привязка к строке неустойчива к
+# рефакторингу/форматированию; классификатор ищет allowlist по
+# (file, snippet), если (file, line) не совпал.
 allowlist:
 - file: src/backend/core/security/object_ownership.py
   line: 142
