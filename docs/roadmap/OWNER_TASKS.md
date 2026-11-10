@@ -359,10 +359,10 @@
 | # | Endpoint | Что нужно | Статус сервиса |
 |---|---|---|---|
 | 1 | `GET /api/v1/admin/guardrails-metrics` + `POST …/{tenant_id}/false-positive` | — | ✅ **закрыто ADR-0432** (DI + эндпоинты + наполнение из AI-шлюза) |
-| 2 | `GET /api/v1/admin/prompt-versions*` (list/activate/compare) | расширить `PromptRegistry` (list/activate) + обёртка | сервис есть, методов нет |
+| 2 | `GET /api/v1/admin/prompt-versions*` (list/activate/compare) | — | ✅ закрыто ADR-0437 |
 | 3 | `GET /api/v1/webhooks/scheduled`, `POST /api/v1/webhook/schedule` | — | ✅ **закрыто ADR-0432** (DI + эндпоинты + SSRF-guard) |
-| 4 | `GET /api/v1/storage/list|get|download` (по ключу) | операции по `file_uuid` есть, по ключу — нет | частично |
-| 5 | `GET /api/v1/admin/pools/snapshot` | pool-менеджер умеет `get_metrics` | частично |
+| 4 | `GET /api/v1/storage/list|get|download` (по ключу) | — | ✅ закрыто ADR-0438 |
+| 5 | `GET /api/v1/admin/pools/snapshot` + `GET /api/v1/admin/processes/{active,stats}` | — | ✅ закрыто ADR-0439 |
 | 6 | `GET /api/v1/admin/processes/active`, `GET /api/v1/admin/queues/summary` | новая capability (для Kafka/RabbitMQ — нет) | нет |
 | 7 | `POST /api/v1/admin/sql/query` | read-only SELECT с валидацией + аудитом | сознательно не поднимался |
 
@@ -400,12 +400,12 @@
 | 2 | ~~Компенсация откатывает разные шаги в Temporal- и pg-runner'е~~ | выровнять семантику (ADR) | ✅ закрыто ADR-0431 |
 | 3 | ~~`idempotency_key` не доходит до внешнего вызова~~ | проброс ключа в заголовок activity | ✅ закрыто ADR-0431 |
 | 4 | ~~Линтер `*.workflow.yaml` отсутствует (только route-DSL)~~ | `dsl lint` для workflow-спеки: spec + `collect_activities(validate=True)` + `file:step.field` | ✅ закрыто ADR-0433 (`tools/check_workflow_specs.py` + шаг в `lint.yml`) |
-| 5 | `workflow_setup.py` глотает ошибку загрузки workflow (`warning` + `str(exc)[:200]`) | `logger.error` с путём файла и полным текстом | medium |
-| 6 | `bulkhead`/`circuit-breaker` не подключены к DSL-процессорам (фасад есть) | подключение по аналогии с `core/api` | medium |
-| 7 | `core/api/__init__.py` не экспортирует CB/RateLimiter/Bulkhead (в AGENTS.md заявлены «17 primitives») | привести экспорт в соответствие с докстрингом | medium |
-| 8 | Нет cookbook'а «как написать workflow YAML» (шаблон → правка → dryrun → запуск) | `docs/cookbooks/07-write-workflow-yaml.md` | low |
+| 5 | ~~`workflow_setup.py` глотает ошибку загрузки workflow (`warning` + `str(exc)[:200]`)~~ | `logger.error` с путём файла и полным текстом | ✅ закрыто ADR-0434 |
+| 6 | ~~`bulkhead`/`circuit-breaker` не подключены к DSL-процессорам~~ | подключение по аналогии с `core/api` | ✅ закрыто ADR-0436 |
+| 7 | ~~`core/api/__init__.py` не экспортирует CB/RateLimiter/Bulkhead~~ | привести экспорт в соответствие с докстрингом | ✅ закрыто ADR-0434 |
+| 8 | ~~Нет cookbook'а «как написать workflow YAML»~~ | `docs/cookbooks/07-write-workflow-yaml.md` | ✅ закрыто ADR-0434 |
 | 9 | `manage.py dsl --help` не показывает `generate` | discoverability CLI-генератора | low |
-| 10 | `dsl/cli/lint.py` и `dsl/engine/dry_run.py` дублируют `dsl/workflow/dryrun.py` | удалить дубли (deletion over addition) | low |
+| 10 | ~~`dsl/cli/lint.py` и `dsl/engine/dry_run.py` дублируют `dsl/workflow/dryrun.py`~~ | удалить дубли (deletion over addition) | ✅ закрыто ADR-0434 (3 линтера → 1; dry-run'и разных доменов разведены) |
 
 **Требует решения владельца:** п. 3 (дубликаты внешних эффектов — нужна
 политика idempotency на стороне получателя: ключ в заголовке/теле) и п. 2
@@ -425,7 +425,7 @@
 | 4 | **Capability-декларации обязательны + CI-гейт** (рэтчет, baseline легаси) | ✅ ADR-0430: `tools/check_route_capabilities.py` + шаг в `lint.yml` |
 | 5 | **Идемпотентность внешних вызовов** — ключ в заголовке activity | ✅ ADR-0431 |
 | 6 | **Семантика компенсации** — откатывать только выполненное (как в Temporal) | ✅ ADR-0431 |
-| 7 | **Инфраструктурные долги** — единый пакет «инфра-решения» с владельцами | ⚙️ **кодом не закрывается**: `.env:92`, образ `gd-integration-tools:light` от 18.08, Prometheus-правила SLA, `audit.write`-декларации + `audit_clickhouse_enabled` в проде, JWKS RS256+keypair, service-DNS для sidecar'ов, OpenWebUI endpoint, replica DSN, BYPASSRLS для межtenant-снапшота, `jupyter.hub` без провайдера |
+| 7 | **Инфраструктурные долги** — единый пакет «инфра-решения» с владельцами | ✅ **чек-лист `docs/ops/infra-release-checklist.md` (ADR-0441)**; закрыто кодом: `.env:92` (парсинг compose), образ `gd-integration-tools:light` (пересобран, `/health` 200), Prometheus-правила (ADR-0440), `audit_clickhouse_enabled` в prod, service-DNS (ADR-0412), JWKS-алгоритмы, BYPASSRLS-guard, `jupyter.hub`-провайдер, OpenWebUI-контракт. Осталось за инфраструктурой (команды — в чек-листе): keypair+JWKS-сервис для RS256, развёртывание OpenWebUI, роль БД с `BYPASSRLS` для межtenant-снапшота, ClickHouse в проде (audit-трейл), решение владельца по `audit.write`-декларациям и `replica_dsn` |
 | 8 | **Волна 28 = «стойкость»** | ✅ закрыто полностью: идемпотентность (ADR-0431) + компенсация (ADR-0431) + линтер workflow-спецификаций и внутренние activity (ADR-0433) |
 
 ---

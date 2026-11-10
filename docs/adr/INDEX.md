@@ -220,9 +220,17 @@
 | [ADR-0431](0431-workflow-idempotency-and-compensation.md) | Идемпотентность внешних вызовов и единая семантика компенсации | Accepted |
 | [ADR-0432](0432-guardrails-metrics-and-webhook-scheduler-endpoints.md) | HTTP-поверхности для метрик guardrails и планировщика webhook'ов | Accepted |
 | [ADR-0433](0433-workflow-spec-linter-and-internal-activities.md) | Линтер workflow-спецификаций и внутренние activity `reflect`/`checkpoint` | Accepted |
+| [ADR-0434](0434-dsl-linter-consolidation-and-docs.md) | Единый линтер DSL-YAML, error-лог загрузки workflow, экспорт примитивов устойчивости | Accepted |
+| [ADR-0435](0435-strict-capability-gate-and-checkpoint-persistence.md) | Строгая проверка ресурсных capability и персистентность checkpoint'ов | Accepted |
+| [ADR-0436](0436-dsl-circuit-breaker-and-bulkhead.md) | Circuit breaker + bulkhead для внешних вызовов DSL-процессоров | Accepted |
+| [ADR-0437](0437-prompt-versions-endpoints.md) | Версии промптов: реестр + HTTP-поверхность + Prompt Lab | Accepted |
+| [ADR-0438](0438-storage-operations-by-key.md) | Storage-операции по ключу (list/get/download) | Accepted |
+| [ADR-0439](0439-runtime-metrics-endpoints.md) | Runtime-метрики: пулы соединений и процессы workflow | Accepted |
+| [ADR-0440](0440-prometheus-sla-rules.md) | Prometheus-правила SLA/DLQ для workflow | Accepted |
+| [ADR-0441](0441-infra-release-checklist.md) | Инфраструктурный чек-лист релиза и явный `audit_clickhouse_enabled` | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 218 ADRs.
+**Total:** 226 ADRs.
 
