@@ -44,7 +44,12 @@ docker compose -f ops/compose/docker-compose.light.yml config --quiet
 **Действие владельца.**
 
 ```bash
+# локальный стенд (dev-light, без Temporal SDK — LiteTemporalBackend)
 docker build --network=host -f ops/compose/Dockerfile -t gd-integration-tools:light .
+# prod-образ: extra `workflow` (temporalio) обязателен (ADR-0442)
+docker build --network=host -f ops/compose/Dockerfile \
+  --build-arg UV_EXTRAS="dev-light sources-cdc workflow" \
+  -t gd-integration-tools:1.0.0 .
 docker image inspect gd-integration-tools:light --format '{{.Created}} {{.Id}}'
 docker compose -f ops/compose/docker-compose.light.yml up -d --force-recreate app workflow-worker
 ```
@@ -194,8 +199,8 @@ core напрямую), клиент — `core/clients/jupyter_hub.py`.
 
 | # | Пункт | Статус |
 |---|---|---|
-| 1 | `.env:92` | нужно действие (1 строка) |
-| 2 | Образ от 18.08 | нужно действие (пересборка + smoke) |
+| 1 | `.env:92` | ✅ **исправлено** (разделитель закомментирован, compose работает) |
+| 2 | Образ от 18.08 | ✅ **пересобран** (ADR-0442: extras через build-ARG; prod требует extra `workflow`) |
 | 3 | Prometheus-правила SLA | **код готов** (ADR-0440) |
 | 4 | `audit.write` в роутах | решение владельца (рекомендация: не объявлять до enforcement) |
 | 5 | `audit_clickhouse_enabled` | **код готов** (ADR-0441) |
