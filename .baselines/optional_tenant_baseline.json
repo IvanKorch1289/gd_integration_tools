@@ -500,7 +500,7 @@
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/infrastructure/workflow/pg_runner_internals/instance_store.py",
-    "line": 92,
+    "line": 107,
     "qualified_name": "WorkflowInstanceStore.list_pending"
   },
   {

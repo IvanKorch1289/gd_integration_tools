@@ -1,1 +1,4 @@
-{"errors": 30, "tool": "mypy"}
+{
+  "errors": 12,
+  "tool": "mypy"
+}
