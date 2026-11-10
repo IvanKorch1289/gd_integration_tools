@@ -32,6 +32,9 @@ schedule = "never"
 # (core/net/outbound_http.py → CapabilityGate.check(plugin, "net.outbound",
 # host)), поэтому scope — хост, а не полный URL.
 [[route.capabilities]]
+name = "net.inbound"
+scope = "http:/api/v1/*"
+[[route.capabilities]]
 name = "net.outbound"
 scope = "api.test"
 

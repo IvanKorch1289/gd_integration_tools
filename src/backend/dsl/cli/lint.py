@@ -30,12 +30,19 @@ import yaml
 
 from src.backend.dsl.builder import RouteBuilder
 
-__all__ = ("Finding", "lint_file", "lint_yaml", "main")
+__all__ = (
+    "Finding",
+    "PROCESSOR_CAPABILITIES",
+    "lint_file",
+    "lint_paths",
+    "lint_yaml",
+    "main",
+)
 
 
 # Маппинг processor → требуемые capabilities (subset из ADR-044).
 # Используется при наличии route.toml.
-_PROCESSOR_CAPABILITIES: dict[str, tuple[str, ...]] = {
+PROCESSOR_CAPABILITIES: dict[str, tuple[str, ...]] = {
     "http_call": ("net.outbound",),
     "soap_call": ("net.outbound",),
     "grpc_call": ("net.outbound",),
@@ -186,7 +193,7 @@ def _check_processor(ctx: _LintContext, spec: Any, line_hint: int) -> None:
                 )
 
     # capability check (если есть route.toml).
-    required = _PROCESSOR_CAPABILITIES.get(proc_name, ())
+    required = PROCESSOR_CAPABILITIES.get(proc_name, ())
     for cap in required:
         if ctx.declared_capabilities and cap not in ctx.declared_capabilities:
             _emit(

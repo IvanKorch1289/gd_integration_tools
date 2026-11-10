@@ -21,6 +21,9 @@ schedule = "never"
 # net.outbound — тот же host-glob, что объявляет plugin-владелец
 # (extensions/osint_agent/plugin.toml): web-search ходит в Perplexity API.
 [[route.capabilities]]
+name = "net.inbound"
+scope = "http:/api/v1/osint/*"
+[[route.capabilities]]
 name = "net.outbound"
 scope = "*.perplexity.ai"
 

@@ -39,6 +39,9 @@ schedule = "never"
 # http://localhost:8000 → host "localhost"); runtime-гейт сверяет scope
 # по hostname (core/net/outbound_http.py).
 [[route.capabilities]]
+name = "net.inbound"
+scope = "http:/api/v1/jupyter/*"
+[[route.capabilities]]
 name = "net.outbound"
 scope = "localhost"
 

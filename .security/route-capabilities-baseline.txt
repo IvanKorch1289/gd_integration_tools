@@ -6,7 +6,3 @@ plugin:core_admin
 plugin:dadata
 plugin:skb
 plugin:test_plug
-route:hello_route
-route:jupyter_hub_run
-route:osint_agent
-route:test_route_w1

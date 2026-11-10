@@ -119,30 +119,18 @@ def _step_types(spec_paths: list[Path]) -> set[str]:
 def _processor_capabilities(step_types: set[str]) -> set[str]:
     """Capability, требуемые процессорами указанных типов.
 
-    Берётся атрибут ``capabilities`` класса процессора из реестра
-    (``src.backend.dsl.registry.get_processor_registry``). Формат записи:
-    ``"<capability>:<scope-kind>"`` — имя capability до двоеточия.
+    Единый источник — :data:`src.backend.dsl.cli.lint.PROCESSOR_CAPABILITIES`
+    (тот же маппинг, что и в линтере DSL-YAML). ADR-0435: проверка стала
+    **строгой** — раньше несовпадение только печаталось как WARN.
     """
     if not step_types:
         return set()
-    try:
-        from src.backend.dsl.registry import get_processor_registry
+    from src.backend.dsl.cli.lint import PROCESSOR_CAPABILITIES
 
-        registry = get_processor_registry()
-    except Exception:  # noqa: BLE001 — гейт не должен падать из-за реестра
-        return set()
     required: set[str] = set()
     for step_type in step_types:
-        try:
-            entry = registry.get(step_type) if hasattr(registry, "get") else None
-        except Exception as exc:  # noqa: BLE001 — неизвестный тип не требует capability
-            _LOGGER.debug("processor %s не найден в реестре: %s", step_type, exc)
-            continue
-        cls = getattr(entry, "processor_class", entry)
-        for ref in getattr(cls, "capabilities", ()) or ():
-            name = str(ref).split(":", 1)[0].strip()
-            if name:
-                required.add(name)
+        for capability in PROCESSOR_CAPABILITIES.get(step_type, ()):
+            required.add(capability)
     return required
 
 
@@ -212,9 +200,15 @@ def main(argv: list[str] | None = None) -> int:
         required = _processor_capabilities(_step_types(specs))
         for cap in sorted(required):
             if cap.startswith(_RESOURCE_PREFIXES) and cap not in declared:
-                print(
-                    f"WARN: {name} ({path}): использует {cap}, но не декларирует "
-                    f"(строгая проверка отключена — ADR-0430 §3)"
+                if f"route:{name}" in baseline:
+                    print(
+                        f"WARN: роут {name} ({path}): использует {cap}, но не "
+                        f"декларирует (baseline — легаси)"
+                    )
+                    continue
+                violations.append(
+                    f"роут {name} ({path}): использует {cap}, но не декларирует "
+                    f"capability"
                 )
 
     for name, path, manifest in plugins:
