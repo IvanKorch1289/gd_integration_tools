@@ -51,6 +51,10 @@ class MqPublishProcessor(BaseProcessor):
         self._payload_property = payload_property
         self._out = _OutSpec(result_property=result_property)
 
+    def _resilience_name(self) -> str:
+        """Имя процессора для circuit breaker / bulkhead (ADR-0436)."""
+        return "mq_publish"
+
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`MqSink` и публикует ``payload``."""
@@ -67,7 +71,11 @@ class MqPublishProcessor(BaseProcessor):
             extra=dict(self._extra),
         )
         payload = _resolve_payload(exchange, self._payload_property)
-        result = await sink.send(payload)
+        from src.backend.dsl.engine.processors._resilience import guarded_external_call
+
+        result = await guarded_external_call(
+            self._resilience_name(), lambda: sink.send(payload)
+        )
         _store_result(exchange, self._out, {"ok": result.ok, **result.details})
 
     def to_spec(self) -> dict[str, Any]:
@@ -106,6 +114,10 @@ class WsPublishProcessor(BaseProcessor):
         self._payload_property = payload_property
         self._out = _OutSpec(result_property=result_property)
 
+    def _resilience_name(self) -> str:
+        """Имя процессора для circuit breaker / bulkhead (ADR-0436)."""
+        return "ws_publish"
+
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`WsSink` и публикует payload."""
@@ -121,7 +133,11 @@ class WsPublishProcessor(BaseProcessor):
             timeout=self._timeout,
         )
         payload = _resolve_payload(exchange, self._payload_property)
-        result = await sink.send(payload)
+        from src.backend.dsl.engine.processors._resilience import guarded_external_call
+
+        result = await guarded_external_call(
+            self._resilience_name(), lambda: sink.send(payload)
+        )
         _store_result(exchange, self._out, {"ok": result.ok, **result.details})
 
     def to_spec(self) -> dict[str, Any]:

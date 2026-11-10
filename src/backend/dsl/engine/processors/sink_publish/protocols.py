@@ -44,6 +44,10 @@ class GrpcCallProcessor(BaseProcessor):
         self._payload_property = payload_property
         self._out = _OutSpec(result_property=result_property)
 
+    def _resilience_name(self) -> str:
+        """Имя процессора для circuit breaker / bulkhead (ADR-0436)."""
+        return "grpc_call"
+
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`GrpcSink` и публикует ``payload``."""
@@ -60,7 +64,11 @@ class GrpcCallProcessor(BaseProcessor):
             timeout=self._timeout,
         )
         payload = _resolve_payload(exchange, self._payload_property)
-        result = await sink.send(payload)
+        from src.backend.dsl.engine.processors._resilience import guarded_external_call
+
+        result = await guarded_external_call(
+            self._resilience_name(), lambda: sink.send(payload)
+        )
         _store_result(exchange, self._out, {"ok": result.ok, **result.details})
 
     def to_spec(self) -> dict[str, Any]:
@@ -102,6 +110,10 @@ class SoapCallProcessor(BaseProcessor):
         self._payload_property = payload_property
         self._out = _OutSpec(result_property=result_property)
 
+    def _resilience_name(self) -> str:
+        """Имя процессора для circuit breaker / bulkhead (ADR-0436)."""
+        return "soap_call"
+
     @handle_processor_error
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Конструирует :class:`SoapSink` и вызывает SOAP-операцию."""
@@ -119,7 +131,11 @@ class SoapCallProcessor(BaseProcessor):
             timeout=self._timeout,
         )
         payload = _resolve_payload(exchange, self._payload_property)
-        result = await sink.send(payload)
+        from src.backend.dsl.engine.processors._resilience import guarded_external_call
+
+        result = await guarded_external_call(
+            self._resilience_name(), lambda: sink.send(payload)
+        )
         _store_result(exchange, self._out, {"ok": result.ok, **result.details})
 
     def to_spec(self) -> dict[str, Any]:

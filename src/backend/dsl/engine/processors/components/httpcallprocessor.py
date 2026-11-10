@@ -71,14 +71,19 @@ class HttpCallProcessor(BaseProcessor):
         if idempotency_key:
             headers.setdefault("Idempotency-Key", str(idempotency_key))
 
+        from src.backend.dsl.engine.processors._resilience import guarded_external_call
+
         try:
-            result = await client.make_request(
-                method=self._method,
-                url=url,
-                headers=headers or None,
-                json=json_body,
-                auth_token=self._auth_token,
-                total_timeout=self._timeout,
+            result = await guarded_external_call(
+                "http_call",
+                lambda: client.make_request(
+                    method=self._method,
+                    url=url,
+                    headers=headers or None,
+                    json=json_body,
+                    auth_token=self._auth_token,
+                    total_timeout=self._timeout,
+                ),
             )
 
             if self._result_property:
