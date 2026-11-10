@@ -11,7 +11,20 @@
 
 ## 1. Code review — findings и что сделано
 
-### 🔴 Блокеры — 0 (после правок)
+### 🔴 Блокеры — 1 (найден функциональной перепроверкой, исправлен)
+
+1. **`src/backend/entrypoints/api/v1/endpoints/webhook_scheduler.py:44` — ломалась
+   генерация OpenAPI-схемы всего приложения.** Module-level алиас
+   `_AdminCtx = Annotated[AuthContext, Depends(...)]` при
+   `from __future__ import annotations` остаётся forward-ref'ом → FastAPI/pydantic
+   не могут построить `TypeAdapter` → `GET /openapi.json` → **500**, схема не
+   генерируется ни для одного маршрута. Обнаружено функциональной проверкой
+   контейнера (`/openapi.json` → 500) и продублировано 8 упавшими тестами
+   (`test_openapi_completeness`, `test_openapi_error_responses`).
+   Исправлено: инлайн-`Depends` в сигнатуре (без forward-ref) → схема
+   строится (447 путей ✓).
+
+### 🟡 Важно — 4 (исправлены в этой волне)
 
 ### 🟡 Важно — 4 (все исправлены в этой волне)
 
@@ -100,6 +113,11 @@
   требуется admin/tenant-право), `POST /api/v1/auto/admin.get_config` → 401,
   `POST /graphql` → 401 (auto-schema поднялась: queries=8, mutations=16),
   `POST /api/v1/webhook/schedule` → 401.
+* **OpenAPI**: `GET /openapi.json` → 200, 447 путей; все новые эндпоинты
+  присутствуют в схеме (`/api/v1/admin/prompt-versions*`,
+  `/api/v1/admin/guardrails-metrics*`, `/api/v1/admin/pools/snapshot`,
+  `/api/v1/admin/processes/*`, `/api/v1/storage/{list,get,download}`,
+  `/api/v1/webhook{,s}/*`).
 * **Гейты**: ruff `src/` ✓ · mypy 12/30 ✓ (рэтчет) · docstrings 0 ✓ ·
   `check_route_capabilities` ✓ (4 легаси в baseline) · `check_workflow_specs` ✓ (22) ·
   `classify_object_authorization --strict` 0 unknown ✓ · secrets-check ✓ ·
