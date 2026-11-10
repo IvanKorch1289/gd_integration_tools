@@ -237,12 +237,24 @@ class WorkflowInstanceStore:
         """
         async with self._sm.create_session() as session:
             async with self._sm.transaction(session):
-                result = await session.execute(
+                current = await session.execute(
+                    select(WorkflowInstance.exchange_snapshot).where(
+                        WorkflowInstance.id == workflow_id
+                    )
+                )
+                row = current.first()
+                if row is None:
+                    return False
+                stored = row[0] if isinstance(row[0], dict) else {}
+                # Merge, а не replace: runner пишет в тот же снимок свои поля
+                # (ошибка/счётчики) — слепой replace затирал бы их.
+                merged = {**stored, **snapshot}
+                await session.execute(
                     update(WorkflowInstance)
                     .where(WorkflowInstance.id == workflow_id)
-                    .values(exchange_snapshot=snapshot)
+                    .values(exchange_snapshot=merged)
                 )
-                return bool(result.rowcount)
+                return True
 
     async def update_status(
         self,
