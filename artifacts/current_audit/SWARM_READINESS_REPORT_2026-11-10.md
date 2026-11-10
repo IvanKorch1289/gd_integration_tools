@@ -15,7 +15,7 @@
 ## 1. Резюме
 
 **Вердикт: ГОТОВ К ПРОДУ С ОГОВОРКАМИ.** Кодовый контур прод-готов
-(0 failed / 0 errors на 24 057 тестах, все блокирующие гейты зелёные). Оговорки
+(0 failed / 0 errors на 24 060 тестах, все блокирующие гейты зелёные). Оговорки
 не только внешние: **5 кодовых долгов** (G3 — 34 устаревшие версии, G5(a) —
 proto v2, G8 — хвост docs, G10 — navigation debt, G12 — capability-контур
 процессоров не enforced, 44 декоративные декларации) **и 6 инфраструктурных
@@ -24,7 +24,7 @@ ClickHouse в проде, OpenWebUI/JupyterHub).
 
 | Показатель | Значение (2026-11-10) | Источник |
 |---|---|---|
-| Тесты | **24 057 passed**, 180 skipped, 52 xfailed, 45 xpassed, **0 failed / 0 errors** (44:24) | `.run/wave13-logs/reg_final_31b.txt` |
+| Тесты | **24 060 passed**, 180 skipped, 51 xfailed, 46 xpassed, **0 failed / 0 errors** (46:23) | `.run/wave13-logs/reg_final_32c.txt` |
 | Модулей в `src/` | 2 587 `.py` | `find src -name '*.py'` |
 | Тест-файлов | 2 287 | `find tests -name 'test_*.py'` |
 | ADR | 403 нумерованных (409 .md всего; +42 за ноябрь) | `docs/adr/` |
@@ -188,11 +188,26 @@ ClickHouse в проде, OpenWebUI/JupyterHub).
 
 ---
 
+## 5б. Итог волны 32 (2026-11-10)
+
+* **Регрессия:** 24 060 passed / 0 failed / 0 errors (46:23).
+* **Гейты:** ruff `src tests` 0 · `ruff format --check` 0 · mypy 12≤12 ·
+  ownership 0 unknown · route-capabilities OK · workflow-specs OK (22) ·
+  uv-audit 0 новых · docstrings 0 · Helm chart рендерит 16 ресурсов.
+* **Контейнер:** app/worker/grpc — healthy на текущем образе; `/health`,
+  `/ready`, `/healthz`, `/livez`, `/openapi.json` → 200; 4 workflow-декларации;
+  0 pool ping FAIL; 0 Vault-ошибок; 0 трейсбэков.
+* **Кодом закрыто за волны 31–32:** 5 красных CI-гейтов, Helm-рендер,
+  OAuthLib-advisory, runtime-контур контейнера, allowlist по snippet,
+  `EXTENSIONS_DIR`/extra `workflow`, `/healthz`, Vault-refresher, pool-пинги.
+* **Отложено с обоснованием:** ORM fail-closed без tenant (ADR-0448 Proposed;
+  ломал 42 внутренних теста) → owner-пункт 7б.
+
 ## 6. Как мерить прогресс (метрики недели)
 
 | Метрика | Сейчас | Цель | Источник |
 |---|---|---|---|
-| Тесты, зелёные | 24 057 | ≥25 000 | `.run/wave13-logs/reg_final_*.txt` |
+| Тесты, зелёные | 24 060 | ≥25 000 | `.run/wave13-logs/reg_final_*.txt` |
 | setup-ERROR / order-dependent падения | 0 / 0 | 0 / 0 | тот же лог + гейт порядка |
 | Красные блокирующие гейты | 0 | 0 | `lint.yml`, `type.yml`, `test.yml` |
 | Coverage (baseline) | 74 % | ≥78 % | `.baselines/coverage.json` |
