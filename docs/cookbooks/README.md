@@ -17,6 +17,7 @@ step-by-step instructions, verification, troubleshooting.
 | 4 | [CircuitBreaker deployment (per-route resilience)](04-circuit-breaker-middleware.md) | S81 | ✅ ready |
 | 5 | [LiteLLM Gateway в PoolHealthMonitor](05-pool-health-monitoring.md) | S80 | ✅ ready |
 | 6 | [DSN Driver Availability (MSSQL/MySQL/DB2/Oracle)](06-dsn-driver-availability.md) | S104 W3 | ✅ ready |
+| 7 | [Как написать workflow на YAML](07-write-workflow-yaml.md) | ADR-0424/0433/0435 | ✅ ready |
 
 ## Cookbook structure (template)
 
