@@ -42,8 +42,10 @@
 
 | Гейт | Результат |
 |---|---|
-| `tests/unit` (волна 29, полный) | **24050 passed, 180 skipped, 52 xfailed, 45 xpassed, 1 failed → 0 после фикса README cookbooks** (43:18; лог `.run/wave13-logs/reg_final_29.txt`) |
+| `tests/unit` (волна 29, полный) | **24051 passed, 180 skipped, 51 xfailed, 46 xpassed, 0 failed, 0 errors** (43:40; лог `.run/wave13-logs/reg_final_29b.txt`) |
 | ruff `src/` | All checks passed |
+| mypy-бюджет | 12 ошибок при бюджете 30 |
+| `classify_object_authorization.py --strict` | 0 unknown из 119 |
 | `check_route_capabilities.py` | OK (7 роутов, 12 плагинов, 4 легаси в baseline) |
 | `check_workflow_specs.py` | OK (22 спе-файла) |
 | `check_docstrings.py src --max-allowed 0` | 0 missing |
