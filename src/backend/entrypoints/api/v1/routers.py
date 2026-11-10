@@ -75,6 +75,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_resilience_profile import (
         router as admin_resilience_profile_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_runtime_metrics import (
+        router as admin_runtime_metrics_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_scheduler_dlq import (
         router as admin_scheduler_dlq_router,
     )
@@ -262,6 +265,10 @@ def get_v1_routers() -> APIRouter:
     # ADR-0437: версии промптов (список/активация/A-B-сравнение).
     api_router_v1.include_router(
         admin_prompts_router, prefix="/admin", tags=["Admin · Prompts"]
+    )
+    # ADR-0439: runtime-метрики (пулы соединений, процессы workflow).
+    api_router_v1.include_router(
+        admin_runtime_metrics_router, prefix="/admin", tags=["Admin · Runtime"]
     )
     # ADR-0432: планировщик webhook'ов (был сервис без HTTP-поверхности).
     api_router_v1.include_router(webhook_scheduler_router)

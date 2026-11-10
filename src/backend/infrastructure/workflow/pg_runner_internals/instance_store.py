@@ -10,7 +10,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, or_, select, text, update
+from sqlalchemy import and_, func, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.core.domain.models.workflow_event import WorkflowEventType
@@ -88,6 +88,21 @@ class WorkflowInstanceStore:
             result = await session.execute(stmt)
             obj = result.scalar_one_or_none()
             return WorkflowInstanceRow.from_orm(obj) if obj is not None else None
+
+    async def count_by_status(self) -> dict[str, int]:
+        """Количество инстансов workflow'а по статусам (ADR-0439).
+
+        Returns:
+            Мапа ``{status: count}`` (пустой мап, если инстансов нет).
+
+        """
+        async with self._sm.create_session() as session:
+            rows = await session.execute(
+                select(WorkflowInstance.status, func.count()).group_by(
+                    WorkflowInstance.status
+                )
+            )
+            return {str(status): int(count) for status, count in rows.all()}
 
     async def list_pending(
         self, limit: int = 100, tenant_id: str | None = None
