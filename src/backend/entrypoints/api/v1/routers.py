@@ -66,6 +66,9 @@ def get_v1_routers() -> APIRouter:
     from src.backend.entrypoints.api.v1.endpoints.admin_plugins import (
         router as admin_plugins_router,
     )
+    from src.backend.entrypoints.api.v1.endpoints.admin_prompts import (
+        router as admin_prompts_router,
+    )
     from src.backend.entrypoints.api.v1.endpoints.admin_rag import (
         router as admin_rag_router,
     )
@@ -255,6 +258,10 @@ def get_v1_routers() -> APIRouter:
     # ADR-0432: метрики guardrails (были в UI, но эндпоинта не было).
     api_router_v1.include_router(
         admin_guardrails_router, prefix="/admin", tags=["Admin · Guardrails"]
+    )
+    # ADR-0437: версии промптов (список/активация/A-B-сравнение).
+    api_router_v1.include_router(
+        admin_prompts_router, prefix="/admin", tags=["Admin · Prompts"]
     )
     # ADR-0432: планировщик webhook'ов (был сервис без HTTP-поверхности).
     api_router_v1.include_router(webhook_scheduler_router)
