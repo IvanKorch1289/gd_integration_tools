@@ -66,13 +66,11 @@ async def processes_active(
     return [
         {
             "id": str(row.id),
+            "workflow_name": row.workflow_name,
+            "route_id": row.route_id,
             "status": str(row.status),
-            "workflow_id": str(row.workflow_id)
-            if getattr(row, "workflow_id", None)
-            else None,
-            "created_at": row.created_at.isoformat()
-            if getattr(row, "created_at", None)
-            else None,
+            "tenant_id": row.tenant_id,
+            "created_at": row.created_at.isoformat() if row.created_at else None,
         }
         for row in rows
     ]
