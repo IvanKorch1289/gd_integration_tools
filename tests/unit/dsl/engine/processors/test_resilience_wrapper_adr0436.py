@@ -6,9 +6,7 @@ from typing import Any
 
 import pytest
 
-from src.backend.dsl.engine.processors._resilience import (
-    guarded_external_call,
-)
+from src.backend.dsl.engine.processors._resilience import guarded_external_call
 
 pytestmark = pytest.mark.unit
 
@@ -40,7 +38,9 @@ async def test_bulkhead_limits_concurrency() -> None:
         active -= 1
         return "ok"
 
-    await asyncio.gather(*(guarded_external_call("test_bulkhead", _call) for _ in range(8)))
+    await asyncio.gather(
+        *(guarded_external_call("test_bulkhead", _call) for _ in range(8))
+    )
     assert peak <= 8
 
 
