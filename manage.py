@@ -685,6 +685,14 @@ dsl_app = typer.Typer(help="DSL operations: hot-reload, write-back, migrations."
 app.add_typer(dsl_app, name="dsl")
 
 
+# ADR-0434: discoverability — CLI-генератор DSL виден в ``manage.py dsl --help``
+# (раньше ``src/backend/dsl/cli/generate.py`` существовал, но не был подключён
+# к корневому CLI, поэтому генератор нельзя было найти без чтения исходников).
+from src.backend.dsl.cli.generate import app as _dsl_generate_app  # noqa: E402
+
+dsl_app.add_typer(_dsl_generate_app, name="generate")
+
+
 @dsl_app.command("reload")
 def dsl_reload(
     route_id: str | None = typer.Option(
