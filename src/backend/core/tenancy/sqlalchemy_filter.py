@@ -821,6 +821,19 @@ def apply_tenant_filter(_target: Any = None) -> None:
             return
 
         if not tenant_id:
+            # ADR-0448: без tenant-контекста запрос к tenant-aware сущностям
+            # НЕДОПУСТИМ. Раньше ORM-ветка выполняла SELECT/UPDATE/DELETE без
+            # tenant-предиката (RLS есть только в PostgreSQL — на SQLite/
+            # Oracle/MySQL защиты не было) → чтение/запись чужих tenant'ов.
+            # Системный tenant и внешний контур исключены выше
+            # (is_main_scope / явный tenant_id).
+            if _tenant_aware_entities(stmt):
+                raise TenantIsolationError(
+                    message=(
+                        "ORM-запрос к tenant-aware сущности без tenant-контекста "
+                        "отклонён (fail-closed, ADR-0448)"
+                    )
+                )
             return
 
         # D-4: составные конструкции (UNION/CTE) фильтруются явно —
