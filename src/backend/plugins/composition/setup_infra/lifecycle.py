@@ -470,6 +470,18 @@ async def _stop_config_hot_reload() -> None:
     app_logger.info("Config hot-reload stopped")
 
 
+def _vault_enabled() -> bool:
+    """Включён ли Vault как источник секретов (ADR-0446).
+
+    Returns:
+        ``True`` если ``vault.enabled`` — рефрешер запускается.
+
+    """
+    from src.backend.core.config.vault import vault_settings
+
+    return bool(vault_settings.enabled)
+
+
 async def _start_vault_secret_refresher() -> None:
     """A2 (ADR-0385): запустить фоновое обновление секретов из Vault.
 
@@ -481,14 +493,13 @@ async def _start_vault_secret_refresher() -> None:
     Vault — опциональный источник секретов: сбой старта логируется и
     деградирует, но не роняет приложение.
     """
-    from src.backend.core.config.vault import vault_settings
     from src.backend.infrastructure.application.vault_refresher import (
         get_vault_refresher,
     )
 
     # ADR-0446: при выключенном Vault (dev_light) рефрешер всё равно
     # стартовал и каждые ~2,5 мин писал error-уровневые «Vault недоступен».
-    if not vault_settings.enabled:
+    if not _vault_enabled():
         app_logger.info(
             "Vault выключен (vault.enabled=false) — secret refresher не запускается"
         )

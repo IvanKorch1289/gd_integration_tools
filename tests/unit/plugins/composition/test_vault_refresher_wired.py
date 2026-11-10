@@ -54,11 +54,29 @@ class TestVaultRefresherWired:
 
     @pytest.mark.asyncio
     async def test_start_invokes_refresher_start(self) -> None:
-        """Стартовая функция вызывает ``start()`` рефрешера."""
+        """Стартовая функция вызывает ``start()`` рефрешера (Vault включён)."""
         refresher = AsyncMock()
-        with patch(f"{_REFRESHER_PATH}.get_vault_refresher", return_value=refresher):
+        with (
+            patch(f"{_REFRESHER_PATH}.get_vault_refresher", return_value=refresher),
+            patch.object(lifecycle, "_vault_enabled", return_value=True, create=True),
+        ):
             await lifecycle._start_vault_secret_refresher()
         refresher.start.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_start_skipped_when_vault_disabled(self) -> None:
+        """При выключенном Vault рефрешер не стартует (ADR-0446).
+
+        Раньше он стартовал всегда и каждые ~2,5 мин писал error-уровневые
+        «Vault недоступен» (в dev_light Vault выключен по умолчанию).
+        """
+        refresher = AsyncMock()
+        with (
+            patch(f"{_REFRESHER_PATH}.get_vault_refresher", return_value=refresher),
+            patch.object(lifecycle, "_vault_enabled", return_value=False, create=True),
+        ):
+            await lifecycle._start_vault_secret_refresher()
+        refresher.start.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_stop_invokes_refresher_stop(self) -> None:
