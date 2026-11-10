@@ -55,6 +55,10 @@ EXIT_ERROR = 2
 #: ``.baselines/coverage.json`` (ADR-0443: single source of truth — CI не должен
 #: задавать ``--threshold`` явно, иначе гейт краснеет на рассинхроне).
 _DEFAULT_THRESHOLD = 70.0
+
+#: Целевой порог рэтчета (план проекта): baseline тянется к нему по мере
+#: перемеров, а не «одномоментно» (ADR-0443).
+_TARGET_THRESHOLD = 75.0
 _BASELINE_DROP_TOLERANCE = 0.5  # допустимое снижение от baseline (в %)
 
 app = typer.Typer(
@@ -305,7 +309,7 @@ def main(
         baseline_data["target_threshold"] = _DEFAULT_THRESHOLD
         baseline_data.setdefault("notes", [])
         if current < _DEFAULT_THRESHOLD:
-            todo = f"raise threshold from {threshold:.0f} to {_DEFAULT_THRESHOLD:.0f}"
+            todo = f"raise threshold from {threshold:.0f} to {_TARGET_THRESHOLD:.0f}"
             if todo not in baseline_data.get("next_wave_todo", []):
                 baseline_data.setdefault("next_wave_todo", []).append(todo)
         _save_baseline(baseline_path, baseline_data)

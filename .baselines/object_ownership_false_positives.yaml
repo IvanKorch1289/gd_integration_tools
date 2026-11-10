@@ -102,7 +102,7 @@ allowlist:
     review_date: "2027-04-29"
     added_at: "2026-10-29"
   - file: src/backend/infrastructure/cdc/poll_backend.py
-    line: 338
+    line: 336
     reason: >
       ``row.get(pk_column)`` в polling-стратегии CDC — извлечение значения
       первичного ключа из строки результата запроса (RowMapping/dict),
@@ -113,7 +113,7 @@ allowlist:
     review_date: "2027-04-28"
     added_at: "2026-10-29"
   - file: src/backend/infrastructure/clients/external/cdc/strategies.py
-    line: 398
+    line: 394
     reason: >
       ``row.get(pk_column)`` в polling-стратегии CDC — то же, что и в
       poll_backend.py:338: чтение PK-колонки из уже полученной строки для

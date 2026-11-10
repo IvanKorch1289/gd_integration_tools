@@ -115,7 +115,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_storage_fallback_counter.labels(chain=chain, operation=operation, severity='write' if is_write else 'read')",
     "label": "chain",
-    "line": 212,
+    "line": 210,
     "reason": "label 'chain' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -123,7 +123,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_storage_fallback_counter.labels(chain=chain, operation=operation, severity='write' if is_write else 'read')",
     "label": "severity",
-    "line": 212,
+    "line": 210,
     "reason": "label 'severity' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -131,7 +131,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_storage_quota_violation_counter.labels(plugin=plugin)",
     "label": "plugin",
-    "line": 232,
+    "line": 228,
     "reason": "label 'plugin' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -139,7 +139,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_pipeline_counter.labels(route_id=route_id, status=status)",
     "label": "route_id",
-    "line": 271,
+    "line": 267,
     "reason": "label 'route_id' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -147,7 +147,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_cache_hits_counter.labels(backend=backend, key_prefix=key_prefix)",
     "label": "key_prefix",
-    "line": 281,
+    "line": 277,
     "reason": "label 'key_prefix' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -155,7 +155,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_cache_misses_counter.labels(backend=backend, key_prefix=key_prefix)",
     "label": "key_prefix",
-    "line": 286,
+    "line": 282,
     "reason": "label 'key_prefix' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -163,7 +163,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_deadline_budget_remaining_histogram.labels(path_prefix=path_prefix, outcome=outcome)",
     "label": "path_prefix",
-    "line": 333,
+    "line": 329,
     "reason": "label 'path_prefix' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -171,7 +171,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_deadline_budget_remaining_histogram.labels(path_prefix=path_prefix, outcome=outcome)",
     "label": "outcome",
-    "line": 333,
+    "line": 329,
     "reason": "label 'outcome' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -179,7 +179,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_deadline_budget_expired_at_entry_counter.labels(path_prefix=path_prefix)",
     "label": "path_prefix",
-    "line": 340,
+    "line": 336,
     "reason": "label 'path_prefix' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -187,7 +187,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_express_sent_counter.labels(bot=bot, status=status)",
     "label": "bot",
-    "line": 345,
+    "line": 341,
     "reason": "label 'bot' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -195,7 +195,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_express_received_counter.labels(bot=bot, command=command)",
     "label": "bot",
-    "line": 350,
+    "line": 346,
     "reason": "label 'bot' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -203,7 +203,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_express_received_counter.labels(bot=bot, command=command)",
     "label": "command",
-    "line": 350,
+    "line": 346,
     "reason": "label 'command' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -211,7 +211,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_express_delivery_histogram.labels(bot=bot)",
     "label": "bot",
-    "line": 355,
+    "line": 351,
     "reason": "label 'bot' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -219,7 +219,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_ai_tokens_counter.labels(provider=provider, model=model, kind=kind)",
     "label": "provider",
-    "line": 368,
+    "line": 364,
     "reason": "label 'provider' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -227,7 +227,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_ai_tokens_counter.labels(provider=provider, model=model, kind=kind)",
     "label": "model",
-    "line": 368,
+    "line": 364,
     "reason": "label 'model' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -235,7 +235,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_ai_semantic_hits_counter.labels(model=model)",
     "label": "model",
-    "line": 373,
+    "line": 369,
     "reason": "label 'model' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -243,7 +243,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_ai_semantic_misses_counter.labels(model=model)",
     "label": "model",
-    "line": 378,
+    "line": 374,
     "reason": "label 'model' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -251,7 +251,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_queue_lag_gauge.labels(queue=queue, consumer_group=consumer_group)",
     "label": "queue",
-    "line": 398,
+    "line": 394,
     "reason": "label 'queue' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -259,7 +259,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_queue_lag_gauge.labels(queue=queue, consumer_group=consumer_group)",
     "label": "consumer_group",
-    "line": 398,
+    "line": 394,
     "reason": "label 'consumer_group' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -267,7 +267,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_queue_dlq_gauge.labels(queue=queue)",
     "label": "queue",
-    "line": 403,
+    "line": 399,
     "reason": "label 'queue' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -275,7 +275,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_processor_histogram.labels(route_id=context.route_id or 'unknown', processor_type=processor_name)",
     "label": "route_id",
-    "line": 264,
+    "line": 260,
     "reason": "label 'route_id' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -283,7 +283,7 @@
     "file": "src/backend/infrastructure/observability/metrics.py",
     "full_call": "_processor_histogram.labels(route_id=context.route_id or 'unknown', processor_type=processor_name)",
     "label": "processor_type",
-    "line": 264,
+    "line": 260,
     "reason": "label 'processor_type' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },

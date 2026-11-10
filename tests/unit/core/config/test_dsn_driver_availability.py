@@ -260,6 +260,8 @@ class TestDeclarationRegistry:
             encoding="utf-8"
         )
         extra = DB_DRIVER_DECLARATIONS["psycopg"].extra
-        assert f"--extra {extra}" in dockerfile, (
-            f"Dockerfile должен ставить extra '{extra}' (psycopg)"
-        )
+        # ADR-0442: набор extras задаётся build-ARG'ом UV_EXTRAS, поэтому
+        # проверяем и дефолт ARG, и (для совместимости) явный --extra.
+        assert f"--extra {extra}" in dockerfile or (
+            "UV_EXTRAS" in dockerfile and extra in dockerfile
+        ), f"Dockerfile должен ставить extra '{extra}' (psycopg)"
