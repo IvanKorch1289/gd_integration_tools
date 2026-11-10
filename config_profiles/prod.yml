@@ -118,6 +118,12 @@ features:
   # Это явная политика, а не случайность (ADR-0393, «Политика»).
   dsl_capability_gate_enabled: true
   dsl_capability_core_baseline_enabled: false
+  # ADR-0441: ClickHouse-трейл audit-событий в prod — ЯВНАЯ настройка.
+  # Раньше флаг оставался дефолтом (True) — значение не было видно в
+  # профиле prod, и отключить трейл без правки кода base.yml было нельзя.
+  # Требование к rollout: ClickHouse доступен из контейнера app
+  # (сервис clickhouse в docker-compose.prod.yml / внешний DSN в проде).
+  audit_clickhouse_enabled: true
 
 
 # B-12 fix (cycle 37) + cycle 38 Task #1: production-enforcement policy
