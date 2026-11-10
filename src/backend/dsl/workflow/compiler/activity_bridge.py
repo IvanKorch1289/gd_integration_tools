@@ -26,6 +26,7 @@ import importlib
 import json
 from collections.abc import Awaitable, Callable
 from typing import Any, Literal
+from uuid import UUID
 
 from src.backend.core.logging import get_logger
 from src.backend.core.security.activity_capability_guard import (
@@ -225,11 +226,18 @@ async def _workflow_checkpoint_put_activity(payload: dict[str, Any]) -> dict[str
 
     """
     checkpoint_id = str(payload.get("checkpoint_id") or "")
+    workflow_id = str(payload.get("workflow_id") or "")
     if not checkpoint_id:
         return {
             "persisted": False,
             "checkpoint_id": "",
             "reason": "checkpoint_id отсутствует",
+        }
+    if not workflow_id:
+        return {
+            "persisted": False,
+            "checkpoint_id": checkpoint_id,
+            "reason": "workflow_id отсутствует в payload",
         }
     try:
         from src.backend.core.di.providers.workflow import (
@@ -237,17 +245,18 @@ async def _workflow_checkpoint_put_activity(payload: dict[str, Any]) -> dict[str
         )
 
         store = get_workflow_state_store_provider()
-        save = getattr(store, "save_checkpoint", None)
-        if callable(save):
-            await save(checkpoint_id, payload.get("snapshot") or {})
+        saved = await store.update_snapshot(
+            UUID(workflow_id), payload.get("snapshot") or {}
+        )
+        if saved:
             return {"persisted": True, "checkpoint_id": checkpoint_id, "reason": None}
         return {
             "persisted": False,
             "checkpoint_id": checkpoint_id,
-            "reason": "хранилище checkpoint'ов не поддерживает save_checkpoint",
+            "reason": f"инстанс workflow {workflow_id} не найден",
         }
     except Exception as exc:  # noqa: BLE001 — checkpoint best-effort
-        _logger.warning("workflow.checkpoint.put unavailable: %s", exc)
+        _logger.warning("workflow.checkpoint.put failed: %s", exc)
         return {"persisted": False, "checkpoint_id": checkpoint_id, "reason": str(exc)}
 
 

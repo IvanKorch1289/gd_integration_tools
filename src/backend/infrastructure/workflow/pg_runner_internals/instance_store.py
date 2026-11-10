@@ -202,6 +202,33 @@ class WorkflowInstanceStore:
                     .values(locked_by=None, locked_until=None)
                 )
 
+    async def update_snapshot(
+        self, workflow_id: UUID, snapshot: dict[str, Any]
+    ) -> bool:
+        """Сохранить снимок состояния инстанса (ADR-0435 — checkpoint'ы).
+
+        Используется activity'ю ``workflow.checkpoint.put``: явный checkpoint
+        workflow сохраняется в колонке ``exchange_snapshot``, чтобы после
+        рестарта/continue_as_new можно было продолжить с последнего
+        известного состояния.
+
+        Args:
+            workflow_id: UUID инстанса workflow'а.
+            snapshot: Снимок состояния (произвольный mapping).
+
+        Returns:
+            ``True`` если инстанс найден и обновлён, ``False`` — если нет.
+
+        """
+        async with self._sm.create_session() as session:
+            async with self._sm.transaction(session):
+                result = await session.execute(
+                    update(WorkflowInstance)
+                    .where(WorkflowInstance.id == workflow_id)
+                    .values(exchange_snapshot=snapshot)
+                )
+                return bool(result.rowcount)
+
     async def update_status(
         self,
         workflow_id: UUID,
