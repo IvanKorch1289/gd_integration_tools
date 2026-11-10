@@ -136,6 +136,30 @@ ClickHouse в проде, OpenWebUI/JupyterHub).
 
 ---
 
+## 4б. Независимая проверка (4 агента) и найденное
+
+Отчёт перепроверен независимыми агентами (гейты, реестры, security,
+функциональность). Их находки и исправления:
+
+| Находка (агент) | Severity | Исправлено |
+|---|---|---|
+| В образе 0 workflow-деклараций: `EXTENSIONS_DIR` искал `/app/src/extensions`, а расширения лежат в `/app/extensions`; плюс в образе не было extra `workflow` → компилятор падал («temporalio SDK not installed») | 🔴 high | ✅ `EXTENSIONS_DIR=/app/extensions` в compose (app+worker), extra `workflow` в дефолте `UV_EXTRAS` (ADR-0442/0446) → **4 декларации в контейнере** |
+| Helm-chart **не рендерился вообще**: Go-template директива `{{- if ... }}` внутри YAML-комментария в `servicemonitor.yaml` | 🔴 high | ✅ директива убрана из комментария, chart рендерит 16 ресурсов; CI-шаг `helm lint`/`helm template` (ADR-0447) |
+| `uv audit` красный: новая advisory `GHSA-3jp2-3mrg-2vxc` (oauthlib 4.0.0 → 4.0.1, прямая зависимость) | 🟠 high | ✅ `oauthlib>=4.0.1`, lock обновлён, гейт зелёный (47 advisory — все в allowlist, 0 новых) |
+| ORM-ветка tenant-изоляции **не fail-closed**: без tenant-контекста SELECT/UPDATE/DELETE шли без предиката (RLS только в PostgreSQL) | 🟠 medium→high | ✅ `TenantIsolationError` для tenant-aware сущностей без tenant'а (ADR-0448) |
+| `/healthz` (k8s livenessProbe-алиас) отдавал 401 → проба не проходит | 🟡 medium | ✅ `/healthz` в `routes_without_api_key` (ADR-0446) |
+| 4 pool ping FAIL (`JupyterHubClient`/`AntivirusService`/`VaultSecretsBackend` создавались без обязательных аргументов) | 🟡 medium | ✅ конструкторы получают реальные зависимости → **0 FAIL** |
+| Vault-refresher стартовал при `vault.enabled=false` → ~100 error-логов «Vault недоступен» | 🟡 medium | ✅ ранний выход по флагу → **0 ошибок** |
+| `gd-grpc-light` работал на образе от 18.08 | 🟡 medium | ✅ пересоздан на текущем образе |
+| Числа в отчёте не сходились (роутов 8 вместо 7, ADR, «прежний долг» слоёв, 6/7 owner- и инфра-пунктов, статус G11) | — | ✅ исправлено по факту; слои: baseline переопределён (37 долг + 4 контракт, ADR-0348), CI-шаг non-strict |
+| `Finding.to_dict` без docstring; `make/quality.mk` звал системный `python3` вместо `$(UV_RUN) python` | 🟢 nit | ✅ исправлено (гейт мог «зеленеть» за счёт пропускаемых файлов) |
+| Allowlist object-ownership привязан к строке → рефакторинг ронял strict-гейт | 🟡 medium | ✅ fallback по `(file, snippet)` (ADR-0445) |
+
+Функциональная перепроверка контейнера после правок: `/health` 200,
+`/ready` 200, `/healthz` 200, `/livez` 200, `/openapi.json` 200 (447 путей),
+14 новых эндпоинтов → 401 без прав, `/graphql` и `/api/v1/auto/…` → 401,
+**workflow-декларации 4**, **pool ping FAIL 0**, **Vault-ошибок 0**, трейсбэков нет.
+
 ## 5. Дорожная карта развития
 
 ### Горизонт 1 — «не дать regressions» (1–2 недели)
