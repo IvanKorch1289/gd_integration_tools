@@ -209,4 +209,4 @@ core напрямую), клиент — `core/clients/jupyter_hub.py`.
 | 8 | OpenWebUI | код готов, нужен сервис |
 | 9 | `replica_dsn` | решение владельца (null допустим) |
 | 10 | BYPASSRLS | код готов, нужна роль БД |
-| 11 | `jupyter.hub` | **код готов** (ADR-0415) |
+| 11 | `jupyter.hub` | **код готов** (ADR-0415), **нужно действие**: развернуть JupyterHub |
