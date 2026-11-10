@@ -718,13 +718,7 @@ def test_helm_values_have_secrets_section() -> None:
 
 def _helm_templates_dir() -> Path:
     """Каталог шаблонов Helm-chart'а."""
-    return (
-        PROJECT_ROOT
-        / "deploy"
-        / "helm"
-        / "gd-integration-tools"
-        / "templates"
-    )
+    return PROJECT_ROOT / "deploy" / "helm" / "gd-integration-tools" / "templates"
 
 
 def test_helm_templates_have_no_template_directives_in_yaml_comments() -> None:
