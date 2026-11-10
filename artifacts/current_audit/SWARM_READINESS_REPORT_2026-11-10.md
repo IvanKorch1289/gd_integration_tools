@@ -14,19 +14,22 @@
 
 ## 1. Резюме
 
-**Вердикт: ГОТОВ К ПРОДУ С ОГОВОРКАМИ** — кодовая часть прод-контура
-закрыта (0 failed / 0 errors на 24 055 тестах, все блокирующие гейты зелёные),
-оставшиеся позиции требуют **внешних условий** (CI-runner, prod-стенд,
-брокеры, ключи/роли БД), а не кода.
+**Вердикт: ГОТОВ К ПРОДУ С ОГОВОРКАМИ.** Кодовый контур прод-готов
+(0 failed / 0 errors на 24 057 тестах, все блокирующие гейты зелёные). Оговорки
+не только внешние: **5 кодовых долгов** (G3 — 34 устаревшие версии, G5(a) —
+proto v2, G8 — хвост docs, G10 — navigation debt, G12 — capability-контур
+процессоров не enforced, 44 декоративные декларации) **и 6 инфраструктурных
+действий** (CI-runner, prod-стенд/брокеры, keypair+JWKS, роль BYPASSRLS,
+ClickHouse в проде, OpenWebUI/JupyterHub).
 
 | Показатель | Значение (2026-11-10) | Источник |
 |---|---|---|
-| Тесты | **24 055 passed**, 180 skipped, 51 xfailed, 46 xpassed, **0 failed / 0 errors** | `.run/wave13-logs/reg_final_31.txt` |
+| Тесты | **24 057 passed**, 180 skipped, 52 xfailed, 45 xpassed, **0 failed / 0 errors** (44:24) | `.run/wave13-logs/reg_final_31b.txt` |
 | Модулей в `src/` | 2 587 `.py` | `find src -name '*.py'` |
 | Тест-файлов | 2 287 | `find tests -name 'test_*.py'` |
-| ADR | 403 (+42 за ноябрь) | `docs/adr/` |
+| ADR | 403 нумерованных (409 .md всего; +42 за ноябрь) | `docs/adr/` |
 | Расширений (бизнес-логика) | 10 | `extensions/` |
-| Роутов / шаблонов workflow | 8 / 18 | `routes/`, `src/backend/dsl/workflow/templates/` |
+| Роутов / шаблонов workflow | 7 / 18 | `routes/*/route.toml` (7), `src/backend/dsl/workflow/templates/` |
 | Runtime-actions | 124 (README и ARCHITECTURE синхронизированы) | `register_action_handlers()` |
 | Граф кода | 135 237 nodes / 186 388 edges / 10 462 communities | `graphify-out/graph.json` |
 | Коммитов за 7 дней | 53 (22 docs / 13 fix / 12 feat) | `git log` |
@@ -45,8 +48,8 @@
 
 | Домен | Оценка | Доказательства | Остаток |
 |---|---|---|---|
-| **Ядро и слои** | 🟢 готово | `check_layers --strict` — 41 (прежний долг, без регресса); `core/` не тянет `src/` | 41 межслойных нарушения — долг (ADR-0348) |
-| **Tenant-изоляция** | 🟢 закрыто | ADR-0383/0417/0428: fail-closed без tenant, UNION/CTE-фильтр, RLS-политика | сверка cross-tenant в прод-тесте (инфра) |
+| **Ядро и слои** | 🟡 готово с долгом | `check_layers --strict` — 41 (baseline переопределён: 37 долг + 4 контракт, ADR-0348; CI-шаг работает в non-strict → зелёный); `core/` не тянет `src/` | 41 межслойное нарушение — долг, цель 0 |
+| **Tenant-изоляция** | 🟢 закрыто | ADR-0383/0417/0428/0448: raw SQL и **ORM-ветка** fail-closed без tenant, UNION/CTE-фильтр, RLS-политика | сверка cross-tenant в прод-тесте (инфра) |
 | **Capability-контур** | 🟡 частично | ADR-0430 (caller-aware), гейт `check_route_capabilities` блокирует новые роуты | 44 декларации числятся декоративными (`check_decorative_capabilities` allowlist) — **critical** |
 | **Workflow-движок** | 🟢 готово | ADR-0394/0396/0403/0408/0431/0433/0435: переходы, компенсации, SLA/DLQ, идемпотентность, checkpoint | 2 activity (`memory.reflect`, `workflow.checkpoint.put`) реализованы; персистентность checkpoint'ов — merge в снимок |
 | **DSL и DX** | 🟢 готово | 18 шаблонов, cookbook 07, линтер `*.workflow.yaml`, единый линтер DSL-YAML, `dsl generate` в help | cookbook по workflow-Temporal (после 2 недель трафика) |
@@ -54,8 +57,8 @@
 | **Портал (Streamlit)** | 🟢 живой | 39 вызовов приведены к канону; 8 новых эндпоинтов; контрактный гейт по `pages/` | сводка очередей (нет capability) |
 | **Конфигурация и секреты** | 🟢 готово | ADR-0364–0407/0412: hot-reload, Vault/Consul, env-over-.env, маскирование, `audit_clickhouse_enabled` в prod | инфра: keypair JWKS, роль BYPASSRLS, ClickHouse в проде |
 | **Наблюдаемость** | 🟢 готово | PrometheusRule SLA/DLQ (ADR-0440), метрики пулов/процессов, SLO-метрика workflow | Prometheus Operator/CRD в кластере (инфра) |
-| **Зависимости и CVE** | 🟡 частично | `uv audit --frozen` — 0 advisory вне allowlist; pillow 13 закрыт | 47 advisory в allowlist без severity/дат ревью; обновление версий (G3) |
-| **Деплой** | 🟡 частично | Helm chart: app/worker/migration/HPA/PDB/NetworkPolicy/ServiceMonitor/PrometheusRule | **Secret с плейсхолдерами закрыт (ADR-0444)**; нет imagePullSecrets/digest-пиннинга; PDB без `component`; worker без ServiceMonitor |
+| **Зависимости и CVE** | 🟡 частично | `uv audit --frozen` — 0 advisory вне allowlist (oauthlib 4.0.1 закрыл GHSA-3jp2-3mrg-2vxc); pillow 13 закрыт | 47 advisory в allowlist без severity/дат ревью; обновление версий (G3) |
+| **Деплой** | 🟡 частично | Helm chart рендерится (ADR-0447: исправлен template-директив в YAML-комментарии, CI-шаг `helm lint`/`template`): app/worker/migration/HPA/PDB/NetworkPolicy/ServiceMonitor/PrometheusRule | **Secret с плейсхолдерами закрыт (ADR-0444/0447)**; нет imagePullSecrets/digest-пиннинга; PDB без `component`; worker без ServiceMonitor |
 | **CI/гейты** | 🟢 починено | ruff `src tests` — 0; `ruff format --check` — 0; mypy 12/12 (baseline-рэтчет); coverage-порог из baseline | mutation-гейт не в CI; advisory-only security-джобы |
 
 ---
@@ -93,19 +96,17 @@
 
 ## 4. Открытые позиции (по владельцам)
 
-### 4.1. Кодом закрывается (инженерно, следующая волна)
+### 4.1. Кодом закрывается (инженерно, следующая волна) — 6 позиций
 
-1. `memory.reflect`/`workflow.checkpoint.put` — реализованы (ADR-0433), нужна
-   персистенция checkpoint'ов в отдельном store (сейчас merge в снимок).
-2. Сводка очередей (`/admin/queues/summary`) — capability «метрики брокера»
-   отсутствует; либо ввести брокер-агент, либо отказаться (ADR-0439).
-3. `audit.write` в `route.toml` — сейчас capability не enforced; при включении
-   enforcement объявить у роутов со шагом `audit`.
-4. Namespace-декларации в `core/api` — 41 межслойное нарушение (ADR-0348).
-5. `core/api` экспорт примитивов устойчивости — закрыто ADR-0434; проверить
-   фактическое использование в расширениях.
-6. Строгая проверка ресурсных capability (после стабилизации формата scope) —
-   база готова (ADR-0435), включать по мере миграции baseline.
+| # | Позиция | Где зафиксировано | Оценка |
+|---|---|---|---|
+| 1 | Capability-контур процессоров: enforcement либо формальный переход в advisory (44 декоративные декларации) | ADR-0446 (план волны 32), `tools/check_decorative_capabilities_allowlist.txt` | 1–2 дня |
+| 2 | 41 межслойное нарушение (`check_layers --strict`) | ADR-0348 (baseline 37 долг + 4 контракт) | 2–3 дня |
+| 3 | Mutation-гейт (mutmut 2.16, 361 collection error) | `docs/MUTATION_BASELINE.md` (BLOCKED) | 1–2 дня |
+| 4 | Coverage: перемер на CI-раннере (dev-box OOM) и подъём порога 74 → 75 % | `.baselines/coverage.json`, ADR-0443 | 0,5 дня |
+| 5 | Сводка очередей (`/admin/queues/summary`): брокер-агент или отказ от панели | ADR-0439 | 0,5–1 день |
+| 6 | `audit.write` в `route.toml` (после включения enforcement) | ADR-0414, ADR-0446 | 0,5 дня |
+
 
 ### 4.2. Инфраструктура (нужна команда/окружение)
 
@@ -124,12 +125,12 @@
 
 | # | Severity | Риск | Где | Что делать |
 |---|---|---|---|---|
-| 1 | 🔴 critical | Capability-гейт процессоров не enforced end-to-end; 44 декларации декоративны | `.security/check_decorative_capabilities_allowlist.txt` | Включить enforcement или честно перевести capability в «документационные» (ADR) |
+| 1 | 🔴 critical | Capability-гейт процессоров не enforced end-to-end; 44 декоративные декларации | `.security/check_decorative_capabilities_allowlist.txt` | Включить enforcement или честно перевести capability в «документационные» (ADR-0446) |
 | 2 | 🔴 critical | Helm Secret с плейсхолдерами попадал в кластер | `deploy/helm/.../secret.yaml` | ✅ закрыто ADR-0444 (рендер падает) |
 | 3 | 🟠 high | SLO не подтверждён на prod-стенде (G2) | `PROD_READINESS_GAPS.md` | Прогон 300 VU на pre-prod |
 | 4 | 🟠 high | MQ-контракты не проверены live (G6) | там же | Поднять брокеры на стенде |
 | 5 | 🟠 high | Prod-образ без `temporalio` → workflow-воркер не стартует (fail-closed ✓, но деплой ломается) | `ops/compose/Dockerfile` | ✅ закрыто ADR-0442 (`UV_EXTRAS`) |
-| 6 | 🟡 medium | Секрет-скан advisory-only; allowlist без severity | `.github/workflows/security.yml` | Включить blocking + разметить allowlist |
+| 6 | 🟡 medium | Секрет-скан advisory-only; allowlist без severity | `.github/workflows/security.yml` | Включить blocking + разметить allowlist. **uv-audit-гейт снова зелёный** (oauthlib 4.0.1) |
 | 7 | 🟡 medium | Coverage не перемеряется на CI (OOM на dev-box) | G1 | Разбить Coverage-мерку на группы в CI |
 | 8 | 🟡 medium | Mutation-гейт не в CI; база BLOCKED | `docs/MUTATION_BASELINE.md` | Разблокировать mutmut или заменить на дешёвый mutation-гейт |
 
@@ -167,7 +168,7 @@
 
 | Метрика | Сейчас | Цель | Источник |
 |---|---|---|---|
-| Тесты, зелёные | 24 055 | ≥25 000 | `.run/wave13-logs/reg_final_*.txt` |
+| Тесты, зелёные | 24 057 | ≥25 000 | `.run/wave13-logs/reg_final_*.txt` |
 | setup-ERROR / order-dependent падения | 0 / 0 | 0 / 0 | тот же лог + гейт порядка |
 | Красные блокирующие гейты | 0 | 0 | `lint.yml`, `type.yml`, `test.yml` |
 | Coverage (baseline) | 74 % | ≥78 % | `.baselines/coverage.json` |
