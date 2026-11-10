@@ -228,9 +228,12 @@
 | [ADR-0439](0439-runtime-metrics-endpoints.md) | Runtime-метрики: пулы соединений и процессы workflow | Accepted |
 | [ADR-0440](0440-prometheus-sla-rules.md) | Prometheus-правила SLA/DLQ для workflow | Accepted |
 | [ADR-0441](0441-infra-release-checklist.md) | Инфраструктурный чек-лист релиза и явный `audit_clickhouse_enabled` | Accepted |
+| [ADR-0442](0442-docker-image-extras-arg.md) | Набор extras образа задаётся build-ARG'ом (`UV_EXTRAS`) | Accepted |
+| [ADR-0443](0443-ci-gates-baseline-single-source.md) | Пороги блокирующих гейтов берутся из baseline (single source of truth) | Accepted |
+| [ADR-0444](0444-helm-secret-placeholder-guard.md) | Helm Secret не пропускает плейсхолдеры в прод | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 226 ADRs.
+**Total:** 229 ADRs.
 
