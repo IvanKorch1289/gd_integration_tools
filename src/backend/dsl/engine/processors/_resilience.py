@@ -107,6 +107,24 @@ def _get_bulkhead(name: str):  # type: ignore[no-untyped-def]
     return bulkhead
 
 
+class _UpstreamServerError(RuntimeError):
+    """Внутренний сигнал: ответ 5xx считается отказом для breaker'а."""
+
+
+def _is_upstream_failure(result: object) -> bool:
+    """Ответ с HTTP-статусом 5xx — признак отказа upstream'а.
+
+    Args:
+        result: Результат внешнего вызова (обычно ``httpx.Response``).
+
+    Returns:
+        ``True`` для статуса 5xx.
+
+    """
+    status = getattr(result, "status_code", None)
+    return isinstance(status, int) and status >= 500
+
+
 async def guarded_external_call(name: str, call: Callable[[], Awaitable[T]]) -> T:
     """Выполнить внешний вызов под circuit breaker'ом и bulkhead'ом.
 
@@ -125,6 +143,19 @@ async def guarded_external_call(name: str, call: Callable[[], Awaitable[T]]) -> 
     """
     breaker = _get_breaker(name)
     bulkhead = _get_bulkhead(name)
-    async with breaker.guard():
-        async with bulkhead.guard():
-            return await call()
+    result: T | None = None
+    try:
+        async with breaker.guard():
+            async with bulkhead.guard():
+                result = await call()
+                if _is_upstream_failure(result):
+                    # 5xx — валидный ответ API (маршрут может его разобрать),
+                    # но для breaker'а это отказ: иначе CB никогда не откроется
+                    # на «upstream деградировал, но отвечает 503».
+                    raise _UpstreamServerError(
+                        f"upstream вернул {getattr(result, 'status_code', '5xx')}"
+                    )
+    except _UpstreamServerError:
+        # Отказ учтён breaker'ом; сам ответ возвращаем вызывающему.
+        pass
+    return result  # type: ignore[return-value]
