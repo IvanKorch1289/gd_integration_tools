@@ -616,3 +616,67 @@ def test_helm_servicemonitor_default_release_label() -> None:
         "ServiceMonitor template must reference 'prometheus' (default release label "
         "for kube-prometheus-stack serviceMonitorSelector)"
     )
+
+
+# ── ADR-0440: PrometheusRule с SLA/DLQ-алертами workflow ─────────────────
+
+
+HELM_PROMETHEUSRULE_FILE: Path = (
+    PROJECT_ROOT
+    / "deploy"
+    / "helm"
+    / "gd-integration-tools"
+    / "templates"
+    / "prometheusrule.yaml"
+)
+
+
+def test_helm_prometheusrule_template_exists() -> None:
+    """Файл шаблона PrometheusRule существует и содержит Go-template директивы."""
+    assert HELM_PROMETHEUSRULE_FILE.exists(), (
+        f"Helm PrometheusRule template missing: {HELM_PROMETHEUSRULE_FILE}"
+    )
+    raw = HELM_PROMETHEUSRULE_FILE.read_text(encoding="utf-8")
+    assert "{{" in raw and "}}" in raw, (
+        f"{HELM_PROMETHEUSRULE_FILE} must contain Go-template directives"
+    )
+
+
+def test_helm_prometheusrule_structure_and_alerts() -> None:
+    """PrometheusRule: kind/apiVersion, группы SLA и DLQ, алерты по метрикам.
+
+    До ADR-0440 в репозитории не было rule-файлов: метрики
+    ``workflow_sla_compliance_total`` / ``workflow_dlq_publish_total``
+    эмитились, но Prometheus Operator не знал, когда по ним алертить.
+    """
+    docs = _load_helm_yaml(HELM_PROMETHEUSRULE_FILE)
+    assert docs, f"{HELM_PROMETHEUSRULE_FILE} is empty after strip"
+    rule = docs[0]
+    assert rule["kind"] == "PrometheusRule", rule.get("kind")
+    assert rule["apiVersion"] == "monitoring.coreos.com/v1", rule.get("apiVersion")
+
+    groups = rule["spec"]["groups"]
+    names = {group["name"] for group in groups}
+    assert {"workflow.sla", "workflow.dlq"} <= names, names
+
+    alerts = {
+        item["alert"]: item["expr"]
+        for group in groups
+        for item in group["rules"]
+        if "alert" in item
+    }
+    assert "WorkflowSlaHardBreach" in alerts
+    assert "workflow_sla_compliance_total" in alerts["WorkflowSlaHardBreach"]
+    assert "WorkflowDlqNoWriter" in alerts
+    assert "workflow_dlq_publish_total" in alerts["WorkflowDlqNoWriter"]
+
+
+def test_prometheusrule_labels_match_servicemonitor_selector() -> None:
+    """Labels правила совпадают с selectorLabels ServiceMonitor.
+
+    Иначе Prometheus Operator (с ``serviceMonitorSelector: release=prometheus``)
+    не подберёт правило.
+    """
+    rule = _load_helm_yaml(HELM_PROMETHEUSRULE_FILE)[0]
+    monitor = _load_helm_yaml(HELM_SERVICEMONITOR_FILE)[0]
+    assert rule["metadata"]["labels"]["release"] == monitor["metadata"]["labels"]["release"]

@@ -1,0 +1,86 @@
+{{- if .Values.prometheusRule.enabled | default false }}
+# PrometheusRule: SLA-алерты workflow (ADR-0440).
+#
+# До ADR-0440 в репозитории не было ни одного rule-файла: метрики
+# `workflow_sla_compliance_total` / `workflow_dlq_publish_total` эмитились
+# (core/observability/workflow_sla.py), но Prometheus Operator не знал, когда
+# по ним 알ертить. Правила ниже закрывают этот разрыв.
+#
+# Включение: `--set prometheusRule.enabled=true` (по умолчанию выключено —
+# чтобы chart можно было ставить без Prometheus Operator CRD).
+#
+# Метрики:
+#   * `workflow_sla_compliance_total{level="none|soft|hard"}` — SLA-оценки
+#     workflow'ев (ADR-0403/ADR-0408);
+#   * `workflow_dlq_publish_total{status="published|duplicate|no_writer|error"}`
+#     — публикации в DLQ (ADR-0408).
+#
+# Labels селектора повторяют ServiceMonitor (release: prometheus) — иначе
+# Prometheus Operator не подберёт правило.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Values.app.name }}-workflow-sla
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- $releaseLabel := .Values.prometheusRule.selectorLabels.release | default "prometheus" }}
+    release: {{ $releaseLabel | quote }}
+    app.kubernetes.io/name: gd-integration-tools
+    app.kubernetes.io/component: app
+spec:
+  groups:
+    - name: workflow.sla
+      interval: {{ .Values.prometheusRule.interval | default "1m" }}
+      rules:
+        # Доля workflow'ев с жёстким нарушением SLA (доля от всех оценок).
+        - record: workflow:sla_hard_breach_ratio:rate5m
+          expr: |
+            sum(rate(workflow_sla_compliance_total{level="hard"}[5m]))
+              /
+            clamp_min(sum(rate(workflow_sla_compliance_total[5m])), 0.000001)
+        # Alert: жёсткое нарушение SLA — workflow не уложился в бюджет.
+        - alert: WorkflowSlaHardBreach
+          expr: sum(rate(workflow_sla_compliance_total{level="hard"}[15m])) > 0
+          for: {{ .Values.prometheusRule.hardBreachFor | default "10m" }}
+          labels:
+            severity: {{ .Values.prometheusRule.severity | default "warning" }}
+          annotations:
+            summary: "Жёсткое нарушение SLA workflow"
+            description: >-
+              Workflow'и нарушают жёсткий SLA-бюджет (level="hard").
+              Проверьте задержки внешних зависимостей и лимиты шагов.
+        # Alert: soft- breaches заметны, но не критичны.
+        - alert: WorkflowSlaSoftBreach
+          expr: sum(rate(workflow_sla_compliance_total{level="soft"}[30m])) > 0
+          for: {{ .Values.prometheusRule.softBreachFor | default "30m" }}
+          labels:
+            severity: info
+          annotations:
+            summary: "Мягкое нарушение SLA workflow"
+            description: >-
+              Workflow'и приближаются к SLA-бюджету (level="soft").
+    - name: workflow.dlq
+      interval: {{ .Values.prometheusRule.interval | default "1m" }}
+      rules:
+        # Alert: DLQ недоступен — события исчерпанного шага теряются.
+        - alert: WorkflowDlqNoWriter
+          expr: sum(rate(workflow_dlq_publish_total{status="no_writer"}[15m])) > 0
+          for: {{ .Values.prometheusRule.dlqFor | default "10m" }}
+          labels:
+            severity: critical
+          annotations:
+            summary: "DLQ workflow недоступен"
+            description: >-
+              События исчерпанных шагов не попадают в DLQ (status="no_writer").
+              Проверьте настройки DLQ-хранилища и права сервиса.
+        # Alert: ошибки публикации в DLQ.
+        - alert: WorkflowDlqPublishError
+          expr: sum(rate(workflow_dlq_publish_total{status="error"}[15m])) > 0
+          for: {{ .Values.prometheusRule.dlqFor | default "10m" }}
+          labels:
+            severity: warning
+          annotations:
+            summary: "Ошибка публикации в DLQ"
+            description: >-
+              Публикация событий в DLQ завершается ошибкой (status="error").
+{{- end }}
