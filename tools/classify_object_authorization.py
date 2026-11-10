@@ -140,6 +140,11 @@ class Callsite:
 # разблокирует strict gate (UNKNOWN всегда блокирует per v6).
 FALSE_POSITIVE_ALLOWLIST: dict[tuple[str, int], dict[str, str]] = {}
 
+#: Fallback-индекс allowlist'а по (файл, snippet) — строки сдвигаются после
+#: форматирования/рефакторинга, и привязка только к строке роняет strict-гейт
+#: (ADR-0445). Совпадение по snippet устойчиво к сдвигу строк.
+FALSE_POSITIVE_BY_SNIPPET: dict[tuple[str, str], dict[str, str]] = {}
+
 
 def _load_false_positive_allowlist() -> dict[tuple[str, int], dict[str, str]]:
     """Load FALSE_POSITIVE allowlist из ``.baselines/...yaml``.
@@ -175,6 +180,9 @@ def _load_false_positive_allowlist() -> dict[tuple[str, int], dict[str, str]]:
     for entry in data.get("allowlist", []):
         key = (entry["file"], int(entry["line"]))
         entries[key] = entry
+        snippet = str(entry.get("snippet") or "").strip()
+        if snippet:
+            FALSE_POSITIVE_BY_SNIPPET[(entry["file"], snippet)] = entry
     return entries
 
 
@@ -470,6 +478,12 @@ def collect_all_callsites() -> list[Callsite]:
                     rel_path = str(py.relative_to(PROJECT_ROOT))
                     key = (rel_path, cs.line)
                     entry = FALSE_POSITIVE_ALLOWLIST.get(key)
+                    if entry is None:
+                        # ADR-0445: привязка к строке неустойчива — ищем по
+                        # snippet (тот же вызов в том же файле).
+                        entry = FALSE_POSITIVE_BY_SNIPPET.get(
+                            (rel_path, cs.snippet.strip())
+                        )
                     if entry is not None:
                         cs = Callsite(
                             file=cs.file,
