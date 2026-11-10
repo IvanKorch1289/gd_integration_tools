@@ -122,7 +122,7 @@
   `check_route_capabilities` ✓ (4 легаси в baseline) · `check_workflow_specs` ✓ (22) ·
   `classify_object_authorization --strict` 0 unknown ✓ · secrets-check ✓ ·
   vulture — 1 pre-existing ✓.
-* **Регрессия**: `tests/unit` — см. `.run/wave13-logs/reg_final_30.txt`.
+* **Регрессия**: `tests/unit` — **24055 passed, 180 skipped, 51 xfailed, 46 xpassed, 0 failed, 0 errors** (43:31; лог `.run/wave13-logs/reg_final_30b.txt`).
 
 ---
 
