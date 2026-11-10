@@ -42,7 +42,7 @@
 
 | Гейт | Результат |
 |---|---|
-| `tests/unit` (волна 29, полный) | см. `.run/wave13-logs/reg_final_29.txt` |
+| `tests/unit` (волна 29, полный) | **24050 passed, 180 skipped, 52 xfailed, 45 xpassed, 1 failed → 0 после фикса README cookbooks** (43:18; лог `.run/wave13-logs/reg_final_29.txt`) |
 | ruff `src/` | All checks passed |
 | `check_route_capabilities.py` | OK (7 роутов, 12 плагинов, 4 легаси в baseline) |
 | `check_workflow_specs.py` | OK (22 спе-файла) |
