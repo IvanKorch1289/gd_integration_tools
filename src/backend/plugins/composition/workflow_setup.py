@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import os
 import threading
+from collections import deque
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
@@ -54,7 +55,7 @@ _logger = get_logger("workflow.setup")
 #: Не загруженные workflow-файлы (последняя попытка авто-регистрации,
 #: ADR-0434). Нужны для диагностики: битый workflow не должен исчезать
 #: молча — оператор видит список через :func:`get_workflow_load_failures`.
-_LOAD_FAILURES: list[dict[str, str]] = []
+_LOAD_FAILURES: deque[dict[str, str]] = deque(maxlen=100)
 
 
 def get_workflow_load_failures() -> list[dict[str, str]]:
