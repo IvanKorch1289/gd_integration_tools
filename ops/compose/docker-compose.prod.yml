@@ -183,6 +183,8 @@ services:
       - ../../.env
     environment:
       APP_PROFILE: prod
+      # ADR-0446: явный путь к расширениям (иначе 0 workflow-деклараций).
+      EXTENSIONS_DIR: /app/extensions
       DB_HOST: postgres
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
@@ -209,6 +211,8 @@ services:
       - ../../.env
     environment:
       APP_PROFILE: prod
+      # ADR-0446: явный путь к расширениям (иначе 0 workflow-деклараций).
+      EXTENSIONS_DIR: /app/extensions
       DB_HOST: postgres
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
@@ -225,6 +229,8 @@ services:
   app:
     environment:
       APP_PROFILE: prod
+      # ADR-0446: явный путь к расширениям (иначе 0 workflow-деклараций).
+      EXTENSIONS_DIR: /app/extensions
       APP_SERVER: ${APP_SERVER:-granian}
       APP_WORKERS: ${APP_WORKERS:-4}
     # D-A12-05 fix (cycle 22): mem_limit/cpus для production app
@@ -254,6 +260,8 @@ services:
   workflow-worker:
     environment:
       APP_PROFILE: prod
+      # ADR-0446: явный путь к расширениям (иначе 0 workflow-деклараций).
+      EXTENSIONS_DIR: /app/extensions
       WORKFLOW_WORKER_EXECUTOR: ${WORKFLOW_WORKER_EXECUTOR:-dsl}
     # D-A12-05 fix (cycle 22): mem_limit/cpus для workflow-worker.
     mem_limit: ${WORKFLOW_WORKER_MEM_LIMIT:-2g}
@@ -271,6 +279,8 @@ services:
   migration-runner:
     environment:
       APP_PROFILE: prod
+      # ADR-0446: явный путь к расширениям (иначе 0 workflow-деклараций).
+      EXTENSIONS_DIR: /app/extensions
 
   # ─── Volumes ──────────────────────────────────────────────────────────
 volumes:

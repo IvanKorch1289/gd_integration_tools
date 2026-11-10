@@ -73,6 +73,10 @@ security:
     - "/asyncapi*"
     - "/documents/"
     - "/health"
+    # ADR-0446: k8s livenessProbe-алиас /healthz возвращал 401 → проба
+    # не проходила (маршрут зарегистрирован в app_factory, но не был в
+    # allowlist'е без API-ключа).
+    - "/healthz"
     - "/health/live"
     - "/health/ready"
     - "/ready"

@@ -35,6 +35,9 @@ services:
       # light-стек. ``MCP_HTTP_ENABLED=true`` → /mcp ASGI mount → JSON-RPC
       # over HTTP (через FastMCP streamable_http_app / http_app).
       MCP_HTTP_ENABLED: ${MCP_HTTP_ENABLED:-true}
+      # ADR-0446: без явного пути workflow-автозагрузка искала /app/src/extensions
+      # (в образе расширения лежат в /app/extensions) → 0 деклараций.
+      EXTENSIONS_DIR: /app/extensions
     # D-A12-05 fix (cycle 23): mem_limit/cpus для light-профиля (dev_light).
     # Консервативные defaults (override через env): 1 GB / 0.5 CPU.
     mem_limit: ${APP_MEM_LIMIT:-1g}
@@ -87,6 +90,8 @@ services:
       APP_PROFILE: dev_light
       WORKFLOW_WORKER_EXECUTOR: ${WORKFLOW_WORKER_EXECUTOR:-lite}
       SHUTDOWN_GRACE_SECONDS: ${SHUTDOWN_GRACE_SECONDS:-10}
+      # ADR-0446: тот же путь к расширениям, что и у app.
+      EXTENSIONS_DIR: /app/extensions
     volumes:
       - ../../.run:/app/.run
     # 2026-10-29 hotfix: см. app-сервис — supplementary gid хоста для

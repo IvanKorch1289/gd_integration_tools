@@ -258,13 +258,16 @@ async def _register_pools_in_unified_manager() -> None:
 
     # JupyterHub
     try:
+        from src.backend.core.config.services.jupyter_hub import jupyter_hub_settings
         from src.backend.infrastructure.clients.external.jupyter_hub import (
             JupyterHubClient,
         )
 
         async def _ping_jupyter() -> None:
             # Constructor side effect: validates import + settings.
-            JupyterHubClient()  # type: ignore[call-arg]  # R2.MYPY: settings already validated at top-level init
+            # ADR-0446: клиент требует settings — без них ping всегда падал
+            # («missing 1 required positional argument: 'settings'»).
+            JupyterHubClient(jupyter_hub_settings)
 
         manager.register(
             "jupyterhub_main",
@@ -277,11 +280,14 @@ async def _register_pools_in_unified_manager() -> None:
 
     # Antivirus
     try:
+        from src.backend.core.di.providers.ai import get_antivirus_service_provider
         from src.backend.infrastructure.antivirus.service import AntivirusService
 
         async def _ping_antivirus() -> None:
             # Constructor side effect: validates import + settings.
-            AntivirusService()  # type: ignore[call-arg]  # R2.MYPY: ping-side-effect — settings resolved at runtime
+            # ADR-0446: сервис требует http_client и s3_service — берём
+            # готовый singleton из DI-провайдера.
+            get_antivirus_service_provider()
 
         manager.register(
             "antivirus_main",
@@ -294,13 +300,20 @@ async def _register_pools_in_unified_manager() -> None:
 
     # Vault
     try:
+        from src.backend.core.config.vault import vault_settings
         from src.backend.infrastructure.security.vault_secrets import (
             VaultSecretsBackend,
         )
 
         async def _ping_vault() -> None:
             # Constructor side effect: validates import + settings.
-            VaultSecretsBackend()  # type: ignore[call-arg]  # R2.MYPY: ping-side-effect — addr from settings
+            # ADR-0446: бэкенд требует keyword-only addr — раньше ping падал
+            # («missing 1 required keyword-only argument: 'addr'»).
+            if not vault_settings.addr:
+                raise RuntimeError("vault addr не настроен (VAULT_ADDR)")
+            VaultSecretsBackend(
+                addr=vault_settings.addr, token=vault_settings.token or None
+            )
 
         manager.register(
             "vault_main", VaultSecretsBackend, ping_fn=_ping_vault, kind="vault"

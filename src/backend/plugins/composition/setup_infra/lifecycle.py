@@ -481,9 +481,18 @@ async def _start_vault_secret_refresher() -> None:
     Vault — опциональный источник секретов: сбой старта логируется и
     деградирует, но не роняет приложение.
     """
+    from src.backend.core.config.vault import vault_settings
     from src.backend.infrastructure.application.vault_refresher import (
         get_vault_refresher,
     )
+
+    # ADR-0446: при выключенном Vault (dev_light) рефрешер всё равно
+    # стартовал и каждые ~2,5 мин писал error-уровневые «Vault недоступен».
+    if not vault_settings.enabled:
+        app_logger.info(
+            "Vault выключен (vault.enabled=false) — secret refresher не запускается"
+        )
+        return
 
     try:
         refresher = get_vault_refresher()
