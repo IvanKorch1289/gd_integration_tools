@@ -63,7 +63,7 @@ Inline-числа в тексте README могут разойтись с фак
 | Метрика | Значение | Источник |
 |---|---:|---|
 | HEAD | `0801775639bc` | `git rev-parse HEAD` |
-| Actions (runtime) | 132 | `ActionHandlerRegistry.list_actions()` после `create_app()` |
+| Actions (runtime) | 124 | `ActionHandlerRegistry.list_actions()` после `register_action_handlers()` (замер 2026-11-10) |
 | DSL-маршрутов (runtime) | 0 | `RouteRegistry.list_routes()` после `create_app()` |
 | Route-пакетов (static) | 7 | `routes/<name>/route.toml` на диске |
 | Протоколов | 17 | пакеты entrypoints: api, asyncapi, cdc, email, express, filewatcher, graphql, grpc, http3, mcp, mqtt, scheduler, soap, sse, stream, webhook, websocket |
