@@ -172,6 +172,17 @@ async def test_list_scheduled_webhooks(monkeypatch: pytest.MonkeyPatch) -> None:
     assert items[0]["id"] == "abc"
 
 
+def _auth(tenant_id: str = "tenant-a"):
+    """Auth-контекст admin-операции."""
+    from src.backend.core.auth import AuthContext, AuthMethod
+
+    return AuthContext(
+        method=AuthMethod.JWT,
+        principal="ops",
+        metadata={"tenant_id": tenant_id},
+    )
+
+
 @pytest.mark.asyncio
 async def test_schedule_webhook_rejects_ssrf(monkeypatch: pytest.MonkeyPatch) -> None:
     """Внутренний URL отклоняется SSRF-guard'ом (400)."""
@@ -187,7 +198,7 @@ async def test_schedule_webhook_rejects_ssrf(monkeypatch: pytest.MonkeyPatch) ->
 
     request = WebhookScheduleRequest(url="http://127.0.0.1:9000/internal")
     with pytest.raises(HTTPException) as exc_info:
-        await schedule_webhook(request, tenant_id="tenant-a")
+        await schedule_webhook(request, auth=_auth(), tenant_id="tenant-a")
     assert exc_info.value.status_code == 400
     assert not scheduler.scheduled
 
@@ -195,6 +206,7 @@ async def test_schedule_webhook_rejects_ssrf(monkeypatch: pytest.MonkeyPatch) ->
 @pytest.mark.asyncio
 async def test_schedule_webhook_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     """Безопасный URL планируется."""
+    from src.backend.core.auth import AuthContext, AuthMethod
     from src.backend.entrypoints.api.v1.endpoints.webhook_scheduler import (
         WebhookScheduleRequest,
         schedule_webhook,
@@ -206,6 +218,57 @@ async def test_schedule_webhook_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
     request = WebhookScheduleRequest(url="https://example.test/hook")
-    result = await schedule_webhook(request, tenant_id="tenant-a")
+    auth = AuthContext(method=AuthMethod.JWT, principal="ops", metadata={"tenant_id": "tenant-a"})
+    result = await schedule_webhook(request, auth=auth, tenant_id="tenant-a")
     assert result["schedule_id"] == "sched-1"
     assert scheduler.scheduled[0]["url"] == "https://example.test/hook"
+
+
+@pytest.mark.asyncio
+async def test_schedule_webhook_rejects_foreign_tenant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Чужой tenant_id → 403 (ADR-0345: tenant-скоупинг)."""
+    from src.backend.core.auth import AuthContext, AuthMethod
+    from src.backend.entrypoints.api.v1.endpoints.webhook_scheduler import (
+        WebhookScheduleRequest,
+        schedule_webhook,
+    )
+
+    scheduler = _FakeScheduler()
+    monkeypatch.setattr(
+        webhooks_provider, "get_webhook_scheduler_provider", lambda: scheduler
+    )
+
+    request = WebhookScheduleRequest(url="https://example.test/hook")
+    auth = AuthContext(
+        method=AuthMethod.JWT, principal="ops", metadata={"tenant_id": "tenant-a"}
+    )
+    with pytest.raises(HTTPException) as exc_info:
+        await schedule_webhook(request, auth=auth, tenant_id="tenant-b")
+    assert exc_info.value.status_code == 403
+    assert not scheduler.scheduled
+
+
+@pytest.mark.asyncio
+async def test_schedule_webhook_uses_caller_tenant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Без явного tenant_id берётся тенант вызывающего."""
+    from src.backend.core.auth import AuthContext, AuthMethod
+    from src.backend.entrypoints.api.v1.endpoints.webhook_scheduler import (
+        WebhookScheduleRequest,
+        schedule_webhook,
+    )
+
+    scheduler = _FakeScheduler()
+    monkeypatch.setattr(
+        webhooks_provider, "get_webhook_scheduler_provider", lambda: scheduler
+    )
+
+    request = WebhookScheduleRequest(url="https://example.test/hook")
+    auth = AuthContext(
+        method=AuthMethod.JWT, principal="ops", metadata={"tenant_id": "tenant-a"}
+    )
+    await schedule_webhook(request, auth=auth, tenant_id="")
+    assert scheduler.scheduled[0]["tenant_id"] == "tenant-a"

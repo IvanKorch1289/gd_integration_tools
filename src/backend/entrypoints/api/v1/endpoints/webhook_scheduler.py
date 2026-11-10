@@ -16,12 +16,14 @@ http/https, без private/loopback/link-local адресов) — иначе п
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
+from src.backend.core.auth import AuthContext
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
+from src.backend.core.auth.auth_context_helpers import extract_tenant_id
 from src.backend.core.logging import get_logger
 
 __all__ = ("router",)
@@ -76,11 +78,27 @@ async def list_scheduled_webhooks(
 )
 async def schedule_webhook(
     request: WebhookScheduleRequest,
+    auth: _AdminCtx,
     tenant_id: str = Query(default="", description="Тенант-владелец."),
 ) -> dict[str, Any]:
-    """Запланировать webhook'а."""
+    """Запланировать webhook'а.
+
+    Tenant-скоупинг (ADR-0345): явный ``tenant_id`` сверяется с тенантом
+    вызывающего; mismatch → 403 (super_admin может указывать любой тенант).
+    """
     from src.backend.core.di.providers.webhooks import get_webhook_scheduler_provider
     from src.backend.core.net.url_guard import UrlNotAllowedError, assert_safe_url
+
+    caller_tenant = extract_tenant_id(auth) or ""
+    if tenant_id and caller_tenant and tenant_id != caller_tenant:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                f"tenant_id={tenant_id!r} не совпадает с тенантом вызывающего "
+                f"({caller_tenant!r})"
+            ),
+        )
+    tenant_id = tenant_id or caller_tenant
 
     try:
         assert_safe_url(request.url)
