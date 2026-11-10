@@ -13,7 +13,7 @@
 
 ### 🔴 Блокеры — 0 (после правок)
 
-### 🟡 Важно — 2 (исправлены в этой волне)
+### 🟡 Важно — 4 (все исправлены в этой волне)
 
 1. **`src/backend/entrypoints/api/v1/endpoints/webhook_scheduler.py:77` — tenant-скоупинг
    webhook'а не проверялся.** ADR-0345 требует сверять явный `tenant_id` с
@@ -26,7 +26,25 @@
    не содержит → всегда `None`). Исправлено: `workflow_name`, `route_id`,
    `status`, `tenant_id`, `created_at`.
 
-### 🟢 Нит — 0 (ruff/format зелёные)
+3. **`src/backend/dsl/engine/processors/_resilience.py:106` — circuit breaker не считал
+   HTTP 5xx отказом.** `OutboundHttpClient.make_request` не бросает исключение на
+   5xx → breaker открывался только на транспортных ошибках и не защищал от
+   «upstream деградировал, но отвечает 503». Исправлено: ответ 5xx учитывается
+   как отказ (внутренний `_UpstreamServerError`), но сам ответ возвращается
+   вызывающему (5xx — валидный ответ API). Тесты: `test_server_error_counts_as_breaker_failure`
+   (breaker открывается → следующий вызов даёт `CircuitOpen`),
+   `test_successful_response_does_not_open_breaker`.
+4. **`src/backend/infrastructure/workflow/pg_runner_internals/instance_store.py:220` —
+   checkpoint затирал снимок инстанса.** `update_snapshot` делал blind replace,
+   а runner пишет в тот же `exchange_snapshot` свои поля (ошибка/счётчики) →
+   checkpoint мог затереть состояние runner'а. Исправлено: merge
+   (`{**stored, **snapshot}`).
+
+### 🟢 Нит — 1 (исправлен)
+
+1. **`src/backend/plugins/composition/workflow_setup.py:38` — глобальный
+   изменяемый список** `_LOAD_FAILURES` (анти-паттерн из python-dev) →
+   ограниченный буфер `deque(maxlen=100)`.
 
 ### Автоматические проверки (по чеклисту скилла)
 
