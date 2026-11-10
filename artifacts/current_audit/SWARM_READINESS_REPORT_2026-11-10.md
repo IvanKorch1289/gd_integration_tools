@@ -49,7 +49,7 @@ ClickHouse в проде, OpenWebUI/JupyterHub).
 | Домен | Оценка | Доказательства | Остаток |
 |---|---|---|---|
 | **Ядро и слои** | 🟡 готово с долгом | `check_layers --strict` — 41 (baseline переопределён: 37 долг + 4 контракт, ADR-0348; CI-шаг работает в non-strict → зелёный); `core/` не тянет `src/` | 41 межслойное нарушение — долг, цель 0 |
-| **Tenant-изоляция** | 🟢 закрыто | ADR-0383/0417/0428/0448: raw SQL и **ORM-ветка** fail-closed без tenant, UNION/CTE-фильтр, RLS-политика | сверка cross-tenant в прод-тесте (инфра) |
+| **Tenant-изоляция** | 🟡 почти закрыто | ADR-0383/0417/0428: raw SQL fail-closed без tenant, UNION/CTE-фильтр, RLS-политика. **ORM-ветка — Known Issue** (ADR-0448 Proposed): без tenant-контекста запрос идёт без предиката вне PostgreSQL | решение по ORM-fail-closed (owner 7б) + сверка cross-tenant в прод-тесте (инфра) |
 | **Capability-контур** | 🟡 частично | ADR-0430 (caller-aware), гейт `check_route_capabilities` блокирует новые роуты | 44 декларации числятся декоративными (`check_decorative_capabilities` allowlist) — **critical** |
 | **Workflow-движок** | 🟢 готово | ADR-0394/0396/0403/0408/0431/0433/0435: переходы, компенсации, SLA/DLQ, идемпотентность, checkpoint | 2 activity (`memory.reflect`, `workflow.checkpoint.put`) реализованы; персистентность checkpoint'ов — merge в снимок |
 | **DSL и DX** | 🟢 готово | 18 шаблонов, cookbook 07, линтер `*.workflow.yaml`, единый линтер DSL-YAML, `dsl generate` в help | cookbook по workflow-Temporal (после 2 недель трафика) |
@@ -146,7 +146,7 @@ ClickHouse в проде, OpenWebUI/JupyterHub).
 | В образе 0 workflow-деклараций: `EXTENSIONS_DIR` искал `/app/src/extensions`, а расширения лежат в `/app/extensions`; плюс в образе не было extra `workflow` → компилятор падал («temporalio SDK not installed») | 🔴 high | ✅ `EXTENSIONS_DIR=/app/extensions` в compose (app+worker), extra `workflow` в дефолте `UV_EXTRAS` (ADR-0442/0446) → **4 декларации в контейнере** |
 | Helm-chart **не рендерился вообще**: Go-template директива `{{- if ... }}` внутри YAML-комментария в `servicemonitor.yaml` | 🔴 high | ✅ директива убрана из комментария, chart рендерит 16 ресурсов; CI-шаг `helm lint`/`helm template` (ADR-0447) |
 | `uv audit` красный: новая advisory `GHSA-3jp2-3mrg-2vxc` (oauthlib 4.0.0 → 4.0.1, прямая зависимость) | 🟠 high | ✅ `oauthlib>=4.0.1`, lock обновлён, гейт зелёный (47 advisory — все в allowlist, 0 новых) |
-| ORM-ветка tenant-изоляции **не fail-closed**: без tenant-контекста SELECT/UPDATE/DELETE шли без предиката (RLS только в PostgreSQL) | 🟠 medium→high | ✅ `TenantIsolationError` для tenant-aware сущностей без tenant'а (ADR-0448) |
+| ORM-ветка tenant-изоляции **не fail-closed**: без tenant-контекста SELECT/UPDATE/DELETE шли без предиката (RLS только в PostgreSQL) | 🟠 medium→high | ⚠️ **откачено**: пробный fail-closed сломал 42 внутренних теста (scheduler/audit-versioning/repositories — служебные выборки без tenant'а). ADR-0448 (Proposed) + owner-пункт 7б: вариант (А) системный tenant по умолчанию или (Б) привязка tenant'а во внутренних потоках |
 | `/healthz` (k8s livenessProbe-алиас) отдавал 401 → проба не проходит | 🟡 medium | ✅ `/healthz` в `routes_without_api_key` (ADR-0446) |
 | 4 pool ping FAIL (`JupyterHubClient`/`AntivirusService`/`VaultSecretsBackend` создавались без обязательных аргументов) | 🟡 medium | ✅ конструкторы получают реальные зависимости → **0 FAIL** |
 | Vault-refresher стартовал при `vault.enabled=false` → ~100 error-логов «Vault недоступен» | 🟡 medium | ✅ ранний выход по флагу → **0 ошибок** |
