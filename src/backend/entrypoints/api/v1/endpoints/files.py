@@ -386,6 +386,38 @@ storage_builder.add_actions(
             tags=("Storage",),
             argument_aliases={"file_uuid": "key"},
         ),
+        # ADR-0438: операции по КЛЮЧУ (без file_uuid) — порталу «Файлы S3»
+        # нужен список объектов и чтение/ссылка по ключу, а не по uuid.
+        ActionSpec(
+            name="list_files",
+            method="GET",
+            path="/list",
+            summary="Список объектов S3 по префиксу",
+            service_getter=get_s3_service,
+            service_method="list_files",
+            dependencies=common_dependencies,
+            tags=("Storage",),
+        ),
+        ActionSpec(
+            name="get_file_by_key",
+            method="GET",
+            path="/get",
+            summary="Получить файл в base64 по ключу",
+            service_getter=get_s3_service,
+            service_method="get_file_base64",
+            dependencies=common_dependencies,
+            tags=("Storage",),
+        ),
+        ActionSpec(
+            name="download_by_key",
+            method="GET",
+            path="/download",
+            summary="Получить ссылку на скачивание файла по ключу",
+            service_getter=get_s3_service,
+            service_method="generate_download_url",
+            dependencies=common_dependencies,
+            tags=("Storage",),
+        ),
         ActionSpec(
             name="scan_file_in_antivirus",
             method="POST",
