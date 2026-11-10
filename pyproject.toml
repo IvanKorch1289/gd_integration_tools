@@ -834,7 +834,7 @@ override-dependencies = [
     "virtualenv>=21.7.13,<22.0.0",
     # oauthlib: PYSEC-2026-4114 (PKCE timing side-channel, 3.x → 4.0.0). Brought
     # in by kubernetes→requests-oauthlib; upgrade is major but no API break for our use.
-    "oauthlib>=4.0.0,<5.0.0",
+    "oauthlib>=4.0.1,<5.0.0",
     # S31: urllib3 1.26.20 entries in lock are PyPy-only markers (platform markers
     # restrict them to PyPy; CPython 3.14 correctly uses urllib3 2.7.0).
     # Dependabot scans the whole lock — force 2.7.0 for all platforms to clear
