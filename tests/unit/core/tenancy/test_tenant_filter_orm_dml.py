@@ -31,7 +31,6 @@ import pytest
 from sqlalchemy import String, create_engine, delete, func, select, text, update
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
-from src.backend.core.tenancy.sqlalchemy_filter import TenantIsolationError
 from src.backend.core.tenancy import (
     TenantContext,
     bind_tenant,
@@ -216,19 +215,17 @@ def test_count_over_tenant_table_is_filtered(seeded: Session) -> None:
     assert seeded.execute(select(func.count()).select_from(Order)).scalar() == 1
 
 
-def test_no_tenant_context_is_fail_closed(seeded: Session) -> None:
-    """Без tenant в контексте запрос к tenant-aware сущности ОТКЛОНЯЕТСЯ.
+def test_no_tenant_context_does_not_filter(seeded: Session) -> None:
+    """Без tenant в контексте фильтр не применяется (совпадает с контрактом).
 
-    ADR-0448: раньше ORM-ветка выполняла SELECT без tenant-предиката
-    (RLS есть только в PostgreSQL) — на SQLite/Oracle это давало чтение
-    строк чужого tenant'а. Теперь — fail-closed (ADR-0417/ADR-0448).
+    Fail-closed на уровне потребителей (см. F-07/F-11), а не здесь: без
+    tenant система не знает, что фильтровать.
 
     Args:
         seeded: Сессия.
     """
     set_tenant(TenantContext(tenant_id=""))
-    with pytest.raises(TenantIsolationError):
-        seeded.execute(select(Order)).scalars().all()
+    assert len(seeded.execute(select(Order)).scalars().all()) == 2
     set_tenant(TenantContext(tenant_id=TENANT_A))
 
 

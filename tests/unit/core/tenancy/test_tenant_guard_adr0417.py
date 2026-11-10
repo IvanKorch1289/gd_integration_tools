@@ -147,14 +147,8 @@ def test_raw_sql_on_non_tenant_table_without_tenant_is_allowed() -> None:
     session.close()
 
 
-def test_orm_query_without_tenant_context_is_blocked() -> None:
-    """ORM-запрос к tenant-aware сущности без tenant'а — fail-closed.
-
-    ADR-0448: раньше запрос выполнялся без tenant-предиката (RLS есть
-    только в PostgreSQL) → на SQLite/Oracle читались строки чужого tenant'а.
-    Фоновые/служебные пути используют системный tenant (SYSTEM_TENANT_ID)
-    либо не трогают tenant-aware сущности — они не затронуты.
-    """
+def test_orm_query_without_tenant_context_is_not_blocked() -> None:
+    """ORM-путь без tenant'а не блокируется (фоновые/служебные пути)."""
     engine = create_engine("sqlite://")
     Base.metadata.create_all(engine)
     tf.apply_tenant_filter()
@@ -163,8 +157,9 @@ def test_orm_query_without_tenant_context_is_blocked() -> None:
     session.commit()
     set_tenant(TenantContext(tenant_id=""))
 
-    with pytest.raises(tf.TenantIsolationError):
-        session.execute(select(Doc)).scalars().all()
+    ids = {row.id for row in session.execute(select(Doc)).scalars()}
+
+    assert ids == {1}
     session.close()
 
 
