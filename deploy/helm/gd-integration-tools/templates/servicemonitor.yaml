@@ -13,7 +13,7 @@
 #     см. аннотацию `prometheus.io/path` в deployment-app.yaml;
 #   * `endpoints[].interval` — как часто Prometheus Operator scrape'ит.
 #
-# Opt-in: шаблон обёрнут в `{{- if ... }}` через default `true` — production
+# Opt-in: шаблон обёрнут в if-блок (default `true`) — production
 # с `kube-prometheus-stack` включает scrape по умолчанию; opt-out через
 # `--set serviceMonitor.enabled=false` или `.Values.serviceMonitor.enabled`
 # в values.yaml (см. паттерн `networkPolicy.enabled` / `pdb.enabled`).

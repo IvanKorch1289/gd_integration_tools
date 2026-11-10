@@ -67,6 +67,7 @@ class Finding:
     processor: str | None = None
 
     def to_dict(self) -> dict[str, object]:
+        """Представление находки в виде словаря (для JSON-вывода)."""
         return {
             "path": str(self.path),
             "line": self.line,

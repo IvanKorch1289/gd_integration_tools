@@ -130,6 +130,15 @@ jobs:
         # обнаруживались только в рантайме (build-time падал Worker).
         run: uv run python tools/check_workflow_specs.py
 
+      - name: Helm chart render gate (helm lint + template)
+        # ADR-0447: chart не рендерился из-за Go-template директивы в
+        # YAML-комментарии ServiceMonitor — ловим до merge.
+        run: |
+          docker run --rm -v "$PWD/deploy/helm/gd-integration-tools:/chart" \
+            alpine/helm:3.15 lint /chart
+          docker run --rm -v "$PWD/deploy/helm/gd-integration-tools:/chart" \
+            alpine/helm:3.15 template gd /chart --set secrets.allowPlaceholders=true > /dev/null
+
       - name: Config audit gate (config_audit)
         # Wave 13 Q16: YAML-конфиг ↔ модели настроек. Неизвестные YAML-ключи
         # (опечатки) и секции без Settings-класса = тихая потеря настройки.

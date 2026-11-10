@@ -711,3 +711,51 @@ def test_helm_values_have_secrets_section() -> None:
     )
     assert "secrets" in values, "нет секции secrets в values.yaml"
     assert values["secrets"]["allowPlaceholders"] is False
+
+
+# ── ADR-0447: chart обязан рендериться (шаблоны Helm) ───────────────────
+
+
+def _helm_templates_dir() -> Path:
+    """Каталог шаблонов Helm-chart'а."""
+    return (
+        PROJECT_ROOT
+        / "deploy"
+        / "helm"
+        / "gd-integration-tools"
+        / "templates"
+    )
+
+
+def test_helm_templates_have_no_template_directives_in_yaml_comments() -> None:
+    """В YAML-комментариях шаблонов нет Go-template директив.
+
+    Helm вычисляет шаблон и ВНУТРИ комментария: директива ``{{- if ... }}``
+    в комментарии вырезала кусок манифеста и ломала рендер всего chart'а
+    («helm template» → parse error). Найдено функциональной проверкой.
+    """
+    offenders: list[str] = []
+    for template in sorted(_helm_templates_dir().glob("*.yaml")):
+        for number, line in enumerate(
+            template.read_text(encoding="utf-8").split("\n"), start=1
+        ):
+            stripped = line.strip()
+            if stripped.startswith("#") and "{{" in stripped:
+                offenders.append(f"{template.name}:{number}: {stripped[:70]}")
+    assert not offenders, (
+        "Go-template директивы в YAML-комментариях ломают рендер chart'а:\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_helm_secret_guard_is_executable_not_comment() -> None:
+    """Guard плейсхолдеров — исполняемый код шаблона, а не комментарий."""
+    raw = (_helm_templates_dir() / "secret.yaml").read_text(encoding="utf-8")
+    executable = [
+        line
+        for line in raw.split("\n")
+        if "{{" in line and not line.strip().startswith("#")
+    ]
+    assert any("fail" in line for line in executable), (
+        "в secret.yaml нет исполняемой проверки плейсхолдеров (fail)"
+    )

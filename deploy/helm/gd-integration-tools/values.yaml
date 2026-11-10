@@ -147,3 +147,20 @@ secrets:
   vaultToken: ""
   openaiApiKey: ""
   anthropicApiKey: ""
+
+# ServiceMonitor (Prometheus Operator CRD). Раньше секции не было — шаблон
+# servicemonitor.yaml обращался к .Values.serviceMonitor.selectorLabels и
+# chart не рендерился вовсе (helm: parse error). ADR-0447.
+serviceMonitor:
+  enabled: true
+  selectorLabels:
+    release: prometheus
+
+# PrometheusRule (SLA/DLQ-алерты, ADR-0440). Opt-in: включается флагом.
+prometheusRule:
+  enabled: false
+  interval: 1m
+  severity: warning
+  hardBreachFor: 10m
+  softBreachFor: 30m
+  dlqFor: 10m
