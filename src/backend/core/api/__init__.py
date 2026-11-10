@@ -113,6 +113,16 @@ __all__ = [
     "main_session_manager",  # from core.database.session (5 imports)
     "load_plugin_manifest",  # from core.plugin_runtime.manifest (5 imports)
     "RetryPolicy",  # from core.ai.retry_policy
+    # === Resilience primitives (ADR-0434) ===
+    # Единая точка входа для расширений: circuit breaker / bulkhead /
+    # rate limiter + retry. Раньше примитивы жили только в core.api.resilience,
+    # а в AGENTS.md был заявлен «17 primitives» без фактического экспорта.
+    "Bulkhead",
+    "CircuitBreaker",
+    "RateLimiter",
+    "rate_limiter",
+    "unified_rate_limiter",
+    "with_retry",
     "validate_inn",  # from dsl.helpers.banking
     "get_feature_flag_service",  # from core.feature_flags
     "ServiceError",  # from core.errors (P2-13 cycle 241)
@@ -129,6 +139,21 @@ __all__ = [
 # who only need a few symbols.
 def __getattr__(name: str) -> Any:
     """Lazy module-level attribute access for DI providers + classes."""
+    # Resilience primitives (ADR-0434)
+    if name in (
+        "Bulkhead",
+        "CircuitBreaker",
+        "RateLimiter",
+        "rate_limiter",
+        "unified_rate_limiter",
+    ):
+        from src.backend.core.api import resilience as _resilience
+
+        return getattr(_resilience, name)
+    if name == "with_retry":
+        from src.backend.core.resilience.retry import with_retry
+
+        return with_retry
     # DI providers
     if name == "get_scheduler_provider":
         from src.backend.core.di.providers.scheduler import get_scheduler_provider

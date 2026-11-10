@@ -1,74 +1,71 @@
-r"""Tests for dsl/cli/lint.py (cycle 227 — coverage push).
+r"""Tests for ``dsl/cli/lint.py`` — единый capability-aware линтер DSL-YAML.
 
-Per CYCLE-220 analysis, coverage target 77% → 80% (analyst item #12).
-`lint.py` (71 LOC) is a small module without tests — add regression
-tests for public API (`lint_file`).
+История модуля (ADR-0434): в проекте было три линтера DSL-YAML
+(``tools/dsl_lint.py``, устаревший ``src.backend.dsl.cli.lint`` и
+``src.backend.dsl.cli.linter.DSLLinter``). Каноничной стала реализация из
+``tools/dsl_lint.py``, перенесённая в ``src.backend.dsl.cli.lint``;
+``tools/dsl_lint.py`` — тонкая CLI-обёртка.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from src.backend.dsl.cli.lint import lint_file
+from src.backend.dsl.cli.lint import Finding, lint_file, lint_yaml
 
 
-def test_lint_file_missing(tmp_path: Path) -> None:
-    """Non-existent file → list с error."""
-    errors = lint_file(tmp_path / "nope.yaml")
-    assert len(errors) == 1
-    assert "File not found" in errors[0]
+def _rules(findings: list[Finding]) -> set[str]:
+    """Множество правил, заделенных находками."""
+    return {finding.rule for finding in findings}
 
 
-def test_lint_file_invalid_yaml(tmp_path: Path) -> None:
-    """Invalid YAML → list с error."""
-    p = tmp_path / "bad.yaml"
-    p.write_text(":\n  invalid: [unclosed", encoding="utf-8")
-    errors = lint_file(p)
-    assert any("Invalid YAML" in e for e in errors)
+def test_lint_yaml_invalid_syntax() -> None:
+    """Некорректный YAML → finding ``yaml-syntax``."""
+    findings = lint_yaml(":\n  invalid: [unclosed")
+    assert "yaml-syntax" in _rules(findings)
 
 
-def test_lint_file_root_not_mapping(tmp_path: Path) -> None:
-    """YAML list (not mapping) → error."""
-    p = tmp_path / "list.yaml"
-    p.write_text("- a\n- b\n", encoding="utf-8")
-    errors = lint_file(p)
-    assert "Root must be a mapping" in errors
+def test_lint_yaml_root_not_mapping() -> None:
+    """YAML-список (не mapping) → ``invalid-root``."""
+    findings = lint_yaml("- a\n- b\n")
+    assert "invalid-root" in _rules(findings)
 
 
-def test_lint_file_missing_route_id(tmp_path: Path) -> None:
-    """Valid YAML but no route_id → error."""
-    p = tmp_path / "no_route.yaml"
-    p.write_text("source: x\n", encoding="utf-8")
-    errors = lint_file(p)
-    assert any("route_id" in e for e in errors)
+def test_lint_yaml_missing_route_id() -> None:
+    """Нет ``route_id`` → ``missing-field``."""
+    findings = lint_yaml("source: x\nprocessors: []\n")
+    assert "missing-field" in _rules(findings)
+    assert any("route_id" in finding.message for finding in findings)
 
 
-def test_lint_file_invalid_processor_spec(tmp_path: Path) -> None:
-    """Processor spec с 2 keys → error."""
-    p = tmp_path / "bad_proc.yaml"
-    p.write_text(
-        "route_id: x\nprocessors:\n  - foo: bar\n    baz: qux\n", encoding="utf-8"
+def test_lint_yaml_missing_source() -> None:
+    """Нет ``source`` → ``missing-field``."""
+    findings = lint_yaml("route_id: r\nprocessors: []\n")
+    assert "missing-field" in _rules(findings)
+    assert any("source" in finding.message for finding in findings)
+
+
+def test_lint_yaml_processors_not_list() -> None:
+    """``processors`` не список → ``invalid-processors``."""
+    findings = lint_yaml("route_id: r\nsource: s\nprocessors: nope\n")
+    assert "invalid-processors" in _rules(findings)
+
+
+def test_lint_yaml_valid_has_no_findings() -> None:
+    """Корректная спецификация → без находок."""
+    findings = lint_yaml(
+        "route_id: r\nsource: s\nprocessors:\n  - log:\n      message: hi\n"
     )
-    errors = lint_file(p)
-    assert any("invalid spec" in e for e in errors)
+    assert findings == []
 
 
-def test_lint_file_valid(tmp_path: Path) -> None:
-    """Valid YAML → empty list (lint passed)."""
-    p = tmp_path / "good.yaml"
-    p.write_text(
-        "route_id: my_route\nsource: my_source\nprocessors:\n  - processor_a\n  - proc_b:\n      config: value\n",
-        encoding="utf-8",
-    )
-    errors = lint_file(p)
-    assert errors == []
+def test_lint_file_non_yaml_extension_is_skipped(tmp_path: Path) -> None:
+    """Не-YAML файл пропускается (без находок)."""
+    path = tmp_path / "route.toml"
+    path.write_text("route_id = 'r'\n", encoding="utf-8")
+    assert lint_file(path) == []
 
 
-def test_lint_file_string_processor(tmp_path: Path) -> None:
-    """Processor as string (shorthand) → no error."""
-    p = tmp_path / "string_proc.yaml"
-    p.write_text(
-        "route_id: x\nsource: y\nprocessors:\n  - just_a_string\n", encoding="utf-8"
-    )
-    errors = lint_file(p)
-    assert errors == []
+def test_lint_file_missing_returns_empty(tmp_path: Path) -> None:
+    """Отсутствующий файл → пустой список (без исключения)."""
+    assert lint_file(tmp_path / "nope.yaml") == []

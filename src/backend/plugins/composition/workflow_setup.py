@@ -51,6 +51,21 @@ __all__ = (
 
 _logger = get_logger("workflow.setup")
 
+#: Не загруженные workflow-файлы (последняя попытка авто-регистрации,
+#: ADR-0434). Нужны для диагностики: битый workflow не должен исчезать
+#: молча — оператор видит список через :func:`get_workflow_load_failures`.
+_LOAD_FAILURES: list[dict[str, str]] = []
+
+
+def get_workflow_load_failures() -> list[dict[str, str]]:
+    """Список workflow-файлов, которые не удалось загрузить/скомпилировать.
+
+    Returns:
+        Копия списка ``{"path", "error_type", "error"}``.
+
+    """
+    return [dict(item) for item in _LOAD_FAILURES]
+
 
 workflow_compiler_registry: WorkflowCompilerRegistry = WorkflowCompilerRegistry()
 """Глобальный реестр скомпилированных workflow-деклараций."""
@@ -156,6 +171,7 @@ def _load_and_register_declarations() -> list[WorkflowDeclaration]:
         return []
 
     declarations: list[WorkflowDeclaration] = []
+    failures: list[dict[str, str]] = []
     for workflow_yaml in sorted(extensions_dir.rglob("*.workflow.yaml")):
         try:
             yaml_text = workflow_yaml.read_text(encoding="utf-8")
@@ -168,12 +184,31 @@ def _load_and_register_declarations() -> list[WorkflowDeclaration]:
             declarations.append(wf)
             _logger.info("workflow.auto_register OK: %s -> %s", wf.name, route_id)
         except Exception as exc:
-            _logger.warning(
+            # ADR-0434: битый workflow — ошибка уровня ERROR с полным текстом
+            # и путём файла (раньше был warning с обрезкой до 200 символов:
+            # причина провала терялась, а сам workflow просто исчезал).
+            _logger.error(
                 "workflow.auto_register FAIL: %s (%s: %s)",
                 workflow_yaml,
                 type(exc).__name__,
-                str(exc)[:200],
+                exc,
+                exc_info=True,
             )
+            failures.append(
+                {
+                    "path": str(workflow_yaml),
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                }
+            )
+
+    if failures:
+        _LOAD_FAILURES.extend(failures)
+        _logger.error(
+            "workflow.auto_register: %d из %d workflow-файлов не загружено",
+            len(failures),
+            len(failures) + len(declarations),
+        )
     return declarations
 
 
