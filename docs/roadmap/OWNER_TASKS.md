@@ -428,6 +428,7 @@ NATS-специфичный `GET /api/v1/admin/nats/consumers`. Панель п�
 | 5 | **Идемпотентность внешних вызовов** — ключ в заголовке activity | ✅ ADR-0431 |
 | 6 | **Семантика компенсации** — откатывать только выполненное (как в Temporal) | ✅ ADR-0431 |
 | 7 | **Инфраструктурные долги** — единый пакет «инфра-решения» с владельцами | ✅ **чек-лист `docs/ops/infra-release-checklist.md` (ADR-0441)**; закрыто кодом: `.env:92` (парсинг compose), образ `gd-integration-tools:light` (пересобран, `/health` 200), Prometheus-правила (ADR-0440), `audit_clickhouse_enabled` в prod, service-DNS (ADR-0412), JWKS-алгоритмы, BYPASSRLS-guard, `jupyter.hub`-провайдер, OpenWebUI-контракт. Осталось за инфраструктурой (команды — в чек-листе): keypair+JWKS-сервис для RS256, развёртывание OpenWebUI, роль БД с `BYPASSRLS` для межtenant-снапшота, ClickHouse в проде (audit-трейл), решение владельца по `audit.write`-декларациям и `replica_dsn` |
+| 7б | **ORM-tenant fail-closed (ADR-0448, Proposed)** — «сырой» ORM без tenant-контекста читает все tenant'ы (вне PostgreSQL). Пробный fail-closed сломал 42 внутренних теста (scheduler/audit/repositories) → откачен. Нужно решение: **(А)** системный tenant по умолчанию или **(Б)** привязка tenant'а во внутренних потоках + fail-closed | ⚙️ решение владельца + отдельная волна |
 | 8 | **Волна 28 = «стойкость»** | ✅ закрыто полностью: идемпотентность (ADR-0431) + компенсация (ADR-0431) + линтер workflow-спецификаций и внутренние activity (ADR-0433) |
 
 ---
