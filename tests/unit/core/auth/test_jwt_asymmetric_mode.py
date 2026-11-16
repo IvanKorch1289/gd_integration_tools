@@ -47,6 +47,35 @@ def _hs256_token(secret: str) -> str:
     return joserfc_jwt.encode({"alg": "HS256"}, _claims(), OctKey.import_key(secret))
 
 
+def _forged_hs256_token(secret: str) -> str:
+    """Собрать HS256-токен вручную (HMAC-SHA256 от произвольного секрета).
+
+    Нужен для сценария algorithm confusion: joserfc ≥ 1.8 отказывается
+    принимать асимметричный публичный ключ как oct-ключ, поэтому «наивный
+    клиент» моделируется на уровне формата JWT.
+
+    Args:
+        secret: Секрет HMAC (в тесте — PEM публичного ключа).
+
+    Returns:
+        Токен в формате ``header.payload.signature``.
+
+    """
+    import base64
+    import hashlib
+    import hmac
+    import json
+
+    def _b64(raw: bytes) -> str:
+        return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+    header = _b64(json.dumps({"alg": "HS256", "typ": "JWT"}).encode())
+    payload = _b64(json.dumps(_claims()).encode())
+    signing_input = f"{header}.{payload}".encode()
+    signature = _b64(hmac.new(secret.encode(), signing_input, hashlib.sha256).digest())
+    return f"{header}.{payload}.{signature}"
+
+
 class TestAsymmetricVerification:
     """Проверка подписи по публичному ключу (PEM) и по JWKS."""
 
@@ -123,13 +152,17 @@ class TestAlgorithmMismatch:
 
     @pytest.mark.asyncio
     async def test_algorithm_confusion_public_key_as_hmac_secret_rejected(self) -> None:
-        """HS256-токен, подписанный публичным ключом, не принимается."""
+        """HS256-токен, подписанный публичным ключом, не принимается.
+
+        joserfc ≥ 1.8 сам не даёт построить такой токен («Asymmetric public
+        keys must not be used as oct keys»), поэтому forged-токен собирается
+        вручную (HMAC-SHA256 от байтов PEM) — так проверяется defense-in-depth
+        самого бэкенда, а не только библиотеки.
+        """
         key = _rsa_key()
         backend = JwtBackend(algorithms=["RS256"], public_key=key)
         # Наивный (и неверный) клиент: HMAC-ключ = PEM публичного ключа.
-        forged = joserfc_jwt.encode(
-            {"alg": "HS256"}, _claims(), OctKey.import_key(key.as_pem().decode())
-        )
+        forged = _forged_hs256_token(key.as_pem().decode())
         with pytest.raises(JwtVerificationError):
             await backend.decode(forged)
 

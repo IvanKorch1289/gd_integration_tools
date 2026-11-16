@@ -314,7 +314,10 @@ async def test_factory_returns_local_when_provider_local() -> None:
         store = factory.get_object_storage()
     from src.backend.infrastructure.storage.local_fs import LocalFSStorage
 
-    assert isinstance(store, LocalFSStorage)
+    # ADR-0390: фактический backend оборачивается в TenantObjectStorage
+    # (tenant-префикс к ключам) → проверяем backend под обёрткой.
+    inner = getattr(store, "wrapped", None) or getattr(store, "_wrapped", None)
+    assert isinstance(inner, LocalFSStorage)
     factory.get_object_storage.cache_clear()
     factory.get_local_fs_storage.cache_clear()
 

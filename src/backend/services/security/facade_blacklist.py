@@ -34,11 +34,13 @@ class InMemoryJwtBlacklist:
       реальные TTL < 24h.
 
     S210 Cycle 1 review fix: ``cachetools.TTLCache`` **не thread-safe** по
-    дизайну (см. cachetools upstream docs). Восстановлен ``asyncio.Lock``
-    для multi-thread safety внутри single-process. Async-only callers
-    (single event-loop, no ``await`` points внутри методов) и так
-    безопасны, но Lock добавляет defense-in-depth для sync middleware /
-    ThreadPoolExecutor paths.
+    дизайну (см. cachetools upstream docs). Защита — ``threading.Lock``:
+    критическая секция синхронная (операции с dict), поэтому блокировка
+    event loop минимальна, а объект остаётся пригодным **из любого** event
+    loop и потока. Раньше использовался ``asyncio.Lock``: он привязывается к
+    первому event loop, который его await'ит, и при обращении из другого
+    loop ожидание блокировки **зависало навсегда** (воспроизведено полной
+    регрессией волны 33: тест на thread-safety падал по таймауту 600 s).
 
     S210 Cycle 1 review fix: ``expires_at`` clamped to 24h; для longer-running
     tokens (e.g. service-to-service > 24h) предпочитать RedisJwtBlacklist
@@ -46,29 +48,31 @@ class InMemoryJwtBlacklist:
     """
 
     def __init__(self) -> None:
-        import asyncio
+        import threading
 
         # ttl: 24h default. Per-entry granularity теряется, но экономим
         # ~40 LOC ручного TTL-check. JWT обычно живут < 24h.
         self._store: TTLCache[str, bool] = TTLCache(maxsize=10_000, ttl=86400)
-        # cachetools.TTLCache НЕ thread-safe по дизайну → asyncio.Lock обязателен
-        # (методы revoke/unvoke/is_revoked — async; threading.Lock блокирует event loop).
-        self._lock = asyncio.Lock()
+        # cachetools.TTLCache НЕ thread-safe по дизайну → нужен lock.
+        # threading.Lock, а не asyncio.Lock: блокировка не зависит от
+        # event loop (см. docstring) и не зависает при обращении из другого
+        # loop/потока.
+        self._lock = threading.Lock()
 
     async def revoke(self, jti: str, expires_at: int) -> None:
         """Добавить jti в blacklist (expires_at учтён через ttl=86400)."""
         # expires_at учтён через ttl=86400; bool-значение не нужно хранить.
-        async with self._lock:
+        with self._lock:
             self._store[jti] = True
 
     async def unrevoke(self, jti: str) -> None:
         """Убрать jti из blacklist (административный false-positive откат)."""
-        async with self._lock:
+        with self._lock:
             self._store.pop(jti, None)
 
     async def is_revoked(self, jti: str) -> bool:
         """Проверить, отозван ли конкретный token id."""
-        async with self._lock:
+        with self._lock:
             return jti in self._store
 
     async def is_iat_revoked(self, iat: int | None) -> bool:
@@ -80,10 +84,10 @@ class InMemoryJwtBlacklist:
         return None  # no-op in in-memory fallback
 
     async def clear(self) -> None:
-        """Полностью очистить blacklist (thread-safe через asyncio.Lock)."""
+        """Полностью очистить blacklist (thread-safe через threading.Lock)."""
         # Review-fix (2026-09-05): sync `with` на asyncio.Lock → TypeError;
         # раньше глотался clear_blacklist except'ом (silent no-op).
-        async with self._lock:
+        with self._lock:
             self._store.clear()
 
 
