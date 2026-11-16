@@ -162,11 +162,12 @@ class WebhookScheduler:
         if not task:
             return {"error": "not_found"}
 
-        # SSRF protection — reuse validator from scraping processors
-        from src.backend.dsl.engine.processors.scraping import _validate_url
+        # SSRF protection — канонический guard из core (ADR-0450: сервис не
+        # импортирует приватный хелпер DSL-слоя).
+        from src.backend.core.net.url_guard import assert_safe_url
 
         try:
-            _validate_url(task["url"])
+            assert_safe_url(task["url"])
         except ValueError as exc:
             logger.warning("Webhook SSRF blocked: %s — %s", schedule_id, exc)
             return {
