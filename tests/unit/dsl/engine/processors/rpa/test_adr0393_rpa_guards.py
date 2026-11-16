@@ -144,6 +144,9 @@ def _png_bytes() -> bytes:
 
 async def test_ocr_step_times_out(monkeypatch: pytest.MonkeyPatch) -> None:
     """OCR не уложился в лимит → понятная ошибка шага (ADR-0368/0393)."""
+    # pytesseract — optional extra (``rpa``/``rpa-ocr``): в CI-джобе без
+    # extras шаг не может быть выполнен вовсе → тест пропускается, а не падает.
+    pytest.importorskip("pytesseract")
     from src.backend.core.security.capabilities.gate import get_capability_gate
     from src.backend.core.security.capabilities.models import CapabilityRef
     from src.backend.dsl.engine.processors.rpa.operations.imageocrprocessor import (

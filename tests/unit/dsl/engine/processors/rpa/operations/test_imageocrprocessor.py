@@ -19,6 +19,11 @@ from src.backend.dsl.engine.processors.rpa.operations.imageocrprocessor import (
     ImageOcrProcessor,
 )
 
+# pytesseract — optional extra (``rpa``/``rpa-ocr``): без него OCR-шаг
+# не запускается вовсе, и мокать ``pytesseract.image_to_string`` нечем →
+# модуль пропускается (в CI-джобе extras не ставятся).
+pytest.importorskip("pytesseract")
+
 
 def _png_bytes() -> bytes:
     """Минимальный валидный PNG (PIL доступна в venv)."""

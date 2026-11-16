@@ -51,6 +51,17 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):  # type: ignore[misc]
         """The model name used for LiteLLM."""
         return self._model_name or "litellm-default"
 
+    @property
+    def system(self) -> str:
+        """Системный промпт модели (абстрактный метод pydantic-ai >= 1.x).
+
+        pydantic-ai 1.x требует ``Model.system``; в нашей реализации
+        системный промпт задаёт вызывающий (через ``model_settings``),
+        поэтому адаптер отдаёт пустую строку — это не меняет поведение
+        (запрос уходит в gateway как есть).
+        """
+        return ""
+
     async def request(
         self,
         messages: list[ModelMessage],
@@ -84,6 +95,13 @@ class LiteLLMModel(Model if HAS_PYDANTIC_AI else object):  # type: ignore[misc]
                 dict_messages.append({"role": str(role), "content": text})
             elif hasattr(msg, "content"):
                 dict_messages.append({"role": "user", "content": str(msg.content)})
+            elif isinstance(msg, dict):
+                # Словарь-сообщение (dict[str, str]) — формат, который
+                # используют прямые вызовы gateway. Без этой ветки такие
+                # сообщения молча терялись: в gateway уходил пустой список.
+                role = str(msg.get("role") or "user")
+                content = str(msg.get("content") or "")
+                dict_messages.append({"role": role, "content": content})
 
         result = await self._gateway.acompletion(
             messages=dict_messages, model=self._model_name, stream=False
