@@ -121,10 +121,17 @@ audit-deps: ## 2026-10-13 (P0-1): pip-audit с runtime-only deps, исключа
 	# теперь актуальные pin-conflict источники — rpa, ai-eval, rag, mcp (каждый
 	# тянет pinned версии, конфликтующие с core deps на py3.14).
 	# Конвертируем hash-pinned формат в простой package==version для pip-audit --strict.
-	# Конвертируем hash-pinned формат в простой package==version для pip-audit --strict.
+	# Дедуплицируем по имени пакета: uv export отдаёт по версии на платформу
+	# (напр. click==8.3.3 для darwin и click==8.5.0 для linux) — без дедупа
+	# pip-audit пытался поставить оба пина и падал на конфликте зависимостей
+	# («Cannot install click==8.3.3 and click==8.5.0»), т.е. CVE-гейт не
+	# доходил до отчёта. Оставляем максимальную версию (sort -V + последняя
+	# строка по имени).
 	@$(UV_RUN) sh -c 'uv export --no-dev --no-all-extras 2>/dev/null \
 	  | awk "/^[a-zA-Z]/ {print \$$1}" \
 	  | sed "s/;$$//" \
+	  | sort -V \
+	  | awk -F"==" "{v[\$$1]=\$$2} END {for (p in v) print p \"==\" v[p]}" \
 	  > dist/audit-requirements.txt' || \
 	  { $(ERROR) "uv export --no-dev --no-all-extras failed"; exit 2; }
 	@ALLOW=""; \
