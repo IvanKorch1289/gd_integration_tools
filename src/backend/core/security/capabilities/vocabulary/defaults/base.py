@@ -595,7 +595,7 @@ def register(vocab: CapabilityVocabulary) -> None:
     )
     vocab.register(
         CapabilityDef(
-            name="net.outbound.open.er-api.com",
+            name="net.outbound.erapi",
             matcher=dot_glob,
             scope_required=False,
             description="Мигрированная декларация процессора (ADR-0451).",

@@ -5,6 +5,8 @@
 | Capability | scope_required | matcher | public | Описание |
 |---|---|---|---|---|
 | `agent.run` | ✅ | `GlobScopeMatcher` | ➖ | Запуск AI-агента (langgraph_agent). |
+| `agent.security.check` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `ai.branch` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `ai.feedback.train` | ✅ | `ExactAliasMatcher` | ➖ | Запуск DSPy training-loop по labeled feedback + публикация prompt-version (S11 K4 W5). |
 | `ai.guardrail.evaluate` | ✅ | `GlobScopeMatcher` | ➖ | Вызов defense-in-depth guardrails pipeline (NeMo Colang input rails + Llama Guard 3 output classifier); scope = tenant-id или '*' (S24 W2, ADR-NEW-17). |
 | `ai.guardrail.policy_read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение per-tenant guardrail policy (NeMo/LlamaGuard/Lakera enable map) из tenant_config.py; scope = tenant-id или '*' (S24 W2, ADR-NEW-17, S172: Rebuff заменён на NeMo, F4.2). |
@@ -12,32 +14,56 @@
 | `ai.guardrails.nemo` | ✅ | `GlobScopeMatcher` | ➖ | Вызов NeMo Colang self-check guard (S172, replaces Rebuff). scope = '*' или provider-id. research/agent-framework/REPORT.md F4.2. |
 | `ai.guardrails.rebuff` | ✅ | `GlobScopeMatcher` | ➖ | [DEPRECATED S172] Вызов Rebuff prompt-injection detector — upstream archived 2026; capability сохранён для backward-compat grants in existing roles. Migrate to ai.guardrails.nemo. research/agent-framework/REPORT.md F4.2. |
 | `ai.invoke` | ✅ | `GlobScopeMatcher` | ➖ | Вызов LLM через единую точку входа AIGateway (ADR-NEW-19). Проверяется на каждый AIGateway.invoke(request.workflow_id); scope = workflow_id pattern или '*' (S25 W1). |
+| `ai.llm.litellm` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `ai.loop` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `ai.memory.delete` | ✅ | `GlobScopeMatcher` | ➖ | Удаление user-memory из MemoryProtocol (GDPR / 152-ФЗ user-erasure); scope = tenant-id или '*' (S24 W3, ADR-NEW-18). |
 | `ai.memory.read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение из MemoryProtocol (LangGraph Checkpointer / Mem0 / AgentMemory); namespace = '<tenant_id>:<scope>'; scope = tenant-id или '*' (S24 W3, ADR-NEW-18). |
 | `ai.memory.write` | ✅ | `GlobScopeMatcher` | ➖ | Запись в MemoryProtocol; namespace = '<tenant_id>:<scope>'; scope = tenant-id или '*' (S24 W3, ADR-NEW-18). |
 | `ai.model_registry.read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение из AI Model Registry (MLflow + HF Hub composite); scope = backend-id или '*' (S11 K4 W6). |
 | `ai.model_registry.write` | ✅ | `GlobScopeMatcher` | ➖ | Запись/promote в AI Model Registry. scope = backend-id или '*' (S11 K4 W6). |
+| `ai.optimize` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `ai.parallel` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `ai.policy.read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение AIPolicySpec из ai_policies/*.policy.yaml через PolicyResolver (ADR-NEW-20); scope = policy-name pattern или '*' (S25 W2). |
 | `ai.rag.pii_redaction` | ✅ | `ExactAliasMatcher` | ➖ | Применение PII-маскера к augment_result.documents[*].content в RAG retrieval pipeline (S11 K1 W1). |
 | `ai.route.optimize` | ✅ | `GlobScopeMatcher` | ➖ | AI-анализ route-метрик + генерация PR markdown (S11 K4 W7); scope = route-name или '*'. |
 | `ai.stream` | ✅ | `SegmentedGlobMatcher` | ➖ | Token-level streaming LLM (SSE/WS) через LLMStreamingService (scope = 'model:<prefix>', optional). |
 | `ai.tool.dispatch` | ✅ | `GlobScopeMatcher` | ➖ | Диспетчеризация вызова AI-инструмента. |
+| `analytics.read` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `audit.write` | ✅ | `GlobScopeMatcher` | ✅ | Запись audit-event в audit-sink (infrastructure/audit, admin_audit, correlation-логи). Добавлена 2026-10-06: capability реально используется роутами с шагом `audit:`, но в vocabulary отсутствовала, из-за чего они не могли объявить её ни публично, ни через плагин. scope = tenant-id, audit-sink или '*'. |
+| `auth.webhook_signature.verify` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `cache.read` | ✅ | `SegmentedGlobMatcher` | ➖ | Чтение кэша через CacheFacade (namespace по ':'). |
 | `cache.write` | ✅ | `SegmentedGlobMatcher` | ➖ | Запись в кэш через CacheFacade (namespace по ':'). |
 | `code.execute` | ✅ | `ExactAliasMatcher` | ➖ | Запуск пользовательского кода в sandbox (e2b/pyodide) через CodeSandbox; прямой subprocess запрещён (V15 R-V15-4). |
 | `data.export` | ✅ | `GlobScopeMatcher` | ➖ | Выгрузка данных во внешний формат (export-процессор). |
 | `db.execute_procedure` | ✅ | `GlobScopeMatcher` | ➖ | Вызов stored procedure во внешней БД через ExternalDatabaseFacade. |
-| `db.read` | ✅ | `ExactAliasMatcher` | ➖ | Чтение из БД через DatabaseFacade (read-only-сессия). |
-| `db.write` | ✅ | `ExactAliasMatcher` | ➖ | Запись в БД через DatabaseFacade (rw-сессия). |
+| `db.read` | ✅ | `ExactAliasMatcher` | ✅ | Чтение из БД через DatabaseFacade (read-only-сессия). |
+| `db.read.elasticsearch` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `db.read.mongodb` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `db.write` | ✅ | `ExactAliasMatcher` | ✅ | Запись в БД через DatabaseFacade (rw-сессия). |
+| `db.write.elasticsearch` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `documents.parse` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `dsl.dlq.write` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `dsl.eip.circuit_breaker` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `dsl.eip.dead_letter` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `dsl.eip.fallback_chain` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `dsl.eip.redelivery_policy` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `dsl.eip.routing_slip` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `dsl.eip.throttler` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `dsl.eip.timeout` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `event.publish` | ✅ | `GlobScopeMatcher` | ➖ | Публикация события в шину (integration-процессор). |
 | `fs.read` | ✅ | `SegmentedGlobMatcher` | ➖ | Чтение файлов через FSFacade (path-glob по '/'). |
 | `fs.watch` | ✅ | `SegmentedGlobMatcher` | ➖ | Наблюдение за файловой системой (watchdog) через FSFacade / FileWatchProcessor; scope = glob по пути наблюдаемого каталога (Cycle 172, Wave 5). |
 | `fs.write` | ✅ | `SegmentedGlobMatcher` | ➖ | Унифицированная запись файлов. fs.create_new — deprecated alias (post-S20 removal). Scope: fs.write.workspace.<session_id> для AI-workspaces; fs.write.tenant.<tenant_id> / fs.write.repo.<area> для системных. |
+| `function.call` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `guardrails.apply` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `health.read` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `jupyter.execute` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `jupyter.export` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `jupyter.hub` | ✅ | `GlobScopeMatcher` | ➖ | Выполнение ноутбуков на Jupyter Hub через NotebookFacade. Добавлена 2026-10-06: capability отсутствовала в vocabulary, из-за чего routes/jupyter_hub_run/ не мог объявить её. Имя двухсегментное (<resource>.<verb>), поэтому scope обязателен: роут объявляет 'jupyter.hub:run'. |
 | `langmem.admin` | ✅ | `ExactAliasMatcher` | ➖ | Администрирование LangMem: consolidate(), stats(), RLM reset (D.6). |
 | `llm.invoke` | ✅ | `SegmentedGlobMatcher` | ➖ | Вызов LLM-провайдера через LLMFacade (provider/model по '/'). |
 | `llm.stream` | ✅ | `GlobScopeMatcher` | ➖ | Streaming-вызов LLM (streaming_llm-процессор). |
+| `log.write` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `mcp.call` | ✅ | `GlobScopeMatcher` | ➖ | Вызов MCP-инструмента (mcp_tool-процессор). |
 | `mcp.gateway.invoke` | ✅ | `GlobScopeMatcher` | ➖ | Вызов tool через MCPGateway namespace (credit/analytics/system) с auth + WAF (ADR-NEW-23); scope = namespace-name или '*' (S27 W4). |
 | `mcp.gateway.invoke.analytics` | ✅ | `GlobScopeMatcher` | ➖ | Вызов tool в namespace 'analytics' через MCPGateway (ADR-0070, S27 W4); scope = tool-name или '*'. |
@@ -50,12 +76,19 @@
 | `mq.publish` | ✅ | `GlobScopeMatcher` | ➖ | Публикация сообщений через MQFacade (topic-glob). |
 | `net.inbound` | ✅ | `GlobScopeMatcher` | ✅ | Регистрация webhook/SSE-эндпоинтов через WebhookFacade. |
 | `net.outbound` | ✅ | `GlobScopeMatcher` | ✅ | Исходящие HTTP/gRPC через {HTTP,GRPC}Facade. |
+| `net.outbound.erapi` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `net.outbound.ldap` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `net.outbound.litellm` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `net.outbound.nominatim` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `net.outbound.search` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `net.outbound.webdav` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `pii.audit` | ✅ | `GlobScopeMatcher` | ➖ | Запись audit-event pii.{detected,anonymized,blocked} с tenant_id + entity_type + redacted_hash в immutable Postgres audit-sink; scope = tenant-id или '*' (S24 W1, ADR-NEW-16). |
 | `pii.read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение текста через PII-detector pipeline (Presidio + ru NER) перед маскированием/anonymize; scope = tenant-id или '*' (S24 W1, ADR-NEW-16). |
 | `pii.tokenize.reversible` | ✅ | `GlobScopeMatcher` | ➖ | Reversible PII-токенизация через PIITokenizer (Presidio + AES-GCM TokenRegistry); обязательна для unmask round-trip (ADR-NEW-21). scope = domain-id (banking, hr, medical) или '*' (S25 W4). |
 | `pii.tokenize.reversible.agent_actions` | ✅ | `GlobScopeMatcher` | ➖ | PII-токенизация параметров tool/action-вызовов агента (AgentDictPIIMaskProcessor в режиме agent_actions); scope = domain-id (banking, hr, medical) или '*' (Cycle 172, Wave 5). |
 | `pii.tokenize.reversible.agent_tools` | ✅ | `GlobScopeMatcher` | ➖ | PII-токенизация аргументов tool-вызовов агента (AgentDictPIIMaskProcessor в режиме agent_tools); scope = domain-id (banking, hr, medical) или '*' (Cycle 172, Wave 5). |
 | `pii.write` | ✅ | `GlobScopeMatcher` | ➖ | Запись маскированных payload-ов в outbound LLM / RAG / DLQ / Langfuse traces; scope = tenant-id или '*' (S24 W1, ADR-NEW-16). |
+| `queue.produce.kafka` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `rpa.ai.decide` | ✅ | `GlobScopeMatcher` | ➖ | AI-принятие решения внутри RPA-сценария. |
 | `rpa.appium.invoke` | ✅ | `GlobScopeMatcher` | ➖ | Вызов Appium-драйвера (мобильная автоматизация). |
 | `rpa.archive.execute` | ✅ | `GlobScopeMatcher` | ➖ | Создание/распаковка архива (tar/zip) RPA-процессором. |
@@ -100,6 +133,8 @@
 | `secret.read` | ✅ | `GlobScopeMatcher` | ➖ | Чтение секрета из Vault (vault_secret-процессор). |
 | `secrets.read` | ✅ | `URISchemeMatcher` | ➖ | Чтение секрета через SecretsFacade (vault:// / env:// / kms://). |
 | `security.waf.check` | ✅ | `GlobScopeMatcher` | ➖ | Проверка запроса WAF-движком. |
+| `settings.read` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `sink.send` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `skill.invoke` | ✅ | `GlobScopeMatcher` | ➖ | Вызов AI skill через SkillRegistry (ADR-NEW-22, S26 W5); scope = skill-id pattern (``credit.score.calculate``, ``credit.*``) или '*' (S27 W3 DSL .skill_invoke()). |
 | `storage.presign` | ✅ | `SegmentedGlobMatcher` | ✅ | Выдача presigned-ссылки на объектное хранилище через StorageFacade (key). Ссылка даёт клиенту прямой доступ к бакету, поэтому выдаётся по отдельной capability, а не по storage.read. |
 | `storage.read` | ✅ | `SegmentedGlobMatcher` | ✅ | Чтение из объектного хранилища через StorageFacade (key/prefix). |
