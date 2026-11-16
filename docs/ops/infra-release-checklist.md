@@ -124,6 +124,9 @@ audit-событий не пишется.
 # keypair для прод-JWT (в vault/secret-менеджере, не в репозитории!)
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out jwt-private.pem
 openssl rsa -pubout -in jwt-private.pem -out jwt-public.pem
+# keypair (ADR-0455): генератор в репозитории — ключи НЕ пишем в git
+python tools/generate_jwks_keypair.py --out-dir /run/secrets/jwt --kid prod-1
+# → jwt-private.pem (0600) → secret-менеджер; jwks.json → ConfigMap/Secret
 # JWKS — сервис, отдающий {"keys":[...]} по service-DNS
 ```
 
@@ -173,6 +176,9 @@ http://open-webui:3000` (ADR-0412); в `fallback_chain` prod **не включё
 ---
 
 ## 10. BYPASSRLS для межtenant-снапшота (код готов, нужна роль БД)
+
+Роль готова в репозитории (ADR-0455): `ops/sql/bypassrls_role.sql`
+(`gd_snapshot_reader`, NOLOGIN BYPASSRLS, только SELECT).
 
 **Код.** `infrastructure/resilience/snapshot_job.py` — fail-closed: перед
 выборкой проверяется наличие `BYPASSRLS` у роли; процедура выдачи роли и
