@@ -11,6 +11,7 @@ from contextvars import ContextVar as ContextVar
 from dataclasses import dataclass as dataclass
 
 __all__ = (
+    "SYSTEM_TENANT_ID",
     "QuotaExceeded",
     "QuotaTracker",
     "SLOEvaluation",
@@ -19,6 +20,7 @@ __all__ = (
     "bind_tenant",
     "bind_tenant_from_metadata",
     "current_tenant",
+    "system_tenant_context",
     "get_tenant_id",
     "set_tenant",
     "tenant_scope",
@@ -81,6 +83,22 @@ def get_tenant_id() -> str:
     """
     ctx = _current.get()
     return ctx.tenant_id if ctx is not None else ""
+
+
+#: Sentinel системного tenant'а (ADR-0448, вариант А). Контекст с таким
+#: tenant_id означает **платформенный** scope: кросс-tenant запросы служебных
+#: потоков разрешены. Пустой tenant_id или отсутствие контекста — fail-closed.
+SYSTEM_TENANT_ID: str = "_system"
+
+
+def system_tenant_context() -> "TenantContext":
+    """Контекст платформенного (системного) scope (ADR-0448).
+
+    Returns:
+        ``TenantContext`` с tenant_id = :data:`SYSTEM_TENANT_ID`.
+
+    """
+    return TenantContext(tenant_id=SYSTEM_TENANT_ID, plan="enterprise", region="global")
 
 
 class tenant_scope:

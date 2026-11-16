@@ -26,6 +26,7 @@ import pytest
 from sqlalchemy import String, create_engine, select, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
+from src.backend.core.tenancy import system_tenant_context
 from src.backend.core.tenancy import (
     TenantContext,
     bind_tenant,
@@ -147,8 +148,13 @@ def test_raw_sql_on_non_tenant_table_without_tenant_is_allowed() -> None:
     session.close()
 
 
-def test_orm_query_without_tenant_context_is_not_blocked() -> None:
-    """ORM-путь без tenant'а не блокируется (фоновые/служебные пути)."""
+def test_orm_query_without_tenant_context_is_blocked() -> None:
+    """ORM-запрос к tenant-aware сущности без tenant'а — fail-closed.
+
+    ADR-0448 (вариант А): без tenant-скоупа запрос не ограничен → отказ.
+    Фоновые/служебные потоки помечают платформенный scope явно
+    (``SYSTEM_TENANT_ID``) — см. следующий тест.
+    """
     engine = create_engine("sqlite://")
     Base.metadata.create_all(engine)
     tf.apply_tenant_filter()
@@ -156,6 +162,21 @@ def test_orm_query_without_tenant_context_is_not_blocked() -> None:
     session.add(Doc(id=1, name="a-1", tenant_id=TENANT_A))
     session.commit()
     set_tenant(TenantContext(tenant_id=""))
+
+    with pytest.raises(tf.TenantIsolationError):
+        session.execute(select(Doc)).scalars().all()
+    session.close()
+
+
+def test_system_tenant_scope_allows_cross_tenant_query() -> None:
+    """Явный системный scope → кросс-tenant запрос разрешён (ADR-0448, вариант А)."""
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    tf.apply_tenant_filter()
+    session = Session(engine)
+    session.add(Doc(id=1, name="a-1", tenant_id=TENANT_A))
+    session.commit()
+    set_tenant(system_tenant_context())
 
     ids = {row.id for row in session.execute(select(Doc)).scalars()}
 

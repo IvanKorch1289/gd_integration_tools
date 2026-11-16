@@ -233,10 +233,11 @@
 | [ADR-0444](0444-helm-secret-placeholder-guard.md) | Helm Secret не пропускает плейсхолдеры в прод | Accepted |
 | [ADR-0446](0446-runtime-container-contract.md) | Рантайм-контур контейнера: расширения, пулы, healthz-алиас, Vault-refresher | Accepted |
 | [ADR-0447](0447-helm-chart-renderable.md) | Helm-chart обязан рендериться; CI-шаг `helm lint`/`helm template` | Accepted |
-| [ADR-0448](0448-orm-tenant-context-fail-closed-deferred.md) | ORM-ветка tenant-изоляции: fail-closed без tenant (решение отложено) | **Proposed** |
+| [ADR-0448](0448-orm-tenant-context-fail-closed-deferred.md) | ORM-ветка tenant-изоляции: fail-closed без tenant (решение отложено) | Accepted |
+| [ADR-0449](0449-processor-declaration-capabilities-enforced.md) | Capability из декларации процессора проверяется в рантайме | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 232 ADRs.
+**Total:** 233 ADRs.
 

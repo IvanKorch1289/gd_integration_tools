@@ -96,7 +96,7 @@ from sqlalchemy.sql.selectable import CompoundSelect
 
 from src.backend.core.errors import BaseError
 from src.backend.core.logging import get_logger
-from src.backend.core.tenancy import get_tenant_id
+from src.backend.core.tenancy import SYSTEM_TENANT_ID, current_tenant, get_tenant_id
 from src.backend.core.tenancy.tenant_tables import TENANT_TABLES
 
 __all__ = (
@@ -820,7 +820,29 @@ def apply_tenant_filter(_target: Any = None) -> None:
         ):
             return
 
+        # ADR-0448 (вариант А, решение владельца 2026-11-10) — три явных
+        # состояния tenant-скоупа:
+        #  * контекста нет → дефолт = платформенный scope (служебные потоки:
+        #    планировщик, аудит-версионирование, репозитории); пользовательский
+        #    контур всегда с контекстом — его выставляет auth-middleware;
+        #  * явный системный tenant (SYSTEM_TENANT_ID) → кросс-tenant без
+        #    фильтра;
+        #  * явный пустой tenant → fail-closed: запрос к tenant-aware
+        #    сущности отклоняется (раньше шёл SELECT/UPDATE/DELETE без
+        #    предиката, а RLS есть только в PostgreSQL → на SQLite/Oracle/
+        #    MySQL читались строки всех tenant'ов).
+        ctx = current_tenant()
+        if ctx is None or ctx.tenant_id == SYSTEM_TENANT_ID:
+            return
+
         if not tenant_id:
+            if _tenant_aware_entities(stmt):
+                raise TenantIsolationError(
+                    message=(
+                        "ORM-запрос к tenant-aware сущности без tenant-контекста "
+                        "отклонён (fail-closed, ADR-0448)"
+                    )
+                )
             return
 
         # D-4: составные конструкции (UNION/CTE) фильтруются явно —

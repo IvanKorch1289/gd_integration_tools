@@ -27,6 +27,30 @@ ProcessorCallable = Callable[[Exchange[Any], "ExecutionContext"], Any | Awaitabl
 
 _logger = get_logger(__name__)
 
+_VOCABULARY_CAPABILITIES: frozenset[str] | None = None
+
+
+def _vocabulary_capabilities() -> frozenset[str]:
+    """Имена capability из vocabulary (кэш на процесс).
+
+    Returns:
+        Множество имён, объявленных в capability-vocabulary.
+
+    """
+    global _VOCABULARY_CAPABILITIES
+    if _VOCABULARY_CAPABILITIES is None:
+        try:
+            from src.backend.core.security.capabilities.vocabulary import (
+                build_default_vocabulary,
+            )
+
+            _VOCABULARY_CAPABILITIES = frozenset(
+                definition.name for definition in build_default_vocabulary().all()
+            )
+        except Exception:  # noqa: BLE001 — vocabulary недоступна → пусто
+            _VOCABULARY_CAPABILITIES = frozenset()
+    return _VOCABULARY_CAPABILITIES
+
 
 def _exchange_stopped(exchange: Exchange[Any]) -> bool:
     """True, если обработка exchange остановлена (безопасно для mock'ов).
@@ -261,10 +285,11 @@ class BaseProcessor(ABC):
             ``False`` если denied.
 
         """
-        if self.required_capability is None:
+        capabilities = self._declared_capabilities()
+        if not capabilities:
             return True
 
-        capability = self.required_capability
+        capability = capabilities[0]
         meta_principal = getattr(exchange.meta, "principal", None)
         resolved_principal = (
             principal
@@ -301,7 +326,46 @@ class BaseProcessor(ABC):
             exchange.fail(f"{self.name}: capability '{capability}' denied{suffix}")
             exchange.stop()
             return False
+
+        # ADR-0449: дополнительные capability из декларации процессора
+        # (``@processor(capabilities=(...))``) — тоже проверяются. Имена вне
+        # словаря считаются advisory (легаси-декларации 3-сегментной формы
+        # не имеют scope в vocabulary) и не блокируют вызов.
+        for extra in capabilities[1:]:
+            extra_ok, extra_reason = self._check_via_runtime_resolver(
+                exchange,
+                capability=extra,
+                action=action,
+                principal=resolved_principal,
+                tenant_id=tenant_id,
+            )
+            if not extra_ok:
+                suffix = f" ({extra_reason})" if extra_reason else ""
+                exchange.fail(f"{self.name}: capability '{extra}' denied{suffix}")
+                exchange.stop()
+                return False
         return True
+
+    def _declared_capabilities(self) -> tuple[str, ...]:
+        """Capability, которые процессор обязан иметь (ADR-0449).
+
+        Источники: ``required_capability`` (одиночная enforced-декларация) и
+        декларация ``@processor(capabilities=(...))`` (только имена, которые
+        есть в vocabulary — остальные advisory и не блокируют вызов).
+
+        Returns:
+            Кортеж имён capability в порядке проверки.
+
+        """
+        names: list[str] = []
+        if self.required_capability:
+            names.append(self.required_capability)
+        spec = getattr(type(self), "__processor_spec__", None)
+        for ref in getattr(spec, "capabilities", ()) or ():
+            name = str(ref).split(":", 1)[0].strip()
+            if name and name not in names and name in _vocabulary_capabilities():
+                names.append(name)
+        return tuple(names)
 
     def _check_via_runtime_resolver(
         self,

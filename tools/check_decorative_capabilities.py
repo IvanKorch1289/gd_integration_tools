@@ -196,6 +196,25 @@ def _extract_capabilities(node: ast.AST) -> tuple[str, ...] | None:
     return (str(value),)
 
 
+def _vocabulary_capabilities() -> frozenset[str]:
+    """Имена capability из vocabulary (ADR-0449).
+
+    Returns:
+        Множество имён, объявленных в capability-vocabulary.
+
+    """
+    try:
+        from src.backend.core.security.capabilities.vocabulary import (
+            build_default_vocabulary,
+        )
+
+        return frozenset(
+            definition.name for definition in build_default_vocabulary().all()
+        )
+    except Exception:  # noqa: BLE001 — vocabulary недоступна → пусто
+        return frozenset()
+
+
 def _required_capability_state(class_node: ast.ClassDef) -> bool:
     """Проверяет наличие непустого прямого ``required_capability``.
 
@@ -258,6 +277,14 @@ def _decorative_declarations(
             if not capabilities:
                 continue
             if _required_capability_state(class_node):
+                continue
+            # ADR-0449: capability из декларации процессора, чьё имя есть в
+            # vocabulary, проверяется в рантайме (BaseProcessor.
+            # _declared_capabilities) → такие декларации не декоративны.
+            vocabulary = _vocabulary_capabilities()
+            if vocabulary and any(
+                name.split(":", 1)[0].strip() in vocabulary for name in capabilities
+            ):
                 continue
             yield DecorativeDeclaration(
                 path=path,

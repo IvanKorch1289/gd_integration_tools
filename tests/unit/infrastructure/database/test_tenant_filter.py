@@ -9,6 +9,7 @@ S107 W1: ``infrastructure.database.tenant_filter`` — shim; реализаци�
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -73,6 +74,13 @@ def test_apply_tenant_filter_registers_listeners() -> None:
         assert mock_listen.call_count == 3
 
 
+def _tenant_ctx(tenant_id: str) -> Any:
+    """Контекст tenant'а для мока (ADR-0448)."""
+    from src.backend.core.tenancy import TenantContext
+
+    return TenantContext(tenant_id=tenant_id)
+
+
 def test_filter_by_tenant_handles_dml() -> None:
     """F-AM: UPDATE/DELETE больше не отбрасываются (контракт изменён осознанно).
 
@@ -97,6 +105,9 @@ def test_filter_by_tenant_handles_dml() -> None:
     with (
         patch(f"{CANONICAL}.event.listens_for", fake_listens_for),
         patch(f"{CANONICAL}.get_tenant_id", return_value="t1"),
+        # ADR-0448 (вариант А): активный tenant-контекст обязателен —
+        # без контекста скоуп считается платформенным (фильтр не применяется).
+        patch(f"{CANONICAL}.current_tenant", return_value=_tenant_ctx("t1")),
     ):
         apply_tenant_filter(MagicMock())
 
