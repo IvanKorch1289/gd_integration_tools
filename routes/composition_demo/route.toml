@@ -18,6 +18,9 @@ scope = "http:/api/v1/composition/demo"
 name = "net.outbound"
 scope = "http://localhost:9000:internal"
 
+[[route.capabilities]]
+name = "audit.write"
+scope = "audit:*"
 [route.slo]
 p95_ms = 30
 p99_ms = 100

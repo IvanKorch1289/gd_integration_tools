@@ -35,6 +35,10 @@ _VALID_OUTCOMES = frozenset({"success", "failure", "denied", "error"})
 class AuditProcessor(BaseProcessor):
     """Записывает событие в immutable audit log.
 
+    Capability:
+        ``audit.write`` (ADR-0454) — запись в audit-sink проверяется
+        capability-гейтом; роут обязан объявить её в ``route.toml``.
+
     Args:
         action: Имя действия (статический). Например ``order.created``.
         action_from: Альтернативно — выражение из exchange.
@@ -47,6 +51,8 @@ class AuditProcessor(BaseProcessor):
         result_property: Имя exchange-property для записи ``event_hash``.
 
     """
+
+    required_capability = "audit.write"
 
     def __init__(
         self,
