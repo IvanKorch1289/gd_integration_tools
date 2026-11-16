@@ -7,14 +7,18 @@
 # разделяется, чтобы «0 новых» перестало означать «прогресс неотличим от
 # стагнации».
 #
-# Сейчас здесь 12 записей services -> dsl: публичная точка входа в DSL для
-# Python-кода и для портала. Матрица ALLOWED["services"] dsl не разрешает,
-# но спецификация (см. ADR-0348) считает эти зависимости легитимными —
-# поэтому кодом их устранить нельзя, нужно решение по матрице.
+# Сейчас здесь 3 записи services -> dsl: публичные точки входа в DSL для
+# Python-кода. Матрица ALLOWED["services"] dsl не разрешает, но спецификация
+# (см. ADR-0348) считает эти зависимости легитимными — поэтому кодом их
+# устранить нельзя, нужно решение по матрице.
 #
 # ADR-0348 рекомендует B: перенос services/dsl_portal/ в dsl/portal/, что
-# убирает этот класс целиком (dsl -> dsl не нарушение).
+# убирает этот класс целиком (dsl -> dsl не нарушение) — выполнено
+# (cf0802244): 8 из 12 записей вымерли вместе с portal-модулями.
+#
+# 2026-11-16 (ADR-0450): запись webhook_scheduler -> dsl.engine.processors.
+# scraping удалена — SSRF-guard перенесён в core (core.net.url_guard),
+# зависимость services -> dsl устранена кодом, а не переносом в долг.
 src/backend/services/execution/action_dispatcher.py	services	src.backend.dsl.commands.action_registry
-src/backend/services/ops/webhook_scheduler.py	services	src.backend.dsl.engine.processors.scraping
 src/backend/services/plugins/registries.py	services	src.backend.dsl.commands.action_registry
 src/backend/services/plugins/registries.py	services	src.backend.dsl.engine.processors

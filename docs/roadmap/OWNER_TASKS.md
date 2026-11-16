@@ -444,7 +444,7 @@
 | 3 | **audit.write** | ✅ ADR-0454: capability обязательна для шага `audit`, объявлена во всех 5 роутах с этим шагом |
 | 4 | **Mutation-гейт** | ✅ ADR-0452: разблокирован (обвязка + синхронизация workspace), baseline 21.6 %, гейт в CI |
 | 5 | **Coverage-перемер** | ✅ ADR-0453: `tools/run_coverage_grouped.sh` (группы + `coverage combine`), CI и `make coverage-grouped` |
-| 6 | **Межслойные нарушения** | ◐ ADR-0450: baseline 41 → **40** (рэтчет, гейт блокирует рост), план инверсии по доменам зафиксирован |
+| 6 | **Межслойные нарушения** | ◐ ADR-0450: baseline 41 → **40** (рэтчет: долг 37 + контракты 3; гейт блокирует рост и стейл-записи), план инверсии по доменам зафиксирован |
 | 7 | **Инфраструктура (6 действий)** | ◐ ADR-0455: автоматизируемая часть в репозитории (генератор JWKS keypair RS256 + SQL роли BYPASSRLS); OpenWebUI / ClickHouse в проде / JupyterHub / JWKS-сервис / replica DSN — за владельцем (`docs/ops/infra-release-checklist.md`) |
 
 ---
