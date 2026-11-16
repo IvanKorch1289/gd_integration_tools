@@ -359,7 +359,8 @@
 | 3 | `GET /api/v1/webhooks/scheduled`, `POST /api/v1/webhook/schedule` | — | ✅ **закрыто ADR-0432** (DI + эндпоинты + SSRF-guard) |
 | 4 | `GET /api/v1/storage/list|get|download` (по ключу) | — | ✅ закрыто ADR-0438 |
 | 5 | `GET /api/v1/admin/pools/snapshot` + `GET /api/v1/admin/processes/{active,stats}` | — | ✅ закрыто ADR-0439 |
-| 6 | `GET /api/v1/admin/processes/active`, `GET /api/v1/admin/queues/summary` | новая capability (для Kafka/RabbitMQ — нет) | нет |
+| 6 | `GET /api/v1/admin/processes/active` | — | ✅ закрыто ADR-0439 |
+| 6б | `GET /api/v1/admin/queues/summary` | **закрыто решением владельца 2026-11-16**: capability «метрики брокера» (Kafka/RabbitMQ) не создаём — брокер-агент без потребителя; панель честно сообщает, доступен только NATS-специфичный `GET /api/v1/admin/nats/consumers` | ✅ закрыто |
 | 7 | `POST /api/v1/admin/sql/query` | read-only SELECT с валидацией + аудитом | сознательно не поднимался |
 
 **Требует владельца:** решение по п. 7 (SQL-консоль — расширение поверх БД в
@@ -408,10 +409,11 @@
 пробрасывается во внешний вызов заголовком `Idempotency-Key` — контракт для
 получателя (дедупликация по ключу) зафиксирован в ADR-0431.
 
-**Осталось:** сводка очередей (`GET /api/v1/admin/queues/summary`) — общей
-capability «метрики брокера» (Kafka/RabbitMQ) в кодовой базе нет; есть только
-NATS-специфичный `GET /api/v1/admin/nats/consumers`. Панель портала остаётся
-выключенной — решение (ввести брокер-агент или отказаться) за владельцем.
+**Закрыто решением владельца (2026-11-16):** сводка очередей
+(`GET /api/v1/admin/queues/summary`) не вводится — capability «метрики
+брокера» (Kafka/RabbitMQ) в кодовой базе нет, а брокер-агент — новая
+подсистема без потребителя. Панель портала сообщает об этом явно; доступен
+только NATS-специфичный `GET /api/v1/admin/nats/consumers`.
 
 ---
 
@@ -428,7 +430,7 @@ NATS-специфичный `GET /api/v1/admin/nats/consumers`. Панель п�
 | 5 | **Идемпотентность внешних вызовов** — ключ в заголовке activity | ✅ ADR-0431 |
 | 6 | **Семантика компенсации** — откатывать только выполненное (как в Temporal) | ✅ ADR-0431 |
 | 7 | **Инфраструктурные долги** — единый пакет «инфра-решения» с владельцами | ✅ **чек-лист `docs/ops/infra-release-checklist.md` (ADR-0441)**; закрыто кодом: `.env:92` (парсинг compose), образ `gd-integration-tools:light` (пересобран, `/health` 200), Prometheus-правила (ADR-0440), `audit_clickhouse_enabled` в prod, service-DNS (ADR-0412), JWKS-алгоритмы, BYPASSRLS-guard, `jupyter.hub`-провайдер, OpenWebUI-контракт. Осталось за инфраструктурой (команды — в чек-листе): keypair+JWKS-сервис для RS256, развёртывание OpenWebUI, роль БД с `BYPASSRLS` для межtenant-снапшота, ClickHouse в проде (audit-трейл), решение владельца по `audit.write`-декларациям и `replica_dsn` |
-| 7б | **ORM-tenant fail-closed (ADR-0448, Proposed)** — «сырой» ORM без tenant-контекста читает все tenant'ы (вне PostgreSQL). Пробный fail-closed сломал 42 внутренних теста (scheduler/audit/repositories) → откачен. Нужно решение: **(А)** системный tenant по умолчанию или **(Б)** привязка tenant'а во внутренних потоках + fail-closed | ⚙️ решение владельца + отдельная волна |
+| 7б | ~~**ORM-tenant fail-closed**~~ — **закрыто ADR-0448 (вариант А, решение владельца 2026-11-16)**: контекста нет → платформенный scope; `tenant_id=_system` → кросс-tenant явно; `tenant_id=""` → fail-closed; реальный tenant → фильтр | ✅ закрыто |
 | 8 | **Волна 28 = «стойкость»** | ✅ закрыто полностью: идемпотентность (ADR-0431) + компенсация (ADR-0431) + линтер workflow-спецификаций и внутренние activity (ADR-0433) |
 
 ---
