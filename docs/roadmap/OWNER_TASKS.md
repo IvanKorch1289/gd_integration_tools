@@ -439,13 +439,14 @@
 
 | # | Пункт | Статус |
 |---|---|---|
-| 1 | **ORM tenant-скоуп** (вариант А) | ✅ ADR-0448: контекста нет / `_system` → платформенный scope; пустой tenant → fail-closed |
-| 2 | **Capability-контур** | ✅ ADR-0449 + ADR-0451: декларации процессоров enforced, **долг 36 → 0**, allowlist гейта пуст |
-| 3 | **audit.write** | ✅ ADR-0454: capability обязательна для шага `audit`, объявлена во всех 5 роутах с этим шагом |
+| 1 | **ORM tenant-скоуп** (вариант А) | ✅ ADR-0448: контекста нет / `_system` → платформенный scope; пустой tenant → fail-closed (+ обход UNION/CTE закрыт в волне 33) |
+| 2 | **Capability-контур** | ◐ ADR-0449 + ADR-0451: долг легаси-форм **36 → 0**, allowlist гейта пуст; **enforcement — на уровне процессоров, не движка** (см. открытые позиции ADR-0449) |
+| 3 | **audit.write** | ✅ ADR-0454: capability реально enforced в `AuditProcessor` (отказ без декларации, проверка scope), объявлена во всех 5 роутах с этим шагом |
 | 4 | **Mutation-гейт** | ✅ ADR-0452: разблокирован (обвязка + синхронизация workspace), baseline 21.6 %, гейт в CI |
-| 5 | **Coverage-перемер** | ✅ ADR-0453: `tools/run_coverage_grouped.sh` (группы + `coverage combine`), CI и `make coverage-grouped` |
+| 5 | **Coverage-перемер** | ✅ ADR-0453: `tools/run_coverage_grouped.sh` починен (имя частей, порог на группе, пустые группы, исключение `chaos`/`integration`), CI и `make coverage-grouped` |
 | 6 | **Межслойные нарушения** | ◐ ADR-0450: baseline 41 → **40** (рэтчет: долг 37 + контракты 3; гейт блокирует рост и стейл-записи), план инверсии по доменам зафиксирован |
-| 7 | **Инфраструктура (6 действий)** | ◐ ADR-0455: автоматизируемая часть в репозитории (генератор JWKS keypair RS256 + SQL роли BYPASSRLS); OpenWebUI / ClickHouse в проде / JupyterHub / JWKS-сервис / replica DSN — за владельцем (`docs/ops/infra-release-checklist.md`) |
+| 7 | **Инфраструктура (6 действий)** | ◐ ADR-0455: генератор JWKS keypair и SQL-роль снапшота **доведены до применимости** (проверено прогонами: PG 16.15, отказ «внутри репозитория», ротация ключа); чек-лист — с реальными env-именами (`SEC_*`, `DB_*`) и командами. За владельцем: keypair+секрет-менеджер, JWKS-сервис (https), роль БД+DSN снапшота, внешний ClickHouse, OpenWebUI, JupyterHub, `DB_REPLICA_DSN` |
+| 8 | **CVE-гейт** (найдено волной 33) | ✅ Гейт не доходил до отчёта (конфликт пинов `click` в `uv export`) → дедуп по имени пакета; **23 CVE в 6 пакетах закрыты** обновлениями lock (filelock 4.2.10, pypdf 7.1.0, soupsieve 4.1.1, opentelemetry 1.45.2, joserfc 1.8.0, dnspython 2.9.2, deepeval 4.3.4) → `make cve-gate`: PASS, 0 unignored |
 
 ---
 
