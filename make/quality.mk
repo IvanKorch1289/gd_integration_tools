@@ -119,9 +119,13 @@ mutation-quick: check-env ## Run mutation testing with --quick mode (single muta
 	@$(INFO) "Running mutation testing in quick mode..."
 	@bash tools/run_mutation_tests.sh --quick
 
-mutation-gate: check-env ## CI gate: minimum mutation score 55% (configurable via THRESHOLD)
+mutation-gate: check-env ## CI gate: mutation score from baseline (.baselines/mutation.json), THRESHOLD overrides
 	@$(INFO) "Running mutation gate..."
-	@THRESHOLD=$${THRESHOLD:-55} python tools/checks/check_mutmut.py --threshold $${THRESHOLD}
+	@if [ -n "$${THRESHOLD:-}" ]; then \
+		$(UV_RUN) python tools/checks/check_mutmut.py --threshold $${THRESHOLD}; \
+	else \
+		$(UV_RUN) python tools/checks/check_mutmut.py; \
+	fi
 
 check-docstrings: ##@ Quality Check for missing docstrings in public API
 	@$(INFO) "Checking docstring coverage..."

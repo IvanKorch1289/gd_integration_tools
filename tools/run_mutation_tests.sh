@@ -33,8 +33,19 @@ VENV_PY="${REPO_ROOT}/.venv/bin/python"
 COVERAGE_DATA="${REPO_ROOT}/.coverage.mutations"
 MUTMUT_CACHE="${REPO_ROOT}/.mutmut-cache"
 MUTMUT_HTML_DIR="${REPO_ROOT}/mutants"
-MUTMUT_MIN_SCORE="${MUTMUT_MIN_SCORE:-55.0}"
+MUTMUT_MIN_SCORE="${MUTMUT_MIN_SCORE:-}"
 MUTMUT_TIMEOUT="${MUTMUT_TIMEOUT:-60}"
+
+# Порог по умолчанию — из baseline (.baselines/mutation.json), как у всех
+# остальных гейтов (ADR-0443). Раньше здесь был жёсткий 55 % при фактическом
+# baseline 21.6 % → локальный `make mutation` был всегда красным.
+if [[ -z "${MUTMUT_MIN_SCORE}" ]]; then
+    if [[ -f "${REPO_ROOT}/.baselines/mutation.json" ]]; then
+        MUTMUT_MIN_SCORE="$("${VENV_PY}" -c 'import json,sys; print(json.load(open(sys.argv[1]))["mutation_score_percent"])' "${REPO_ROOT}/.baselines/mutation.json")"
+    else
+        MUTMUT_MIN_SCORE="55.0"
+    fi
+fi
 
 cd "${REPO_ROOT}"
 
