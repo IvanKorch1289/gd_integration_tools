@@ -96,6 +96,12 @@ class AuditProcessor(BaseProcessor):
             exchange.fail("AuditProcessor: пустое action")
             return
 
+        # ADR-0454: запись в audit-sink — только при объявленной capability.
+        # Отказ = failed + stopped (auth_check сам переводит exchange), шаг
+        # не выполняется: audit не может быть обойден отсутствием декларации.
+        if not await self.auth_check(exchange, action="write"):
+            return
+
         actor = (
             str(_resolve(exchange, self._actor_from))
             if self._actor_from
@@ -154,6 +160,29 @@ class AuditProcessor(BaseProcessor):
         except Exception as exc:
             _logger.warning("AuditProcessor: ошибка записи в audit log: %s", exc)
             exchange.set_property(f"{self._result_property}_error", str(exc))
+
+    def _capability_scope(self, exchange: Exchange[Any]) -> str | None:
+        """Scope проверки capability — ``audit:<action>`` (ADR-0454).
+
+        Роут объявляет ``audit.write`` со scope ``audit:*`` — glob покрывает
+        любой action. Конкретный scope нужен, потому что capability с
+        ``scope_required=True`` и неуказанным scope не проходит гейт
+        (ADR-0435: scope обязателен).
+
+        Точки в action заменяются на двоеточия: matcher ``audit.write`` —
+        dot-glob (``.`` — разделитель сегментов), поэтому ``audit:order.created``
+        не совпал бы с декларацией ``audit:*`` (второй сегмент). После замены
+        scope остаётся одним сегментом и покрывается декларацией.
+
+        Args:
+            exchange: Текущий exchange (для ``action_from``).
+
+        Returns:
+            Строка ``audit:<action>`` либо ``audit:*``, если action неизвестен.
+
+        """
+        action = self._action or str(_resolve(exchange, self._action_from) or "")
+        return f"audit:{action.replace('.', ':')}" if action else "audit:*"
 
     @staticmethod
     def _build_store() -> Any:

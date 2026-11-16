@@ -9,9 +9,12 @@
 
 Проверяется здесь:
 
-* процессор ``audit`` объявляет ``required_capability = "audit.write"``;
-* с capability-гейтом включённым роут без декларации → шаг отклоняется;
-* роут с декларацией → шаг выполняется;
+* процессор ``audit`` объявляет ``required_capability = "audit.write"`` и
+  **сам** вызывает ``auth_check`` (enforcement на уровне процессора — как у
+  БД- и RPA-процессоров, ADR-0393/ADR-0401);
+* роут без декларации → шаг отклоняется (sink не вызывается);
+* роут с декларацией ``audit.write`` (scope ``audit:*``) → шаг выполняется;
+* scope проверяется: декларация другого scope не покрывает запрос;
 * все роуты с шагом ``audit`` объявляют ``audit.write``.
 """
 
@@ -20,15 +23,23 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from src.backend.core.security.capabilities.gate import get_capability_gate
-from src.backend.dsl.engine.exchange import Exchange
+from src.backend.core.security.capabilities.models import CapabilityRef
+from src.backend.dsl.engine.exchange import Exchange, Message
+from src.backend.dsl.engine.execution_engine import ExecutionEngine
 from src.backend.dsl.engine.pipeline import Pipeline
 from src.backend.dsl.engine.processors.audit import AuditProcessor
 
 pytestmark = pytest.mark.unit
+
+#: Реальный capability-гейт: без этой подмены autouse-фикстура
+#: ``tests/unit/dsl/conftest.py`` подменяет ``BaseProcessor.auth_check`` на
+#: «всегда разрешено» (ADR-0393) — и проверка гейта была бы вакуумной.
+REAL_CAPABILITY_GATE = True
 
 _ROUTES_DIR = Path("routes")
 
@@ -83,28 +94,70 @@ def test_every_route_with_audit_step_declares_audit_write() -> None:
         assert "audit.write" in names, f"{manifest}: нет декларации audit.write"
 
 
-@pytest.mark.asyncio
-async def test_audit_step_runs_with_public_baseline(gate: Any) -> None:
-    """Шаг audit выполняется: capability public в platform-baseline.
+async def _run_audit_step(route_id: str) -> tuple[Any, MagicMock]:
+    """Прогоняет pipeline из одного шага ``audit`` с замоканным sink'ом.
 
-    ``audit.write`` — public capability (vocabulary, ADR-0454), поэтому
-    platform-baseline покрывает роут и без собственной декларации. Ценность
-    enforcement'а — в scope: декларация роута ограничивает sink-ы
-    (``audit:*``), а capability-заявка процессора делает проверку обязательной.
+    Args:
+        route_id: Имя роута (namespace capability-гейта).
+
+    Returns:
+        Кортеж ``(exchange, store)`` — результат выполнения и sink-мок.
+
     """
-    gate.declare("r_audit_public", [])
+    fake_store = MagicMock()
+    fake_store.append = AsyncMock(return_value="hash-abc")
     processor = AuditProcessor(action="test.audit")
     pipeline = Pipeline(
-        route_id="r_audit_public",
+        route_id=route_id,
         source="internal:test",
         processors=[processor],
         tenant_aware=False,
     )
-    from src.backend.dsl.engine.exchange import Message
-    from src.backend.dsl.engine.execution_engine import ExecutionEngine
-
     exchange = Exchange(in_message=Message(body={}))
     engine = ExecutionEngine(validate_before_execute=False)
-    result = await engine.execute(pipeline, exchange=exchange)
+    with patch.object(AuditProcessor, "_build_store", return_value=fake_store):
+        result = await engine.execute(pipeline, exchange=exchange)
+    return result, fake_store
 
-    assert result.status.value != "failed"
+
+@pytest.mark.asyncio
+async def test_audit_step_denied_without_declaration(gate: Any) -> None:
+    """Роут без декларации ``audit.write`` → шаг отклонён, sink не вызван."""
+    result, store = await _run_audit_step("r_audit_no_decl")
+
+    assert result.status.value == "failed", (
+        "шаг audit без декларации capability должен быть отклонён, "
+        f"получено status={result.status.value!r}"
+    )
+    assert "audit.write" in (result.error or ""), (
+        f"в ошибке должно быть имя capability, получено: {result.error!r}"
+    )
+    assert store.append.await_count == 0, "sink не должен вызываться при отказе"
+
+
+@pytest.mark.asyncio
+async def test_audit_step_allowed_with_declaration(gate: Any) -> None:
+    """Роут с декларацией ``audit.write`` (scope ``audit:*``) → шаг выполнен."""
+    gate.declare("r_audit_ok", [CapabilityRef(name="audit.write", scope="audit:*")])
+
+    result, store = await _run_audit_step("r_audit_ok")
+
+    assert result.status.value != "failed", (
+        f"шаг audit с объявленной capability должен выполняться, "
+        f"получено status={result.status.value!r} error={result.error!r}"
+    )
+    assert store.append.await_count == 1
+    assert result.properties["audit_event_hash"] == "hash-abc"
+
+
+@pytest.mark.asyncio
+async def test_audit_step_denied_on_scope_mismatch(gate: Any) -> None:
+    """Декларация с другим scope не покрывает запрос шага."""
+    gate.declare(
+        "r_audit_scope", [CapabilityRef(name="audit.write", scope="audit:other")]
+    )
+
+    result, store = await _run_audit_step("r_audit_scope")
+
+    assert result.status.value == "failed"
+    assert store.append.await_count == 0
