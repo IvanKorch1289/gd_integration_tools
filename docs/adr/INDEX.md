@@ -240,9 +240,10 @@
 | [ADR-0452](0452-mutation-gate-unblocked.md) | Mutation-гейт разблокирован и переведён на рэтчет | Accepted |
 | [ADR-0453](0453-grouped-coverage-run.md) | Coverage по группам + `coverage combine` | Accepted |
 | [ADR-0454](0454-audit-write-capability-enforcement.md) | Capability `audit.write`: enforcement процессора + декларации роутов | Accepted |
+| [ADR-0455](0455-infra-automation-for-owner-actions.md) | Автоматизация инфраструктурных действий (keypair JWKS, роль BYPASSRLS) | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 238 ADRs.
+**Total:** 239 ADRs.
 
