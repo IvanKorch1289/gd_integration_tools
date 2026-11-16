@@ -170,6 +170,12 @@ async def _register_pools_in_unified_manager() -> None:
         nats_pool = NatsConnectionPool()
 
         async def _ping_nats() -> None:
+            # ADR-0446: пул, который никогда не стартовал, — это «NATS не
+            # сконфигурирован» (dev-профиль), а не отказ: раньше каждые
+            # несколько минут в лог шло «Pool ping FAIL: NATS connection not
+            # initialized».
+            if not nats_pool.started:
+                return
             result = await nats_pool.health()
             if result.status == "failed":
                 raise RuntimeError(result.error or "NATS health failed")

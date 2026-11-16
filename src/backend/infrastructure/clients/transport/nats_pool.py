@@ -64,6 +64,17 @@ class NatsConnectionPool:
         # S182: QuotaTracker для rate limiting per client
         self._quota = QuotaTracker(prefix="nats")
 
+    @property
+    def started(self) -> bool:
+        """Запускался ли пул (NATS-брокер сконфигурирован и подключён).
+
+        Returns:
+            ``True`` после успешного ``start()``; ``False`` — брокер не
+            настроен (например, dev-профиль без NATS).
+
+        """
+        return self._started
+
     async def start(self) -> None:
         """Start the pool and establish persistent NATS connection."""
         if self._started:
