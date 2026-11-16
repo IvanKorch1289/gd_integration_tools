@@ -11,6 +11,11 @@
 * **нужно действие** — операционная задача (ключи, роли БД, запуск сервиса);
 * **не закрывается кодом** — требует инфраструктуры/решения владельца.
 
+Имена env-переменных в чек-листе сверены с исходниками настроек:
+`SEC_` (`core/config/security.py`), `DB_` (`core/config/database.py`),
+`CLICKHOUSE_` (`core/config/clickhouse.py`), `OPEN_WEBUI_` (`core/config/ai.py`),
+`JUPYTER_HUB_` (`core/config/services/jupyter_hub.py`).
+
 ---
 
 ## 1. `.env:92` — docker compose не парсит `.env` (нужно действие)
@@ -80,20 +85,24 @@ helm upgrade --install gd deploy/helm/gd-integration-tools \
 
 ---
 
-## 4. `audit.write` в `routes/*/route.toml` (решение владельца)
+## 4. `audit.write` в `routes/*/route.toml` (закрыто кодом)
 
-**Состояние.** Capability `audit.write` **не enforced**: процессор аудита не
-задаёт `required_capability`, а ADR-0414 делает capability opt-in для
-workflow-шагов. Объявлять её в роутах сейчас означало бы декоративную
-декларацию (её отметит гейт `check_decorative_capabilities`).
+**Состояние.** Capability `audit.write` **enforced**: `AuditProcessor`
+вызывает `auth_check()` до записи в sink (ADR-0454). Роут без декларации
+получает fail-closed отказ; scope запроса — `audit:<action>`, декларация
+роутов — `audit:*`.
 
-**Решение по умолчанию (рекомендация):** не объявлять до появления
-enforcement; при включении enforcement — объявить `audit.write` в роутах,
-использующих шаг `audit` (роуты с шагом audit: `composition_demo`,
-`health_proxy_demo`, `hello_route`, `test_route_w1`).
+**Что сделано кодом.** Декларацию `audit.write` получили все пять роутов с
+шагом `audit`: `composition_demo`, `health_proxy_demo`, `hello_route`,
+`jupyter_hub_run`, `test_route_w1`.
 
-**Проверка (после решения).** `python tools/check_route_capabilities.py` —
-без нарушений; `python tools/check_decorative_capabilities.py --ci` — чисто.
+**Проверка.**
+
+```bash
+python tools/check_route_capabilities.py
+python tools/check_decorative_capabilities.py --ci
+python -m pytest tests/unit/dsl/engine/capability/test_audit_write_capability_adr0454.py -q
+```
 
 ---
 
@@ -103,38 +112,72 @@ enforcement; при включении enforcement — объявить `audit.w
 (`features.audit_clickhouse_enabled: true`) — раньше действовал неявный
 default.
 
-**Нужно действие.** В prod должен быть доступен ClickHouse (сервис
-`clickhouse` в `docker-compose.prod.yml` либо внешний DSN) — иначе трейл
-audit-событий не пишется.
+**Нужно действие.** В prod должен быть доступен ClickHouse. В
+`ops/compose/docker-compose.prod.yml` **сервиса `clickhouse` нет** — нужен
+внешний DSN (или собственный сервис в k8s), иначе трейл audit-событий не
+пишется. Профиль по умолчанию: `clickhouse.enabled=false`,
+`clickhouse.host=localhost`, `clickhouse.http_port=8123` — с `localhost` в
+prod писать нельзя.
 
-**Проверка.** `python -c "from src.backend.core.config.validator.profile_merge import validate_profile_config; print(validate_profile_config('prod'))"`
-— пусто; в логах нет `clickhouse_connect_failed`.
+```bash
+# адрес внешнего ClickHouse (env-префикс CLICKHOUSE_)
+export CLICKHOUSE_ENABLED=true
+export CLICKHOUSE_HOST=clickhouse.internal.example.ru
+export CLICKHOUSE_HTTP_PORT=8123
+```
+
+**Проверка.**
+
+```bash
+python -c "from src.backend.core.config.validator.profile_merge import validate_profile_config; print(validate_profile_config('prod'))"
+# — пусто (ошибок профиля нет)
+docker compose -f ops/compose/docker-compose.prod.yml exec app \
+  python -c "import urllib.request; print(urllib.request.urlopen('http://clickhouse.internal.example.ru:8123/ping', timeout=5).read())"
+# — b'Ok.\n'
+```
+
+В логах не должно быть `clickhouse_connect_failed`.
 
 ---
 
 ## 6. JWKS RS256 + keypair (код готов, нужна инфраструктура)
 
 **Код.** Валидация JWT поддерживает асимметричные алгоритмы
-(`core/auth/jwt_backend_helpers.py::_ASYMMETRIC_ALGS`), JWKS-бэкенд есть в
-`core/auth/auth_selector.py`. Для prod нужен **keypair** и endpoint JWKS.
+(`core/auth/jwt_backend_helpers.py::_ASYMMETRIC_ALGS`), JWKS-бэкенд
+собирается в `core/di/providers/auth.py::_build_jwks_cache_or_none`
+(сам кэш — `core/auth/jwks_cache.py`). Для prod нужен **keypair** и
+endpoint JWKS.
 
 **Нужно действие.**
 
 ```bash
-# keypair для прод-JWT (в vault/secret-менеджере, не в репозитории!)
-openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out jwt-private.pem
-openssl rsa -pubout -in jwt-private.pem -out jwt-public.pem
-# keypair (ADR-0455): генератор в репозитории — ключи НЕ пишем в git
+# keypair (ADR-0455): генератор в репозитории — ключи НЕ пишем в git.
+# Каталог внутри репозитория (включая его корень) отклоняется генератором.
 python tools/generate_jwks_keypair.py --out-dir /run/secrets/jwt --kid prod-1
 # → jwt-private.pem (0600) → secret-менеджер; jwks.json → ConfigMap/Secret
-# JWKS — сервис, отдающий {"keys":[...]} по service-DNS
+# JWKS — сервис, отдающий {"keys":[...]} по service-DNS (только https!)
 ```
 
-Проключи в проде: `JWT_JWKS_URL`, `JWT_ALGORITHM=RS256` (проверить точные
-имена в `docs/config/SETTINGS_GUIDE.md`).
+Проключи в проде (env-префикс `SEC_`):
+
+```bash
+export SEC_ALGORITHM=RS256
+export SEC_JWKS_URL=https://idp.internal.example.ru/.well-known/jwks.json
+```
+
+`SEC_JWKS_URL` обязан быть **https**: `http://` отклоняется
+`JwksConfigurationError` (SSRF-guard, `core/auth/jwks_cache.py`).
 
 **Проверка.** Токен, подписанный приватным ключом, принимается сервисом;
-токен с чужим ключом — отклоняется.
+токен с чужим ключом — отклоняется. Проверка самого JWKS-документа:
+
+```bash
+python - <<'PY'
+import json, pathlib
+doc = json.loads(pathlib.Path("/run/secrets/jwt/jwks.json").read_text())
+print("kid:", doc["keys"][0]["kid"], "alg:", doc["keys"][0]["alg"])
+PY
+```
 
 ---
 
@@ -158,9 +201,23 @@ docker compose -f ops/compose/docker-compose.prod.yml exec app \
 **Код.** Провайдер `ai_providers.open_webui` с `base_url:
 http://open-webui:3000` (ADR-0412); в `fallback_chain` prod **не включён**,
 пока сервис не развёрнут (иначе откат ушёл бы на несуществующий endpoint).
+Env-префикс — `OPEN_WEBUI_` (`core/config/ai.py`).
 
-**Нужно действие.** Развернуть OpenWebUI в сети compose/k8s и только после
-этого добавить провайдера в `fallback_chain` prod.
+**Нужно действие.** Развернуть OpenWebUI в сети compose/k8s, задать
+адрес/ключ и только после этого добавить провайдера в `fallback_chain` prod.
+
+```bash
+export OPEN_WEBUI_BASE_URL=http://open-webui:3000
+export OPEN_WEBUI_API_KEY=<из секрет-хранилища>
+```
+
+**Проверка (из контейнера app).**
+
+```bash
+docker compose -f ops/compose/docker-compose.prod.yml exec app \
+  python -c "import urllib.request; print(urllib.request.urlopen('http://open-webui:3000/api/version', timeout=5).status)"
+# — 200
+```
 
 ---
 
@@ -168,25 +225,56 @@ http://open-webui:3000` (ADR-0412); в `fallback_chain` prod **не включё
 
 **Код.** ADR-0407: `replica_dsn: null` — допустимое прод-значение
 (реплика не обязательна). Валидатор профиля проверяет формат, если значение
-задано.
+задано. Env-префикс — `DB_` (`core/config/database.py`).
 
-**Нужно действие (опционально).** Задать `DATABASE_REPLICA_DSN` (или
-аналогичный env) при появлении реплики; до этого — оставить `null`.
+**Нужно действие (опционально).** При появлении реплики задать
+`DB_REPLICA_DSN`; до этого — оставить `null`.
+
+```bash
+export DB_REPLICA_DSN='postgresql+asyncpg://user:pass@replica.internal:5432/appdb'
+```
+
+**Проверка.** Значение подхватывается настройками (в выводе — маскированное):
+
+```bash
+python -c "from src.backend.core.config.settings import settings; print(settings.database.replica_dsn)"
+```
 
 ---
 
 ## 10. BYPASSRLS для межtenant-снапшота (код готов, нужна роль БД)
 
-Роль готова в репозитории (ADR-0455): `ops/sql/bypassrls_role.sql`
-(`gd_snapshot_reader`, NOLOGIN BYPASSRLS, только SELECT).
+**Код.** Роль готова в репозитории (ADR-0455): `ops/sql/bypassrls_role.sql` —
+роли `snapshot_service` (NOLOGIN, BYPASSRLS) и `snapshot_service_login`
+(LOGIN), `GRANT SELECT` на таблицы снимка (`orderkinds`, `users`, `orders`,
+`certs`, `cert_history`). Скрипт идемпотентен и приводит атрибуты к канону
+при каждом применении.
 
 **Код.** `infrastructure/resilience/snapshot_job.py` — fail-closed: перед
-выборкой проверяется наличие `BYPASSRLS` у роли; процедура выдачи роли и
-риски описаны в `docs/ops/snapshot-bypassrls-role.md`.
+выборкой проверяется наличие `BYPASSRLS` у роли; риски и режимы описаны в
+`docs/ops/snapshot-bypassrls-role.md` (предпочитается `per-tenant` — он RLS
+не обходит вовсе).
 
-**Нужно действие.** Создать роль/пользователя с `BYPASSRLS` и выдать DSN
-снапшот-job'у (либо не выдавать — тогда снапшоты просто не создаются, что
-безопасно).
+**Нужно действие.**
+
+```bash
+# пароль — из секрет-хранилища, в репозитории не хранится
+psql -v snap_password="$SNAP_DB_PASSWORD" -v snapshots_db=appdb \
+     -f ops/sql/bypassrls_role.sql
+# DSN снапшот-job'у: snapshot.service_dsn / env SNAPSHOT_SERVICE_DSN
+```
+
+**Проверка.**
+
+```bash
+psql -tAc "SELECT rolname, rolcanlogin, rolbypassrls FROM pg_roles WHERE rolname LIKE 'snapshot_service%';"
+# snapshot_service|f|t
+# snapshot_service_login|t|f
+psql -tAc "SELECT table_name FROM information_schema.role_table_grants WHERE grantee='snapshot_service' ORDER BY 1;"
+# cert_history / certs / orderkinds / orders / users
+```
+
+Без роли снапшоты просто не создаются (fail-closed) — это безопасно.
 
 ---
 
@@ -194,10 +282,26 @@ http://open-webui:3000` (ADR-0412); в `fallback_chain` prod **не включё
 
 **Код.** Провайдер capability `jupyter.hub` живёт в расширении
 `extensions/jupyter_hub/` (ADR-0415 — расширения не могут импортировать
-core напрямую), клиент — `core/clients/jupyter_hub.py`.
+core напрямую), клиент — `core/clients/jupyter_hub.py`. Параметры —
+yaml-группа `jupyter_hub`, env-префикс `JUPYTER_HUB_`
+(`core/config/services/jupyter_hub.py`).
 
-**Нужно действие.** Развернуть JupyterHub в кластере и указать его URL в
-профиле (`jupyter_hub.*`).
+**Нужно действие.** Развернуть JupyterHub в кластере и указать его URL и
+токен в профиле:
+
+```bash
+export JUPYTER_HUB_ENABLED=true
+export JUPYTER_HUB_BASE_URL=https://jupyter.internal.example.ru
+export JUPYTER_HUB_API_TOKEN=<из секрет-хранилища>
+```
+
+**Проверка.**
+
+```bash
+docker compose -f ops/compose/docker-compose.prod.yml exec app \
+  python -c "import urllib.request; print(urllib.request.urlopen('https://jupyter.internal.example.ru/hub/api/health', timeout=5).status)"
+# — 200
+```
 
 ---
 
@@ -208,11 +312,11 @@ core напрямую), клиент — `core/clients/jupyter_hub.py`.
 | 1 | `.env:92` | ✅ **исправлено** (разделитель закомментирован, compose работает) |
 | 2 | Образ от 18.08 | ✅ **пересобран** (ADR-0442: extras через build-ARG; prod требует extra `workflow`) |
 | 3 | Prometheus-правила SLA | **код готов** (ADR-0440) |
-| 4 | `audit.write` в роутах | решение владельца (рекомендация: не объявлять до enforcement) |
-| 5 | `audit_clickhouse_enabled` | **код готов** (ADR-0441) |
-| 6 | JWKS RS256 + keypair | код готов, нужна инфраструктура |
+| 4 | `audit.write` в роутах | ✅ **закрыто кодом** (ADR-0454: enforcement в процессоре + декларации 5 роутов) |
+| 5 | `audit_clickhouse_enabled` | **код готов** (ADR-0441); нужен внешний ClickHouse (сервиса в compose.prod нет) |
+| 6 | JWKS RS256 + keypair | код готов (ADR-0455); нужны keypair, JWKS-сервис (https) и `SEC_JWKS_URL`/`SEC_ALGORITHM` |
 | 7 | Service-DNS sidecar'ов | **код готов** (ADR-0412) |
-| 8 | OpenWebUI | код готов, нужен сервис |
-| 9 | `replica_dsn` | решение владельца (null допустим) |
-| 10 | BYPASSRLS | код готов, нужна роль БД |
-| 11 | `jupyter.hub` | **код готов** (ADR-0415), **нужно действие**: развернуть JupyterHub |
+| 8 | OpenWebUI | код готов; нужен сервис + `OPEN_WEBUI_*` |
+| 9 | `replica_dsn` | решение владельца (null допустим); env — `DB_REPLICA_DSN` |
+| 10 | BYPASSRLS | код готов (ADR-0455: `snapshot_service`/`snapshot_service_login`); нужна роль БД и DSN снапшота |
+| 11 | `jupyter.hub` | **код готов** (ADR-0415), **нужно действие**: развернуть JupyterHub + `JUPYTER_HUB_*` |

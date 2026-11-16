@@ -11,7 +11,8 @@
 Безопасность
 -------------
 * ключи **никогда** не пишутся в репозиторий: каталог вывода задаётся явно и
-  по умолчанию — временный (``--out-dir``), в репозитории исключается;
+  по умолчанию — временный (``--out-dir``), каталог внутри репозитория
+  (включая его корень) отклоняется;
 * приватный ключ — PKCS#8 PEM (шифрование закрывает KMS/secret-менеджер),
   публичный — JWK (base64url ``n``/``e``) для JWKS-документа;
 * в stdout выводятся только **пути** и отпечатки (SHA-256 публичного ключа),
@@ -27,6 +28,10 @@
 
 JWKS-документ (публичный) кладётся в ConfigMap/Secret и отдаётся JWKS-эндпоинтом;
 приватный — только в secret-менеджер (ADR-0364).
+
+JWKS-endpoint в приложении читает ``security.jwks_url`` (env-префикс
+``SEC_``) и требует **https** (SSRF-guard, ``core/auth/jwks_cache.py``);
+сборка бэкенда — ``core/di/providers/auth.py::_build_jwks_cache_or_none``.
 """
 
 from __future__ import annotations
@@ -96,6 +101,12 @@ def generate(out_dir: Path, kid: str) -> tuple[Path, Path, str]:
     private_pem = out_dir / "jwt-private.pem"
     public_pem = out_dir / "jwt-public.pem"
     jwks_json = out_dir / "jwks.json"
+
+    # Повторный прогон (ротация ключа) не должен падать на read-only-файле
+    # прошлого запуска: jwks.json закрывается 0444, поэтому перезапись
+    # запрещена — старые файлы удаляем явно.
+    for stale in (private_pem, public_pem, jwks_json):
+        stale.unlink(missing_ok=True)
 
     # RSA-2048 → RS256 (алгоритм, который требует прод-JWT, ADR-0455).
     _run_openssl(
@@ -178,7 +189,10 @@ def main(argv: list[str] | None = None) -> int:
 
     out_dir = args.out_dir.resolve()
     repo_root = Path(__file__).resolve().parents[1]
-    if repo_root in out_dir.parents:
+    # Корень репозитория — тоже «внутри репозитория»: он не является
+    # собственным parent'ом, поэтому проверка только по parents пропускала
+    # --out-dir <корень> и приватный ключ писался в рабочее дерево.
+    if out_dir == repo_root or repo_root in out_dir.parents:
         print(
             "REFUSED: каталог ключей находится внутри репозитория — "
             "приватный ключ не должен попадать в git",
