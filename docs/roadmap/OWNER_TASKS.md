@@ -435,6 +435,20 @@
 
 ---
 
+## 18. Волна 33 (2026-11-17) — передача полномочий: что закрыто
+
+| # | Пункт | Статус |
+|---|---|---|
+| 1 | **ORM tenant-скоуп** (вариант А) | ✅ ADR-0448: контекста нет / `_system` → платформенный scope; пустой tenant → fail-closed |
+| 2 | **Capability-контур** | ✅ ADR-0449 + ADR-0451: декларации процессоров enforced, **долг 36 → 0**, allowlist гейта пуст |
+| 3 | **audit.write** | ✅ ADR-0454: capability обязательна для шага `audit`, объявлена во всех 5 роутах с этим шагом |
+| 4 | **Mutation-гейт** | ✅ ADR-0452: разблокирован (обвязка + синхронизация workspace), baseline 21.6 %, гейт в CI |
+| 5 | **Coverage-перемер** | ✅ ADR-0453: `tools/run_coverage_grouped.sh` (группы + `coverage combine`), CI и `make coverage-grouped` |
+| 6 | **Межслойные нарушения** | ◐ ADR-0450: baseline 41 → **40** (рэтчет, гейт блокирует рост), план инверсии по доменам зафиксирован |
+| 7 | **Инфраструктура (6 действий)** | ◐ ADR-0455: автоматизируемая часть в репозитории (генератор JWKS keypair RS256 + SQL роли BYPASSRLS); OpenWebUI / ClickHouse в проде / JupyterHub / JWKS-сервис / replica DSN — за владельцем (`docs/ops/infra-release-checklist.md`) |
+
+---
+
 ## Связанные документы
 
 * [ADR-0405](../adr/0405-route-capabilities-namespace-migration.md) — миграция capability-деклараций роутов.
