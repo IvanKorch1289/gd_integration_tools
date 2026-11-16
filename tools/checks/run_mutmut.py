@@ -24,6 +24,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -69,6 +70,52 @@ def _patch_mutmut() -> None:
             print("[run_mutmut] Patched mutmut/utils/format_utils.py (src. strip)")
 
 
+def _sync_mutants_assets() -> None:
+    """Синхронизировать вспомогательные каталоги с ``mutants/``.
+
+    Без этого в рабочей копии мутантов:
+
+    * остаются **удалённые** тесты (например, ``test_cache_namespace.py``
+      после его удаления) → сборка падает с ``ModuleNotFoundError``;
+    * отсутствуют манифесты Helm/профили конфигурации → падают тесты,
+      читающие ``deploy/`` и ``config_profiles/`` (например,
+      ``test_adr0412_deploy_manifests``).
+
+    Синхронизируются: ``tests/``, ``deploy/``, ``config/``, ``config_profiles/``,
+    ``docs/`` (тесты читают документацию, например SETTINGS_GUIDE),
+    ``extensions/``, ``routes/`` и ``ops/`` (тесты сканируют потребителей
+    констант и читают Dockerfile/compose).
+    """
+    repo_root = Path(__file__).resolve().parents[2]
+    for name in (
+        "tests",
+        "deploy",
+        "config",
+        "config_profiles",
+        "docs",
+        "extensions",
+        "routes",
+        "ops",
+    ):
+        source = repo_root / name
+        if not source.exists():
+            continue
+        target = repo_root / "mutants" / name
+        target.mkdir(parents=True, exist_ok=True)
+        subprocess.run(  # noqa: S603  # dev-tool: rsync — фиксированные локальные пути
+            ["rsync", "-a", "--delete", f"{source}/", f"{target}/"],  # noqa: S607  # dev-tool: rsync — PATH binary
+            check=True,
+        )
+        print(f"[run_mutmut] Synced mutants/{name}/ from {name}/")
+    # Отдельные файлы, которые читают тесты (``.env.example`` и т.п.).
+    for filename in (".env.example",):
+        source = repo_root / filename
+        if not source.exists():
+            continue
+        shutil.copy2(source, repo_root / "mutants" / filename)
+        print(f"[run_mutmut] Copied {filename} → mutants/")
+
+
 def _sync_mutants_src() -> None:
     """Синхронизировать ``mutants/src/`` с полным деревом ``src/``."""
     repo_root = Path(__file__).resolve().parents[2]
@@ -88,6 +135,7 @@ def _sync_mutants_src() -> None:
 def main() -> int:
     _patch_mutmut()
     _sync_mutants_src()
+    _sync_mutants_assets()
 
     repo_root = Path(__file__).resolve().parents[2]
     env = os.environ.copy()

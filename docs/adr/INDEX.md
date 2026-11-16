@@ -235,10 +235,11 @@
 | [ADR-0447](0447-helm-chart-renderable.md) | Helm-chart обязан рендериться; CI-шаг `helm lint`/`helm template` | Accepted |
 | [ADR-0448](0448-orm-tenant-context-fail-closed-deferred.md) | ORM-ветка tenant-изоляции: fail-closed без tenant (решение отложено) | Accepted |
 | [ADR-0449](0449-processor-declaration-capabilities-enforced.md) | Capability из декларации процессора проверяется в рантайме | Accepted |
+| [ADR-0452](0452-mutation-gate-unblocked.md) | Mutation-гейт разблокирован и переведён на рэтчет | Accepted |
 | [ADR-0454](0454-audit-write-capability-enforcement.md) | Capability `audit.write`: enforcement процессора + декларации роутов | Accepted |
 | [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
 | [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
 | [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
 
-**Total:** 234 ADRs.
+**Total:** 235 ADRs.
 

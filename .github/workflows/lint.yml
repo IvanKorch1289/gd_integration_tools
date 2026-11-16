@@ -139,6 +139,13 @@ jobs:
           docker run --rm -v "$PWD/deploy/helm/gd-integration-tools:/chart" \
             alpine/helm:3.15 template gd /chart --set secrets.allowPlaceholders=true > /dev/null
 
+      - name: Mutation score gate (mutmut, ADR-0452)
+        # ADR-0452: гейт был заблокирован с 2026-06-04 (ошибки сбора +
+        # бинарник `mutmut` не в PATH + устаревшие файлы в рабочей копии
+        # мутантов). Теперь гейт рабочий, порог берётся из baseline
+        # (.baselines/mutation.json) — рэтчет «не хуже baseline».
+        run: uv run python tools/checks/check_mutmut.py
+
       - name: Config audit gate (config_audit)
         # Wave 13 Q16: YAML-конфиг ↔ модели настроек. Неизвестные YAML-ключи
         # (опечатки) и секции без Settings-класса = тихая потеря настройки.

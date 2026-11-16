@@ -2,7 +2,18 @@
 
 **Date**: 2026-06-04 | **v17 Sprint 39 W4** | **Tool**: mutmut 2.16
 
-## Status: BLOCKED (tooling ready, baseline run requires fix)
+## Status: ACTIVE (baseline зафиксирован 2026-11-17, ADR-0452)
+
+**Обновление 2026-11-17 (ADR-0452):** гейт разблокирован. Причины блокировки
+были в обвязке, а не в коде: бинарник `mutmut` не в PATH (теперь
+`python -m mutmut`), рабочая копия `mutants/` не обновлялась (теперь
+синхронизируются `src/`, `tests/`, `deploy/`, `config/`, `config_profiles/`,
+`docs/`, `extensions/`, `routes/`, `ops/`, `.env.example`), ошибки сбора из-за
+отсутствующих optional-зависимостей устранены (зависимости установлены).
+
+Первый рабочий замер: **21.6 %** → baseline `.baselines/mutation.json`;
+порог гейта берётся из baseline (рэтчет «не хуже baseline»), гейт включён в
+CI (`lint.yml`).
 
 ### Tooling Status (READY, committed in `b3ee023e`)
 

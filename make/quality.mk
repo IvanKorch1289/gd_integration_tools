@@ -388,3 +388,10 @@ audit-2026-09-22: check-env ## Audit 2026-09-22: run all new production readines
 	@$(UV_RUN) python tools/checks/check_privacy_lifecycle.py
 	@$(UV_RUN) python tools/checks/check_deadline_propagation.py --strict
 	@$(SUCCESS) "All audit gates complete!"
+
+# ADR-0453: покрытие по группам (dev-box OOM на монолитном прогоне).
+coverage-grouped: check-env ## Покрытие по группам + coverage combine
+	@$(INFO) "Running grouped coverage (ADR-0453)..."
+	@$(UV_RUN) bash tools/run_coverage_grouped.sh --out coverage.xml
+	@$(UV_RUN) python -m coverage report | tail -20
+	@$(SUCCESS) "Grouped coverage report ready"

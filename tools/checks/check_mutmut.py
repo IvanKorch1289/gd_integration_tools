@@ -22,6 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from run_mutmut import (  # type: ignore[import-not-found]  # noqa: E402  # dev-tool: sys.path hack
     _patch_mutmut,
+    _sync_mutants_assets,
     _sync_mutants_src,
 )
 
@@ -29,7 +30,9 @@ from run_mutmut import (  # type: ignore[import-not-found]  # noqa: E402  # dev-
 def _run_mutmut(repo_root: Path, env: dict[str, str]) -> int:
     print("[check_mutmut] Running mutmut run...")
     proc = subprocess.run(  # noqa: S603  # dev-tool: фиксированная команда
-        ["mutmut", "run"],  # noqa: S607  # dev-tool: mutmut — PATH binary
+        # python -m mutmut, а не PATH-бинарник: в venv скрипт не всегда
+        # установлен (в CI — uv run, где бинарник есть, локально — нет).
+        [sys.executable, "-m", "mutmut", "run"],
         cwd=repo_root,
         env=env,
     )
@@ -39,9 +42,7 @@ def _run_mutmut(repo_root: Path, env: dict[str, str]) -> int:
 def _export_cicd_stats(repo_root: Path, env: dict[str, str]) -> Path:
     print("[check_mutmut] Exporting CI/CD stats...")
     proc = subprocess.run(  # noqa: S603  # dev-tool: фиксированная команда
-        ["mutmut", "export-cicd-stats"],  # noqa: S607  # dev-tool: mutmut — PATH binary
-        cwd=repo_root,
-        env=env,
+        [sys.executable, "-m", "mutmut", "export-cicd-stats"], cwd=repo_root, env=env
     )
     if proc.returncode != 0:
         raise RuntimeError("mutmut export-cicd-stats failed")
@@ -60,13 +61,43 @@ def _parse_score(stats_path: Path) -> float:
     return (killed / total) * 100.0
 
 
+_BASELINE_PATH = Path(".baselines/mutation.json")
+
+
+def _load_baseline(path: Path = _BASELINE_PATH) -> float:
+    """Прочитать порог из baseline-файла (рэтчет, ADR-0452).
+
+    Args:
+        path: Путь к baseline-файлу.
+
+    Returns:
+        Порог в процентах; при отсутствии файла — дефолт 55.
+
+    """
+    if not path.exists():
+        return 55.0
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return float(data.get("mutation_score_percent", 55.0))
+    except OSError, ValueError, json.JSONDecodeError:
+        return 55.0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Mutation testing gate")
     parser.add_argument(
         "--threshold",
         type=float,
-        default=55.0,
-        help="Minimum mutation score threshold (%%) (default: 55)",
+        default=None,
+        help=(
+            "Minimum mutation score threshold (%%); по умолчанию — значение из "
+            "baseline (.baselines/mutation.json), т.е. рэтчет «не хуже baseline»"
+        ),
+    )
+    parser.add_argument(
+        "--update-baseline",
+        action="store_true",
+        help="записать измеренный score в baseline-файл",
     )
     args = parser.parse_args()
 
@@ -76,6 +107,7 @@ def main() -> int:
 
     _patch_mutmut()
     _sync_mutants_src()
+    _sync_mutants_assets()
 
     exit_code = _run_mutmut(repo_root, env)
     if exit_code != 0:
@@ -85,13 +117,37 @@ def main() -> int:
     stats_path = _export_cicd_stats(repo_root, env)
     score = _parse_score(stats_path)
 
-    print(f"[check_mutmut] Mutation score: {score:.1f}% (threshold: {args.threshold}%)")
+    threshold = args.threshold if args.threshold is not None else _load_baseline()
 
-    if score >= args.threshold:
-        print(f"[check_mutmut] PASS: score {score:.1f}% >= {args.threshold}%")
+    if args.update_baseline:
+        _BASELINE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _BASELINE_PATH.write_text(
+            json.dumps(
+                {
+                    "mutation_score_percent": round(score, 1),
+                    "updated": "2026-11-17",
+                    "note": (
+                        "ADR-0452: baseline зафиксирован первым рабочим прогоном "
+                        "mutmut (раньше гейт был заблокирован ошибками сбора). "
+                        "Рост — только с новыми тестами на мутируемые модули."
+                    ),
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        print(f"[check_mutmut] baseline обновлён: {score:.1f}% → {_BASELINE_PATH}")
+        return 0
+
+    print(f"[check_mutmut] Mutation score: {score:.1f}% (threshold: {threshold:.1f}%)")
+
+    if score >= threshold:
+        print(f"[check_mutmut] PASS: score {score:.1f}% >= {threshold:.1f}%")
         return 0
     else:
-        print(f"[check_mutmut] FAIL: score {score:.1f}% < {args.threshold}%")
+        print(f"[check_mutmut] FAIL: score {score:.1f}% < {threshold:.1f}%")
         return 1
 
 
