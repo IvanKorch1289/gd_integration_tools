@@ -57,7 +57,7 @@ _ALLOWED_MODES = frozenset({"upload", "download", "list", "delete"})
         },
         "required": ["url", "mode", "remote_path"],
     },
-    capabilities=("net.outbound.webdav:external",),
+    capabilities=("net.outbound.webdav",),
     meta={"tier": 1, "category": "storage"},
     tags=("webdav", "storage", "io"),
 )

@@ -62,7 +62,7 @@ __all__ = ("CallFunctionProcessor",)
         },
         "required": ["ref"],
     },
-    capabilities=("function.call.*",),
+    capabilities=("function.call",),
     meta={"tier": 1, "category": "integration"},
 )
 class CallFunctionProcessor(BaseProcessor):

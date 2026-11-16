@@ -355,3 +355,289 @@ def register(vocab: CapabilityVocabulary) -> None:
             ),
         )
     )
+
+    # ── Миграция деклараций процессоров (ADR-0451, 2026-11-17) ─────────────
+    # Декларации ``@processor(capabilities=(...))`` переведены на имена из
+    # vocabulary → они проверяются runtime-резолвером, а не только публикуются
+    # в JSON-схеме. Scope не требуется: декларация описывает вид ресурса,
+    # конкретный scope задаёт роут (``route.capabilities``).
+    vocab.register(
+        CapabilityDef(
+            name="agent.security.check",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.branch",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.llm.litellm",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.loop",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.optimize",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="ai.parallel",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="analytics.read",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="auth.webhook_signature.verify",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="db.read.elasticsearch",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="db.read.mongodb",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="db.write.elasticsearch",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="documents.parse",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="dsl.dlq.write",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="dsl.eip.circuit_breaker",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="dsl.eip.dead_letter",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="dsl.eip.fallback_chain",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="dsl.eip.redelivery_policy",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="dsl.eip.routing_slip",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="dsl.eip.throttler",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="dsl.eip.timeout",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="function.call",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="guardrails.apply",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="health.read",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="jupyter.execute",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="jupyter.export",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="log.write",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="net.outbound.ldap",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="net.outbound.litellm",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="net.outbound.nominatim",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="net.outbound.open.er-api.com",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="net.outbound.search",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="net.outbound.webdav",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="queue.produce.kafka",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="settings.read",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )
+    vocab.register(
+        CapabilityDef(
+            name="sink.send",
+            matcher=dot_glob,
+            scope_required=False,
+            description="Мигрированная декларация процессора (ADR-0451).",
+        )
+    )

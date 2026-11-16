@@ -32,7 +32,7 @@ if TYPE_CHECKING:
         },
         "required": ["sink_id"],
     },
-    capabilities=("sink.send.*",),  # per-kind проверяется в facade
+    capabilities=("sink.send",),  # per-kind проверяется в facade
     meta={"tier": 2, "category": "infra"},
 )
 class IntegrationSendProcessor(BaseProcessor):

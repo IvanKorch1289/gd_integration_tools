@@ -57,7 +57,7 @@ __all__ = ("RateConvertProcessor",)
         },
         "required": ["from_currency", "to_currency"],
     },
-    capabilities=("net.outbound.open.er-api.com:external",),
+    capabilities=("net.outbound.open.er-api.com",),
     meta={"tier": 1, "category": "finance"},
     tags=("rates", "currency", "fx"),
 )

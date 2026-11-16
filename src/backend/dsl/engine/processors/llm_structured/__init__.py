@@ -64,7 +64,7 @@ __all__ = ("LLMStructuredProcessor",)
             "to": {"type": "string"},
         },
     },
-    capabilities=("ai.llm.litellm", "net.outbound.litellm:external"),
+    capabilities=("ai.llm.litellm", "net.outbound.litellm"),
     meta={"tier": 2, "category": "ai", "version": "v17"},
     tags=("ai", "llm", "structured-output"),
 )

@@ -107,7 +107,7 @@ _FALLBACK_SCHEMA: Final = "public"
         },
         "required": ["profile", "name"],
     },
-    capabilities=("db.execute_procedure.*",),
+    capabilities=("db.execute_procedure",),
     meta={"tier": 1, "category": "integration"},
     tags=("db", "stored-procedure", "execute"),
 )

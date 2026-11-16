@@ -59,7 +59,7 @@ _ALLOWED_ENGINES = frozenset({"tavily", "perplexity", "searxng", "auto"})
             "deep_research": {"type": "boolean"},
         },
     },
-    capabilities=("net.outbound.search:external",),
+    capabilities=("net.outbound.search",),
     meta={"tier": 1, "category": "ai"},
     tags=("web-search", "ai", "rag"),
 )

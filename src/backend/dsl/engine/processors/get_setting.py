@@ -40,7 +40,7 @@ _MISSING = object()
         },
         "required": ["path"],
     },
-    capabilities=("settings.read.*",),
+    capabilities=("settings.read",),
     meta={"tier": 1, "category": "integration"},
 )
 class GetSettingProcessor(BaseProcessor):

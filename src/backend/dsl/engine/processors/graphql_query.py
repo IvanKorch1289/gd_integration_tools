@@ -60,7 +60,7 @@ __all__ = ("GraphQLQueryProcessor",)
         },
         "required": ["endpoint", "query"],
     },
-    capabilities=("net.outbound.*:external",),
+    capabilities=("net.outbound",),
     meta={"tier": 1, "category": "transport"},
 )
 class GraphQLQueryProcessor(BaseProcessor):

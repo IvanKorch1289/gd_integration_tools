@@ -57,7 +57,7 @@ __all__ = ("LdapQueryProcessor",)
         },
         "required": ["server", "search_base", "search_filter"],
     },
-    capabilities=("net.outbound.ldap:external",),
+    capabilities=("net.outbound.ldap",),
     meta={"tier": 1, "category": "directory"},
     tags=("ldap", "directory", "auth"),
 )

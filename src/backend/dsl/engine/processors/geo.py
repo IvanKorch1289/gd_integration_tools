@@ -51,7 +51,7 @@ _ALLOWED_MODES = frozenset({"geocode", "reverse", "distance"})
         },
         "required": ["mode"],
     },
-    capabilities=("net.outbound.nominatim:external",),
+    capabilities=("net.outbound.nominatim",),
     meta={"tier": 1, "category": "transform"},
     tags=("geo", "geopy", "geocoding", "distance"),
 )

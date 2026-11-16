@@ -97,7 +97,7 @@ class TestCapabilityVocabulary:
         # Cycle 172 (Wave 5): 51 → 107 (RPA/FS + connector-сегмент,
         # multi-segment pii.* и fs.watch); Wave 13 (Q6): 107 → 108
         # (storage.presign).
-        assert len(v.all()) == 108
+        assert len(v.all()) == 143
 
     def test_net_capabilities_are_public(self) -> None:
         """Публичный набор: net.*, db.*, audit.write, storage.*.
