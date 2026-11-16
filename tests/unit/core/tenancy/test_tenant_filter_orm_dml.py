@@ -232,6 +232,38 @@ def test_no_tenant_context_is_fail_closed(seeded: Session) -> None:
     set_tenant(TenantContext(tenant_id=TENANT_A))
 
 
+def test_union_with_empty_tenant_is_fail_closed(seeded: Session) -> None:
+    """UNION с пустым tenant → отказ (ADR-0448): сущности видны в ветвях.
+
+    Раньше fail-closed ветка смотрела только на верхний уровень statement'а:
+    у ``CompoundSelect`` нет ни ``column_descriptions``, ни ``entity_description``,
+    поэтому запрос уходил без предиката и читал строки всех tenant'ов.
+
+    Args:
+        seeded: Сессия.
+    """
+    set_tenant(TenantContext(tenant_id=""))
+    try:
+        with pytest.raises(TenantIsolationError):
+            seeded.execute(select(Order.id).union(select(User.id))).all()
+    finally:
+        set_tenant(TenantContext(tenant_id=TENANT_A))
+
+
+def test_cte_with_empty_tenant_is_fail_closed(seeded: Session) -> None:
+    """CTE с пустым tenant → отказ (ADR-0448).
+
+    Args:
+        seeded: Сессия.
+    """
+    set_tenant(TenantContext(tenant_id=""))
+    try:
+        with pytest.raises(TenantIsolationError):
+            seeded.execute(select(select(Order.id).cte("o").c.id)).all()
+    finally:
+        set_tenant(TenantContext(tenant_id=TENANT_A))
+
+
 def test_non_tenant_entity_not_filtered(tmp_path: Path) -> None:
     """Сущность без ``tenant_id`` не фильтруется — mixin не навязан.
 

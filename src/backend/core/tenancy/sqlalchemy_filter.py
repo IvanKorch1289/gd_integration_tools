@@ -379,7 +379,38 @@ def _tenant_aware_entities(stmt: Any) -> list[Any]:
         entity = getattr(frm, "entity_namespace", None)
         if entity and _is_tenant_aware(entity):
             entities.append(entity)
+    if entities:
+        return entities
+
+    # Составные конструкции (UNION/CTE, ADR-0448): сущности видны только
+    # в ветвях/определениях, верхний уровень их не показывает — без этого
+    # обхода fail-closed ветка (пустой tenant) не срабатывала и запрос
+    # читал строки всех tenant'ов.
+    for nested in _nested_statements(stmt):
+        for entity in _tenant_aware_entities(nested):
+            if entity not in entities:
+                entities.append(entity)
     return entities
+
+
+def _nested_statements(stmt: Any) -> list[Any]:
+    """Вложенные statement'ы: ветви UNION и определения CTE.
+
+    Args:
+        stmt: SQLAlchemy statement.
+
+    Returns:
+        Список вложенных statement'ов (может быть пустым).
+
+    """
+    nested: list[Any] = []
+    for branch in getattr(stmt, "selects", None) or []:
+        nested.append(branch)
+    for frm in _final_froms(stmt):
+        element = getattr(frm, "element", None)
+        if element is not None and hasattr(element, "get_final_froms"):
+            nested.append(element)
+    return nested
 
 
 def _filter_statement(stmt: Any, tenant_id: str) -> Any:
