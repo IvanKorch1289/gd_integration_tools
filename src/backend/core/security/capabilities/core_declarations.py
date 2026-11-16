@@ -182,7 +182,6 @@ CORE_CAPABILITIES: tuple[str, ...] = (
     "rpa.word.write",
     # Файловая система (core-процессор FileWatchProcessor)
     "fs.watch",
-
     # Мигрированные декларации процессоров (ADR-0451, 2026-11-17) —
     # capability ядра; scope объявляет владелец ресурса (роут/плагин).
     "agent.security.check",
@@ -338,7 +337,6 @@ RESOURCE_SCOPED_CAPABILITIES: Final[frozenset[str]] = frozenset(
         "rpa.terminal3270.invoke",
         "rpa.word.read",
         "rpa.word.write",
-
         # Мигрированные декларации процессоров (ADR-0451, 2026-11-17):
         # scope задаёт владелец ресурса (роут/плагин) — как и для
         # остальных resource-scoped capability.
@@ -379,7 +377,7 @@ RESOURCE_SCOPED_CAPABILITIES: Final[frozenset[str]] = frozenset(
         "queue.produce.kafka",
         "settings.read",
         "sink.send",
-}
+    }
 )
 """Capability, **исключённые** из baseline-деклараций ядра (ADR-0416).
 
