@@ -33,6 +33,43 @@ def health_route_dir() -> Path:
     return PROJECT_ROOT / "routes" / "health_proxy_demo"
 
 
+@pytest.fixture()
+def missing_caps_route_dir(tmp_path: Path) -> Path:
+    """Синтетический роут с намеренно неполными декларациями capability.
+
+    Репозиторные роуты после ADR-0454 объявляют ``audit.write``, поэтому
+    сценарий «required - declared» (и ``--strict`` с exit 1) проверяется
+    на временном роуте, который оставляет capability необъявленной.
+    """
+    route_dir = tmp_path / "missing_caps_route"
+    route_dir.mkdir()
+    (route_dir / "route.toml").write_text(
+        "[route]\n"
+        'name = "missing_caps_route"\n'
+        "tenant_aware = false\n"
+        'pipelines = ["missing.dsl.yaml"]\n'
+        "\n"
+        "[[route.capabilities]]\n"
+        'name = "net.inbound"\n'
+        'scope = "http:/api/v1/demo/missing"\n',
+        encoding="utf-8",
+    )
+    (route_dir / "missing.dsl.yaml").write_text(
+        "source:\n"
+        "  http:\n"
+        "    method: POST\n"
+        "    path: /api/v1/demo/missing\n"
+        "steps:\n"
+        "  - http_call:\n"
+        '      url: "https://example.invalid/api"\n'
+        "      method: GET\n"
+        "  - audit:\n"
+        "      event: demo.missing\n",
+        encoding="utf-8",
+    )
+    return route_dir
+
+
 def test_explain_route_returns_route_explanation(hello_route_dir: Path) -> None:
     """explain_route возвращает :class:`RouteExplanation` с всеми полями."""
     explanation = explain_route(hello_route_dir)
@@ -86,24 +123,46 @@ def test_explain_route_no_policy_step_post_fix(hello_route_dir: Path) -> None:
     assert policy_steps == [], "policy — @property, не должен быть DSL-шагом"
 
 
-def test_explain_route_identifies_missing_capabilities(health_route_dir: Path) -> None:
+def test_explain_route_identifies_missing_capabilities(
+    missing_caps_route_dir: Path,
+) -> None:
     """Missing capabilities вычисляются как required - declared.
 
     ADR-0405: манифест роута разворачивается из конверта ``[route]``, поэтому
     объявленные capability видны (раньше инструмент читал только top-level
     ключ и объявлял reference-роут «без capability» — ложное срабатывание,
     зафиксированное в artifacts/current_audit/RE_AUDIT_2026-10-15_post_fix.md).
+
+    Роут синтетический: репозиторные роуты после ADR-0454 объявляют
+    ``audit.write``, поэтому сценарий «объявлено меньше, чем требуется»
+    моделируется явно (net.inbound объявлен, net.outbound/audit.write — нет).
     """
-    explanation = explain_route(health_route_dir)
+    explanation = explain_route(missing_caps_route_dir)
     assert "net.outbound" in explanation.capabilities_required
-    # Объявлены в [[route.capabilities]]: net.inbound + net.outbound.
-    assert set(explanation.capabilities_declared) == {"net.inbound", "net.outbound"}
-    # Шаг audit: требует audit.write — она не объявлена.
-    assert explanation.capabilities_missing == ("audit.write",)
+    assert "audit.write" in explanation.capabilities_required
+    # Объявлена только [[route.capabilities]]: net.inbound.
+    assert set(explanation.capabilities_declared) == {"net.inbound"}
+    # Шаги http_call + audit требуют capability, которые не объявлены.
+    assert explanation.capabilities_missing == ("audit.write", "net.outbound")
     # Issue message mentions missing capabilities.
     assert any(
         "MISSING" in issue or "не объявлены" in issue for issue in explanation.issues
     )
+
+
+def test_explain_route_repo_routes_declare_audit_write(health_route_dir: Path) -> None:
+    """ADR-0454: роут с audit-шагом объявляет audit.write явно.
+
+    До ADR-0454 декларации не было — шаг audit требовал capability, которая
+    не была объявлена, и ``explain --strict`` падал на собственном роуте.
+    """
+    explanation = explain_route(health_route_dir)
+    assert set(explanation.capabilities_declared) == {
+        "net.inbound",
+        "net.outbound",
+        "audit.write",
+    }
+    assert explanation.capabilities_missing == ()
 
 
 def test_explain_route_aggregates_side_effects(hello_route_dir: Path) -> None:
@@ -220,14 +279,14 @@ def test_explain_cli_json_output(
     assert "capabilities_missing" in data
 
 
-def test_explain_cli_strict_fails_on_missing_caps(health_route_dir: Path) -> None:
+def test_explain_cli_strict_fails_on_missing_caps(missing_caps_route_dir: Path) -> None:
     """CLI --strict exits 1 если capabilities missing."""
     result = subprocess.run(
         [
             sys.executable,
             "-m",
             "src.backend.dsl.cli.explain_cmd",
-            str(health_route_dir),
+            str(missing_caps_route_dir),
             "--strict",
         ],
         capture_output=True,

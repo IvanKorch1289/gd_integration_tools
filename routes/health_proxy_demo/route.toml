@@ -21,9 +21,12 @@ scope = "https://localhost:9000:internal"
 # routes могут не иметь schedule — это on-demand (пустая секция [route.schedule]
 # заменена комментарием: schedule — строка, пустой TOML-table невалиден).
 
+# ADR-0454: шаг audit требует capability audit.write — объявлена явно
+# (scope audit:*), иначе процессор отклонён capability-guard'ом.
 [[route.capabilities]]
 name = "audit.write"
 scope = "audit:*"
+
 [route.slo]
 p95_ms = 50
 p99_ms = 200
