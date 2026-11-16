@@ -26,11 +26,11 @@ import pytest
 from sqlalchemy import String, create_engine, select, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
-from src.backend.core.tenancy import system_tenant_context
 from src.backend.core.tenancy import (
     TenantContext,
     bind_tenant,
     set_tenant,
+    system_tenant_context,
     unbind_tenant,
 )
 from src.backend.core.tenancy import sqlalchemy_filter as tf

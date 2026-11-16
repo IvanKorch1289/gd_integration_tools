@@ -14,9 +14,7 @@ from typing import Any
 
 import pytest
 
-from src.backend.core.security.capabilities.vocabulary import (
-    build_default_vocabulary,
-)
+from src.backend.core.security.capabilities.vocabulary import build_default_vocabulary
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 pytestmark = pytest.mark.unit
@@ -47,10 +45,7 @@ def test_unknown_capability_name_stays_advisory() -> None:
     """Имя вне vocabulary остаётся advisory (не блокирует вызов)."""
     from src.backend.dsl.registry.processor import processor
 
-    @processor(
-        "test.proc2",
-        capabilities=("net.outbound.not.in.vocabulary:external",),
-    )
+    @processor("test.proc2", capabilities=("net.outbound.not.in.vocabulary:external",))
     class _Proc(BaseProcessor):
         """Процессор с нестандартной capability-формой."""
 

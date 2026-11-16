@@ -31,7 +31,6 @@ import pytest
 from sqlalchemy import String, create_engine, delete, func, select, text, update
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
-from src.backend.core.tenancy.sqlalchemy_filter import TenantIsolationError
 from src.backend.core.tenancy import (
     TenantContext,
     bind_tenant,
@@ -39,6 +38,7 @@ from src.backend.core.tenancy import (
     unbind_tenant,
 )
 from src.backend.core.tenancy import sqlalchemy_filter as tf
+from src.backend.core.tenancy.sqlalchemy_filter import TenantIsolationError
 
 TENANT_A = "tenant-a"
 TENANT_B = "tenant-b"
