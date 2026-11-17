@@ -18,21 +18,63 @@ Usage::
     # Передача principal в runtime:
     await sink.send(payload, _principal="user-123", _ctx={"topic": "orders"})
 
+Волна 33 (LAYERS, инверсия): реализация ``AuthorizationFacade`` остаётся в
+слое services, но ядро обращается к ней через DI-provider
+(:func:`get_authorization_facade_provider`), а не прямым импортом — dependency
+core → services устранена без нарушения публичного API.
+
 Sprint 172, Wave S2 (connector authorization extension).
 """
 
 from __future__ import annotations
 
 from functools import wraps
-from typing import Any, ParamSpec, TypeVar
+from typing import Any, ParamSpec, Protocol, TypeVar, cast, runtime_checkable
 
 from src.backend.core.logging import get_logger
 
-__all__ = ("ConnectorAuthError", "check_source_capability", "require_capability")
+__all__ = (
+    "AuthorizationOutcome",
+    "ConnectorAuthError",
+    "PrincipalAuthorizer",
+    "check_source_capability",
+    "require_capability",
+)
 
 
 class ConnectorAuthError(PermissionError):
     """Raised when capability check fails for a connector operation."""
+
+
+@runtime_checkable
+class AuthorizationOutcome(Protocol):
+    """Решение авторизации, потребляемое ядром (read-only контракт)."""
+
+    @property
+    def allowed(self) -> bool:
+        """True, если доступ разрешён."""
+        ...
+
+    @property
+    def reason(self) -> str:
+        """Причина отказа (пустая строка при allow)."""
+        ...
+
+
+@runtime_checkable
+class PrincipalAuthorizer(Protocol):
+    """Минимальный контракт авторизатора principal'а (реализация — services)."""
+
+    async def check_principal(
+        self,
+        principal: str,
+        *,
+        required_action: str,
+        required_resource: str,
+        context: dict[str, Any] | None = None,
+    ) -> AuthorizationOutcome:
+        """Проверить право principal'а на действие над ресурсом."""
+        ...
 
 
 _P = ParamSpec("_P")
@@ -66,11 +108,14 @@ def require_capability(
     def decorator(func: Any) -> Any:
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
-            # Lazy import — избежать циклических зависимостей (auth → core).
+            # DI-мост core → services (волна 33): прямой импорт services здесь
+            # нарушал layer rule — авторизатор берётся через provider.
             try:
-                from src.backend.services.authorization.facade import (
-                    get_authorization_facade,
+                from src.backend.core.di.providers.auth import (
+                    get_authorization_facade_provider,
                 )
+
+                facade = cast(PrincipalAuthorizer, get_authorization_facade_provider())
             except Exception as exc:  # pragma: no cover — facade недоступен в test
                 _logger.debug(
                     "authorization_facade_unavailable: %s; failing closed", exc
@@ -107,7 +152,6 @@ def require_capability(
                     )
                     tenant_id = None
 
-            facade = get_authorization_facade()
             try:
                 decision = await facade.check_principal(
                     principal=principal,
@@ -179,7 +223,9 @@ async def check_source_capability(
 
     """
     try:
-        from src.backend.services.authorization.facade import get_authorization_facade
+        from src.backend.core.di.providers.auth import get_authorization_facade_provider
+
+        facade = cast(PrincipalAuthorizer, get_authorization_facade_provider())
     except Exception as exc:  # pragma: no cover
         _logger.debug("authorization_facade_unavailable: %s; failing closed", exc)
         return False
@@ -202,7 +248,6 @@ async def check_source_capability(
         )
         tenant_id = None
 
-    facade = get_authorization_facade()
     try:
         decision = await facade.check_principal(
             principal=principal,

@@ -140,7 +140,7 @@ class InputGuardMixin:
     ) -> GuardResult:
         """Lakera input guard check."""
         try:
-            from src.backend.services.ai.guardrails.lakera_client import LakeraClient
+            from src.backend.core.ai.guardrails.lakera_client import LakeraClient
 
             client = LakeraClient()
             result = await client.screen(prompt)

@@ -285,3 +285,56 @@ class TestTenantScopeResolvesTenantId:
         # tenant_id is propagated via context dict (matches require_capability L116)
         call_kwargs = mock_facade.check_principal.call_args.kwargs
         assert call_kwargs["context"]["tenant_id"] == "globex-inc"
+
+
+# ── Wave 33 (LAYERS, инверсия): core → services.authorization через DI ──
+
+
+class TestAuthorizationFacadeProvider:
+    """Авторизатор в ядре берётся через DI-provider, а не прямым импортом."""
+
+    def test_provider_resolves_services_facade(self) -> None:
+        """Provider отдаёт тот же singleton, что и services-фасад."""
+        from src.backend.core.di.providers.auth import get_authorization_facade_provider
+        from src.backend.services.authorization.facade import get_authorization_facade
+
+        assert get_authorization_facade_provider() is get_authorization_facade()
+
+    def test_provider_override(self) -> None:
+        """Override для provider'а (test-инжекция) применяется."""
+        from src.backend.core.di.providers.auth import (
+            get_authorization_facade_provider,
+            set_authorization_facade_provider,
+        )
+
+        sentinel = object()
+        set_authorization_facade_provider(sentinel)
+        try:
+            assert get_authorization_facade_provider() is sentinel
+        finally:
+            set_authorization_facade_provider(None)
+
+    def test_core_module_has_no_services_import(self) -> None:
+        """В core/security/connector_auth.py нет импорта services-слоя."""
+        import ast
+        from pathlib import Path
+
+        path = Path(__file__).resolve().parents[4] / (
+            "src/backend/core/security/connector_auth.py"
+        )
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        offenders: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                offenders.update(
+                    alias.name
+                    for alias in node.names
+                    if alias.name.startswith("src.backend.services")
+                )
+            elif (
+                isinstance(node, ast.ImportFrom)
+                and node.module
+                and node.module.startswith("src.backend.services")
+            ):
+                offenders.add(node.module)
+        assert not offenders, f"core импортирует services: {sorted(offenders)}"

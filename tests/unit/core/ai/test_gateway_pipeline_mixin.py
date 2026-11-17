@@ -967,7 +967,7 @@ def test_resolve_llm_gateway_caches(monkeypatch: pytest.MonkeyPatch) -> None:
     """``_resolve_llm_gateway`` кеширует singleton gateway."""
     sentinel = object()
     monkeypatch.setattr(
-        "src.backend.services.ai.gateway.get_litellm_gateway", lambda: sentinel
+        "src.backend.core.ai.gateway.client.get_litellm_gateway", lambda: sentinel
     )
     mixin = _make_mixin(_llm_gateway=None)
     mixin._llm_gateway = None

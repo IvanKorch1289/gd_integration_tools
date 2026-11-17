@@ -1,0 +1,127 @@
+"""Lakera Guard async client (Sprint 11 K1 W2).
+
+Async httpx-client поверх ``core.net.migration_helper.make_http_client``
+(WAF фасад при ``waf_outbound_via_facade``; capability
+``ai.guardrails.lakera``).
+
+P0-S2 fix (audit 2026-08-18): при отсутствии ``LAKERA_API_KEY`` клиент
+**raise** ``LakeraGuardrailUnavailableError`` (fail-closed). Upstream
+``input_guard_mixin._guard_input_lakera`` ловит ``Exception`` и fail-closed
+блокирует prompt через ``GuardrailViolationError`` (если ``fail_open=False``).
+
+Для dev_light и профилей без API key — используйте ``fail_open=True`` в
+политике guard'а или фиктивный ключ через mock-Lakera.
+"""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from typing import Any
+
+import httpx
+
+__all__ = ("LakeraClient", "LakeraGuardrailUnavailableError", "LakeraResult")
+
+_DEFAULT_BASE = "https://api.lakera.ai/v2"
+
+
+class LakeraGuardrailUnavailableError(RuntimeError):
+    """Lakera provider недоступен (нет API key, network down, 5xx).
+
+    P0-S2: при отсутствии API key — клиент raise эту ошибку вместо
+    no-op return, чтобы upstream guard_mixin fail-closed блокировал prompt.
+    """
+
+
+@dataclass(frozen=True, slots=True)
+class LakeraResult:
+    """Результат одного скана Lakera Guard.
+
+    Attributes:
+        flagged: True, если provider пометил входной prompt как небезопасный.
+        score: Числовая оценка [0..1]; больше — выше уверенность detector'а.
+        categories: Категории срабатывания (``prompt_injection``, ``pii``,
+            ``hate_speech``, ...) — список dict'ов из ответа API.
+
+    """
+
+    flagged: bool
+    score: float
+    categories: list[dict[str, Any]]
+
+
+class LakeraClient:
+    """Async-обёртка над Lakera Guard prompt-injection / PII detector.
+
+    Args:
+        api_key: Lakera API token. Если ``None`` — читается из env
+            ``LAKERA_API_KEY``; при отсутствии — клиент raise
+            :class:`LakeraGuardrailUnavailableError` (fail-closed).
+        base_url: URL API; default ``https://api.lakera.ai/v2``.
+        timeout: HTTP timeout (sec); default 5.
+
+    """
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        base_url: str = _DEFAULT_BASE,
+        timeout: float = 5.0,
+    ) -> None:
+        # Sprint 29 P0 fix: actually raise on missing key (Sprint 7 P0-S2
+        # fix was incomplete — docstring claimed fail-closed but init
+        # just stored None silently).
+        resolved_key = api_key or os.environ.get("LAKERA_API_KEY")
+        if not resolved_key:
+            raise LakeraGuardrailUnavailableError(
+                "Lakera API key required: pass api_key= or set LAKERA_API_KEY env"
+            )
+        self._api_key = resolved_key
+        self._base_url = base_url.rstrip("/")
+        self._timeout = timeout
+
+    async def screen(self, text: str, *, breakdown: bool = True) -> LakeraResult:
+        """Отправить prompt в Lakera Guard и вернуть структурированный результат.
+
+        Args:
+            text: Произвольный prompt / user-input.
+            breakdown: Если True, попросить provider вернуть
+                разбивку по категориям (default True).
+
+        Returns:
+            :class:`LakeraResult`.
+
+        Raises:
+            LakeraGuardrailUnavailableError: Если ``api_key`` отсутствует.
+                Upstream guard_mixin обработает это fail-closed.
+            httpx.HTTPError: Network/HTTP ошибки.
+
+        """
+        if not self._api_key:
+            raise LakeraGuardrailUnavailableError(
+                "LAKERA_API_KEY не задан — guardrail недоступен (fail-closed)"
+            )
+
+        from src.backend.core.net.migration_helper import make_http_client
+
+        payload: dict[str, Any] = {"input": text, "breakdown": bool(breakdown)}
+        headers = {
+            "Authorization": f"Bearer {self._api_key}",
+            "Content-Type": "application/json",
+        }
+        async with make_http_client(
+            plugin="core.ai.guardrails.lakera",
+            base_url=self._base_url,
+            timeout=self._timeout,
+            headers=headers,
+        ) as client:
+            response: httpx.Response = await client.post("/guard", json=payload)
+            response.raise_for_status()
+            data = response.json()
+
+        return LakeraResult(
+            flagged=bool(data.get("flagged", False)),
+            score=float(data.get("score", 0.0) or 0.0),
+            categories=list(data.get("breakdown") or data.get("categories") or []),
+        )

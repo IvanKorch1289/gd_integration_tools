@@ -138,7 +138,7 @@ class OutputMixin(_PipelineStepsProtocol):
         gateway: Any | None = self._llm_gateway
         if gateway is not None:
             return gateway
-        from src.backend.services.ai.gateway import get_litellm_gateway
+        from src.backend.core.ai.gateway.client import get_litellm_gateway
 
         gateway = get_litellm_gateway()
         self._llm_gateway = gateway

@@ -96,6 +96,11 @@ class Scope(Enum):
 INFRA_MODULES: Final[dict[str, str]] = {
     # ─── Application services ───────────────────────────────────────
     "app.slo_tracker": f"{_INFRA}.application.slo_tracker",
+    # authorization.facade живёт в services-слое (core → services bypass);
+    # get_authorization_facade() — services/authorization/facade.py.
+    # Волна 33 (LAYERS, инверсия): core/security/connector_auth.py обращается
+    # к нему через DI-provider, а не прямым импортом.
+    "authorization.facade": "src.backend.services.authorization.facade",
     "app.health_aggregator": f"{_INFRA}.application.health_aggregator",
     "app.vault_refresher": f"{_INFRA}.application.vault_refresher",
     # ─── Cache / decorators ─────────────────────────────────────────

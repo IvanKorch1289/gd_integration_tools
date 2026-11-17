@@ -77,7 +77,7 @@ def test_v3_callback_calls_span() -> None:
     }
     # Presidio-spaCy инициализация (~30s+) — мокаем passthrough.
     with patch(
-        "src.backend.services.ai.gateway.langfuse_pii_callback.anonymize_trace_payload",
+        "src.backend.core.ai.gateway.langfuse_pii_callback.anonymize_trace_payload",
         side_effect=lambda payload, *, tenant_id: payload,
     ):
         cb(

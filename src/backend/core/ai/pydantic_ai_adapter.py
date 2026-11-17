@@ -96,7 +96,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
         ) -> _ModelResponse:
             """Single request через LiteLLMGateway."""
             # duck-typing: gateway с acompletion() (LiteLLMGateway живёт в
-            # services.ai.gateway.client — core не может импортировать services).
+            # core.ai.gateway.client — волна 33: перенос из services).
             prompt = "\n".join(
                 str(getattr(m, "content", m))
                 for m in messages
@@ -122,7 +122,7 @@ if _PYDANTIC_AI_AVAILABLE and _PydanticAIModel is not None:
         ) -> _StreamedResponse:
             """Streamed request — returns _SimpleStreamedResponse."""
             # duck-typing: gateway с acompletion() (LiteLLMGateway живёт в
-            # services.ai.gateway.client — core не может импортировать services).
+            # core.ai.gateway.client — волна 33: перенос из services).
             prompt = "\n".join(
                 str(getattr(m, "content", m))
                 for m in messages

@@ -29,9 +29,7 @@ async def test_provider_failure_fail_closed_by_default() -> None:
     enforcer = _StubEnforcer()
     ref = GuardRef(name="lakera:strict", on_block="warn")
 
-    with patch(
-        "src.backend.services.ai.guardrails.lakera_client.LakeraClient"
-    ) as mock_cls:
+    with patch("src.backend.core.ai.guardrails.lakera_client.LakeraClient") as mock_cls:
         mock_client = MagicMock()
         mock_client.screen = AsyncMock(side_effect=RuntimeError("network timeout"))
         mock_cls.return_value = mock_client
@@ -50,9 +48,7 @@ async def test_provider_failure_with_fail_open_warns() -> None:
     ref = GuardRef(name="lakera:strict", on_block="warn", fail_open=True)
 
     with (
-        patch(
-            "src.backend.services.ai.guardrails.lakera_client.LakeraClient"
-        ) as mock_cls,
+        patch("src.backend.core.ai.guardrails.lakera_client.LakeraClient") as mock_cls,
         patch(
             # Patch at LOOKUP location, not source location (import shadows
             # the source name in destination module's namespace).
@@ -93,9 +89,7 @@ async def test_flagged_input_blocks_even_with_fail_open() -> None:
     enforcer._handle_guard_block = _raise_block  # type: ignore[method-assign]
     ref = GuardRef(name="lakera:strict", on_block="fail", fail_open=True)
 
-    with patch(
-        "src.backend.services.ai.guardrails.lakera_client.LakeraClient"
-    ) as mock_cls:
+    with patch("src.backend.core.ai.guardrails.lakera_client.LakeraClient") as mock_cls:
         mock_result = MagicMock()
         mock_result.flagged = True
         mock_result.categories = [{"category": "prompt_injection"}]
@@ -114,9 +108,7 @@ async def test_successful_guard_returns_passed() -> None:
     enforcer = _StubEnforcer()
     ref = GuardRef(name="lakera:strict", on_block="fail")
 
-    with patch(
-        "src.backend.services.ai.guardrails.lakera_client.LakeraClient"
-    ) as mock_cls:
+    with patch("src.backend.core.ai.guardrails.lakera_client.LakeraClient") as mock_cls:
         mock_result = MagicMock()
         mock_result.flagged = False
         mock_result.categories = []

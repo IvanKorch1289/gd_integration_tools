@@ -17,7 +17,9 @@ from src.backend.services.ai.prompt_registry import (
 @pytest.fixture(autouse=True)
 def _reset_singleton() -> Any:
     """Сбрасывает singleton перед каждым тестом."""
-    import src.backend.services.ai.prompt_registry as _mod
+    # Волна 33 (LAYERS): реализация перенесена в core — сброс singleton'а
+    # делаем в его новом home-модуле.
+    import src.backend.core.ai.prompt_registry as _mod
 
     _mod._instance = None
     yield

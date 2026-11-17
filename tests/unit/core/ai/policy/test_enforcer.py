@@ -305,7 +305,7 @@ async def test_guard_input_lakera_blocked(mock_lakera_client: MagicMock) -> None
 
     with (
         patch(
-            "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
+            "src.backend.core.ai.guardrails.lakera_client.LakeraClient",
             return_value=mock_lakera_client,
         ),
         pytest.raises(GuardrailViolationError) as exc_info,
@@ -331,7 +331,7 @@ async def test_guard_input_lakera_provider_error_fails_closed_and_audits() -> No
 
     with (
         patch(
-            "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
+            "src.backend.core.ai.guardrails.lakera_client.LakeraClient",
             return_value=client,
         ),
         patch(
@@ -359,7 +359,7 @@ async def test_guard_input_lakera_provider_error_explicit_fail_open_audits() -> 
 
     with (
         patch(
-            "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
+            "src.backend.core.ai.guardrails.lakera_client.LakeraClient",
             return_value=client,
         ),
         patch(
@@ -400,7 +400,7 @@ async def test_guard_input_lakera_flagged_blocks_even_with_fail_open(
     ]
 
     with patch(
-        "src.backend.services.ai.guardrails.lakera_client.LakeraClient",
+        "src.backend.core.ai.guardrails.lakera_client.LakeraClient",
         return_value=mock_lakera_client,
     ):
         results = await AIPolicyEnforcer().guard_input("unsafe prompt", policy)

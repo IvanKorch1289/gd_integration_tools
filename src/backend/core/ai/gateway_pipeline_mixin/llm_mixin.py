@@ -72,7 +72,7 @@ class LlmInvocationMixin(_PipelineStepsProtocol):
 
         if feature_flags.prompt_registry_gateway_wiring and request.prompt_ref:
             try:
-                from src.backend.services.ai.prompt_registry import get_prompt_registry
+                from src.backend.core.ai.prompt_registry import get_prompt_registry
 
                 registry = get_prompt_registry()
                 compiled = await registry.get_compiled(

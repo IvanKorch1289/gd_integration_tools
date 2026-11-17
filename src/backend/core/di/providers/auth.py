@@ -294,3 +294,40 @@ def get_security_facade_provider() -> Any:
 def set_security_facade_provider(facade: Any) -> None:
     """Override для ``security_facade`` provider (test/mock injection)."""
     _overrides["security_facade"] = facade
+
+
+# ─────────────── Wave 33 (LAYERS): core → services.authorization bridge ───────────────
+
+
+def get_authorization_facade_provider() -> Any:
+    """DI-provider для ``services.authorization.AuthorizationFacade``.
+
+    Волна 33 (LAYERS, инверсия): ``core/security/connector_auth.py`` больше
+    не делает прямой импорт ``src.backend.services.authorization.facade``
+    (нарушение layer rule core → services). Реализация остаётся в services,
+    а ядро получает её через canonical DI provider — тот же мост, что
+    :func:`get_security_facade_provider`.
+
+    Resolve через ``resolve_module`` — late import, чтобы избежать
+    module-level circular dependency.
+    """
+    if "authorization_facade" in _overrides:
+        return _overrides["authorization_facade"]
+    module = resolve_module("authorization.facade")
+    return module.get_authorization_facade()
+
+
+def set_authorization_facade_provider(facade: Any) -> None:
+    """Установить/сбросить override для ``authorization_facade`` provider.
+
+    ``None`` сбрасывает override и возвращает provider к дефолтному
+    (resolve через ``resolve_module``) — та же конвенция, что у
+    ``set_jwt_backend_provider`` и ``set_ad_directory_client_factory``.
+    Без сброса override утекал бы в следующие тесты процесса: provider
+    отдавал бы ``None``, и ``check_source_capability`` падал бы с
+    ``AttributeError`` вместо штатной проверки прав.
+    """
+    if facade is None:
+        _overrides.pop("authorization_facade", None)
+    else:
+        _overrides["authorization_facade"] = facade
