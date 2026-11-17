@@ -355,11 +355,28 @@ def test_forward_compute_score_returns_scalar(monkeypatch: pytest.MonkeyPatch) -
 
 
 @pytest.mark.unit
-def test_forward_fallback_empty_doc_text() -> None:
-    """Покрывает return 0.0 в _score при пустых doc_tokens (line 156)."""
+def test_forward_fallback_empty_doc_text(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Покрывает return 0.0 в _score при пустых doc_tokens (line 156).
+
+    FlagEmbedding подменяется заглушкой: без неё тест пытается поднять
+    реальную BGE-модель (в оффлайн-окружении — долгая загрузка/таймаут под
+    нагрузкой CI, волна 33).
+    """
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
+
+    class _ScalarReranker:
+        def __init__(self, *_: Any, **__: Any) -> None:
+            pass
+
+        def compute_score(self, pairs: list[tuple[str, str]]) -> float:
+            # Пустой doc → 0.0, непустой — 1.0 (порядок по score).
+            return 0.0 if not pairs[0][1] else 1.0
+
+    fake_mod = ModuleType("FlagEmbedding")
+    fake_mod.FlagReranker = _ScalarReranker  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "FlagEmbedding", fake_mod)
 
     _reset_reranker_cache()
 

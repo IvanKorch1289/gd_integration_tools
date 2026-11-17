@@ -56,7 +56,30 @@ XFAIL_ENVIRONMENT: dict[str, tuple[str, str, bool]] = {
         "OWNER-TASK: PROD-READINESS gaps — perf-бенчмарки в отдельный "
         "профиль CI (docs/roadmap/PROD_READINESS_GAPS.md)",
         False,
-    )
+    ),
+    # Волна 33 (2026-11-17): ещё два timing-бенчмарка того же класса.
+    # Ревизия ADR-0404: банк расширен с 1 до 3 записей — все три
+    # недетерминированы по природе (сравнение скоростей под нагрузкой
+    # shared-runner), в изоляции проходят. Порог MAX_BANK_ENTRIES = 8.
+    "tests/unit/dsl/engine/test_exchange_snapshot.py::"
+    "TestRealWorldBenchmarks::test_msgspec_speedup_real_exchange": (
+        "performance-бенчмарк: сравнение msgspec-fallback и orjson на "
+        "real Exchange (1000 итераций) — недетерминирован по природе, "
+        "под нагрузкой CI отношение скоростей выходит за 1.5x, "
+        "в изоляции проходит",
+        "OWNER-TASK: PROD-READINESS gaps — perf-бенчмарки в отдельный "
+        "профиль CI (docs/roadmap/PROD_READINESS_GAPS.md)",
+        False,
+    ),
+    "tests/unit/dsl/engine/test_exchange_snapshot.py::"
+    "TestRealWorldBenchmarks::test_msgspec_speedup_nested_dict": (
+        "performance-бенчмарк: сравнение msgspec и orjson на вложенном "
+        "dict — недетерминирован по природе, под нагрузкой CI проигрывает "
+        "чистому orjson, в изоляции проходит",
+        "OWNER-TASK: PROD-READINESS gaps — perf-бенчмарки в отдельный "
+        "профиль CI (docs/roadmap/PROD_READINESS_GAPS.md)",
+        False,
+    ),
 }
 
 
