@@ -36,17 +36,28 @@ _ALLOWED_SIDE_EFFECTS = frozenset({"none", "read", "write", "external"})
 
 @pytest.fixture(scope="module")
 def registered_metadata() -> tuple[ActionMetadata, ...]:
-    """Импортирует все API v1 routers и возвращает накопленные метаданные.
+    """Импортирует все API v1 routers и возвращает их метаданные.
 
     ``get_v1_routers()`` лениво импортирует endpoint-модули, каждый из
     которых через ``ActionRouterBuilder.add_action()`` регистрирует
     ``ActionMetadata`` в ``action_handler_registry``. Тест работает с
     реальным content реестра — это и есть «контракт по факту».
+
+    Реестр — process-global: в нём остаются и action'ы, зарегистрированные
+    другими тестами ранее в том же воркере. Контракт здесь — про **API v1**,
+    поэтому берём только те action'ы, которых не было до импорта роутеров
+    (иначе инфраструктурный action с пустыми transports ронял бы тест —
+    order-dependent падение).
     """
     from src.backend.entrypoints.api.v1.routers import get_v1_routers
 
+    before = set(action_handler_registry.list_actions())
     get_v1_routers()
-    return action_handler_registry.list_metadata()
+    return tuple(
+        meta
+        for meta in action_handler_registry.list_metadata()
+        if meta.action not in before
+    )
 
 
 class TestRegisteredActionMetadata:

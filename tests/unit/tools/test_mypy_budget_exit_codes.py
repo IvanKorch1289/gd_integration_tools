@@ -32,8 +32,19 @@ def module_under_test():
 class TestMypyBudgetExitCodes:
     """Per v6 W1: 4 distinct exit codes for distinct failure modes."""
 
-    def test_exit_0_on_success(self, module_under_test) -> None:
-        """Current code: 8 errors ≤ budget 30 → exit 0."""
+    def test_exit_0_on_success(self, module_under_test, monkeypatch) -> None:
+        """Ошибки в пределах baseline → exit 0.
+
+        Реальный mypy здесь не запускается: контракт теста — код возврата
+        гейта, а полный анализ ``src`` занимает минуты и в CI-режиме
+        (xdist, 4 воркера) превышал per-test timeout → order-dependent
+        падение (волна 33).
+        """
+        monkeypatch.setattr(
+            module_under_test,
+            "run_mypy",
+            lambda: (1, "src/x.py:1: error: name 'X' is not defined\n"),
+        )
         result = module_under_test.main([])
         assert result == 0, (
             f"mypy_budget should exit 0 (errors within budget). Got {result}."

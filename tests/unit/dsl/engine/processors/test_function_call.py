@@ -25,6 +25,29 @@ def _ctx(**props: Any) -> SimpleNamespace:
     return SimpleNamespace(properties=dict(props))
 
 
+@pytest.fixture(autouse=True)
+def _isolate_active_whitelist():
+    """Изолировать process-global whitelist (``_active_whitelist``).
+
+    Whitelist заполняется на bootstrap'е (``dsl/commands/setup/orchestrator.py``
+    → ``register_active_whitelist``) и живёт в class-level set. Если до этих
+    тестов отработал bootstrap (например, в другом сьютx того же
+    xdist-воркера), «пустой whitelist» переставал быть пустым → контракт
+    K-ARCH-5 проверялся не по тому состоянию (order-dependent падение).
+
+    Yields:
+        None — внутри блока whitelist пуст.
+
+    """
+    saved = set(CallFunctionProcessor._active_whitelist)
+    CallFunctionProcessor._active_whitelist.clear()
+    try:
+        yield
+    finally:
+        CallFunctionProcessor._active_whitelist.clear()
+        CallFunctionProcessor._active_whitelist.update(saved)
+
+
 class TestStrictWhitelistEmpty:
     """K-ARCH-5: пустой whitelist в strict-режиме поднимает PermissionError."""
 
