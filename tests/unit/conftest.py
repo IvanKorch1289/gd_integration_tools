@@ -31,6 +31,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import sys
 from collections.abc import Iterator
@@ -165,8 +166,6 @@ def _cleanup_polluted_modules() -> int:
     removed = 0
     for k in _POLLUTED_MODULE_KEYS:
         if k in sys.modules and _is_polluted_module(k):
-            del sys.modules[k]
-            removed += 1
             # ADR-0404: у подменённого ``polars`` подмодули остаются в
             # sys.modules от ПРЕДЫДУЩЕГО реального импорта. Следующий
             # ``import polars`` переиспользует их как «частично
@@ -174,11 +173,40 @@ def _cleanup_polluted_modules() -> int:
             # рекурсивно импортирует ``polars.datatypes.group`` →
             # RecursionError (3 падения в dsl/engine/processors/*csv_to_dict*).
             # Поэтому сносим ВСЕ подмодули polars вместе со stub'ом.
+            #
+            # Но только если пакета НЕТ в окружении: если polars установлен,
+            # его подмодули удалять нельзя — «частично инициализированные»
+            # подмодули дают циклический импорт при ленивом
+            # ``polars.lazyframe`` (волна 33: ImportError '_is_generator').
+            # В этом случае возвращаем настоящий пакет и не трогаем его
+            # подмодули.
+            polars_installed = k == "polars" and _module_installed("polars")
+            del sys.modules[k]
+            removed += 1
             if k == "polars":
-                for sub in [m for m in sys.modules if m.startswith("polars.")]:
-                    del sys.modules[sub]
-                    removed += 1
+                if polars_installed:
+                    importlib.import_module("polars")
+                else:
+                    for sub in [m for m in sys.modules if m.startswith("polars.")]:
+                        del sys.modules[sub]
+                        removed += 1
     return removed
+
+
+def _module_installed(name: str) -> bool:
+    """Установлен ли модуль в окружении (без импорта).
+
+    Args:
+        name: Имя модуля.
+
+    Returns:
+        ``True`` — модуль доступен для импорта.
+
+    """
+    try:
+        return importlib.util.find_spec(name) is not None
+    except ImportError, ValueError:  # pragma: no cover — битый spec
+        return False
 
 
 def _ensure_structlog_backend() -> None:
