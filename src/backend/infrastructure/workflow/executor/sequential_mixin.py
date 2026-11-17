@@ -109,7 +109,7 @@ async def _run_processor(
         return result if isinstance(result, dict) else body
 
     # Exchange wrapping path
-    from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
+    from src.backend.core.engine.exchange import Exchange, ExchangeStatus, Message
 
     exchange = Exchange(in_message=Message(body=body), status=ExchangeStatus.pending)
     if idempotency_key:

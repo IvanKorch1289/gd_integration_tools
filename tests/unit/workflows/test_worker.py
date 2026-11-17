@@ -88,39 +88,42 @@ async def test_noop_executor_returns_done() -> None:
 # ── _bootstrap / _shutdown_connectors ──────────────────────────────────
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
-async def test_bootstrap_calls_registrations() -> None:
-    with (
-        patch(
-            "src.backend.plugins.composition.service_setup.register_all_services"
-        ) as reg_svc,
-        patch(
-            "src.backend.dsl.commands.setup.orchestrator.register_action_handlers"
-        ) as reg_act,
-        patch("src.backend.dsl.routes.register_dsl_routes") as reg_routes,
-        patch("src.backend.infrastructure.registry.ConnectorRegistry") as Reg,
-    ):
+async def test_bootstrap_uses_injected_registration_callback() -> None:
+    register_dependencies = MagicMock()
+    with patch("src.backend.infrastructure.registry.ConnectorRegistry") as Reg:
         Reg.instance.return_value.start_all = AsyncMock()
-        await _bootstrap()
-        reg_svc.assert_called_once()
-        reg_act.assert_called_once()
-        reg_routes.assert_called_once()
+        await _bootstrap(register_dependencies=register_dependencies)
+        register_dependencies.assert_called_once_with()
         Reg.instance.assert_called_once()
         Reg.instance.return_value.start_all.assert_awaited_once()
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
-async def test_bootstrap_graceful_on_connector_failure() -> None:
+async def test_bootstrap_default_uses_composition_adapter() -> None:
+    """Production-путь использует DSL-aware composition-адаптер."""
     with (
-        patch("src.backend.plugins.composition.service_setup.register_all_services"),
-        patch("src.backend.dsl.commands.setup.orchestrator.register_action_handlers"),
-        patch("src.backend.dsl.routes.register_dsl_routes"),
+        patch(
+            "src.backend.plugins.composition.workflow_worker."
+            "register_worker_dependencies"
+        ) as register,
         patch("src.backend.infrastructure.registry.ConnectorRegistry") as Reg,
     ):
+        Reg.instance.return_value.start_all = AsyncMock()
+        await _bootstrap()
+        register.assert_called_once_with()
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_bootstrap_graceful_on_connector_failure() -> None:
+    with patch("src.backend.infrastructure.registry.ConnectorRegistry") as Reg:
         Reg.instance.return_value.start_all = AsyncMock(
             side_effect=RuntimeError("boom")
         )
-        await _bootstrap()  # should not raise
+        await _bootstrap(register_dependencies=MagicMock())  # should not raise
 
 
 @pytest.mark.asyncio

@@ -149,31 +149,22 @@ class _WorkerContext:
     shutdown_event: asyncio.Event
 
 
-async def _bootstrap() -> None:
+async def _bootstrap(
+    *, register_dependencies: Callable[[], None] | None = None
+) -> None:
     """Минимальная инициализация: сервисы + БД + коннекторы.
 
     Аналогично ``manage.py._bootstrap``, но дополнительно стартует
+    DSL-регистрации через инъецированный callback от composition-слоя.
     ``ConnectorRegistry`` — worker-у нужны живые БД-подключения.
     """
-    # Sprint 41 W1 (Item 1 fix): импортируем из canonical dsl paths
-    # (НЕ из core.api.extensions facade), чтобы test patches
-    # (`patch("src.backend.dsl.commands.setup.register_action_handlers")`)
-    # корректно перехватывали вызовы. core.api.extensions — facade для
-    # entrypoints, а не для infrastructure workflow worker.
-    #
-    # S48 M2-#5 swarm audit (A2 Infra #8): 'from src.backend.plugins.composition'
-    # — reverse layer violation (infrastructure → plugins). Worker entrypoint
-    # напрямую импортирует composition-service_setup. Документировано как
-    # known violation. Proper fix: extract bootstrap в
-    # `core/lifecycle/worker_bootstrap.py` который оба слоя могут
-    # использовать через canonical DI. Tracking: docs/roadmap/PRODUCTION_READINESS.md M2-#5.
-    from src.backend.dsl.commands.setup.orchestrator import register_action_handlers
-    from src.backend.dsl.routes import register_dsl_routes
-    from src.backend.plugins.composition.service_setup import register_all_services
+    if register_dependencies is None:
+        from src.backend.plugins.composition.workflow_worker import (
+            register_worker_dependencies,
+        )
 
-    register_all_services()
-    register_action_handlers()
-    register_dsl_routes()
+        register_dependencies = register_worker_dependencies
+    register_dependencies()
 
     # Коннекторы (БД + внешние клиенты) — если registry доступен.
     try:

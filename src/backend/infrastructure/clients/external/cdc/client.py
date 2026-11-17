@@ -11,7 +11,12 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.interfaces.action_dispatcher import ActionDispatcher
 from src.backend.core.logging import get_logger
+from src.backend.core.types.invocation_command import (
+    ActionCommandMetaSchema,
+    ActionCommandSchema,
+)
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.infrastructure.clients.external.cdc._dlq_writer_guard import (
     mark_cdc_dlq_writer_wired,  # B-17 fix (cycle 37): fail-loud DLQ wiring
@@ -71,7 +76,11 @@ class CDCClient:
     }
 
     def __init__(
-        self, *, dlq_writer: DLQWriter | None = None, dlq_required: bool = True
+        self,
+        *,
+        dlq_writer: DLQWriter | None = None,
+        dlq_required: bool = True,
+        action_dispatcher: ActionDispatcher | None = None,
     ) -> None:
         self._subscriptions: dict[str, CDCSubscription] = {}
         self._tasks: dict[str, asyncio.Task] = {}
@@ -89,6 +98,10 @@ class CDCClient:
         # of silent log-drop if writer is missing. dev_light / unit tests
         # set ``dlq_required=False`` to preserve pre-fix log+drop behavior.
         self._dlq_required: bool = dlq_required
+        # Action-dispatcher — core-контракт, инъецируемый composition root'ом.
+        # Fallback для обратной совместимости разрешает service-facade только
+        # в момент фактического dispatch'а.
+        self._action_dispatcher: ActionDispatcher | None = action_dispatcher
 
     def set_dlq_writer(self, writer: DLQWriter | None) -> None:
         """Установить/сбросить DLQ-writer (для composition root wiring).
@@ -113,6 +126,15 @@ class CDCClient:
         выставляет ``False`` через ``DLQSettings``/profile.
         """
         self._dlq_required = required
+
+    def set_action_dispatcher(self, dispatcher: ActionDispatcher | None) -> None:
+        """Установить action-dispatcher для target-action dispatch.
+
+        Args:
+            dispatcher: Core-контракт dispatcher'а либо ``None`` для сброса.
+
+        """
+        self._action_dispatcher = dispatcher
 
     async def subscribe(
         self,
@@ -308,7 +330,7 @@ class CDCClient:
         """Обрабатывает обнаруженное изменение.
 
         B-02 fix (S176 cycle 33): на исключение в callback или
-        ``action_handler_registry.dispatch()`` событие сериализуется в
+        ``dispatcher.dispatch()`` событие сериализуется в
         :class:`DLQEnvelope` (reason=``UNEXPECTED``) и отправляется в
         ``dlq_writer`` если он сконфигурирован. Без writer — fallback
         к ERROR-логу (поведение pre-fix). Исключения никогда не
@@ -325,11 +347,17 @@ class CDCClient:
                 await self._send_to_dlq(sub, event_dict, exc, stage="callback")
 
         if sub.target_action:
-            from src.backend.core.types.invocation_command import (
-                ActionCommandMetaSchema,
-            )
-            from src.backend.dsl.commands.registry import action_handler_registry
-            from src.backend.schemas.invocation import ActionCommandSchema
+            dispatcher = self._action_dispatcher
+            if dispatcher is None:
+                # Legacy fallback для одиночных интеграций: тот же
+                # generic service-facade, который раньше скрывал прямой
+                # DSL-импорт за ленивым import'ом.
+                from src.backend.services.execution.action_dispatcher import (
+                    get_action_dispatcher,
+                )
+
+                dispatcher = get_action_dispatcher()
+                self._action_dispatcher = dispatcher
 
             command = ActionCommandSchema(
                 action=sub.target_action,
@@ -342,7 +370,7 @@ class CDCClient:
                 ),
             )
             try:
-                await action_handler_registry.dispatch(command)
+                await dispatcher.dispatch(command)
             except Exception as exc:
                 logger.error(
                     "CDC dispatch error [%s -> %s]: %s", sub.id, sub.target_action, exc

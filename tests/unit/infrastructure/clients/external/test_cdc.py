@@ -338,6 +338,64 @@ async def test_cdc_dispatch_change_invokes_callback_with_event_dict() -> None:
 
 @pytest.mark.unit
 @pytest.mark.asyncio
+async def test_cdc_dispatch_change_uses_injected_action_dispatcher() -> None:
+    """Target-action dispatch использует инъецированный core-контракт."""
+    dispatcher: Any = MagicMock()
+    dispatcher.dispatch = AsyncMock(return_value=None)
+    client = CDCClient(action_dispatcher=dispatcher)
+    sub = CDCSubscription(
+        profile="default",
+        tables=["orders"],
+        strategy="polling",
+        target_action="orders.handle_change",
+    )
+    event = CDCEvent(
+        operation="INSERT",
+        table="orders",
+        timestamp="2026-06-05T00:00:00Z",
+        profile="default",
+        new={"id": 7},
+    )
+
+    await client._dispatch_change(sub, event)
+
+    dispatcher.dispatch.assert_awaited_once()
+    command = dispatcher.dispatch.await_args.args[0]
+    assert command.action == "orders.handle_change"
+    assert command.payload == event.to_dict()
+    assert command.meta.principal == "cdc:default:polling"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_cdc_dispatch_change_default_dispatcher_preserves_behavior() -> None:
+    """Без инъекции используется прежний generic service-facade."""
+    dispatcher: Any = MagicMock()
+    dispatcher.dispatch = AsyncMock(return_value=None)
+    sub = CDCSubscription(
+        profile="default",
+        tables=["orders"],
+        strategy="polling",
+        target_action="orders.handle_change",
+    )
+    event = CDCEvent(
+        operation="INSERT",
+        table="orders",
+        timestamp="2026-06-05T00:00:00Z",
+        profile="default",
+    )
+
+    with patch(
+        "src.backend.services.execution.action_dispatcher.get_action_dispatcher",
+        return_value=dispatcher,
+    ):
+        await CDCClient()._dispatch_change(sub, event)
+
+    dispatcher.dispatch.assert_awaited_once()
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
 async def test_cdc_dispatch_change_handles_callback_error() -> None:
     """Callback raising must be logged but not propagated.
 
