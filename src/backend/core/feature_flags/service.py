@@ -14,6 +14,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from src.backend.core.config.features import feature_flags
 from src.backend.core.feature_flags.runtime_overrides import get_runtime_overrides
 
@@ -24,16 +26,30 @@ class FeatureFlagService:
     """Синхронный resolver feature-flags с приоритетом overrides > static.
 
     Attributes:
-        _overrides: Runtime overrides singleton.
         _static: Pydantic-settings based static registry.
 
     """
 
-    __slots__ = ("_overrides", "_static")
+    __slots__ = ("_static",)
 
     def __init__(self) -> None:
-        self._overrides = get_runtime_overrides()
         self._static = feature_flags
+
+    @property
+    def _overrides(self) -> Any:
+        """Актуальный singleton runtime-overrides.
+
+        Аксессор берётся **на каждый доступ**, а не кэшируется в конструкторе:
+        ``reset_runtime_overrides()`` (lifespan re-init, тесты) заменяет
+        singleton новым объектом, и закэшированная ссылка продолжала бы
+        указывать на старый → runtime-override, выставленный после re-init,
+        не был бы виден (order-dependent падение в CI-режиме, волна 33).
+
+        Returns:
+            Актуальный ``RuntimeFeatureFlagOverrides``.
+
+        """
+        return get_runtime_overrides()
 
     def is_enabled(
         self, flag_key: str, *, default: bool = False, tenant_id: str | None = None

@@ -305,7 +305,18 @@ class TestAttachSchedulerDLQ:
                 event.scheduled_run_time = datetime.now(UTC)
                 handler(event)
         assert store.size() == 1
-        tr.create_task.assert_called_once()
+        # Задача DLQ создана. Строго «один вызов» не проверяем: в том же
+        # воркере может быть зарегистрирован log-sink (process-global), и
+        # listener дополнительно отдаёт событие в него → create_task
+        # вызывается дважды (order-dependent падение, волна 33).
+        dlq_calls = [
+            call
+            for call in tr.create_task.call_args_list
+            if call.kwargs.get("name") == "scheduler-dlq-write"
+        ]
+        assert len(dlq_calls) == 1, (
+            f"ожидалась ровно одна задача scheduler-dlq-write, получено {len(dlq_calls)}"
+        )
 
     def test_listener_no_running_loop(self, caplog: pytest.LogCaptureFixture) -> None:
         scheduler = MagicMock()

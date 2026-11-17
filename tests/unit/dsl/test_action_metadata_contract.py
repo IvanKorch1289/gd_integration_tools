@@ -44,14 +44,15 @@ def registered_metadata() -> tuple[ActionMetadata, ...]:
     реальным content реестра — это и есть «контракт по факту».
 
     Реестр — process-global: в нём остаются и action'ы, зарегистрированные
-    другими тестами ранее в том же воркере. Контракт здесь — про **API v1**,
+    другими тестами/бутстрапом ранее в том же воркере (например
+    ``admin.*`` из ``dsl/commands/setup/registers_domains.py`` — у них
+    transports пуст по построению). Контракт здесь — про **API v1**,
     поэтому берём только те action'ы, которых не было до импорта роутеров
-    (иначе инфраструктурный action с пустыми transports ронял бы тест —
-    order-dependent падение).
+    (иначе чужой action ронял бы тест — order-dependent падение).
     """
     from src.backend.entrypoints.api.v1.routers import get_v1_routers
 
-    before = set(action_handler_registry.list_actions())
+    before = {meta.action for meta in action_handler_registry.list_metadata()}
     get_v1_routers()
     return tuple(
         meta

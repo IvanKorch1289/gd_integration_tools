@@ -3,16 +3,28 @@
 from __future__ import annotations
 
 import sys as _sys
-
-# Pre-mock hvac module (D255: lazy import в backend_vault)
 from unittest.mock import MagicMock
 
-if "hvac" not in _sys.modules:
-    _mock_hvac = MagicMock()
-    _mock_hvac.Client = MagicMock()  # type: ignore[attr-defined]
-    _sys.modules["hvac"] = _mock_hvac
-
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def _mock_hvac(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Подменить модуль ``hvac`` на время тестов (D255: lazy import).
+
+    Раньше подмена делалась на уровне модуля и **не откатывалась**: fake
+    ``hvac`` оставался в ``sys.modules`` для всех следующих тестов
+    воркера → ``import hvac.exceptions`` падал с «'hvac' is not a package»,
+    а Vault-источник настроек вел себя иначе (order-dependent падения,
+    волна 33).
+
+    Yields:
+        None — подмена действует только внутри теста.
+
+    """
+    mock_hvac = MagicMock()
+    mock_hvac.Client = MagicMock()  # type: ignore[attr-defined]
+    monkeypatch.setitem(_sys.modules, "hvac", mock_hvac)
 
 
 class TestVaultCertBackendAppRole:
