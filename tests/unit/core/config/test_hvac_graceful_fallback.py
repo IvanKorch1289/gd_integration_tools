@@ -20,12 +20,13 @@ Fix (cycle 158+):
 
 from __future__ import annotations
 
-import importlib
+import importlib.util
+from collections.abc import Iterator
 
 import pytest
 
 
-def _reload_config_loader():
+def _fresh_config_loader():
     """Reload ``config_loader`` module to reset ``_HVAC_AVAILABLE`` cache.
 
     Per v4 §10 testable surface: cache должен be testable для
@@ -33,8 +34,34 @@ def _reload_config_loader():
     """
     import src.backend.core.config.config_loader as cl
 
-    importlib.reload(cl)
+    cl._HVAC_AVAILABLE = None
     return cl
+
+
+@pytest.fixture(autouse=True)
+def _restore_config_loader_globals() -> Iterator[None]:
+    """Сохраняет/восстанавливает module-level флаги ``config_loader``.
+
+    Раньше тесты использовали ``importlib.reload(config_loader)``: перезагрузка
+    создаёт новые объекты классов, а остальной процесс продолжает ссылаться
+    на старые (split-brain) → источники настроек переставали совпадать, и
+    Vault-источник молча выключался для всех следующих тестов
+    (order-dependent падения, волна 33). Теперь сбрасывается только
+    module-level флаг, а фикстура восстанавливает исходные значения.
+
+    Yields:
+        None — внутри блока флаги можно свободно менять.
+
+    """
+    import src.backend.core.config.config_loader as cl
+
+    hvac_available = cl._HVAC_AVAILABLE
+    vault_unreachable = cl._VAULT_UNREACHABLE
+    try:
+        yield
+    finally:
+        cl._HVAC_AVAILABLE = hvac_available
+        cl._VAULT_UNREACHABLE = vault_unreachable
 
 
 class TestHvacAvailabilityCache:
@@ -47,7 +74,7 @@ class TestHvacAvailabilityCache:
         known state. _load_data() должен trigger check lazily.
         """
         # Force fresh module — drop _HVAC_AVAILABLE.
-        cl = _reload_config_loader()
+        cl = _fresh_config_loader()
         assert cl._HVAC_AVAILABLE is None, (
             "Cache должен быть None при fresh module load"
         )
@@ -58,7 +85,7 @@ class TestHvacAvailabilityCache:
         На этой машине hvac missing (not installed в venv). Ожидаем
         cache = False. Если hvac available в CI, ожидаем True.
         """
-        cl = _reload_config_loader()
+        cl = _fresh_config_loader()
         # Pre-condition: cache = None.
         assert cl._HVAC_AVAILABLE is None
 
@@ -83,9 +110,9 @@ class TestHvacAvailabilityCache:
         """Test isolation: каждый test начинается с fresh reload.
 
         Если другой test проверял cache = True, наш не должен
-        inherit; _reload_config_loader() drops state.
+        inherit; _fresh_config_loader() drops state.
         """
-        cl = _reload_config_loader()
+        cl = _fresh_config_loader()
         cl._hvac_module_available()
         # Sanity: cache populated.
         assert cl._HVAC_AVAILABLE is not None
@@ -106,7 +133,7 @@ class TestVaultConfigSettingsSourceHvacFallback:
             pytest.skip(
                 "hvac installed — fallback-путь недостижим, негативный сценарий покрыт моками"
             )
-        cl = _reload_config_loader()
+        cl = _fresh_config_loader()
         # Verify precondition: hvac really missing.
         assert cl._hvac_module_available() is False
 
@@ -118,11 +145,9 @@ class TestVaultConfigSettingsSourceHvacFallback:
         # Per PydanticBaseSettingsSource interface, _load_data is the
         # core method. We invoke via __call__() to test full chain.
         # For test purposes, we use the public method directly.
-        from src.backend.core.config.config_loader import _VAULT_UNREACHABLE
-
         # Reset _VAULT_UNREACHABLE для каждого test (not strictly needed:
         # _load_data() устанавливает в True при hvac missing).
-        if _VAULT_UNREACHABLE:
+        if cl._VAULT_UNREACHABLE:
             cl._VAULT_UNREACHABLE = False
 
         # Direct call test (bypass Pydantic integration).
@@ -154,7 +179,7 @@ class TestBackwardsCompatibility:
 
     def test_hvac_module_available_callable(self) -> None:
         """``_hvac_module_available()`` остаётся вызываемой."""
-        cl = _reload_config_loader()
+        cl = _fresh_config_loader()
         # Function exists, is callable, returns bool.
         result = cl._hvac_module_available()
         assert isinstance(result, bool)
@@ -165,7 +190,7 @@ class TestBackwardsCompatibility:
         Pre-fix: ImportError raise (caught в __call__).
         Post-fix: returns {}} early, без raise.
         """
-        cl = _reload_config_loader()
+        cl = _fresh_config_loader()
 
         class _StubSource(cl.VaultConfigSettingsSource):
             def __init__(self):
