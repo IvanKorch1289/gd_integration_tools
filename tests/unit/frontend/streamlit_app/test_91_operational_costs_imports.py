@@ -16,7 +16,7 @@ import importlib.util
 import sys
 from pathlib import Path
 from types import ModuleType
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -185,6 +185,26 @@ def _build_polars_mock() -> ModuleType:
     return polars
 
 
+def _neutralize_real_page_config() -> object | None:
+    """Отключить ``st.set_page_config`` у РЕАЛЬНОГО streamlit-модуля.
+
+    Страница импортирует ``shared.components`` (а он — реальный streamlit),
+    поэтому подмена ``sys.modules['streamlit']`` на мок не действует, если
+    ``shared.components`` уже импортирован ранее в этом же процессе.
+    Реальный ``st.set_page_config`` можно вызвать только один раз за процесс
+    → второй вызов (в нашем тесте) падал с ``StreamlitAPIException``
+    (order-dependent падение, волна 33).
+
+    Returns:
+        Контекстный менеджер патча либо ``None``, если реального streamlit нет.
+
+    """
+    real_st = sys.modules.get("streamlit")
+    if real_st is None or not hasattr(real_st, "set_page_config"):
+        return None
+    return patch.object(real_st, "set_page_config", MagicMock())
+
+
 def _load_page_module() -> object:
     """Load page module via spec_from_file_location (Cyrillic name)."""
     global _load_counter
@@ -196,9 +216,14 @@ def _load_page_module() -> object:
     spec = importlib.util.spec_from_file_location(module_name, _page_path())
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
+    real_config_patch = _neutralize_real_page_config()
     try:
+        if real_config_patch is not None:
+            real_config_patch.__enter__()
         spec.loader.exec_module(module)
     finally:
+        if real_config_patch is not None:
+            real_config_patch.__exit__(None, None, None)
         # ADR-0404: мок polars/streamlit действует ТОЛЬКО на время загрузки
         # страницы — иначе он остаётся в sys.modules и ``patch('polars.
         # read_excel')`` в других suite'ах патчит мок вместо реального

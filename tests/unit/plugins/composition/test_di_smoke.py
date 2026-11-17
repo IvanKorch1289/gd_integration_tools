@@ -102,6 +102,26 @@ def fresh_app() -> FastAPI:
     return FastAPI()
 
 
+@pytest.fixture(autouse=True)
+def _reset_app_state_caches():
+    """Сбрасывать кэши ``app_state_singleton`` после теста.
+
+    Фикстура ``stub_constructors`` подменяет конструкторы (в т.ч.
+    ``PipelineVersionManager``), а ``app_state_singleton`` кэширует созданный
+    инстанс в process-global кэше → после восстановления подмены mock
+    оставался в кэше, и следующий тест получал mock вместо реального объекта
+    (order-dependent падение, волна 33).
+
+    Yields:
+        None — внутри блока кэши чистые.
+
+    """
+    from src.backend.core.di.app_state import reset_app_state
+
+    yield
+    reset_app_state()
+
+
 @pytest.fixture
 def stub_constructors(monkeypatch: pytest.MonkeyPatch) -> dict[str, MagicMock]:
     """Подменяет ВСЕ concrete-конструкторы лёгкими MagicMock'ами.

@@ -304,7 +304,15 @@ class ActionHandlerRegistry:
         )
         if action not in self._metadata:
             self._metadata[action] = ActionMetadata(
-                action=action, input_model=payload_model
+                action=action,
+                input_model=payload_model,
+                # Транспорт по умолчанию — «internal»: action зарегистрирован
+                # как обработчик сервиса (не REST-эндпоинт). Раньше transports
+                # оставался пустым, и контракт метаданных («transports —
+                # непустой кортеж») выполнялся только для REST-action'ов —
+                # проверка зависела от того, успел ли до теста выполниться
+                # bootstrap (order-dependent падение, волна 33).
+                transports=("internal",),
             )
 
     def register_many(self, specs: list[ActionHandlerSpec]) -> None:
@@ -321,7 +329,10 @@ class ActionHandlerRegistry:
             self._handlers[spec.action] = spec
             if spec.action not in self._metadata:
                 self._metadata[spec.action] = ActionMetadata(
-                    action=spec.action, input_model=spec.payload_model
+                    action=spec.action,
+                    input_model=spec.payload_model,
+                    # См. register(): транспорт по умолчанию — «internal».
+                    transports=("internal",),
                 )
 
     def register_with_metadata(

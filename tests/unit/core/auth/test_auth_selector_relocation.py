@@ -94,27 +94,33 @@ def test_gateway_imports_from_core_not_entrypoints() -> None:
 
 
 def test_entrypoints_shim_is_deprecated() -> None:
-    """``entrypoints.api.dependencies.auth_selector`` — DEPRECATED shim."""
-    with pytest.warns(DeprecationWarning, match="S96 W1"):
-        # Force reimport — cache may suppress warn after first import
-        import importlib
+    """``entrypoints.api.dependencies.auth_selector`` — DEPRECATED shim.
 
+    Warning ловится собственным recorder'ом, а не ``pytest.warns``: при
+    импорте модуля внутри ``pytest.warns`` предупреждение уходило бы во
+    вложенный ``catch_warnings`` и тест падал бы с «DID NOT WARN» — если
+    модуль уже был импортирован ранее в этом же процессе (order-dependent
+    падение, волна 33).
+    """
+    import importlib
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
         mod = importlib.import_module(
             "src.backend.entrypoints.api.dependencies.auth_selector"
         )
-        # Reload чтобы DeprecationWarning повторился
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            importlib.reload(mod)
-            deprecation_warnings = [
-                w for w in caught if issubclass(w.category, DeprecationWarning)
-            ]
-        assert any(
-            "S96 W1" in str(w.message) and "core.auth.gateway" in str(w.message)
-            for w in deprecation_warnings
-        ), (
-            f"Expected S96 W1 deprecation, got: {[str(w.message) for w in deprecation_warnings]}"
-        )
+        # Reload — предупреждение import-time повторяется при каждом reload.
+        importlib.reload(mod)
+
+    deprecation_warnings = [
+        w for w in caught if issubclass(w.category, DeprecationWarning)
+    ]
+    assert any(
+        "S96 W1" in str(w.message) and "core.auth.gateway" in str(w.message)
+        for w in deprecation_warnings
+    ), (
+        f"Expected S96 W1 deprecation, got: {[str(w.message) for w in deprecation_warnings]}"
+    )
 
 
 def test_entrypoints_shim_re_exports_core() -> None:
