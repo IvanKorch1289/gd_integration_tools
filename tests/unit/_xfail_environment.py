@@ -72,6 +72,15 @@ XFAIL_ENVIRONMENT: dict[str, tuple[str, str, bool]] = {
         False,
     ),
     "tests/unit/dsl/engine/test_exchange_snapshot.py::"
+    "TestToDictMsgspec::test_to_dict_msgspec_faster": (
+        "performance-бенчмарк: msgspec против orjson на msgspec.Struct — "
+        "недетерминирован по природе, под нагрузкой CI отношение скоростей "
+        "выходит за порог 0.5x, в изоляции проходит",
+        "OWNER-TASK: PROD-READINESS gaps — perf-бенчмарки в отдельный "
+        "профиль CI (docs/roadmap/PROD_READINESS_GAPS.md)",
+        False,
+    ),
+    "tests/unit/dsl/engine/test_exchange_snapshot.py::"
     "TestRealWorldBenchmarks::test_msgspec_speedup_nested_dict": (
         "performance-бенчмарк: сравнение msgspec и orjson на вложенном "
         "dict — недетерминирован по природе, под нагрузкой CI проигрывает "

@@ -350,6 +350,34 @@ def _reset_app_state_singletons():
     reset_app_state()
 
 
+@_pytest.fixture(autouse=True)
+def _reset_correlation_context():
+    """Сбрасывать correlation/request/tenant ContextVar'ы после каждого теста.
+
+    Как и tenant-контекст, correlation-id — process-global ContextVar: тест,
+    выставивший его, оставлял значение следующим тестам. В outbox-запись
+    попадал заголовок ``correlation_id`` от чужого теста → падение
+    «headers == {}» (order-dependent, волна 33).
+
+    Yields:
+        None — внутри блока контекст не меняется.
+
+    """
+    from src.backend.core.observability.correlation import (
+        correlation_id_var,
+        request_id_var,
+        tenant_id_var,
+    )
+
+    saved = (correlation_id_var.get(), request_id_var.get(), tenant_id_var.get())
+    try:
+        yield
+    finally:
+        correlation_id_var.set(saved[0])
+        request_id_var.set(saved[1])
+        tenant_id_var.set(saved[2])
+
+
 # ── Tenant ContextVar: сброс после каждого теста (P1 test isolation) ──
 # core.tenancy._current — общепроцессный ContextVar. Многие тесты вызывают
 # set_tenant() напрямую и не отвязывают контекст, из-за чего tenant предыдущего

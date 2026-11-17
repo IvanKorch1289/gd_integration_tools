@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 import pytest
@@ -163,10 +165,24 @@ def test_document_parser_pipeline_metric() -> None:
     assert parsed["dob"] == "15.03.1980"
 
 
-def test_rag_reranker_metric() -> None:
+def test_rag_reranker_metric(monkeypatch: pytest.MonkeyPatch) -> None:
     from src.backend.services.ai.dspy.pipelines.rag_reranker import (
         rag_reranker_pipeline,
     )
+
+    # FlagEmbedding подменяется заглушкой: без неё pipeline поднимает
+    # реальную BGE-модель (в оффлайне — долгая загрузка, таймаут под
+    # нагрузкой CI, волна 33).
+    class _ScalarReranker:
+        def __init__(self, *_: Any, **__: Any) -> None:
+            pass
+
+        def compute_score(self, pairs: list[tuple[str, str]]) -> float:
+            return 1.0 if pairs and pairs[0][1] else 0.0
+
+    fake_mod = ModuleType("FlagEmbedding")
+    fake_mod.FlagReranker = _ScalarReranker  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "FlagEmbedding", fake_mod)
 
     example = {
         "query": "ставка ипотека",
