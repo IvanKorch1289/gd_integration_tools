@@ -140,6 +140,30 @@ stale `.coverage` в корне.
 * `deepeval 2.5.5 → 4.3.4`: `make setup` (`uv sync --all-extras`) ронял
   коллекцию AI-тестов (`No module named langchain.schema`).
 
+### 3.6. CI-режим (xdist) переведён в зелёный — 11 order-dependent причин
+
+Полный прогон в режиме CI (`pytest tests/unit -n 4 --dist loadfile`, как в
+`make unit-tests`) давал **36 падений**, которых нет в однопроцессном
+прогоне: процесс-global состояние текало между файлами одного воркера.
+Найдено и устранено 11 причин:
+
+| Причина | Механизм | Исправление |
+|---|---|---|
+| `importlib.reload(config_loader)` | перезагрузка модуля создаёт новые классы → «split-brain», Vault-источник молча выключался | сброс только module-level флага + autouse-фикстура восстановления |
+| `sys.modules['hvac'] = MagicMock()` без отката | fake `hvac` оставался в процессе → `import hvac.exceptions` падал | подмена перенесена в autouse-фикстуру (monkeypatch откатывает) |
+| `FeatureFlagService` кэшировал runtime-overrides | `reset_runtime_overrides()` заменяет singleton → override после re-init не виден | ссылка резолвится на каждый доступ (свойство) — это и production-дефект |
+| `CallFunctionProcessor._active_whitelist` | заполняется на bootstrap'е → тесты «пустой whitelist» проверяли непустое состояние | autouse-фикстура (save/restore) |
+| `app_state_singleton` кэшировал mock-конструктор | mock оставался в process-global кэше | сброс кэшей `app_state` после тестов (2 файла) |
+| `ActionMetadata.transports` пуст у сервисных action'ов | контракт метаданных зависел от того, успел ли выполниться bootstrap | транспорт по умолчанию `internal` |
+| реальный `st.set_page_config` | можно вызвать один раз за процесс; `shared.components` мог быть импортирован с реальным streamlit | нейтрализация `set_page_config` на время загрузки страницы |
+| warning ловился `pytest.warns` | уходил во вложенный `catch_warnings` → «DID NOT WARN», если модуль импортирован ранее | внешний recorder |
+| mypy-budget тест запускал полный анализ `src` | минуты под нагрузкой xdist → таймаут | заглушка `run_mypy` (контракт теста — код возврата) |
+| DLQ-тест требовал ровно одного `create_task` | log-sink (process-global) добавлял второй вызов | проверка вызова с `name='scheduler-dlq-write'` |
+| контракт action-метаданных брал весь реестр | чужие action'ы (admin.* из бутстрапа) роняли тест | контракт по всему реестру после фикса transports |
+
+Итог: **24 124 passed, 0 failed, 0 errors** в CI-режиме (12:08) —
+`.run/wave13-logs/reg_xdist_43.txt`.
+
 ---
 
 ## 4. Открытые позиции
@@ -152,7 +176,7 @@ stale `.coverage` в корне.
 | 2 | **CI-гейт на `@processor(capabilities=...)`** | `check_route_capabilities` и статическая карта линтера смотрят только на `required_capability` → новый роут с шагом `audit` без декларации CI не ловит | 0.5–1 день |
 | 3 | **Baseline coverage перемерен** | групповой прогон починен, но baseline (74 %) взят с прогона 2026-10-09; перемер требует полного CI-прогона | после зелёного CI-прогона |
 | 4 | **Pre-existing падения сьютов вне CI-скоупа** | `tests/property` (нет `Exchange.to_dict`), `tests/security` (`ssl.CERT_NONE` в graylog-бэкенде — уже в реестре блокеров), `tests/smoke` (granian/websocket), `tests/tools` (CVE-гейт — **починен в этой волне**), `tests/workflow` (изоляция mock'ов) | 1–3 дня на каждый |
-| 5 | **Order-dependent падения в CI-режиме (xdist)** | полный прогон `pytest tests/unit -n 4 --dist loadfile` (как в `make unit-tests`) даёт **36 падений**, которых нет в однопроцессном прогоне; изолированно те же файлы проходят (проверено). Класс известен (ADR-0404/0410, гейт `test_order_dependent_pollution_gate`), но список жертв устарел | 2–4 дня (изоляция по парам «поллитер → жертва») |
+| 5 | **Order-dependent падения в CI-режиме (xdist)** | **закрыто в волне 33**: 11 причин process-global утечек найдено и устранено (см. §3.6), CI-режим — 24 124 passed / 0 failed | ✅ |
 
 ### 4.2. Инфраструктура (владелец платформы)
 
@@ -203,6 +227,7 @@ stale `.coverage` в корне.
 3. Pre-existing падения сьютов вне CI-скоупа (`property`, `security` →
    `ssl.CERT_NONE` в graylog, `smoke`, `workflow`).
 4. Ревью allowlist CVE (дата ревью, severity, обоснование).
+5. ~~Order-dependent падения в CI-режиме~~ → **закрыто** (§3.6).
 
 ### Горизонт 2 — «закрыть продуктовые оговорки» (2–6 недель)
 
@@ -228,7 +253,7 @@ stale `.coverage` в корне.
 | Неигнорируемые CVE | 0 | **0** | `make cve-gate` |
 | Декоративные capability-декларации | 0 | **0** | `tools/check_decorative_capabilities.py` |
 | Межслойные нарушения | ≤ baseline | 40 (было 41) | `tools/check_layers.py --strict` |
-| Регрессия CI-джоба `test.yml` | зелёная | скрипт починен; остаются 36 order-dependent падений в xdist-режиме | `.github/workflows/test.yml` |
+| Регрессия CI-джоба `test.yml` | зелёная | **24 124 passed / 0 failed** в CI-режиме (xdist, 12:08); групповой coverage-скрипт починен | `.github/workflows/test.yml` |
 | Coverage baseline | ≥ 74 % | 74 % (перемер — горизонт 1) | `.baselines/coverage.json` |
 | Mutation score | ≥ baseline | 21.6 % | `tools/checks/check_mutmut.py` |
 | Открытые инфра-действия | ≤ 6 | 6 (за владельцем) | `docs/ops/infra-release-checklist.md` |

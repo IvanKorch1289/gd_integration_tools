@@ -173,9 +173,37 @@ legacy-объявления и упал на «`admin.get_cache_value`: transpor
 
 ```bash
 .venv/bin/python -m pytest tests/unit -q -p no:randomly        # 0 падений
+.venv/bin/python -m pytest tests/unit -q -n 4 --dist loadfile  # CI-режим: 0 падений
 .venv/bin/python -m pytest tests/unit/test_order_dependent_pollution_gate.py -q
 ruff check tests/unit
 ```
+
+### Дополнение волны 33 (2026-11-17): CI-режим (xdist)
+
+Прогон в режиме CI (`-n 4 --dist loadfile`) выявил **36 падений**, которых
+не было в однопроцессном прогоне: process-global состояние текало между
+файлами одного воркера. Устранено **11 причин** (reload модулей, подмена
+`sys.modules`, кэши singleton'ов, глобальные реестры, page-config Streamlit,
+тяжёлый mypy-прогон в юнит-тесте):
+
+* `importlib.reload(config_loader)` → split-brain модуля (Vault-источник
+  выключался) — заменено сбросом флага + autouse-фикстурой;
+* `sys.modules['hvac'] = MagicMock()` без отката → подмена в фикстуре;
+* `FeatureFlagService` кэшировал runtime-overrides → свойство вместо поля
+  (**production-дефект**: override после lifespan re-init не виден);
+* `CallFunctionProcessor._active_whitelist` (bootstrap) → save/restore;
+* `app_state_singleton` кэшировал mock → сброс кэшей после тестов;
+* `ActionMetadata.transports` пуст у сервисных action'ов → `internal` по
+  умолчанию (**production-дефект**: контракт метаданных зависел от порядка);
+* реальный `st.set_page_config` (один вызов за процесс) → нейтрализация на
+  время загрузки страницы;
+* warning в `pytest.warns` при уже импортированном модуле → внешний recorder;
+* mypy-budget тест запускал полный анализ `src` → заглушка;
+* DLQ-тест требовал ровно одного `create_task` → проверка по имени задачи;
+* контракт action-метаданных брал весь реестр → фильтрация по scope.
+
+Итог: **24 124 passed, 0 failed, 0 errors** в CI-режиме
+(`.run/wave13-logs/reg_xdist_43.txt`).
 
 Гейт падает, если: (а) банк xfail вырос, (б) запись банка указывает на
 несуществующий тест, (в) появился файл с маркером
