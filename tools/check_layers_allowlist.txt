@@ -3,14 +3,6 @@
 # Цель — постепенно сокращать.
 # S110 W2: --update-allowlist MERGES (was REPLACE).
 # S112 W1: --prune-allowlist removes stale entries (complement to MERGE).
-# ВНИМАНИЕ: осознанные контракты вынесены в check_layers_contract.txt
-# (ADR-0348, вариант C). Здесь остаётся только реальный долг.
-src/backend/core/ai/gateway_pipeline_mixin/llm_mixin.py	core	src.backend.services.ai.prompt_registry
-src/backend/core/ai/gateway_pipeline_mixin/output_mixin.py	core	src.backend.services.ai.gateway
-src/backend/core/ai/llm_gateway.py	core	src.backend.services.ai.gateway.client
-src/backend/core/ai/multi_agent.py	core	src.backend.services.ai.multi_agent.supervisor
-src/backend/core/ai/policy/enforcer/input_guard_mixin.py	core	src.backend.services.ai.guardrails.lakera_client
-src/backend/core/security/connector_auth.py	core	src.backend.services.authorization.facade
 src/backend/dsl/commands/setup/registers_domains.py	dsl	extensions.core_entities.orderkinds.services.orderkinds
 src/backend/dsl/commands/setup/registers_domains.py	dsl	extensions.core_entities.orders.schemas.route
 src/backend/dsl/commands/setup/registers_domains.py	dsl	extensions.core_entities.orders.services.orders
@@ -35,10 +27,6 @@ src/backend/entrypoints/api/v1/endpoints/skb.py	entrypoints	extensions.skb.schem
 src/backend/entrypoints/api/v1/endpoints/users.py	entrypoints	extensions.core_entities.users.schemas.filter
 src/backend/entrypoints/api/v1/endpoints/users.py	entrypoints	extensions.core_entities.users.schemas.route
 src/backend/entrypoints/api/v1/endpoints/users.py	entrypoints	extensions.core_entities.users.services.users
-src/backend/infrastructure/clients/external/cdc/client.py	infrastructure	src.backend.dsl.commands.registry
-src/backend/infrastructure/workflow/executor/sequential_mixin.py	workflows	src.backend.dsl.engine.exchange
-src/backend/infrastructure/workflow/worker.py	workflows	src.backend.dsl.commands.setup.orchestrator
-src/backend/infrastructure/workflow/worker.py	workflows	src.backend.dsl.routes
 src/backend/services/auth/bootstrap_admin.py	services	extensions.core_entities.users.domain.models
 src/backend/services/integrations/skb.py	services	extensions.skb.services.waf_route
 src/backend/services/io/files.py	services	extensions.core_entities.files.services.files
