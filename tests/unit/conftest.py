@@ -180,16 +180,23 @@ def _cleanup_polluted_modules() -> int:
             # ``polars.lazyframe`` (волна 33: ImportError '_is_generator').
             # В этом случае возвращаем настоящий пакет и не трогаем его
             # подмодули.
+            #
+            # Уточнение (волна 34): «не трогать подмодули» означало «не
+            # оставлять частично инициализированные». Подмодули от
+            # подменённого stub'а остаются в sys.modules → следующий
+            # ленивый импорт ``polars.lazyframe`` переиспользует их и
+            # падает с ImportError '_is_generator' (CI-режим, xdist).
+            # Поэтому подмодули вычищаются ВСЕГДА, а настоящий пакет
+            # переимпортируется заново, если он установлен.
             polars_installed = k == "polars" and _module_installed("polars")
             del sys.modules[k]
             removed += 1
             if k == "polars":
+                for sub in [m for m in sys.modules if m.startswith("polars.")]:
+                    del sys.modules[sub]
+                    removed += 1
                 if polars_installed:
                     importlib.import_module("polars")
-                else:
-                    for sub in [m for m in sys.modules if m.startswith("polars.")]:
-                        del sys.modules[sub]
-                        removed += 1
     return removed
 
 
