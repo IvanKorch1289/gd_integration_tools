@@ -3,30 +3,4 @@
 # Цель — постепенно сокращать.
 # S110 W2: --update-allowlist MERGES (was REPLACE).
 # S112 W1: --prune-allowlist removes stale entries (complement to MERGE).
-src/backend/dsl/commands/setup/registers_domains.py	dsl	extensions.core_entities.orderkinds.services.orderkinds
-src/backend/dsl/commands/setup/registers_domains.py	dsl	extensions.core_entities.orders.schemas.route
-src/backend/dsl/commands/setup/registers_domains.py	dsl	extensions.core_entities.orders.services.orders
-src/backend/dsl/commands/setup/registers_domains.py	dsl	extensions.core_entities.users.services.users
-src/backend/dsl/commands/setup/registers_domains.py	dsl	extensions.dadata.schemas.route
-src/backend/dsl/commands/setup/registers_domains.py	dsl	extensions.skb.schemas.route
-src/backend/entrypoints/api/generator/setup.py	entrypoints	extensions.core_entities.orderkinds.services.orderkinds
-src/backend/entrypoints/api/generator/setup.py	entrypoints	extensions.core_entities.orders.schemas.route
-src/backend/entrypoints/api/generator/setup.py	entrypoints	extensions.core_entities.orders.services.orders
-src/backend/entrypoints/api/v1/endpoints/admin.py	entrypoints	extensions.core_admin.schemas.route
-src/backend/entrypoints/api/v1/endpoints/auth_login.py	entrypoints	extensions.core_entities.users.services.users
-src/backend/entrypoints/api/v1/endpoints/dadata.py	entrypoints	extensions.dadata.schemas.route
-src/backend/entrypoints/api/v1/endpoints/files.py	entrypoints	extensions.core_entities.files.schemas.filter
-src/backend/entrypoints/api/v1/endpoints/files.py	entrypoints	extensions.core_entities.files.schemas.route
-src/backend/entrypoints/api/v1/endpoints/orderkinds.py	entrypoints	extensions.core_entities.orderkinds.schemas.filter
-src/backend/entrypoints/api/v1/endpoints/orderkinds.py	entrypoints	extensions.core_entities.orderkinds.schemas.route
-src/backend/entrypoints/api/v1/endpoints/orderkinds.py	entrypoints	extensions.core_entities.orderkinds.services.orderkinds
-src/backend/entrypoints/api/v1/endpoints/orders.py	entrypoints	extensions.core_entities.orders.schemas.filter
-src/backend/entrypoints/api/v1/endpoints/orders.py	entrypoints	extensions.core_entities.orders.schemas.route
-src/backend/entrypoints/api/v1/endpoints/orders.py	entrypoints	extensions.core_entities.orders.services.orders
-src/backend/entrypoints/api/v1/endpoints/skb.py	entrypoints	extensions.skb.schemas.route
-src/backend/entrypoints/api/v1/endpoints/users.py	entrypoints	extensions.core_entities.users.schemas.filter
-src/backend/entrypoints/api/v1/endpoints/users.py	entrypoints	extensions.core_entities.users.schemas.route
-src/backend/entrypoints/api/v1/endpoints/users.py	entrypoints	extensions.core_entities.users.services.users
-src/backend/services/auth/bootstrap_admin.py	services	extensions.core_entities.users.domain.models
-src/backend/services/integrations/skb.py	services	extensions.skb.services.waf_route
-src/backend/services/io/files.py	services	extensions.core_entities.files.services.files
+
