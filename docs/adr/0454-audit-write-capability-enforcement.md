@@ -53,9 +53,10 @@ Capability `audit.write` была в vocabulary с 2026-10-06, но:
 
 * Декларации роутов перестали быть декоративными: capability реально
   проверяется на каждом шаге `audit`;
-* гейт `check_route_capabilities` **не** видит шаг `audit` (статическая карта
-  линтера не содержит `audit`) — отсутствие декларации в новом роуте
-  ловится только в рантайме. Это отдельный пробел CI (см. ADR-0449:
-  engine-wide enforcement деклараций процессоров);
+* гейт `check_route_capabilities` **видит** шаг `audit` (волна 33): capability
+  берётся из того же источника, что и рантайм (`required_capability` +
+  `@processor(capabilities=...)`), проверяются все scope-required capability
+  из vocabulary → роут с шагом `audit` без декларации `audit.write` падает
+  в CI (негативный тест в `tests/unit/tools/test_check_route_capabilities.py`);
 * scope `audit:*` — «любой audit-sink»; более узкие декларации
   (`audit:<action>`) ограничивают набор событий роута.

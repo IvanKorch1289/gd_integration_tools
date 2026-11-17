@@ -59,14 +59,19 @@ SQLAlchemy/движке) уточнила границу этого ADR:
    реально используют 7 канонических роутов (сегодня — 2: `audit.write`,
    `function.call`), (г) миграция 35 новых имён в манифесты либо решение
    владельца о «advisory-режиме».
-2. **Гейт CI, который видит декларации процессоров.**
-   `tools/check_route_capabilities.py` и статическая карта линтера
-   (`dsl/cli/lint.py`) смотрят на `required_capability`/`PROCESSOR_CAPABILITIES`,
-   но не на `@processor(capabilities=...)` → новый роут с шагом `audit`
-   без декларации CI не ловит (ловит рантайм).
+2. **Гейт CI, который видит декларации процессоров.** — **закрыто
+   в волне 33**: `tools/check_route_capabilities.py` и линтер DSL-YAML
+   (`dsl/cli/lint.py`) берут capability из **того же источника**, что и
+   рантайм (`required_capability` + `@processor(capabilities=...)`), а
+   проверяются все scope-required capability из vocabulary. Роут с шагом
+   `audit` без декларации `audit.write` теперь падает в CI (негативный
+   тест `tests/unit/tools/test_check_route_capabilities.py`).
 3. **Декларации с именами из vocabulary, но без scope.** Пока у таких
    capability `scope_required=False` (миграция ADR-0451), при усилении
    scope-политики их придётся доработать точечно.
+4. **Runtime-часть engine-wide enforcement** (п. 1) остаётся открытой:
+   гейт теперь ловит отсутствие декларации, но сама проверка capability
+   по-прежнему выполняется процессором, а не движком.
 
 ## Последствия
 
