@@ -202,8 +202,18 @@ ruff check tests/unit
 * DLQ-тест требовал ровно одного `create_task` → проверка по имени задачи;
 * контракт action-метаданных брал весь реестр → фильтрация по scope.
 
-Итог: **24 124 passed, 0 failed, 0 errors** в CI-режиме
-(`.run/wave13-logs/reg_xdist_43.txt`).
+Итог: **24 122 passed, 0 failed, 0 errors** в каноническом CI-режиме
+(`-n 2 --dist loadfile`, как `make unit-tests`; 13:28) —
+`.run/wave13-logs/reg_ci_mode_52.txt`. Более жёсткий режим `-n 4`:
+24 117 passed / 0 failed (`.run/wave13-logs/reg_xdist_48.txt`).
+
+Дополнительно устранены (волна 33, продолжение): заглушка `hvac` без
+отката, `reload` шима auth_selector (оставлял mock в re-export'ах),
+`_VERIFIERS` core.auth_selector (откатывался только в app-shutdown),
+correlation-id ContextVar (попадал в outbox-запись), cleanup подмодулей
+polars (циклический импорт в `polars.lazyframe`), загрузка BGE-модели в
+dspy-тестах и semantic-поиске шаблонов, таймаут сканеров синтаксиса,
+перф-бенчмарки msgspec (банк xfail расширен до 4 записей).
 
 Гейт падает, если: (а) банк xfail вырос, (б) запись банка указывает на
 несуществующий тест, (в) появился файл с маркером

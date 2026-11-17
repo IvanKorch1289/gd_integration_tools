@@ -69,7 +69,7 @@ coverage-прогон и прогон CVE-гейта.
 |---|---|---|---|
 | **Ядро и слои** | 🟡 готово с долгом | `check_layers` — 40 нарушений (долг 37 + контракты 3), гейт блокирует рост **и стейл-записи** (ADR-0450) | инверсия зависимостей по доменам (ADR-0450) |
 | **Tenant-изоляция** | 🟢 закрыто | ADR-0448 (вариант А): 3 явных состояния скоупа; **UNION/CTE-обход fail-closed закрыт** (регрессионные тесты) | сверка платформенного scope по бэкендам (на PG с RLS «нет контекста» = 0 строк) — решение владельца |
-| **Capability-контур** | 🟡 частично | ADR-0449/0451: долг 36 → **0**; **ADR-0454: `audit.write` реально enforced** (отказ без декларации + проверка scope) | **engine-wide enforcement** (проверка capability перед каждым шагом) + CI-гейт, видящий `@processor(capabilities=...)` |
+| **Capability-контур** | 🟡 частично | ADR-0449/0451: долг 36 → **0**; **ADR-0454: `audit.write` реально enforced** (отказ без декларации + проверка scope); **CI-гейт видит capability процессоров** (роут с audit-шагом без декларации падает) | **engine-wide enforcement** (проверка capability перед каждым шагом в движке) |
 | **Workflow-движок** | 🟢 готово | ADR-0394/0396/0403/0408/0431/0433/0435; 18 шаблонов, 22 спецификации под линтером | персистентность checkpoint'ов |
 | **DSL и DX** | 🟢 готово | 18 шаблонов, cookbook, линтеры DSL-YAML и workflow-спецификаций, `dsl explain` с реальной проверкой missing-capability | cookbook по workflow-Temporal |
 | **HTTP/GraphQL/WS** | 🟢 готово | ADR-0421/0422/0423/0427; 447 путей OpenAPI; auth-проброс | — |
@@ -140,29 +140,41 @@ stale `.coverage` в корне.
 * `deepeval 2.5.5 → 4.3.4`: `make setup` (`uv sync --all-extras`) ронял
   коллекцию AI-тестов (`No module named langchain.schema`).
 
-### 3.6. CI-режим (xdist) переведён в зелёный — 11 order-dependent причин
+### 3.6. CI-режим (xdist) переведён в зелёный — 18 order-dependent причин
 
-Полный прогон в режиме CI (`pytest tests/unit -n 4 --dist loadfile`, как в
+Полный прогон в режиме CI (`pytest tests/unit -n 2 --dist loadfile`, как в
 `make unit-tests`) давал **36 падений**, которых нет в однопроцессном
-прогоне: процесс-global состояние текало между файлами одного воркера.
-Найдено и устранено 11 причин:
+прогоне: process-global состояние текало между файлами одного воркера.
+Найдено и устранено **18 причин** (прогон: 36 → 25 → 13 → 9 → 4 → 2 → 1 → 0):
 
 | Причина | Механизм | Исправление |
 |---|---|---|
 | `importlib.reload(config_loader)` | перезагрузка модуля создаёт новые классы → «split-brain», Vault-источник молча выключался | сброс только module-level флага + autouse-фикстура восстановления |
 | `sys.modules['hvac'] = MagicMock()` без отката | fake `hvac` оставался в процессе → `import hvac.exceptions` падал | подмена перенесена в autouse-фикстуру (monkeypatch откатывает) |
-| `FeatureFlagService` кэшировал runtime-overrides | `reset_runtime_overrides()` заменяет singleton → override после re-init не виден | ссылка резолвится на каждый доступ (свойство) — это и production-дефект |
+| `FeatureFlagService` кэшировал runtime-overrides | `reset_runtime_overrides()` заменяет singleton → override после re-init не виден | ссылка резолвится на каждый доступ (свойство) — это и **production-дефект** |
 | `CallFunctionProcessor._active_whitelist` | заполняется на bootstrap'е → тесты «пустой whitelist» проверяли непустое состояние | autouse-фикстура (save/restore) |
-| `app_state_singleton` кэшировал mock-конструктор | mock оставался в process-global кэше | сброс кэшей `app_state` после тестов (2 файла) |
-| `ActionMetadata.transports` пуст у сервисных action'ов | контракт метаданных зависел от того, успел ли выполниться bootstrap | транспорт по умолчанию `internal` |
-| реальный `st.set_page_config` | можно вызвать один раз за процесс; `shared.components` мог быть импортирован с реальным streamlit | нейтрализация `set_page_config` на время загрузки страницы |
+| `app_state_singleton` кэшировал mock-конструктор | mock оставался в process-global кэше | глобальный сброс кэшей `app_state` после **каждого** теста (conftest) |
+| `ActionMetadata.transports` пуст у сервисных action'ов | контракт метаданных зависел от того, успел ли выполниться bootstrap | транспорт по умолчанию `internal` — **production-дефект** |
+| реальный `st.set_page_config` | можно вызвать один раз за процесс; `shared.components` мог быть импортирован с реальным streamlit | нейтрализация `shared.components.setup_page` на время загрузки страницы |
 | warning ловился `pytest.warns` | уходил во вложенный `catch_warnings` → «DID NOT WARN», если модуль импортирован ранее | внешний recorder |
 | mypy-budget тест запускал полный анализ `src` | минуты под нагрузкой xdist → таймаут | заглушка `run_mypy` (контракт теста — код возврата) |
 | DLQ-тест требовал ровно одного `create_task` | log-sink (process-global) добавлял второй вызов | проверка вызова с `name='scheduler-dlq-write'` |
 | контракт action-метаданных брал весь реестр | чужие action'ы (admin.* из бутстрапа) роняли тест | контракт по всему реестру после фикса transports |
+| reload шима оставлял mock в re-export'ах | шим кэширует объекты core на момент импорта | reload шима + восстановление re-export'ов |
+| `core.auth_selector._VERIFIERS` откатывался только в app-shutdown | тестовый набор оставался в модуле | autouse-фикстура восстановления |
+| correlation-id ContextVar не сбрасывался | заголовок `correlation_id` от чужого теста попадал в outbox-запись | глобальный сброс correlation/request/tenant ContextVar'ов |
+| cleanup удалял подмодули polars | пакет оставался «частично инициализирован» → циклический импорт в `polars.lazyframe` | при установленном polars cleanup возвращает настоящий пакет |
+| перезагрузка/заглушка BGE-модели в тестах | реальная модель грузилась в каждом прогоне (минуты, таймаут) | заглушка FlagEmbedding в dspy-тестах |
+| semantic-поиск шаблонов | флаг BGE-M3 включён по умолчанию → загрузка модели | тесты идут по rapidfuzz-fallback |
+| таймаут гейта `--timeout=120` | сканеры синтаксиса по 2.6k файлов не укладываются | собственный `@pytest.mark.timeout(600)` |
+| перф-бенчмарки (msgspec vs orjson) | недетерминированы по природе, ломаются под нагрузкой CI | банк xfail (ревизия ADR-0404): 1 → 4 записи |
 
-Итог: **24 124 passed, 0 failed, 0 errors** в CI-режиме (12:08) —
-`.run/wave13-logs/reg_xdist_43.txt`.
+Итог: **24 122 passed, 0 failed, 0 errors** в каноническом CI-режиме
+(`-n 2 --dist loadfile`, 13:28) — `.run/wave13-logs/reg_ci_mode_52.txt`.
+Отдельно прогнан более жёсткий режим `-n 4`: **24 117 passed, 0 failed**
+(`.run/wave13-logs/reg_xdist_48.txt`); на этом dev-box один воркер умер по
+памяти (4 × ~2 ГБ на 15 ГБ вместе с dev-стендом) — сам CI использует 2
+воркера (`UNIT_TEST_JOBS ?= 2`).
 
 ---
 
@@ -173,10 +185,10 @@ stale `.coverage` в корне.
 | # | Позиция | Почему не закрыто сейчас | Оценка |
 |---|---|---|---|
 | 1 | **Engine-wide enforcement capability** | проверка есть в процессорах, но не в общем пути шага; для этого нужны scope-запросы всех процессоров и декларации в манифестах (сегодня у роутов 2 реально используемые capability) | 3–5 дней + ревью |
-| 2 | **CI-гейт на `@processor(capabilities=...)`** | `check_route_capabilities` и статическая карта линтера смотрят только на `required_capability` → новый роут с шагом `audit` без декларации CI не ловит | 0.5–1 день |
+| 2 | **CI-гейт на `@processor(capabilities=...)`** | **закрыто в волне 33**: гейт и линтер берут capability из того же источника, что и рантайм; проверяются все scope-required capability из vocabulary; роут с шагом `audit` без `audit.write` падает в CI (негативный тест) | ✅ |
 | 3 | **Baseline coverage перемерен** | групповой прогон починен, но baseline (74 %) взят с прогона 2026-10-09; перемер требует полного CI-прогона | после зелёного CI-прогона |
 | 4 | **Pre-existing падения сьютов вне CI-скоупа** | `tests/property` (нет `Exchange.to_dict`), `tests/security` (`ssl.CERT_NONE` в graylog-бэкенде — уже в реестре блокеров), `tests/smoke` (granian/websocket), `tests/tools` (CVE-гейт — **починен в этой волне**), `tests/workflow` (изоляция mock'ов) | 1–3 дня на каждый |
-| 5 | **Order-dependent падения в CI-режиме (xdist)** | **закрыто в волне 33**: 11 причин process-global утечек найдено и устранено (см. §3.6), CI-режим — 24 124 passed / 0 failed | ✅ |
+| 5 | **Order-dependent падения в CI-режиме (xdist)** | **закрыто в волне 33**: 18 причин process-global утечек найдено и устранено (см. §3.6), канонический CI-режим — 24 122 passed / 0 failed | ✅ |
 
 ### 4.2. Инфраструктура (владелец платформы)
 
@@ -222,7 +234,7 @@ stale `.coverage` в корне.
 
 ### Горизонт 1 — «не дать регрессий» (1–2 недели)
 
-1. Engine-wide enforcement capability + CI-гейт на декларации процессоров.
+1. Engine-wide enforcement capability (CI-гейт на декларации уже закрыт ✓).
 2. Перемер coverage на CI-раннере (скрипт починен) → обновление baseline.
 3. Pre-existing падения сьютов вне CI-скоупа (`property`, `security` →
    `ssl.CERT_NONE` в graylog, `smoke`, `workflow`).
@@ -253,7 +265,7 @@ stale `.coverage` в корне.
 | Неигнорируемые CVE | 0 | **0** | `make cve-gate` |
 | Декоративные capability-декларации | 0 | **0** | `tools/check_decorative_capabilities.py` |
 | Межслойные нарушения | ≤ baseline | 40 (было 41) | `tools/check_layers.py --strict` |
-| Регрессия CI-джоба `test.yml` | зелёная | **24 124 passed / 0 failed** в CI-режиме (xdist, 12:08); групповой coverage-скрипт починен | `.github/workflows/test.yml` |
+| Регрессия CI-джоба `test.yml` | зелёная | **24 122 passed / 0 failed** в каноническом CI-режиме (`-n 2 --dist loadfile`, 13:28); групповой coverage-скрипт починен | `.github/workflows/test.yml` |
 | Coverage baseline | ≥ 74 % | 74 % (перемер — горизонт 1) | `.baselines/coverage.json` |
 | Mutation score | ≥ baseline | 21.6 % | `tools/checks/check_mutmut.py` |
 | Открытые инфра-действия | ≤ 6 | 6 (за владельцем) | `docs/ops/infra-release-checklist.md` |
