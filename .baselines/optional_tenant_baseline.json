@@ -178,28 +178,28 @@
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
-    "line": 38,
+    "line": 54,
     "qualified_name": "FeatureFlagService.is_enabled"
   },
   {
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
-    "line": 53,
+    "line": 69,
     "qualified_name": "FeatureFlagService.get_string"
   },
   {
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
-    "line": 63,
+    "line": 79,
     "qualified_name": "FeatureFlagService.get_int"
   },
   {
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
-    "line": 79,
+    "line": 95,
     "qualified_name": "FeatureFlagService.has_override"
   },
   {
@@ -348,6 +348,13 @@
     "file": "src/backend/core/audit/facade/audit_service.py",
     "line": 68,
     "qualified_name": "AuditService.emit"
+  },
+  {
+    "annotation": "str | None",
+    "arg": "tenant_id",
+    "file": "src/backend/core/ai/gateway/langfuse_pii_callback.py",
+    "line": 31,
+    "qualified_name": "anonymize_trace_payload"
   },
   {
     "annotation": "str | None",
@@ -761,13 +768,6 @@
     "file": "src/backend/services/ai/rag_service/search_mixin.py",
     "line": 182,
     "qualified_name": "SearchMixin.search"
-  },
-  {
-    "annotation": "str | None",
-    "arg": "tenant_id",
-    "file": "src/backend/services/ai/gateway/langfuse_pii_callback.py",
-    "line": 31,
-    "qualified_name": "anonymize_trace_payload"
   },
   {
     "annotation": "str | None",

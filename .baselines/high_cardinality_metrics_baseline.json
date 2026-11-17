@@ -16,6 +16,126 @@
     "severity": "WARNING"
   },
   {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._histogram.labels(agent_id=agent_id, provider=provider, status=status)",
+    "label": "agent_id",
+    "line": 136,
+    "reason": "label 'agent_id' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._histogram.labels(agent_id=agent_id, provider=provider, status=status)",
+    "label": "provider",
+    "line": 136,
+    "reason": "label 'provider' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._calls.labels(agent_id=agent_id, provider=provider, status=status)",
+    "label": "agent_id",
+    "line": 139,
+    "reason": "label 'agent_id' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._calls.labels(agent_id=agent_id, provider=provider, status=status)",
+    "label": "provider",
+    "line": 139,
+    "reason": "label 'provider' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._tool.labels(agent_id=agent_id, tool=tool)",
+    "label": "agent_id",
+    "line": 179,
+    "reason": "label 'agent_id' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._cost.labels(provider=provider, model=model)",
+    "label": "provider",
+    "line": 192,
+    "reason": "label 'provider' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._cost.labels(provider=provider, model=model)",
+    "label": "model",
+    "line": 192,
+    "reason": "label 'model' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._feedback.labels(agent_id=agent_id, label=label)",
+    "label": "agent_id",
+    "line": 204,
+    "reason": "label 'agent_id' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._feedback.labels(agent_id=agent_id, label=label)",
+    "label": "label",
+    "line": 204,
+    "reason": "label 'label' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._tokens.labels(provider=provider, model=model, direction='input')",
+    "label": "provider",
+    "line": 161,
+    "reason": "label 'provider' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._tokens.labels(provider=provider, model=model, direction='input')",
+    "label": "model",
+    "line": 161,
+    "reason": "label 'model' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._tokens.labels(provider=provider, model=model, direction='input')",
+    "label": "direction",
+    "line": 161,
+    "reason": "label 'direction' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._tokens.labels(provider=provider, model=model, direction='output')",
+    "label": "provider",
+    "line": 165,
+    "reason": "label 'provider' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._tokens.labels(provider=provider, model=model, direction='output')",
+    "label": "model",
+    "line": 165,
+    "reason": "label 'model' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/metrics.py",
+    "full_call": "self._tokens.labels(provider=provider, model=model, direction='output')",
+    "label": "direction",
+    "line": 165,
+    "reason": "label 'direction' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
     "file": "src/backend/core/utils/redis_fallback.py",
     "full_call": "redis_fallback_operations_total.labels(op=op, outcome='degraded')",
     "label": "op",
@@ -69,6 +189,22 @@
     "label": "engine",
     "line": 313,
     "reason": "label 'engine' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/gateway/callbacks.py",
+    "full_call": "counter.labels(model=model, reason=reason)",
+    "label": "model",
+    "line": 177,
+    "reason": "label 'model' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
+    "severity": "WARNING"
+  },
+  {
+    "file": "src/backend/core/ai/gateway/callbacks.py",
+    "full_call": "counter.labels(model=model, reason=reason)",
+    "label": "reason",
+    "line": 177,
+    "reason": "label 'reason' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
   {
@@ -744,126 +880,6 @@
     "severity": "WARNING"
   },
   {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._histogram.labels(agent_id=agent_id, provider=provider, status=status)",
-    "label": "agent_id",
-    "line": 136,
-    "reason": "label 'agent_id' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._histogram.labels(agent_id=agent_id, provider=provider, status=status)",
-    "label": "provider",
-    "line": 136,
-    "reason": "label 'provider' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._calls.labels(agent_id=agent_id, provider=provider, status=status)",
-    "label": "agent_id",
-    "line": 139,
-    "reason": "label 'agent_id' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._calls.labels(agent_id=agent_id, provider=provider, status=status)",
-    "label": "provider",
-    "line": 139,
-    "reason": "label 'provider' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._tool.labels(agent_id=agent_id, tool=tool)",
-    "label": "agent_id",
-    "line": 179,
-    "reason": "label 'agent_id' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._cost.labels(provider=provider, model=model)",
-    "label": "provider",
-    "line": 192,
-    "reason": "label 'provider' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._cost.labels(provider=provider, model=model)",
-    "label": "model",
-    "line": 192,
-    "reason": "label 'model' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._feedback.labels(agent_id=agent_id, label=label)",
-    "label": "agent_id",
-    "line": 204,
-    "reason": "label 'agent_id' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._feedback.labels(agent_id=agent_id, label=label)",
-    "label": "label",
-    "line": 204,
-    "reason": "label 'label' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._tokens.labels(provider=provider, model=model, direction='input')",
-    "label": "provider",
-    "line": 161,
-    "reason": "label 'provider' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._tokens.labels(provider=provider, model=model, direction='input')",
-    "label": "model",
-    "line": 161,
-    "reason": "label 'model' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._tokens.labels(provider=provider, model=model, direction='input')",
-    "label": "direction",
-    "line": 161,
-    "reason": "label 'direction' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._tokens.labels(provider=provider, model=model, direction='output')",
-    "label": "provider",
-    "line": 165,
-    "reason": "label 'provider' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._tokens.labels(provider=provider, model=model, direction='output')",
-    "label": "model",
-    "line": 165,
-    "reason": "label 'model' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/metrics.py",
-    "full_call": "self._tokens.labels(provider=provider, model=model, direction='output')",
-    "label": "direction",
-    "line": 165,
-    "reason": "label 'direction' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
     "file": "src/backend/services/schema_registry/registry.py",
     "full_call": "self._metrics.counter('schema_registry_get_total', 'Total schema lookups', labels=('kind', 'hit')).labels(kind=kind.value, hit='true' if result is not None else 'false')",
     "label": "hit",
@@ -892,22 +908,6 @@
     "full_call": "audit_silent_loss_total.labels(transport='clickhouse_audit', reason='no_dlq_configured')",
     "label": "reason",
     "line": 245,
-    "reason": "label 'reason' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/gateway/callbacks.py",
-    "full_call": "counter.labels(model=model, reason=reason)",
-    "label": "model",
-    "line": 177,
-    "reason": "label 'model' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
-    "severity": "WARNING"
-  },
-  {
-    "file": "src/backend/services/ai/gateway/callbacks.py",
-    "full_call": "counter.labels(model=model, reason=reason)",
-    "label": "reason",
-    "line": 177,
     "reason": "label 'reason' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
