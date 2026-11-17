@@ -329,6 +329,27 @@ def _restore_di_overrides():
             ov.update(snapshot[id(ov)])
 
 
+@_pytest.fixture(autouse=True)
+def _reset_app_state_singletons():
+    """Сбрасывать кэши декораторов ``app_state_singleton`` после теста.
+
+    Кэш — process-global: если тест подменил конструктор (например
+    ``PipelineVersionManager``), созданный mock оставался в кэше навсегда →
+    следующий тест в том же воркере получал mock вместо реального объекта
+    (order-dependent падения, волна 33). Сброс делается после **каждого**
+    теста — точечные фикстуры в отдельных файлах покрывали лишь часть
+    поллитеров.
+
+    Yields:
+        None — внутри блока состояние не меняется.
+
+    """
+    yield
+    from src.backend.core.di.app_state import reset_app_state
+
+    reset_app_state()
+
+
 # ── Tenant ContextVar: сброс после каждого теста (P1 test isolation) ──
 # core.tenancy._current — общепроцессный ContextVar. Многие тесты вызывают
 # set_tenant() напрямую и не отвязывают контекст, из-за чего tenant предыдущего
