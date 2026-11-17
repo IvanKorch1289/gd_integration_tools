@@ -106,6 +106,7 @@ ERROR := printf '\033[31m%s\033[0m\n'
 	testkit-smoke new-plugin new-middleware \
 	perf-smoke perf-full perf-gate perf-gate-py perf-baseline chaos chaos-slow docs-vale \
 	arch-ratchet \
+	infra-readiness \
 new-adr release-notes
 
 .PHONY: new-middleware
@@ -118,6 +119,14 @@ help: ##@ Misc Show this help
 		/^##@/ {printf "\n\033[1m%s\033[0m\n", substr($$0, 5); next} \
 		/^[a-zA-Z0-9_.-]+:.*## / {printf "  \033[36m%-28s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@printf "\n"
+
+
+# Профиль, который проверяет гейт готовности инфраструктуры.
+INFRA_PROFILE ?= prod
+
+infra-readiness: ## Infra: гейт готовности инфраструктуры (6 пунктов чек-листа ADR-0441)
+	@$(INFO) "Проверяю готовность инфраструктуры (профиль $(INFRA_PROFILE))..."
+	@.venv/bin/python tools/check_infra_readiness.py --profile $(INFRA_PROFILE)
 
 
 # === Org-4 (S64): split per-section into make/*.mk ===
