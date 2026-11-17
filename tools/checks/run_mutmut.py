@@ -103,7 +103,11 @@ def _sync_mutants_assets() -> None:
         target = repo_root / "mutants" / name
         target.mkdir(parents=True, exist_ok=True)
         subprocess.run(  # noqa: S603  # dev-tool: rsync — фиксированные локальные пути
-            ["rsync", "-a", "--delete", f"{source}/", f"{target}/"],  # noqa: S607  # dev-tool: rsync — PATH binary
+            # --exclude='*.meta' обязателен: mutmut хранит результаты
+            # мутаций в mutants/<path>.meta, а --delete удаляет всё, чего
+            # нет в источнике. Без исключения каждый запуск гейта стирал
+            # кэш и прогон начинался с нуля (часы вместо минут).
+            ["rsync", "-a", "--delete", "--exclude=*.meta", f"{source}/", f"{target}/"],  # noqa: S607  # dev-tool: rsync — PATH binary
             check=True,
         )
         print(f"[run_mutmut] Synced mutants/{name}/ from {name}/")
@@ -124,15 +128,31 @@ def _sync_mutants_src() -> None:
     if not src_dir.exists():
         raise RuntimeError(f"Source dir not found: {src_dir}")
     mutants_src.mkdir(parents=True, exist_ok=True)
-    # rsync с сохранением прав и удалением лишнего
+    # rsync с сохранением прав и удалением лишнего.
+    # --exclude='*.meta' защищает кэш результатов мутаций
+    # (mutants/<path>.meta) от --delete — иначе каждый запуск был бы
+    # полным прогоном с нуля.
     subprocess.run(  # noqa: S603  # dev-tool wrapper: фиксированная команда
-        ["rsync", "-a", "--delete", f"{src_dir}/", f"{mutants_src}/"],  # noqa: S607  # dev-tool: rsync — PATH binary
+        [  # noqa: S607  # dev-tool: rsync — PATH binary
+            "rsync",
+            "-a",
+            "--delete",
+            "--exclude=*.meta",
+            f"{src_dir}/",
+            f"{mutants_src}/",
+        ],
         check=True,
     )
     print("[run_mutmut] Synced mutants/src/ from src/")
 
 
 def main() -> int:
+    """Синхронизировать рабочую копию мутантов и запустить ``mutmut run``.
+
+    Returns:
+        Exit-код процесса mutmut.
+
+    """
     _patch_mutmut()
     _sync_mutants_src()
     _sync_mutants_assets()
@@ -141,7 +161,7 @@ def main() -> int:
     env = os.environ.copy()
     env["GD_REPO_ROOT"] = str(repo_root)
 
-    mutmut_args = ["mutmut", "run"] + sys.argv[1:]
+    mutmut_args = [sys.executable, "-m", "mutmut", "run"] + sys.argv[1:]
     print(f"[run_mutmut] Executing: {' '.join(mutmut_args)}")
     return subprocess.run(  # noqa: S603  # dev-tool wrapper: args от пользователя CLI
         mutmut_args, cwd=repo_root, env=env

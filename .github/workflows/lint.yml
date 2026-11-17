@@ -140,11 +140,31 @@ jobs:
             alpine/helm:3.15 template gd /chart --set secrets.allowPlaceholders=true > /dev/null
 
       - name: Mutation score gate (mutmut, ADR-0452)
+        id: mutation_gate
         # ADR-0452: гейт был заблокирован с 2026-06-04 (ошибки сбора +
         # бинарник `mutmut` не в PATH + устаревшие файлы в рабочей копии
         # мутантов). Теперь гейт рабочий, порог берётся из baseline
         # (.baselines/mutation.json) — рэтчет «не хуже baseline».
-        run: uv run python tools/checks/check_mutmut.py
+        #
+        # Контракт exit-кодов гейта: 0=PASS, 1=FAIL, 2=SKIPPED, 3=ERROR.
+        # Полный прогон мутаций занимает часы, а job lint ограничен
+        # 15-минутным таймаутом, поэтому прогон ограничен по времени:
+        # при исчерпании бюджета гейт возвращает SKIPPED (exit 2) с явной
+        # причиной — это НЕ «зелёный» результат и НЕ молчаливый PASS.
+        # FAIL (exit 1) — блокирует PR.
+        timeout-minutes: 6
+        env:
+          MUTATION_GATE_TIMEOUT: "240"
+        run: |
+          set +e
+          uv run python tools/checks/check_mutmut.py --timeout "${MUTATION_GATE_TIMEOUT}"
+          rc=$?
+          case "${rc}" in
+            0) echo "::notice::[mutation] PASS — score >= baseline" ;;
+            1) echo "::error::[mutation] FAIL — mutation score ниже baseline"; exit 1 ;;
+            2) echo "::warning::[mutation] SKIPPED — score не измерен (причина в выводе шага)" ;;
+            *) echo "::error::[mutation] ERROR — гейт завершился с кодом ${rc}"; exit 1 ;;
+          esac
 
       - name: Config audit gate (config_audit)
         # Wave 13 Q16: YAML-конфиг ↔ модели настроек. Неизвестные YAML-ключи

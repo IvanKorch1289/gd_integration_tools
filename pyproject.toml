@@ -1422,21 +1422,29 @@ ignore_names = [
 # -----------------------------------------------------------------------------
 # Mutation testing (S39 W4 — branch coverage 38% → 55% via mutation analysis)
 # -----------------------------------------------------------------------------
-# Mutmut 2.4.4: вводит точечные мутации (operator/constant/name/boundary) в
-# paths_to_mutate и прогоняет тесты из tests_dir. Mutation score = (killed /
-# total). Цель: довести score до 55% — это соответствует real-mutation-based
-# branch coverage, а не поверхностной line coverage.
+# Mutmut 3.x (>=3.6.0, dev-группа): вводит точечные мутации (operator/constant/
+# name/boundary) в source_paths и прогоняет тесты из
+# pytest_add_cli_args_test_selection. Mutation score = (killed / total).
+# Цель: довести score до baseline (.baselines/mutation.json, ADR-0452) —
+# это соответствует real-mutation-based branch coverage, а не поверхностной
+# line coverage.
 #
-# Конфиг intentionally ограничивает 3 hot-модулями (FeatureFlags, RouteBuilder,
-# CircuitBreaker), чтобы цикл прогона укладывался в <5 минут. Расширять
-# paths_to_mutate инкрементально — по модулю за раз.
+# Конфиг intentionally ограничен hot-модулями (FeatureFlags, RouteBuilder,
+# CircuitBreaker и др.), чтобы цикл прогона оставался управляемым.
+# Расширять source_paths инкрементально — по модулю за раз (учёт: смена
+# набора мутируемых модулей меняет score и требует пересчёта baseline).
 #
-# Mutmut 2.4.4 API notes (см. .venv/lib/python3.13/site-packages/mutmut/__init__.py:config_from_file):
-#   - читает ТОЛЬКО ключи, совпадающие с click-опциями run-сабкоманды;
-#   - dict_synonyms и tests_dir ожидаются СТРОКАМИ (split по ',' или ':');
-#   - минимальный score / timeout / max_concurrent_spawns — не читаются из
-#     конфига; их выставляет scripts/run_mutation_tests.sh через CLI/env.
-#   - .coverage файл жёстко зашит; используем общий .coverage + --use-coverage.
+# Mutmut 3.x API notes (см. .venv/lib/python3.14/site-packages/mutmut/configuration.py):
+#   - читаются ТОЛЬКО ключи из dataclass Config: source_paths,
+#     pytest_add_cli_args, pytest_add_cli_args_test_selection, also_copy,
+#     do_not_mutate_patterns, timeout_multiplier/timeout_constant и др.;
+#   - ключи backup / runner / dict_synonyms / paths_to_exclude из мута 2.x
+#     НЕ читаются (молчаливый no-op) — здесь их больше нет;
+#   - покрытие тестами mutmut считает сам, отдельных флагов
+#     --use-coverage/--coverage-data-file в 3.x нет;
+#   - минимальный score/timeout не читаются из конфига: порог живёт в
+#     .baselines/mutation.json, бюджет времени — в tools/checks/check_mutmut.py
+#     (--timeout) и CI-шаге lint.yml.
 [tool.mutmut]
 source_paths = [
     "src/backend/core/config/features/__init__.py",
@@ -1471,8 +1479,6 @@ source_paths = [
     # fingerprint collision handling, retry-after-completion semantics.
     "src/backend/core/idempotency/service.py",
 ]
-backup = false
-runner = "pytest"
 # mutmut 2.x: tests_dir deprecated → передаём через pytest_add_cli_args_test_selection.
 # split_paths() делит по ',' или ':' — передаём списком.
 pytest_add_cli_args_test_selection = [
@@ -1494,15 +1500,10 @@ pytest_add_cli_args = [
 ]
 # Дополнительные файлы/директории, которые mutmut копирует в mutants/.
 # Нужны для корректного запуска тестов из-под mutmut (config loader,
-# pydantic-settings ищут конфиги относительно repo root).
+# pydantic-settings ищет конфиги относительно repo root).
 also_copy = ["config_profiles", ".env"]
-# dict_synonyms — comma-separated string, по дефолту пусто (мутируем dict.get
-# штатно, см. MUTATION_OPERATORS в mutmut/__init__.py).
-dict_synonyms = ""
-# paths-to-exclude — glob-паттерны, не мутировать (см. .mutmut-ignore для
-# полного списка, здесь — критичные stub'ы, которые всегда бесполезно
-# мутировать).
-paths_to_exclude = "**/conftest.py:**/__init__.py:**/_compat.py"
-# --use-coverage включён по умолчанию через wrapper-скрипт (CI-режим).
-# Минимальный score 55% enforced в scripts/run_mutation_tests.sh через awk,
-# т.к. mutmut 2.4.4 не имеет нативного gate'а (exit code 1 при failed mutants).
+# Порог гейта и учёт score — НЕ в конфиге mutmut: они живут в
+# .baselines/mutation.json (ADR-0452), гейт — tools/checks/check_mutmut.py,
+# CI-шаг — .github/workflows/lint.yml (Mutation score gate).
+# Мутациям подвергаются только модули из source_paths выше; набор модулей
+# менять нельзя без пересчёта baseline.
