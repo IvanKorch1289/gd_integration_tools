@@ -160,6 +160,37 @@ def _processor_class_in_return(
     return None
 
 
+def _local_imports(tree: ast.AST) -> dict[str, Any]:
+    """Классы, импортированные **внутри** builder-метода.
+
+    Ряд методов ``RouteBuilder`` импортирует процессор локально
+    (``from ...processors.audit import AuditProcessor``) — такой класс не
+    виден в namespace'е модуля, и разбор не находил его. Без этого шаг
+    ``audit`` (capability ``audit.write``, ADR-0454) не попадал ни в
+    capability-карту, ни в CI-гейт route-capabilities.
+
+    Args:
+        tree: AST тела метода.
+
+    Returns:
+        Mapping ``имя → класс`` для локально импортированных классов.
+
+    """
+    resolved: dict[str, Any] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ImportFrom) or node.module is None:
+            continue
+        try:
+            loaded = importlib.import_module(node.module)
+        except ImportError:  # pragma: no cover — optional deps
+            continue
+        for alias in node.names:
+            candidate = getattr(loaded, alias.name, None)
+            if isinstance(candidate, type):
+                resolved[alias.asname or alias.name] = candidate
+    return resolved
+
+
 def _processor_class_for_step(step: str) -> type[Any] | None:
     """Класс процессора, создаваемый builder'ом для YAML-шага ``step``.
 
@@ -185,7 +216,8 @@ def _processor_class_for_step(step: str) -> type[Any] | None:
     except SyntaxError:  # pragma: no cover — исходники builder'а валидны
         return None
     module = sys.modules.get(getattr(method, "__module__", ""), None)
-    namespace = vars(module) if module is not None else {}
+    namespace = dict(vars(module)) if module is not None else {}
+    namespace.update(_local_imports(tree))
     for node in ast.walk(tree):
         if isinstance(node, ast.Return) and node.value is not None:
             candidate = _processor_class_in_return(node.value, namespace)
@@ -322,6 +354,38 @@ def yaml_step_for_registry_name(name: str) -> str | None:
 
     """
     return _yaml_step_by_registry_name().get(name)
+
+
+@lru_cache(maxsize=1)
+def step_capability_requirements() -> dict[str, tuple[str, ...]]:
+    """Карта «YAML-шаг → все требуемые capability» (ADR-0449/0454).
+
+    В отличие от :func:`step_capability_map` (один ``required_capability`` на
+    шаг) здесь собраны **все** capability процессора: ``required_capability``
+    плюс декларации ``@processor(capabilities=...)`` (в vocabulary — enforced,
+    остальные advisory).
+
+    Карта — тот же источник истины, что и рантайм-проверка
+    (``BaseProcessor._declared_capabilities``), поэтому статический гейт
+    (``check_route_capabilities``) и линтер DSL-YAML видят ровно то, что
+    проверяется в момент исполнения шага.
+
+    Returns:
+        Mapping ``step → кортеж имён capability``.
+
+    """
+    requirements: dict[str, tuple[str, ...]] = {}
+    for step in builder_step_names():
+        processor_cls = _cached_processor_class(step)
+        if processor_cls is None:
+            continue
+        declared = getattr(processor_cls, "_declared_capabilities_for_class", None)
+        if not callable(declared):
+            continue
+        capabilities = tuple(declared())
+        if capabilities:
+            requirements[step] = capabilities
+    return requirements
 
 
 @lru_cache(maxsize=1)

@@ -56,6 +56,31 @@ PROCESSOR_CAPABILITIES: dict[str, tuple[str, ...]] = {
 }
 
 
+def _required_capabilities(proc_name: str) -> tuple[str, ...]:
+    """Capability, требуемые YAML-шагом.
+
+    Источники (ADR-0454):
+
+    1. динамическая карта ``step_capability_requirements()`` — ``required_capability``
+       процессора **и** декларации ``@processor(capabilities=...)``; тот же
+       набор, что проверяется в рантайме (``BaseProcessor._declared_capabilities``);
+    2. статическая карта :data:`PROCESSOR_CAPABILITIES` — для шагов, класс
+       процессора которых не разрешается статически (``http_call`` → ``net.outbound``).
+
+    Args:
+        proc_name: Имя YAML-шага.
+
+    Returns:
+        Кортеж имён capability (без дублей).
+
+    """
+    from src.backend.dsl.builders.step_catalog import step_capability_requirements
+
+    dynamic = step_capability_requirements().get(proc_name, ())
+    static = PROCESSOR_CAPABILITIES.get(proc_name, ())
+    return tuple(dict.fromkeys((*dynamic, *static)))
+
+
 @dataclass(slots=True, frozen=True)
 class Finding:
     """Одна проблема в YAML."""
@@ -194,8 +219,7 @@ def _check_processor(ctx: _LintContext, spec: Any, line_hint: int) -> None:
                 )
 
     # capability check (если есть route.toml).
-    required = PROCESSOR_CAPABILITIES.get(proc_name, ())
-    for cap in required:
+    for cap in _required_capabilities(proc_name):
         if ctx.declared_capabilities and cap not in ctx.declared_capabilities:
             _emit(
                 ctx,

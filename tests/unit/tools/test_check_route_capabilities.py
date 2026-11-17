@@ -70,6 +70,37 @@ def test_gate_accepts_declared_route(
     assert gate.main([]) == 0
 
 
+def test_gate_catches_missing_processor_capability(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Роут с шагом ``audit`` без декларации ``audit.write`` блокируется.
+
+    ADR-0454: capability шага берётся из того же источника, что и рантайм-
+    проверка (``required_capability`` + ``@processor(capabilities=...)``),
+    поэтому гейт видит ``audit → audit.write`` и требует декларацию.
+    """
+    from tools import check_route_capabilities as gate
+
+    routes = tmp_path / "routes"
+    new_route = routes / "audit_route"
+    new_route.mkdir(parents=True)
+    (new_route / "route.toml").write_text(
+        '[route]\nname = "audit_route"\nversion = "0.1.0"\n'
+        'pipelines = ["main.dsl.yaml"]\n'
+        '[[route.capabilities]]\nname = "net.inbound"\nscope = "http:/api/v1/audit"\n',
+        encoding="utf-8",
+    )
+    (new_route / "main.dsl.yaml").write_text(
+        "steps:\n  - audit:\n      action: demo.audit\n", encoding="utf-8"
+    )
+
+    monkeypatch.setattr(gate, "_ROUTE_DIR", routes)
+    monkeypatch.setattr(gate, "_PLUGIN_DIR", tmp_path / "plugins")
+    monkeypatch.setattr(gate, "_BASELINE_PATH", tmp_path / "baseline.txt")
+
+    assert gate.main([]) == 1, "роут с audit-шагом без audit.write обязан падать"
+
+
 def test_baseline_file_exists_and_is_not_empty() -> None:
     """Baseline-файл существует (легаси зафиксирован явно)."""
     baseline = Path(".security/route-capabilities-baseline.txt")

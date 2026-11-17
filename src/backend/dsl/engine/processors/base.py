@@ -52,6 +52,38 @@ def _vocabulary_capabilities() -> frozenset[str]:
     return _VOCABULARY_CAPABILITIES
 
 
+def _collect_declared_capabilities(
+    processor_cls: type[Any], *, instance: Any | None = None
+) -> tuple[str, ...]:
+    """Собрать capability, объявленные процессором (ADR-0449).
+
+    Источники: ``required_capability`` (одиночная enforced-декларация) и
+    декларация ``@processor(capabilities=(...))`` (только имена, которые есть
+    в vocabulary — остальные advisory и не блокируют вызов).
+
+    Args:
+        processor_cls: Класс процессора.
+        instance: Экземпляр процесса (если задан — ``required_capability``
+            читается с него: часть процессоров выбирает capability по
+            содержимому запроса, например ``db.read``/``db.write`` по SQL).
+
+    Returns:
+        Кортеж имён capability в порядке проверки.
+
+    """
+    names: list[str] = []
+    source = instance if instance is not None else processor_cls
+    required = getattr(source, "required_capability", None)
+    if isinstance(required, str) and required:
+        names.append(required)
+    spec = getattr(processor_cls, "__processor_spec__", None)
+    for ref in getattr(spec, "capabilities", ()) or ():
+        name = str(ref).split(":", 1)[0].strip()
+        if name and name not in names and name in _vocabulary_capabilities():
+            names.append(name)
+    return tuple(names)
+
+
 def _exchange_stopped(exchange: Exchange[Any]) -> bool:
     """True, если обработка exchange остановлена (безопасно для mock'ов).
 
@@ -353,19 +385,31 @@ class BaseProcessor(ABC):
         декларация ``@processor(capabilities=(...))`` (только имена, которые
         есть в vocabulary — остальные advisory и не блокируют вызов).
 
+        ``required_capability`` читается с **экземпляра**: часть процессоров
+        выбирает capability по содержимому запроса (например
+        ``db_query_external`` — ``db.read``/``db.write`` по типу SQL).
+
         Returns:
             Кортеж имён capability в порядке проверки.
 
         """
-        names: list[str] = []
-        if self.required_capability:
-            names.append(self.required_capability)
-        spec = getattr(type(self), "__processor_spec__", None)
-        for ref in getattr(spec, "capabilities", ()) or ():
-            name = str(ref).split(":", 1)[0].strip()
-            if name and name not in names and name in _vocabulary_capabilities():
-                names.append(name)
-        return tuple(names)
+        return _collect_declared_capabilities(type(self), instance=self)
+
+    @classmethod
+    def _declared_capabilities_for_class(cls) -> tuple[str, ...]:
+        """Capability процессора на уровне класса (для статических гейтов).
+
+        Тот же набор, что проверяет рантайм, но без instance-override'а
+        (``required_capability`` класса). Нужен линтеру DSL-YAML и гейту
+        ``check_route_capabilities``: раньше для них был ручной статический
+        маппинг шаг→capability, и шаги вроде ``audit`` (audit.write,
+        ADR-0454) в нём отсутствовали → роут без декларации проходил CI.
+
+        Returns:
+            Кортеж имён capability в порядке проверки.
+
+        """
+        return _collect_declared_capabilities(cls)
 
     def _check_via_runtime_resolver(
         self,

@@ -46,6 +46,50 @@ _ROUTE_REQUIRED = ("net.inbound",)
 #: Ресурсные семейства — для WARN-отчёта (строгая проверка отключена).
 _RESOURCE_PREFIXES = ("storage.", "db.", "cache.", "net.outbound")
 
+#: Capability, которые **обязаны** быть объявлены роутом, если их требует
+#: шаг: все scope-required capability из vocabulary (ADR-0454). Префиксы
+#: выше — частный случай (в них scope обязателен), список получается из
+#: vocabulary, чтобы новые ресурсные capability не проходили мимо гейта.
+_SCOPE_REQUIRED_FALLBACK_PREFIXES = _RESOURCE_PREFIXES
+
+
+def _scope_required_capabilities() -> frozenset[str]:
+    """Имена capability, для которых в vocabulary обязателен scope.
+
+    Returns:
+        Множество имён (``scope_required=True``). При недоступности
+        vocabulary — пустое множество (гейт не блокирует).
+
+    """
+    try:
+        from src.backend.core.security.capabilities.vocabulary.defaults import (
+            build_default_vocabulary,
+        )
+
+        return frozenset(
+            definition.name
+            for definition in build_default_vocabulary().all()
+            if getattr(definition, "scope_required", False)
+        )
+    except Exception:  # noqa: BLE001 — vocabulary недоступна → не блокируем
+        return frozenset()
+
+
+def _is_scope_required(capability: str) -> bool:
+    """Требует ли capability явного scope (и, значит, декларации в роуте).
+
+    Args:
+        capability: Имя capability.
+
+    Returns:
+        ``True`` — capability ресурсная (scope обязателен).
+
+    """
+    required = _scope_required_capabilities()
+    if required:
+        return capability in required
+    return capability.startswith(_SCOPE_REQUIRED_FALLBACK_PREFIXES)
+
 
 def _load_manifests(directory: Path, section: str) -> list[tuple[str, Path, dict]]:
     """Собрать ``(name, path, manifest)`` по TOML-манифестам каталога.
@@ -119,18 +163,29 @@ def _step_types(spec_paths: list[Path]) -> set[str]:
 def _processor_capabilities(step_types: set[str]) -> set[str]:
     """Capability, требуемые процессорами указанных типов.
 
-    Единый источник — :data:`src.backend.dsl.cli.lint.PROCESSOR_CAPABILITIES`
-    (тот же маппинг, что и в линтере DSL-YAML). ADR-0435: проверка стала
-    **строгой** — раньше несовпадение только печаталось как WARN.
+    Два источника (ADR-0454):
+
+    1. :func:`src.backend.dsl.builders.step_catalog.step_capability_requirements`
+       — динамическая карта «шаг → все capability процессора»
+       (``required_capability`` + декларации ``@processor(capabilities=...)``).
+       Тот же источник истины, что и рантайм-проверка шага;
+    2. :data:`src.backend.dsl.cli.lint.PROCESSOR_CAPABILITIES` — историческая
+       статическая карта для шагов, класс процессора которых не разрешается
+       статически (``http_call`` → ``net.outbound`` и т.п.).
+
+    ADR-0435: проверка **строгая** — раньше несовпадение только печаталось
+    как WARN.
     """
     if not step_types:
         return set()
+    from src.backend.dsl.builders.step_catalog import step_capability_requirements
     from src.backend.dsl.cli.lint import PROCESSOR_CAPABILITIES
 
+    dynamic = step_capability_requirements()
     required: set[str] = set()
     for step_type in step_types:
-        for capability in PROCESSOR_CAPABILITIES.get(step_type, ()):
-            required.add(capability)
+        required.update(dynamic.get(step_type, ()))
+        required.update(PROCESSOR_CAPABILITIES.get(step_type, ()))
     return required
 
 
@@ -199,7 +254,7 @@ def main(argv: list[str] | None = None) -> int:
         specs = _pipeline_files(manifest, path)
         required = _processor_capabilities(_step_types(specs))
         for cap in sorted(required):
-            if cap.startswith(_RESOURCE_PREFIXES) and cap not in declared:
+            if _is_scope_required(cap) and cap not in declared:
                 if f"route:{name}" in baseline:
                     print(
                         f"WARN: роут {name} ({path}): использует {cap}, но не "

@@ -94,10 +94,16 @@ class TestRegistrySync:
             )
 
     def test_registry_only_steps_are_reported(self) -> None:
-        """Процессоры реестра без YAML-шага перечислены отдельным списком."""
+        """Процессоры реестра без YAML-шага перечислены отдельным списком.
+
+        ``memory_recall`` (имя в реестре) **адресуем** из YAML как
+        ``ai_memory_recall`` (метод builder'а) → в registry-only списке его
+        быть не должно. Раньше он там оказывался из-за неудачного AST-разбора
+        builder-методов с локальным импортом процессора (ADR-0454).
+        """
         only = registry_only_steps()
         assert only, "реестр не может быть пустым"
-        assert "memory_recall" in only
+        assert "memory_recall" not in only
         steps = set(builder_step_names())
         assert not (set(only) & steps)
 
@@ -105,7 +111,7 @@ class TestRegistrySync:
         """Имя реестра → YAML-шаг (``rpa_pdf`` → ``print_pdf``)."""
         assert yaml_step_for_registry_name("rpa_pdf") == "print_pdf"
         assert yaml_step_for_registry_name("rpa_wait_for") == "wait_for_selector"
-        assert yaml_step_for_registry_name("memory_recall") is None
+        assert yaml_step_for_registry_name("memory_recall") == "ai_memory_recall"
 
     def test_coverage_reports_registry_only(self) -> None:
         """Покрытие каталога сообщает о процессорах без YAML-шага."""
