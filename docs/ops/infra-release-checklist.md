@@ -112,15 +112,21 @@ python -m pytest tests/unit/dsl/engine/capability/test_audit_write_capability_ad
 (`features.audit_clickhouse_enabled: true`) — раньше действовал неявный
 default.
 
-**Нужно действие.** В prod должен быть доступен ClickHouse. В
-`ops/compose/docker-compose.prod.yml` **сервиса `clickhouse` нет** — нужен
-внешний DSN (или собственный сервис в k8s), иначе трейл audit-событий не
-пишется. Профиль по умолчанию: `clickhouse.enabled=false`,
+**Нужно действие.** В prod должен быть доступен ClickHouse. С волны 34 в
+`ops/compose/docker-compose.prod.yml` **есть сервис `clickhouse`**
+(pinned-образ, healthcheck, DDL audit-трейла накатывается при первом
+старте) — можно использовать его; альтернатива — внешний DSN (собственный
+сервис в k8s). Профиль по умолчанию: `clickhouse.enabled=false`,
 `clickhouse.host=localhost`, `clickhouse.http_port=8123` — с `localhost` в
-prod писать нельзя.
+prod писать нельзя. В prod-профиле (волна 34):
+`clickhouse.enabled=true`, `clickhouse.host=clickhouse`,
+`clickhouse.http_port=8123`.
 
 ```bash
-# адрес внешнего ClickHouse (env-префикс CLICKHOUSE_)
+# вариант A — сервис из compose.prod (пароль — из секрет-хранилища)
+export CLICKHOUSE_PASSWORD=<из секрет-хранилища>
+
+# вариант B — адрес внешнего ClickHouse (env-префикс CLICKHOUSE_)
 export CLICKHOUSE_ENABLED=true
 export CLICKHOUSE_HOST=clickhouse.internal.example.ru
 export CLICKHOUSE_HTTP_PORT=8123
@@ -205,10 +211,16 @@ Env-префикс — `OPEN_WEBUI_` (`core/config/ai.py`).
 
 **Нужно действие.** Развернуть OpenWebUI в сети compose/k8s, задать
 адрес/ключ и только после этого добавить провайдера в `fallback_chain` prod.
+С волны 34 в `ops/compose/docker-compose.prod.yml` **есть сервис
+`open-webui`** (pinned-образ, healthcheck, `WEBUI_SECRET_KEY` — из
+секрет-хранилища); в `fallback_chain` prod провайдер **не** включён —
+включать только после реального развёртывания (иначе откат ушёл бы на
+несуществующий endpoint).
 
 ```bash
 export OPEN_WEBUI_BASE_URL=http://open-webui:3000
 export OPEN_WEBUI_API_KEY=<из секрет-хранилища>
+export OPEN_WEBUI_SECRET_KEY=<из секрет-хранилища>
 ```
 
 **Проверка (из контейнера app).**
@@ -287,7 +299,14 @@ yaml-группа `jupyter_hub`, env-префикс `JUPYTER_HUB_`
 (`core/config/services/jupyter_hub.py`).
 
 **Нужно действие.** Развернуть JupyterHub в кластере и указать его URL и
-токен в профиле:
+токен в профиле. С волны 34 в `ops/compose/docker-compose.prod.yml` **есть
+сервис `jupyterhub`** (pinned-образ 4.x, healthcheck, конфиг
+`ops/compose/jupyterhub/jupyterhub_config.py`); в prod-профиле:
+`jupyter_hub.enabled=true`, `jupyter_hub.base_url=http://jupyterhub:8000`.
+Токен обязателен: без `JUPYTER_HUB_API_TOKEN` профиль fail-closed
+(валидатор `JupyterHubSettings`), escape-hatch — `JUPYTER_HUB_ENABLED=false`.
+Аутентификация хаба сейчас `DummyAuthenticator` — до публикации порта
+заменить на корпоративный IdP (OIDC/LDAP).
 
 ```bash
 export JUPYTER_HUB_ENABLED=true
@@ -305,6 +324,31 @@ docker compose -f ops/compose/docker-compose.prod.yml exec app \
 
 ---
 
+## 12. Гейт готовности инфраструктуры (волна 34)
+
+**Код.** `tools/check_infra_readiness.py` — fail-closed проверка **конфигурации**
+(без обращения к живой сети и без чтения Vault) по 6 пунктам этого
+чеклиста: JWKS (https-требование), режим снапшота `service-role` +
+`service_dsn`, ClickHouse, OpenWebUI (+ согласованность `fallback_chain`),
+JupyterHub, `database.replica_dsn`.
+
+```bash
+make infra-readiness              # exit 0 — конфигурация согласована
+make infra-readiness ARGS=--strict  # предупреждения тоже блокируют
+.venv/bin/python tools/check_infra_readiness.py --profile prod --json
+```
+
+Семантика: **fail** (exit 1) — небезопасное или несогласованное значение
+(`http://` в JWKS-URL, loopback-хост ClickHouse, `service-role` без
+валидного DSN); **warning** (exit 0, блокирует только `--strict`) —
+невыполненное инфра-действие или отсутствующий секрет (секреты живут в
+Vault, поэтому их отсутствие в CI — не ошибка конфигурации).
+
+Гейт не подключён к CI-пайплайнам (только `Makefile`) — решение о
+подключении за владельцем.
+
+---
+
 ## Итог
 
 | # | Пункт | Статус |
@@ -312,11 +356,12 @@ docker compose -f ops/compose/docker-compose.prod.yml exec app \
 | 1 | `.env:92` | ✅ **исправлено** (разделитель закомментирован, compose работает) |
 | 2 | Образ от 18.08 | ✅ **пересобран** (ADR-0442: extras через build-ARG; prod требует extra `workflow`) |
 | 3 | Prometheus-правила SLA | **код готов** (ADR-0440) |
-| 4 | `audit.write` в роутах | ✅ **закрыто кодом** (ADR-0454: enforcement в процессоре + декларации 5 роутов) |
-| 5 | `audit_clickhouse_enabled` | **код готов** (ADR-0441); нужен внешний ClickHouse (сервиса в compose.prod нет) |
+| 4 | `audit.write` в роутах | ✅ **закрыто кодом** (ADR-0454: enforcement в процессоре + декларации 5 роутов; волна 34 — engine-wide enforcement, ADR-0456) |
+| 5 | `audit_clickhouse_enabled` | ✅ сервис `clickhouse` добавлен в `compose.prod` (волна 34); альтернатива — внешний DSN; нужен пароль |
 | 6 | JWKS RS256 + keypair | код готов (ADR-0455); нужны keypair, JWKS-сервис (https) и `SEC_JWKS_URL`/`SEC_ALGORITHM` |
 | 7 | Service-DNS sidecar'ов | **код готов** (ADR-0412) |
-| 8 | OpenWebUI | код готов; нужен сервис + `OPEN_WEBUI_*` |
+| 8 | OpenWebUI | ✅ сервис `open-webui` добавлен в `compose.prod` (волна 34); нужен `OPEN_WEBUI_API_KEY`/`OPEN_WEBUI_SECRET_KEY`; в `fallback_chain` prod включать после развёртывания |
 | 9 | `replica_dsn` | решение владельца (null допустим); env — `DB_REPLICA_DSN` |
 | 10 | BYPASSRLS | код готов (ADR-0455: `snapshot_service`/`snapshot_service_login`); нужна роль БД и DSN снапшота |
-| 11 | `jupyter.hub` | **код готов** (ADR-0415), **нужно действие**: развернуть JupyterHub + `JUPYTER_HUB_*` |
+| 11 | `jupyter.hub` | ✅ сервис `jupyterhub` добавлен в `compose.prod` (волна 34); нужен `JUPYTER_HUB_API_TOKEN` + замена `DummyAuthenticator` на IdP |
+| 12 | Гейт готовности инфры | ✅ **код готов** (волна 34): `make infra-readiness` — проверяет конфигурацию 6 пунктов; в CI не подключён |
