@@ -30,6 +30,8 @@ from __future__ import annotations
 import ast
 import pathlib
 
+import pytest
+
 # Корни, которые мы охраняем от Py2-syntax regression.
 SRC_ROOTS: tuple[pathlib.Path, ...] = (
     pathlib.Path("src/backend"),
@@ -59,6 +61,7 @@ def _check_clean(path: pathlib.Path) -> str | None:
     return None
 
 
+@pytest.mark.timeout(600)
 def test_all_src_backend_files_parse_cleanly() -> None:
     """Все ``src/backend/**/*.py`` парсятся Python 3 без ``SyntaxError``."""
     failures: list[str] = []
@@ -74,6 +77,7 @@ def test_all_src_backend_files_parse_cleanly() -> None:
     )
 
 
+@pytest.mark.timeout(600)
 def test_no_unparseable_except_binding_anywhere() -> None:
     """Защита от появления ``except X, Y as e:`` в любом файле.
 

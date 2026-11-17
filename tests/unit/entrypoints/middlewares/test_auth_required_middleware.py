@@ -46,6 +46,28 @@ def test_is_path_public_strict_boundary() -> None:
     assert is_path_public("/health-check", ("/health",)) is False
 
 
+@pytest.fixture(autouse=True)
+def _restore_core_verifiers():
+    """Восстанавливать ``core.auth.auth_selector._VERIFIERS`` после теста.
+
+    Подмена реестра verifier'ов делалась в helper'е ``_add_middleware`` и
+    откатывалась только в app-обработчике shutdown — если тест не закрывал
+    TestClient, тестовый набор оставался в модуле, и следующий тест
+    видел меньше 7 verifier'ов (order-dependent падение, волна 33).
+
+    Yields:
+        None — внутри блока подмена разрешена.
+
+    """
+    import src.backend.core.auth.auth_selector as core_auth_selector
+
+    original = core_auth_selector._VERIFIERS
+    try:
+        yield
+    finally:
+        core_auth_selector._VERIFIERS = original
+
+
 @pytest.fixture
 def app() -> FastAPI:
     app = FastAPI()

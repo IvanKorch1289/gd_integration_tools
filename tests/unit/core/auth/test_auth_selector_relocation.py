@@ -139,8 +139,15 @@ def test_entrypoints_shim_is_deprecated() -> None:
 
 def test_entrypoints_shim_re_exports_core() -> None:
     """Shim re-exports из core (НЕ имеет собственной implementation)."""
+    import importlib
+
     from src.backend.core.auth import auth_selector as core_sel
     from src.backend.entrypoints.api.dependencies import auth_selector as shim
+
+    # Reload шима: он кэширует re-export'ы на момент импорта, поэтому после
+    # подмены core-функций (или reload'а в другом тесте) шим мог бы держать
+    # устаревший объект. Reload переимпортирует актуальные объекты core'а.
+    shim = importlib.reload(shim)
 
     assert shim.verify_request is core_sel.verify_request
     assert shim.require_auth is core_sel.require_auth
