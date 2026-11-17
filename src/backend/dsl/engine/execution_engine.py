@@ -9,6 +9,7 @@ from src.backend.core.security.capabilities.caller import (
     reset_caller_namespace,
 )
 from src.backend.core.state.runtime import disabled_feature_flags
+from src.backend.dsl.engine.capability_guard import enforce_step_capability
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus, Message
 from src.backend.dsl.engine.middleware import (
@@ -221,8 +222,23 @@ class ExecutionEngine:
         middleware_chain: MiddlewareChain,
         timeout_mw: TimeoutMiddleware | None,
     ) -> dict[str, Any]:
-        """Выполняет один процессор, возвращает trace entry."""
+        """Выполняет один процессор, возвращает trace entry.
+
+        ADR-0456: перед вызовом процессора проверяется capability шага
+        (engine-wide enforcement). При отказе шаг **не выполняется**:
+        exchange переводится в ``failed`` + ``stopped``, в trace попадает
+        запись со статусом ``denied``.
+        """
         proc_start = time.monotonic()
+
+        if not await enforce_step_capability(processor, exchange, context):
+            return {
+                "processor": processor.name,
+                "type": type(processor).__name__,
+                "duration_ms": (time.monotonic() - proc_start) * 1000,
+                "status": "denied",
+                "error": exchange.error,
+            }
 
         if context.logger is not None:
             context.logger.debug(
@@ -499,11 +515,12 @@ class ExecutionEngine:
 
             current_exchange.set_property("_trace", trace_log)
 
-            if any(entry.get("status") == "error" for entry in trace_log):
+            # ADR-0456: «denied» — отказ capability-гейта (шаг не выполнен).
+            if any(entry.get("status") in ("error", "denied") for entry in trace_log):
                 errors = [
                     e.get("error", "Unknown")
                     for e in trace_log
-                    if e.get("status") == "error"
+                    if e.get("status") in ("error", "denied")
                 ]
                 current_exchange.fail("; ".join(errors))
             elif current_exchange.status != ExchangeStatus.failed:

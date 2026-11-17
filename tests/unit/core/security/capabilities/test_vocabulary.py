@@ -123,6 +123,13 @@ class TestCapabilityVocabulary:
         объявляет capability сам (в route.toml) с **обязательным** scope —
         алиасом профиля БД / таблицы. Scope по-прежнему сверяется
         matcher'ем ExactAliasMatcher, т.е. public не выдаёт доступ.
+
+        ``function.call`` — ADR-0456 (волна 34): шаг ``call_function`` —
+        общий DSL-процессор без plugin-владельца; публичность снимает
+        только declaration-time проверку манифеста. Рантайм-контроль не
+        ослаблен: capability обязана быть объявлена в route.toml, иначе
+        engine-wide гейт отклонит шаг (no_declaration); ограничение по
+        модулям остаётся за whitelist'ом call_function_modules.
         """
         v = build_default_vocabulary()
         public_names = {d.name for d in v.public_capabilities()}
@@ -135,6 +142,7 @@ class TestCapabilityVocabulary:
             "storage.read",
             "storage.write",
             "storage.presign",
+            "function.call",
         }
         # Доменные и привилегированные capability остаются непубличными —
         # расширять набор молча нельзя.

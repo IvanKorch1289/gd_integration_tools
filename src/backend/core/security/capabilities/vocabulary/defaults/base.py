@@ -527,6 +527,17 @@ def register(vocab: CapabilityVocabulary) -> None:
             matcher=dot_glob,
             scope_required=False,
             description="Мигрированная декларация процессора (ADR-0451).",
+            # public с 2026-11-17 (ADR-0456, engine-wide enforcement): шаг
+            # `call_function` — общий DSL-процессор, у него нет
+            # plugin-владельца (в отличие от jupyter.hub), а объявлять его
+            # в манифесте роута без плагина нельзя (ADR-044 subset-инвариант).
+            # Прецедент — audit.write: публичность снимает ТОЛЬКО
+            # declaration-time проверку манифеста; рантайм-контроль public
+            # не читает: capability всё равно должна быть объявлена в
+            # route.toml, иначе engine-wide гейт отклонит шаг
+            # (no_declaration). Ограничение на вызываемые модули остаётся
+            # за whitelist'ом (call_function_modules).
+            public=True,
         )
     )
     vocab.register(

@@ -58,6 +58,16 @@ scope = "run"
 name = "audit.write"
 scope = "audit:*"
 
+# function.call — шаги call_function (run.dsl.yaml, run_file.dsl.yaml,
+# run_inline.dsl.yaml). ADR-0456: engine-wide гейт проверяет capability
+# каждого шага, поэтому декларация обязательна. Scope = "*" (модуль не
+# ограничен — ограничение по вызываемым модулям делает whitelist
+# call_function_modules); capability scope-optional, поэтому scope не
+# сверяется по matcher'у.
+[[route.capabilities]]
+name = "function.call"
+scope = "*"
+
 # ВНИМАНИЕ (TOML): в конверте [route] bare-ключи обязаны идти ДО любой
 # вложенной таблицы — иначе они поглощаются последней открытой таблицей.
 # Провайдер capability jupyter.hub:run — extensions/jupyter_hub (ADR-0415).

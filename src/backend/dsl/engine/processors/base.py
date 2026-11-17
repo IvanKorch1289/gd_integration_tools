@@ -174,6 +174,11 @@ class BaseProcessor(ABC):
     side_effect: ClassVar[SideEffectKind] = SideEffectKind.PURE
     compensatable: ClassVar[bool] = True
     required_capability: ClassVar[str | None] = None
+    #: ADR-0456: действие capability-запроса по умолчанию (``"execute"``).
+    #: Движок проверяет capability шага до вызова процессора — чтобы scope
+    #: совпадал с тем, который просит сам процессор, наследник может
+    #: переопределить значение (``AuditProcessor`` → ``"write"``).
+    capability_action: ClassVar[str] = "execute"
     # ``audit_event`` НЕ объявляется здесь как ClassVar: подклассы объявляют
     # его как ``audit_event: str = "..."`` (аннотация без ClassVar), и mypy
     # трактует такое объявление как переменную экземпляра → «Cannot override
@@ -197,6 +202,11 @@ class BaseProcessor(ABC):
 
     def __init__(self, name: str | None = None) -> None:
         self.name = name or self.__class__.__name__
+        #: ADR-0456: capability шага уже проверена движком
+        #: (:mod:`src.backend.dsl.engine.capability_guard`). Флаг делает
+        #: проверку идемпотентной — внутренний вызов ``auth_check()`` из
+        #: ``process()`` не проверяет capability второй раз.
+        self.capability_verified = False
 
     def set_result(self, exchange, target: str, value) -> None:  # type: ignore[no-untyped-def]
         """Записать значение в Exchange (body.<field> или property).
@@ -321,6 +331,13 @@ class BaseProcessor(ABC):
         if not capabilities:
             return True
 
+        if getattr(self, "capability_verified", False):
+            # ADR-0456: capability этого шага уже проверена движком
+            # (engine-wide enforcement) — повторная проверка не нужна.
+            # Без этого каждый шаг давал бы два audit-события
+            # ``capability.check`` и два обхода гейта.
+            return True
+
         capability = capabilities[0]
         meta_principal = getattr(exchange.meta, "principal", None)
         resolved_principal = (
@@ -376,6 +393,10 @@ class BaseProcessor(ABC):
                 exchange.fail(f"{self.name}: capability '{extra}' denied{suffix}")
                 exchange.stop()
                 return False
+
+        # ADR-0456: capability проверена — помечаем шаг, чтобы внутренний
+        # вызов ``auth_check()`` из ``process()`` не проверял её повторно.
+        self.capability_verified = True
         return True
 
     def _declared_capabilities(self) -> tuple[str, ...]:
@@ -676,11 +697,18 @@ class SubPipelineExecutor:
 async def run_sub_processors(
     processors: list[BaseProcessor], exchange: Exchange[Any], context: ExecutionContext
 ) -> None:
-    """Общий цикл выполнения sub-processor list с проверкой failed/stopped."""
+    """Общий цикл выполнения sub-processor list с проверкой failed/stopped.
+
+    ADR-0456: вложенные шаги проходят тот же capability-гейт, что и
+    шаги верхнего уровня (движок проверяет capability до вызова шага).
+    """
+    from src.backend.dsl.engine.capability_guard import enforce_step_capability
     from src.backend.dsl.engine.exchange import ExchangeStatus
 
     for proc in processors:
         if exchange.status == ExchangeStatus.failed or exchange.stopped:
+            break
+        if not await enforce_step_capability(proc, exchange, context):
             break
         await proc.process(exchange, context)
 

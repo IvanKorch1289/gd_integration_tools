@@ -53,6 +53,10 @@ class AuditProcessor(BaseProcessor):
     """
 
     required_capability = "audit.write"
+    # ADR-0456: движок проверяет capability шага до вызова процессора —
+    # scope запроса должен совпадать с тем, что просит сам процессор
+    # (``auth_check(action="write")`` → scope ``audit:<action>``).
+    capability_action = "write"
 
     def __init__(
         self,

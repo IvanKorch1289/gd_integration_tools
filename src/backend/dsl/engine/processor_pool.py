@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.utils.task_registry import get_task_registry
+from src.backend.dsl.engine.capability_guard import enforce_step_capability
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -153,6 +154,16 @@ class ProcessorPool:
         effective_timeout = timeout if (timeout is None or timeout > 0) else None
 
         try:
+            # ADR-0456: capability-гейт до вызова шага (движок).
+            if not await enforce_step_capability(processor, exchange, context):
+                pooled.completed_at = time.monotonic()
+                return processor, {
+                    "processor": processor.name,
+                    "type": type(processor).__name__,
+                    "duration_ms": (pooled.completed_at - start) * 1000,
+                    "status": "denied",
+                    "error": getattr(exchange, "error", None),
+                }
             if inspect.iscoroutinefunction(processor.process):
                 await asyncio.wait_for(
                     processor.process(exchange, context), timeout=effective_timeout

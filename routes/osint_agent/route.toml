@@ -32,6 +32,15 @@ scope = "*.perplexity.ai"
 name = "ai.invoke"
 scope = "*"
 
+# function.call — шаг call_function (osint.dsl.yaml). ADR-0456: engine-wide
+# гейт проверяет capability каждого шага. Scope = "*" (модуль не
+# ограничен — ограничение по вызываемым модулям делает whitelist
+# call_function_modules); capability scope-optional, поэтому scope не
+# сверяется по matcher'у.
+[[route.capabilities]]
+name = "function.call"
+scope = "*"
+
 # ai.invoke покрывается плагином osint_agent: он объявляет ai.invoke(*)
 # и net.outbound(*.perplexity.ai) в своём plugin.toml. Capability-гит требует
 # route.capabilities ⊆ union(requires_plugins.capabilities) ∪ public, поэтому
