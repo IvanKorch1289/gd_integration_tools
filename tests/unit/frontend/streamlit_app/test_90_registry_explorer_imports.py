@@ -192,19 +192,16 @@ def _neutralize_real_page_config() -> object | None:
         Контекстный менеджер патча либо ``None``, если реального streamlit нет.
 
     """
-    # Реальный streamlit мог быть уже импортирован (в sys.modules или внутри
-    # shared.components) — тогда подмена sys.modules['streamlit'] на мок не
-    # действует: компонент держит ссылку на реальный модуль.
-    candidates = []
-    real_st = sys.modules.get("streamlit")
-    if real_st is not None:
-        candidates.append(real_st)
+    # Страница вызывает shared.components.setup_page(), а тот — реальный
+    # st.set_page_config (реальный streamlit мог быть импортирован раньше,
+    # и подмена sys.modules['streamlit'] на мок тогда не действует).
+    # Нейтрализуем сам setup_page: он не обращается к streamlit вовсе.
     components = sys.modules.get("src.frontend.streamlit_app.shared.components")
-    if components is not None:
-        candidates.append(getattr(components, "st", None))
-    for module in candidates:
-        if module is not None and hasattr(module, "set_page_config"):
-            return patch.object(module, "set_page_config", MagicMock())
+    if components is not None and hasattr(components, "setup_page"):
+        return patch.object(components, "setup_page", MagicMock())
+    real_st = sys.modules.get("streamlit")
+    if real_st is not None and hasattr(real_st, "set_page_config"):
+        return patch.object(real_st, "set_page_config", MagicMock())
     return None
 
 

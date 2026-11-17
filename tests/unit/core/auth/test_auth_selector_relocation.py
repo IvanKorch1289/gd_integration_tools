@@ -104,13 +104,27 @@ def test_entrypoints_shim_is_deprecated() -> None:
     """
     import importlib
 
+    mod = importlib.import_module(
+        "src.backend.entrypoints.api.dependencies.auth_selector"
+    )
+    # Re-export'ы шима — те же объекты, что в core. После reload модуль
+    # переимпортирует их заново, а если в этот момент core.auth_selector
+    # был подменён моком — шим «запомнил» бы мок, и инвариант «gateway
+    # re-export = тот же объект» сломался бы для следующих тестов
+    # (order-dependent падение, волна 33). Поэтому сохраняем и возвращаем
+    # исходные re-export'ы.
+    preserved = {
+        name: value
+        for name, value in vars(mod).items()
+        if name in {"verify_request", "require_auth", "set_default_auth"}
+    }
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        mod = importlib.import_module(
-            "src.backend.entrypoints.api.dependencies.auth_selector"
-        )
         # Reload — предупреждение import-time повторяется при каждом reload.
         importlib.reload(mod)
+
+    for name, value in preserved.items():
+        setattr(mod, name, value)
 
     deprecation_warnings = [
         w for w in caught if issubclass(w.category, DeprecationWarning)
