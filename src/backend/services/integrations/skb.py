@@ -4,20 +4,22 @@ Auth-схема СКБ — query-параметр ``api-key``, поэтому п
 во все запросы через override ``_request``.
 
 Cycle-35 B2: чистая логика WAF-маршрутизации вынесена в
-``extensions.sk.b.services.waf_route.resolve_waf_route``. Старый
+``extensions.skb.services.waf_route.resolve_waf_route``. Старый
 shim-символ ``resolve_waf_route`` оставлен здесь для backward-compat
 с ``DeprecationWarning`` (удалить в Sprint 37+).
+
+ADR-0457: резолвер берётся из core-реестра ресурсов расширений — статической
+зависимости ``src/ → extensions`` не остаётся (``tools/check_layers.py``).
+Резолв ленивый (в момент вызова), поэтому импорт модуля не тянет расширения.
 """
 
 import warnings
 from typing import Any
 from uuid import UUID
 
-from extensions.skb.services.waf_route import (
-    resolve_waf_route as _resolve_waf_route_impl,
-)
 from src.backend.core.config.settings import SKBAPISettings, settings
 from src.backend.core.errors import ServiceError
+from src.backend.core.extension_registry import get_extension_resource
 from src.backend.services.core.base_external_api import BaseExternalAPIClient
 
 __all__ = ("APISKBService", "get_skb_service", "resolve_waf_route")
@@ -49,9 +51,8 @@ class APISKBService(BaseExternalAPIClient):
         Cycle-35 B2: чистая логика делегирована
         ``extensions.skb.services.waf_route.resolve_waf_route``.
         """
-        return _resolve_waf_route_impl(
-            settings.app.environment, settings.http_base_settings.waf_url
-        )
+        resolver = get_extension_resource("skb", "service", "resolve_waf_route")
+        return resolver(settings.app.environment, settings.http_base_settings.waf_url)
 
     async def get_request_kinds(self) -> dict[str, Any]:
         """Получить справочник видов запросов из СКБ-Техно."""
@@ -149,4 +150,5 @@ def resolve_waf_route(
         DeprecationWarning,
         stacklevel=2,
     )
-    return _resolve_waf_route_impl(environment, waf_url)
+    resolver = get_extension_resource("skb", "service", "resolve_waf_route")
+    return resolver(environment, waf_url)

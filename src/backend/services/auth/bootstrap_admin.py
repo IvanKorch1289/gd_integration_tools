@@ -17,6 +17,7 @@ import asyncio
 import os
 import sys
 
+from src.backend.core.extension_registry import get_extension_resource
 from src.backend.core.logging import get_logger
 
 __all__ = ("KNOWN_DEFAULT_PASSWORDS", "bootstrap_admin_user", "read_password")
@@ -98,10 +99,13 @@ def bootstrap_admin_user(
     async def _run() -> str:
         import sqlalchemy as sa
 
-        from extensions.core_entities.users.domain.models import User
         from src.backend.infrastructure.database.session_manager import (
             main_session_manager,
         )
+
+        # ADR-0457: ORM-модель отдаёт расширение через core-реестр —
+        # статического импорта ``extensions.*`` в ``src/`` не остаётся.
+        User = get_extension_resource("users", "model", "user")
 
         async with main_session_manager.create_session() as session:
             user = (

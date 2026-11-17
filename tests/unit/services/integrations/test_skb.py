@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -170,3 +171,66 @@ def test_get_skb_service_singleton(stub_settings: SimpleNamespace) -> None:
         s1 = get_skb_service()
         s2 = get_skb_service()
         assert s1 is s2
+
+
+# ── ADR-0457: резолв через реестр расширений ──────────────────
+
+
+class TestWafRouteFromRegistry:
+    """Резолвер WAF-маршрутизации берётся из core-реестра (ADR-0457)."""
+
+    def test_registry_holds_canonical_resolver(self) -> None:
+        """В реестре лежит канонический резолвер расширения."""
+        from extensions.skb.services.waf_route import resolve_waf_route as canonical
+        from src.backend.core.extension_registry import get_extension_resource
+
+        assert (
+            get_extension_resource("skb", "service", "resolve_waf_route") is canonical
+        )
+
+    def test_shim_resolves_via_registry(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Shim достаёт резолвер из реестра по ключу ``skb/service/resolve_waf_route``."""
+        import src.backend.services.integrations.skb as skb_module
+
+        calls: list[tuple[str, str, str]] = []
+
+        def _fake_get_resource(domain: str, kind: str, name: str) -> Any:
+            calls.append((domain, kind, name))
+            return lambda environment, waf_url: ("https://waf.test/skb", True)
+
+        monkeypatch.setattr(skb_module, "get_extension_resource", _fake_get_resource)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            assert skb_module.resolve_waf_route("production", None) == (
+                "https://waf.test/skb",
+                True,
+            )
+        assert calls == [("skb", "service", "resolve_waf_route")]
+
+    def test_class_waf_route_resolves_via_registry(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """``APISKBService._waf_route`` резолвит через тот же реестр."""
+        import src.backend.services.integrations.skb as skb_module
+
+        calls: list[tuple[str, str, str]] = []
+
+        def _fake_get_resource(domain: str, kind: str, name: str) -> Any:
+            calls.append((domain, kind, name))
+            return lambda environment, waf_url: ("https://waf.test/skb", True)
+
+        monkeypatch.setattr(skb_module, "get_extension_resource", _fake_get_resource)
+        stub_settings = SimpleNamespace(
+            base_url="https://skb.example.com/",
+            endpoints={"GET_KINDS": "kinds"},
+            api_key="skb-key",
+            connect_timeout=2,
+            read_timeout=5,
+            use_waf=False,
+        )
+        svc = APISKBService(skb_settings=stub_settings)
+        with patch("src.backend.services.integrations.skb.settings") as mock_settings:
+            mock_settings.app.environment = "production"
+            mock_settings.http_base_settings.waf_url = None
+            assert svc._waf_route() == ("https://waf.test/skb", True)
+        assert calls == [("skb", "service", "resolve_waf_route")]

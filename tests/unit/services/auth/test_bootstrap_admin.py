@@ -71,3 +71,35 @@ class TestReadPassword:
 def test_known_defaults_registry() -> None:
     """Реестр известных дефолтов содержит задокументированные значения."""
     assert "admin-default-password-change-me" in KNOWN_DEFAULT_PASSWORDS
+
+
+class TestUserModelFromRegistry:
+    """ADR-0457: ORM-модель пользователя берётся из core-реестра расширений."""
+
+    def test_user_model_available_from_registry(self) -> None:
+        """Расширение отдаёт ту же модель, что использует bootstrap."""
+        from extensions.core_entities.users.domain.models import User as ext_user
+        from src.backend.core.extension_registry import get_extension_resource
+
+        assert get_extension_resource("users", "model", "user") is ext_user
+
+    def test_bootstrap_resolves_user_model_via_registry(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Модель резолвится лениво, по ключу ``users/model/user``."""
+        import src.backend.services.auth.bootstrap_admin as bootstrap_admin
+
+        calls: list[tuple[str, str, str]] = []
+
+        def _fake_get_resource(domain: str, kind: str, name: str) -> object:
+            calls.append((domain, kind, name))
+            raise RuntimeError("stop-after-resolution")
+
+        monkeypatch.setattr(
+            bootstrap_admin, "get_extension_resource", _fake_get_resource
+        )
+        with pytest.raises(RuntimeError, match="stop-after-resolution"):
+            bootstrap_admin.bootstrap_admin_user(
+                username="admin", password="Str0ngBootstrap#2026"
+            )
+        assert calls == [("users", "model", "user")]
