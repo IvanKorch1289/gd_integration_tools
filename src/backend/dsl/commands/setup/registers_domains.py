@@ -3,10 +3,15 @@
 domain entity registrations (orders, files, dadata, admin, etc.).
 
 Functions: _register_orders, _register_files, _register_skb_api, _register_dadata, _register_tech, _register_admin, _register_servicedsl_auto_register.
+
+ADR-0457: объекты расширений (схемы/сервисы) получаются из core-реестра
+``src.backend.core.extension_registry`` — инверсия зависимости
+``dsl → extensions``. Прямых импортов ``extensions.*`` в модуле нет.
 """
 
 from __future__ import annotations
 
+from src.backend.core.extension_registry import get_extension_resource
 from src.backend.dsl.commands.registry import ActionHandlerSpec, action_handler_registry
 from src.backend.dsl.commands.setup.helpers import (
     _register_crud_actions,  # S66 W2: cross-import
@@ -14,8 +19,9 @@ from src.backend.dsl.commands.setup.helpers import (
 
 
 def _register_orders() -> None:
-    from extensions.core_entities.orders.schemas.route import OrderIdQuerySchema
-    from extensions.core_entities.orders.services.orders import get_order_service
+    # Резолв ленивый (внутри функции) — регистрация остаётся отложенной.
+    OrderIdQuerySchema = get_extension_resource("orders", "schema", "id_query")
+    get_order_service = get_extension_resource("orders", "service", "orders")
 
     _register_crud_actions("orders", get_order_service)
 
@@ -67,19 +73,22 @@ def _register_orders() -> None:
 
 
 def _register_files() -> None:
-    from src.backend.services.io.files import get_file_service
+    # Канонический сервис файлов — ``extensions.core_entities.files``;
+    # deprecated-shim ``src.backend.services.io.files`` больше не нужен.
+    get_file_service = get_extension_resource("files", "service", "files")
 
     _register_crud_actions("files", get_file_service)
 
 
 def _register_skb_api() -> None:
-    from extensions.skb.schemas.route import (
-        APISKBOrderSchemaIn,
-        SKBObjectsByAddressQuerySchema,
-        SKBOrdersListQuerySchema,
-        SKBResultQuerySchema,
-    )
     from src.backend.services.integrations.skb import get_skb_service
+
+    APISKBOrderSchemaIn = get_extension_resource("skb", "schema", "api_skb_order_in")
+    SKBObjectsByAddressQuerySchema = get_extension_resource(
+        "skb", "schema", "objects_by_address"
+    )
+    SKBOrdersListQuerySchema = get_extension_resource("skb", "schema", "orders_list")
+    SKBResultQuerySchema = get_extension_resource("skb", "schema", "result")
 
     action_handler_registry.register_many(
         [
@@ -117,8 +126,9 @@ def _register_skb_api() -> None:
 
 
 def _register_dadata() -> None:
-    from extensions.dadata.schemas.route import DadataGeolocateQuerySchema
     from src.backend.services.integrations.dadata import get_dadata_service
+
+    DadataGeolocateQuerySchema = get_extension_resource("dadata", "schema", "geolocate")
 
     action_handler_registry.register(
         action="dadata.get_geolocate",
@@ -231,15 +241,15 @@ def _register_users() -> None:
     Previously missing — legacy_aliases calls users.get/users.add/etc.
     which returned 404 because no _register_users() existed in orchestrator.
     """
-    from extensions.core_entities.users.services.users import get_user_service
+    get_user_service = get_extension_resource("users", "service", "users")
 
     _register_crud_actions("users", get_user_service)
 
 
 def _register_orderkinds() -> None:
     """ITER 15 (Sprint 19) DSL-2 fix: register orderkinds CRUD actions."""
-    from extensions.core_entities.orderkinds.services.orderkinds import (
-        get_order_kind_service,
+    get_order_kind_service = get_extension_resource(
+        "orderkinds", "service", "orderkinds"
     )
 
     _register_crud_actions("orderkinds", get_order_kind_service)

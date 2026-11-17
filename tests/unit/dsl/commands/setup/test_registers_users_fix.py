@@ -13,7 +13,8 @@ NEW-8 fix (2026-08-13):
 
 1. ``_register_users()`` существует в registers_domains module.
 2. Orchestrator вызывает ``_register_users()`` при bootstrap.
-3. ``_register_users()`` импортирует ``get_user_service`` из extensions.
+3. ``_register_users()`` получает ``get_user_service`` из core-реестра
+   расширений (ADR-0457 — инверсия ``dsl → extensions``).
 4. ``_register_users()`` вызывает ``_register_crud_actions("users", svc)``.
 """
 
@@ -40,8 +41,12 @@ def test_register_users_imports_get_user_service() -> None:
     assert "get_user_service" in source, (
         "NEW-8 fix regressed: _register_users doesn't import get_user_service"
     )
-    assert "extensions.core_entities.users.services.users" in source, (
-        "_register_users should import from extensions.core_entities.users"
+    assert 'get_extension_resource("users", "service", "users")' in source, (
+        "_register_users should resolve the service via the extension "
+        "resource registry (ADR-0457)"
+    )
+    assert "extensions." not in source, (
+        "_register_users must not import extensions.* directly (ADR-0457)"
     )
 
 
