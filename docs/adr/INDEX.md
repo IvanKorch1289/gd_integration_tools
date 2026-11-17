@@ -1,249 +1,408 @@
-# ADR Index
+# Architecture Decision Records (ADR) — индекс
 
-> Автоматически сгенерирован из ``docs/adr/*.md``.
-> Последнее обновление: see git log.
+Всего ADR-файлов: **400**; уникальных слотов: **400**.
 
-| ADR | Title | Status |
-|-----|-------|--------|
-| [ADR-0050](0050-net-waf-strict-single-entry.md) | WAF strict + Single Entry для исходящего HTTP | Accepted |
-| [ADR-0051](0051-cache-decorators-facade.md) | Cache-декораторы как фасад поверх CachingDecorator | Accepted |
-| [ADR-0052](0052-policy-decorator-order.md) | Каноничный порядок композиции в `@policy` | Accepted |
-| [ADR-0053](0053-waf-phase2-migration.md) | WAF Phase-2: flip `outbound_via_facade=True` по умолчанию | Accepted |
-| [ADR-0054](0054-sso-federation.md) | SSO Federation (SAML 2.0 + per-tenant IdP) | Accepted |
-| [ADR-0055](0055-chaos-engineering.md) | Chaos Engineering + Performance Gate | Accepted |
-| [ADR-0056](0056-routes-v11.md) | Routes V11.1a (DSL-routes как лёгкие плагины) | Accepted |
-| [ADR-0057](0057-asgi-pure-chain.md) | Pure ASGI Middleware Chain | Accepted |
-| [ADR-0058](0058-jsonschema-export.md) | JSON-Schema Export для DSL Processors | Accepted |
-| [ADR-0059](0059-granian-rsgi-production.md) | Granian RSGI production tuning | Accepted |
-| [ADR-0060](0060-blue-green-deploy.md) | Blue/Green deployment topology | Accepted |
-| [ADR-0061](0061-waf-allowlist-tightening.md) | WAF allowlist tightening для Sprint 9 | Accepted |
-| [ADR-0062](0062-middleware-layers-distinction.md) | Distinction между ASGI и Action-dispatch middleware | Accepted |
-| [ADR-0063](0063-presidio-ru-ner-pii.md) | Presidio + ru NER как обязательный AI Safety layer (PII) | **Accepted** |
-| [ADR-0064](0064-nemo-guardrails-llama-guard.md) | NeMo Guardrails + Llama Guard 3 defense-in-depth | **Accepted** |
-| [ADR-0065](0065-langgraph-checkpointer-mem0.md) | LangGraph PostgresCheckpointer + Mem0 как единый long-term memory layer | **Accepted** |
-| [ADR-0066](0066-ai-gateway-facade.md) | AIGateway — единая точка входа в AI | **Accepted** |
-| [ADR-0067](0067-ai-policy-spec-dsl.md) | AIPolicySpec — декларативная политика AI per-workflow | **Draft** |
-| [ADR-0068](0068-pii-tokenizer-reversible.md) | PIITokenizer — reversible PII tokenization layer | **Accepted** |
-| [ADR-0069](0069-skill-registry-v11-2-toml.md) | SkillRegistry V11.2 — TOML-манифест для AI-tools | **Draft** |
-| [ADR-0070](0070-mcp-gateway-namespaces.md) | MCP Gateway — domain namespaces + trusted external registry | **Draft** |
-| [ADR-0071](0071-ai-audit-unified-schema.md) | AI Audit Unified Schema — `ai.invocation.*` события | **Draft** |
-| [ADR-0072](0072-pii-production-enforcement.md) | PII production enforcement (Presidio + Langfuse + RAG ingest + MCP authz + Policy gate) | **Accepted** |
-| [ADR-0073](0073-ragas-evaluation-gate.md) | RAGAS evaluation gate | **Accepted** |
-| [ADR-0074](0074-rag-hybrid-retrieval-and-eval-gate.md) | RAG hybrid retrieval, embedding provenance, source attribution & eval gate | **Accepted** |
-| [ADR-0075](0075-unified-agent-memory-gateway.md) | UnifiedAgentMemoryGateway (Protocol + dispatch) | **Accepted** |
-| [ADR-0078](0078-plugin-toml-capability-syntax.md) | plugin.toml Capability Syntax: Array Format (`[[capabilities]]`) | Unknown |
-| [ADR-0079](0079-slo-format-route-toml-slo.md) | SLO Format: Inline `route.toml::slo` (not separate sloth YAML) | Unknown |
-| [ADR-0080](0080-single-entry-policy-naming.md) | Single Entry Policy Naming Convention | Unknown |
-| [ADR-0081](0081-eventbus-production-backend-faststream-redis.md) | Event Bus Production Backend: FastStream + Redis | Unknown |
-| [ADR-0082](0082-markitdown-network-isolation.md) | Network isolation для markitdown через monkey-patch urllib.request | Accepted |
-| [ADR-0083](0083-versioning-dsl-continuum-wrapper.md) | Row-Level Versioning: thin DSL wrapper над `sqlalchemy-continuum` | Unknown |
-| [ADR-0084](0084-library-adoption-migration-plan.md) | Library Adoption Migration Plan (structlog, typer, rich, aiocache) | Unknown |
-| [ADR-0085](0085-user-auth-ldap-integration.md) | User Auth: LDAP as Primary, Password Deprecated | Unknown |
-| [ADR-0086](0086-aiocache-migration-plan.md) | aiocache Migration Plan (S60+) | Unknown |
-| [ADR-0087](0087-claimcheck-dedup.md) | ClaimCheckProcessor Dedup (S63 W2.1) | Unknown |
-| [ADR-0088](0088-eip-10of10-coverage.md) | EIP 10/10 Coverage: TransactionalClient + ProcessManager (S63 W3.0) | Unknown |
-| [ADR-0108](0108-di-dsl-for-routes.md) | DI DSL для RouteBuilder / call_function / process_fn | Accepted |
-| [ADR-0109](0109-feature-flag-dependency-check-fix.md) | Feature Flag Dependency Check: package-aware + Sprint 41 audit | Accepted |
-| [ADR-0110](0110-waf-coverage-100pct-formalize.md) | WAF Coverage 100% (formalize Sprint 41 #4 met) | Accepted |
-| [ADR-0111](0111-chaos-multitenant-formalize.md) | Chaos Tests + Multi-Tenant Isolation status (Sprint 41 #1, #6) | Accepted |
-| [ADR-0112](0112-security-audit-status.md) | Security Audit status (Sprint 41 #3) | Accepted |
-| [ADR-0113](0113-perf-bg-dr-formalize.md) | Perf + Blue/Green + Disaster Recovery status (S41 #2, #7, #10) | Accepted |
-| [ADR-0114](0114-dsl-lsp-server-formalize.md) | DSL LSP server status + Makefile integration (Sprint 42 #1) | Accepted |
-| [ADR-0115](0115-sprint-42-dx-closure.md) | Sprint 42 closure: Developer Experience Polish (5/5 DoD) | Accepted |
-| [ADR-0116](0116-sprint-43-closure.md) | Sprint 43 closure: Streamlit Filters + Vite Cleanup (2/5 DoD) | Accepted |
-| [ADR-0117](0117-sprint-44-closure.md) | Sprint 44 closure: Backend Wiring + Admin Build Fix (4/5 DoD) | Accepted |
-| [ADR-0118](0118-sprint-45-closure.md) | Sprint 45 closure: TD-006 + TD-018 + filter migration + docstrings (5/5 DoD) | Accepted |
-| [ADR-0119](0119-sprint-46-closure.md) | Sprint 46 closure: TraceStorage abstraction + docstring tool + toxiproxy runbook (5/5 DoD) | Accepted |
-| [ADR-0120](0120-sprint-47-closure.md) | Sprint 47 closure: ExecutionTracer storage wiring (1/5 substantive) | Accepted |
-| [ADR-0121](0121-sprint-48-partial-closure.md) | Sprint 48 partial closure: TD-015 ruff F401 + mypy clean + stub regen verified | Accepted |
-| [ADR-0122](0122-sprint-48-closure.md) | Sprint 48 closure: audit + re-scope + 5/5 waves (W1-W4 substantive, W5 closure) | Accepted |
-| [ADR-0123](0123-sprint-49-closure.md) | Sprint 49 closure: TD-009 + actions.py decomp + trunk hygiene (4 commits, 5/5 substantive) | Accepted |
-| [ADR-0124](0124-sprint-50-closure.md) | Sprint 50 closure: TD backlog + transport.py B3-B5 + ai_banking/rpa god-file decomp (5 commits, 5/5 substantive) | Accepted |
-| [ADR-0125](0125-sprint-51-closure.md) | Sprint 51 closure: ai_rpa.py (2-wave) + agent_dsl.py + TD-003 (5 working + 1 fixup commits, 5/5 substantive) | Accepted |
-| [ADR-0126](0126-sprint-52-closure.md) | Sprint 52 closure: ai_rpa.py W3 + validator.py + loader_v11.py god-file decomp + TD-010 closure (5+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0127](0127-sprint-53-closure.md) | Sprint 53 closure: format_convert + streaming + setup god-file decomp + TD-002 closure (5 commits, 5/5 substantive) | Accepted |
-| [ADR-0128](0128-sprint-54-closure.md) | Sprint 54 closure: 4 god-file decomps (mcp_server, ai_agent, invoker, capability_gate) (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0129](0129-sprint-55-closure.md) | Sprint 55 closure: 4 god-file decomp (cert_store, control_flow, pg_runner_internals, data_quality) (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0130](0130-sprint-56-closure.md) | Sprint 56 closure: 4 god-file decomp (spec, gateway_pipeline_mixin, s3_pool, admin_workflows) (5+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0131](0131-sprint-57-closure.md) | Sprint 57 closure: 4 god-file decomp (base RouteBuilder, sources_mixin, collection EIP, sink_publish) (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0132](0132-sprint-58-closure.md) | Sprint 58 closure: 4 god-file decomp (crud, saga_lra_processor, format_converters, workflow_builder) (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0133](0133-sprint-59-closure.md) | Sprint 59 closure: 4 god-file decomp (banking_processors, lifecycle [sibling W82], redis, 31_DSL_Visual_Editor) (3+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0134](0134-sprint-60-closure.md) | Sprint 60 closure: 4 god-file decomp (jupyter, cdc, setup_infra, authorization_gateway) (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0135](0135-sprint-61-closure.md) | Sprint 61 closure: 4 god-file decomp (base_service, enrichment, executor, http) (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0136](0136-sprint-62-closure.md) | Sprint 62 closure: 4 god-file decomp (admin_plugins, vocabulary, integration_core, yaml_loader) (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0137](0137-sprint-63-closure.md) | Sprint 63 closure: 4 god-file decomp (loading, routing, marshal, external_database) (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0138](0138-sprint-64-closure.md) | Sprint 64 closure: 4 god-file decomp (graphql, repositories, database, rag_service) (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0139](0139-sprint-65-closure.md) | Sprint 65 closure: 4 god-file decomp (components, rpa_operations, grpc_server, idp_pipeline) + 2 W3 sibling WIP fixups (4+1+2 commits, 7/7 substantive) | Accepted |
-| [ADR-0140](0140-sprint-66-closure.md) | Sprint 66 closure: 3 god-file decomp (event_store, setup, lifecycle) + 1 sibling WIP fixup (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0141](0141-sprint-67-closure.md) | Sprint 67 closure: 4 god-file decomp (backpressure, ai_enforcer, semantic_cache, ad_directory_client) (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0142](0142-sprint-68-closure.md) | Sprint 68 closure: 4 god-file decomp (macros, clickhouse_audit, invoker, ai_providers) (4+1 commits, 5/5 substantive) | Accepted |
-| [ADR-0143](0143-sprint-83-w3-closure.md) | Sprint 83 W3: Vault DSL wrapper + PIL leak fix | Accepted |
-| [ADR-0144](0144-multi-instance-safety.md) | Multi-instance safety: outbox claim_pending + scheduler leader election + RedisDedupeStore (4 commits, 3/5 substantive) | Accepted |
-| [ADR-0145](0145-sprint-65-p0-cleanup-closure.md) | Sprint 65 closure: P0 cleanup (lazy imports, dead enforcement, dsl/workflows LAYERS) (3 commits, 3/3 substantive) | Accepted |
-| [ADR-0146](0146-sprint-66-quick-wins-closure.md) | Sprint 66 closure: fact-checked quick wins (4 commits, 4/4 substantive) | Accepted |
-| [ADR-0147](0147-sprint-67-torch-namespace-jwt-fix-closure.md) | Sprint 67 closure: torch CVE, namespace markers, JWT consolidation, pre-existing fix (4 commits, 4/4 substantive) | Accepted |
-| [ADR-0148](0148-sprint-68-swarm-closure.md) | Sprint 68 closure: 3 parallel teams (swarm), 4 violations closed, 2 ADR docs (3 commits, 3/3 substantive) | Accepted |
-| [ADR-0149](0149-core-violations-audit.md) | TD-S65-W2 audit: 34 core→other violations classified + 1 sample refactor (RetryPolicy) | Accepted |
-| [ADR-0150](0150-dsl-violations-audit.md) | TD-S65-W4 audit: 124 dsl/workflows violations classified + 1 sample refactor (audit JSON codec) | Accepted |
-| [ADR-0151](0151-sprint-69-swarm-2nd-closure.md) | Sprint 69 closure: 2nd SWARM (3 teams) — 1 violation closed + 2 style cleanups (3 commits, 3/3 substantive, scope discipline) | Accepted |
-| [ADR-0152](0152-sprint-70-swarm-3rd-closure.md) | Sprint 70 closure: 3rd SWARM (3 teams) — 3 style cleanups (3 commits, 3/3 substantive, 2/3 subagent clean) | Accepted |
-| [ADR-0153](0153-sprint-71-pre-existing-bugs-and-multi-instance-safety-closure.md) | Sprint 71 closure: 4 pre-existing import bugs + 3 file+dir merges + 2 P1 multi-instance safety fixes (4 commits, 7+3 NEW tests) | Accepted |
-| [ADR-0154](0154-sprint-72-outbox-per-row-claim-closure.md) | Sprint 72 closure: TD-S64-W1 per-row outbox claim (3 files, 5+1 NEW tests, per-row lease + sweeper) | Accepted |
-| [ADR-0155](0155-sprint-73-p0-a-except-bug-batch-fix-closure.md) | Sprint 73 closure: P0-A batch fix (106 files, 136 except-A-B fixes, 2 NEW regression tests, pre-push CI gate) (5 commits) | Accepted |
-| [ADR-0156](0156-sprint-74-jupyter-execution-ecosystem-closure.md) | Sprint 74 closure: Jupiter Hub + Notebook Execution ecosystem (Papermill + Factory + WebSocket heartbeat, 13 NEW tests) (5 commits) | Accepted |
-| [ADR-0157](0157-sprint-75-jupyter-execution-final-closure.md) | Sprint 75 closure: направление #1 final closure (e2b ExecutionBackend + KernelSpecDiscovery, 15 NEW tests) (5 commits) | Accepted |
-| [ADR-0158](0158-sprint-76-tools-whitelist-closure.md) | Sprint 76 closure: P0-B tools whitelist в AIPolicySpec (ToolsSpec + enforcement + 21 NEW tests) (5 commits) | Accepted |
-| [ADR-0159](0159-sprint-77-ai-policy-dsl-closure.md) | Sprint 77 closure: P0-C AI Policy Spec DSL (hot-reload + JSON-Schema + specificity, 20 NEW tests) (5 commits) | Accepted |
-| [ADR-0160](0160-sprint-78-streamlit-cors-xsrf-closure.md) | Sprint 78 closure: P0-D CORS/XSRF в Streamlit (config security + nginx + validator + 17 NEW tests) (5 commits) | Accepted |
-| [ADR-0161](0161-sprint-79-capability-gate-tools-integration-closure.md) | Sprint 79 closure: CapabilityGate ↔ AIPolicySpec.tools two-layer integration (FINAL_REPORT_V2 направление #4 closure, 16 NEW tests) (6 commits) | Accepted |
-| [ADR-0162](0162-sprint-80-litellm-pool-registration-closure.md) | Sprint 80 closure: P1 #6 LiteLLM Gateway pool registration (PoolHealthMonitor integration, 8 NEW tests) (6 commits) | Accepted |
-| [ADR-0163](0163-sprint-81-circuit-breaker-middleware-closure.md) | Sprint 81 closure: P1 #8 CircuitBreakerMiddleware restoration (per-route state, sliding window, 13 NEW tests) (4 commits) | Accepted |
-| [ADR-0248](0248-s43-deep-audit-quick-wins.md) | Sprint 43: Deep-Audit Quick Wins (Layer linter P0 + P7 logger + schemas shims) | Unknown |
-| [ADR-0249](0249a-s44-audit-followup-facades.md) | Sprint 44: Audit Follow-up — Facades + Migrations | Unknown |
-| [ADR-0250](0250-s45-audit-backlog-closure.md) | Sprint 45: Audit Backlog QW10 + S1 Closure | Unknown |
-| [ADR-0251](0251-s13-circuit-breaker-shared-state.md) | S13: Circuit Breaker Middleware → Shared State | Unknown |
-| [ADR-0306](0306-w0-py2-except-syntax-migration.md) | W0 P0-BLOCKER: миграция `except A, B:` → `except (A, B):` | **Accepted** |
-| [ADR-0307](0307-w3-p0-4-shim-inventory-classification.md) | W3 P0-4: shim inventory + classification (MINIMAX Phase 1) | **Accepted** |
-| [ADR-0308](0308-w2-prereq-saga-lra-deadline-reapply.md) | W2 prerequisite: SagaLRA deadline integration re-apply (current branch) | **Accepted** |
-| [ADR-0309](0309-w3-p0-4-phase2a-reliability-rename.md) | W3 P0-4 Phase 2A: rename `_legacy.py` → `common.py` (reliability) | **Accepted** |
-| [ADR-0310](0310-w3-p0-5-pyi-drift-regeneration.md) | W3 P0-5: RouteBuilder/WorkflowBuilder `.pyi` drift fix + CI enforcement | **Accepted** |
-| [ADR-0311](0311-w4-p1-6-aiocache-evaluation-hybrid.md) | W4 P1-6: aiocache evaluation + HYBRID decision (sync=cachetools, simple async=aiocache opt-in, advanced=custom) | **Accepted** |
-| [ADR-0312](0312-w5-p1-7-structlog-default-circular-fix.md) | W5 P1-7: structlog как default backend (factory auto-detect + circular import fix) | **Accepted** |
-| [ADR-0313](0313-w2-p0-3-batch-processor-migration-pilot.md) | W2 P0-3 Phase 1A: BatchProcessor migration pilot (single-file processor consolidation) | **Accepted** |
-| [ADR-0314](0314-w2-p0-3-phase1b-remaining-processors.md) | W2 P0-3 Phase 1B: 5 single-file processors migration (strangler_fig, data_lineage, plan_execute, reflection_loop, router_specialist) | **Accepted** |
-| [ADR-0315](0315-w2-p0-3-phase1c-event-store-idp-pipeline-subpackages.md) | W2 P0-3 Phase 1C: event_store + idp_pipeline_processor subpackages migration | **Accepted** |
-| [ADR-0316](0316-w2-p0-3-phase2-saga-lra-decision.md) | W2 P0-3 Phase 2: SagaLRA — Variant A (migrate legacy mixin-based subpackage) + ADR | Unknown |
-| [ADR-0317](0317-w7-p1-9-di-evaluation-dishka-vs-custom.md) | W7 P1-9: DI evaluation — dishka vs самописный module_registry | **Accepted** |
-| [ADR-0318](0318-w6-p1-8-pilot-argparse-to-typer.md) | W6 P1-8: argparse → typer CLI migration pilot (tools/import_wsdl.py) | **Accepted** |
-| [ADR-0319](0319-w6-p1-8-phase2-import-postman-typer.md) | W6 P1-8 Phase 2: argparse → typer migration (`tools/import_postman.py`) | **Accepted** |
-| [ADR-0320](0320-w9-p2-13-routebuilder-protocols-god-module-split.md) | W9 P2-13: `dsl/builders/base/_protocols.py` → package split (god-module decomposition) | **Accepted** |
-| [ADR-0321](0321-w9-p2-13-phase2-cache-providers-decomposition.md) | W9 P2-13 Phase 2: `core/di/providers/cache.py` god-module → domain split + duplicate audit | **Accepted** |
-| [ADR-0322](0322-w6-p1-8-phase3-check-env-example-typer.md) | W6 P1-8 Phase 3: `tools/check_env_example.py` argparse → typer | **Accepted** |
-| [ADR-0323](0323-w6-p1-8-phase4-check-dsn-drivers-typer.md) | W6 P1-8 Phase 4: `tools/check_dsn_drivers.py` argparse → typer | **Accepted** |
-| [ADR-0324](0324-w6-p1-8-phase5-s86-workflow-sandbox-guard-typer.md) | W6 P1-8 Phase 5: `tools/s86_workflow_sandbox_guard.py` argparse → typer | **Accepted** |
-| [ADR-0325](0325-w6-p1-8-phase6-migrate-to-structlog-typer.md) | W6 P1-8 Phase 6: `tools/migrate_to_structlog.py` argparse → typer | **Accepted** |
-| [ADR-0326](0326-w6-p1-8-phase7-generate-adr-index-typer.md) | W6 P1-8 Phase 7: `tools/generate_adr_index.py` argparse → typer | **Accepted** |
-| [ADR-0327](0327-w6-p1-8-phase8-check-docstrings-typer.md) | W6 P1-8 Phase 8: `tools/check_docstrings.py` argparse → typer | **Accepted** |
-| [ADR-0328](0328-w9-p2-13-phase3-privacy-delete-data-subject-split.md) | W9 P2-13 Phase 3: `core/privacy/delete_data_subject.py` → package split (god-module decomposition) | **Accepted** |
-| [ADR-0329](0329-w9-p2-13-phase4-services-ops-health-split.md) | W9 P2-13 Phase 4: `services/ops/health.py` (609 LOC) → package split | **Accepted** |
-| [ADR-0330](0330-w9-p2-13-phase5-services-ai-agent-sandbox-split.md) | W9 P2-13 Phase 5: `services/ai/agent_sandbox.py` (601 LOC) → package split | **Accepted** |
-| [ADR-0331](0331-w9-p2-13-phase7-core-di-workflow-providers-split.md) | W9 P2-13 Phase 7: `core/di/providers/workflow.py` (602 LOC) → package split | **Accepted** |
-| [ADR-0333](0333-w6-p1-8-phase10-scaffold-typer.md) | W6 P1-8 Phase 10: `tools/scaffold.py` argparse → typer (subcommands) + structlog Py2 syntax fix | **Accepted** |
-| [ADR-0334](0334-factcheck-master-state-vs-claim.md) | Фактчек заявления о массовой синтаксической регрессии в master | Unknown |
-| [ADR-0335](0335-w11-p0-2-config-unsafe-defaults-gate.md) | Configuration matrix gate: unsafe secret defaults detector | Unknown |
-| [ADR-0336](0336-w11-p0-3-env-example-matrix-gate.md) | W11 P0-3: Configuration matrix — required secrets & unknown vars | Unknown |
-| [ADR-0337](0337-w11-p0-4-canonical-error-contract.md) | Canonical error contract (DomainProblem) | Unknown |
-| [ADR-0338](0338-w11-p1-1-outbox-crash-matrix.md) | Outbox state-machine crash matrix (model-based tests) | Unknown |
-| [ADR-0339](0339-w11-p1-2-dlq-replay-governance.md) | DLQ replay governance (7-step flow + capability + rate limit + audit) | Unknown |
-| [ADR-0340](0340-w11-p2-1-audit-hash-chain.md) | Audit log integrity (hash chain ledger) | Unknown |
-| [ADR-0341](0341-w2-p1-2-legacy-processors-inventory.md) | Legacy DSL processors inventory tool | Unknown |
-| [ADR-0342](0342-ai-policy-spec-s76-tool-policy-migration.md) | AIPolicySpec S76 tool_policy → tools migration | Unknown |
-| [ADR-0343](0343-pluginmanifest-schema-evolution-core-admin-dadata-skb.md) | PluginManifest schema migration: core_admin / dadata / skb | Unknown |
-| [ADR-0344](0344-sagalra-convergence-plan.md) | SagaLRA convergence plan (per v4 §9) | Unknown |
-| [ADR-0345](0345-p0-object-ownership-policy-options.md) | Object-Level Authorization: ownership policy (P0 audit response) | Unknown |
-| [ADR-0348](0348-services-to-dsl-dependency.md) | Разрешение зависимости `services → dsl` | Draft |
-| [ADR-0349](0349-dsl-response-binding-to.md) | Response-binding (`to:`) в DSL-роутах | Draft |
-| [ADR-0350](0350-remove-dead-code-rate-limiter-cache-keys.md) | Удаление мёртвого кода: `core/rate_limiter/` и `core/utils/cache_keys.py` | Draft |
-| [ADR-0357](0357-storage-presign-capability.md) | Отдельная capability `storage.presign` для presigned-URL (cycle 172) | Accepted |
-| [ADR-0358](0358-dsl-path-allowlist-config.md) | Allowlist файловых путей в конфиг-системе и единый path-барьер DSL (cycle 172) | Accepted |
-| [ADR-0359](0359-dsl-sql-guard-and-infra-db-flag.md) | Канонический SQL-guard для DSL и fail-closed flag для `infra_db_query` (cycle 172) | Accepted |
-| [ADR-0360](0360-cdc-identifier-validation.md) | Allowlist-валидация идентификаторов в CDC (cycle 172) | Accepted |
-| [ADR-0361](0361-capability-enforcement-required-capability-semantics.md) | Семантика `required_capability` у DSL-процессоров: фактический deny-all и план починки | ACCEPTED |
-| [ADR-0362](0362-config-audit-orphan-vs-missing.md) | Двусторонний аудит конфигурации: разделение orphan- и missing-классов, подключение гейта | ACCEPTED |
-| [ADR-0363](0363-db-driver-declarations-and-dependency-gate.md) | Драйверы БД: psycopg3 как sync-дефолт, fail-fast на необъявленный драйвер, гейт объявленных зависимостей | ACCEPTED |
-| [ADR-0364](0364-remove-dead-code-wave13.md) | Удаление мёртвого кода, найденного в Wave 13 | Accepted |
-| [ADR-0365](0365-canonical-sql-identifier-validation.md) | Единый канон валидации SQL-идентификаторов | Accepted |
-| [ADR-0366](0366-dsl-capability-gate-runtime-enforcement.md) | Runtime-enforcement capability-гейта DSL-процессоров | Accepted |
-| [ADR-0367](0367-rpa-file-access-and-injection-hardening.md) | Файловый доступ и защита от инъекций в RPA-процессорах | Accepted |
-| [ADR-0368](0368-rpa-fault-tolerance.md) | Отказоустойчивость RPA: cleanup-финализаторы, живой circuit breaker, таймауты внешних вызовов | Accepted |
-| [ADR-0369](0369-rpa-step-reachability-and-yaml-naming.md) | RPA: достижимость шагов из YAML и канон именования | Accepted |
-| [ADR-0370](0370-rpa-config-consolidation.md) | Консолидация RPA-конфига, честная документация и тестовая гигиена | Accepted |
-| [ADR-0371](0371-profile-hardening-and-invariants.md) | Харденинг prod/staging-профилей и инварианты профилей | Accepted |
-| [ADR-0372](0372-settings-sources-priority-and-hot-reload.md) | Приоритет источников конфигурации и рабочий hot-reload | Accepted |
-| [ADR-0373](0373-env-secrets-only-rule-and-gates.md) | Правило «в `.env` только секреты» и гейты конфигурации | Accepted |
-| [ADR-0375](0375-settings-coverage-merged-validation-constants-and-secret-typing.md) | Полнота покрытия настроек, merged-валидация профиля, константы из YAML, типизация секретов | Accepted |
-| [ADR-0376](0376-vault-consul-payload-and-endpoint-resolution.md) | Формат payload Vault/Consul и единое разрешение endpoint Vault | Accepted |
-| [ADR-0377](0377-profile-placeholders-waf-allowlist-and-validation.md) | Профили без env-плейсхолдеров, WAF-allowlist интеграций и валидация секции constants | Accepted |
-| [ADR-0378](0378-secret-masking-and-undeclared-env-secrets.md) | Маскирование секретов в дампах/логах и необъявленные env-секреты | Accepted |
-| [ADR-0379](0379-hot-reload-honesty-profile-validation-and-env-priority.md) | Честный hot-reload, валидация профиля и приоритет env над .env | Accepted |
-| [ADR-0380](0380-db-call-procedure-injection-and-fail-closed.md) | SQL-инъекция и fail-open в `db_call_procedure` | Accepted |
-| [ADR-0381](0381-db-driver-dsn-compatibility.md) | Драйверы и DSN: совместимость пар (тип СУБД, драйвер), driver-specific connect_args, fail-fast для недостижимых типов | Accepted |
-| [ADR-0382](0382-dsl-db-data-loss-and-dialect-correctness.md) | Потеря данных и диалекты в DSL-БД | Accepted |
-| [ADR-0383](0383-tenant-isolation-raw-sql-and-error-sanitization.md) | Tenant-изоляция raw SQL, санитизация PII в ошибках БД и breaker | Accepted |
-| [ADR-0384](0384-cdc-batch-boundary-dialects-and-dsl-path.md) | CDC: граница батча, диалекты и рабочий DSL-путь | Accepted |
-| [ADR-0385](0385-open-tasks-env-vault-waf-and-db-settings.md) | Открытые задачи A1–A11: env-гейт, Vault-refresher, WAF, внешние БД и валидация профиля | Accepted |
-| [ADR-0386](0386-tenant-guard-for-connection-and-rls-coverage.md) | Tenant-guard для `Connection.execute` и RLS на всех tenant-таблицах | Accepted |
-| [ADR-0387](0387-db-pool-degradation-and-dead-cache-removal.md) | Деградация пула при старте и удаление мёртвого `QueryResultCache` | Accepted |
-| [ADR-0388](0388-pillow-12-risk-mitigation.md) | Pillow 12.x: снижение риска без обновления (Pillow <13 из-за streamlit) | Accepted |
-| [ADR-0389](0389-db-call-procedure-flag-semantics.md) | Семантика флага `db_call_procedure_enabled`: отключение должно быть явным | Accepted |
-| [ADR-0390](0390-storage-production-guard-and-file-limits.md) | Production-guard хранилища, пути/файлы и лимиты (волна 18, G1) | Accepted |
-| [ADR-0391](0391-cache-primary-tier-and-tenant-keys.md) | Primary cache-тир, tenant-ключи и деградация кэша (волна 18, кластер G2) | Accepted |
-| [ADR-0392](0392-logging-redos-sync-audit-and-request-logging.md) | Логирование: ReDoS в PII-регексе, доставка audit-событий, structlog-стек, дефолты конфигурации | Accepted |
-| [ADR-0393](0393-db-capability-gate-and-rpa-authorization.md) | DB-capability-гейт, tenant-изоляция DSL-SQL и авторизация RPA | Accepted |
-| [ADR-0394](0394-pg-runner-state-transitions-and-lease.md) | PG-runner: транзиции состояний, payload-контракт, lease и отмена | Accepted |
-| [ADR-0395](0395-workflow-declaration-model-and-worker-registration.md) | Модель workflow-деклараций, регистрация Temporal Worker'а и детерминизм | Accepted |
-| [ADR-0396](0396-workflow-compensation-and-time-budget.md) | Компенсации Saga в pg-runner-пути и бюджет времени workflow | Accepted |
-| [ADR-0397](0397-dsl-authoring-ergonomics.md) | Эргономика авторства DSL: скаффолд, линтер, capability-гейт, вложенный YAML | Accepted |
-| [ADR-0398](0398-workflow-event-log-pagination-and-subflow-semantics.md) | Пагинация event-log, семантика sub_flow, retry-бюджет и build-time резолв activity | Accepted |
-| [ADR-0399](0399-dsl-schemas-lsp-catalog-and-workflow-metrics.md) | JSON-Schema процессоров в репозитории, каталог LSP-шагов и метрики workflow | Accepted |
-| [ADR-0400](0400-snapshot-rls-graphql-hot-reload-and-bls-gate.md) | Snapshot под RLS, интроспекция GraphQL, честный hot-reload и гейт профилей | Accepted |
-| [ADR-0401](0401-rpa-runtime-wiring-cache-invalidation-and-quotas.md) | RPA-runtime wiring, инвалидация всех уровней кэша, квоты и PII fast-path (волна 20, кластер W4) | Accepted |
-| [ADR-0402](0402-dependency-placement-and-dead-duplicate-removal.md) | Размещение зависимостей по extras и удаление мёртвого дубля OCR (волна 21, кластер A1) | Accepted |
-| [ADR-0403](0403-workflow-sla-dlq-and-prod-validator.md) | Workflow-SLA/DLQ: удаление мёртвого трекера, честная фиксация DLQ, прод-валидатор JWT/AI-fallback (волна 21, кластер A2) | Accepted |
-| [ADR-0404](0404-order-dependent-test-pollution.md) | Order-dependent тесты: диагностика, устранение загрязнения и гейт | Accepted |
-| [ADR-0405](0405-route-capabilities-namespace-migration.md) | Миграция `route.toml` под namespace capability: структурированная форма `[[route.capabilities]]` | Accepted |
-| [ADR-0406](0406-pillow-13-blocker-and-criteria.md) | Pillow 13: разблокировка пина, streamlit 1.66.1 и критерии приёмки | Accepted |
-| [ADR-0407](0407-production-values-contracts.md) | Прод-значения: контракты HS256, WAF allow_hosts, AI-fallback и replica_dsn (волна 22, кластер B3) | Accepted |
-| [ADR-0408](0408-workflow-dlq-contract-and-sla-alerting.md) | Workflow-DLQ: контракт для исчерпавших попыток шагов + SLA-алертинг (волна 22, кластер B4) | Accepted |
-| [ADR-0409](0409-multi-tenant-snapshot-and-credit-pipeline-agents.md) | Multi-tenant снапшот (fail-closed tenant-скоуп) и честные агенты credit_pipeline (волна 22, кластер B5) | Accepted |
-| [ADR-0410](0410-order-dependent-pollution-final.md) | Финальное закрытие order-dependent падений (волна 22, кластер B6) | Accepted |
-| [ADR-0411](0411-jwt-rs256-jwks-support.md) | RS256/JWKS: поддержка асимметричного режима JWT, генерация ключевой пары и контракт ротации (волна 23, кластер C1) | Accepted |
-| [ADR-0412](0412-sidecar-dns-and-endpoint-contracts.md) | Service-DNS для sidecar'ов и endpoint-контракты (волна 23, кластер C2) | Accepted |
-| [ADR-0413](0413-multi-tenant-snapshot-modes.md) | Режимы межtenant-снапшота (single-tenant / per-tenant / service-role) | Accepted |
-| [ADR-0414](0414-workflow-step-audit-model.md) | Модель аудита шагов workflow (волна 23, кластер C4) | Accepted |
-| [ADR-0415](0415-jupyter-hub-provider-and-capability-generators.md) | Провайдер capability `jupyter.hub` и миграция генераторов capability | Accepted |
-| [ADR-0416](0416-capability-skill-checks-and-wildcard-scope.md) | Capability-проверка скиллов, честный core-baseline и отказ от wildcard-scope | Accepted |
-| [ADR-0417](0417-tenant-guard-scope-and-external-sessions.md) | Границы tenant-guard'а: main-контур, внешние БД и fail-closed | Accepted |
-| [ADR-0418](0418-db-limits-retries-savepoints-and-batch-guards.md) | Лимиты выборки, retry на сериализацию, savepoint'ы и гварды batch-шагов (волна 24, кластер F3) | Accepted |
-| [ADR-0419](0419-jwks-hardening-sandbox-and-masking.md) | JWKS-hardening, Jinja2 sandbox, безопасный pickle и маскирование DSN (волна 24, кластер F4) | Accepted |
-| [ADR-0420](0420-db-credential-rotation-and-dead-pool-registrar.md) | Ротация кредов БД без рестарта и подключение регистратора пулов | Accepted |
-| [ADR-0421](0421-action-permission-enforcement.md) | Авторизация на action-поверхности (permissions + admin-префикс) | Accepted |
-| [ADR-0422](0422-api-contract-and-cors-csrf-ordering.md) | Контракт клиент↔сервер и порядок CORS/CSRF/auth | Accepted |
-| [ADR-0423](0423-openapi-completeness-and-upload-limits.md) | Полнота OpenAPI-схемы и лимиты загрузки файлов (кластер F6b-2) | Accepted |
-| [ADR-0424](0424-workflow-template-catalog.md) | Каталог шаблонов workflow для быстрой разработки (волна 25, кластер P5) | Accepted |
-| [ADR-0425](0425-streamlit-portal-api-path-contract.md) | Контракт API-путей портала: гейт по `pages/` + честные панели | Accepted |
-| [ADR-0426](0426-test-isolation-module-object-patching.md) | Тестовая изоляция: патч по объекту модуля, без `sys.modules.pop` | Accepted |
-| [ADR-0427](0427-auth-propagation-ws-graphql.md) | Проброс principal/permissions на WS- и GraphQL-поверхности | Accepted |
-| [ADR-0428](0428-tenant-filter-compound-statements.md) | Tenant-фильтр для составных запросов: UNION/CTE (D-4, G13) | Accepted |
-| [ADR-0429](0429-fail-loud-semantics.md) | «Громкая» семантика провала: ошибка не должна выглядеть как успех | Accepted |
-| [ADR-0430](0430-caller-aware-capability-namespace.md) | Caller-aware namespace для capability-проверок + гейт деклараций | Accepted |
-| [ADR-0431](0431-workflow-idempotency-and-compensation.md) | Идемпотентность внешних вызовов и единая семантика компенсации | Accepted |
-| [ADR-0432](0432-guardrails-metrics-and-webhook-scheduler-endpoints.md) | HTTP-поверхности для метрик guardrails и планировщика webhook'ов | Accepted |
-| [ADR-0433](0433-workflow-spec-linter-and-internal-activities.md) | Линтер workflow-спецификаций и внутренние activity `reflect`/`checkpoint` | Accepted |
-| [ADR-0434](0434-dsl-linter-consolidation-and-docs.md) | Единый линтер DSL-YAML, error-лог загрузки workflow, экспорт примитивов устойчивости | Accepted |
-| [ADR-0435](0435-strict-capability-gate-and-checkpoint-persistence.md) | Строгая проверка ресурсных capability и персистентность checkpoint'ов | Accepted |
-| [ADR-0436](0436-dsl-circuit-breaker-and-bulkhead.md) | Circuit breaker + bulkhead для внешних вызовов DSL-процессоров | Accepted |
-| [ADR-0437](0437-prompt-versions-endpoints.md) | Версии промптов: реестр + HTTP-поверхность + Prompt Lab | Accepted |
-| [ADR-0438](0438-storage-operations-by-key.md) | Storage-операции по ключу (list/get/download) | Accepted |
-| [ADR-0439](0439-runtime-metrics-endpoints.md) | Runtime-метрики: пулы соединений и процессы workflow | Accepted |
-| [ADR-0440](0440-prometheus-sla-rules.md) | Prometheus-правила SLA/DLQ для workflow | Accepted |
-| [ADR-0441](0441-infra-release-checklist.md) | Инфраструктурный чек-лист релиза и явный `audit_clickhouse_enabled` | Accepted |
-| [ADR-0442](0442-docker-image-extras-arg.md) | Набор extras образа задаётся build-ARG'ом (`UV_EXTRAS`) | Accepted |
-| [ADR-0443](0443-ci-gates-baseline-single-source.md) | Пороги блокирующих гейтов берутся из baseline (single source of truth) | Accepted |
-| [ADR-0444](0444-helm-secret-placeholder-guard.md) | Helm Secret не пропускает плейсхолдеры в прод | Accepted |
-| [ADR-0446](0446-runtime-container-contract.md) | Рантайм-контур контейнера: расширения, пулы, healthz-алиас, Vault-refresher | Accepted |
-| [ADR-0447](0447-helm-chart-renderable.md) | Helm-chart обязан рендериться; CI-шаг `helm lint`/`helm template` | Accepted |
-| [ADR-0448](0448-orm-tenant-context-fail-closed.md) | ORM-ветка tenant-изоляции: fail-closed без tenant (вариант А) | Accepted |
-| [ADR-0449](0449-processor-declaration-capabilities-enforced.md) | Capability из декларации процессора проверяется в рантайме | Accepted |
-| [ADR-0450](0450-layer-violations-paydown.md) | План погашения межслойных нарушений (40 → 0) с рэтчетом | Accepted |
-| [ADR-0451](0451-capability-vocabulary-migration.md) | Миграция capability-деклараций в vocabulary (план + рэтчет) | Accepted |
-| [ADR-0452](0452-mutation-gate-unblocked.md) | Mutation-гейт разблокирован и переведён на рэтчет | Accepted |
-| [ADR-0453](0453-grouped-coverage-run.md) | Coverage по группам + `coverage combine` | Accepted |
-| [ADR-0454](0454-audit-write-capability-enforcement.md) | Capability `audit.write`: enforcement процессора + декларации роутов | Accepted |
-| [ADR-0455](0455-infra-automation-for-owner-actions.md) | Автоматизация инфраструктурных действий (keypair JWKS, роль BYPASSRLS) | Accepted |
-| [ADR-0305](ADR-0305-circuit-breaker-consolidation-purgatory.md) | Circuit Breaker consolidation поверх purgatory | **Draft** |
-| [ADR-0346](ADR-0346-run-history-store-backfill-catchup.md) | Run-history store для backfill/catchup scheduler-триггеров | ACCEPTED |
-| [ADR-0347](ADR-0347-tenant-isolation-boundary-auto-surface.md) | Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED |
+| № | Заголовок | Статус | Файл |
+|---|-----------|--------|------|
+| 0050 | ADR-0050 — WAF strict + Single Entry для исходящего HTTP | Accepted (Wave 1, S1+S2+S3, 2026-05-08) | [0050-net-waf-strict-single-entry.md](0050-net-waf-strict-single-entry.md) |
+| 0051 | ADR-0051 — Cache-декораторы как фасад поверх CachingDecorator | Accepted (Wave [s1/k2-1-cache-decorator], 2026-05-12) | [0051-cache-decorators-facade.md](0051-cache-decorators-facade.md) |
+| 0052 | ADR-0052 — Каноничный порядок композиции в `@policy` | Accepted (Wave [s1/k2-2-policy-decorator], 2026-05-12) | [0052-policy-decorator-order.md](0052-policy-decorator-order.md) |
+| 0053 | ADR-0053 — WAF Phase-2: flip `outbound_via_facade=True` по умолчанию | Accepted (Wave [s1/k1-waf-phase2], 2026-05-12) | [0053-waf-phase2-migration.md](0053-waf-phase2-migration.md) |
+| 0054 | ADR-0054 — SSO Federation (SAML 2.0 + per-tenant IdP) | Accepted (Sprint 3, К1 W3, 2026-05-13) | [0054-sso-federation.md](0054-sso-federation.md) |
+| 0055 | ADR-0055 — Chaos Engineering + Performance Gate | Accepted (Sprint 3, К2 W3, 2026-05-13) | [0055-chaos-engineering.md](0055-chaos-engineering.md) |
+| 0056 | ADR-0056 — Routes V11.1a (DSL-routes как лёгкие плагины) | Accepted (Sprint 3, К3 W3, 2026-05-13) | [0056-routes-v11.md](0056-routes-v11.md) |
+| 0057 | ADR-0057 — Pure ASGI Middleware Chain | Accepted (Sprint 3, К5 W3, 2026-05-13) | [0057-asgi-pure-chain.md](0057-asgi-pure-chain.md) |
+| 0058 | ADR-0058 — JSON-Schema Export для DSL Processors | Accepted (Sprint 3, К3 W3, 2026-05-13) | [0058-jsonschema-export.md](0058-jsonschema-export.md) |
+| 0059 | ADR-0059 — Granian RSGI production tuning | Accepted (Sprint 6 K2, 2026-05-14) | [0059-granian-rsgi-production.md](0059-granian-rsgi-production.md) |
+| 0060 | ADR-0060 — Blue/Green deployment topology | Accepted (Sprint 7 K2, 2026-05-14) | [0060-blue-green-deploy.md](0060-blue-green-deploy.md) |
+| 0061 | ADR-0061 — WAF allowlist tightening для Sprint 9 | Accepted (Wave [s9/k1-w3-waf-allowlist-tightening], 2026-05- | [0061-waf-allowlist-tightening.md](0061-waf-allowlist-tightening.md) |
+| 0062 | ADR-0062 — Distinction между ASGI и Action-dispatch middleware | Accepted (Wave [s9/k5-w7-execution-middleware-dedup], 2026-0 | [0062-middleware-layers-distinction.md](0062-middleware-layers-distinction.md) |
+| 0063 | ADR-0063 — Presidio + ru NER как обязательный AI Safety layer (PII) | Accepted (2026-05-22, после S24 W1 closure — landed коммитам | [0063-presidio-ru-ner-pii.md](0063-presidio-ru-ner-pii.md) |
+| 0064 | ADR-0064 — NeMo Guardrails + Llama Guard 3 defense-in-depth | Accepted (S29 T11, 2026-05-26 — GPU-check scaffolding + nemo | [0064-nemo-guardrails-llama-guard.md](0064-nemo-guardrails-llama-guard.md) |
+| 0065 | ADR-0065 — LangGraph PostgresCheckpointer + Mem0 как единый long-term memory layer | Accepted (S29 T12, 2026-05-26 — durable flag + PostgresCheck | [0065-langgraph-checkpointer-mem0.md](0065-langgraph-checkpointer-mem0.md) |
+| 0066 | ADR-0066 — AIGateway — единая точка входа в AI | Accepted (S29 T9, 2026-05-26 — ModelRouter LiteLLM fallback  | [0066-ai-gateway-facade.md](0066-ai-gateway-facade.md) |
+| 0067 | ADR-0067 — AIPolicySpec — декларативная политика AI per-workflow | Draft (Sprint 25 candidate, [wave:s25/w2-policy-resolver]) | [0067-ai-policy-spec-dsl.md](0067-ai-policy-spec-dsl.md) |
+| 0068 | ADR-0068 — PIITokenizer — reversible PII tokenization layer | Accepted (Sprint 25 W4, 2026-05-25) | [0068-pii-tokenizer-reversible.md](0068-pii-tokenizer-reversible.md) |
+| 0069 | ADR-0069 — SkillRegistry V11.2 — TOML-манифест для AI-tools | Draft (Sprint 26 candidate, [wave:s26/w5-skill-registry]) | [0069-skill-registry-v11-2-toml.md](0069-skill-registry-v11-2-toml.md) |
+| 0070 | ADR-0070 — MCP Gateway — domain namespaces + trusted external registry | Draft (Sprint 27 candidate, [wave:s27/w4-mcp-gateway]) | [0070-mcp-gateway-namespaces.md](0070-mcp-gateway-namespaces.md) |
+| 0071 | ADR-0071 — AI Audit Unified Schema — `ai.invocation.*` события | Draft (Sprint 27 candidate, [wave:s27/w5-audit-unified]) | [0071-ai-audit-unified-schema.md](0071-ai-audit-unified-schema.md) |
+| 0072 | ADR-0072 — PII production enforcement (Presidio + Langfuse + RAG ingest + MCP authz + Policy gate) | Accepted (2026-05-22, Phase A Block 1 closure). | [0072-pii-production-enforcement.md](0072-pii-production-enforcement.md) |
+| 0073 | ADR-0073 — RAGAS evaluation gate | Accepted (S29 W3, 2026-05-26, gap-ai-6 closure). | [0073-ragas-evaluation-gate.md](0073-ragas-evaluation-gate.md) |
+| 0074 | ADR-0074 — RAG hybrid retrieval, embedding provenance, source attribution & eval gate | Accepted (2026-05-25, Phase B Block 3 closure). | [0074-rag-hybrid-retrieval-and-eval-gate.md](0074-rag-hybrid-retrieval-and-eval-gate.md) |
+| 0075 | ADR-0075 — UnifiedAgentMemoryGateway (Protocol + dispatch) | Accepted (2026-05-25, Phase B Block 4.1 closure). | [0075-unified-agent-memory-gateway.md](0075-unified-agent-memory-gateway.md) |
+| 0076 | ADR-NEW-25: LangGraph Integration Decision | — | [0076-langgraph-integration-decision.md](0076-langgraph-integration-decision.md) |
+| 0077 | ADR-0077: Sandbox Decision — E2B for Production, NoOp for Dev | — | [0077-sandbox-decision-e2b-vs-pyodide.md](0077-sandbox-decision-e2b-vs-pyodide.md) |
+| 0078 | ADR-0078 — plugin.toml Capability Syntax: Array Format (`[[capabilities]]`) | — | [0078-plugin-toml-capability-syntax.md](0078-plugin-toml-capability-syntax.md) |
+| 0079 | ADR-0079 — SLO Format: Inline `route.toml::slo` (not separate sloth YAML) | — | [0079-slo-format-route-toml-slo.md](0079-slo-format-route-toml-slo.md) |
+| 0080 | ADR-0080 — Single Entry Policy Naming Convention | — | [0080-single-entry-policy-naming.md](0080-single-entry-policy-naming.md) |
+| 0081 | ADR-0081 — Event Bus Production Backend: FastStream + Redis | — | [0081-eventbus-production-backend-faststream-redis.md](0081-eventbus-production-backend-faststream-redis.md) |
+| 0082 | ADR-0082 — Network isolation для markitdown через monkey-patch urllib.request | Accepted (Sprint 57 W5, 2026-06-07) | [0082-markitdown-network-isolation.md](0082-markitdown-network-isolation.md) |
+| 0083 | ADR-0083 — Row-Level Versioning: thin DSL wrapper над `sqlalchemy-continuum` | — | [0083-versioning-dsl-continuum-wrapper.md](0083-versioning-dsl-continuum-wrapper.md) |
+| 0084 | ADR-0084 — Library Adoption Migration Plan (structlog, typer, rich, aiocache) | — | [0084-library-adoption-migration-plan.md](0084-library-adoption-migration-plan.md) |
+| 0085 | ADR-0085 — User Auth: LDAP as Primary, Password Deprecated | — | [0085-user-auth-ldap-integration.md](0085-user-auth-ldap-integration.md) |
+| 0086 | ADR-0086 — aiocache Migration Plan (S60+) | CLOSED — DEFERRED to per-feature ad-hoc (no global migration | [0086-aiocache-migration-plan.md](0086-aiocache-migration-plan.md) |
+| 0087 | ADR-0087 — ClaimCheckProcessor Dedup (S63 W2.1) | — | [0087-claimcheck-dedup.md](0087-claimcheck-dedup.md) |
+| 0088 | ADR-0088 — EIP 10/10 Coverage: TransactionalClient + ProcessManager (S63 W3.0) | — | [0088-eip-10of10-coverage.md](0088-eip-10of10-coverage.md) |
+| 0089 | ADR-0089: Multi-agent supervisor — LangGraph-based architecture | — | [0089-multi-agent-supervisor-architecture.md](0089-multi-agent-supervisor-architecture.md) |
+| 0090 | ADR-0090: aiocache hot-path strategy (audit + defer) | — | [0090-aiocache-hotpath-strategy.md](0090-aiocache-hotpath-strategy.md) |
+| 0091 | ADR-0091: DLQ retention strategy (formalize existing unified implementation) | — | [0091-dlq-retention-strategy.md](0091-dlq-retention-strategy.md) |
+| 0092 | ADR-0092: Vault zero-downtime rotation (formalize K1 S19 W1) | — | [0092-vault-zero-downtime-rotation.md](0092-vault-zero-downtime-rotation.md) |
+| 0093 | ADR-0093: Global rate-limit (formalize existing production-ready implementation) | — | [0093-global-rate-limit.md](0093-global-rate-limit.md) |
+| 0094 | ADR-0094: Global PII response middleware (formalize S18 W3 + S-L8-4) | — | [0094-global-pii-response-middleware.md](0094-global-pii-response-middleware.md) |
+| 0096 | ADR-0096: Correlation→OTel trace_id binding (formalize S18 W7 + S-L7-2/6) | — | [0096-correlation-otel-traceid-binding.md](0096-correlation-otel-traceid-binding.md) |
+| 0097 | ADR-0097: Fallback logging sink (formalize existing production-ready implementation) | — | [0097-fallback-logging-sink.md](0097-fallback-logging-sink.md) |
+| 0098 | ADR-0098: Outbox per-transport stuck breakdown (defer implementation) | — | [0098-outbox-per-transport-stuck-breakdown.md](0098-outbox-per-transport-stuck-breakdown.md) |
+| 0099 | ADR-0099: v28 ro-analysis reconciliation — fabricated claims + Sprint 0 closeout | — | [0099-v28-reconciliation-fabricated-claims.md](0099-v28-reconciliation-fabricated-claims.md) |
+| 0100 | ADR-0100: Remove dead `dsl/builders/eip.py` (1354 LOC) — S60 W4 split superseded | — | [0100-remove-dead-eip-py.md](0100-remove-dead-eip-py.md) |
+| 0101 | ADR-0101: Lazy-import pattern для streamlit-dependent helpers (testability boundary) | — | [0101-lazy-streamlit-import-pattern.md](0101-lazy-streamlit-import-pattern.md) |
+| 0102 | ADR-0102: ai_processors.py god-object decomposition (1164 LOC → 6 modules) | design + plan, NOT impl (deferred to S81 W1). | [0102-ai-processors-decomposition.md](0102-ai-processors-decomposition.md) |
+| 0103 | ADR-0103: Per-transport cardinality protection (ND-001 step 8) | — | [0103-per-transport-cardinality-protection.md](0103-per-transport-cardinality-protection.md) |
+| 0105 | ADR-0105: lifecycle.py god-object decomposition (1142→5 files, ~200 LOC avg) | — | [0105-lifecycle-py-decomposition.md](0105-lifecycle-py-decomposition.md) |
+| 0106 | ADR-0106: S27 closure — AIGateway enforce + WorkflowBuilder.invoke_agent() as Temporal activity | — | [0106-s27-closure.md](0106-s27-closure.md) |
+| 0107 | ADR-0107: transport.py god-object decomposition (990 LOC → 6 modules) | — | [0107-transport-py-decomposition.md](0107-transport-py-decomposition.md) |
+| 0108 | ADR-0108 — DI DSL для RouteBuilder / call_function / process_fn | Accepted (Sprint 40 W1–W5, 2026-06-09) | [0108-di-dsl-for-routes.md](0108-di-dsl-for-routes.md) |
+| 0109 | ADR-0109 — Feature Flag Dependency Check: package-aware + Sprint 41 audit | Accepted (Sprint 41 W2, 2026-06-09) | [0109-feature-flag-dependency-check-fix.md](0109-feature-flag-dependency-check-fix.md) |
+| 0110 | ADR-0110 — WAF Coverage 100% (formalize Sprint 41 #4 met) | Accepted (Sprint 41 W4, 2026-06-09) | [0110-waf-coverage-100pct-formalize.md](0110-waf-coverage-100pct-formalize.md) |
+| 0111 | ADR-0111 — Chaos Tests + Multi-Tenant Isolation status (Sprint 41 #1, #6) | Accepted (Sprint 41 W6, 2026-06-09) | [0111-chaos-multitenant-formalize.md](0111-chaos-multitenant-formalize.md) |
+| 0112 | ADR-0112 — Security Audit status (Sprint 41 #3) | Accepted (Sprint 41 W7, 2026-06-09) | [0112-security-audit-status.md](0112-security-audit-status.md) |
+| 0113 | ADR-0113 — Perf + Blue/Green + Disaster Recovery status (S41 #2, #7, #10) | Accepted (Sprint 41 W8, 2026-06-09) | [0113-perf-bg-dr-formalize.md](0113-perf-bg-dr-formalize.md) |
+| 0114 | ADR-0114 — DSL LSP server status + Makefile integration (Sprint 42 #1) | Accepted (Sprint 42 W1, 2026-06-09) | [0114-dsl-lsp-server-formalize.md](0114-dsl-lsp-server-formalize.md) |
+| 0115 | ADR-0115 — Sprint 42 closure: Developer Experience Polish (5/5 DoD) | Accepted (Sprint 42 W5, 2026-06-09) | [0115-sprint-42-dx-closure.md](0115-sprint-42-dx-closure.md) |
+| 0116 | ADR-0116 — Sprint 43 closure: Streamlit Filters + Vite Cleanup (2/5 DoD) | Accepted (Sprint 43 W5, 2026-06-09) | [0116-sprint-43-closure.md](0116-sprint-43-closure.md) |
+| 0117 | ADR-0117 — Sprint 44 closure: Backend Wiring + Admin Build Fix (4/5 DoD) | Accepted (Sprint 44 W5, 2026-06-09) | [0117-sprint-44-closure.md](0117-sprint-44-closure.md) |
+| 0118 | ADR-0118 — Sprint 45 closure: TD-006 + TD-018 + filter migration + docstrings (5/5 DoD) | Accepted (Sprint 45 W5, 2026-06-09) | [0118-sprint-45-closure.md](0118-sprint-45-closure.md) |
+| 0119 | ADR-0119 — Sprint 46 closure: TraceStorage abstraction + docstring tool + toxiproxy runbook (5/5 DoD) | Accepted (Sprint 46 W5, 2026-06-09) | [0119-sprint-46-closure.md](0119-sprint-46-closure.md) |
+| 0120 | ADR-0120 — Sprint 47 closure: ExecutionTracer storage wiring (1/5 substantive) | Accepted (Sprint 47 W5, 2026-06-09) | [0120-sprint-47-closure.md](0120-sprint-47-closure.md) |
+| 0121 | ADR-0121 — Sprint 48 partial closure: TD-015 ruff F401 + mypy clean + stub regen verified | Accepted (Sprint 48 W2, 2026-06-10) | [0121-sprint-48-partial-closure.md](0121-sprint-48-partial-closure.md) |
+| 0122 | ADR-0122 — Sprint 48 closure: audit + re-scope + 5/5 waves (W1-W4 substantive, W5 closure) | Accepted (Sprint 48 W5, 2026-06-10) | [0122-sprint-48-closure.md](0122-sprint-48-closure.md) |
+| 0123 | ADR-0123 — Sprint 49 closure: TD-009 + actions.py decomp + trunk hygiene (4 commits, 5/5 substantive) | Accepted (Sprint 49 W5, 2026-06-10) | [0123-sprint-49-closure.md](0123-sprint-49-closure.md) |
+| 0124 | ADR-0124 — Sprint 50 closure: TD backlog + transport.py B3-B5 + ai_banking/rpa god-file decomp (5 commits, 5/5 substantive) | Accepted (Sprint 50 W5, 2026-06-10) | [0124-sprint-50-closure.md](0124-sprint-50-closure.md) |
+| 0125 | ADR-0125 — Sprint 51 closure: ai_rpa.py (2-wave) + agent_dsl.py + TD-003 (5 working + 1 fixup commits, 5/5 substantive) | Accepted (Sprint 51 W5, 2026-06-10) | [0125-sprint-51-closure.md](0125-sprint-51-closure.md) |
+| 0126 | ADR-0126 — Sprint 52 closure: ai_rpa.py W3 + validator.py + loader_v11.py god-file decomp + TD-010 closure (5+1 commits, 5/5 substantive) | Accepted (Sprint 52 W5, 2026-06-10) | [0126-sprint-52-closure.md](0126-sprint-52-closure.md) |
+| 0127 | ADR-0127 — Sprint 53 closure: format_convert + streaming + setup god-file decomp + TD-002 closure (5 commits, 5/5 substantive) | Accepted (Sprint 53 W5, 2026-06-10) | [0127-sprint-53-closure.md](0127-sprint-53-closure.md) |
+| 0128 | ADR-0128 — Sprint 54 closure: 4 god-file decomps (mcp_server, ai_agent, invoker, capability_gate) (4+1 commits, 5/5 substantive) | Accepted (Sprint 54 W5, 2026-06-10) | [0128-sprint-54-closure.md](0128-sprint-54-closure.md) |
+| 0129 | ADR-0129 — Sprint 55 closure: 4 god-file decomp (cert_store, control_flow, pg_runner_internals, data_quality) (4+1 commits, 5/5 substantive) | Accepted (Sprint 55 W5, 2026-06-10) | [0129-sprint-55-closure.md](0129-sprint-55-closure.md) |
+| 0130 | ADR-0130 — Sprint 56 closure: 4 god-file decomp (spec, gateway_pipeline_mixin, s3_pool, admin_workflows) (5+1 commits, 5/5 substantive) | Accepted (Sprint 56 W5, 2026-06-10) | [0130-sprint-56-closure.md](0130-sprint-56-closure.md) |
+| 0131 | ADR-0131 — Sprint 57 closure: 4 god-file decomp (base RouteBuilder, sources_mixin, collection EIP, sink_publish) (4+1 commits, 5/5 substantive) | Accepted (Sprint 57 W5, 2026-06-10) | [0131-sprint-57-closure.md](0131-sprint-57-closure.md) |
+| 0132 | ADR-0132 — Sprint 58 closure: 4 god-file decomp (crud, saga_lra_processor, format_converters, workflow_builder) (4+1 commits, 5/5 substantive) | Accepted (Sprint 58 W5, 2026-06-10) | [0132-sprint-58-closure.md](0132-sprint-58-closure.md) |
+| 0133 | ADR-0133 — Sprint 59 closure: 4 god-file decomp (banking_processors, lifecycle [sibling W82], redis, 31_DSL_Visual_Editor) (3+1 commits, 5/5 substantive) | Accepted (Sprint 59 W5, 2026-06-10) | [0133-sprint-59-closure.md](0133-sprint-59-closure.md) |
+| 0134 | ADR-0134 — Sprint 60 closure: 4 god-file decomp (jupyter, cdc, setup_infra, authorization_gateway) (4+1 commits, 5/5 substantive) | Accepted (Sprint 60 W5, 2026-06-10) | [0134-sprint-60-closure.md](0134-sprint-60-closure.md) |
+| 0135 | ADR-0135 — Sprint 61 closure: 4 god-file decomp (base_service, enrichment, executor, http) (4+1 commits, 5/5 substantive) | Accepted (Sprint 61 W5, 2026-06-10) | [0135-sprint-61-closure.md](0135-sprint-61-closure.md) |
+| 0136 | ADR-0136 — Sprint 62 closure: 4 god-file decomp (admin_plugins, vocabulary, integration_core, yaml_loader) (4+1 commits, 5/5 substantive) | Accepted (Sprint 62 W5, 2026-06-10) | [0136-sprint-62-closure.md](0136-sprint-62-closure.md) |
+| 0137 | ADR-0137 — Sprint 63 closure: 4 god-file decomp (loading, routing, marshal, external_database) (4+1 commits, 5/5 substantive) | Accepted (Sprint 63 W5, 2026-06-10) | [0137-sprint-63-closure.md](0137-sprint-63-closure.md) |
+| 0138 | ADR-0138 — Sprint 64 closure: 4 god-file decomp (graphql, repositories, database, rag_service) (4+1 commits, 5/5 substantive) | Accepted (Sprint 64 W5, 2026-06-10) | [0138-sprint-64-closure.md](0138-sprint-64-closure.md) |
+| 0139 | ADR-0139 — Sprint 65 closure: 4 god-file decomp (components, rpa_operations, grpc_server, idp_pipeline) + 2 W3 sibling WIP fixups (4+1+2 commits, 7/7 substantive) | Accepted (Sprint 65 W5, 2026-06-10) | [0139-sprint-65-closure.md](0139-sprint-65-closure.md) |
+| 0140 | ADR-0140 — Sprint 66 closure: 3 god-file decomp (event_store, setup, lifecycle) + 1 sibling WIP fixup (4+1 commits, 5/5 substantive) | Accepted (Sprint 66 W5, 2026-06-10) | [0140-sprint-66-closure.md](0140-sprint-66-closure.md) |
+| 0141 | ADR-0141 — Sprint 67 closure: 4 god-file decomp (backpressure, ai_enforcer, semantic_cache, ad_directory_client) (4+1 commits, 5/5 substantive) | Accepted (Sprint 67 W5, 2026-06-10) | [0141-sprint-67-closure.md](0141-sprint-67-closure.md) |
+| 0142 | ADR-0142 — Sprint 68 closure: 4 god-file decomp (macros, clickhouse_audit, invoker, ai_providers) (4+1 commits, 5/5 substantive) | Accepted (Sprint 68 W5, 2026-06-10) | [0142-sprint-68-closure.md](0142-sprint-68-closure.md) |
+| 0143 | ADR-0143 — Sprint 83 W3: Vault DSL wrapper + PIL leak fix | Accepted (Sprint 83 W3, 2026-08-31) | [0143-sprint-83-w3-closure.md](0143-sprint-83-w3-closure.md) |
+| 0144 | ADR-0144 — Multi-instance safety: outbox claim_pending + scheduler leader election + RedisDedupeStore (4 commits, 3/5 substantive) | Accepted (Autonomous work cycle, 2026-06-12) | [0144-multi-instance-safety.md](0144-multi-instance-safety.md) |
+| 0145 | ADR-0145 — Sprint 65 closure: P0 cleanup (lazy imports, dead enforcement, dsl/workflows LAYERS) (3 commits, 3/3 substantive) | Accepted (Autonomous work cycle S65, 2026-06-12) | [0145-sprint-65-p0-cleanup-closure.md](0145-sprint-65-p0-cleanup-closure.md) |
+| 0146 | ADR-0146 — Sprint 66 closure: fact-checked quick wins (4 commits, 4/4 substantive) | Accepted (Autonomous work cycle S66, 2026-06-12) | [0146-sprint-66-quick-wins-closure.md](0146-sprint-66-quick-wins-closure.md) |
+| 0147 | ADR-0147 — Sprint 67 closure: torch CVE, namespace markers, JWT consolidation, pre-existing fix (4 commits, 4/4 substantive) | Accepted (Autonomous work cycle S67, 2026-06-12) | [0147-sprint-67-torch-namespace-jwt-fix-closure.md](0147-sprint-67-torch-namespace-jwt-fix-closure.md) |
+| 0148 | ADR-0148 — Sprint 68 closure: 3 parallel teams (swarm), 4 violations closed, 2 ADR docs (3 commits, 3/3 substantive) | Accepted (Autonomous work cycle S68, 2026-06-12) | [0148-sprint-68-swarm-closure.md](0148-sprint-68-swarm-closure.md) |
+| 0149 | ADR-0149 — TD-S65-W2 audit: 34 core→other violations classified + 1 sample refactor (RetryPolicy) | Accepted (Autonomous work cycle S68 W2, 2026-06-12) | [0149-core-violations-audit.md](0149-core-violations-audit.md) |
+| 0150 | ADR-0150 — TD-S65-W4 audit: 124 dsl/workflows violations classified + 1 sample refactor (audit JSON codec) | Accepted (Autonomous work cycle S68 W3, 2026-06-12) | [0150-dsl-violations-audit.md](0150-dsl-violations-audit.md) |
+| 0151 | ADR-0151 — Sprint 69 closure: 2nd SWARM (3 teams) — 1 violation closed + 2 style cleanups (3 commits, 3/3 substantive, scope discipline) | Accepted (Autonomous work cycle S69, 2026-06-12) | [0151-sprint-69-swarm-2nd-closure.md](0151-sprint-69-swarm-2nd-closure.md) |
+| 0152 | ADR-0152 — Sprint 70 closure: 3rd SWARM (3 teams) — 3 style cleanups (3 commits, 3/3 substantive, 2/3 subagent clean) | Accepted (Autonomous work cycle S70, 2026-06-12) | [0152-sprint-70-swarm-3rd-closure.md](0152-sprint-70-swarm-3rd-closure.md) |
+| 0153 | ADR-0153 — Sprint 71 closure: 4 pre-existing import bugs + 3 file+dir merges + 2 P1 multi-instance safety fixes (4 commits, 7+3 NEW tests) | Accepted (Autonomous work cycle S71, 2026-06-12) | [0153-sprint-71-pre-existing-bugs-and-multi-instance-safety-closure.md](0153-sprint-71-pre-existing-bugs-and-multi-instance-safety-closure.md) |
+| 0154 | ADR-0154 — Sprint 72 closure: TD-S64-W1 per-row outbox claim (3 files, 5+1 NEW tests, per-row lease + sweeper) | Accepted (Autonomous work cycle S72, 2026-06-12) | [0154-sprint-72-outbox-per-row-claim-closure.md](0154-sprint-72-outbox-per-row-claim-closure.md) |
+| 0155 | ADR-0155 — Sprint 73 closure: P0-A batch fix (106 files, 136 except-A-B fixes, 2 NEW regression tests, pre-push CI gate) (5 commits) | Accepted (Autonomous work cycle S73, 2026-06-12) | [0155-sprint-73-p0-a-except-bug-batch-fix-closure.md](0155-sprint-73-p0-a-except-bug-batch-fix-closure.md) |
+| 0156 | ADR-0156 — Sprint 74 closure: Jupiter Hub + Notebook Execution ecosystem (Papermill + Factory + WebSocket heartbeat, 13 NEW tests) (5 commits) | Accepted (Autonomous work cycle S74, 2026-06-12) | [0156-sprint-74-jupyter-execution-ecosystem-closure.md](0156-sprint-74-jupyter-execution-ecosystem-closure.md) |
+| 0157 | ADR-0157 — Sprint 75 closure: направление #1 final closure (e2b ExecutionBackend + KernelSpecDiscovery, 15 NEW tests) (5 commits) | Accepted (Autonomous work cycle S75, 2026-06-12) | [0157-sprint-75-jupyter-execution-final-closure.md](0157-sprint-75-jupyter-execution-final-closure.md) |
+| 0158 | ADR-0158 — Sprint 76 closure: P0-B tools whitelist в AIPolicySpec (ToolsSpec + enforcement + 21 NEW tests) (5 commits) | Accepted (Autonomous work cycle S76, 2026-06-12) | [0158-sprint-76-tools-whitelist-closure.md](0158-sprint-76-tools-whitelist-closure.md) |
+| 0159 | ADR-0159 — Sprint 77 closure: P0-C AI Policy Spec DSL (hot-reload + JSON-Schema + specificity, 20 NEW tests) (5 commits) | Accepted (Autonomous work cycle S77, 2026-06-12) | [0159-sprint-77-ai-policy-dsl-closure.md](0159-sprint-77-ai-policy-dsl-closure.md) |
+| 0160 | ADR-0160 — Sprint 78 closure: P0-D CORS/XSRF в Streamlit (config security + nginx + validator + 17 NEW tests) (5 commits) | Accepted (Autonomous work cycle S78, 2026-06-12) | [0160-sprint-78-streamlit-cors-xsrf-closure.md](0160-sprint-78-streamlit-cors-xsrf-closure.md) |
+| 0161 | ADR-0161 — Sprint 79 closure: CapabilityGate ↔ AIPolicySpec.tools two-layer integration (FINAL_REPORT_V2 направление #4 closure, 16 NEW tests) (6 commits) | Accepted (Autonomous work cycle S79, 2026-06-12) | [0161-sprint-79-capability-gate-tools-integration-closure.md](0161-sprint-79-capability-gate-tools-integration-closure.md) |
+| 0162 | ADR-0162 — Sprint 80 closure: P1 #6 LiteLLM Gateway pool registration (PoolHealthMonitor integration, 8 NEW tests) (6 commits) | Accepted (Autonomous work cycle S80, 2026-06-12) | [0162-sprint-80-litellm-pool-registration-closure.md](0162-sprint-80-litellm-pool-registration-closure.md) |
+| 0163 | ADR-0163 — Sprint 81 closure: P1 #8 CircuitBreakerMiddleware restoration (per-route state, sliding window, 13 NEW tests) (4 commits) | Accepted (Autonomous work cycle S81, 2026-06-12) | [0163-sprint-81-circuit-breaker-middleware-closure.md](0163-sprint-81-circuit-breaker-middleware-closure.md) |
+| 0164 | ADR-0164: Sprint 82 — Documentation Cookbooks Closure | Accepted | [0164-sprint-82-cookbooks-closure.md](0164-sprint-82-cookbooks-closure.md) |
+| 0165 | ADR-0165: Sprint 83 — DetachedInstanceError Closure (V2 P0 N1) | Accepted | [0165-sprint-83-detached-instance-error-closure.md](0165-sprint-83-detached-instance-error-closure.md) |
+| 0166 | ADR-0166: Sprint 84 — logging.factory Layer Violations Closure (V2 P0 #3) | Accepted | [0166-sprint-84-logging-facade-closure.md](0166-sprint-84-logging-facade-closure.md) |
+| 0167 | ADR-0167: Sprint 85 — AIGateway Pass-Through Closure (V2 P0 #1) | Accepted | [0167-sprint-85-ai-gateway-enforcement-closure.md](0167-sprint-85-ai-gateway-enforcement-closure.md) |
+| 0168 | ADR-0168: Sprint 86 — Temporal Sandbox Closure + Defense-in-Depth (V2 P0 #2) | Accepted | [0168-sprint-86-temporal-sandbox-closure.md](0168-sprint-86-temporal-sandbox-closure.md) |
+| 0169 | ADR-0169: Sprint 87 — V2 P0 Re-Verification (Fact-Check, NO Code Changes) | Accepted (investigation-only) | [0169-sprint-87-v2-p0-reverification.md](0169-sprint-87-v2-p0-reverification.md) |
+| 0170 | ADR-0170: Sprint 88 — V2 P0 #5 + #6 Closure (HIGH severity) | Accepted | [0170-sprint-88-rate-limit-and-tenant-isolation.md](0170-sprint-88-rate-limit-and-tenant-isolation.md) |
+| 0171 | ADR-0171: Sprint 89 — V2 P0 #6 Pilot Migration (Order → TenantMixin) | Accepted | [0171-sprint-89-order-tenant-mixin-pilot.md](0171-sprint-89-order-tenant-mixin-pilot.md) |
+| 0172 | ADR-0172: Sprint 90 — Pool Registration Completion (V3 #5) | — | [0172-sprint-90-pool-registration-completion.md](0172-sprint-90-pool-registration-completion.md) |
+| 0173 | ADR-0173: Sprint 91 — V2 P0 #6 continue (User) + V2 P0 #7 fix (processors) | — | [0173-sprint-91-v2-p0-6-continue-and-v2-p0-7-fix.md](0173-sprint-91-v2-p0-6-continue-and-v2-p0-7-fix.md) |
+| 0174 | ADR-0174: Sprint 92 — V2 P0 #6 continue (File + OrderKind) | — | [0174-sprint-92-v2-p0-6-file-orderkind.md](0174-sprint-92-v2-p0-6-file-orderkind.md) |
+| 0175 | ADR-0175: Sprint 93 Wave 1 — Cleanup + Critical Fixes | — | [0175-sprint-93-w1-cleanup-and-critical-fixes.md](0175-sprint-93-w1-cleanup-and-critical-fixes.md) |
+| 0176 | ADR-0176: Sprint 93 Wave 2 — Frontend PATH + Docstring Ratchet + Resilience Fact-Check | — | [0176-sprint-93-w2-frontend-and-resilience-factcheck.md](0176-sprint-93-w2-frontend-and-resilience-factcheck.md) |
+| 0177 | ADR-0177: S93 closure — auth, CDC, logging, DSL | — | [0177-sprint-93-w5-closure-auth-cdc-logging-dsl.md](0177-sprint-93-w5-closure-auth-cdc-logging-dsl.md) |
+| 0178 | ADR-0178: S94 closure — stdlib logging codemod + docstring ratchet + DSL SSE | — | [0178-sprint-94-w5-closure-logging-ratchet-sse.md](0178-sprint-94-w5-closure-logging-ratchet-sse.md) |
+| 0179 | ADR-0179: S95 closure — DSL CRUD + docstring ratchet + stdlib audit + AuthGateway | — | [0179-sprint-95-w5-closure-dsl-crud-ratchet-authgateway.md](0179-sprint-95-w5-closure-dsl-crud-ratchet-authgateway.md) |
+| 0180 | ADR-0180: S96 Closure | — | [0180-sprint-96-closure.md](0180-sprint-96-closure.md) |
+| 0181 | ADR-0181: S97 Closure | — | [0181-sprint-97-closure.md](0181-sprint-97-closure.md) |
+| 0182 | ADR-0182: S98 Closure | — | [0182-sprint-98-closure.md](0182-sprint-98-closure.md) |
+| 0183 | ADR-0183: S99 Closure — Final Score 9.0/10 | — | [0183-sprint-99-closure.md](0183-sprint-99-closure.md) |
+| 0184 | ADR-0184: S100 Closure — TODO backlog = 0 | — | [0184-sprint-100-closure.md](0184-sprint-100-closure.md) |
+| 0185 | 0185-sprint-101-deep-research-followup | — | [0185-sprint-101-deep-research-followup.md](0185-sprint-101-deep-research-followup.md) |
+| 0186 | 0186-sprint-102-backlog-closure | — | [0186-sprint-102-backlog-closure.md](0186-sprint-102-backlog-closure.md) |
+| 0187 | 0187-sprint-103-cross-cutting | — | [0187-sprint-103-cross-cutting.md](0187-sprint-103-cross-cutting.md) |
+| 0188 | ADR-0188: D5 model move plan (analysis-only, multi-sprint execution) | — | [0188-d5-models-move-plan.md](0188-d5-models-move-plan.md) |
+| 0189 | ADR-0189: Sprint 104 closure — DSN tests + RPA DSL + Rate limit + MSSQL/MySQL/DB2 | — | [0189-sprint-104-closure.md](0189-sprint-104-closure.md) |
+| 0190 | ADR-0190: Sprint 105 Closure | — | [0190-sprint-105-closure.md](0190-sprint-105-closure.md) |
+| 0191 | ADR-0191: Sprint 106 Closure — D5 split-brain B1+B2+B3 complete | — | [0191-sprint-106-closure.md](0191-sprint-106-closure.md) |
+| 0192 | ADR-0192: Sprint 106 Sprint B closure — sub_workflow + ai_tool_dispatch + from_nats/from_mongo + test baseline | — | [0192-sprint-106-sprint-b-closure.md](0192-sprint-106-sprint-b-closure.md) |
+| 0193 | ADR-0193: Sprint 107 closure — TD-residual cleanup + real LLM-wiring + real runtime for nats/mongo | — | [0193-sprint-107-closure.md](0193-sprint-107-closure.md) |
+| 0194 | ADR-0194: Sprint 108 closure — Dependabot security audit + TD-008 verify + TD-004 AI migration + AI tool registry e2e tests | — | [0194-sprint-108-closure.md](0194-sprint-108-closure.md) |
+| 0195 | ADR-0195: Sprint 109 closure — TD-004 audit migration wave 2 (4 domains) | — | [0195-sprint-109-closure.md](0195-sprint-109-closure.md) |
+| 0196 | ADR-0196: Sprint 110 closure — Layer policy enforcement + linter tooling hardening | — | [0196-sprint-110-closure.md](0196-sprint-110-closure.md) |
+| 0197 | ADR-0197: Sprint 111 closure — DSL Completion + DX (TD-017 / TD-004 / TD-012 closure + lifespan.py god-file decomposition) | — | [0197-sprint-111-closure.md](0197-sprint-111-closure.md) |
+| 0198 | ADR-0198: Sprint 112 closure — Layer linter stale cleanup + NEW violation triage + 3-entry allowlist closure | — | [0198-sprint-112-closure.md](0198-sprint-112-closure.md) |
+| 0199 | ADR-0199: Sprint 113 closure — AuditService canonical home + 10 extensions allowlist + Bucket A classification + prune CI hook | — | [0199-sprint-113-closure.md](0199-sprint-113-closure.md) |
+| 0200 | ADR-0200: Sprint 114 closure — 191 → 0 layer violations + 10 audit tests fixed + P0-1/P0-2 closed | — | [0200-sprint-114-closure.md](0200-sprint-114-closure.md) |
+| 0201 | ADR-0201: Sprint 115 closure — DSL Protocol inversion (W1) + dsl.* architectural exceptions (W2-W4) + verification | — | [0201-sprint-115-closure.md](0201-sprint-115-closure.md) |
+| 0202 | ADR-0202: Sprint 116 Closure — DSL bulk final + typer+rich migration + orphan tests + NO-OP fact-check | — | [0202-sprint-116-closure.md](0202-sprint-116-closure.md) |
+| 0203 | ADR-0203: Sprint 117 Closure — Tenant Models Fact-Check (NO-OP) | — | [0203-sprint-117-closure.md](0203-sprint-117-closure.md) |
+| 0204 | ADR-0204: Sprint 118 — Docstring Ratchet Plan (multi-sprint, -200/wave) | — | [0204-sprint-118-docstring-ratchet-plan.md](0204-sprint-118-docstring-ratchet-plan.md) |
+| 0205 | ADR-0205: Sprint 118 Closure — Docstring Ratchet S118 Complete (1625 → 1524, -101 violations, -6.2%) | — | [0205-sprint-118-closure.md](0205-sprint-118-closure.md) |
+| 0206 | ADR-0206: Sprint 119 Closure — Docstring Ratchet Complete + Protocol Bulk Amnisty (1625 → 0, -100%) | — | [0206-sprint-119-closure.md](0206-sprint-119-closure.md) |
+| 0207 | ADR-0207: Sprint 120 Closure — Architectural Boundary Hardening (43 → 9 violations, -79%) | — | [0207-sprint-120-closure.md](0207-sprint-120-closure.md) |
+| 0208 | ADR-0208: Sprint 121 Plan — Orphan Tests Root Cause Analysis (17 of 18 deferred from S116 W4) | — | [0208-sprint-121-orphan-tests-plan.md](0208-sprint-121-orphan-tests-plan.md) |
+| 0209 | ADR-0209: Sprint 123 Closure — Boundary Hardening Complete (43 → 1, -98%) | — | [0209-sprint-123-closure.md](0209-sprint-123-closure.md) |
+| 0210 | ADR-0210: Sprint 124 W1 Closure — Boundary Hardening 100% Complete (43 → 0) | — | [0210-sprint-124-w1-closure.md](0210-sprint-124-w1-closure.md) |
+| 0211 | ADR-0211: Sprint 124 Closure — Orphan Tests, Collection Pollution, Composition Mock Hardening (5 waves, 100% scope) | — | [0211-sprint-124-closure.md](0211-sprint-124-closure.md) |
+| 0212 | ADR-0212: Sprint 125 W1 — SSO Registry Design (Re-affirm ADR-0054 + Fill Research Gap) | — | [0212-sprint-125-w1-sso-registry-design.md](0212-sprint-125-w1-sso-registry-design.md) |
+| 0213 | ADR-0213: Sprint 125 Closure — SSO/IdP Layer Built: SsoRegistry + require_sso_auth + Backward-Compat Shim (5 waves, 100% scope, +S126 W0 regressions fix) | — | [0213-sprint-125-closure.md](0213-sprint-125-closure.md) |
+| 0214 | ADR-0214: Sprint 127 Closure — DSL Variable Store + ExternalDB Facade + Anthropic Prompt Cache (5 waves, 100% scope, score 9.6) | — | [0214-sprint-127-closure.md](0214-sprint-127-closure.md) |
+| 0215 | ADR-0215: Sprint 128 Closure — Consul CertStore + CDC Transform + DaskMixin + gRPC File Streaming + OpenAI Cache (5 waves, 100% scope, score 9.8) | — | [0215-sprint-128-closure.md](0215-sprint-128-closure.md) |
+| 0216 | ADR-0216: Sprint 129 Closure — 8 Stale OPEN TDs Closed + Rule #124 TLS Test Fix (4 waves, 100% scope, score 9.8 MAINTAINED) | — | [0216-sprint-129-closure.md](0216-sprint-129-closure.md) |
+| 0217 | ADR-0217: Sprint 130 Closure — TD-030 Finish + FB-1 (S3 Fallback) + gRPC Codegen Path Fix (4 commits, score 9.8 → 9.85) | — | [0217-sprint-130-closure.md](0217-sprint-130-closure.md) |
+| 0218 | ADR-0218: Sprint 131 Closure — FB-1 Factory + TD-026 Full Wire-Up + TD-016 + TD-015 Partial (4 commits, score 9.85 → 9.9) | — | [0218-sprint-131-closure.md](0218-sprint-131-closure.md) |
+| 0219 | ADR-0219: Sprint 132 Closure — TD-006 LLM+Airflow Fixes + TD-011 Partial (from_grpc_stream) (5 commits, score 9.9 → 9.9) | — | [0219-sprint-132-closure.md](0219-sprint-132-closure.md) |
+| 0220 | ADR-0220: Sprint 133 Closure — FormatConvertProcessor MRO Fix (W1+W2, score 9.9 → 9.9, +145 tests, 0 NEW layer violations) | — | [0220-sprint-133-closure.md](0220-sprint-133-closure.md) |
+| 0221 | ADR-0221: Sprint 136 Closure — Pydantic v2 Migration + Regression Fixes (4 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, -81 Pydantic warnings) | — | [0221-sprint-136-closure.md](0221-sprint-136-closure.md) |
+| 0222 | ADR-0222: Sprint 138 Closure — Layer Violations + Pydantic Online Verify + Test Failures (6 atomic commits, score 9.9 → 9.9, 0 NEW layer violations from my work, 1 violation fixed, 2 NEW sibling violations flagged) | — | [0222-sprint-138-closure.md](0222-sprint-138-closure.md) |
+| 0223 | ADR-0223: Sprint 140 Closure — 15-Bug Pattern Fix in services/ (6 atomic commits, score 9.9 → 9.9, services 86→29 fails -66%, 0 NEW layer violations) | — | [0223-sprint-140-closure.md](0223-sprint-140-closure.md) |
+| 0224 | ADR-0224: Sprint 141 Closure — core/ Pattern Fixes (3 atomic commits, score 9.9 → 9.9, core 126→73 fails -42%, services 86→29 cumulative -66% from S139) | — | [0224-sprint-141-closure.md](0224-sprint-141-closure.md) |
+| 0225 | ADR-0225: Sprint 142 Closure — Subagent Orchestration + A+B Manual Fallback (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 1 TD-013 PoC page regrouped) | — | [0225-sprint-142-closure.md](0225-sprint-142-closure.md) |
+| 0226 | ADR-0226: Sprint 143 Closure — Feature Flags Field() Backfill (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 23→14 fails -39%) | — | [0226-sprint-143-closure.md](0226-sprint-143-closure.md) |
+| 0227 | ADR-0227: Sprint 144 Closure — 5 Features Backfill + 2 TD-013 Page Regroups (4 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 14→6 fails -57%, TD-013 1→3 pages) | — | [0227-sprint-144-closure.md](0227-sprint-144-closure.md) |
+| 0228 | ADR-0228: Sprint 145 Closure — Sprint5DSLFlags Reorder + SmartSessionManager Lookup Fix (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, test_features 6→3 fails -50%, +1 pre-existing fix) | — | [0228-sprint-145-closure.md](0228-sprint-145-closure.md) |
+| 0229 | ADR-0229: Sprint 146 Closure — Pre-existing Triage Burst (3 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 18 fails closed: 14 collection errors + 4 test_main fails) | — | [0229-sprint-146-closure.md](0229-sprint-146-closure.md) |
+| 0230 | ADR-0230: Sprint 147 Closure — Regression Fix (S146 W1 broken commit, 1 atomic commit + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 14 collection errors fixed + 164 tests unblocked) | — | [0230-sprint-147-closure.md](0230-sprint-147-closure.md) |
+| 0231 | ADR-0231: Sprint 148 Closure — Pre-existing Triage Burst (2 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 4 fails closed: 2 outbox + 2 validator) | — | [0231-sprint-148-closure.md](0231-sprint-148-closure.md) |
+| 0232 | ADR-0232: Sprint 149 Closure — Pre-existing Triage Burst (2 atomic commits + 1 closure, score 9.9 → 9.9, 0 NEW layer violations, 4 fails closed: 2 dedupe_store + 2 streaming) | — | [0232-sprint-149-closure.md](0232-sprint-149-closure.md) |
+| 0233 | ADR-0233: Sprint 150 Closure — Cache Decorator Critical Fix + 2 Pre-existing Triage (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 2 fails closed: 1 dq_monitor + 1 e2b test drift) | — | [0233-sprint-150-closure.md](0233-sprint-150-closure.md) |
+| 0234 | ADR-0234: Sprint 151 Closure — Cron Dashboard Parser + Patch Source (1 atomic commit, score 9.9 → 9.9, 0 NEW layer violations, 3 fails closed) | — | [0234-sprint-151-closure.md](0234-sprint-151-closure.md) |
+| 0235 | ADR-0235: Sprint 152 Closure — RAG Filter + Source Attribution + Langfuse Test (3 atomic commits, score 9.9 → 9.9, 0 NEW layer violations, 13 fails closed) | — | [0235-sprint-152-closure.md](0235-sprint-152-closure.md) |
+| 0236 | ADR-0236: Sprint 161 Closure — Pre-flight Verified + Stale Claims Corrected (0 atomic, score 9.9, 14 dsl + 22 core = 36 pre-existing) | — | [0236-sprint-161-closure.md](0236-sprint-161-closure.md) |
+| 0237 | ADR-0237: Sprint 163 Closure — Per-Route Protocol Overrides & Settings Wiring | — | [0237-sprint-163-closure.md](0237-sprint-163-closure.md) |
+| 0239 | ADR-0239: Sprint 165 Closure — Facades + CB + Hot-reload (7 atomic, score 9.9, 0 NEW violations) | — | [0239-sprint-165-closure.md](0239-sprint-165-closure.md) |
+| 0241 | ADR-0241: Sprint 166 Final Closure — Kafka CDC + Sandbox + Docs (3 atomic, score 9.9, 0 NEW violations) | — | [0241-sprint-166-final-closure.md](0241-sprint-166-final-closure.md) |
+| 0242 | S168 W11 P2-11: Decision: mkdocs-material (primary) + Sphinx (deprecated) | — | [0242-s168-w11-mkdocs-vs-sphinx-decision.md](0242-s168-w11-mkdocs-vs-sphinx-decision.md) |
+| 0243 | S168 W11 P2-3: ADR dedup plan (11 collision-slots) | — | [0243-s168-w11-adr-dedup-plan.md](0243-s168-w11-adr-dedup-plan.md) |
+| 0244 | S168 W11 P2-10: Domain leakage to extensions — migration plan | — | [0244-s168-w11-domain-leakage-migration-plan.md](0244-s168-w11-domain-leakage-migration-plan.md) |
+| 0245 | ADR-0245: S168 Delta Closure — Tool Import Fix + Allowlist Regen (2 atomic, score 9.85, 0 NEW violations) | — | [0245-s168-delta-closure.md](0245-s168-delta-closure.md) |
+| 0246 | ADR-0246: Sprint 30 Security Patch — 7 Dependabot Vulnerabilities Fixed | — | [0246-s30-security-patch.md](0246-s30-security-patch.md) |
+| 0247 | ADR-0247: S169 W2 Feature Pack — RLM, DI Scope, Per-Invoke Tool Policy, Linter Cleanup | — | [0247-s30-rlm-di-scope-tool-policy.md](0247-s30-rlm-di-scope-tool-policy.md) |
+| 0248 | ADR-0248 — Sprint 43: Deep-Audit Quick Wins (Layer linter P0 + P7 logger + schemas shims) | ✅ ACCEPTED (3 atomic commits merged) | [0248-s43-deep-audit-quick-wins.md](0248-s43-deep-audit-quick-wins.md) |
+| 0249 | ADR-0249: DSL → upper-layer imports consolidation (legacy tech debt) | — | [0249-dsl-upper-layer-imports-debt.md](0249-dsl-upper-layer-imports-debt.md) |
+| 0250 | ADR-0250 — Sprint 45: Audit Backlog QW10 + S1 Closure | ✅ ACCEPTED (2 atomic commits merged) | [0250-s45-audit-backlog-closure.md](0250-s45-audit-backlog-closure.md) |
+| 0251 | ADR-0251 — S13: Circuit Breaker Middleware → Shared State | 🔴 DECLINED — K8s multi-pod safety requires Redis, but wiring | [0251-s13-circuit-breaker-shared-state.md](0251-s13-circuit-breaker-shared-state.md) |
+| 0252 | ADR-0252: S-L7-5 W3C TraceContext MQ wiring — deferred (Sprint 4 L10) | — | [0252-s4-l7-5-mq-trace-propagator-wiring-deferral.md](0252-s4-l7-5-mq-trace-propagator-wiring-deferral.md) |
+| 0253 | ADR-0253: AsyncElasticsearch transport — aiohttp → httpxasync (Sprint 36 L1) | — | [0253-httpx-async-elasticsearch-transport.md](0253-httpx-async-elasticsearch-transport.md) |
+| 0254 | ADR-0254: AgentSecurity god-object 5/5 — DISCOVERED COMPLETE (S43 W3, Variant 3) | — | [0254-agent-security-godobject-refactor-plan.md](0254-agent-security-godobject-refactor-plan.md) |
+| 0255 | ADR-0255: L5 Security Chain restoration (S44 W1) | — | [0255-l5-security-chain-restoration.md](0255-l5-security-chain-restoration.md) |
+| 0256 | ADR-0256: `pytest` integration/ai RUNS — R12/R13 otel-block FALSE CLAIM | — | [0256-otel-pin-full-pytest-confirmed-runnable.md](0256-otel-pin-full-pytest-confirmed-runnable.md) |
+| 0257 | ADR-0257: Coverage extension — real measurement = 13% (was fake 90.35%) | — | [0257-coverage-extension-real-measurement-13pct.md](0257-coverage-extension-real-measurement-13pct.md) |
+| 0258 | ADR-0258: dependabot Python bumps BLOCKED by aio-pika pre-release constraint | — | [0258-dependabot-python-deps-blocked-aio-pika.md](0258-dependabot-python-deps-blocked-aio-pika.md) |
+| 0259 | ADR-0259: Audit claims fact-check — 3 production claims re-verified (cycle 249) | — | [0259-audit-claims-factcheck-cycle-249.md](0259-audit-claims-factcheck-cycle-249.md) |
+| 0260 | ADR-0260: DSL external library usage — current state map (cycle 250) | — | [0260-dsl-external-lib-usage-map-cycle-250.md](0260-dsl-external-lib-usage-map-cycle-250.md) |
+| 0261 | ADR-0259: Sprint 45 coverage ratchet — 2-3pp/cycle honest climb to 60% | — | [0261-sprint-45-coverage-ratchet.md](0261-sprint-45-coverage-ratchet.md) |
+| 0262 | ADR-0262: Mobile JWT Validation Epic — Current State + Plan (cycle 258) | — | [0262-mobile-jwt-validation-epic-cycle-258.md](0262-mobile-jwt-validation-epic-cycle-258.md) |
+| 0263 | ADR-0263: S-L7-5 W3C TraceContext MQ wiring — partial completion (cycle 260) | — | [0263-s-l7-5-tracecontext-mq-wiring-cycle-260.md](0263-s-l7-5-tracecontext-mq-wiring-cycle-260.md) |
+| 0264 | ADR-0264: Sprint 46 Plan + Mobile JWT Phase 1 (cycle 261) | — | [0264-sprint-46-mobile-jwt-phase1-cycle-261.md](0264-sprint-46-mobile-jwt-phase1-cycle-261.md) |
+| 0265 | ADR-0265: OWASP JWT Security Checklist Review (cycle 263) | 14/17 items implemented (82%), 3 deferred to client/infra/Ph | [0265-owasp-jwt-checklist-review-cycle-263.md](0265-owasp-jwt-checklist-review-cycle-263.md) |
+| 0266 | ADR-0266: S13 Circuit Breaker Redis — still DECLINED (cycle 268) | — | [0266-s13-circuit-breaker-redis-still-declined-cycle-268.md](0266-s13-circuit-breaker-redis-still-declined-cycle-268.md) |
+| 0267 | ADR-0267: Sprint 48 Plan + S13 Phase 1 Foundation (cycle 270) | — | [0267-sprint-48-s13-phase1-mobilerfresh-cycle-270.md](0267-sprint-48-s13-phase1-mobilerfresh-cycle-270.md) |
+| 0268 | ADR-0268: S13 Phase 2 Investigation — middleware refactor scope (cycle 272) | — | [0268-s13-phase2-investigation-cycle-272.md](0268-s13-phase2-investigation-cycle-272.md) |
+| 0269 | ADR-0269: Sprint 49 Plan + S13 Phase 2a Adapter (cycle 273) | — | [0269-sprint-49-s13-phase2a-cycle-273.md](0269-sprint-49-s13-phase2a-cycle-273.md) |
+| 0270 | ADR-0270: Sprint 50 Plan + S13 Phase 2b Middleware Wiring (cycle 276) | — | [0270-sprint-50-s13-phase2b-middleware-cycle-276.md](0270-sprint-50-s13-phase2b-middleware-cycle-276.md) |
+| 0271 | ADR-0271: Phase 2c Legacy Deprecation — Deferred to S51 (cycle 277) | — | [0271-s50-w2-legacy-deferral-cycle-277.md](0271-s50-w2-legacy-deferral-cycle-277.md) |
+| 0272 | ADR-0272: Mobile JWT Production Readiness Checklist (cycle 278) | — | [0272-mobile-jwt-production-readiness-cycle-278.md](0272-mobile-jwt-production-readiness-cycle-278.md) |
+| 0273 | ADR-0273: S13 Phase 2b-2 __call__ Dispatch Fix (cycle 281) | — | [0273-s13-phase2b-2-call-dispatch-fix-cycle-281.md](0273-s13-phase2b-2-call-dispatch-fix-cycle-281.md) |
+| 0274 | ADR-0274: S13 Phase 2c Legacy DeRemoval — Complete (cycle 282) | — | [0274-s13-phase2c-legacy-removal-cycle-282.md](0274-s13-phase2c-legacy-removal-cycle-282.md) |
+| 0275 | ADR-0275: Purgatory ContextManager Protocol Integration (cycle 283) | — | [0275-purgatory-contextmanager-integration-cycle-283.md](0275-purgatory-contextmanager-integration-cycle-283.md) |
+| 0276 | ADR-0276: S13 Phase 4 Staging Rollout Plan (cycle 284) | — | [0276-s13-phase4-staging-rollout-plan-cycle-284.md](0276-s13-phase4-staging-rollout-plan-cycle-284.md) |
+| 0277 | ADR-0277: P0-P3 Audit Verification (cycle 292) | — | [0277-p0-p3-audit-verification-cycle-292.md](0277-p0-p3-audit-verification-cycle-292.md) |
+| 0279 | ADR-0279: Circuit-breaker metrics refactor (cross-layer fix) | — | [0279-circuit-breaker-metrics-refactor.md](0279-circuit-breaker-metrics-refactor.md) |
+| 0280 | ADR-0280: LISTEN/NOTIFY для workflow events — defer до S220+ (pg-runner removal) | — | [0280-listen-notify-defer-pg-runner-removal.md](0280-listen-notify-defer-pg-runner-removal.md) |
+| 0281 | ADR-0281: HTTP-migration Phase C close-out (S34 W1) | — | [0281-phase-c-http-migration-closeout.md](0281-phase-c-http-migration-closeout.md) |
+| 0282 | ADR-0282: Layer allowlist multi-sprint prune plan (S34-S39) | — | [0282-layer-allowlist-prune.md](0282-layer-allowlist-prune.md) |
+| 0283 | ADR-0283: RouteBuilder MRO composition refactor (ACCEPTED — HIGH risk, decomposed) | — | [0283-routebuilder-mro-composition.md](0283-routebuilder-mro-composition.md) |
+| 0284 | ADR-0284: Architectural debt resolution (services + entrypoints → infrastructure) | — | [0284-architectural-debt-resolution.md](0284-architectural-debt-resolution.md) |
+| 0285 | ADR-0285: Per-layer coverage thresholds (Phase 1 gate) | — | [0285-per-layer-coverage-thresholds.md](0285-per-layer-coverage-thresholds.md) |
+| 0286 | ADR-0286: Narrow infrastructure → services allowance for log_indexer (Phase B Item 6) | — | [0286-narrow-infra-services-allowance.md](0286-narrow-infra-services-allowance.md) |
+| 0287 | ADR-0287: diskcache PYSEC-2026-2447 deferral (no upstream fix) | — | [0287-diskcache-pyssec-2447-deferral.md](0287-diskcache-pyssec-2447-deferral.md) |
+| 0288 | ADR-0288: Pinned major versions policy (M3.T5, 1-year justification) | — | [0288-pinned-major-versions-policy.md](0288-pinned-major-versions-policy.md) |
+| 0289 | ADR-0289: pypdf 6.14.2 → 6.16.1 (CVE patch + minor) | — | [0289-pypdf-6.14.2-to-6.16.1-rationale.md](0289-pypdf-6.14.2-to-6.16.1-rationale.md) |
+| 0290 | ADR-0290: pip-audit-allowlist cleanup (22 stale CVEs) | — | [0290-pip-audit-allowlist-cleanup.md](0290-pip-audit-allowlist-cleanup.md) |
+| 0291 | ADR-0291: cryptography upper bound lift <50.0.0 → <51.0.0 | — | [0291-cryptography-50.0.1-build-verification.md](0291-cryptography-50.0.1-build-verification.md) |
+| 0292 | ADR-0292: frontend_facade — постоянное исключение (YAGNI/ponytail) | ACCEPTED (per user plan: «явный ADR о постоянном исключении» | [0292-frontend-facade-allowed.md](0292-frontend-facade-allowed.md) |
+| 0293 | ADR-0293: bandit HIGH confidence findings — категоризация как LEGITIMATE patterns | ACCEPTED | [0293-bandit-high-confidence-categorized.md](0293-bandit-high-confidence-categorized.md) |
+| 0295 | ADR-0295: Metrics Honest Audit — корректировка самосчёта (2026-09-05) | ACCEPTED (self-audit correction) | [0295-metrics-honest-audit.md](0295-metrics-honest-audit.md) |
+| 0296 | ADR-0296: Gate 15 (feature-flags audit) — infra-deferral | — | [0296-feature-flags-vault-deferral.md](0296-feature-flags-vault-deferral.md) |
+| 0297 | ADR-0297: S170 CL-12 Frontend facade migration (9/9 → 0 migratable, 4 exceptions remain) | ACCEPTED + EXECUTED (commits `6fd3523d0` ... `bb5a306ff`) | [0297-frontend-migration-9-of-13.md](0297-frontend-migration-9-of-13.md) |
+| 0298 | ADR-0298: Удалённое исполнение — остаёмся на asyncssh; Fabric отклонён (sync-only) | accepted (interim — контекст запрошен пользователем: «изучи  | [0298-remote-exec-asyncssh-over-fabric.md](0298-remote-exec-asyncssh-over-fabric.md) |
+| 0299 | ADR-0299: orphan-create-task → get_task_registry() migration plan | EXECUTED + CLOSED (12 commits, 13 sites migrated, 1 design-e | [0299-orphan-create-task-migration-plan.md](0299-orphan-create-task-migration-plan.md) |
+| 0300 | ADR-0300: Out-of-scope implementation plan per user explicit ask | PROPOSED + PARTIALLY EXECUTED (1 atomic commit) | [0300-out-of-scope-implementation-plan.md](0300-out-of-scope-implementation-plan.md) |
+| 0301 | ADR-0301: entrypoints → dsl (санкционированное направление импортов) | — | [0301-entrypoints-import-dsl.md](0301-entrypoints-import-dsl.md) |
+| 0302 | ADR-0302: Accepted outdated-minimum для 32 residual пакетов (Wave OP-5) | — | [0302-accepted-outdated-minimum.md](0302-accepted-outdated-minimum.md) |
+| 0303 | ADR-0303: mypy strict budget — accept 30 errors baseline (Sprint 175+) | — | [0303-mypy-budget-ratchet.md](0303-mypy-budget-ratchet.md) |
+| 0304 | ADR-0304: except-кортежи без скобок каноничны (PEP 758); гейт перепрофилирован в fail-closed parse | accepted (2026-09-21) | [0304-except-tuple-pep758-canonical.md](0304-except-tuple-pep758-canonical.md) |
+| 0306 | ADR-0306 — W0 P0-BLOCKER: миграция `except A, B:` → `except (A, B):` | Accepted (2026-09-23, cycle 152). | [0306-w0-py2-except-syntax-migration.md](0306-w0-py2-except-syntax-migration.md) |
+| 0307 | ADR-0307 — W3 P0-4: shim inventory + classification (MINIMAX Phase 1) | Accepted (2026-09-23, cycle 152). | [0307-w3-p0-4-shim-inventory-classification.md](0307-w3-p0-4-shim-inventory-classification.md) |
+| 0308 | ADR-0308 — W2 prerequisite: SagaLRA deadline integration re-apply (current branch) | Accepted (2026-09-23, cycle 152). | [0308-w2-prereq-saga-lra-deadline-reapply.md](0308-w2-prereq-saga-lra-deadline-reapply.md) |
+| 0309 | ADR-0309 — W3 P0-4 Phase 2A: rename `_legacy.py` → `common.py` (reliability) | Accepted (2026-09-23, cycle 152). | [0309-w3-p0-4-phase2a-reliability-rename.md](0309-w3-p0-4-phase2a-reliability-rename.md) |
+| 0310 | ADR-0310 — W3 P0-5: RouteBuilder/WorkflowBuilder `.pyi` drift fix + CI enforcement | Accepted (2026-09-23, cycle 152). | [0310-w3-p0-5-pyi-drift-regeneration.md](0310-w3-p0-5-pyi-drift-regeneration.md) |
+| 0311 | ADR-0311 — W4 P1-6: aiocache evaluation + HYBRID decision (sync=cachetools, simple async=aiocache opt-in, advanced=custom) | Accepted (2026-09-23, cycle 152). | [0311-w4-p1-6-aiocache-evaluation-hybrid.md](0311-w4-p1-6-aiocache-evaluation-hybrid.md) |
+| 0312 | ADR-0312 — W5 P1-7: structlog как default backend (factory auto-detect + circular import fix) | Accepted (2026-09-23, cycle 152). | [0312-w5-p1-7-structlog-default-circular-fix.md](0312-w5-p1-7-structlog-default-circular-fix.md) |
+| 0313 | ADR-0313 — W2 P0-3 Phase 1A: BatchProcessor migration pilot (single-file processor consolidation) | Accepted (2026-09-23, cycle 152). | [0313-w2-p0-3-batch-processor-migration-pilot.md](0313-w2-p0-3-batch-processor-migration-pilot.md) |
+| 0314 | ADR-0314 — W2 P0-3 Phase 1B: 5 single-file processors migration (strangler_fig, data_lineage, plan_execute, reflection_loop, router_specialist) | Accepted (2026-09-23, cycle 152). | [0314-w2-p0-3-phase1b-remaining-processors.md](0314-w2-p0-3-phase1b-remaining-processors.md) |
+| 0315 | ADR-0315 — W2 P0-3 Phase 1C: event_store + idp_pipeline_processor subpackages migration | Accepted (2026-09-23, cycle 152). | [0315-w2-p0-3-phase1c-event-store-idp-pipeline-subpackages.md](0315-w2-p0-3-phase1c-event-store-idp-pipeline-subpackages.md) |
+| 0316 | ADR-0316 — W2 P0-3 Phase 2: SagaLRA — Variant A (migrate legacy mixin-based subpackage) + ADR | — | [0316-w2-p0-3-phase2-saga-lra-decision.md](0316-w2-p0-3-phase2-saga-lra-decision.md) |
+| 0317 | ADR-0317 — W7 P1-9: DI evaluation — dishka vs самописный module_registry | Accepted (research only, cycle 152). | [0317-w7-p1-9-di-evaluation-dishka-vs-custom.md](0317-w7-p1-9-di-evaluation-dishka-vs-custom.md) |
+| 0318 | ADR-0318 — W6 P1-8: argparse → typer CLI migration pilot (tools/import_wsdl.py) | Accepted (cycle 152). | [0318-w6-p1-8-pilot-argparse-to-typer.md](0318-w6-p1-8-pilot-argparse-to-typer.md) |
+| 0319 | ADR-0319 — W6 P1-8 Phase 2: argparse → typer migration (`tools/import_postman.py`) | Accepted (cycle 152). | [0319-w6-p1-8-phase2-import-postman-typer.md](0319-w6-p1-8-phase2-import-postman-typer.md) |
+| 0320 | ADR-0320 — W9 P2-13: `dsl/builders/base/_protocols.py` → package split (god-module decomposition) | Accepted (cycle 153). | [0320-w9-p2-13-routebuilder-protocols-god-module-split.md](0320-w9-p2-13-routebuilder-protocols-god-module-split.md) |
+| 0321 | ADR-0321 — W9 P2-13 Phase 2: `core/di/providers/cache.py` god-module → domain split + duplicate audit | Accepted (cycle 153). | [0321-w9-p2-13-phase2-cache-providers-decomposition.md](0321-w9-p2-13-phase2-cache-providers-decomposition.md) |
+| 0322 | ADR-0322 — W6 P1-8 Phase 3: `tools/check_env_example.py` argparse → typer | Accepted (cycle 153). | [0322-w6-p1-8-phase3-check-env-example-typer.md](0322-w6-p1-8-phase3-check-env-example-typer.md) |
+| 0323 | ADR-0323 — W6 P1-8 Phase 4: `tools/check_dsn_drivers.py` argparse → typer | Accepted (cycle 153). | [0323-w6-p1-8-phase4-check-dsn-drivers-typer.md](0323-w6-p1-8-phase4-check-dsn-drivers-typer.md) |
+| 0324 | ADR-0324 — W6 P1-8 Phase 5: `tools/s86_workflow_sandbox_guard.py` argparse → typer | Accepted (cycle 153). | [0324-w6-p1-8-phase5-s86-workflow-sandbox-guard-typer.md](0324-w6-p1-8-phase5-s86-workflow-sandbox-guard-typer.md) |
+| 0325 | ADR-0325 — W6 P1-8 Phase 6: `tools/migrate_to_structlog.py` argparse → typer | Accepted (cycle 153). | [0325-w6-p1-8-phase6-migrate-to-structlog-typer.md](0325-w6-p1-8-phase6-migrate-to-structlog-typer.md) |
+| 0326 | ADR-0326 — W6 P1-8 Phase 7: `tools/generate_adr_index.py` argparse → typer | Accepted (cycle 153). | [0326-w6-p1-8-phase7-generate-adr-index-typer.md](0326-w6-p1-8-phase7-generate-adr-index-typer.md) |
+| 0327 | ADR-0327 — W6 P1-8 Phase 8: `tools/check_docstrings.py` argparse → typer | Accepted (cycle 153). | [0327-w6-p1-8-phase8-check-docstrings-typer.md](0327-w6-p1-8-phase8-check-docstrings-typer.md) |
+| 0328 | ADR-0328 — W9 P2-13 Phase 3: `core/privacy/delete_data_subject.py` → package split (god-module decomposition) | Accepted (cycle 153). | [0328-w9-p2-13-phase3-privacy-delete-data-subject-split.md](0328-w9-p2-13-phase3-privacy-delete-data-subject-split.md) |
+| 0329 | ADR-0329 — W9 P2-13 Phase 4: `services/ops/health.py` (609 LOC) → package split | Accepted (cycle 153). | [0329-w9-p2-13-phase4-services-ops-health-split.md](0329-w9-p2-13-phase4-services-ops-health-split.md) |
+| 0330 | ADR-0330 — W9 P2-13 Phase 5: `services/ai/agent_sandbox.py` (601 LOC) → package split | Accepted (cycle 153). | [0330-w9-p2-13-phase5-services-ai-agent-sandbox-split.md](0330-w9-p2-13-phase5-services-ai-agent-sandbox-split.md) |
+| 0331 | ADR-0331 — W9 P2-13 Phase 7: `core/di/providers/workflow.py` (602 LOC) → package split | Accepted (cycle 153). | [0331-w9-p2-13-phase7-core-di-workflow-providers-split.md](0331-w9-p2-13-phase7-core-di-workflow-providers-split.md) |
+| 0333 | ADR-0333 — W6 P1-8 Phase 10: `tools/scaffold.py` argparse → typer (subcommands) + structlog Py2 syntax fix | Accepted (cycle 153). | [0333-w6-p1-8-phase10-scaffold-typer.md](0333-w6-p1-8-phase10-scaffold-typer.md) |
+| 0334 | ADR-0334 — Фактчек заявления о массовой синтаксической регрессии в master | — | [0334-factcheck-master-state-vs-claim.md](0334-factcheck-master-state-vs-claim.md) |
+| 0335 | ADR-0335 — Configuration matrix gate: unsafe secret defaults detector | — | [0335-w11-p0-2-config-unsafe-defaults-gate.md](0335-w11-p0-2-config-unsafe-defaults-gate.md) |
+| 0336 | ADR-0336 — W11 P0-3: Configuration matrix — required secrets & unknown vars | — | [0336-w11-p0-3-env-example-matrix-gate.md](0336-w11-p0-3-env-example-matrix-gate.md) |
+| 0337 | ADR-0337 — Canonical error contract (DomainProblem) | — | [0337-w11-p0-4-canonical-error-contract.md](0337-w11-p0-4-canonical-error-contract.md) |
+| 0338 | ADR-0338 — Outbox state-machine crash matrix (model-based tests) | — | [0338-w11-p1-1-outbox-crash-matrix.md](0338-w11-p1-1-outbox-crash-matrix.md) |
+| 0339 | ADR-0339 — DLQ replay governance (7-step flow + capability + rate limit + audit) | — | [0339-w11-p1-2-dlq-replay-governance.md](0339-w11-p1-2-dlq-replay-governance.md) |
+| 0340 | ADR-0340 — Audit log integrity (hash chain ledger) | — | [0340-w11-p2-1-audit-hash-chain.md](0340-w11-p2-1-audit-hash-chain.md) |
+| 0341 | ADR-0341 — Legacy DSL processors inventory tool | — | [0341-w2-p1-2-legacy-processors-inventory.md](0341-w2-p1-2-legacy-processors-inventory.md) |
+| 0342 | ADR-0342 — AIPolicySpec S76 tool_policy → tools migration | — | [0342-ai-policy-spec-s76-tool-policy-migration.md](0342-ai-policy-spec-s76-tool-policy-migration.md) |
+| 0343 | ADR-0343 — PluginManifest schema migration: core_admin / dadata / skb | — | [0343-pluginmanifest-schema-evolution-core-admin-dadata-skb.md](0343-pluginmanifest-schema-evolution-core-admin-dadata-skb.md) |
+| 0344 | ADR-0344 — SagaLRA convergence plan (per v4 §9) | — | [0344-sagalra-convergence-plan.md](0344-sagalra-convergence-plan.md) |
+| 0345 | ADR-0345 — Object-Level Authorization: ownership policy (P0 audit response) | — | [0345-p0-object-ownership-policy-options.md](0345-p0-object-ownership-policy-options.md) |
+| 0348 | ADR-0348 — Разрешение зависимости `services → dsl` | Draft (на согласование) | [0348-services-to-dsl-dependency.md](0348-services-to-dsl-dependency.md) |
+| 0349 | ADR-0349 — Response-binding (`to:`) в DSL-роутах | Draft (на согласование) | [0349-dsl-response-binding-to.md](0349-dsl-response-binding-to.md) |
+| 0350 | ADR-0350 — Удаление мёртвого кода: `core/rate_limiter/` и `core/utils/cache_keys.py` | Draft (на согласование владельца) | [0350-remove-dead-code-rate-limiter-cache-keys.md](0350-remove-dead-code-rate-limiter-cache-keys.md) |
+| 0351 | ADR-0351: Logging Facade Status Audit & Inline Antipattern Migration Plan | Accepted (2026-10-20, cycle-160/161 audit). | [0351-logging-facade-status-audit.md](0351-logging-facade-status-audit.md) |
+| 0352 | ADR-0352: Унификация двух `UnifiedCacheFacade` (Cycle 163 cache audit) | — | [0352-cache-facade-duplication.md](0352-cache-facade-duplication.md) |
+| 0353 | ADR-0353: Удаление `src/backend/core/rate_limiter/` (cycle 170) | ACCEPTED (2026-10-20, cycle 170, пользователь Mavis) | [0353-rate-limiter-removal.md](0353-rate-limiter-removal.md) |
+| 0354 | ADR-0354: `CacheProcessor` → `services.cache.UnifiedCacheFacade` (tenant prefix) — cycle 170 | HIGH risk (security — tenant isolation). | [0354-cacheprocessor-tenant-services-facade.md](0354-cacheprocessor-tenant-services-facade.md) |
+| 0355 | ADR-0355: Deprecate `policy.cache()` marker — rename to `cache_policy` (cycle 170) | ACCEPTED (2026-10-20, cycle 170, пользователь Mavis) | [0355-deprecate-policy-cache-marker.md](0355-deprecate-policy-cache-marker.md) |
+| 0356 | ADR-0356: CacheProcessor RedisError handling + InfraLoggingMixin (cycle 170) | ACCEPTED (2026-10-20, cycle 170, пользователь Mavis) | [0356-cacheprocessor-rediserror-infralogging-mixin.md](0356-cacheprocessor-rediserror-infralogging-mixin.md) |
+| 0357 | ADR-0357 — Отдельная capability `storage.presign` для presigned-URL (cycle 172) | Accepted (2026-10-27, cycle 172) | [0357-storage-presign-capability.md](0357-storage-presign-capability.md) |
+| 0358 | ADR-0358 — Allowlist файловых путей в конфиг-системе и единый path-барьер DSL (cycle 172) | Accepted (2026-10-27, cycle 172) | [0358-dsl-path-allowlist-config.md](0358-dsl-path-allowlist-config.md) |
+| 0359 | ADR-0359 — Канонический SQL-guard для DSL и fail-closed flag для `infra_db_query` (cycle 172) | Accepted (2026-10-27, cycle 172) | [0359-dsl-sql-guard-and-infra-db-flag.md](0359-dsl-sql-guard-and-infra-db-flag.md) |
+| 0360 | ADR-0360 — Allowlist-валидация идентификаторов в CDC (cycle 172) | Accepted (2026-10-27, cycle 172) | [0360-cdc-identifier-validation.md](0360-cdc-identifier-validation.md) |
+| 0361 | ADR-0361 — Семантика `required_capability` у DSL-процессоров: фактический deny-all и план починки | ACCEPTED (2026-10-27, cycle 172, Wave 13 — решения Q14 + Q15 | [0361-capability-enforcement-required-capability-semantics.md](0361-capability-enforcement-required-capability-semantics.md) |
+| 0362 | ADR-0362 — Двусторонний аудит конфигурации: разделение orphan- и missing-классов, подключение гейта | ACCEPTED (2026-10-27, cycle 172, Wave 13 — решения Q16 + Q17 | [0362-config-audit-orphan-vs-missing.md](0362-config-audit-orphan-vs-missing.md) |
+| 0363 | ADR-0363 — Драйверы БД: psycopg3 как sync-дефолт, fail-fast на необъявленный драйвер, гейт объявленных зависимостей | ACCEPTED (2026-10-27, cycle 172, Wave 13 — решения Q8 + Q9) | [0363-db-driver-declarations-and-dependency-gate.md](0363-db-driver-declarations-and-dependency-gate.md) |
+| 0364 | ADR-0364 — Удаление мёртвого кода, найденного в Wave 13 | Accepted (2026-10-28, cycle 172, владелец Mavis) | [0364-remove-dead-code-wave13.md](0364-remove-dead-code-wave13.md) |
+| 0365 | ADR-0365 — Единый канон валидации SQL-идентификаторов | Accepted (2026-10-28, cycle 172, владелец Mavis) | [0365-canonical-sql-identifier-validation.md](0365-canonical-sql-identifier-validation.md) |
+| 0366 | ADR-0366 — Runtime-enforcement capability-гейта DSL-процессоров | Accepted (2026-10-28, cycle 172) | [0366-dsl-capability-gate-runtime-enforcement.md](0366-dsl-capability-gate-runtime-enforcement.md) |
+| 0367 | ADR-0367 — Файловый доступ и защита от инъекций в RPA-процессорах | Accepted (2026-10-28, cycle 172) | [0367-rpa-file-access-and-injection-hardening.md](0367-rpa-file-access-and-injection-hardening.md) |
+| 0368 | ADR-0368 — Отказоустойчивость RPA: cleanup-финализаторы, живой circuit breaker, таймауты внешних вызовов | Accepted (2026-10-28, cycle 172) | [0368-rpa-fault-tolerance.md](0368-rpa-fault-tolerance.md) |
+| 0369 | ADR-0369 — RPA: достижимость шагов из YAML и канон именования | Accepted (2026-10-28, cycle 172) | [0369-rpa-step-reachability-and-yaml-naming.md](0369-rpa-step-reachability-and-yaml-naming.md) |
+| 0370 | ADR-0370 — Консолидация RPA-конфига, честная документация и тестовая гигиена | Accepted (2026-10-28, cycle 172) | [0370-rpa-config-consolidation.md](0370-rpa-config-consolidation.md) |
+| 0371 | ADR-0371 — Харденинг prod/staging-профилей и инварианты профилей | Accepted (2026-10-28, cycle 172) | [0371-profile-hardening-and-invariants.md](0371-profile-hardening-and-invariants.md) |
+| 0372 | ADR-0372 — Приоритет источников конфигурации и рабочий hot-reload | Accepted (2026-10-28, cycle 172) | [0372-settings-sources-priority-and-hot-reload.md](0372-settings-sources-priority-and-hot-reload.md) |
+| 0373 | ADR-0373 — Правило «в `.env` только секреты» и гейты конфигурации | Accepted (2026-10-28, cycle 172) | [0373-env-secrets-only-rule-and-gates.md](0373-env-secrets-only-rule-and-gates.md) |
+| 0374 | ADR-0374: Зависимости RPA и обновления по CVE (волна 14) | Accepted (2026-10-28, cycle 172, владелец Mavis) | [0374-rpa-dependencies-and-cve-updates.md](0374-rpa-dependencies-and-cve-updates.md) |
+| 0375 | ADR-0375 — Полнота покрытия настроек, merged-валидация профиля, константы из YAML, типизация секретов | Accepted (2026-10-28, wave 14, финальный кластер CF4) | [0375-settings-coverage-merged-validation-constants-and-secret-typing.md](0375-settings-coverage-merged-validation-constants-and-secret-typing.md) |
+| 0376 | ADR-0376 — Формат payload Vault/Consul и единое разрешение endpoint Vault | Accepted (2026-10-29, cycle 175, кластер W1) | [0376-vault-consul-payload-and-endpoint-resolution.md](0376-vault-consul-payload-and-endpoint-resolution.md) |
+| 0377 | ADR-0377 — Профили без env-плейсхолдеров, WAF-allowlist интеграций и валидация секции constants | Accepted (2026-10-29, wave 15, кластер W2 — «Профили: плейсх | [0377-profile-placeholders-waf-allowlist-and-validation.md](0377-profile-placeholders-waf-allowlist-and-validation.md) |
+| 0378 | ADR-0378 — Маскирование секретов в дампах/логах и необъявленные env-секреты | Accepted (2026-10-29, wave 15, кластер W3) | [0378-secret-masking-and-undeclared-env-secrets.md](0378-secret-masking-and-undeclared-env-secrets.md) |
+| 0379 | ADR-0379 — Честный hot-reload, валидация профиля и приоритет env над .env | Accepted (2026-10-29, wave 15, кластер W4 — «HOT RELOAD, ПРО | [0379-hot-reload-honesty-profile-validation-and-env-priority.md](0379-hot-reload-honesty-profile-validation-and-env-priority.md) |
+| 0380 | ADR-0380 — SQL-инъекция и fail-open в `db_call_procedure` | Accepted (2026-10-29, wave 16, кластер X1 — «SQL-ИНЪЕКЦИЯ И  | [0380-db-call-procedure-injection-and-fail-closed.md](0380-db-call-procedure-injection-and-fail-closed.md) |
+| 0381 | ADR-0381 — Драйверы и DSN: совместимость пар (тип СУБД, драйвер), driver-specific connect_args, fail-fast для недостижимых типов | Accepted (2026-10-29, wave 16, кластер X2 «Драйверы и DSN») | [0381-db-driver-dsn-compatibility.md](0381-db-driver-dsn-compatibility.md) |
+| 0382 | ADR-0382 — Потеря данных и диалекты в DSL-БД | Accepted (2026-10-29, wave 16, кластер X3 — «ПОТЕРЯ ДАННЫХ И | [0382-dsl-db-data-loss-and-dialect-correctness.md](0382-dsl-db-data-loss-and-dialect-correctness.md) |
+| 0383 | ADR-0383 — Tenant-изоляция raw SQL, санитизация PII в ошибках БД и breaker | Accepted (2026-10-29, wave 16, кластер X4 — «TENANT-ИЗОЛЯЦИЯ | [0383-tenant-isolation-raw-sql-and-error-sanitization.md](0383-tenant-isolation-raw-sql-and-error-sanitization.md) |
+| 0384 | ADR-0384 — CDC: граница батча, диалекты и рабочий DSL-путь | Accepted (2026-10-29, wave 16, кластер X5 — «CDC: ПОТЕРЯ СТР | [0384-cdc-batch-boundary-dialects-and-dsl-path.md](0384-cdc-batch-boundary-dialects-and-dsl-path.md) |
+| 0385 | ADR-0385 — Открытые задачи A1–A11: env-гейт, Vault-refresher, WAF, внешние БД и валидация профиля | Accepted (2026-10-29, wave 16, кластер X6 — «ОТКРЫТЫЕ ЗАДАЧИ | [0385-open-tasks-env-vault-waf-and-db-settings.md](0385-open-tasks-env-vault-waf-and-db-settings.md) |
+| 0386 | ADR-0386 — Tenant-guard для `Connection.execute` и RLS на всех tenant-таблицах | Accepted (2026-10-29, wave 17, кластер T1 — «TENANT-GUARD ДЛ | [0386-tenant-guard-for-connection-and-rls-coverage.md](0386-tenant-guard-for-connection-and-rls-coverage.md) |
+| 0387 | ADR-0387 — Деградация пула при старте и удаление мёртвого `QueryResultCache` | Accepted (2026-10-29, wave 17, кластер T2 — «INITIALIZE_ASYN | [0387-db-pool-degradation-and-dead-cache-removal.md](0387-db-pool-degradation-and-dead-cache-removal.md) |
+| 0388 | ADR-0388 — Pillow 12.x: снижение риска без обновления (Pillow <13 из-за streamlit) | Accepted (2026-10-29, wave 17, кластер T3 — «PILLOW 12.x: СН | [0388-pillow-12-risk-mitigation.md](0388-pillow-12-risk-mitigation.md) |
+| 0389 | ADR-0389 — Семантика флага `db_call_procedure_enabled`: отключение должно быть явным | Accepted (2026-10-29, wave 17, кластер T4 — «db_call_procedu | [0389-db-call-procedure-flag-semantics.md](0389-db-call-procedure-flag-semantics.md) |
+| 0390 | ADR-0390 — Production-guard хранилища, пути/файлы и лимиты (волна 18, G1) | Accepted (2026-10-29, cycle 173, волна 18) | [0390-storage-production-guard-and-file-limits.md](0390-storage-production-guard-and-file-limits.md) |
+| 0391 | ADR-0391 — Primary cache-тир, tenant-ключи и деградация кэша (волна 18, кластер G2) | Accepted (2026-10-29, wave 18, кластер G2 — «КЭШИРОВАНИЕ») | [0391-cache-primary-tier-and-tenant-keys.md](0391-cache-primary-tier-and-tenant-keys.md) |
+| 0392 | ADR-0392 — Логирование: ReDoS в PII-регексе, доставка audit-событий, structlog-стек, дефолты конфигурации | Accepted (2026-10-29, волна 18 повторного аудита, кластер G3 | [0392-logging-redos-sync-audit-and-request-logging.md](0392-logging-redos-sync-audit-and-request-logging.md) |
+| 0393 | ADR-0393 — DB-capability-гейт, tenant-изоляция DSL-SQL и авторизация RPA | Accepted (2026-10-29, волна 18 повторного аудита) | [0393-db-capability-gate-and-rpa-authorization.md](0393-db-capability-gate-and-rpa-authorization.md) |
+| 0394 | ADR-0394 — PG-runner: транзиции состояний, payload-контракт, lease и отмена | Accepted (2026-10-29, волна 19, кластер A) | [0394-pg-runner-state-transitions-and-lease.md](0394-pg-runner-state-transitions-and-lease.md) |
+| 0395 | ADR-0395 — Модель workflow-деклараций, регистрация Temporal Worker'а и детерминизм | Accepted (2026-10-29, волна 19, кластер B) | [0395-workflow-declaration-model-and-worker-registration.md](0395-workflow-declaration-model-and-worker-registration.md) |
+| 0396 | ADR-0396 — Компенсации Saga в pg-runner-пути и бюджет времени workflow | Accepted (2026-10-29, волна 19 повторного аудита вехи «воркф | [0396-workflow-compensation-and-time-budget.md](0396-workflow-compensation-and-time-budget.md) |
+| 0397 | ADR-0397 — Эргономика авторства DSL: скаффолд, линтер, capability-гейт, вложенный YAML | Accepted (2026-10-29, волна 19, кластер D — DX) | [0397-dsl-authoring-ergonomics.md](0397-dsl-authoring-ergonomics.md) |
+| 0398 | ADR-0398 — Пагинация event-log, семантика sub_flow, retry-бюджет и build-time резолв activity | Accepted (2026-10-30, волна 20, кластер W1 — workflow) | [0398-workflow-event-log-pagination-and-subflow-semantics.md](0398-workflow-event-log-pagination-and-subflow-semantics.md) |
+| 0399 | ADR-0399 — JSON-Schema процессоров в репозитории, каталог LSP-шагов и метрики workflow | Accepted (2026-10-30, волна 20, кластер W2 — DX: схемы, LSP, | [0399-dsl-schemas-lsp-catalog-and-workflow-metrics.md](0399-dsl-schemas-lsp-catalog-and-workflow-metrics.md) |
+| 0400 | ADR-0400 — Snapshot под RLS, интроспекция GraphQL, честный hot-reload и гейт профилей | Accepted (2026-10-30, волна 20, кластер W3) | [0400-snapshot-rls-graphql-hot-reload-and-bls-gate.md](0400-snapshot-rls-graphql-hot-reload-and-bls-gate.md) |
+| 0401 | ADR-0401 — RPA-runtime wiring, инвалидация всех уровней кэша, квоты и PII fast-path (волна 20, кластер W4) | Accepted (2026-10-30, волна 20, кластер W4 — RPA, кэш, файлы | [0401-rpa-runtime-wiring-cache-invalidation-and-quotas.md](0401-rpa-runtime-wiring-cache-invalidation-and-quotas.md) |
+| 0402 | ADR-0402 — Размещение зависимостей по extras и удаление мёртвого дубля OCR (волна 21, кластер A1) | Accepted (2026-10-30, волна 21, кластер A1 — зависимости и м | [0402-dependency-placement-and-dead-duplicate-removal.md](0402-dependency-placement-and-dead-duplicate-removal.md) |
+| 0403 | ADR-0403 — Workflow-SLA/DLQ: удаление мёртвого трекера, честная фиксация DLQ, прод-валидатор JWT/AI-fallback (волна 21, кластер A2) | Accepted (2026-10-30, волна 21, кластер A2 — workflow-долг,  | [0403-workflow-sla-dlq-and-prod-validator.md](0403-workflow-sla-dlq-and-prod-validator.md) |
+| 0404 | ADR-0404 — Order-dependent тесты: диагностика, устранение загрязнения и гейт | Accepted (2026-10-30); обновлён 2026-11-02 (ADR-0410 — финал | [0404-order-dependent-test-pollution.md](0404-order-dependent-test-pollution.md) |
+| 0405 | ADR-0405 — Миграция `route.toml` под namespace capability: структурированная форма `[[route.capabilities]]` | Accepted (2026-11-02) | [0405-route-capabilities-namespace-migration.md](0405-route-capabilities-namespace-migration.md) |
+| 0406 | ADR-0406 — Pillow 13: разблокировка пина, streamlit 1.66.1 и критерии приёмки | Accepted (2026-11-02, wave 22, кластер B2 — «PILLOW 13 / STR | [0406-pillow-13-blocker-and-criteria.md](0406-pillow-13-blocker-and-criteria.md) |
+| 0407 | ADR-0407 — Прод-значения: контракты HS256, WAF allow_hosts, AI-fallback и replica_dsn (волна 22, кластер B3) | Accepted (2026-11-02, волна 22, кластер B3 — прод-значения:  | [0407-production-values-contracts.md](0407-production-values-contracts.md) |
+| 0408 | ADR-0408 — Workflow-DLQ: контракт для исчерпавших попыток шагов + SLA-алертинг (волна 22, кластер B4) | Accepted (2026-11-02, волна 22, кластер B4 — workflow-DLQ и  | [0408-workflow-dlq-contract-and-sla-alerting.md](0408-workflow-dlq-contract-and-sla-alerting.md) |
+| 0409 | ADR-0409 — Multi-tenant снапшот (fail-closed tenant-скоуп) и честные агенты credit_pipeline (волна 22, кластер B5) | Accepted (2026-11-02, волна 22, кластер B5 — межtenant-снапш | [0409-multi-tenant-snapshot-and-credit-pipeline-agents.md](0409-multi-tenant-snapshot-and-credit-pipeline-agents.md) |
+| 0410 | ADR-0410 — Финальное закрытие order-dependent падений (волна 22, кластер B6) | Accepted (2026-11-02) | [0410-order-dependent-pollution-final.md](0410-order-dependent-pollution-final.md) |
+| 0411 | ADR-0411 — RS256/JWKS: поддержка асимметричного режима JWT, генерация ключевой пары и контракт ротации (волна 23, кластер C1) | Accepted (2026-11-02, волна 23, кластер C1 — RS256 + JWKS) | [0411-jwt-rs256-jwks-support.md](0411-jwt-rs256-jwks-support.md) |
+| 0412 | ADR-0412 — Service-DNS для sidecar'ов и endpoint-контракты (волна 23, кластер C2) | Accepted (2026-11-02, волна 23, кластер C2 — sidecar-DNS и e | [0412-sidecar-dns-and-endpoint-contracts.md](0412-sidecar-dns-and-endpoint-contracts.md) |
+| 0413 | ADR-0413 — Режимы межtenant-снапшота (single-tenant / per-tenant / service-role) | Accepted (2026-11-02, волна 23, кластер C3 — роль `BYPASSRLS | [0413-multi-tenant-snapshot-modes.md](0413-multi-tenant-snapshot-modes.md) |
+| 0414 | ADR-0414 — Модель аудита шагов workflow (волна 23, кластер C4) | Accepted (2026-11-02, волна 23, кластер C4 — аудит шагов wor | [0414-workflow-step-audit-model.md](0414-workflow-step-audit-model.md) |
+| 0415 | ADR-0415 — Провайдер capability `jupyter.hub` и миграция генераторов capability | Accepted (2026-11-02) | [0415-jupyter-hub-provider-and-capability-generators.md](0415-jupyter-hub-provider-and-capability-generators.md) |
+| 0416 | ADR-0416 — Capability-проверка скиллов, честный core-baseline и отказ от wildcard-scope | Accepted (2026-11-02) | [0416-capability-skill-checks-and-wildcard-scope.md](0416-capability-skill-checks-and-wildcard-scope.md) |
+| 0417 | ADR-0417 — Границы tenant-guard'а: main-контур, внешние БД и fail-closed | Accepted (2026-11-02) | [0417-tenant-guard-scope-and-external-sessions.md](0417-tenant-guard-scope-and-external-sessions.md) |
+| 0418 | ADR-0418 — Лимиты выборки, retry на сериализацию, savepoint'ы и гварды batch-шагов (волна 24, кластер F3) | Accepted (2026-11-02, волна 24, кластер F3 — аудит лимитов и | [0418-db-limits-retries-savepoints-and-batch-guards.md](0418-db-limits-retries-savepoints-and-batch-guards.md) |
+| 0419 | ADR-0419 — JWKS-hardening, Jinja2 sandbox, безопасный pickle и маскирование DSN (волна 24, кластер F4) | Accepted (2026-11-02, волна 24, кластер F4 — прочая безопасн | [0419-jwks-hardening-sandbox-and-masking.md](0419-jwks-hardening-sandbox-and-masking.md) |
+| 0420 | ADR-0420 — Ротация кредов БД без рестарта и подключение регистратора пулов | Accepted (2026-11-02, волна 24, кластер F5 — «ротация кредов | [0420-db-credential-rotation-and-dead-pool-registrar.md](0420-db-credential-rotation-and-dead-pool-registrar.md) |
+| 0421 | ADR-0421 — Авторизация на action-поверхности (permissions + admin-префикс) | Accepted (2026-11-02, волна 24, кластер F6a — «авторизация н | [0421-action-permission-enforcement.md](0421-action-permission-enforcement.md) |
+| 0422 | ADR-0422 — Контракт клиент↔сервер и порядок CORS/CSRF/auth | Accepted (2026-11-02, волна 25, кластер F6b-1) | [0422-api-contract-and-cors-csrf-ordering.md](0422-api-contract-and-cors-csrf-ordering.md) |
+| 0423 | ADR-0423 — Полнота OpenAPI-схемы и лимиты загрузки файлов (кластер F6b-2) | Accepted (2026-11-02, волна 25, кластер F6b-2 — полнота Open | [0423-openapi-completeness-and-upload-limits.md](0423-openapi-completeness-and-upload-limits.md) |
+| 0424 | ADR-0424 — Каталог шаблонов workflow для быстрой разработки (волна 25, кластер P5) | Accepted (2026-11-02, волна 25, кластер P5 — «шаблоны workfl | [0424-workflow-template-catalog.md](0424-workflow-template-catalog.md) |
+| 0425 | ADR-0425 — Контракт API-путей портала: гейт по `pages/` + честные панели | Accepted (2026-11-03, волна 26) | [0425-streamlit-portal-api-path-contract.md](0425-streamlit-portal-api-path-contract.md) |
+| 0426 | ADR-0426 — Тестовая изоляция: патч по объекту модуля, без `sys.modules.pop` | Accepted (2026-11-03, волна 26) | [0426-test-isolation-module-object-patching.md](0426-test-isolation-module-object-patching.md) |
+| 0427 | ADR-0427 — Проброс principal/permissions на WS- и GraphQL-поверхности | Accepted (2026-11-03, волна 26) | [0427-auth-propagation-ws-graphql.md](0427-auth-propagation-ws-graphql.md) |
+| 0428 | ADR-0428 — Tenant-фильтр для составных запросов: UNION/CTE (D-4, G13) | Accepted (2026-11-03, волна 26) | [0428-tenant-filter-compound-statements.md](0428-tenant-filter-compound-statements.md) |
+| 0429 | ADR-0429 — «Громкая» семантика провала: ошибка не должна выглядеть как успех | Accepted (2026-11-09, волна 27) | [0429-fail-loud-semantics.md](0429-fail-loud-semantics.md) |
+| 0430 | ADR-0430 — Caller-aware namespace для capability-проверок + гейт деклараций | Accepted (2026-11-09, волна 28) | [0430-caller-aware-capability-namespace.md](0430-caller-aware-capability-namespace.md) |
+| 0431 | ADR-0431 — Идемпотентность внешних вызовов и единая семантика компенсации | Accepted (2026-11-09, волна 28) | [0431-workflow-idempotency-and-compensation.md](0431-workflow-idempotency-and-compensation.md) |
+| 0432 | ADR-0432 — HTTP-поверхности для метрик guardrails и планировщика webhook'ов | Accepted (2026-11-09, волна 28) | [0432-guardrails-metrics-and-webhook-scheduler-endpoints.md](0432-guardrails-metrics-and-webhook-scheduler-endpoints.md) |
+| 0433 | ADR-0433 — Линтер workflow-спецификаций и внутренние activity `reflect`/`checkpoint` | Accepted (2026-11-09, волна 28) | [0433-workflow-spec-linter-and-internal-activities.md](0433-workflow-spec-linter-and-internal-activities.md) |
+| 0434 | ADR-0434 — Единый линтер DSL-YAML, error-лог загрузки workflow, экспорт примитивов устойчивости | Accepted (2026-11-10, волна 29) | [0434-dsl-linter-consolidation-and-docs.md](0434-dsl-linter-consolidation-and-docs.md) |
+| 0435 | ADR-0435 — Строгая проверка ресурсных capability и персистентность checkpoint'ов | Accepted (2026-11-10, волна 29) | [0435-strict-capability-gate-and-checkpoint-persistence.md](0435-strict-capability-gate-and-checkpoint-persistence.md) |
+| 0436 | ADR-0436 — Circuit breaker + bulkhead для внешних вызовов DSL-процессоров | Accepted (2026-11-10, волна 29) | [0436-dsl-circuit-breaker-and-bulkhead.md](0436-dsl-circuit-breaker-and-bulkhead.md) |
+| 0437 | ADR-0437 — Версии промптов: реестр + HTTP-поверхность + Prompt Lab | Accepted (2026-11-10, волна 29) | [0437-prompt-versions-endpoints.md](0437-prompt-versions-endpoints.md) |
+| 0438 | ADR-0438 — Storage-операции по ключу (list/get/download) | Accepted (2026-11-10, волна 29) | [0438-storage-operations-by-key.md](0438-storage-operations-by-key.md) |
+| 0439 | ADR-0439 — Runtime-метрики: пулы соединений и процессы workflow | Accepted (2026-11-10, волна 29) | [0439-runtime-metrics-endpoints.md](0439-runtime-metrics-endpoints.md) |
+| 0440 | ADR-0440 — Prometheus-правила SLA/DLQ для workflow | Accepted (2026-11-10, волна 29) | [0440-prometheus-sla-rules.md](0440-prometheus-sla-rules.md) |
+| 0441 | ADR-0441 — Инфраструктурный чек-лист релиза и явный `audit_clickhouse_enabled` | Accepted (2026-11-10, волна 29) | [0441-infra-release-checklist.md](0441-infra-release-checklist.md) |
+| 0442 | ADR-0442 — Набор extras образа задаётся build-ARG'ом (`UV_EXTRAS`) | Accepted (2026-11-10, волна 31) | [0442-docker-image-extras-arg.md](0442-docker-image-extras-arg.md) |
+| 0443 | ADR-0443 — Пороги блокирующих гейтов берутся из baseline (single source of truth) | Accepted (2026-11-10, волна 31) | [0443-ci-gates-baseline-single-source.md](0443-ci-gates-baseline-single-source.md) |
+| 0444 | ADR-0444 — Helm Secret не пропускает плейсхолдеры в прод | Accepted (2026-11-10, волна 31) | [0444-helm-secret-placeholder-guard.md](0444-helm-secret-placeholder-guard.md) |
+| 0446 | ADR-0446 — Рантайм-контур контейнера: расширения, пулы, healthz-алиас, Vault-refresher | Accepted (2026-11-10, волны 31–32) | [0446-runtime-container-contract.md](0446-runtime-container-contract.md) |
+| 0447 | ADR-0447 — Helm-chart обязан рендериться; CI-шаг `helm lint`/`helm template` | Accepted (2026-11-10, волны 31–32) | [0447-helm-chart-renderable.md](0447-helm-chart-renderable.md) |
+| 0448 | ADR-0448 — ORM-ветка tenant-изоляции: fail-closed без tenant (вариант А) | Accepted (вариант А — решение владельца 2026-11-16) | [0448-orm-tenant-context-fail-closed.md](0448-orm-tenant-context-fail-closed.md) |
+| 0449 | ADR-0449 — Capability из декларации процессора проверяется в рантайме | Accepted (2026-11-16, волна 32) | [0449-processor-declaration-capabilities-enforced.md](0449-processor-declaration-capabilities-enforced.md) |
+| 0450 | ADR-0450 — План погашения межслойных нарушений (40 → 0) с рэтчетом | Accepted (2026-11-17, волна 33) | [0450-layer-violations-paydown.md](0450-layer-violations-paydown.md) |
+| 0451 | ADR-0451 — Миграция capability-деклараций в vocabulary (план + рэтчет) | Accepted (2026-11-17, волна 33) | [0451-capability-vocabulary-migration.md](0451-capability-vocabulary-migration.md) |
+| 0452 | ADR-0452 — Mutation-гейт разблокирован и переведён на рэтчет | Accepted (2026-11-17, волна 33) | [0452-mutation-gate-unblocked.md](0452-mutation-gate-unblocked.md) |
+| 0453 | ADR-0453 — Coverage по группам + `coverage combine` | Accepted (2026-11-17, волна 33) | [0453-grouped-coverage-run.md](0453-grouped-coverage-run.md) |
+| 0454 | ADR-0454 — Capability `audit.write`: enforcement процессора + декларации роутов | Accepted (2026-11-17, волна 33) | [0454-audit-write-capability-enforcement.md](0454-audit-write-capability-enforcement.md) |
+| 0455 | ADR-0455 — Автоматизация инфраструктурных действий (keypair JWKS, роль BYPASSRLS) | Accepted (2026-11-17, волна 33) | [0455-infra-automation-for-owner-actions.md](0455-infra-automation-for-owner-actions.md) |
+| 0456 | ADR-0456 — Engine-wide enforcement capability в DSL-движке | Accepted (2026-11-17, волна 34) | [0456-engine-wide-capability-enforcement.md](0456-engine-wide-capability-enforcement.md) |
+| 0457 | ADR-0457 — Реестр ресурсов расширений: инверсия зависимостей `src/ → extensions` | Accepted (2026-11-17, волна 34) | [0457-extension-resource-registry.md](0457-extension-resource-registry.md) |
+| 0305 | ADR-0305 — Circuit Breaker consolidation поверх purgatory | Draft (2026-09-23). | [ADR-0305-circuit-breaker-consolidation-purgatory.md](ADR-0305-circuit-breaker-consolidation-purgatory.md) |
+| 0346 | ADR-0346 — Run-history store для backfill/catchup scheduler-триггеров | pending/running/missed/done/failed; tenant_id; correlation_i | [ADR-0346-run-history-store-backfill-catchup.md](ADR-0346-run-history-store-backfill-catchup.md) |
+| 0347 | ADR-0347 — Граница tenant-изоляции для авто-регистрируемой поверхности | PROPOSED (требует согласования владельца) | [ADR-0347-tenant-isolation-boundary-auto-surface.md](ADR-0347-tenant-isolation-boundary-auto-surface.md) |
 
-**Total:** 239 ADRs.
-
+_Сгенерировано `tools/build_adr_index.py`. Не редактировать вручную — запустите скрипт повторно._
