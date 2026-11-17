@@ -20,6 +20,7 @@ ADR-0350 (identity без номера строки):
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -62,8 +63,10 @@ def _add_finding_and_restore() -> bool:
         # Cleanup + restore baseline.
         if test_file.exists():
             test_file.unlink()
+        # Каталог мог остаться с __pycache__ (гейт импортирует временный
+        # модуль) — rmdir() на таком каталоге падает с OSError(39).
         if test_dir.exists():
-            test_dir.rmdir()
+            shutil.rmtree(test_dir, ignore_errors=True)
         _run_gate(["--update-baseline"])
 
 
