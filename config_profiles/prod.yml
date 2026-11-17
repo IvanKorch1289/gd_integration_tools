@@ -121,8 +121,9 @@ features:
   # ADR-0441: ClickHouse-трейл audit-событий в prod — ЯВНАЯ настройка.
   # Раньше флаг оставался дефолтом (True) — значение не было видно в
   # профиле prod, и отключить трейл без правки кода base.yml было нельзя.
-  # Требование к rollout: ClickHouse доступен из контейнера app
-  # (сервис clickhouse в docker-compose.prod.yml / внешний DSN в проде).
+  # Требование к rollout: ClickHouse доступен из контейнера app —
+  # сервис clickhouse развёрнут в ops/compose/docker-compose.prod.yml
+  # (либо внешний DSN: CLICKHOUSE_HOST / CLICKHOUSE_HTTP_PORT / CLICKHOUSE_ENABLED).
   audit_clickhouse_enabled: true
 
 
@@ -264,6 +265,11 @@ waf:
     - "api.skb-techno.ru"
     # DaData (services/integrations/dadata.py → dadata.base_url)
     - "suggestions.dadata.ru"
+    # Внутренние сервисы compose-стека prod (service-DNS, ADR-0412):
+    # клиент ClickHouse и клиент JupyterHub ходят через
+    # OutboundHttpClient → WAF strict-проверка allow_hosts.
+    - "clickhouse"
+    - "jupyterhub"
   # ADR-0412: хост clamd — service-DNS имя sidecar'а (k8s Service ``clamd``,
   # deploy/k8s/service.yaml). Loopback в prod/staging — CRITICAL
   # ``waf.clamav_host_loopback_in_prod`` (в k8s это сам pod, а не clamd).
@@ -414,3 +420,32 @@ ai_providers:
 # Провайдер не входит в fallback-цепочку выше, пока сервис не развёрнут.
 open_webui:
   base_url: "http://open-webui:3000"
+
+
+# ─── ClickHouse (audit-трейл, ADR-0441) ───────────────────────────────
+# Сервис clickhouse развёрнут в ops/compose/docker-compose.prod.yml
+# (образ clickhouse/clickhouse-server; HTTP 8123 / native 9000).
+# Хост — service-DNS (ADR-0412): в k8s/compose loopback — это сам контейнер,
+# а не соседний сервис.
+# Пароль — только из env (CLICKHOUSE_PASSWORD) / Vault, в YAML его нет.
+# Внешний ClickHouse (если сервис не разворачивается) — переопределение
+# через env: CLICKHOUSE_HOST / CLICKHOUSE_HTTP_PORT / CLICKHOUSE_ENABLED.
+clickhouse:
+  enabled: true
+  host: "clickhouse"
+  port: 9000
+  http_port: 8123
+  database: "default"
+  user: "default"
+  secure: false
+
+
+# ─── JupyterHub (routes/jupyter_hub_run, ADR-0415) ────────────────────
+# Сервис jupyterhub развёрнут в ops/compose/docker-compose.prod.yml
+# (образ jupyterhub/jupyterhub; API — 8000).
+# base_url — service-DNS (ADR-0412), порт как в compose.
+# enabled=true требует API-токен (JUPYTER_HUB_API_TOKEN) — валидатор
+# JupyterHubSettings fail-closed: без токена конфигурация не поднимается.
+jupyter_hub:
+  enabled: true
+  base_url: "http://jupyterhub:8000"

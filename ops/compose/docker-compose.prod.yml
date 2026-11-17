@@ -3,7 +3,7 @@
 # Назначение:
 #     Поднимает полный стек: app + workflow-worker + Kafka + Minio +
 #     Vault + OTEL Collector + Schema Registry + Debezium Connect +
-#     Celery workers + Celery Beat.
+#     Celery workers + Celery Beat + ClickHouse + OpenWebUI + JupyterHub.
 #
 # Профиль: production (APP_PROFILE=prod для app и workflow-worker).
 #
@@ -13,6 +13,13 @@
 #     - monitoring_enabled: true
 #     - kafka.enabled: true
 #     - vault.enabled: true
+#
+# Секреты сервисов (экспортировать в окружение или положить в
+# ops/compose/.env — значения НЕ хранятся в этом файле):
+#     - CLICKHOUSE_PASSWORD   — пользователь ClickHouse (app + сервис)
+#     - OPEN_WEBUI_SECRET_KEY — секрет сервиса OpenWebUI (WEBUI_SECRET_KEY)
+#     - JUPYTER_HUB_API_TOKEN — API-токен JupyterHub (app + регистрация
+#       в хабе, см. ops/compose/jupyterhub/jupyterhub_config.py)
 #
 # Использование:
 #     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
@@ -172,6 +179,105 @@ services:
     networks:
       - compose_default
 
+  # ─── Analytics ───────────────────────────────────────────────────────
+  # ClickHouse — хранилище audit-трейла (features.audit_clickhouse_enabled
+  # в prod-профиле, ADR-0441). DDL накатывается из
+  # src/backend/services/audit/migrations (docker-entrypoint-initdb.d).
+  # Пароль — только из env (CLICKHOUSE_PASSWORD); в compose не хардкодится.
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.3.65
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-default}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD must be set for prod}
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ../../src/backend/services/audit/migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "8123:8123"   # HTTP (его использует клиент приложения)
+      - "9000:9000"   # native
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --user \"$$CLICKHOUSE_USER\" --password \"$$CLICKHOUSE_PASSWORD\" --query 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+    networks:
+      - compose_default
+
+  # ─── AI ──────────────────────────────────────────────────────────────
+  # OpenWebUI — внутренний LLM-сервер (ADR-0412). Endpoint приложения:
+  # open_webui.base_url = http://open-webui:3000 (prod-профиль).
+  # PORT=3000 задан явно: в текущих образах OpenWebUI дефолт — 8080,
+  # а контракт ADR-0412 (и k8s-Service open-webui) — порт 3000.
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.13.3
+    environment:
+      PORT: "3000"
+      WEBUI_SECRET_KEY: ${OPEN_WEBUI_SECRET_KEY:?OPEN_WEBUI_SECRET_KEY must be set for prod}
+      # Внутренний контур: самостоятельная регистрация пользователей не нужна.
+      ENABLE_SIGNUP: "false"
+    volumes:
+      - open_webui_data:/app/backend/data
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:3000/health', timeout=5)\" || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+    networks:
+      - compose_default
+
+  # ─── Notebooks ───────────────────────────────────────────────────────
+  # JupyterHub — REST API для запуска ноутбуков (routes/jupyter_hub_run).
+  # Токен приложения (JUPYTER_HUB_API_TOKEN) регистрируется в хабе как
+  # API-токен пользователя-администратора — см.
+  # ops/compose/jupyterhub/jupyterhub_config.py.
+  jupyterhub:
+    image: jupyterhub/jupyterhub:4.1.6
+    environment:
+      JUPYTER_HUB_API_TOKEN: ${JUPYTER_HUB_API_TOKEN:-}
+      JUPYTER_HUB_API_USER: ${JUPYTER_HUB_API_USER:-admin}
+      # Пусто → хаб генерирует свой crypt-key и сохраняет его в sqlite.
+      JUPYTERHUB_CRYPT_KEY: ${JUPYTERHUB_CRYPT_KEY:-}
+    volumes:
+      - jupyterhub_data:/srv/jupyterhub
+      - ./jupyterhub/jupyterhub_config.py:/usr/local/etc/jupyterhub/jupyterhub_config.py:ro
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/hub/login >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+    networks:
+      - compose_default
+
   # ─── Celery ───────────────────────────────────────────────────────────
   celery-worker:
     build:
@@ -285,6 +391,9 @@ services:
   # ─── Volumes ──────────────────────────────────────────────────────────
 volumes:
   minio_data:
+  clickhouse_data:
+  open_webui_data:
+  jupyterhub_data:
 
 networks:
   compose_default:
