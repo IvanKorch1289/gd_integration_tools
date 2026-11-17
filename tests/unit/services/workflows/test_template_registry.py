@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from src.backend.services.workflows.template_registry import WorkflowTemplateRegistry
 
 
@@ -67,7 +69,15 @@ def test_get_returns_none_for_unknown() -> None:
     assert registry.get("nonexistent_template") is None
 
 
-def test_search_semantic_returns_relevant_top_k() -> None:
+def test_search_semantic_returns_relevant_top_k(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Semantic-поиск по флагу включает загрузку BGE-M3 (модель) — в тесте
+    # нужен быстрый детерминированный путь (rapidfuzz-fallback).
+    from src.backend.core.config.features import feature_flags
+
+    monkeypatch.setattr(feature_flags, "workflow_template_semantic_search", False)
+
     registry = WorkflowTemplateRegistry()
     results = registry.search_semantic("incident response triage", top_k=3)
     assert len(results) == 3
@@ -80,7 +90,13 @@ def test_search_semantic_empty_query() -> None:
     assert registry.search_semantic("", top_k=5) == []
 
 
-def test_search_semantic_relevant_for_kyc_aml() -> None:
+def test_search_semantic_relevant_for_kyc_aml(monkeypatch: pytest.MonkeyPatch) -> None:
+    # См. test_search_semantic_returns_relevant_top_k: без выключения флага
+    # поднимается BGE-модель (медленно в CI, нестабильно по таймауту).
+    from src.backend.core.config.features import feature_flags
+
+    monkeypatch.setattr(feature_flags, "workflow_template_semantic_search", False)
+
     registry = WorkflowTemplateRegistry()
     results = registry.search_semantic("kyc compliance check", top_k=3)
     names = [t.name for t, _ in results]

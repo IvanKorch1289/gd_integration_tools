@@ -9,6 +9,14 @@ import pytest
 
 pl = pytest.importorskip("polars")
 
+# polars.lazyframe импортируется лениво внутри ``DataFrame.write_parquet``.
+# Если к этому моменту ``polars.dataframe`` уже загружен, ленивый импорт
+# polars.lazyframe упирается во внутренний цикл polars
+# («cannot import name '_is_generator' from partially initialized module
+# 'polars._utils.various'») — порядок импорта в polars не устойчив.
+# Импортируем подмодуль заранее, до первого использования DataFrame.
+pytest.importorskip("polars.lazyframe")
+
 from src.backend.dsl.transforms.dataframes import read_csv, read_excel, write_parquet
 
 pytestmark = pytest.mark.dataframes
