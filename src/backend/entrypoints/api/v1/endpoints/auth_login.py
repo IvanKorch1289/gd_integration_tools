@@ -105,9 +105,14 @@ class LoginResponse(BaseModel):
 
 
 async def _get_user_service() -> Any:
-    """Lazy import UserService (избегаем circular)."""
-    from extensions.core_entities.users.services.users import get_user_service
+    """Lazy resolve UserService через core-реестр расширений (ADR-0457).
 
+    Резолв ленивый: реестр (и, при необходимости, сами расширения)
+    подтягиваются только при первом обращении к сервису.
+    """
+    from src.backend.core.extension_registry import get_extension_resource
+
+    get_user_service = get_extension_resource("users", "service", "users")
     return get_user_service()
 
 

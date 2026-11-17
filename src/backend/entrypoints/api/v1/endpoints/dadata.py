@@ -9,7 +9,7 @@ Routes registered:
 
 from fastapi import APIRouter, Depends
 
-from extensions.dadata.schemas.route import DadataGeolocateQuerySchema  # S168 W17 P2-10
+from src.backend.core.extension_registry import get_extension_resource
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
@@ -18,6 +18,12 @@ from src.backend.entrypoints.api.generator.actions import (
 from src.backend.services.integrations.dadata import get_dadata_service
 
 __all__ = ("router",)
+
+
+# ADR-0457: объект расширения получается через core-реестр (инверсия
+# зависимости ``src/ → extensions``), а не прямым импортом ``extensions.*``.
+# Резолв на уровне модуля — FastAPI строит модель при импорте.
+DadataGeolocateQuerySchema = get_extension_resource("dadata", "schema", "geolocate")
 
 
 router = APIRouter()

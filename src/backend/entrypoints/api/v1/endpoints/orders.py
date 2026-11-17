@@ -12,16 +12,9 @@ Routes registered:
 
 from fastapi import APIRouter, Depends, status
 
-from extensions.core_entities.orders.schemas.filter import OrderFilter
-from extensions.core_entities.orders.schemas.route import (  # S168 W15-17 P2-10
-    OrderIdPathSchema,
-    OrderSchemaIn,
-    OrderSchemaOut,
-    OrderVersionSchemaOut,
-)
-from extensions.core_entities.orders.services.orders import get_order_service
 from src.backend.core.config.settings import settings
 from src.backend.core.enums.invocation import BrokerKind
+from src.backend.core.extension_registry import get_extension_resource
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
@@ -37,6 +30,17 @@ from src.backend.entrypoints.api.generator.invocation import (
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 
 __all__ = ("router",)
+
+
+# ADR-0457: объекты расширения получаются через core-реестр (инверсия
+# зависимости ``src/ → extensions``), а не прямым импортом ``extensions.*``.
+# Резолв на уровне модуля — FastAPI строит модель при импорте.
+OrderFilter = get_extension_resource("orders", "schema", "filter")
+OrderIdPathSchema = get_extension_resource("orders", "schema", "id_path")
+OrderSchemaIn = get_extension_resource("orders", "schema", "schema_in")
+OrderSchemaOut = get_extension_resource("orders", "schema", "schema_out")
+OrderVersionSchemaOut = get_extension_resource("orders", "schema", "version_schema")
+get_order_service = get_extension_resource("orders", "service", "orders")
 
 
 router = APIRouter()

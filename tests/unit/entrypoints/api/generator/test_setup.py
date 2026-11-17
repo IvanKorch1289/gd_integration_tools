@@ -1,88 +1,40 @@
 """Unit-тесты для ``src.backend.entrypoints.api.generator.setup``.
 
-Модуль импортирует сервис-геттеры из ``extensions/*``; в тестах они
-подменяются фейковыми пакетами через ``sys.modules``, чтобы не тянуть
-бизнес-логику extensions и тяжёлые зависимости.
+Модуль получает сервис-геттеры и схемы расширений через core-реестр
+(ADR-0457); в тестах они подменяются фейковыми ресурсами через
+``register_extension_resource``, чтобы не тянуть бизнес-логику extensions
+и тяжёлые зависимости.
 """
 
 from __future__ import annotations
 
 import importlib
-import sys
-import types
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
 
+from src.backend.core.extension_registry import (
+    register_extension_resource,
+    reset_extension_resources,
+)
 from src.backend.dsl.commands.action_registry import ActionHandlerRegistry
 
 
-def _mock_extension_modules(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
-    """Создаёт фейковое дерево модулей для ``extensions/*`` и workflows."""
-    names = [
-        "extensions",
-        "extensions.core_entities",
-        "extensions.core_entities.orderkinds",
-        "extensions.core_entities.orderkinds.services",
-        "extensions.core_entities.orderkinds.services.orderkinds",
-        "extensions.core_entities.orders",
-        "extensions.core_entities.orders.services",
-        "extensions.core_entities.orders.services.orders",
-        "extensions.core_entities.orders.schemas",
-        "extensions.core_entities.orders.schemas.route",
-        "src.backend.workflows",
-        "src.backend.workflows.workflows_service",
-    ]
-    mods: dict[str, Any] = {}
-    for name in names:
-        mod = types.ModuleType(name)
-        mod.__path__ = []
-        mods[name] = mod
-        monkeypatch.setitem(sys.modules, name, mod)
-
-    # Связываем родителей с подмодулями.
-    mods["extensions"].core_entities = mods["extensions.core_entities"]
-    mods["extensions.core_entities"].orderkinds = mods[
-        "extensions.core_entities.orderkinds"
-    ]
-    mods["extensions.core_entities.orderkinds"].services = mods[
-        "extensions.core_entities.orderkinds.services"
-    ]
-    mods["extensions.core_entities"].orders = mods["extensions.core_entities.orders"]
-    mods["extensions.core_entities.orders"].services = mods[
-        "extensions.core_entities.orders.services"
-    ]
-    mods["extensions.core_entities.orders"].schemas = mods[
-        "extensions.core_entities.orders.schemas"
-    ]
-    mods["extensions.core_entities.orders.schemas"].route = mods[
-        "extensions.core_entities.orders.schemas.route"
-    ]
-    mods[
-        "extensions.core_entities.orders.schemas.route"
-    ].OrderIdPathSchema = MagicMock()
-
-    # Сервис-геттеры — достаточно быть вызываемыми MagicMock.
-    mods[
-        "extensions.core_entities.orderkinds.services.orderkinds"
-    ].get_order_kind_service = MagicMock()
-    mods[
-        "extensions.core_entities.orders.services.orders"
-    ].get_order_service = MagicMock()
-    mods["src.backend.workflows.workflows_service"].get_workflows_service = MagicMock()
-
-    return mods
-
-
 @pytest.fixture
-def setup_module(monkeypatch: pytest.MonkeyPatch) -> Any:
-    """Возвращает свежий инстанс модуля ``setup`` с замоканными extensions."""
-    _mock_extension_modules(monkeypatch)
+def setup_module() -> Any:
+    """Возвращает свежий инстанс модуля ``setup`` с фейковыми ресурсами."""
+    reset_extension_resources()
+    register_extension_resource("orders", "schema", "id_path", MagicMock())
+    register_extension_resource("orders", "service", "orders", MagicMock())
+    register_extension_resource("orderkinds", "service", "orderkinds", MagicMock())
+
     from src.backend.entrypoints.api.generator import setup as mod
 
     importlib.reload(mod)
-    return mod
+    yield mod
+
+    reset_extension_resources()
 
 
 @pytest.fixture
@@ -137,3 +89,19 @@ class TestRegisterActionHandlers:
         assert setup_module._is_registered is False
         setup_module.register_action_handlers()
         assert setup_module._is_registered is True
+
+    def test_resources_are_resolved_via_extension_registry(
+        self, setup_module: Any
+    ) -> None:
+        """Модуль берёт объекты расширений из core-реестра (ADR-0457)."""
+        from src.backend.core.extension_registry import get_extension_resource
+
+        assert setup_module.OrderIdPathSchema is get_extension_resource(
+            "orders", "schema", "id_path"
+        )
+        assert setup_module.get_order_service is get_extension_resource(
+            "orders", "service", "orders"
+        )
+        assert setup_module.get_order_kind_service is get_extension_resource(
+            "orderkinds", "service", "orderkinds"
+        )

@@ -14,12 +14,7 @@ from fastapi import (
     status,
 )
 
-from extensions.core_entities.files.schemas.filter import FileFilter
-from extensions.core_entities.files.schemas.route import (  # S168 W15-17 P2-10
-    FileSchemaIn,
-    FileSchemaOut,
-    FileVersionSchemaOut,
-)
+from src.backend.core.extension_registry import get_extension_resource
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
@@ -36,6 +31,16 @@ __all__ = (
     "router",
     "storage_router",
 )
+
+
+# ADR-0457: объекты расширения получаются через core-реестр (инверсия
+# зависимости ``src/ → extensions``), а не прямым импортом ``extensions.*``.
+# Резолв на уровне модуля — FastAPI строит модель при импорте.
+# Сервис файлов берётся из ``services.io.files`` (legacy-шим, вне этой волны).
+FileFilter = get_extension_resource("files", "schema", "filter")
+FileSchemaIn = get_extension_resource("files", "schema", "schema_in")
+FileSchemaOut = get_extension_resource("files", "schema", "schema_out")
+FileVersionSchemaOut = get_extension_resource("files", "schema", "version_schema")
 
 
 router = APIRouter()

@@ -12,18 +12,22 @@ Auth: ``X-API-Key`` (см. ``common_dependencies``).
 
 from fastapi import APIRouter, Depends
 
-from extensions.core_entities.users.schemas.filter import UserFilter
-from extensions.core_entities.users.schemas.route import (  # S168 W15-17 P2-10
-    UserSchemaIn,
-    UserSchemaOut,
-    UserVersionSchemaOut,
-)
-from extensions.core_entities.users.services.users import get_user_service
+from src.backend.core.extension_registry import get_extension_resource
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
 from src.backend.entrypoints.api.generator.actions import ActionRouterBuilder, CrudSpec
 from src.backend.entrypoints.dependencies.rate_limit import get_default_rate_limiter
 
 __all__ = ("router",)
+
+
+# ADR-0457: объекты расширения получаются через core-реестр (инверсия
+# зависимости ``src/ → extensions``), а не прямым импортом ``extensions.*``.
+# Резолв на уровне модуля — FastAPI строит модель при импорте.
+UserFilter = get_extension_resource("users", "schema", "filter")
+UserSchemaIn = get_extension_resource("users", "schema", "schema_in")
+UserSchemaOut = get_extension_resource("users", "schema", "schema_out")
+UserVersionSchemaOut = get_extension_resource("users", "schema", "version_schema")
+get_user_service = get_extension_resource("users", "service", "users")
 
 
 router = APIRouter()

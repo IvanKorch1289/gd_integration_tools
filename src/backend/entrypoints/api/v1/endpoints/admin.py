@@ -1,15 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from extensions.core_admin.schemas.route import (
-    AdminCacheInvalidatePatternSchema,
-    AdminCacheInvalidateTableSchema,
-    AdminCacheInvalidateTagsSchema,
-    AdminCacheKeysQuerySchema,
-    AdminCacheValuePathSchema,
-    AdminToggleFeatureFlagQuerySchema,
-    AdminToggleRouteQuerySchema,
-)
 from src.backend.core.auth.admin_roles import AdminRole, require_admin
+from src.backend.core.extension_registry import get_extension_resource
 from src.backend.entrypoints.api.generator.actions import (
     ActionRouterBuilder,
     ActionSpec,
@@ -18,6 +10,32 @@ from src.backend.services.cache.metrics import get_cache_metrics_snapshot
 from src.backend.services.core.admin import get_admin_service
 
 __all__ = ("router",)
+
+
+# ADR-0457: объекты расширения получаются через core-реестр (инверсия
+# зависимости ``src/ → extensions``), а не прямым импортом ``extensions.*``.
+# Резолв на уровне модуля — FastAPI строит модель при импорте.
+AdminCacheInvalidatePatternSchema = get_extension_resource(
+    "core_admin", "schema", "cache_invalidate_pattern"
+)
+AdminCacheInvalidateTableSchema = get_extension_resource(
+    "core_admin", "schema", "cache_invalidate_table"
+)
+AdminCacheInvalidateTagsSchema = get_extension_resource(
+    "core_admin", "schema", "cache_invalidate_tags"
+)
+AdminCacheKeysQuerySchema = get_extension_resource(
+    "core_admin", "schema", "cache_keys_query"
+)
+AdminCacheValuePathSchema = get_extension_resource(
+    "core_admin", "schema", "cache_value_path"
+)
+AdminToggleFeatureFlagQuerySchema = get_extension_resource(
+    "core_admin", "schema", "toggle_feature_flag"
+)
+AdminToggleRouteQuerySchema = get_extension_resource(
+    "core_admin", "schema", "toggle_route"
+)
 
 
 # S202 audit fix: require admin role для всех admin-endpoints.

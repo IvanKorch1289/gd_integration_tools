@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from extensions.core_entities.orderkinds.services.orderkinds import (
-    get_order_kind_service,
-)
-from extensions.core_entities.orders.schemas.route import (  # S168 W15-17 P2-10
-    OrderIdPathSchema,
-)
-from extensions.core_entities.orders.services.orders import get_order_service
+from src.backend.core.extension_registry import get_extension_resource
 from src.backend.entrypoints.api.generator.registry import (
     ActionHandlerSpec,
     action_handler_registry,
 )
+
+# ADR-0457: объекты расширения получаются через core-реестр (инверсия
+# зависимости ``src/ → extensions``), а не прямым импортом ``extensions.*``.
+OrderIdPathSchema = get_extension_resource("orders", "schema", "id_path")
+get_order_service = get_extension_resource("orders", "service", "orders")
+get_order_kind_service = get_extension_resource("orderkinds", "service", "orderkinds")
 
 # D-AUDIT-8901 fix (cycle 89): src.backend.workflows.workflows_service
 # был удалён в S168 W13 P2-7, но оставались ActionHandlerSpec'ы которые
