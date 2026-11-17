@@ -233,9 +233,9 @@
 | [ADR-0444](0444-helm-secret-placeholder-guard.md) | Helm Secret не пропускает плейсхолдеры в прод | Accepted |
 | [ADR-0446](0446-runtime-container-contract.md) | Рантайм-контур контейнера: расширения, пулы, healthz-алиас, Vault-refresher | Accepted |
 | [ADR-0447](0447-helm-chart-renderable.md) | Helm-chart обязан рендериться; CI-шаг `helm lint`/`helm template` | Accepted |
-| [ADR-0448](0448-orm-tenant-context-fail-closed.md) | ORM-ветка tenant-изоляции: fail-closed без tenant (вариант А, принят) | Accepted |
+| [ADR-0448](0448-orm-tenant-context-fail-closed.md) | ORM-ветка tenant-изоляции: fail-closed без tenant (вариант А) | Accepted |
 | [ADR-0449](0449-processor-declaration-capabilities-enforced.md) | Capability из декларации процессора проверяется в рантайме | Accepted |
-| [ADR-0450](0450-layer-violations-paydown.md) | План погашения межслойных нарушений (41 → 0) с рэтчетом | Accepted |
+| [ADR-0450](0450-layer-violations-paydown.md) | План погашения межслойных нарушений (40 → 0) с рэтчетом | Accepted |
 | [ADR-0451](0451-capability-vocabulary-migration.md) | Миграция capability-деклараций в vocabulary (план + рэтчет) | Accepted |
 | [ADR-0452](0452-mutation-gate-unblocked.md) | Mutation-гейт разблокирован и переведён на рэтчет | Accepted |
 | [ADR-0453](0453-grouped-coverage-run.md) | Coverage по группам + `coverage combine` | Accepted |
