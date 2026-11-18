@@ -217,6 +217,7 @@ CTE; фронтенд кэшировал данные пользователя �
 | 2 | **Мутационный гейт как блокирующее условие** | Нужен выбор: отдельный job на master с кэшем vs ночной прогон vs сузить набор мутируемых модулей |
 | 3 | **Caller-namespace в `execute()`** | Меняет enforcement для всех DSL-роутов → нужен аудит 7 роутов/12 плагинов перед включением |
 | 4 | **Altair-проверка в CI** | Следующий релиз altair снова поднимет проблему Python 3.15 → нужен гейт «import altair на 3.14» в CI или pre-commit |
+| 7 | **Перемер coverage после волны 35** | Baseline 77.68 % измерен до аудита (добавлено ~500 строк кода и ~30 тестов) → нужен групповой прогон на CI-раннере |
 | 5 | **Политика аутентификации** (`basicAuth`/`samlSession` в схеме) | Публичный контракт OpenAPI — решение владельца API |
 | 6 | **Celery в проде** | Нет ни пакета, ни `src/backend/tasks/` → либо реализовать, либо оставить за профилем |
 
@@ -226,7 +227,7 @@ CTE; фронтенд кэшировал данные пользователя �
 
 | Проверка | Результат |
 |---|---|
-| `pytest tests/unit -q --timeout=120 -n 2 --dist loadfile` | **24 328 passed, 0 failed** (регрессия волны 34) → после правок аудита — зелёная (лог: `.run/wave35-logs/reg_ci_audit.txt`) |
+| `pytest tests/unit -q --timeout=120 -n 2 --dist loadfile` | **24 455 passed, 0 failed** (711 с) после правок аудита — лог: `.run/wave35-logs/reg_ci_audit2.txt` |
 | `pytest tests/unit/frontend -q` | **468 passed, 6 skipped** (было 458 + 6) |
 | Импорт-скан 97 модулей страниц | **96 OK / 1** → после пина altair — **97 OK** |
 | `pytest tests/unit/infrastructure tests/unit/services` | **6056 passed**, 77 skipped, 1 xfailed |
@@ -238,8 +239,8 @@ CTE; фронтенд кэшировал данные пользователя �
 | `tools/check_streamlit_deprecations.py` / `check_streamlit_security.py` | 0 matches / All security checks passed |
 | `ruff check` / `format --check` (изменённые файлы) | чисто |
 | `mypy -p src` | 12 ошибок = baseline (регрессий нет) |
-| `tools/checks/check_mutmut.py --timeout 1500` | **PASS 21.6 %** (холодный прогон) |
-| `tools/check_coverage_gate.py --strict` | PASS (77.68 % ≥ 70 %) |
+| `tools/checks/check_mutmut.py --timeout 1500` | **PASS 21.6 %** (прогон после волны 35: лог `.run/wave35-logs/mutmut_audit.txt`) |
+| `tools/check_coverage_gate.py --strict` | PASS (77.68 % ≥ 70 %) — замер сделан до волны 35; перемер на CI-раннере — в остатке (§5) |
 | `uv lock --check` | exit 0 (diff — только altair) |
 | OpenAPI | 447 путей / 477 операций, у всех есть `security` |
 
