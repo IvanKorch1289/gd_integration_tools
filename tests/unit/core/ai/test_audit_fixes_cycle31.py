@@ -14,6 +14,8 @@ HIGH-1 retro fix: Tests now import from canonical ``gateway_orchestrator_mixin``
 from __future__ import annotations
 
 import warnings
+from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -221,10 +223,8 @@ class TestSkillRegistryWhitelistDelegation:
 
 
 @pytest.mark.unit
-def _noop_breaker() -> "MagicMock":
+def _noop_breaker() -> Any:
     """Заглушка circuit-breaker'а для тестов без реального Redis."""
-    from unittest.mock import MagicMock
-
     breaker = MagicMock()
     breaker.guard.return_value = _AsyncContextManager()
     return breaker
