@@ -307,18 +307,33 @@ class TestMutmutCachePreserved:
 
 
 class TestCiWiring:
-    """CI-обвязка шага mutation-гейта в lint.yml."""
+    """CI-обвязка mutation-гейта в lint.yml.
+
+    Волна 35: гейт вынесен из перегруженного job'а ``lint`` (15 мин на ~35
+    шагов) в отдельный job ``mutation`` (45 мин) с кэшем ``mutants/`` —
+    иначе прогон не укладывался в бюджет и гейт всегда давал SKIPPED.
+    """
+
+    @staticmethod
+    def _mutation_job() -> dict[str, object]:
+        workflow = yaml.safe_load(LINT_WORKFLOW.read_text(encoding="utf-8"))
+        jobs = workflow["jobs"]
+        assert "mutation" in jobs, "job mutation не найден в lint.yml"
+        return jobs["mutation"]
 
     @staticmethod
     def _mutation_step() -> dict[str, object]:
-        workflow = yaml.safe_load(LINT_WORKFLOW.read_text(encoding="utf-8"))
-        steps = workflow["jobs"]["lint"]["steps"]
-        matches = [s for s in steps if "mutmut" in str(s.get("name", "")).lower()]
-        assert matches, "шаг mutation-гейта не найден в lint.yml"
+        steps = TestCiWiring._mutation_job()["steps"]
+        matches = [
+            s for s in steps if "check_mutmut.py" in str(s.get("run", ""))
+        ]
+        assert matches, "шаг mutation-гейта не найден в job'е mutation"
         return matches[0]
 
     def test_step_has_timeout(self) -> None:
-        """У шага есть собственный таймаут (job ограничен 15 минутами)."""
+        """У job'а и у шага есть собственные таймауты."""
+        job = self._mutation_job()
+        assert "timeout-minutes" in job
         assert "timeout-minutes" in self._mutation_step()
 
     def test_step_maps_exit_codes(self) -> None:
@@ -326,8 +341,15 @@ class TestCiWiring:
         run_block = str(self._mutation_step()["run"])
         assert "check_mutmut.py" in run_block
         for code in ("0", "1", "2"):
-            assert f" {code})" in run_block, f"нет ветки для exit-кода {code}"
+            assert f"{code})" in run_block, f"нет ветки для exit-кода {code}"
 
     def test_step_uses_project_interpreter(self) -> None:
         """Шаг запускается через uv run (venv проекта, Python 3.14)."""
         assert "uv run python" in str(self._mutation_step()["run"])
+
+    def test_job_caches_mutants_workspace(self) -> None:
+        """Job кэширует рабочую копию mutants/ — прогон инкрементальный."""
+        steps = self._mutation_job()["steps"]
+        cache_steps = [s for s in steps if "actions/cache" in str(s.get("uses", ""))]
+        assert cache_steps, "в job'е mutation нет кэша mutants/"
+        assert "mutants" in str(cache_steps[0].get("with", {}).get("path", ""))

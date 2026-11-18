@@ -227,7 +227,7 @@
     "file": "src/backend/infrastructure/application/monitoring.py",
     "full_call": "_request_count.labels(method=method, path=path, status_code=status_code)",
     "label": "path",
-    "line": 91,
+    "line": 101,
     "reason": "label 'path' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -235,7 +235,7 @@
     "file": "src/backend/infrastructure/application/monitoring.py",
     "full_call": "_request_count.labels(method=method, path=path, status_code=status_code)",
     "label": "status_code",
-    "line": 91,
+    "line": 101,
     "reason": "label 'status_code' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },
@@ -243,7 +243,7 @@
     "file": "src/backend/infrastructure/application/monitoring.py",
     "full_call": "_request_latency.labels(method=method, path=path)",
     "label": "path",
-    "line": 94,
+    "line": 104,
     "reason": "label 'path' — verify cardinality. If high (per-tenant, per-user), move to traces/logs.",
     "severity": "WARNING"
   },

@@ -11,7 +11,15 @@ commit: ensure-branch ## Commit changes to Git (explicit paths — no -A)
 	@$(INFO) "Committing changes (explicit paths, no -A)..."
 	@# A2 security: запрещаем git add -A, чтобы исключить добавление
 	@# случайных файлов (.env, artifacts, IDE-cruft, секреты).
-	git add src/ docs/ tools/ tools/ pyproject.toml uv.lock Makefile .pre-commit-config.yaml .gitignore 2>/dev/null || true
+	git add src/ docs/ tools/ pyproject.toml uv.lock Makefile .pre-commit-config.yaml .gitignore 2>/dev/null || true
+	@# P2 (аудит 2026-11-18): список явных путей был НЕПОЛНЫМ — изменения в
+	@# .github/workflows/, ops/compose/ (кроме Dockerfile и docker-compose.yml),
+	@# tests/, extensions/, routes/, config_profiles/, deploy/ НЕ попадали
+	@# в коммит: `make commit`/`make ship` молча оставляли их в рабочей
+	@# копии (изменение CI или prod-compose «не доезжало» до репозитория).
+	@# Каталоги безопасны: паттерн `.env` в .gitignore исключает env-файлы
+	@# на любом уровне, артефакты/кэши — тоже.
+	git add .github/ ops/ tests/ extensions/ routes/ plugins/ testkit/ config_profiles/ deploy/ 2>/dev/null || true
 	@# Опциональные корневые файлы — добавляются, только если существуют.
 	@[ -f .gitlab-ci.yml ] && git add .gitlab-ci.yml || true
 	@[ -f ops/compose/Dockerfile ] && git add ops/compose/Dockerfile || true
