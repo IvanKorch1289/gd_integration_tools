@@ -50,8 +50,15 @@ _request_latency = metrics_registry.histogram(
 _requests_in_progress = metrics_registry.gauge(
     "http_requests_in_progress",
     "Number of HTTP requests currently in progress",
-    labels=("method", "path"),
+    # Только method: path-label здесь создавал бы unbounded cardinality —
+    # по одной серии на каждый уникальный URL (entity-id, correlation-id).
+    labels=("method",),
 )
+
+#: Label для запросов, маршрут которых не удалось сопоставить с шаблоном
+#: (404, mounted-приложения без ``scope["route"]``). Одна серия вместо
+#: бесконечного набора уникальных URL.
+_UNMATCHED_PATH = "__unmatched__"
 
 
 class PrometheusMiddleware:
@@ -70,10 +77,10 @@ class PrometheusMiddleware:
             return
 
         method = scope.get("method", "UNKNOWN")
-        path = self._normalize_path(scope)
-        labels = {"method": method, "path": path}
 
-        _requests_in_progress.labels(**labels).inc()
+        # In-progress gauge инкрементируется ДО роутинга — шаблон маршрута
+        # в этот момент ещё неизвестен, поэтому gauge живёт только по method.
+        _requests_in_progress.labels(method=method).inc()
         start = time.perf_counter()
         status_code = "500"
 
@@ -86,8 +93,11 @@ class PrometheusMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)  # type: ignore[arg-type]  # R2.MYPY: send_wrapper Callable mismatch
         finally:
-            _requests_in_progress.labels(**labels).dec()
+            _requests_in_progress.labels(method=method).dec()
             duration = time.perf_counter() - start
+            # Шаблон маршрута доступен только после роутинга (Starlette
+            # выставляет ``scope["route"]`` внутри ``Router.app``).
+            path = self._normalize_path(scope)
             _request_count.labels(
                 method=method, path=path, status_code=status_code
             ).inc()
@@ -95,11 +105,31 @@ class PrometheusMiddleware:
 
     @staticmethod
     def _normalize_path(scope: Scope) -> str:
-        """Return a templated path, excluding /metrics."""
-        path = scope.get("path", "/")
-        if path == "/metrics":
-            return "/metrics"
-        return path or "/"
+        """Вернуть шаблон маршрута (route template), а не сырой URL.
+
+        Starlette (>=1.0) выставляет ``scope["route"]`` после успешного
+        роутинга; ``route.path`` содержит шаблон с path-параметрами
+        (``/api/v1/orders/{order_id}``).
+
+        Раньше возвращался сырой ``scope["path"]`` — каждое уникальное
+        значение (entity-id, correlation-id, произвольный query) создавало
+        новую Prometheus-серию: unbounded cardinality → рост памяти
+        процесса и OOM Prometheus-сервера.
+
+        Args:
+            scope: ASGI scope.
+
+        Returns:
+            Шаблон маршрута либо ``"__unmatched__"``, если маршрут не
+            сопоставлен (404 / mounted-приложение без ``scope["route"]``).
+
+        """
+        route = scope.get("route")
+        if route is not None:
+            template = getattr(route, "path", None)
+            if isinstance(template, str) and template:
+                return template
+        return _UNMATCHED_PATH
 
 
 async def metrics_endpoint(scope: Scope, receive: Receive, send: Send) -> None:

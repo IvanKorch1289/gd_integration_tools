@@ -193,22 +193,33 @@ class ResilienceCoordinator:
     # ─────────── Вызов ───────────
 
     async def call(self, component: str, *args: Any, **kwargs: Any) -> Any:
-        """Вызывает primary, при отказе/OPEN — идёт по chain."""
+        """Вызывает primary, при отказе/OPEN — идёт по chain.
+
+        Исходное исключение primary **не теряется**: если chain пуст или
+        все fallback'ы тоже упали, итоговая ошибка chains'ится
+        (``raise ... from <исходная ошибка>``). Раньше при пустом chain
+        поднимался ``RuntimeError`` с ``from None`` — первичная причина
+        (например, ``OperationalError`` БД) исчезала из логов и из
+        ``__cause__``, а классификация ошибок по типу становилась
+        невозможной.
+        """
         comp = self._components.get(component)
         if comp is None:
             raise KeyError(f"Resilience component не зарегистрирован: {component}")
 
+        primary_exc: Exception | None = None
         if comp.mode != "forced" and comp.primary is not None:
             try:
                 async with comp.breaker.guard():
                     result = await comp.primary(*args, **kwargs)
                 self._mark_success(comp, "primary")
                 return result
-            except CircuitOpen:
+            except CircuitOpen as exc:
                 logger.warning(
                     "Breaker OPEN for '%s' — переключаемся на fallback chain", comp.name
                 )
                 self._mark_failure(comp)
+                primary_exc = exc
             except Exception as exc:
                 logger.warning(
                     "Primary call failed for '%s' (%s) — пробуем fallback chain",
@@ -216,11 +227,12 @@ class ResilienceCoordinator:
                     type(exc).__name__,
                 )
                 self._mark_failure(comp)
+                primary_exc = exc
 
         if comp.mode == "off":
             raise RuntimeError(
                 f"Resilience: primary '{comp.name}' упал, fallback mode=off"
-            )
+            ) from primary_exc
 
         last_exc: Exception | None = None
         for backend_name in comp.chain:
@@ -238,9 +250,9 @@ class ResilienceCoordinator:
                     type(exc).__name__,
                 )
 
-        raise RuntimeError(
-            f"Resilience: все backend'ы '{comp.name}' исчерпаны"
-        ) from last_exc
+        raise RuntimeError(f"Resilience: все backend'ы '{comp.name}' исчерпаны") from (
+            last_exc if last_exc is not None else primary_exc
+        )
 
     # ─────────── Snapshot для health-aggregator ───────────
 

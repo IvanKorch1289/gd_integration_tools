@@ -157,7 +157,34 @@ def create_cache_fallback_backends(
     return memory, disk
 
 
-def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
+def _resolve_cache_settings(settings: CacheSettings | str | None) -> CacheSettings:
+    """Нормализовать аргумент фабрики до :class:`CacheSettings`.
+
+    Раньше фабрика принимала только ``CacheSettings``/``None``, но
+    call-site'ы в ``infrastructure/resilience/components/cache_chain.py``
+    передавали **строку** с именем backend'а (``"redis"`` / ``"memcached"``).
+    Внутри ``cfg = settings or cache_settings`` строка проходила как
+    truthy-значение, и ``cfg.backend`` падал с
+    ``AttributeError: 'str' object has no attribute 'backend'`` — то есть
+    primary и первый fallback cache-chain'а были нерабочими (breaker
+    ``redis`` открывался самопроизвольно после N вызовов).
+
+    Args:
+        settings: ``CacheSettings``, имя backend'а или ``None``.
+
+    Returns:
+        Валидный :class:`CacheSettings` (глобальный ``cache_settings`` —
+        если ``None``).
+
+    """
+    if settings is None:
+        return cache_settings
+    if isinstance(settings, str):
+        return cache_settings.model_copy(update={"backend": settings})
+    return settings
+
+
+def create_cache_backend(settings: CacheSettings | str | None = None) -> CacheBackend:
     """Возвращает CacheBackend в соответствии с :class:`CacheSettings`.
 
     Cycle 34 B-03 fix: возвращённый backend обёрнут в
@@ -176,14 +203,17 @@ def create_cache_backend(settings: CacheSettings | None = None) -> CacheBackend:
     flag (autouse fixture в test_factory.py).
 
     Args:
-        settings: Опциональный override; по умолчанию — ``cache_settings``.
+        settings: ``CacheSettings`` (override), имя backend'а
+            (``"redis"`` / ``"keydb"`` / ``"memcached"`` / ``"memory"``)
+            либо ``None`` (глобальный ``cache_settings``).
 
     Raises:
         RuntimeError: для бэкенда ``memcached`` без установленной
             зависимости ``aiomcache``.
+        ValueError: для неизвестного имени backend'а.
 
     """
-    cfg = settings or cache_settings
+    cfg = _resolve_cache_settings(settings)
     backend: CacheBackend
     match cfg.backend:
         case "memory":

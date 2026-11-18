@@ -443,26 +443,51 @@ class S3ObjectStorage(ObjectStorage):
             # leak an in-flight multipart upload. Catch them BEFORE the OSError
             # branch (BaseException is parent), attempt abort, then re-raise
             # unchanged so the runtime/loop sees the original cancel signal.
+            #
+            # wave 34 (infra-аудит): в tuple добавлены ``BotoCoreError`` и
+            # ``ClientError`` — транспортный отказ (connection refused, 500
+            # от S3) НЕ попадал в этот branch, из-за чего multipart-upload
+            # не abort'ился (orphaned parts в бакете + оплата storage) и
+            # наружу утекал сырой botocore-exception вместо ``ServiceError``.
             except asyncio.CancelledError, MemoryError:
                 if upload_id is not None:
                     try:
                         await s3.abort_multipart_upload(
                             Bucket=self._bucket, Key=full_key, UploadId=upload_id
                         )
-                    except (OSError, RuntimeError, KeyError) as abort_exc:
+                    except (
+                        BotoCoreError,
+                        ClientError,
+                        OSError,
+                        RuntimeError,
+                        KeyError,
+                    ) as abort_exc:
                         self.logger.exception(
                             "S3ObjectStorage.upload_stream abort failed key=%s: %s",
                             full_key,
                             abort_exc,
                         )
                 raise
-            except (OSError, RuntimeError, KeyError, ValueError) as exc:
+            except (
+                BotoCoreError,
+                ClientError,
+                OSError,
+                RuntimeError,
+                KeyError,
+                ValueError,
+            ) as exc:
                 if upload_id is not None:
                     try:
                         await s3.abort_multipart_upload(
                             Bucket=self._bucket, Key=full_key, UploadId=upload_id
                         )
-                    except (OSError, RuntimeError, KeyError) as abort_exc:
+                    except (
+                        BotoCoreError,
+                        ClientError,
+                        OSError,
+                        RuntimeError,
+                        KeyError,
+                    ) as abort_exc:
                         self.logger.exception(
                             "S3ObjectStorage.upload_stream abort failed key=%s: %s",
                             full_key,

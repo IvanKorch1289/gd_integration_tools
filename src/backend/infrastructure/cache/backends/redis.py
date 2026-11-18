@@ -224,10 +224,14 @@ class RedisBackend(CacheBackend):
                 f"mget_pipelined: {len(keys)} keys exceeds batch limit "
                 f"{self._MAX_PIPELINE_BATCH}. Split into smaller chunks."
             )
-        async with self._client.pipeline(transaction=False) as pipe:
-            for key in keys:
-                pipe.get(key)
-            return await pipe.execute()
+        # wave 34 (infra-аудит): batch-операции тоже идут под CB — раньше
+        # они обходили breaker и при упавшем Redis висели до socket-таймаута
+        # вместо быстрого ``CircuitOpen`` (деградация в memory/disk).
+        async with self._breaker.guard():
+            async with self._client.pipeline(transaction=False) as pipe:
+                for key in keys:
+                    pipe.get(key)
+                return await pipe.execute()
 
     async def mset_pipelined(
         self, items: dict[str, bytes], ttl: int | None = None
@@ -255,10 +259,12 @@ class RedisBackend(CacheBackend):
                 f"mset_pipelined: {len(items)} items exceeds batch limit "
                 f"{self._MAX_PIPELINE_BATCH}. Split into smaller chunks."
             )
-        async with self._client.pipeline(transaction=False) as pipe:
-            for key, value in items.items():
-                if ttl is not None:
-                    pipe.set(key, value, ex=ttl)
-                else:
-                    pipe.set(key, value)
-            await pipe.execute()
+        # wave 34 (infra-аудит): CB-покрытие — см. ``mget_pipelined``.
+        async with self._breaker.guard():
+            async with self._client.pipeline(transaction=False) as pipe:
+                for key, value in items.items():
+                    if ttl is not None:
+                        pipe.set(key, value, ex=ttl)
+                    else:
+                        pipe.set(key, value)
+                await pipe.execute()
