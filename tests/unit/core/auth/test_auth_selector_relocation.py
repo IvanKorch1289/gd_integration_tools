@@ -147,13 +147,34 @@ def test_entrypoints_shim_re_exports_core() -> None:
     # Reload шима: он кэширует re-export'ы на момент импорта, поэтому после
     # подмены core-функций (или reload'а в другом тесте) шим мог бы держать
     # устаревший объект. Reload переимпортирует актуальные объекты core'а.
-    shim = importlib.reload(shim)
+    #
+    # Исходные re-export'ы сохраняем и восстанавливаем: reload пересоздаёт
+    # функции модуля, а соседние модули (``core.auth.gateway``) держат ссылки
+    # на прежние объекты → проверка «шм-объект == core-объект» ломалась бы
+    # для следующих тестов (order-dependent падение, волна 36).
+    preserved = {
+        name: value
+        for name, value in vars(shim).items()
+        if name
+        in {
+            "verify_request",
+            "require_auth",
+            "set_default_auth",
+            "AuthMethod",
+            "AuthContext",
+        }
+    }
+    try:
+        shim = importlib.reload(shim)
 
-    assert shim.verify_request is core_sel.verify_request
-    assert shim.require_auth is core_sel.require_auth
-    assert shim.set_default_auth is core_sel.set_default_auth
-    assert shim.AuthMethod is core_sel.AuthMethod
-    assert shim.AuthContext is core_sel.AuthContext
+        assert shim.verify_request is core_sel.verify_request
+        assert shim.require_auth is core_sel.require_auth
+        assert shim.set_default_auth is core_sel.set_default_auth
+        assert shim.AuthMethod is core_sel.AuthMethod
+        assert shim.AuthContext is core_sel.AuthContext
+    finally:
+        for name, value in preserved.items():
+            setattr(shim, name, value)
 
 
 def test_entrypoints_shim_hides_private_verifiers() -> None:

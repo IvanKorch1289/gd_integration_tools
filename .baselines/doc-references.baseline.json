@@ -95,6 +95,7 @@
     "dsl/yaml_loader.py",
     "entrypoints/api/generator/actions.py",
     "entrypoints/api/generator/actions/crud.py",
+    "entrypoints/api/generator/setup.py",
     "entrypoints/graphql/router.py",
     "entrypoints/grpc/grpc_server.py",
     "entrypoints/grpc/server.py",
