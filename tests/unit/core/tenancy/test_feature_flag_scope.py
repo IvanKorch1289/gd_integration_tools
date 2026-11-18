@@ -197,3 +197,43 @@ def test_get_current_tenant_id_inside_scope() -> None:
     ctx = TenantContext(tenant_id="my-tenant")
     with tenant_scope(ctx):
         assert resolver.get_current_tenant_id() == "my-tenant"
+
+
+@pytest.mark.asyncio
+async def test_local_registry_read_dynamically(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Локальный реестр читается динамически — подмена видна сразу.
+
+    До фикса реестр кэшировался при первом обращении (``self._local_features
+    = feature_flags``): подмена ``feature_flags`` в модуле после первого
+    чтения не влияла на резолвер — тот же класс order-dependent падений,
+    что закрыт в ``core/feature_flags/service.py`` (волна 34/35).
+    """
+    from src.backend.core.config import features as features_module
+
+    resolver = TenantFeatureFlagResolver()
+
+    # Первое чтение (в старой реализации — фиксирует кэш).
+    assert await resolver.is_enabled("dynamic_flag", default=False) is False
+
+    monkeypatch.setattr(
+        features_module, "feature_flags", _LocalFeaturesStub(dynamic_flag=True)
+    )
+
+    assert await resolver.is_enabled("dynamic_flag", default=False) is True
+
+
+@pytest.mark.asyncio
+async def test_injected_local_features_take_precedence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Явно переданный ``local_features`` (DI) имеет приоритет над реестром."""
+    from src.backend.core.config import features as features_module
+
+    resolver = TenantFeatureFlagResolver(
+        local_features=_LocalFeaturesStub(dynamic_flag=True)
+    )
+    monkeypatch.setattr(
+        features_module, "feature_flags", _LocalFeaturesStub(dynamic_flag=False)
+    )
+
+    assert await resolver.is_enabled("dynamic_flag", default=False) is True

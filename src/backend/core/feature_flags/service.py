@@ -6,6 +6,10 @@
 2. Static registry (``src.backend.core.config.features.feature_flags``) — default.
 3. External OpenFeature provider — *placeholder для S42; сейчас no-op*.
 
+Статический реестр читается **динамически** (на каждый доступ), поэтому
+подмена объекта ``feature_flags`` в модуле ``src.backend.core.config.features``
+(автофикстуры тестов, hot-reload) видна сервису сразу.
+
 Цель — заменить прямые обращения ``feature_flags.<name>`` на
 ``get_feature_flag_service().is_enabled("name")`` без ломки
 существующего sync-кода. Async-пути (entrypoints, workflow) должны
@@ -16,7 +20,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.backend.core.config.features import feature_flags
 from src.backend.core.feature_flags.runtime_overrides import get_runtime_overrides
 
 __all__ = ("FeatureFlagService", "get_feature_flag_service")
@@ -25,15 +28,29 @@ __all__ = ("FeatureFlagService", "get_feature_flag_service")
 class FeatureFlagService:
     """Синхронный resolver feature-flags с приоритетом overrides > static.
 
-    Attributes:
-        _static: Pydantic-settings based static registry.
-
+    Статический реестр читается **динамически** (свойство ``_static``) —
+    см. его docstring.
     """
 
-    __slots__ = ("_static",)
+    __slots__ = ()
 
-    def __init__(self) -> None:
-        self._static = feature_flags
+    @property
+    def _static(self) -> Any:
+        """Актуальный статический реестр feature-flags.
+
+        Аксессор берётся **на каждый доступ**, а не кэшируется в конструкторе:
+        объект ``feature_flags`` в модуле ``src.backend.core.config.features``
+        может быть подменён (автофикстуры тестов, hot-reload) уже после
+        импорта этого модуля — закэшированная ссылка продолжала бы читать
+        старый объект (order-dependent падения, волна 34/35).
+
+        Returns:
+            Актуальный Pydantic-settings based static registry.
+
+        """
+        from src.backend.core.config.features import feature_flags
+
+        return feature_flags
 
     @property
     def _overrides(self) -> Any:

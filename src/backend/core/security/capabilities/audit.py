@@ -24,6 +24,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
 from src.backend.core.logging import get_logger
+from src.backend.core.tenancy.context import SYSTEM_TENANT_ID
 
 __all__ = ("CapabilityAuditEvent", "CapabilityAuditEventKind", "log_capability_event")
 
@@ -42,7 +43,8 @@ class CapabilityAuditEvent:
         scope: scope-аргумент проверки (``None`` если scope-less).
         granted: True — решение allow, False — deny.
         denial_reason: Причина отказа (``None`` при granted=True).
-        tenant: tenant_id из TenantContext (``"_system"`` если отсутствует).
+        tenant: tenant_id из TenantContext (по умолчанию — sentinel
+            :data:`src.backend.core.tenancy.context.SYSTEM_TENANT_ID`).
         actor: Identity актора (user/email/service-account) или
             ``"_anonymous"``.
         correlation_id: Request correlation_id для трассировки.
@@ -57,7 +59,7 @@ class CapabilityAuditEvent:
     scope: str | None
     granted: bool
     denial_reason: str | None = None
-    tenant: str = "_system"
+    tenant: str = SYSTEM_TENANT_ID
     actor: str = "_anonymous"
     correlation_id: str | None = None
     timestamp: str = field(

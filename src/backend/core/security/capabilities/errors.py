@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from src.backend.core.tenancy.context import SYSTEM_TENANT_ID
+
 if TYPE_CHECKING:
     from src.backend.core.security.capabilities.models import CapabilityRef
 
@@ -54,7 +56,8 @@ class CapabilityDeniedError(CapabilityError):
         requested_scope: Scope, запрошенный в runtime.
         declared_scope: Scope, объявленный в манифесте (``None`` если
             capability вообще не декларирована).
-        tenant: Tenant-id (для tenant-aware вызовов; ``"_system"`` по умолчанию).
+        tenant: Tenant-id (для tenant-aware вызовов; по умолчанию — sentinel
+            :data:`src.backend.core.tenancy.context.SYSTEM_TENANT_ID`).
         principal: Principal-id (имя плагина/route'а) для audit-контекста.
         correlation_id: Request correlation_id (опц.).
 
@@ -67,7 +70,7 @@ class CapabilityDeniedError(CapabilityError):
         capability: str,
         requested_scope: str | None,
         declared_scope: str | None,
-        tenant: str = "_system",
+        tenant: str = SYSTEM_TENANT_ID,
         principal: str | None = None,
         correlation_id: str | None = None,
     ) -> None:

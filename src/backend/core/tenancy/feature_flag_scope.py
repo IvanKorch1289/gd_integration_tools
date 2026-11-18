@@ -68,12 +68,18 @@ class FeatureFlagProvider(Protocol):
 class TenantFeatureFlagResolver:
     """Резолвер feature-flag с per-tenant scope.
 
+    Локальный реестр читается **динамически** (на каждый доступ), поэтому
+    подмена объекта ``feature_flags`` в модуле
+    ``src.backend.core.config.features`` (автофикстуры тестов, hot-reload)
+    видна резолверу сразу — см. :attr:`_local_features`.
+
     Args:
         provider: OpenFeature-совместимый external provider (опционально).
             При None — используется только локальный
             :mod:`src.backend.core.config.features`.
         local_features: Локальный реестр feature_flag (опционально).
-            По умолчанию — модульный singleton ``feature_flags``.
+            По умолчанию — модульный singleton ``feature_flags``
+            (читается динамически).
 
     Пример:
         >>> resolver = TenantFeatureFlagResolver(provider=fs_provider)
@@ -83,7 +89,7 @@ class TenantFeatureFlagResolver:
 
     """
 
-    __slots__ = ("_local_features", "provider")
+    __slots__ = ("_local_features_override", "provider")
 
     def __init__(
         self,
@@ -93,7 +99,29 @@ class TenantFeatureFlagResolver:
     ) -> None:
         """Инициализирует резолвер."""
         self.provider = provider
-        self._local_features = local_features
+        self._local_features_override = local_features
+
+    @property
+    def _local_features(self) -> Any:
+        """Актуальный локальный реестр feature-flags.
+
+        Реестр читается **динамически** (на каждый доступ), а не кэшируется
+        при первом обращении: объект ``feature_flags`` в модуле
+        ``src.backend.core.config.features`` может быть подменён (автофикстуры
+        тестов, hot-reload) уже после первого чтения — закэшированная ссылка
+        продолжала бы читать старый объект (order-dependent падения, волна
+        34/35). Явно переданный в конструктор ``local_features`` имеет
+        приоритет (DI-подмена).
+
+        Returns:
+            Актуальный реестр feature-flags.
+
+        """
+        if self._local_features_override is not None:
+            return self._local_features_override
+        from src.backend.core.config.features import feature_flags
+
+        return feature_flags
 
     async def is_enabled(self, flag_key: str, *, default: bool = False) -> bool:
         """Возвращает True, если ``flag_key`` включён для текущего tenant.
@@ -180,10 +208,6 @@ class TenantFeatureFlagResolver:
     def _local_lookup(self, flag_key: str, default: bool) -> bool:
         """Читает flag из локального ``feature_flags`` (default-safe)."""
         try:
-            if self._local_features is None:
-                from src.backend.core.config.features import feature_flags
-
-                self._local_features = feature_flags
             value = getattr(self._local_features, flag_key, None)
             if value is None:
                 return default
