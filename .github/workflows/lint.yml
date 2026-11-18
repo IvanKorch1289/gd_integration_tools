@@ -275,6 +275,20 @@ jobs:
         # Storage backends with erasure + legal hold + reconciliation.
         run: uv run python tools/checks/check_privacy_lifecycle.py || true
 
+      # ─── Action ownership gate (P2, аудит 2026-11-18) ────────────────────
+      # Шаг стоит В КОНЦЕ job'а намеренно. Гейт быстрый (AST + tomllib, ~1 с),
+      # но даже при зависании он не съест бюджет остальных блокирующих гейтов:
+      # в волне 35 мутационный гейт стоял в середине job'а и «съедал» ~20
+      # последующих шагов (см. отдельный job `mutation`).
+      - name: Action ownership gate (check_action_ownership)
+        # «У action'а один владелец»: дубль регистрации (ядро + плагин) и
+        # расхождение payload_model/capability между владельцами (F-01e:
+        # адаптер плагина затирал модель валидации payload).
+        # `--strict` дополнительно блокирует рассинхрон provides.actions;
+        # включается, когда инвентарь манифестов станет каноническим.
+        timeout-minutes: 5
+        run: uv run python tools/check_action_ownership.py
+
   # ─── Mutation score gate (ADR-0452) ──────────────────────────────────
   # Вынесен в ОТДЕЛЬНЫЙ job (аудит 2026-11-18). Причина: полный прогон
   # мутаций занимает ЧАСЫ, а шаг внутри job'а `lint` жил с общим

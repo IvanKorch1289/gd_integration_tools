@@ -19,7 +19,7 @@ DOMAIN = "orders"
 
 
 def register() -> None:
-    """Регистрирует схемы и сервис заказов в core-реестре."""
+    """Регистрирует схемы, сервис и admin-view заказов в core-реестре."""
     from extensions.core_entities.orders.schemas.filter import OrderFilter
     from extensions.core_entities.orders.schemas.route import (
         OrderIdPathSchema,
@@ -39,3 +39,11 @@ def register() -> None:
     register_extension_resource(DOMAIN, "schema", "id_path", OrderIdPathSchema)
     register_extension_resource(DOMAIN, "schema", "id_query", OrderIdQuerySchema)
     register_extension_resource(DOMAIN, "service", "orders", get_order_service)
+    # Admin-view: ``sqladmin`` может отсутствовать в окружении — тогда
+    # панель не поднимается, но остальные ресурсы домена остаются.
+    try:
+        from extensions.core_entities.orders.admin import OrderAdmin
+    except ImportError:  # pragma: no cover — sqladmin не установлен
+        pass
+    else:
+        register_extension_resource(DOMAIN, "admin", "order", OrderAdmin)

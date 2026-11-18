@@ -77,3 +77,65 @@ def test_compiler_activities_are_registered() -> None:
     from tools import check_workflow_specs as linter
 
     assert linter.check_compiler_activities() == []
+
+
+def test_linter_detects_call_function_with_non_dict_payload(tmp_path: Path) -> None:
+    """Шаг ``call_function`` на функцию со списком → контракт нарушен.
+
+    Движок вызывает ``fn(payload)``, где ``payload`` — словарь. Функция
+    ``estimate_usage(messages: list, ...)`` список ожидает — счётчик
+    usage молча считает неверные значения (F-06, волна 35).
+    """
+    from tools import check_workflow_specs as linter
+
+    spec = tmp_path / "bad_call_function.workflow.yaml"
+    spec.write_text(
+        yaml.safe_dump(
+            {
+                "name": "bad_call_function",
+                "version": "1.0",
+                "steps": [
+                    {
+                        "type": "call_function",
+                        "ref": "src.backend.services.ai.usage_meter:estimate_usage",
+                        "args": {},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    findings = linter.check_spec(spec)
+    assert findings, "несовместимый контракт call_function не обнаружен"
+    assert any("estimate_usage" in finding for finding in findings)
+    assert any("dict" in finding for finding in findings)
+
+
+def test_linter_accepts_call_function_with_dict_payload(tmp_path: Path) -> None:
+    """Совместимый шаблон ``call_function`` (payload — dict) проходит."""
+    from tools import check_workflow_specs as linter
+
+    spec = tmp_path / "good_call_function.workflow.yaml"
+    spec.write_text(
+        yaml.safe_dump(
+            {
+                "name": "good_call_function",
+                "version": "1.0",
+                "steps": [
+                    {
+                        "type": "call_function",
+                        "ref": (
+                            "src.backend.dsl.workflow.templates.template_helpers"
+                            ":estimate_usage_payload"
+                        ),
+                        "args": {"messages": [], "model": "gpt-4o-mini"},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    findings = linter.check_spec(spec)
+    assert not [finding for finding in findings if "call_function" in finding], findings

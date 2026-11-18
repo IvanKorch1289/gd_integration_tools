@@ -16,7 +16,7 @@ DOMAIN = "orderkinds"
 
 
 def register() -> None:
-    """Регистрирует схемы и сервис видов запросов в core-реестре."""
+    """Регистрирует схемы, сервис и admin-view видов запросов."""
     from extensions.core_entities.orderkinds.schemas.filter import OrderKindFilter
     from extensions.core_entities.orderkinds.schemas.route import (
         OrderKindSchemaIn,
@@ -34,3 +34,11 @@ def register() -> None:
         DOMAIN, "schema", "version_schema", OrderKindVersionSchemaOut
     )
     register_extension_resource(DOMAIN, "service", "orderkinds", get_order_kind_service)
+    # Admin-view: ``sqladmin`` может отсутствовать в окружении — тогда
+    # панель не поднимается, но остальные ресурсы домена остаются.
+    try:
+        from extensions.core_entities.orderkinds.admin import OrderKindAdmin
+    except ImportError:  # pragma: no cover — sqladmin не установлен
+        pass
+    else:
+        register_extension_resource(DOMAIN, "admin", "orderkind", OrderKindAdmin)

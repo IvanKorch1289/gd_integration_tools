@@ -16,7 +16,7 @@ DOMAIN = "files"
 
 
 def register() -> None:
-    """Регистрирует схемы и сервис файлов в core-реестре."""
+    """Регистрирует схемы, сервис и admin-view файлов в core-реестре."""
     from extensions.core_entities.files.schemas.filter import FileFilter
     from extensions.core_entities.files.schemas.route import (
         FileSchemaIn,
@@ -32,3 +32,12 @@ def register() -> None:
         DOMAIN, "schema", "version_schema", FileVersionSchemaOut
     )
     register_extension_resource(DOMAIN, "service", "files", get_file_service)
+    # Admin-view: ``sqladmin`` может отсутствовать в окружении — тогда
+    # панель не поднимается, но остальные ресурсы домена остаются.
+    try:
+        from extensions.core_entities.files.admin import FileAdmin, OrderFileAdmin
+    except ImportError:  # pragma: no cover — sqladmin не установлен
+        pass
+    else:
+        register_extension_resource(DOMAIN, "admin", "file", FileAdmin)
+        register_extension_resource(DOMAIN, "admin", "order_file", OrderFileAdmin)

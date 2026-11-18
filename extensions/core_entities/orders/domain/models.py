@@ -16,6 +16,9 @@ from sqlalchemy_utils.types import EmailType, UUIDType
 from extensions.core_entities.files.domain.models import (  # S168 W14 P2-10
     OrderFile,  # moved from src/backend/core/domain/models/files.py
 )
+from extensions.core_entities.orderkinds.domain.models import (  # noqa: F401
+    OrderKind,  # FK-цель orders.order_kind_id → orderkinds.id
+)
 from src.backend.core.api import BaseModel, nullable_str
 from src.backend.core.api import TenantMixin
 

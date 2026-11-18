@@ -17,7 +17,7 @@ DOMAIN = "users"
 
 
 def register() -> None:
-    """Регистрирует схемы, сервис и модель пользователей в core-реестре."""
+    """Регистрирует схемы, сервис, модель и admin-view пользователей."""
     from extensions.core_entities.users.domain.models import User
     from extensions.core_entities.users.schemas.filter import UserFilter
     from extensions.core_entities.users.schemas.route import (
@@ -35,3 +35,11 @@ def register() -> None:
     )
     register_extension_resource(DOMAIN, "service", "users", get_user_service)
     register_extension_resource(DOMAIN, "model", "user", User)
+    # Admin-view: ``sqladmin`` может отсутствовать в окружении — тогда
+    # панель не поднимается, но остальные ресурсы домена остаются.
+    try:
+        from extensions.core_entities.users.admin import UserAdmin
+    except ImportError:  # pragma: no cover — sqladmin не установлен
+        pass
+    else:
+        register_extension_resource(DOMAIN, "admin", "user", UserAdmin)

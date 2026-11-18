@@ -1,3 +1,9 @@
+"""Базовый класс для admin-view расширений (общий для sqladmin-панелей).
+
+Используется расширениями (``extensions/core_entities/*/admin.py``) как
+миксин поверх ``sqladmin.ModelView``.
+"""
+
 from collections.abc import Sequence
 
 __all__ = ("BaseAdmin",)
