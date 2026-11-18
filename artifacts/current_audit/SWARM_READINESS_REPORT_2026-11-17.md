@@ -23,7 +23,7 @@
 
 | Показатель | Было (волна 33) | Стало (волна 34) | Источник |
 |---|---|---|---|
-| Регрессия `tests/unit` (CI-режим) | 24 122 passed, 0 failed | **24 328 passed, 0 failed** (159 skipped, 52 xfailed, 48 xpassed), 597 с | `.run/wave34-logs/reg_ci_r4.txt` |
+| Регрессия `tests/unit` (CI-режим) | 24 122 passed, 0 failed | **24 328 passed, 0 failed** (159 skipped, 52 xfailed, 48 xpassed), 600 с | `.run/wave34-logs/reg_ci_final2.txt` |
 | Межслойные нарушения | 40 (долг 37 + контракты 3) | **3** (долг **0** + 3 осознанных контракта) | `tools/check_layers.py --strict` |
 | Enforcement capability | только в процессорах (7 из 64) | **в движке** — перед каждым шагом | ADR-0456 |
 | Coverage (line-rate, метрика гейта) | 74 % (branch-число) | **77.68 %** (branch 75 %) | `.baselines/coverage.json` |
@@ -154,7 +154,7 @@ stub без `__spec__` (`find_spec` бросает `ValueError`): cleanup счи
 
 | Проверка | Результат |
 |---|---|
-| `pytest tests/unit -q --timeout=120 -n 2 --dist loadfile` | **24 328 passed, 0 failed**, 159 skipped, 52 xfailed, 48 xpassed (597 с) — `.run/wave34-logs/reg_ci_r4.txt` |
+| `pytest tests/unit -q --timeout=120 -n 2 --dist loadfile` | **24 328 passed, 0 failed**, 159 skipped, 52 xfailed, 48 xpassed (600 с) — `.run/wave34-logs/reg_ci_final2.txt` |
 | `tools/check_layers.py` | 0 новых нарушений; долг **0**, контракты 3 — `tools/check_layers.py --strict` → 3 |
 | `tools/check_decorative_capabilities.py` | 0 новых (долг 0) |
 | `tools/check_route_capabilities.py` | OK (роутов 7, плагинов 12) |
@@ -187,9 +187,9 @@ mutmut'а давал «Table 'am_plain' is already defined» (одинаково
 * `docs/roadmap/OWNER_TASKS.md` §19 — что закрыто;
 * `docs/ops/infra-release-checklist.md` — состояние инфры + пункт 12 (гейт);
 * `docs/MUTATION_BASELINE.md` — переписан (был устарел на 2026-06-04);
-* Логи: `.run/wave34-logs/reg_ci_r4.txt` (регрессия),
+* Логи: `.run/wave34-logs/reg_ci_final2.txt` (регрессия),
   `.run/coverage-baseline-2026-11-17/` (coverage),
-  `.run/wave34-logs/mutmut_w34*.txt` (мутации).
+  `.run/wave34-logs/mutmut_final.txt` (мутации — финальный прогон, PASS 21.6 %).
 
 ---
 
@@ -197,7 +197,7 @@ mutmut'а давал «Table 'am_plain' is already defined» (одинаково
 
 | Метрика | Цель | Сейчас | Источник |
 |---|---|---|---|
-| Регрессия `tests/unit` (CI-режим) | 0 failed | **0 failed** (24 328 passed) | `.run/wave34-logs/reg_ci_r4.txt` |
+| Регрессия `tests/unit` (CI-режим) | 0 failed | **0 failed** (24 328 passed) | `.run/wave34-logs/reg_ci_final2.txt` |
 | Долг межслойных нарушений | 0 | **0** (+3 контракта) | `tools/check_layers.py --strict` |
 | Enforcement capability | движок | ✅ движок (ADR-0456) | `dsl/engine/capability_guard.py` |
 | Coverage (line-rate) | ≥ 75 % | **77.68 %** | `.baselines/coverage.json` |
