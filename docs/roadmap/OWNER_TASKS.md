@@ -469,6 +469,36 @@ docstrings (0 missing), ruff, mypy (12 = baseline), mutation, coverage.
 
 ---
 
+## 20. Волна 34 (2026-11-18) — сверка документации с кодом
+
+Зона: `docs/**`, `README.md`, `CLAUDE.md`, `AGENTS.md`, `.claude/**`,
+`artifacts/current_audit/**`. Правки — только в документации; `src/`, `tests/`,
+`tools/`, `.baselines/` не тронуты.
+
+| # | Пункт | Статус |
+|---|---|---|
+| 1 | **Гейты документации** | ✅ прогнаны фактически: `tools/check_docstrings.py` → **exit 0, 0 missing** (полный обход дерева); `tools/checks/check_service_docs.py` → exit 0; `tools/build_adr_index.py` → 400 ADR, 0 коллизий, индекс без диффа; `tools/check_v11_artefacts.py` → был **красный** (`docs/reference/capabilities.md` устарел) → пересобран (`make capability-catalog`) → **exit 0** |
+| 2 | **README: блок «Текущие метрики»** | ✅ был устарел с 2026-10-19 (actions 124, OpenAPI 414/142, тестов 22 389, layer «debt: 37 legacy; contract: 4») — CI-гейт `docs-current-metrics-check` был **красный**; перегенерировано: actions **132**, OpenAPI **447/146**, тестов **25 639**, layer **debt 0 / contract 3**. Значения тестов/файлов дрейфуют вместе с параллельной работой — блок нужно перегенерировать перед коммитом |
+| 3 | **CLAUDE.md** | ✅ путь гейта слоёв `tools/checks/check_layers.py` → `tools/check_layers.py` (×2); несуществующие цели `make service-schema` / `make perf` → `make check-service-docs` / `make perf-gate`; `make docs` → `make docs-mkdocs`; статус docstring-гейта «1 отсутствующий» → **0 missing**; путь `ResponseValidatorProcessor` (`validation/response.py` → `validate_response.py`); корень импорта расширений `gd_integration_tools.core.*` → `src.backend.core.*`; exception для workflow → `src.backend.sdk`; версия V22 → **V23** |
+| 4 | **AGENTS.md** | ✅ корень импорта расширений (`gd_integration_tools.core.*` → `src.backend.core.*`), testkit-пакет (`gd_integration_tools.testkit.*` → `testkit.*`) |
+| 5 | **ADR волны 33, устаревшие к волне 34** | ✅ ADR-0450 — добавлена таблица фактического итога (долг 37 → **0**, 3 контракта `services → dsl`); ADR-0452 — добавлены 7 дефектов обвязки и контракт exit-кодов 0/1/2/3; ADR-0453 — добавлены перемер **77.68 %** и приведение baseline к метрике гейта. Решения не переписывались |
+| 6 | **`docs/roadmap/PROD_READINESS_GAPS.md`** | ✅ G1 — coverage 74 % → **77.68 %** (ADR-0453), уточнён остаток; G12 (capability не проверяется в рантайме) — **закрыт** (ADR-0456, enforcement в движке); G8 — зафиксирован объём выполненной сверки и остаток |
+| 7 | **Индексы** | ✅ `docs/adr/INDEX.md` — пересобран, без диффа (400 ADR); `docs/adr/WIKI.md` — пересобран (был от 2026-09-30 со 288 ADR → **397**); `docs/reference/capabilities.md` — пересобран; `docs/index.md` — «190+ ADR» → **400**, устаревшая таблица «Status (S164)» заменена ссылками на источники правды, диаграмма слоёв приведена к канонической |
+| 8 | **Битые ссылки и якоря** | ✅ `docs/analysis/index.md` (4 ссылки на несуществующие файлы), ADR-0087/0088 (неверная глубина `../../../src/` → `../../src/`), `docs/ARCHITECTURE.md` (несуществующий якорь `#stability-matrix`, «190+ ADR» → 400, `core.storage.facade` → `services.storage.facade`, несуществующие `route.use_auth()`/`route.use_secret()`); якоря с кириллицей в `docs/ai/AGENT_GUIDE.md` и `docs/workflows/index.md` — проставлены явные `{#…}` (mkdocs генерировал пустые `_N`) |
+| 9 | **`mkdocs build --strict`** | ⚠️ предупреждений было **32**, стало **27**: 7 ссылок ведут на файлы вне `docs/` (`README.md`, `CHANGELOG.md`, `.security/*.policy.md`, `.shared/context/TECH_DEBT.md`, `src/**`) — они корректны при чтении репозитория, но не резолвятся в собранном сайте; 20 — разделы nav объявлены каталогами, а mkdocs 1.6 резолвит только файлы. **Требует правки `mkdocs.yml` (вне зоны документации)** |
+| 10 | **Волна 35: CI/compose — отражено в документации** | ✅ `docs/MUTATION_BASELINE.md` — мутационный гейт вынесен в отдельный job `mutation` (`timeout-minutes: 45`, `MUTATION_GATE_TIMEOUT=2280`) с кэшем `mutants/` через `actions/cache`; прежнее утверждение «в CI гейт честно даёт SKIPPED, нужен отдельный job **или** кэш `mutants/`» больше не верно. ✅ `docs/ops/docker-compose-gap.md` — таблица «сервисы прода отсутствуют» заменена фактической (`clickhouse`, `open-webui`, `jupyterhub` — волна 34; `celery-worker`/`celery-beat` — за opt-in `profiles: ["celery"]`, т.к. пакет `celery` не объявлен в extras/uv.lock, а модуль с точкой входа `celery_app` в дереве отсутствует) |
+
+**Осталось за владельцем:**
+
+| # | Позиция | Что нужно |
+|---|---|---|
+| 1 | **mkdocs nav** | В `mkdocs.yml` заменить 20 записей вида `- Section: dir/` на явный перечень файлов (или подключить плагин section-index) — иначе `make docs-mkdocs` (`mkdocs build --clean --strict`) падает. Вне зоны правки документации |
+| 2 | **Ссылки из `docs/**` на файлы репозитория** | 7 ссылок на `README.md`/`CHANGELOG.md`/`.security/*`/`.shared/*`/`src/**`. Варианты: `validation.links.not_found: ignore` в `mkdocs.yml` (осознанно) либо перенос этих документов в `docs/` |
+| 3 | **Исторические ADR и отчёты спринтов** | 662 упоминания несуществующих путей в 308 файлах документации (455 уникальных путей; напр. `tools/checks/check_layers.py`). Переписывать историю нельзя — решение: глобальная пометка «документ — снимок на дату» + автоматический гейт «упоминания путей» с allowlist исторических файлов |
+| 4 | **`ARCHITECTURE.md` (корень)** | Содержит `tools/checks/check_layers.py` (несуществующий путь). Вне зоны правки документации |
+
+---
+
 ## Связанные документы
 
 * [ADR-0405](../adr/0405-route-capabilities-namespace-migration.md) — миграция capability-деклараций роутов.

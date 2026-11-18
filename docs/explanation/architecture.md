@@ -13,7 +13,7 @@ entrypoints  →  services  →  core  (Protocols)
 
 **Правило**: слои могут импортировать только нижележащие; `core` не импортирует
 ничего из `src/` (только stdlib + Protocols). Нарушения проверяются через
-`make check-layers` (`tools/checks/check_layers.py`).
+`make layers` (`tools/check_layers.py`).
 
 ## DSL Dual-Mode Principle
 

@@ -3,9 +3,9 @@
 **Status:** Accepted
 **Date:** 2026-06-08
 **Authors:** K3
-**Sources:** роевой аудит 2026-06-08 (EIP coverage gap), [eip/transactional.py](../../../src/backend/dsl/engine/processors/eip/transactional.py)
+**Sources:** роевой аудит 2026-06-08 (EIP coverage gap), [eip/transactional.py](../../src/backend/dsl/engine/processors/eip/transactional.py)
 **Supersedes:** — (additive, не заменяет существующее)
-**See also:** ADR-0087 (ClaimCheck dedup, sibling wave), [SagaProcessor](../../../src/backend/dsl/engine/processors/control_flow.py) (parent для ProcessManager)
+**See also:** ADR-0087 (ClaimCheck dedup, sibling wave), [SagaProcessor](../../src/backend/dsl/engine/processors/control_flow/saga.py) (parent для ProcessManager)
 
 ## Context
 

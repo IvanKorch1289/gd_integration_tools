@@ -2,7 +2,7 @@
 
 Temporal (production) + LiteTemporalBackend (dev_light).
 
-## Терминология
+## Терминология {#терминология}
 
 * **Шаг** (step) — **основной термин**. Шаг — одна декларация в `steps[]`
   workflow: `type: activity`, `type: saga`, `type: wait_signal`,
@@ -209,7 +209,7 @@ Namespace для проверки определяет runtime-резолвер 
 гейт включён, core-baseline выключен — см.
 [Capability runtime](../explanation/capability_runtime.md).
 
-## Схема состояний
+## Схема состояний {#схема-состояний}
 
 Статусы инстанса — `WorkflowStatus`
 (`src/backend/core/domain/models/workflow_instance.py`):
@@ -349,7 +349,7 @@ Pg-runner эмитит OTel-метрики (meter `gd.workflow`) через
 
 Recorders best-effort: отсутствие OTel SDK не ломает исполнение.
 
-## Как отладить
+## Как отладить {#как-отладить}
 
 Admin-API (`/api/v1/admin/workflows/...`) требует admin-роль
 (operator / super_admin).
@@ -415,7 +415,7 @@ workflow; для workflow используйте admin-API (см. выше).
 - Retry policies (exponential backoff) — `spec/policies.py`
 - Async, parallel, sequential — `mode`, `gateway_and` / `gateway_xor` / `gateway_or`
 
-## Не реализовано
+## Не реализовано {#не-реализовано}
 
 * SLA-алертинг **не реализован** (ADR-0403): исполнитель трекинга
   (`SlaTracker`) и протокол диспетчера (`SlaAlertDispatcher`) удалены как

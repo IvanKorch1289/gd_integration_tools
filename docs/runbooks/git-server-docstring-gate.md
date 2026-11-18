@@ -38,7 +38,7 @@ export GD_PYTHON_BIN=/usr/bin/python3                    # опциональн�
 исключён из проверки (амнистия legacy-кода) — добавь его в:
 
 ```text
-tools/checks/check_docstrings_allowlist.txt
+tools/check_docstrings_allowlist.txt
 ```
 
 Запушенный allowlist влияет на следующие проверки. Удалить запись из

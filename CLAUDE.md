@@ -1,8 +1,17 @@
 # CLAUDE.md — gd_integration_tools
 
-> **Версия документа**: V22 (синхронизирована с `ARCHITECTURE.md` от 2026-08-19). Sprint 3 audit cleanup: bandit HIGH blocking, lazy `__getattr__` proxies fix, ADR regen.
+> **Версия документа**: V23 (синхронизирована с `ARCHITECTURE.md` от 2026-08-19
+> и с волной 34 от 2026-11-18). Sprint 3 audit cleanup: bandit HIGH blocking,
+> lazy `__getattr__` proxies fix, ADR regen.
 > Любая работа выполняется в соответствии с этим документом и `ARCHITECTURE.md`.
 > GAP-анализ: `docs/architecture/repository-navigation-audit.md` (актуальный, 2026-09-11).
+>
+> **Версия 23 (2026-11-18, волна 34)** — синхронизация с кодом:
+> путь гейта слоёв (`tools/check_layers.py`, не `tools/checks/…`), актуальные
+> make-цели (`docs-mkdocs`, `perf-gate`; `make service-schema`/`make perf`
+> не существуют), статус docstring-гейта (0 missing), путь
+> `ResponseValidatorProcessor`, долг межслойных нарушений **0** (ADR-0457),
+> coverage-baseline **77.68 %** (ADR-0453), engine-wide capability (ADR-0456).
 
 ---
 
@@ -54,6 +63,11 @@
 > работает. Импортируйте через `src.backend.*`. Расхождение задокументировано
 > как долг: переименование — это переписывание ~9 100 мест импорта, а не
 > рефакторинг; исправлению подлежит спецификация.
+>
+> **Спецификация приведена в соответствие (2026-11-18, волна 34).** Раздел
+> «Ограничения слоёв» ниже и `AGENTS.md` теперь используют `src.backend.*`;
+> оставшиеся упоминания `gd_integration_tools.*` — исторические ADR и
+> отчёты спринтов (фиксируют состояние на момент принятия).
 
 Связи через `graphify query/path/explain`. **Не читать весь репозиторий целиком без необходимости.**
 
@@ -133,16 +147,16 @@
 │    └── *.dsl.yaml    (steps[] любых типов)                          │
 └─────────────────────────────────────────────────────────────────────┘
 
-Ограничения слоёв (enforce через tools/checks/check_layers.py)
+Ограничения слоёв (enforce через tools/check_layers.py)
 
     entrypoints импортирует только services, schemas, core (Protocols)
     services импортирует только core, schemas
     infrastructure реализует контракты из core (Protocols)
     core не импортирует код из src/ (только stdlib + Protocols)
     dsl импортирует core (контракты) + infrastructure через registries
-    extensions/<name>/ импортирует только `gd_integration_tools.core.*` + `gd_integration_tools.testkit.*` + capability-checked фасады. Прямой импорт из infrastructure//services/ запрещён.
+    extensions/<name>/ импортирует только `src.backend.core.*` + `testkit.*` + capability-checked фасады. Прямой импорт из infrastructure//services/ запрещён.
 
-    **Exception** (P1-L1, audit 2026-08-18): extensions с durable workflows могут также импортировать `gd_integration_tools.dsl.workflow.builder` + `gd_integration_tools.dsl.workflow.spec` + `gd_integration_tools.dsl.helpers.banking` для декларации ``WorkflowDeclaration``. Production use: `extensions/core_entities/orders/workflows/orders_dsl.py` (saga-based migration, S213). Future migrations: ADR-0244 plan.
+    **Exception** (P1-L1, audit 2026-08-18): extensions с durable workflows могут также импортировать `src.backend.sdk` (`WorkflowBuilder`, `WorkflowDeclaration`, `ActivityDeclaration`, `SensorDeclaration`, `SleepDeclaration`) для декларации ``WorkflowDeclaration``. Production use: `extensions/core_entities/orders/workflows/orders_dsl.py` (saga-based migration, S213). Future migrations: ADR-0244 plan.
     src/frontend/streamlit_app/ импортирует только публичный API + REST через api_client.py.
 
 Капитальные структурные элементы V15
@@ -398,7 +412,7 @@ R-V15-17: Settings access из DSL
 Builder .get_setting("path.to.value", default=...) + YAML-step get_setting: { path: "...", to: body.x }. Capability-checked: settings.read.<scope>. Глобальная инъекция settings.section остаётся для Python-кода.
 R-V15-18: Response validation для внешних API
 
-ResponseValidatorProcessor (dsl/engine/processors/validation/response.py) — Pydantic-validation на входящий response_body. Builder: .validate_response(schema=PydanticModel, on_error="dlq"|"fail"|"warn").
+ResponseValidatorProcessor (dsl/engine/processors/validate_response.py) — Pydantic-validation на входящий response_body. Builder: .validate_response(schema=PydanticModel, on_error="dlq"|"fail"|"warn").
 Запрещённые паттерны (V15)
 
     God Object (>300 строк, >10 публичных методов).
@@ -456,12 +470,12 @@ ResponseValidatorProcessor (dsl/engine/processors/validation/response.py) — Py
 
 По области изменений
 
-    Public contracts / DI / DSL: make routes + make actions + make plugin-schema + make route-schema + make service-schema.
-    Документация: make docs.
+    Public contracts / DI / DSL: make routes + make actions + make plugin-schema + make route-schema + make check-service-docs.
+    Документация: make docs-mkdocs (канонический mkdocs; make docs — deprecated-обёртка).
     Зависимости/секреты/релиз: make deps-check + make secrets-check + make readiness-check.
-    Performance-критичные: make perf (после Wave 7).
-    Resilience-критичные: make chaos (после Wave 13).
-    Security-критичные: make security + make check-waf-coverage (после R3).
+    Performance-критичные: make perf-gate (enforced, k6 + SLO) / make perf-full / make perf-smoke.
+    Resilience-критичные: make chaos.
+    Security-критичные: make security + make check-waf-coverage.
 
 V15-специфичные gates
 
@@ -484,12 +498,16 @@ Pre-push docstring gate (Sprint 0)
     > запуск падал с `No such option: --strict`, то есть предписанный
     > гейт не запускался как задокументировано. Проверено:
     > `tools/check_docstrings.py --strict` → `No such option`.
-    > Текущее состояние гейта: 1 отсутствующий docstring —
-    > `src/backend/entrypoints/graphql/graphql_guards.py:27`.
+    >
+    > **Перепроверено 2026-11-18 (волна 34):** гейт зелёный —
+    > `.venv/bin/python tools/check_docstrings.py` → **exit 0, 0 missing**
+    > (полный обход дерева). Прежняя пометка «1 отсутствующий
+    > docstring — `src/backend/entrypoints/graphql/graphql_guards.py:27`»
+    > больше не актуальна.
 
-Sphinx auto-gen API reference (Sprint 9)
+Auto-gen API reference (mkdocs, канонично — FW3)
 
-Auto-gen из docstrings; multi-version + ReadTheDocs/GitLab Pages; Diátaxis структура; Vale prose linter + ru-language proofreader.
+Сборка документации — mkdocs (`make docs-mkdocs` → `mkdocs build --clean --strict`); Sphinx удалён (FW3, P2-001 RESIDUAL). Multi-version публикация — `docs-publish.yml` (mike, ветка `gh-pages`); Diátaxis-структура; Vale prose linter + ru-language proofreader (`make docs-vale`).
 Docstring правила
 
     Все docstrings и комментарии — на русском языке.
@@ -531,7 +549,7 @@ Pre-step initialization ritual
 
 graphify update . && \
 cat .claude/DECISIONS.md .claude/KNOWN_ISSUES.md && \
-python tools/checks/check_layers.py
+.venv/bin/python tools/check_layers.py
 
 Файлы правил (@include)
 
@@ -702,4 +720,4 @@ python tools/checks/check_layers.py
 - M7: 19/19 pass
 - Total: 3058 passed (+11)
 
-Версия CLAUDE.md: V22 (2026-08-19). При обновлении архитектурных решений синхронизировать с ARCHITECTURE.md.
+Версия CLAUDE.md: V23 (2026-11-18, синхронизация с волной 34). При обновлении архитектурных решений синхронизировать с ARCHITECTURE.md.

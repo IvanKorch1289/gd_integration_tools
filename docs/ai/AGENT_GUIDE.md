@@ -18,7 +18,7 @@
 
 ---
 
-## 1. Создание политик безопасности
+## 1. Создание политик безопасности {#1-создание-политик-безопасности}
 
 ### 1.1 Capability-based permissions
 
@@ -78,7 +78,7 @@ AgentToolPolicy:
 
 ---
 
-## 2. Маскирование PII
+## 2. Маскирование PII {#2-маскирование-pii}
 
 ### 2.1 Общий PII (regex-based, `pii_mask.py`)
 
@@ -136,7 +136,7 @@ tokenizer = provider()  # PresidioTokenizer | RegexTokenizer
 
 ---
 
-## 3. Agent workflow (LangGraph + DSL)
+## 3. Agent workflow (LangGraph + DSL) {#3-agent-workflow}
 
 ### 3.1 LangGraph agent DSL
 
@@ -209,7 +209,7 @@ p = AIToolDispatchProcessor(
 
 ---
 
-## 4. Версионирование и оптимизация промптов
+## 4. Версионирование и оптимизация промптов {#4-версионирование-промптов}
 
 ### 4.1 PromptRegistry (YAML-based versioning)
 
@@ -385,7 +385,7 @@ p = AIRLMProcessor(
 
 ---
 
-## 7. Выбор правильного паттерна
+## 7. Выбор правильного паттерна {#7-выбор-паттерна}
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -424,7 +424,7 @@ p = AIRLMProcessor(
 
 ---
 
-## 8. Тестирование агентов
+## 8. Тестирование агентов {#8-тестирование-агентов}
 
 ### 8.1 Unit tests (TDD)
 
@@ -489,7 +489,7 @@ async def test_real_mask_reversible():
 
 ---
 
-## 9. Workspace isolation (AIWorkspaceManager)
+## 9. Workspace isolation (AIWorkspaceManager) {#9-workspace-isolation}
 
 V15 R-V15-4. `AIWorkspaceManager` выдаёт изолированные writable-каталоги
 для AI-агентов с per-tenant quota + TTL cleanup.

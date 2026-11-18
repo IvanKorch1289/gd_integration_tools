@@ -1,7 +1,6 @@
 # Docker Compose Gap Analysis
 
-**Date**: 2026-06-23
-**Sprint**: S168 W14
+**Date**: 2026-06-23 (S168 W14) · **Обновлено**: 2026-11-18 (волны 34–35)
 **Status**: INFO — no production blockers
 
 ---
@@ -34,18 +33,37 @@ Docker-compose provides sufficient infrastructure for `dev` profile.
 
 ## Production Gap (APP_PROFILE=prod)
 
-If switching `app`/`workflow-worker` to `prod` profile, these are **required but not in docker-compose**:
+**Актуально на 2026-11-18.** Прежняя редакция документа утверждала, что
+сервисы прода «отсутствуют». Это больше не так: они объявлены в
+`ops/compose/docker-compose.prod.yml`. Прод-стек запускается как
+`docker-compose -f docker-compose.yml -f docker-compose.prod.yml`.
 
-| Service | Required by prod.yml | Missing |
-|---------|---------------------|---------|
-| `otel-collector` | `opentelemetry_endpoint: "http://otel-collector:4317"` | ✅ Missing |
-| `kafka` | `kafka.enabled: true` | ✅ Missing |
-| `minio` | S3 storage | ✅ Missing |
-| `vault` | `vault.enabled: true` | ✅ Missing |
-| `schema-registry` | Avro serialization | ✅ Missing |
-| `connect-distributed` | Debezium CDC | ✅ Missing |
-| `celery-worker` | Async task queue | ✅ Missing |
-| `celery-beat` | Celery scheduler | ✅ Missing |
+| Service | Required by prod.yml | Где объявлен | Статус |
+|---------|---------------------|--------------|--------|
+| `otel-collector` | `opentelemetry_endpoint: "http://otel-collector:4317"` | `docker-compose.prod.yml` | ✅ есть (+ `jaeger`) |
+| `kafka` | `kafka.enabled: true` | `docker-compose.prod.yml` | ✅ есть (+ `kafka-zookeeper`, `schema-registry`, `connect-distributed`, `kafka-ui`) |
+| `minio` | S3 storage | `docker-compose.prod.yml` | ✅ есть |
+| `vault` | `vault.enabled: true` | `docker-compose.prod.yml` | ✅ есть |
+| `clickhouse` | `audit_clickhouse_enabled` | `docker-compose.prod.yml` | ✅ добавлен волной 34 (DDL audit-трейла накатывается на старте) |
+| `open-webui` | `open_webui.base_url` | `docker-compose.prod.yml` | ✅ добавлен волной 34 (`WEBUI_SECRET_KEY` из секрет-хранилища) |
+| `jupyterhub` | `jupyter_hub.base_url` | `docker-compose.prod.yml` | ✅ добавлен волной 34 (конфиг — `ops/compose/jupyterhub/`) |
+| `celery-worker` | Async task queue | `docker-compose.prod.yml` | ⛔ **за `profiles: ["celery"]`** (волна 35) |
+| `celery-beat` | Celery scheduler | `docker-compose.prod.yml` | ⛔ **за `profiles: ["celery"]`** (волна 35) |
+
+### Почему celery-сервисы отключены по умолчанию
+
+Волна 35 (аудит 2026-11-18, P1) перевела `celery-worker`/`celery-beat` за
+opt-in-профиль `profiles: ["celery"]`, потому что:
+
+* пакет `celery` **не объявлен** ни в `[project.optional-dependencies]`
+  `pyproject.toml`, ни в `uv.lock`;
+* модуль с точкой входа `celery_app` **не существует** (каталога
+  `src/backend/tasks/` нет).
+
+Без профиля compose не поднимает эти сервисы. Чтобы включить стек celery,
+нужно: (1) объявить `celery` в extras и пересобрать lock; (2) создать
+модуль `celery_app`; (3) запускать compose с `--profile celery`.
+До этого celery не является частью прод-стека.
 
 **Recommendation**: Keep `APP_PROFILE=dev` for local docker dev. For production, use
 `docker-compose -f docker-compose.yml -f docker-compose.prod.yml` pattern with

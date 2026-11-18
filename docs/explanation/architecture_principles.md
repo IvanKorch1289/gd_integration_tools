@@ -25,7 +25,7 @@ MQTT + XML.
 * `infrastructure` реализует `core` Protocols;
 * `core` не импортирует `src/`.
 
-Enforce: `tools/checks/check_layers.py` (см. `make layers`).
+Enforce: `tools/check_layers.py` (см. `make layers`).
 
 ## См. также
 

@@ -139,12 +139,13 @@ src/frontend/streamlit_app/  ─►  src/backend/entrypoints/  ─►  src/backe
 ```
 
 **Бизнес-логика** — `extensions/<name>/` (отдельные плагины с `plugin.toml`).
-Импортирует ТОЛЬКО `gd_integration_tools.core.*` + capability-checked фасады.
+Импортирует ТОЛЬКО `src.backend.core.*` + capability-checked фасады.
 Прямой импорт из `infrastructure/*` / `services/*` запрещён.
 
 **`routes/<name>/`** — DSL-routes как «лёгкие плагины» (V11.1a).
 
-**`gd_integration_tools.testkit.*`** — тестовые утилиты.
+**`testkit.*`** — тестовые утилиты (пакет в корне репозитория; в venv
+устанавливается как `testkit`, дублируется в `src/testkit`).
 
 **Лёгкие routes** — `route.toml` + `*.dsl.yaml` (steps[] любых типов).
 

@@ -54,7 +54,7 @@
 | `fs.read` | ✅ | `SegmentedGlobMatcher` | ➖ | Чтение файлов через FSFacade (path-glob по '/'). |
 | `fs.watch` | ✅ | `SegmentedGlobMatcher` | ➖ | Наблюдение за файловой системой (watchdog) через FSFacade / FileWatchProcessor; scope = glob по пути наблюдаемого каталога (Cycle 172, Wave 5). |
 | `fs.write` | ✅ | `SegmentedGlobMatcher` | ➖ | Унифицированная запись файлов. fs.create_new — deprecated alias (post-S20 removal). Scope: fs.write.workspace.<session_id> для AI-workspaces; fs.write.tenant.<tenant_id> / fs.write.repo.<area> для системных. |
-| `function.call` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
+| `function.call` | ➖ | `GlobScopeMatcher` | ✅ | Мигрированная декларация процессора (ADR-0451). |
 | `guardrails.apply` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `health.read` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |
 | `jupyter.execute` | ➖ | `GlobScopeMatcher` | ➖ | Мигрированная декларация процессора (ADR-0451). |

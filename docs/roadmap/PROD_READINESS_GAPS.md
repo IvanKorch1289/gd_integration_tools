@@ -1,4 +1,4 @@
-# PROD_READINESS_GAPS — 2026-09-14 (обновлено)
+# PROD_READINESS_GAPS — 2026-09-14 (обновлено 2026-11-18, волна 34)
 
 > Реестр позиций, не позволяющих заявить «ГОТОВ К ПРОДУ» без оговорок, либо
 > требующих внешних условий. Каждая: owner, тип, причина, минимальный шаг,
@@ -19,8 +19,14 @@
   **Частично выполнено (2026-11-10, ADR-0443):** baseline пересчитан по
   последнему валидному замеру — 74 % (было 52.25 %, замер на прогоне с 206
   упавшими тестами), порог гейта берётся из baseline; красный гейт
-  (`--threshold 75` при фактических 74 %) устранён. Остаток: перемерить
-  coverage на CI-раннере (dev-box падает с OOM) и поднять порог.
+  (`--threshold 75` при фактических 74 %) устранён.
+  **Перемерено (2026-11-18, ADR-0453, волна 34):** grouped-прогон переведён в
+  канонический CI-режим (`-n 2 --dist loadfile`) — прежние 74 % были
+  branch-числом, гейт же сравнивает line-rate из `coverage.xml`. Перемер дал
+  **77.68 %** line-rate (branch 75 %); baseline `.baselines/coverage.json`
+  приведён к метрике гейта, порог `target_threshold` = 75 % (S19 K2 W4)
+  достигнут. **Остаток:** воспроизвести перемер на CI-раннере (набор тестов
+  раннера может отличаться) и поднять порог гейта с 70 % до 75 %.
 - **Риск**: локальные числа невоспроизводимы → возможен дрейф вниз без сигнала.
 - **Срок**: следующий спринт.
 
@@ -120,10 +126,42 @@
 - **Тип**: docs (P1, частично исправлено). **Owner**: docs-owner.
 - **Исправлено 2026-09-11**: README-пути `/events` и `/webhooks`; navigation
   audit зафиксировал расхождения.
-- **Осталось**: CLAUDE.md — 4 битых пути (PLAN.md, /root/.claude/plans/…,
-  gap-analysis/, graphify-out/wiki/); mkdocs nav `api/` (каталог не существует);
-  README «114 actions» vs ARCHITECTURE «35+ actions»; двойная нумерация
-  спринтов в AGENTS.md; дубли docs/workflow|workflows, docs/migration|migrations.
+- **Исправлено 2026-11-18 (волна 34, сверка документации с кодом)**:
+  * README — блок «Текущие метрики» перегенерирован (`tools/generate_current_metrics.py --write`):
+    actions 124 → **132**, OpenAPI 414/142 → **447/146**, тестов 22 389 → **25 639**,
+    layer baseline «debt: 37 legacy; contract: 4» → **debt 0; contract 3**;
+  * `docs/index.md` — «190+ ADR» → **400**, устаревшая таблица «Status (S164)»
+    заменена ссылками на актуальные источники правды, диаграмма слоёв
+    приведена к канонической;
+  * CLAUDE.md — путь гейта слоёв (`tools/checks/check_layers.py` → `tools/check_layers.py`),
+    несуществующие цели `make service-schema` / `make perf` → `make check-service-docs` /
+    `make perf-gate`, `make docs` → `make docs-mkdocs`, статус docstring-гейта
+    («1 отсутствующий docstring» → **0 missing**), путь `ResponseValidatorProcessor`,
+    корень импорта расширений (`gd_integration_tools.core.*` → `src.backend.core.*`);
+  * `docs/reference/capabilities.md` — пересобран (`make capability-catalog`):
+    `function.call` помечена публичной (ADR-0456);
+  * ADR-0450/0452/0453 — добавлены пометки о последующих изменениях волны 34
+    (долг слоёв 0, fail-closed мутационный гейт, coverage 77.68 %);
+  * `docs/analysis/index.md`, ADR-0087/0088 — исправлены битые/неверно-глубинные
+    ссылки;
+  * `docs/ARCHITECTURE.md` — «190+ ADR» → 400, несуществующий якорь
+    `#stability-matrix` в README, `core.storage.facade` → `services.storage.facade`,
+    несуществующие `route.use_auth()` / `route.use_secret()`, таблица слоёв
+    приведена к фактической;
+  * `docs/adr/WIKI.md` — пересобран (`tools/build_adr_wiki.py`): 288 → **397** ADR
+    (был сгенерирован 2026-09-30, новые ADR 0346–0457 отсутствовали);
+  * `docs/STATUS.md` — помечен как срез от 2026-10-15 (значения 414 paths и др.
+    устарели) со ссылками на актуальные источники;
+  * якоря с кириллицей в `docs/ai/AGENT_GUIDE.md` и `docs/workflows/index.md` —
+    проставлены явные `{#…}` (mkdocs генерировал пустые `_N`, ссылки работали
+    только в GitHub-рендере).
+- **Осталось**: mkdocs nav (`mkdocs.yml` — вне зоны правки документации): 20
+  разделов объявлены как «каталог», а mkdocs 1.6 резолвит только файлы → в
+  `--strict` это 20 предупреждений; нужен либо явный перечень файлов в nav,
+  либо плагин section-index. Плюс 7 ссылок из `docs/**` на файлы вне `docs/`
+  (`README.md`, `CHANGELOG.md`, `.security/*.policy.md`, `.shared/context/*`,
+  `src/**`) — они корректны для чтения в репозитории, но не резолвятся в
+  собранном сайте.
 - **Шаг**: волна doc-fix по §8 navigation audit (каждая правка — атомарный
   commit; числа — только из `manage.py` inventory).
 - **Done**: 0 битых путей в CLAUDE.md/mkdocs nav; согласованные числа actions.
@@ -191,8 +229,9 @@
 
 - **Тип**: security-архитектура. **Owner**: platform-team + владелец
   авторизации.
-- **Статус**: 🟡 ЗАФИКСИРОВАН, ПОЧИНКА ОТЛОЖЕНА (ADR-0361, гриллинг раунды 1–2).
-- **Причина**: `BaseProcessor.auth_check` ведёт в синхронный
+- **Статус**: 🟢 ЗАКРЫТО (2026-11-18, ADR-0456, волна 34) — enforcement перенесён
+  в движок; ранее (ADR-0361) статус был «зафиксирован, починка отложена».
+- **Причина (было)**: `BaseProcessor.auth_check` ведёт в синхронный
   `AuthorizationGateway.check`, где единственный allow-источник — exact
   in-memory policy (в проде пусто), sync-хуки Casbin/OPA отсутствуют (есть
   только async `casbin_step`/`opa_step`), а `CapabilityGate.check` в этом пути
@@ -204,9 +243,17 @@
   `required_capability` сломало бы процессор); риски закрыты доменными
   guard'ами (ADR-0359) и path-allowlist (ADR-0358); декларативность
   зафиксирована гейтом `tools/check_decorative_capabilities.py` (baseline 45).
-- **Шаг (отдельный ADR + владелец)**: кандидаты — единый app-level gateway с
-  OPA/Casbin в processor-пути; либо sync-реализация `_casbin_check`/`_opa_check`;
-  маппинг principal→plugin НЕ рекомендуется (открывает 71 core-capability для
+- **Что сделано в волне 34 (ADR-0456)**: проверка capability шага вынесена из
+  процессоров (opt-in, 7 из 64) **в движок** — `dsl/engine/capability_guard.py`
+  вызывается до `processor.process()` в основном, параллельном и вложенном
+  путях. Шаг без декларации → поведение не меняется; шаг с декларацией →
+  канонический гейт (runtime-resolver, ADR-0366), отказ = `failed` + `stopped`,
+  шаг не выполняется, в trace — `denied`. Идемпотентность: `capability_verified`
+  не даёт второй проверки и второго audit-события `capability.check`.
+  Гейт декоративных деклараций: `tools/check_decorative_capabilities.py` → 0.
+- **Осталось**: единый app-level gateway с OPA/Casbin в processor-пути (ADR-0361
+  вариант «отдельный ADR + владелец») — не входит в волну 34. Маппинг
+  principal→plugin НЕ рекомендуется (открывает 71 core-capability для
   `principal=anonymous`).
 
 ---
