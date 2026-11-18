@@ -27,7 +27,6 @@ _ENTRYPOINTS_MODULES = (
     "src.backend.entrypoints.api.v1.endpoints.dadata",
     "src.backend.entrypoints.api.v1.endpoints.admin",
     "src.backend.entrypoints.api.v1.endpoints.auth_login",
-    "src.backend.entrypoints.api.generator.setup",
 )
 
 

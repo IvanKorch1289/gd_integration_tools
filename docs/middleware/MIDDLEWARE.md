@@ -41,6 +41,23 @@ Note: per-route декоратор
 
 См. `.claude/KNOWN_ISSUES.md` (#2 object authorization, #5 header trust).
 
+### Инвариант: ETag = хеш отдаваемого тела (P2-5, 2026-11-18)
+
+`ResponseCacheMiddleware` зарегистрирован на **order=710** — ВНЕШНЕ обоих
+маскеров (`data_masking` 580, `pii_masking_response` 700) и ВНУТРЕННЕ
+сжатия (900/920). Напоминание про LIFO: **высокий order = внешний**.
+
+Из-за LIFO-семантики `add_middleware` middleware с меньшим order отрабатывает
+на response-пути раньше. Пока `response_cache` был внутри маскеров
+(порядок `520`), ETag считался по **сырому** телу, а клиент получал
+**замаскированное** → идентификатор не соответствовал контенту (условный
+GET отдавал «не то» тело, CDN кэшировал по чужому id).
+
+Правило: ETag = хеш байтов, которые **реально уходят клиенту**
+(после маскирования, до transfer-кодирования сжатия). Порядок
+зафиксирован тестом
+`tests/unit/entrypoints/middlewares/test_etag_masking_order.py`.
+
 ### DSL middleware (per-route via `RouteBuilder`)
 
 - `TimeoutMiddleware(op, timeout_s)` — per-route timeout

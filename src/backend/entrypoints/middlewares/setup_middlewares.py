@@ -187,9 +187,6 @@ def build_default_registry() -> MiddlewareRegistry:
     registry.register_builtin("timeout", TimeoutMiddleware, order=400)
 
     # Layer 3: body / auth (500-749) --------------------------------------- #
-    registry.register_builtin(
-        "response_cache", ResponseCacheMiddleware, {"max_age": 60}, order=520
-    )
     registry.register_builtin("data_masking", DataMaskingMiddleware, order=580)
     # Wave 8.1: маркер успешной аутентификации в response.
     registry.register_builtin(
@@ -274,6 +271,26 @@ def build_default_registry() -> MiddlewareRegistry:
 
     registry.register_builtin(
         "pii_masking_response", PIIMaskingResponseMiddleware, order=700
+    )
+    # P2-5 (CODE_AUDIT_2026-11-18): response_cache перенесён ВЫШЕ обоих
+    # маскеров (был order=520 — ВНУТРИ data_masking 580 и
+    # pii_masking_response 700).
+    #
+    # Дефект: из-за LIFO-семантики add_middleware (высокий order = внешний)
+    # middleware с order=520 отрабатывал на response-пути ПЕРВЫМ, то есть
+    # видел СЫРОЕ тело. ETag считался по нему, а клиент получал
+    # ЗАМАСКИРОВАННОЕ тело → идентификатор не соответствовал контенту:
+    # условный GET отдавал «не то» тело, а CDN/браузер кэшировал по
+    # чужому идентификатору (и два разных PII в одном ответе давали один
+    # ETag на разных клиентов).
+    #
+    # Инвариант: ETag = хеш байтов, которые РЕАЛЬНО уходят клиенту.
+    # Поэтому response_cache обязан быть ВНЕШНЕ маскеров (получает уже
+    # замаскированное тело) и ВНУТРЕННЕ сжатия (900/920 — сжатие
+    # остаётся последним преобразованием тела, см. инвариант в
+    # test_compression_masking_order.py).
+    registry.register_builtin(
+        "response_cache", ResponseCacheMiddleware, {"max_age": 60}, order=710
     )
     # S183: RPA policy deny-by-default (Layer 3, after auth).
     # Per Master Prompt §3.3: обязателен для банковской шины.

@@ -19,6 +19,15 @@ Starlette API) для restore body. В pure ASGI нет body_iterator —
 headers добавляются). Можно: добавить headers через send-wrapper
 (start message), и downstream-consumers получат body как есть
 (т.к. body НЕ модифицируется, можно не suppress + re-send).
+
+P2-5 (CODE_AUDIT_2026-11-18): ETag обязан идентифицировать ТЕЛО,
+которое реально уходит клиенту. Middleware зарегистрирован на
+order=710 — ВНЕШНЕ обоих маскеров (``data_masking`` 580,
+``pii_masking_response`` 700), поэтому хеш считается по уже
+замаскированным байтам. Раньше (order=520, внутри маскеров) ETag
+считался по сырому телу, а клиент получал замаскированное — иденти-
+фикатор не соответствовал контенту. Порядок регистрации зафиксирован
+тестом ``tests/unit/entrypoints/middlewares/test_etag_masking_order.py``.
 """
 
 from __future__ import annotations
@@ -33,6 +42,23 @@ except ImportError:
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 __all__ = ("ResponseCacheMiddleware",)
+
+
+def _compute_etag(body: bytes) -> str:
+    """Вычисляет ETag по байтам ответа (RFC 7232, strong).
+
+    Args:
+        body: Байты, которые реально уходят клиенту (после маскирования).
+
+    Returns:
+        ETag в кавычках, напр. ``"cb6f2a63f81df718"``.
+
+    """
+    if _USE_XXHASH:
+        return f'"{xxhash.xxh64(body).hexdigest()}"'
+    from src.backend.entrypoints.middlewares._body_hash import etag_hash
+
+    return etag_hash(body)
 
 
 class ResponseCacheMiddleware:
@@ -137,12 +163,7 @@ class ResponseCacheMiddleware:
             )
             return
 
-        if _USE_XXHASH:
-            etag = f'"{xxhash.xxh64(body).hexdigest()}"'
-        else:
-            from src.backend.entrypoints.middlewares._body_hash import etag_hash
-
-            etag = etag_hash(body)
+        etag = _compute_etag(body)
 
         # Cycle 55: If-None-Match check.
         if_none_match = _get_header_value(scope, b"if-none-match")
@@ -152,7 +173,10 @@ class ResponseCacheMiddleware:
                 {
                     "type": "http.response.start",
                     "status": 304,
-                    "headers": [(b"etag", etag.encode("latin-1"))],
+                    "headers": [
+                        (b"etag", etag.encode("latin-1")),
+                        (b"cache-control", self._cache_control().encode("latin-1")),
+                    ],
                 }
             )
             # ASGI-контракт: после ``http.response.start`` обязателен
@@ -170,9 +194,7 @@ class ResponseCacheMiddleware:
                 continue
             new_headers.append((k, v))
         new_headers.append((b"etag", etag.encode("latin-1")))
-        new_headers.append(
-            (b"cache-control", f"public, max-age={self._max_age}".encode("latin-1"))
-        )
+        new_headers.append((b"cache-control", self._cache_control().encode("latin-1")))
 
         await send(
             {
@@ -182,6 +204,15 @@ class ResponseCacheMiddleware:
             }
         )
         await send({"type": "http.response.body", "body": body})
+
+    def _cache_control(self) -> str:
+        """Значение заголовка ``Cache-Control`` (одинаково для 200 и 304).
+
+        Returns:
+            Строка вида ``"public, max-age=60"``.
+
+        """
+        return f"public, max-age={self._max_age}"
 
     @staticmethod
     async def _send_original(
