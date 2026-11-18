@@ -233,7 +233,7 @@ CTE; фронтенд кэшировал данные пользователя �
 
 | Проверка | Результат |
 |---|---|
-| `pytest tests/unit -q --timeout=120 -n 2 --dist loadfile` | **24 455 passed, 0 failed** (711 с) после правок аудита — лог: `.run/wave35-logs/reg_ci_audit2.txt` |
+| `pytest tests/unit -q --timeout=120 -n 2 --dist loadfile` | **24 455 passed, 0 failed** (658 с) на финальном коммите — лог: `.run/wave35-logs/reg_ci_final.txt` |
 | `pytest tests/unit/frontend -q` | **468 passed, 6 skipped** (было 458 + 6) |
 | Импорт-скан 97 модулей страниц | **96 OK / 1** → после пина altair — **97 OK** |
 | `pytest tests/unit/infrastructure tests/unit/services` | **6056 passed**, 77 skipped, 1 xfailed |
