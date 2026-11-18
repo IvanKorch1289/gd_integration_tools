@@ -37,7 +37,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync
+        run: uv sync --locked
 
       - name: Run mypy ratcheting baseline gate
         # Формат baseline: {"errors": <int>, "tool": "mypy"}.
@@ -65,7 +65,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync
+        run: uv sync --locked
 
       - name: Run pyright (narrow scope — backend core)
         # Узкий scope как указано в плане Sprint 3 W1.

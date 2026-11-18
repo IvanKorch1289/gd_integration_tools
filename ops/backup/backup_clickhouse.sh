@@ -62,9 +62,13 @@ clickhouse_query() {
         "http://${CH_HOST}:${CH_HTTP_PORT}/"
 }
 
-TABLES="$(clickhouse_query "SELECT name FROM system.tables WHERE database='${CH_DATABASE}' FORMAT TabSeparated")"
+# P1 (аудит 2026-11-18): брались ВСЕ таблицы system.tables, включая
+# MaterializedView/Dictionary/Log — `ALTER TABLE ... FREEZE` для них
+# падает с ошибкой, и из-за `set -e` весь бэкап падал. FREEZE применим
+# только к семейству MergeTree — фильтруем по engine.
+TABLES="$(clickhouse_query "SELECT name FROM system.tables WHERE database='${CH_DATABASE}' AND engine LIKE '%MergeTree%' FORMAT TabSeparated")"
 if [[ -z "${TABLES}" ]]; then
-    echo "[backup_clickhouse] ERROR: no tables in ${CH_DATABASE}" >&2
+    echo "[backup_clickhouse] ERROR: no MergeTree tables in ${CH_DATABASE}" >&2
     exit 1
 fi
 
@@ -90,7 +94,19 @@ if command -v aws >/dev/null 2>&1; then
     echo "[backup_clickhouse] uploaded to s3://${BACKUP_S3_BUCKET}/${S3_KEY}"
 fi
 
-rm -rf "${SHADOW_DIR}"
+# P1 (аудит 2026-11-18): было безусловное `rm -rf "${SHADOW_DIR}"`.
+# Каталог shadow принадлежит ЖИВОМУ серверу ClickHouse: в нём лежат
+# временные файлы незавершённых merge'ей. Удаление каталога у живого
+# сервера приводит к «Directory ... doesn't exist» и риску потери данных
+# для мерджей в полёте. Очистка теперь opt-in (CH_CLEANUP_SHADOW=1) и
+# по умолчанию выключена: shadow-каталог чистит сам ClickHouse.
+if [[ "${CH_CLEANUP_SHADOW:-0}" == "1" ]]; then
+    rm -rf "${SHADOW_DIR}"
+    echo "[backup_clickhouse] shadow dir removed (CH_CLEANUP_SHADOW=1)"
+else
+    echo "[backup_clickhouse] shadow dir left intact (ClickHouse manages it); set CH_CLEANUP_SHADOW=1 to remove"
+fi
+
 find "${BACKUP_DIR}" -name "ch_${CH_DATABASE}_*.tar.gz" \
     -mtime "+${RETENTION_DAYS}" -delete 2>/dev/null || true
 

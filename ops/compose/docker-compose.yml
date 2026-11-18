@@ -10,7 +10,14 @@ services:
       context: ../..
       dockerfile: ops/compose/Dockerfile
     entrypoint: ["sh", "-c"]
-    command: ["python -m alembic -c alembic.ini upgrade head || true"]
+    # P1 (аудит 2026-11-18): убран `|| true`. Он делал шаг всегда «успешным»:
+    # при падении alembic (несовместимая схема, битая миграция, недоступная
+    # БД) контейнер завершался с кодом 0, а `depends_on:
+    # service_completed_successfully` для app/workflow-worker СРАБАТЫВАЛ —
+    # приложение стартовало поверх неактуальной схемы (тихая потеря
+    # данных / 500 в рантайме). Теперь миграция — fail-closed: ошибка
+    # миграции останавливает стек, пока это явное решение оператора.
+    command: ["python -m alembic -c alembic.ini upgrade head"]
     environment:
       # S124 W4: dev profile (DB_HOST=postgres, REDIS_HOST=redis)
       # вместо prod (DB_HOST=postgres, REDIS_HOST=redis-prod) —

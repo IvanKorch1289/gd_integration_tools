@@ -44,7 +44,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync
+        run: uv sync --locked
 
       - name: Run pytest with coverage (grouped, ADR-0453)
         # ADR-0453: монолитный `pytest tests --cov=src/backend` на 24k тестов

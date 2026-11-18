@@ -4,6 +4,22 @@ version = "0.20.0"
 description = "GD Integration Tools — интеграционная шина на Python 3.14"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
+# P3 (аудит 2026-11-18): блок classifiers отсутствовал → в метаданных пакета
+# не было ни одной строки про поддерживаемые версии Python, хотя проект
+# жёстко ориентирован на 3.14 (PEP 758, `except A, B:`). Для внутреннего
+# пакета метаданные видны в корпоративном индексе (Artifactory/PyPI-mirror),
+# для dry-run публикации (release.yml → `uv build` + `twine check`) — тоже.
+# `Typing :: Typed` НЕ указан: маркера `py.typed` в пакете нет.
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: System :: Distributed Computing",
+]
 authors = [
     { name = "crazyivan1289", email = "crazyivan1289@gmail.com" }
 ]
@@ -625,7 +641,10 @@ frontend = [
     # ADR-0406: пол >=1.66.1 — первая версия streamlit, допускающая pillow>=13.
     "streamlit>=1.66.1,<2.0.0",
     "streamlit-autorefresh>=1.0.0,<2.0.0",
-    "altair>=5.0.0,<6.0.0",
+    # altair 5.5.0 использует TypedDict(closed=True) (PEP 728) — только
+    # Python 3.15+. Проект закреплён на >=3.14,<3.15 → 8 страниц портала
+    # (chart-API) падали с TypeError. Пин до 5.4.x.
+    "altair>=5.0.0,<5.5.0",
     "plotly>=5.18.0,<6.0.0",
 ]
 

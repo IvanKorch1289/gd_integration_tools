@@ -42,7 +42,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync
+        run: uv sync --locked
 
       - name: Validate baseline.json
         # Проверить, что baseline корректный JSON перед запуском gate.

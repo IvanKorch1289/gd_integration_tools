@@ -3,7 +3,11 @@
 # Назначение:
 #     Поднимает полный стек: app + workflow-worker + Kafka + Minio +
 #     Vault + OTEL Collector + Schema Registry + Debezium Connect +
-#     Celery workers + Celery Beat + ClickHouse + OpenWebUI + JupyterHub.
+#     OpenWebUI + JupyterHub + ClickHouse.
+#
+#     Celery worker/beat — только за `--profile celery` (см. комментарий
+#     в блоке Celery: пакет celery и модуль src.backend.tasks.celery_app
+#     в проекте отсутствуют, сервисы были в CrashLoopBackOff).
 #
 # Профиль: production (APP_PROFILE=prod для app и workflow-worker).
 #
@@ -151,8 +155,11 @@ services:
     image: minio/minio:RELEASE.2024-06-13T17-07-06Z
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      # Fail-closed: дефолтный пароль «minioadmin» — публично известный
+      # (MinIO docs), в prod-стеке он означал бы открытый S3.
+      # Как у clickhouse/open-webui — значение обязано прийти из env.
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER must be set for prod}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set for prod}
     volumes:
       - minio_data:/data
     ports:
@@ -167,11 +174,17 @@ services:
       - compose_default
 
   # ─── Secrets ──────────────────────────────────────────────────────────
+  # ВНИМАНИЕ (P1, аудит 2026-11-18): dev-режим Vault (`server -dev`) —
+  # in-memory storage, без TLS и без HA. Он остаётся в стеке как заглушка,
+  # но root-токен больше НЕ зашит в репозиторий: значение обязано прийти
+  # из env (fail-closed, как CLICKHOUSE_PASSWORD / WEBUI_SECRET_KEY).
+  # Полноценный prod-Vault (TLS + seal/unseal + storage backend) —
+  # отдельная задача инфраструктуры, см. docs/roadmap/PROD_READINESS_GAPS.md.
   vault:
     image: hashicorp/vault:1.15
-    command: server -dev -dev-root-token-id=gd-dev-token
+    command: server -dev -dev-root-token-id=${VAULT_ROOT_TOKEN:?VAULT_ROOT_TOKEN must be set for prod}
     environment:
-      VAULT_DEV_ROOT_TOKEN_ID: gd-dev-token
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_ROOT_TOKEN:?VAULT_ROOT_TOKEN must be set for prod}
     ports:
       - "8200:8200"
     cap_add:
@@ -195,7 +208,11 @@ services:
       - ../../src/backend/services/audit/migrations:/docker-entrypoint-initdb.d:ro
     ports:
       - "8123:8123"   # HTTP (его использует клиент приложения)
-      - "9000:9000"   # native
+      # native: host-порт 9000 уже занят MinIO (API) → конфликт биндинга,
+      # из-за которого стек не поднимался целиком. Host-порт — только для
+      # внешних утилит; приложение ходит по service-DNS «clickhouse:9000»
+      # (config_profiles/prod.yml → clickhouse.port), поэтому его не трогаем.
+      - "9004:9000"   # native
     ulimits:
       nofile:
         soft: 262144
@@ -262,7 +279,11 @@ services:
       - jupyterhub_data:/srv/jupyterhub
       - ./jupyterhub/jupyterhub_config.py:/usr/local/etc/jupyterhub/jupyterhub_config.py:ro
     ports:
-      - "8000:8000"
+      # host-порт 8000 уже занят приложением (app: "8000:8000" из
+      # docker-compose.yml) → конфликт биндинга. Внутри compose хаб
+      # остаётся на 8000 (config_profiles/prod.yml → jupyter_hub.base_url
+      # = http://jupyterhub:8000), меняется только host-порт.
+      - "8001:8000"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/hub/login >/dev/null || exit 1"]
       interval: 30s
@@ -279,7 +300,17 @@ services:
       - compose_default
 
   # ─── Celery ───────────────────────────────────────────────────────────
+  # P1 (аудит 2026-11-18): сервисы переведены за opt-in `profiles: [celery]`.
+  # Причина: ни `celery`, ни `src.backend.tasks.celery_app` в проекте НЕТ
+  # (celery не объявлен ни в pyproject, ни в uv.lock; модуль src/backend/tasks/
+  # не существует) → контейнеры гарантированно падали в CrashLoopBackOff и
+  # `docker compose up` завершался с ошибкой. Чтобы включить их, нужно:
+  #   1) объявить `celery` в [project.optional-dependencies] и пересобрать lock;
+  #   2) создать src/backend/tasks/celery_app.py;
+  #   3) запускать стек с `--profile celery`.
+  # До этого — только заглушки, чтобы стек поднимался.
   celery-worker:
+    profiles: ["celery"]
     build:
       context: ../..
       dockerfile: ops/compose/Dockerfile
@@ -308,6 +339,7 @@ services:
       - compose_default
 
   celery-beat:
+    profiles: ["celery"]
     build:
       context: ../..
       dockerfile: ops/compose/Dockerfile
@@ -357,7 +389,17 @@ services:
       migration-runner:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8000/docs"]
+      # P1 (аудит 2026-11-18): было `curl -sf http://localhost:8000/docs`.
+      # Две поломки: (1) `curl` НЕ установлен в runtime-слой образа
+      # (ops/compose/Dockerfile) — curl есть только в builder-слое;
+      # (2) в prod-профиле `app.enable_swagger=false` (config_profiles/prod.yml),
+      # поэтому FastAPI монтирует без `docs_url` → /docs отдаёт 404.
+      # Итог: app навсегда unhealthy → `depends_on: service_healthy`
+      # не выполняется, стек не поднимается.
+      # Канонический liveness-маршрут приложения — GET /health
+      # (src/backend/plugins/composition/app_factory.py), он не требует
+      # авторизации и не зависит от профиля.
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
       interval: 15s
       timeout: 5s
       retries: 5

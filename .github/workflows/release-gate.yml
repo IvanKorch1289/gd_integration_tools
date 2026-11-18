@@ -14,6 +14,15 @@ on:
     branches: [master]
   merge_group:
 
+# P2 (аудит 2026-11-18): блок permissions отсутствовал → workflow наследовал
+# дефолтные права токена. Гейт читает статусы прогонов через
+# `gh api /repos/{repo}/actions/runs` — нужен `actions: read`; без явного
+# блока (и при `permissions: contents: read` без actions) GitHub обрезал бы
+# права до `none` по умолчанию и запрос падал бы с 403.
+permissions:
+  contents: read
+  actions: read
+
 # Без concurrency — release-gate это наблюдатель, не writer.
 concurrency:
   group: release-gate-${{ github.ref }}

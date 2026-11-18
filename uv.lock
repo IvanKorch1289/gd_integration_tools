@@ -362,17 +362,19 @@ wheels = [
 
 [[package]]
 name = "altair"
-version = "5.5.0"
+version = "5.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "jsonschema", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
-    { name = "narwhals", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "numpy", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "packaging", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "pandas", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "toolz", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/16/b1/f2969c7bdb8ad8bbdda031687defdce2c19afba2aa2c8e1d2a17f78376d8/altair-5.5.0.tar.gz", hash = "sha256:d960ebe6178c56de3855a68c47b516be38640b73fb3b5111c2a9ca90546dd73d", size = 705305, upload-time = "2024-11-23T23:39:58.542Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bd/3c/a0934e25e5eed622b35594261edff75bfa342882d651daa33961fdb4fbf0/altair-5.3.0.tar.gz", hash = "sha256:5a268b1a0983b23d8f9129f819f956174aa7aea2719ed55a52eba9979b9f6675", size = 826846, upload-time = "2024-03-30T15:25:00.274Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/aa/f3/0b6ced594e51cc95d8c1fc1640d3623770d01e4969d29c0bd09945fafefa/altair-5.5.0-py3-none-any.whl", hash = "sha256:91a310b926508d560fe0148d02a194f38b824122641ef528113d029fcd129f8c", size = 731200, upload-time = "2024-11-23T23:39:56.4Z" },
+    { url = "https://files.pythonhosted.org/packages/46/30/2118537233fa72c1d91a81f5908a7e843a6601ccc68b76838ebc4951505f/altair-5.3.0-py3-none-any.whl", hash = "sha256:7084a1dab4d83c5e7e5246b92dc1b4451a6c68fd057f3716ee9d315c8980e59a", size = 857848, upload-time = "2024-03-30T15:24:57.762Z" },
 ]
 
 [[package]]
@@ -3131,7 +3133,7 @@ requires-dist = [
     { name = "aiosqlite", marker = "extra == 'test-scheduler'", specifier = ">=0.20.0,<1.0.0" },
     { name = "aiosqlite", marker = "extra == 'test-workflow'", specifier = ">=0.20.0,<1.0.0" },
     { name = "alembic", specifier = ">=1.13.3,<2.0.0" },
-    { name = "altair", marker = "extra == 'frontend'", specifier = ">=5.0.0,<6.0.0" },
+    { name = "altair", marker = "extra == 'frontend'", specifier = ">=5.0.0,<5.5.0" },
     { name = "apscheduler", specifier = ">=3.11.0,<4.0.0" },
     { name = "argon2-cffi", specifier = ">=23.1.0,<26.0.0" },
     { name = "asgi-correlation-id", specifier = ">=4.3.0,<6.0.0" },

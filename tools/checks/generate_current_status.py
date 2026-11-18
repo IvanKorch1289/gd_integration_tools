@@ -73,7 +73,10 @@ def _iso_now() -> str:
     rc, out = _run("date -u +%Y-%m-%dT%H:%M:%SZ")
     if rc == 0:
         return out
-    return datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    # P3 (аудит 2026-11-18): `datetime.utcnow()` объявлен deprecated в
+    # Python 3.12+ (DeprecationWarning). Fallback использует timezone-aware
+    # now(UTC) — тот же формат, но без deprecated-вызова.
+    return datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _python_version() -> str:

@@ -40,7 +40,13 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps (with dev)
-        run: uv sync --extra dev
+        # P1 (аудит 2026-11-18): было `uv sync --extra dev` — такого extra в
+        # [project.optional-dependencies] НЕТ (`dev` — это dependency-group,
+        # а не extra), поэтому `uv sync` падал с "Extra `dev` is not defined"
+        # и шаг фаззинг-раннера НИКОГДА не выполнялся (job при этом оставался
+        # зелёным из-за continue-on-error). Нужные пакеты (schemathesis)
+        # лежат в группе `dev`, которая ставится по умолчанию.
+        run: uv sync --locked
 
       - name: Validate api_fuzz_runner.py imports
         run: uv run python -c "import tools.api_fuzz_runner as m; print('module loaded')"

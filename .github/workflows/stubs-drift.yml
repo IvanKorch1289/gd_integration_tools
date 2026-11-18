@@ -41,7 +41,7 @@ jobs:
       - name: Sync deps
         # gen_dsl_stubs импортирует dsl-модули (inspect.get_type_hints) —
         # нужен полный sync.
-        run: uv sync
+        run: uv sync --locked
 
       - name: Verify .pyi stubs match generated output
         # Аудит 2026-09-21: `--check` сравнивает СЫРОЙ вывод генератора с

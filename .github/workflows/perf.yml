@@ -39,7 +39,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync --extra dev-light --extra perf
+        run: uv sync --locked --extra dev-light --extra perf
 
       - name: Start backend (dev_light)
         run: |
@@ -122,7 +122,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync --extra dev-light --extra perf
+        run: uv sync --locked --extra dev-light --extra perf
 
       - name: Start backend
         run: |

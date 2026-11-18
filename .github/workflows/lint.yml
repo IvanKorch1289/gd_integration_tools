@@ -18,7 +18,13 @@ concurrency:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # P1 (аудит 2026-11-18): было 15 минут на ~35 шагов (compileall по
+    # src+extensions+scripts+tools+tests, ruff, mypy, docstring-гейт по всему
+    # дереву, WAF-coverage, tenant-isolation, object-authorization и др.).
+    # При превышении job-timeout GitHub УБИВАЕТ job — все последующие
+    # блокирующие гейты просто не выполнялись, а красным выглядел только
+    # общий таймаут. Мутационный гейт вынесен в отдельный job `mutation`.
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -38,7 +44,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync
+        run: uv sync --locked
 
       - name: Python compileall gate (syntax-first, до Ruff)
         # Аудит 2026-09-21: syntax-проверки должны идти первыми и быть
@@ -138,33 +144,6 @@ jobs:
             alpine/helm:3.15 lint /chart
           docker run --rm -v "$PWD/deploy/helm/gd-integration-tools:/chart" \
             alpine/helm:3.15 template gd /chart --set secrets.allowPlaceholders=true > /dev/null
-
-      - name: Mutation score gate (mutmut, ADR-0452)
-        id: mutation_gate
-        # ADR-0452: гейт был заблокирован с 2026-06-04 (ошибки сбора +
-        # бинарник `mutmut` не в PATH + устаревшие файлы в рабочей копии
-        # мутантов). Теперь гейт рабочий, порог берётся из baseline
-        # (.baselines/mutation.json) — рэтчет «не хуже baseline».
-        #
-        # Контракт exit-кодов гейта: 0=PASS, 1=FAIL, 2=SKIPPED, 3=ERROR.
-        # Полный прогон мутаций занимает часы, а job lint ограничен
-        # 15-минутным таймаутом, поэтому прогон ограничен по времени:
-        # при исчерпании бюджета гейт возвращает SKIPPED (exit 2) с явной
-        # причиной — это НЕ «зелёный» результат и НЕ молчаливый PASS.
-        # FAIL (exit 1) — блокирует PR.
-        timeout-minutes: 6
-        env:
-          MUTATION_GATE_TIMEOUT: "240"
-        run: |
-          set +e
-          uv run python tools/checks/check_mutmut.py --timeout "${MUTATION_GATE_TIMEOUT}"
-          rc=$?
-          case "${rc}" in
-            0) echo "::notice::[mutation] PASS — score >= baseline" ;;
-            1) echo "::error::[mutation] FAIL — mutation score ниже baseline"; exit 1 ;;
-            2) echo "::warning::[mutation] SKIPPED — score не измерен (причина в выводе шага)" ;;
-            *) echo "::error::[mutation] ERROR — гейт завершился с кодом ${rc}"; exit 1 ;;
-          esac
 
       - name: Config audit gate (config_audit)
         # Wave 13 Q16: YAML-конфиг ↔ модели настроек. Неизвестные YAML-ключи
@@ -295,3 +274,97 @@ jobs:
       - name: Privacy lifecycle coverage (audit 2026-09-22)
         # Storage backends with erasure + legal hold + reconciliation.
         run: uv run python tools/checks/check_privacy_lifecycle.py || true
+
+  # ─── Mutation score gate (ADR-0452) ──────────────────────────────────
+  # Вынесен в ОТДЕЛЬНЫЙ job (аудит 2026-11-18). Причина: полный прогон
+  # мутаций занимает ЧАСЫ, а шаг внутри job'а `lint` жил с общим
+  # 15-минутным таймаутом и 4-минутным бюджетом гейта → гейт ВСЕГДА
+  # возвращал SKIPPED (exit 2). В логе CI это выглядело как обычный
+  # зелёный шаг, т.е. score НЕ измерялся, но merge не блокировался и
+  # никто об этом не узнавал. Плюс ~20 блокирующих гейтов стояли ПОСЛЕ
+  # мутационного шага и не успевали выполняться при таймауте job'а.
+  #
+  # Механика «настоящего enforcement без раздувания PR»:
+  #   1) КЭШ `mutants/` (actions/cache). mutmut кладёт вердикт по каждой
+  #      мутации в `mutants/<path>.meta`; при следующем прогоне он
+  #      переиспользует вердикты и считает ТОЛЬКО новые мутации.
+  #      restore-keys восстанавливают кэш базовой ветки → PR получает
+  #      инкрементальный прогон вместо холодного (часы).
+  #   2) Ключ кэша включает хэши мутируемых модулей И тестов: verdicts
+  #      пересчитываются при изменении кода или тестов (у mutmut ключ
+  #      веридкта — только исходник, поэтому тесты в ключе обязательны).
+  #   3) FAIL (score < baseline) → job красный → workflow красный →
+  #      release-gate (release-gate.yml) его видит. Это настоящий гейт.
+  #   4) SKIPPED (бюджет исчерпан / нет данных) → НЕ маскируется под PASS:
+  #      явный warning + строка в job summary «НЕ ИЗМЕРЕНО». Такой job
+  #      честно показывает, что enforcement ещё не состоялся.
+  mutation:
+    name: mutation score (mutmut, ADR-0452)
+    runs-on: ubuntu-latest
+    # Собственный таймаут: 45 мин (шаг гейта ограничен 40 мин).
+    # Раньше шаг жил внутри job'а `lint` с таймаутом 15 мин.
+    timeout-minutes: 45
+    # Job не входит в required-набор release-gate как отдельный workflow,
+    # но его conclusion агрегируется в conclusion'е lint.yml, который
+    # release-gate.yml проверяет по имени workflow-файла.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.14
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Sync deps
+        run: uv sync --locked
+
+      - name: Restore mutation cache (mutants/)
+        # Ключ — по хэшу мутируемых модулей + набора тестов; префикс
+        # restore-keys восстанавливает последний кэш базовой ветки,
+        # поэтому прогон инкрементальный, а не холодный.
+        uses: actions/cache@v6
+        with:
+          path: mutants
+          key: mutants-${{ hashFiles('src/backend/core/config/features/__init__.py', 'src/backend/dsl/builders/base/__init__.py', 'src/backend/core/resilience/breaker.py', 'src/backend/core/tenancy/__init__.py', 'src/backend/core/ai/gateway_orchestrator_mixin.py', 'src/backend/entrypoints/middlewares/rpa_policy.py', 'src/backend/core/dsl_browser/__init__.py', 'src/backend/core/agent_eval/__init__.py', 'src/backend/core/idempotency/__init__.py', 'src/backend/core/idempotency/service.py', 'tests/unit/core/config/**', 'tests/unit/dsl/builders/**', 'tests/unit/core/resilience/**', 'tests/unit/core/tenancy/**', 'tests/unit/core/dsl_browser/**', 'tests/unit/core/agent_eval/**', 'tests/unit/core/idempotency/**') }}
+          restore-keys: |
+            mutants-
+
+      - name: Mutation score gate
+        id: mutation_gate
+        # Контракт exit-кодов (tools/checks/check_mutmut.py):
+        #   0 = PASS, 1 = FAIL, 2 = SKIPPED, 3 = ERROR.
+        # FAIL → блокирует PR. SKIPPED → честный warning, НЕ PASS.
+        timeout-minutes: 42
+        env:
+          MUTATION_GATE_TIMEOUT: "2280"
+        run: |
+          set +e
+          uv run python tools/checks/check_mutmut.py --timeout "${MUTATION_GATE_TIMEOUT}"
+          rc=$?
+          case "${rc}" in
+            0)
+              echo "::notice::[mutation] PASS — score >= baseline"
+              echo "### Mutation score: PASS" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            1)
+              echo "::error::[mutation] FAIL — mutation score ниже baseline"
+              echo "### Mutation score: FAIL (ниже baseline)" >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+              ;;
+            2)
+              echo "::warning::[mutation] SKIPPED — score НЕ ИЗМЕРЕН (причина в выводе шага). Это НЕ зелёный результат."
+              echo "### Mutation score: НЕ ИЗМЕРЕНО (SKIPPED) — enforcement не состоялся" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *)
+              echo "::error::[mutation] ERROR — гейт завершился с кодом ${rc}"
+              echo "### Mutation score: ERROR (код ${rc})" >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+              ;;
+          esac

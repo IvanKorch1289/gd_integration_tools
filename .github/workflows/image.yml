@@ -103,7 +103,9 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Run Trivy image scan
-        uses: aquasecurity/trivy-action@master
+        # P2 (аудит 2026-11-18): был `@master` — подвижная ветка вместо
+        # релизного тега (см. security.yml). Заменён на релизный тег.
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
           image: ${{ needs.build.outputs.image }}

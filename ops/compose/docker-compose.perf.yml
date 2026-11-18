@@ -91,7 +91,14 @@ services:
       temporal:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8000/api/v1/health || exit 1"]
+      # P1 (аудит 2026-11-18): было `/api/v1/health` — такого маршрута НЕТ.
+      # v1-роутер health монтируется с префиксом `/health` и содержит
+      # /liveness, /readiness, /startup, /components
+      # (src/backend/entrypoints/api/v1/endpoints/health.py), а корневой
+      # liveness приложения — GET /health
+      # (src/backend/plugins/composition/app_factory.py). Healthcheck
+      # получал 404 → сервис вечно unhealthy.
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10

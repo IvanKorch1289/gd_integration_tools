@@ -52,7 +52,7 @@ jobs:
           key: chaos-docker-${{ runner.os }}-toxiproxy-2.9.0
 
       - name: Sync deps
-        run: uv sync --extra dev-light --extra testkit
+        run: uv sync --locked --extra dev-light --extra testkit
 
       - name: Run chaos suite
         env:

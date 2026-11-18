@@ -42,7 +42,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync
+        run: uv sync --locked
 
       - name: Sprint health check (5 quick signals)
         # S177/S178 ST-2: tools/verify_sprint_health.py integration.

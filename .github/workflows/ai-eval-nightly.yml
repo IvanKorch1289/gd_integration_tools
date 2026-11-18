@@ -46,7 +46,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps (with AI extras)
-        run: uv sync --extra ai
+        run: uv sync --locked --extra ai
 
       - name: Run nightly eval (all suites)
         if: ${{ github.event.inputs.suite_name == '' }}

@@ -16,6 +16,12 @@ name: AI PR Review
         description: PR number to review
         required: false
         type: string
+# P2 (аудит 2026-11-18): блок permissions отсутствовал → workflow наследовал
+# дефолтные права токена репозитория (часто read/write). Явный минимум:
+# читать код + писать комментарий в PR.
+permissions:
+  contents: read
+  pull-requests: write
 concurrency:
   group: ai-pr-review-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
@@ -53,7 +59,8 @@ jobs:
       with:
         enable-cache: true
     - name: Sync deps
-      run: uv sync
+      run: uv sync --locked
+
     - name: Run linting checks
       run: uv run ruff check src/ tests/
       continue-on-error: true
@@ -69,15 +76,20 @@ jobs:
     - name: Check coverage delta
       run: uv run pytest tests/ --cov=. --cov-report=json:coverage.json -q
       continue-on-error: true
-    - name: AI Layer Policy Check
-      run: 'uv run python -c "print(''Layer policy check: PASS'')"'
-      continue-on-error: true
-    - name: AI Security Check
-      run: 'uv run python -c "print(''Security check: PASS'')"'
-      continue-on-error: true
-    - name: AI Performance Regression Check
-      run: 'uv run python -c "print(''Performance regression check: PASS'')"'
-      continue-on-error: true
+    - name: AI checks (STUB — реальные проверки не реализованы)
+      # P1 (аудит 2026-11-18): шаги «AI Layer Policy Check», «AI Security
+      # Check» и «AI Performance Regression Check» были заглушками вида
+      # `python -c "print('...: PASS')"` — они ВСЕГДА печатали PASS, ничего
+      # не проверяя, и в логе CI выглядели как пройденные гейты
+      # (fail-open по сути). Заменены одним явным шагом-заглушкой с
+      # warning-аннотацией: сигнала он не даёт и не должен выдавать.
+      #
+      # Реальные гейты безопасности/политик живут в других workflow:
+      #   lint.yml    → check_decorative_capabilities, check_tenant_isolation,
+      #                 check_object_authorization, check_waf_coverage
+      #   security.yml → bandit (HIGH — blocking), pip-audit, uv audit
+      run: |
+        echo "::warning::AI Layer/Security/Performance checks are not implemented — no signal produced (see lint.yml / security.yml for the real gates)"
     - name: Generate AI Review Comment
       if: github.event_name == 'pull_request'
       run: uv run python -c "from datetime import datetime; open('review_comment.md','w').write('##

@@ -41,7 +41,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync
+        run: uv sync --locked
 
       - name: Build distribution (sdist + wheel)
         run: uv build

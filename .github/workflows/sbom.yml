@@ -41,7 +41,7 @@ jobs:
         # Аудит 2026-09-21: cyclonedx-bom живёт в extra `security` — голый
         # `uv sync` его не ставит, и оба fallback'а ниже падали
         # ("Failed to spawn: cyclonedx-bom").
-        run: uv sync --extra security
+        run: uv sync --locked --extra security
 
       - name: Generate CycloneDX SBOM
         # cyclonedx-bom>=4.5 уже в dev-deps; CLI `cyclonedx-py` появляется

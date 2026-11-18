@@ -65,7 +65,7 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync
+        run: uv sync --locked
 
       - name: Start local Redis Sentinel stack
         # S61 W1: spin up the stack defined in docker-compose.redis-sentinel.yml
