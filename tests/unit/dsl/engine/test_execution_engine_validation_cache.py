@@ -12,7 +12,10 @@ from typing import Any
 
 import pytest
 
-from src.backend.dsl.engine.execution_engine import ExecutionEngine
+from src.backend.dsl.engine.execution_engine import (
+    _VALIDATION_CACHE_MAX_SIZE,
+    ExecutionEngine,
+)
 from src.backend.dsl.engine.processors.base import BaseProcessor
 
 
@@ -99,3 +102,27 @@ class TestValidationCacheInvalidation:
         engine._cached_validate(_make_pipeline("r1", ["a"]))
         engine._cached_validate(_make_pipeline("r2", ["a"]))
         assert len(engine._validation_cache) == 2
+
+    def test_cache_is_bounded(self) -> None:
+        """Кэш валидации ограничен — при hot-reload роутов не растёт без границ."""
+        engine = ExecutionEngine(validate_before_execute=True)
+        for i in range(_VALIDATION_CACHE_MAX_SIZE + 10):
+            engine._cached_validate(_make_pipeline(f"r{i}", ["a"]))
+
+        assert len(engine._validation_cache) == _VALIDATION_CACHE_MAX_SIZE
+
+    def test_lru_evicts_least_recently_used(self) -> None:
+        """Переполнение вытесняет наименее недавно использованную запись."""
+        engine = ExecutionEngine(validate_before_execute=True)
+        for i in range(_VALIDATION_CACHE_MAX_SIZE):
+            engine._cached_validate(_make_pipeline(f"r{i}", ["a"]))
+
+        # r0 используется повторно → становится «свежей» записью
+        engine._cached_validate(_make_pipeline("r0", ["a"]))
+        # новая запись вытесняет r1 (теперь он самый старый)
+        engine._cached_validate(_make_pipeline("r_new", ["a"]))
+
+        assert len(engine._validation_cache) == _VALIDATION_CACHE_MAX_SIZE
+        assert ("r1", ("a",)) not in engine._validation_cache
+        assert ("r0", ("a",)) in engine._validation_cache
+        assert ("r_new", ("a",)) in engine._validation_cache

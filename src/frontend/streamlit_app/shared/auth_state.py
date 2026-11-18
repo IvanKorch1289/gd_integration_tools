@@ -8,6 +8,7 @@ S169: Управление JWT token в ``st.session_state``. ``BaseAPIClient`` 
 from __future__ import annotations
 
 import hashlib
+import logging
 import time
 from typing import Any, Literal
 
@@ -114,8 +115,33 @@ def login(
     st.session_state[_SESSION_KEY_EXPIRES_IN] = response.expires_in
 
 
+def _clear_api_cache() -> None:
+    """Очистить глобальный кэш API-ответов Streamlit (best-effort).
+
+    ``st.cache_data`` — процесс-глобальный кэш портала. Без очистки
+    ответы ушедшего пользователя остаются в нём до TTL.
+
+    Очистка best-effort: сбой очистки кэша не должен блокировать выход —
+    session state к этому моменту уже очищен, а кэш истечёт по TTL.
+    """
+    try:
+        # Lazy-import: api_clients тянет hooks.cache → auth_state.
+        from src.frontend.streamlit_app.api_clients.cached import clear_api_cache
+
+        clear_api_cache()
+    except Exception as exc:  # noqa: BLE001 — logout не должен падать из-за кэша
+        logging.getLogger(__name__).error(
+            "auth_state.logout_cache_clear_failed: %s", exc
+        )
+
+
 def logout() -> None:
-    """Логаут: очищает session state и token в api_clients."""
+    """Логаут: очищает session state, token в api_clients и API-кэш.
+
+    Кэш API-клиента обязателен к очистке: ``st.cache_data`` —
+    процесс-глобальный кэш, поэтому записи ушедшего пользователя
+    иначе оставались бы в нём до TTL и могли достаться следующему.
+    """
     for key in (
         _SESSION_KEY_TOKEN,
         _SESSION_KEY_USERNAME,
@@ -124,6 +150,7 @@ def logout() -> None:
         _SESSION_KEY_EXPIRES_IN,
     ):
         st.session_state.pop(key, None)
+    _clear_api_cache()
 
 
 def require_auth() -> bool:
