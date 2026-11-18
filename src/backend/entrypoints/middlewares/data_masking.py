@@ -199,6 +199,18 @@ class DataMaskingMiddleware:
 
         body = b"".join(body_chunks)
         if not body:
+            # Пустое тело маскировать нечего, но original start уже был
+            # подавлен — молчаливый ``return`` ронял ответ целиком
+            # (ASGI: «callable returned without starting response» →
+            # клиент получал 500 вместо исходного ответа).
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": response_status["status"],
+                    "headers": original_headers,
+                }
+            )
+            await send({"type": "http.response.body", "body": b"", "more_body": False})
             return
 
         # Apply mask.

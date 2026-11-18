@@ -340,6 +340,46 @@ def _final_froms(stmt: Any) -> list[Any]:
     return list(getattr(stmt, "froms", []))
 
 
+def _direct_tenant_aware_entities(stmt: Any) -> list[Any]:
+    """Tenant-aware сущности самого statement'а (без спуска в CTE/UNION).
+
+    Отличается от :func:`_tenant_aware_entities` тем, что не заглядывает
+    внутрь вложенных конструкций (определений CTE, ветвей UNION).
+
+    Нужен именно в :func:`_filter_statement`: сущности внутри CTE уже
+    получили tenant-предикат в своём определении — повторное добавление
+    предиката во **внешний** запрос превращало его в cartesian product
+    (``SELECT c.id FROM c, orders WHERE orders.tenant_id = ...``) и
+    возвращало дублированные строки.
+
+    Args:
+        stmt: SQLAlchemy statement.
+
+    Returns:
+        Список tenant-aware mapped-классов (может быть пустым).
+
+    """
+    entities: list[Any] = []
+    for description in getattr(stmt, "column_descriptions", None) or []:
+        entity = description.get("entity") if isinstance(description, dict) else None
+        if entity is not None and _is_tenant_aware(entity):
+            entities.append(entity)
+    if entities:
+        return entities
+
+    dml_description = getattr(stmt, "entity_description", None)
+    if isinstance(dml_description, dict):
+        dml_entity = dml_description.get("entity")
+        if dml_entity is not None and _is_tenant_aware(dml_entity):
+            return [dml_entity]
+
+    for frm in _final_froms(stmt):
+        entity = getattr(frm, "entity_namespace", None)
+        if entity and _is_tenant_aware(entity):
+            entities.append(entity)
+    return entities
+
+
 def _tenant_aware_entities(stmt: Any) -> list[Any]:
     """Найти tenant-aware сущности, участвующие в запросе.
 
@@ -361,24 +401,7 @@ def _tenant_aware_entities(stmt: Any) -> list[Any]:
     Returns:
         Список tenant-aware mapped-классов (может быть пустым).
     """
-    entities: list[Any] = []
-    for description in getattr(stmt, "column_descriptions", None) or []:
-        entity = description.get("entity") if isinstance(description, dict) else None
-        if entity is not None and _is_tenant_aware(entity):
-            entities.append(entity)
-    if entities:
-        return entities
-
-    dml_description = getattr(stmt, "entity_description", None)
-    if isinstance(dml_description, dict):
-        dml_entity = dml_description.get("entity")
-        if dml_entity is not None and _is_tenant_aware(dml_entity):
-            return [dml_entity]
-
-    for frm in _final_froms(stmt):
-        entity = getattr(frm, "entity_namespace", None)
-        if entity and _is_tenant_aware(entity):
-            entities.append(entity)
+    entities = _direct_tenant_aware_entities(stmt)
     if entities:
         return entities
 
@@ -429,6 +452,11 @@ def _filter_statement(stmt: Any, tenant_id: str) -> Any:
       ссылается только на его колонки. Фильтруем определение и подменяем
       сам CTE (то же имя → внешние ссылки остаются валидными).
 
+    Предикат верхнего уровня добавляется только по **прямым** сущностям
+    statement'а (:func:`_direct_tenant_aware_entities`): сущности внутри CTE
+    уже отфильтрованы в определении, а повторный предикат во внешнем запросе
+    давал cartesian product (``FROM c, orders``) и дублированные строки.
+
     Args:
         stmt: SQLAlchemy statement (select/DML/compound).
         tenant_id: Идентификатор tenant'а.
@@ -464,7 +492,7 @@ def _filter_statement(stmt: Any, tenant_id: str) -> Any:
 
         stmt = visitors.replacement_traverse(stmt, {}, _replace_cte)
 
-    for entity in _tenant_aware_entities(stmt):
+    for entity in _direct_tenant_aware_entities(stmt):
         stmt = stmt.where(entity.tenant_id == tenant_id)
     return stmt
 
@@ -585,10 +613,10 @@ def referenced_tables(sql: str) -> frozenset[str]:
 
     """
     cleaned = _SQL_STRING_RE.sub(" ", _SQL_COMMENT_RE.sub(" ", sql))
-    return {
+    return frozenset(
         _normalize_table_name(match.group(1))
         for match in _TABLE_REF_RE.finditer(cleaned)
-    }
+    )
 
 
 def _referenced_tables(sql: str) -> set[str]:

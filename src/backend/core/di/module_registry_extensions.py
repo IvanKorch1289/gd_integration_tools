@@ -47,7 +47,6 @@ Lifecycle:
 from __future__ import annotations
 
 import threading
-from re import Pattern
 from typing import Final
 
 from src.backend.core.logging import get_logger
@@ -81,7 +80,8 @@ _MAX_DOTTED_PATH_LENGTH: Final[int] = 200
 
 # Разрешённые символы в module path: lowercase letters, digits, dot,
 # underscore. Никаких ``..``, ``/``, leading dot, trailing dot.
-_MODULE_PATH_PATTERN: Final[Pattern[str]] = ...
+# Проверка — посимвольно в :func:`is_extension_path` (regex-константа была
+# объявлена, но не использовалась — мёртвый код).
 
 
 class ExtensionRegistrationError(ValueError):

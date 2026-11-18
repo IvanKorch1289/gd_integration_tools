@@ -166,18 +166,27 @@ class PIIMaskingResponseMiddleware:
 
         body = b"".join(body_chunks)
         if not body:
+            # Пустое тело маскировать нечего, но original start уже был
+            # подавлен — молчаливый ``return`` ронял ответ целиком
+            # (ASGI: «callable returned without starting response» →
+            # клиент получал 500 вместо исходного ответа).
+            await self._send_original(send, original_status, original_headers, body)
             return
 
         try:
             masked = self._mask_json_bytes(body)
         except Exception as exc:
+            # Fail-closed (тот же инвариант, что в DataMaskingMiddleware,
+            # cycle 78 L1): неотмаскированное тело наружу не отдаём.
+            # Раньше здесь был ``return`` без ответа — клиент получал
+            # 500/обрыв вместо результата, а PII-контур был непрозрачен.
             _logger.warning(
-                "PIIMaskingResponseMiddleware: ошибка маскировки %s, payload "
-                "пропущен без изменений: %s",
+                "PIIMaskingResponseMiddleware: ошибка маскировки %s — "
+                "ответ заменён fail-closed заглушкой: %s",
                 path,
                 exc,
             )
-            return
+            masked = self._masking_failed_body()
 
         # Cycle 54 critical: send new response (start + body) с masked body.
         # Update content-length в headers.
@@ -231,6 +240,39 @@ class PIIMaskingResponseMiddleware:
         if not self._path_patterns:
             return True
         return any(p.search(path) for p in self._path_patterns)
+
+    @staticmethod
+    def _masking_failed_body() -> bytes:
+        """Fail-closed заглушка вместо неотмаскированного тела.
+
+        Формат совпадает с :meth:`DataMaskingMiddleware._mask_bytes_fallback`,
+        чтобы оба маскера отдавали одинаковый контракт при сбое.
+        """
+        import orjson
+
+        return orjson.dumps(
+            {
+                "error": "response_masking_failed",
+                "detail": "PII masking failed; original response withheld for safety",
+            }
+        )
+
+    @staticmethod
+    async def _send_original(
+        send: Send,
+        status: int,
+        original_headers: list[tuple[bytes, bytes]],
+        body: bytes,
+    ) -> None:
+        """Отправить исходный ответ без изменений (ASGI-совместимо)."""
+        await send(
+            {
+                "type": "http.response.start",
+                "status": status,
+                "headers": original_headers,
+            }
+        )
+        await send({"type": "http.response.body", "body": body, "more_body": False})
 
     @staticmethod
     def _mask_json_bytes(raw: bytes) -> bytes:

@@ -290,8 +290,20 @@ def apply_security_to_openapi(app: FastAPI) -> None:
     def openapi() -> dict[str, Any]:
         schema = original_openapi()
         try:
-            schema = annotate_openapi(schema)
+            # Порядок важен: сначала полнота (ADR-0423), потом security.
+            #
+            # Раньше было наоборот, и это давало два дефекта:
+            #  * ``annotate_completeness`` публикует 16 скрытых legacy-алиасов
+            #    (``/api/v1/orders/*`` и т.д.) ПОСЛЕ ``annotate_openapi`` →
+            #    эти операции оставались без поля ``security``, то есть
+            #    спецификация объявляла их публичными, хотя auth-guard
+            #    отдаёт по ним 401;
+            #  * FastAPI кеширует схему в ``app.openapi_schema``, и на втором
+            #    запросе ``annotate_openapi`` уже видел легаси → документ
+            #    менялся между первым и вторым ответом (ETag «плавал»,
+            #    клиенты получали два разных контракта).
             schema = annotate_completeness(app, schema)
+            schema = annotate_openapi(schema)
             return annotate_error_responses(schema)
         except (AttributeError, KeyError, TypeError, ValueError) as exc:
             # exc — причина сбоя аннотации; сам FastAPI уже отдал схему.

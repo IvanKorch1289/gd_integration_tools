@@ -61,24 +61,26 @@ class _FakeProvider:
 
 @pytest.fixture
 def disable_external_flag(monkeypatch: pytest.MonkeyPatch) -> None:
-    """openfeature_external=False."""
-    from src.backend.core.config import features as features_mod
+    """openfeature_external=False.
 
-    class _Stub:
-        openfeature_external = False
+    Ставится флаг **на самом объекте** ``feature_flags``, а не подменяется
+    модульный атрибут: ``core/feature_flags/service.py`` импортирует
+    ``feature_flags`` на уровне модуля и кэширует его в process-wide
+    singleton-е. Подмена модульного атрибута «залипала» в сервисе (stub
+    без ``authz_gateway_enabled`` → флаг читался как False) и ломала
+    11 order-dependent тестов authorization-gateway в общем сеансе.
+    """
+    from src.backend.core.config.features import feature_flags
 
-    monkeypatch.setattr(features_mod, "feature_flags", _Stub())
+    monkeypatch.setattr(feature_flags, "openfeature_external", False)
 
 
 @pytest.fixture
 def enable_external_flag(monkeypatch: pytest.MonkeyPatch) -> None:
-    """openfeature_external=True."""
-    from src.backend.core.config import features as features_mod
+    """openfeature_external=True (см. :func:`disable_external_flag`)."""
+    from src.backend.core.config.features import feature_flags
 
-    class _Stub:
-        openfeature_external = True
-
-    monkeypatch.setattr(features_mod, "feature_flags", _Stub())
+    monkeypatch.setattr(feature_flags, "openfeature_external", True)
 
 
 @pytest.mark.asyncio

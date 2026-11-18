@@ -221,6 +221,27 @@ class TestSkillRegistryWhitelistDelegation:
 
 
 @pytest.mark.unit
+def _noop_breaker() -> "MagicMock":
+    """Заглушка circuit-breaker'а для тестов без реального Redis."""
+    from unittest.mock import MagicMock
+
+    breaker = MagicMock()
+    breaker.guard.return_value = _AsyncContextManager()
+    return breaker
+
+
+class _AsyncContextManager:
+    """Асинхронный контекст-менеджер без действия (для заглушки breaker'а)."""
+
+    async def __aenter__(self) -> None:
+        """Вход без эффекта."""
+        return None
+
+    async def __aexit__(self, *exc_info: object) -> bool:
+        """Выход без подавления исключений."""
+        return False
+
+
 class TestRedisBatchLimits:
     """Verify Redis mget_pipelined / mset_pipelined enforce batch size limits.
 
@@ -248,6 +269,9 @@ class TestRedisBatchLimits:
         from src.backend.infrastructure.cache.backends.redis import RedisBackend
 
         backend = object.__new__(RedisBackend)
+        # Обход __init__ (тест не поднимает реальный Redis) → breaker надо
+        # задать вручную: batch-операции идут под circuit-breaker'ом.
+        backend._breaker = _noop_breaker()
         backend._client = MagicMock()
         backend._MAX_PIPELINE_BATCH = 10_000
 
@@ -266,6 +290,9 @@ class TestRedisBatchLimits:
         from src.backend.infrastructure.cache.backends.redis import RedisBackend
 
         backend = object.__new__(RedisBackend)
+        # Обход __init__ (тест не поднимает реальный Redis) → breaker надо
+        # задать вручную: batch-операции идут под circuit-breaker'ом.
+        backend._breaker = _noop_breaker()
         # Mock pipeline that just returns empty list (we only test that
         # the batch-size check passes — we don't verify returned values).
         mock_pipeline = MagicMock()
@@ -288,6 +315,9 @@ class TestRedisBatchLimits:
         from src.backend.infrastructure.cache.backends.redis import RedisBackend
 
         backend = object.__new__(RedisBackend)
+        # Обход __init__ (тест не поднимает реальный Redis) → breaker надо
+        # задать вручную: batch-операции идут под circuit-breaker'ом.
+        backend._breaker = _noop_breaker()
         backend._client = MagicMock()
         backend._MAX_PIPELINE_BATCH = 10_000
 
@@ -303,6 +333,9 @@ class TestRedisBatchLimits:
         from src.backend.infrastructure.cache.backends.redis import RedisBackend
 
         backend = object.__new__(RedisBackend)
+        # Обход __init__ (тест не поднимает реальный Redis) → breaker надо
+        # задать вручную: batch-операции идут под circuit-breaker'ом.
+        backend._breaker = _noop_breaker()
         backend._client = MagicMock()
         backend._MAX_PIPELINE_BATCH = 10_000
 

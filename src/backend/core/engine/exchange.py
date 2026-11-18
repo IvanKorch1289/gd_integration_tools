@@ -270,15 +270,28 @@ class Exchange[T](BaseModel):
         ``_finalizers`` НЕ копируются: родитель владеет ресурсом и
         освобождает его своим finalizer (напр. browser context); клон,
         читающий ``properties['rpa.page']``, не должен дублировать cleanup.
+
+        ``tenant_id`` и ``principal`` копируются **обязательно**: capability-гейт
+        процессора берёт tenant из ``exchange.meta.tenant_id`` (без него —
+        платформенный scope ``_system``), а tenant-aware процессоры агентов
+        (``ai.memory.*``, ``ai.tool.*``) берут его же — без копирования клон
+        работал бы в чужом namespace (``tenant_id or "unknown"``).
         """
         cloned = Exchange(
             in_message=Message(
                 body=body if body is not None else self.in_message.body,
                 headers=dict(self.in_message.headers),
+                data_kind=self.in_message.data_kind,
+                watermark=self.in_message.watermark,
             )
         )
         cloned.meta.route_id = self.meta.route_id
         cloned.meta.correlation_id = self.meta.correlation_id
+        cloned.meta.tenant_id = self.meta.tenant_id
+        cloned.meta.principal = self.meta.principal
+        cloned.meta.source = self.meta.source
+        cloned.meta.protocol = self.meta.protocol
+        cloned.meta.protocol_attrs = dict(self.meta.protocol_attrs)
         cloned.properties = {
             k: v for k, v in self.properties.items() if k != "_finalizers"
         }

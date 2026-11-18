@@ -127,6 +127,14 @@ class ResponseCacheMiddleware:
         # Compute ETag (только если client поддерживает If-None-Match).
         body = b"".join(body_chunks)
         if not body:
+            # Пустое тело кешировать нечего (ETag строим по body), но
+            # original start уже был подавлен — молчаливый ``return`` ронял
+            # ответ целиком: uvicorn писал «ASGI callable returned without
+            # starting response» и отдавал клиенту 500 вместо 200.
+            # Отправляем original response без ETag/Cache-Control.
+            await self._send_original(
+                send, response_status["status"], response_headers, body_chunks
+            )
             return
 
         if _USE_XXHASH:
@@ -147,6 +155,12 @@ class ResponseCacheMiddleware:
                     "headers": [(b"etag", etag.encode("latin-1"))],
                 }
             )
+            # ASGI-контракт: после ``http.response.start`` обязателен
+            # ``http.response.body`` — иначе ответ не «закрывается» и
+            # uvicorn пишет «ASGI callable returned without completing
+            # response» (проверено на живом uvicorn: каждый условный GET
+            # давал ERROR в логе сервера).
+            await send({"type": "http.response.body", "body": b"", "more_body": False})
             return
 
         # Cycle 55: new response с ETag + Cache-Control.
@@ -184,8 +198,15 @@ class ResponseCacheMiddleware:
                 "headers": original_headers,
             }
         )
-        if body_chunks:
-            await send({"type": "http.response.body", "body": b"".join(body_chunks)})
+        # Body-сообщение обязательно даже для пустого тела: без него
+        # ответ не завершается (ASGI-контракт).
+        await send(
+            {
+                "type": "http.response.body",
+                "body": b"".join(body_chunks),
+                "more_body": False,
+            }
+        )
 
 
 def _get_header_value(scope: Scope, name: bytes) -> str:

@@ -119,3 +119,106 @@ class TestProcessWideRegistry:
         model = get_extension_resource("users", "model", "user")
 
         assert getattr(model, "__name__", "") == "User"
+
+
+class TestConcurrentLoad:
+    """Гонка первых обращений (ADR-0457): загрузка расширений — общая для процесса."""
+
+    @pytest.mark.unit
+    def test_parallel_first_access_does_not_raise_keyerror(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Параллельные потоки дожидаются загрузки, а не получают KeyError.
+
+        Регрессия: ``load_extension_resources`` при активной загрузке в
+        другом потоке делал ``return`` немедленно — потребитель тут же
+        обращался к полузагруженному реестру и получал ``KeyError``
+        (спорадические 500 на первых запросах после старта).
+        """
+        import threading
+        import time
+
+        import src.backend.core.extension_registry as registry
+
+        started = threading.Event()
+        results: list[object] = []
+        errors: list[BaseException] = []
+
+        def _fake_discover(package_name: str, *, depth: int) -> None:
+            started.set()
+            time.sleep(0.3)  # имитация тяжёлого импорта расширений
+            registry.register_extension_resource("race", "schema", "s", int)
+
+        monkeypatch.setattr(registry, "_discover_package", _fake_discover)
+
+        def _worker() -> None:
+            try:
+                results.append(registry.get_extension_resource("race", "schema", "s"))
+            except BaseException as exc:  # noqa: BLE001 — тест фиксирует отказ
+                errors.append(exc)
+
+        loader = threading.Thread(target=_worker)
+        loader.start()
+        assert started.wait(timeout=5), "загрузка расширений не стартовала"
+
+        waiters = [threading.Thread(target=_worker) for _ in range(3)]
+        for thread in waiters:
+            thread.start()
+        loader.join(timeout=30)
+        for thread in waiters:
+            thread.join(timeout=30)
+
+        assert errors == []
+        assert results == [int, int, int, int]
+
+    @pytest.mark.unit
+    def test_reset_drops_registered_resources(self) -> None:
+        """``reset_extension_resources`` очищает реестр (изоляция тестов)."""
+        register_extension_resource("orders", "schema", "schema_in", int)
+
+        reset_extension_resources()
+
+        assert get_extension_registry().find("orders", "schema", "schema_in") is None
+
+    @pytest.mark.unit
+    def test_resource_registered_as_none_is_not_missing(self) -> None:
+        """Ресурс, зарегистрированный как ``None``, — не «отсутствующий»."""
+        register_extension_resource("orders", "schema", "maybe", None)
+
+        assert get_extension_resource("orders", "schema", "maybe") is None
+
+    @pytest.mark.unit
+    def test_keyerror_reports_extension_load_failure(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """KeyError потребителя содержит реальную причину (сломанное расширение).
+
+        Регрессия: ошибка импорта расширения глушилась warning-логом, а
+        потребитель получал ``KeyError`` с текстом «проверь, что расширение
+        экспортирует модуль resources» — без указания настоящей причины.
+        """
+        import src.backend.core.extension_registry as registry
+
+        class _FakeImportlib:
+            """Подмена ``importlib`` в модуле реестра (глобальный не трогаем)."""
+
+            util = registry.importlib.util
+
+            @staticmethod
+            def import_module(name: str) -> object:
+                raise ModuleNotFoundError(
+                    "No module named 'broken_dependency'", name="broken_dependency"
+                )
+
+        def _fake_discover(package_name: str, *, depth: int) -> None:
+            registry._load_extension("extensions.broken", depth=depth)
+
+        monkeypatch.setattr(registry, "importlib", _FakeImportlib)
+        monkeypatch.setattr(registry, "_discover_package", _fake_discover)
+
+        with pytest.raises(KeyError) as exc:
+            get_extension_resource("broken", "schema", "nope")
+
+        message = str(exc.value)
+        assert "broken_dependency" in message
+        assert "extensions.broken.resources" in message

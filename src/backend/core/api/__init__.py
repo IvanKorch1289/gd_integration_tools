@@ -272,8 +272,13 @@ def __getattr__(name: str) -> Any:
         #     get_express_bot_client_factory_provider,
         #     get_express_botx_message_class_provider,
         # )
-
-        return locals()[name]
+        #
+        # Раньше здесь стояло ``return locals()[name]`` — в локальной области
+        # ``__getattr__`` такого имени нет, поэтому вместо AttributeError
+        # (контракт PEP 562 для module-level ``__getattr__``) вылетал KeyError:
+        # ``hasattr()`` падал, а ``from ... import X`` давал не ImportError.
+        # Теперь эти имена доходят до общего ``raise AttributeError`` ниже.
+        pass
     # === P1-6 (cycle 241): Promoted base classes ===
     if name == "BasePlugin":
         from src.backend.core.interfaces.plugin import BasePlugin

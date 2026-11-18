@@ -59,6 +59,18 @@ class CapabilityTenant:
     scope_glob: str | None = None
 
     @property
+    def tenant_id(self) -> str:
+        """Совместимое имя атрибута с :class:`src.backend.core.tenancy.TenantContext`.
+
+        ``core.tenancy`` (ORM-фильтр, ``get_tenant_id()``, capability-гейт)
+        читает ``ctx.tenant_id``. Фасад ``services.tenancy.TenantFacade``
+        кладёт в tenant-ContextVar именно :class:`CapabilityTenant`
+        (``with_tenant()``), поэтому без алиаса чтение падало с
+        ``AttributeError``, а capability-гейт уходил в tenant-less проверку.
+        """
+        return self.id
+
+    @property
     def is_system(self) -> bool:
         """``True`` если tenant — системный (sentinel :data:`SYSTEM_TENANT_ID`)."""
         return self.id == SYSTEM_TENANT_ID
