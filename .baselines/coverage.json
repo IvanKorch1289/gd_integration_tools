@@ -1,14 +1,24 @@
 {
-  "coverage_percent": 74.0,
-  "updated": "2026-11-10",
-  "note": "последнее валидное измерение: 74 % (branch, нижняя граница — полный прогон с coverage на этой машине падает с OOM, см. artifacts/current_audit/COVERAGE_2026-10-09.md); line/XML — 76.50 %. Прежнее значение 52.25 % получено на прогоне с 206 упавшими тестами и не отражало состояние кода.",
+  "coverage_percent": 77.68,
+  "updated": "2026-11-18",
+  "note": "Волна 34: перемер на текущем дереве grouped-прогоном (ADR-0453, tools/run_coverage_grouped.sh, канонический CI-режим -n 2 --dist loadfile). Значение 77.68 % — line-rate из coverage.xml (метрика, которую сравнивает гейт tools/check_coverage_gate.py). Branch-покрытие того же прогона — 75 % (statements 128632, missed 28712; branches 29060, partial 4087). Прежнее значение 74 % было branch-числом, а гейт сравнивает line-rate — baseline приведён к единой метрике. Логи: .run/coverage-baseline-2026-11-17/.",
   "threshold": 70.0,
-  "target_threshold": 75.0,
+  "target_threshold": 78.0,
   "notes": [
     "Previous value 0 (written by the removed orphan tools/checks/coverage_budget.py in eef33aa29) disabled drop-detection entirely.",
-    "ADR-0443: baseline пересчитан по последнему валидному замеру (74 %); порог гейта берётся из этого файла (single source of truth) — CI больше не задаёт --threshold 75 явно, из-за чего гейт был красным при coverage 74 %."
+    "ADR-0443: порог гейта берётся из этого файла (single source of truth).",
+    "Волна 34: baseline переведён на ту же метрику, что и гейт (line-rate из coverage.xml): прежние 74 % — branch-число, гейт сравнивал line-rate 76.50 %.",
+    "Волна 34: grouped-прогон переведён в канонический CI-режим (-n 2 --dist loadfile) — на dev-box 4 воркера давали OOM."
   ],
   "next_wave_todo": [
-    "перемерить coverage на CI-раннере без OOM (разбиение на группы) и поднять порог до 75 % (цель baseline: coverage_percent 74 % → 75 %)"
+    "воспроизвести перемер на CI-раннере (runner может отличаться по набору тестов) и поднять порог гейта с 70 % до 75 %",
+    "цель ratchet'а — 78 % (сейчас 77.68 %)"
+  ],
+  "ratchet_history": [
+    {
+      "date": "2026-11-18",
+      "percent": 77.68,
+      "sprint": "W34"
+    }
   ]
 }

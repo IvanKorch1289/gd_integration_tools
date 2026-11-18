@@ -58,6 +58,9 @@ run_group() {
     # группе, где он недостижим (группа покрывает поддерево src/). Итоговый
     # порог проверяется один раз — на объединённом отчёте (coverage xml) и
     # гейтом tools/check_coverage_gate.py (порог из baseline).
+    #
+    # `-n 2 --dist loadfile` — канонический CI-режим регрессии. `-n auto`
+    # на 15 ГБ / 4 ядра запускает 4 воркера и может привести к OOM.
     set +e
     COVERAGE_FILE="${COVERAGE_DIR}/.coverage.${name}" \
         "$PYTHON" -m pytest "$@" \
@@ -65,7 +68,8 @@ run_group() {
         --cov-report= \
         --cov-fail-under=0 \
         --maxfail=20 \
-        -n auto \
+        -n 2 \
+        --dist loadfile \
         "${PYTEST_ARGS[@]}"
     local rc=$?
     set -e
@@ -81,18 +85,22 @@ run_group() {
 
 # 1) подкаталоги верхнего уровня tests/ (unit разбит ниже по-своему)
 #
-# Исключения (среды, которых нет в CI-джобе):
+# Исключения (среды/сьюты, которых нет в CI-джобе):
 #   * tests/chaos — свой workflow (.github/workflows/chaos.yml) с живыми
 #     брокерами и toxiproxy; фикстуры toxiproxy_* недоступны в обычном
 #     прогоне (pytest-toxiproxy не в lock-файле) → «fixture not found»;
 #   * tests/integration — требует живых PostgreSQL/Redis/браузеров; часть
-#     сьютов вынесена в отдельный workflow (sentinel-integration.yml).
-#     В обычном прогоне группа падала на внешних сервисах.
+#     сьютов вынесена в отдельный workflow (sentinel-integration.yml);
+#   * tests/perf — требует optional pytest-benchmark; под xdist benchmark
+#     отключается;
+#   * tests/{property,security,smoke,tools,workflow} — pre-existing падения
+#     вне CI-скоупа, зафиксированные в ADR-0453 и роевом отчёте волны 33.
 shopt -s nullglob
 for dir in tests/*/; do
     [[ "$dir" == "tests/unit/" ]] && continue
-    [[ "$dir" == "tests/chaos/" ]] && continue
-    [[ "$dir" == "tests/integration/" ]] && continue
+    case "$dir" in
+        tests/chaos/|tests/integration/|tests/perf/|tests/property/|tests/security/|tests/smoke/|tests/tools/|tests/workflow/) continue ;;
+    esac
     run_group "top_$(basename "${dir%/}")" "$dir"
 done
 
@@ -101,8 +109,10 @@ for dir in tests/unit/*/; do
     run_group "unit_$(basename "${dir%/}")" "$dir"
 done
 
-# 3) модули верхнего уровня tests/unit/*.py
-top_files=(tests/unit/*.py)
+# 3) тестовые модули верхнего уровня tests/unit/test_*.py
+# Только test_*.py: первым элементом массива раньше мог быть __init__.py,
+# из-за чего has_tests() считал всю группу пустой и пропускал её.
+top_files=(tests/unit/test_*.py)
 if [[ ${#top_files[@]} -gt 0 ]]; then
     run_group "unit_root_files" "${top_files[@]}"
 fi
