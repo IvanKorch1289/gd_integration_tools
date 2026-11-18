@@ -3,7 +3,7 @@
 * Статус: Accepted (2026-11-17, волна 34)
 * Cycle: 190 (волна 34)
 * Связан с: ADR-0450 (межслойные нарушения: план инверсии), ADR-042 (plugin manifest), ADR-0449/0451 (capability-декларации в vocabulary)
-* Затрагивает: `src/backend/core/extension_registry.py`, `extensions/*/resources.py`, `src/backend/entrypoints/api/v1/endpoints/*.py`, `src/backend/entrypoints/api/generator/setup.py`, `src/backend/dsl/commands/setup/registers_domains.py`, `src/backend/services/{io/files.py,auth/bootstrap_admin.py,integrations/skb.py}`, `tools/check_layers_allowlist.txt`
+* Затрагивает: `src/backend/core/extension_registry.py`, `extensions/*/resources.py`, `src/backend/entrypoints/api/v1/endpoints/*.py`, `src/backend/dsl/commands/setup/registers_domains.py`, `src/backend/services/{io/files.py,auth/bootstrap_admin.py,integrations/skb.py}`, `tools/check_layers_allowlist.txt`
 
 ## Контекст
 
@@ -81,6 +81,16 @@
   трём зонам), `tests/unit/core/test_extension_registry.py` (11 passed).
 * Новый контракт-тест реестра: регистрация/поиск/отсутствие/идемпотентность
   загрузки/пропуск битого расширения.
+
+## Уточнение волны 36
+
+* Модуль `entrypoints/api/generator/setup` **удалён**: модуль был
+  мёртвым (ни одного импорта; помечен как dead code ещё в аудите 2026-08-06,
+  DOMAIN-P1-001) и дублировал регистрацию actions ядра с **конфликтующим**
+  `payload_model` (`OrderIdPathSchema` против канонического
+  `OrderIdQuerySchema`) — при импорте регистрация затирала бы валидацию
+  payload'а. Регистрация actions живёт только в
+  `dsl/commands/setup/registers_domains.py`.
 
 ## Последствия
 

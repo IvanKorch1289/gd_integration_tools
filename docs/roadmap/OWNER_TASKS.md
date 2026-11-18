@@ -469,6 +469,25 @@ docstrings (0 missing), ruff, mypy (12 = baseline), mutation, coverage.
 
 ---
 
+## 21. Волна 36 (2026-11-18) — доработка по плану аудита волны 35
+
+| # | Пункт плана (`artifacts/current_audit/CODE_AUDIT_2026-11-18.md` §4) | Статус |
+|---|---|---|
+| 1 | **P1-1** caller-namespace в последовательном пути | ✅ привязка добавлена (fail-safe); аудит 7 роутов/12 плагинов: `GRANT→DENY` невозможен; ADR-0430 «Уточнение волны 36». Требует подтверждения владельца: фактическое изменение enforcement для фасадных capability |
+| 2 | **P1-2** `ActionRegistryAdapter` не затирает `payload_model` | ✅ сохранение `payload_model`/`input_model`/`permissions`; конфликт → fail-closed `ValueError`; 9 тестов |
+| 3 | **P1-3** фиче-флаги читаются динамически | ✅ `core/feature_flags/service.py` + `core/tenancy/feature_flag_scope.py` (тот же кэш-баг); приоритеты не изменились |
+| 4 | **P1-4/P1-5** единый tenant-контекст | ✅ канон `core/tenancy/context.py` (`TenantContext` с `principal_id`, `CapabilityTenant` — фасад, `normalize_tenant_context()` fail-closed); `with_tenant` ставит канонический контекст; 15 тестов |
+| 5 | **P2-2** гейт «у action'а один владелец» | ✅ `tools/check_action_ownership.py` (fail-closed, `--json`/`--strict`): 134 actions / 134 регистрации / 12 плагинов; шаг в `lint.yml`; 9 тестов |
+| 6 | **P2-3** контракт `call_function` | ✅ `tools/check_workflow_specs.py`: движок передаёт `dict` — сигнатура, требующая список/скаляр, отвергается |
+| 7 | **P2-4** инверсия в `utilities` | ✅ `utilities/admin_panel/setup_admin.py` берёт admin-view из core-реестра (4 импорта `extensions.*` убраны); гейт на lazy-импорты — не сделан |
+| 8 | **P2-5** ETag по отдаваемым байтам | ✅ `response_cache` перенесён внешне обоих маскеров; ETag = хеш фактически отданного тела; 304 без тела; 8 тестов |
+| 9 | **P2-10** `logout()` чистит API-кэш | ✅ best-effort очистка кэша + session state; **замечание:** кнопки выхода в портале нет — фикс не сработает, пока её не добавят |
+| 10 | **P3** LRU `_validation_cache` (512), единый `SYSTEM_TENANT_ID`, удаление мёртвого `dsl/engine/process` | ✅ |
+| 11 | Регрессы волны 36 | ✅ FK `orders.order_kind_id → orderkinds.id` (модели orderkinds импортируются в моделях заказов); удалён мёртвый модуль регистрации actions в `entrypoints/api/generator/` с конфликтующим `payload_model` |
+| 12 | Открыто (требует решения владельца) | pre-load расширений в lifespan; мёртвые `basicAuth`/`samlSession` в схеме; `rglob(plugin.toml)` в capability-графе; `xfail_strict` + perf-профиль; фаза `denied` в трейсере; `ProtocolType` → `core/types`; `cache_resource` → `session_state`; 9 библиотечных правок (почти все — lock, требует согласования); `Cache-Control: public` для аутентифицированных ответов; стриминговая регрессия HTTP-цепочки (pre-existing) |
+
+---
+
 ## 20. Волна 34 (2026-11-18) — сверка документации с кодом
 
 Зона: `docs/**`, `README.md`, `CLAUDE.md`, `AGENTS.md`, `.claude/**`,

@@ -252,6 +252,97 @@ CTE; фронтенд кэшировал данные пользователя �
 
 ---
 
+## 8. Сверка с планом: что закрыто в волне 36 (2026-11-18)
+
+План §4 (19 улучшений кода + 10 библиотечных + 6 CI) пересобран по факту
+кода: каждый пункт перепроверен и реализован в отдельной зоне с
+регресс-тестами.
+
+### 8.1. Код (§4.1)
+
+| Пункт плана | Статус | Чем закрыт |
+|---|---|---|
+| **P1-1** caller-namespace в последовательном пути | ✅ | `dsl/engine/execution_engine.py`: привязка в `execute()` (fail-safe — только для роутов с декларациями). Аудит 7 роутов/12 плагинов: переход `GRANT→DENY` невозможен (инвариант в тесте). ADR-0430, секция «Уточнение волны 36» |
+| **P1-2** `ActionRegistryAdapter` не затирает `payload_model` | ✅ | `services/plugins/registries.py`: сохраняются `payload_model`/`input_model`/`permissions`; конфликт моделей → fail-closed `ValueError`. 9 регресс-тестов |
+| **P1-3** фиче-флаги читаются динамически | ✅ | `core/feature_flags/service.py` (свойство вместо import-time биндинга) + `core/tenancy/feature_flag_scope.py` (тот же кэш-баг). Приоритеты не изменились; 6 регресс-тестов |
+| **P1-4** единый tenant-контекст | ✅ | Новый канон `core/tenancy/context.py`: `TenantContext` (с `principal_id`), `CapabilityTenant` как фасад, `TenantContextLike`, `normalize_tenant_context()` (fail-closed). 15 регресс-тестов |
+| **P1-5** `with_tenant` ставит канонический контекст | ✅ | `services/tenancy/facade.py`: в ContextVar кладётся только `TenantContext`; потребители ядра и capability-контура видят одинаковые `tenant_id`/`principal_id` |
+| **P2-1** pre-load расширений в lifespan | ⬜ | не сделано: требует выбора точки старта (lifespan vs composition root) и правки `plugins/composition` |
+| **P2-2** гейт «у action'а один владелец» | ✅ | Новый `tools/check_action_ownership.py` (AST-скан регистраций + манифестов, fail-closed, `--json`/`--strict`): «Владение actions: OK (actions: 134; регистраций: 134; плагинов: 12)». 9 тестов + шаг в `lint.yml` |
+| **P2-3** контракт `call_function` | ✅ | `tools/check_workflow_specs.py`: `fn(payload: dict)` — падение, если сигнатура требует список/скаляр («параметр 'messages' требует list, а движок передаёт dict»). 2 теста |
+| **P2-4** инверсия в `utilities` + гейт слоёв | ◐ | Инверсия исправлена: `utilities/admin_panel/setup_admin.py` берёт admin-view из core-реестра (4 статических импорта `extensions.*` убраны), расширения отдают `ModelView` в реестр. **Гейт на lazy-импорты из composition/plugins — не сделан** |
+| **P2-5** ETag по фактически отдаваемым байтам | ✅ | `response_cache` перенесён **внешне** обоих маскеров (`order 520 → 710`): ETag = хеш отдаваемого тела; 304 — без тела, с согласованными заголовками. 8 регресс-тестов (красные до фикса) |
+| **P2-6** мёртвые `basicAuth`/`samlSession` в схеме | ⬜ | решение владельца API (публичный контракт OpenAPI) |
+| **P2-7** `include:` при merge `extends` | ✅ | волна 35 (`dsl/yaml_loader/resolve.py`), shared-шаги composition_demo восстановлены |
+| **P2-8** `rglob("plugin.toml")` в capability-графе | ⬜ | не сделано: 8 деклараций вложенных плагинов core_entities по-прежнему не попадают в граф |
+| **P2-9** `xfail_strict` + отдельный perf-профиль | ⬜ | не сделано: 48 XPASS (сеть не strict) по-прежнему маскируют регрессии |
+| **P2-10** `logout()` чистит API-кэш | ✅ | `frontend/shared/auth_state.py`: очистка кэша best-effort (с логом ERROR), session state чистится первым. 3 регресс-теста. **Замечание:** в портале нет кнопки выхода — фикс не срабатывает, пока её не добавят |
+| **P3** LRU для `_validation_cache` | ✅ | `execution_engine.py`: `OrderedDict`, лимит 512, вытеснение LRU; 2 теста |
+| **P3** фаза `denied` в трейсере | ⬜ | не сделано |
+| **P3** удалить мёртвый `dsl/engine/process` | ✅ | файл удалён (0 байт, без ссылок) |
+| **P3** `ProtocolType` → `core/types/` | ⬜ | не сделано (нужен ре-экспорт из dsl) |
+| **P3** единый `SYSTEM_TENANT_ID` | ✅ | канон в `core/tenancy/context.py`, ре-экспорты в `core.tenancy` и `core.security.capabilities.tenant`; литералы в `capabilities/{audit,errors}` заменены. 4 теста-инварианта |
+| **P3** `cache_resource` → `session_state` (SSE-очередь, FakeOutbox) | ⬜ | не сделано |
+
+### 8.2. Библиотеки (§4.2)
+
+| Пункт | Статус | Комментарий |
+|---|---|---|
+| `altair <5.5` | ✅ волна 35 | pin + lock (5.5.0 → 5.3.0) |
+| `ruamel.yaml` → runtime-зависимость | ⬜ | требует согласования lock (Sprint 36) |
+| убрать `grpc-interceptor` | ⬜ | требует согласования lock |
+| объявить `requests` | ⬜ | требует согласования lock |
+| SHA-пиннинг GitHub Actions | ⬜ | предложение |
+| `pytest-xdist --dist worksteal` | ⬜ | предложение |
+| одна версия `tenacity` | ⬜ | platform-split, требует lock |
+| `license`/`urls`/`LICENSE` | ⬜ | предложение |
+| комментарий про aiohttp в `pyproject.toml` | ⬜ | предложение |
+| `mutmut.also_copy` → `.env.example` | ⬜ | предложение |
+
+### 8.3. CI и процесс (§4.3)
+
+| Пункт | Статус |
+|---|---|
+| отдельный job мутационного гейта | ✅ волна 35 |
+| контрактные гейты «ответ всегда начат и завершён» | ✅ волна 35 (инвариант зафиксирован тестами) |
+| гейт «все слои в матрице» + lazy-import гейт | ⬜ |
+| `make release-notes` в CI | ◐ инструмент реализован (волна 35), в CI не подключён |
+| `uv lock --check` в CI | ⬜ |
+| **новое:** гейт владения actions в CI | ✅ волна 36 (шаг в `lint.yml`) |
+
+### 8.4. Сверка: находки волны 35, закрытые в волне 36
+
+| Находка волны 35 | Статус |
+|---|---|
+| F-02 маркер `capability_verified` жил между запросами | ✅ |
+| F-01 12 мест обходили engine-wide гейт | ✅ (волна 35) |
+| Z-01 гонка загрузки расширений | ✅ (волна 35) |
+| Z-05 tenant-фильтр + CTE → cartesian product | ✅ (волна 35) |
+| Z-07 `CapabilityTenant` без `tenant_id` → fail-open | ✅ волна 36 (единый контекст) |
+| F-01e дубли регистрации action'ов затирали `payload_model` | ✅ волна 36 (адаптер) |
+| FE-03 `st.cache_data` без user-scope | ✅ (волна 35) |
+| F-06 guardrail стоимости не срабатывал | ✅ (волна 35) |
+| W34-HTTP-01…05 ответ терялся | ✅ (волна 35) |
+| KNOWN-01 повторный импорт после AI-sandbox | ⬜ не закрыт (ADR-TD-0247, machinery изоляции модулей) |
+
+### 8.5. Находки волны 36 (новые, закрытые в этой же волне)
+
+| Находка | Sev | Суть | Статус |
+|---|---|---|---|
+| W36-01 | **P1** | `orders.order_kind_id` → FK на `orderkinds.id` резолвился только если импортированы модели orderkinds; регистрация admin-view в `extensions/core_entities/orders/resources.py` сделала импорт моделей заказов самостоятельным → `NoReferencedTableError` при конфигурации мапперов (8 ошибок в `tests/unit/core/domain/`) | ✅ `orders/domain/models.py` импортирует модели orderkinds (как уже сделано для files) |
+| W36-02 | **P2** | `entrypoints/api/generator/setup.py` — мёртвый модуль (ни одного импорта, помечен dead code ещё в аудите 2026-08-06) с **конфликтующим** `payload_model` для `orders.create_skb_order` (`OrderIdPathSchema` против канонического `OrderIdQuerySchema`) | ✅ модуль удалён; регистрация живёт только в `dsl/commands/setup/registers_domains.py` |
+
+### 8.6. Итог сверки
+
+| Показатель | Значение |
+|---|---|
+| Пунктов плана закрыто | **14 из 19** (код) + **1 из 10** (библиотеки) + **2 из 6** (CI) |
+| Открытых пунктов плана | 7 (код) + 9 (библиотеки, почти все — требуют согласования lock) + 3 (CI) |
+| Требуют решения владельца | 9 позиций (§9 отчёта) |
+| Новых находок в волне 36 | 2 (обе закрыты) |
+
+---
+
 ## 7. Связанные документы
 
 * `docs/adr/0450-layer-violations-paydown.md`, `0452-mutation-gate-unblocked.md`, `0453-grouped-coverage-run.md` — секции «Уточнение волны 34/35»;
