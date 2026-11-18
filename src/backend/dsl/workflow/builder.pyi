@@ -15,6 +15,7 @@ from src.backend.dsl.workflow.gateways import BranchSpec
 
 from src.backend.dsl.workflow.spec.activity_declarations import (
     ActivityDeclaration,
+    CallFunctionDeclaration,
     PauseDeclaration,
     ResumeDeclaration,
     SagaDeclaration,
@@ -55,6 +56,17 @@ class WorkflowBuilder:
 
     def build(self) -> WorkflowDeclaration:
         """Собрать и провалидировать :class:`WorkflowDeclaration`."""
+        ...
+
+    def call_function(
+        self,
+        ref: str,
+        *,
+        args: Union[dict[str, Any], None] = ...,
+        timeout_s: Union[float, None] = ...,
+        output_key: Union[str, None] = ...,
+    ) -> Self:
+        """Добавить шаг прямого вызова Python-функции ``module:fn``."""
         ...
 
     def checkpoint(
@@ -200,6 +212,7 @@ class WorkflowBuilder:
         step: Annotated[
             Union[
                 ActivityDeclaration,
+                CallFunctionDeclaration,
                 SagaDeclaration,
                 SignalWaitDeclaration,
                 SleepDeclaration,

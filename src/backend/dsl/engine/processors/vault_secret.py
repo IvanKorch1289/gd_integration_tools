@@ -63,6 +63,8 @@ class VaultSecretProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "secret.read"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "read"
     audit_event: ClassVar[str | None] = "secret.read"
 
     side_effect: ClassVar[Any] = "READ"

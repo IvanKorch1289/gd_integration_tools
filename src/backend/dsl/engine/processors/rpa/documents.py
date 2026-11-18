@@ -72,6 +72,8 @@ class PdfReadProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "rpa.pdf.read"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "read"
     audit_event: str | None = "rpa.pdf.read"
 
     def __init__(
@@ -190,6 +192,8 @@ class WordReadProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "rpa.word.read"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "read"
     audit_event: str | None = "rpa.word.read"
 
     def __init__(self, *, name: str | None = None) -> None:
@@ -246,6 +250,8 @@ class WordWriteProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "rpa.word.write"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "write"
     audit_event: str | None = "rpa.word.write"
 
     def __init__(self, *, name: str | None = None) -> None:
@@ -300,6 +306,8 @@ class ExcelReadProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "rpa.excel.read"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "read"
     audit_event: str | None = "rpa.excel.read"
 
     def __init__(

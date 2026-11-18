@@ -512,14 +512,23 @@ def test_agent_pipeline_template_contract() -> None:
 
 @pytest.mark.unit
 def test_sensor_polling_template_contract() -> None:
-    """``sensor_polling``: sensor c module:fn-предикатом и timeout_s."""
+    """``sensor_polling``: sensor c предикатом готовности и timeout_s.
+
+    Контракт предиката (волна 34, аудит F-07): движок вызывает предикат
+    как activity с **пустым** payload (``execute_activity(predicate, {})``) →
+    предикат не может зависеть от входных данных, он проверяет внешнее
+    состояние. Поэтому допустимы два вида: зарегистрированный action-id
+    (``tech.check_redis``) или ``module:fn`` без входных данных.
+    """
     raw = _raw(_TEMPLATES_DIR / "sensor_polling.workflow.yaml")
     sensors = [s for s in raw["steps"] if s["type"] == "sensor"]
     assert sensors, "нет sensor-шага"
     for sensor in sensors:
         predicate = sensor["predicate"]
-        module, _, func = predicate.partition(":")
-        assert module and func, sensor
+        assert predicate, sensor
+        if ":" in predicate:
+            module, _, func = predicate.partition(":")
+            assert module and func, sensor
         assert sensor.get("timeout_s"), "sensor без timeout_s (D-A8-10)"
         assert sensor.get("poll_interval_s"), sensor
 

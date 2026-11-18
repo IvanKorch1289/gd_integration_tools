@@ -11,7 +11,11 @@ from typing import Any
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
-from src.backend.dsl.engine.processors.base import BaseProcessor, run_sub_processors
+from src.backend.dsl.engine.processors.base import (
+    BaseProcessor,
+    run_gated_step,
+    run_sub_processors,
+)
 from src.backend.dsl.engine.processors.control_flow.saga import _serialize_sub
 
 _cf_logger = get_logger("dsl.control_flow")
@@ -62,7 +66,8 @@ class TryCatchProcessor(BaseProcessor):
             if exchange.stopped:
                 break
             try:
-                await proc.process(exchange, context)
+                # ADR-0456: finally-шаги — тоже под capability-гейтом.
+                await run_gated_step(proc, exchange, context)
             except Exception as exc:
                 _cf_logger.error("Finally processor error: %s", exc)
 
@@ -165,13 +170,24 @@ class RetryProcessor(BaseProcessor):
                         if exchange.status == ExchangeStatus.failed or exchange.stopped:
                             break
                         try:
-                            await proc.process(exchange, context)
+                            # ADR-0456: retry-шаги — под capability-гейтом.
+                            await run_gated_step(proc, exchange, context)
                         except Exception as exc:
                             exchange.fail(str(exc))
                             break
 
                     if exchange.status == ExchangeStatus.failed:
                         last_error = exchange.error
+                        if exchange.get_property("_capability_denied"):
+                            # ADR-0456: отказ capability-гейта не ретраится —
+                            # решение детерминировано, повтор только плодит
+                            # deny-аудит и тратит время.
+                            _cf_logger.warning(
+                                "Retry aborted for '%s': capability denied (%s)",
+                                self.name,
+                                last_error,
+                            )
+                            break
                         _cf_logger.warning(
                             "Retry %d/%d for '%s' failed: %s",
                             attempt.retry_state.attempt_number,

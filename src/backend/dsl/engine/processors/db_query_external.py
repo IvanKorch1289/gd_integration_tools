@@ -207,6 +207,23 @@ class ExternalDbQueryProcessor(BaseProcessor):
         """Действие capability-гейта (``read`` / ``write``)."""
         return "read" if self.required_capability == "db.read" else "write"
 
+    def _capability_action(self, exchange: Exchange[Any]) -> str:
+        """Действие capability-запроса шага (ADR-0456).
+
+        Движок проверяет capability до ``process()`` — он должен запросить
+        то же действие (``read``/``write``), что и сам процессор, иначе
+        audit-событие ``capability.check`` запишет ``execute``.
+
+        Args:
+            exchange: Текущий Exchange (не используется).
+
+        Returns:
+            ``read`` или ``write`` — по виду SQL.
+
+        """
+        del exchange
+        return self._action()
+
     def _collect_params(self, exchange: Exchange[Any]) -> dict[str, Any]:
         """Собирает bind-параметры из указанного источника."""
         match self._params_from:

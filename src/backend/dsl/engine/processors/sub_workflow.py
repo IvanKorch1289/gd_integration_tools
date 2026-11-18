@@ -31,7 +31,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.workflow.backend import WorkflowBackend
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.base import BaseProcessor, run_gated_step
 from src.backend.dsl.registry import processor
 
 if TYPE_CHECKING:
@@ -159,7 +159,8 @@ class SubWorkflowProcessor(BaseProcessor):
             backend=self._backend_override,
             backend_factory=self._backend_factory,
         )
-        await delegate.process(exchange, context)
+        # ADR-0456: delegate-шаг — под capability-гейтом.
+        await run_gated_step(delegate, exchange, context)
 
     def to_spec(self) -> dict[str, Any] | None:
         """Round-trip DSL-спецификация ``{"sub_workflow": {...}}``."""

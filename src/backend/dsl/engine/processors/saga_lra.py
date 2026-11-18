@@ -33,8 +33,9 @@ def _step_span(step_name: str, kind: str):
 
 
 from src.backend.core.types.side_effect import SideEffectKind
+from src.backend.dsl.engine.capability_guard import enforce_step_capability
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.base import BaseProcessor, run_gated_step
 from src.backend.dsl.engine.processors.control_flow import SagaStep, _emit_saga_audit
 
 if TYPE_CHECKING:
@@ -466,7 +467,8 @@ class SagaLRAProcessor(BaseProcessor):
 
         for i, step in enumerate(self._steps):
             try:
-                await step.forward.process(exchange, context)
+                # ADR-0456: saga-шаги — под capability-гейтом.
+                await run_gated_step(step.forward, exchange, context)
 
                 if exchange.status == ExchangeStatus.failed:
                     raise RuntimeError(exchange.error or f"Step {i} failed")
@@ -586,6 +588,11 @@ class SagaLRAProcessor(BaseProcessor):
             SagaStepTimeoutError: If the deadline budget is already expired
                 or the effective timeout is exceeded.
         """
+        # ADR-0456: capability-гейт до шага (шаг не выполняется при отказе;
+        # exchange переводится в failed+stopped — вызывающий код увидит
+        # failed и прервёт saga).
+        if not await enforce_step_capability(step, exchange, context):
+            return None
         result = step.process(exchange, context)
         if not inspect.isawaitable(result):
             return result

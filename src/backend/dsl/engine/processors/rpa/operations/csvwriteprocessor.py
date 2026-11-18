@@ -84,6 +84,8 @@ class CsvWriteProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "rpa.file.csv.write"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "write"
     audit_event: str | None = "rpa.file.csv.write"
 
     def __init__(

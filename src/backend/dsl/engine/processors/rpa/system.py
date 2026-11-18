@@ -329,6 +329,8 @@ class EmailReadProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "rpa.email.read"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "read"
     audit_event: str | None = "rpa.email.read"
 
     def __init__(

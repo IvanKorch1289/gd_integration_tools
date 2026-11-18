@@ -61,6 +61,10 @@ class _CapabilityStep(BaseProcessor):
     """Шаг с объявленной capability, который **сам** гейт не проверяет."""
 
     required_capability = "audit.write"
+    # ADR-0456: действие capability-запроса обязано совпадать с тем,
+    # которое просит сам процессор (``auth_check(action=...)``) — иначе
+    # движок проверяет другой запрос и внутренняя проверка не идемпотентна.
+    capability_action = "write"
 
     def __init__(self) -> None:
         super().__init__(name="capability-step")

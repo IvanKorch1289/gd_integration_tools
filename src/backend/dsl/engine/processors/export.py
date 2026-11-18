@@ -26,6 +26,8 @@ class ExportProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "data.export"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "export"
     audit_event: ClassVar[str | None] = "data.exported"
 
     def __init__(

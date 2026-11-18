@@ -226,6 +226,19 @@ class ClaimCheckProcessor(BaseProcessor):
             self.__dict__["required_capability"] = "message.claim_check.retrieve"
             self.__dict__["audit_event"] = "message.claim_check.retrieve"
 
+    def _capability_action(self, exchange: Exchange[Any]) -> str:
+        """Действие capability-запроса — режим claim-check (ADR-0456).
+
+        Args:
+            exchange: Текущий Exchange (не используется).
+
+        Returns:
+            ``store`` или ``retrieve`` — по режиму процессора.
+
+        """
+        del exchange
+        return self._mode
+
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
         """Реализует Claim Check EIP: выгрузка/восстановление больших сообщений.
 

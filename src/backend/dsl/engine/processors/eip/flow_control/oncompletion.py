@@ -10,7 +10,7 @@ from typing import Any
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.base import BaseProcessor, run_gated_step
 
 _camel_logger = get_logger("dsl.camel")
 
@@ -58,9 +58,14 @@ class OnCompletionProcessor(BaseProcessor):
 
         for proc in self._processors:
             try:
-                await proc.process(exchange, context)
+                # ADR-0456: on-completion шаги — под capability-гейтом.
+                await run_gated_step(proc, exchange, context)
             except Exception as exc:
                 _camel_logger.warning("OnCompletion processor error: %s", exc)
 
-        exchange.status = saved_status
-        exchange.error = saved_error
+        # Статус восстанавливается только если ни один sub-шаг не провалил
+        # маршрут: отказ capability-гейта (failed + stopped) — это отказ
+        # авторизации, его нельзя затирать «как было» (fail-open).
+        if exchange.status != ExchangeStatus.failed and not exchange.stopped:
+            exchange.status = saved_status
+            exchange.error = saved_error

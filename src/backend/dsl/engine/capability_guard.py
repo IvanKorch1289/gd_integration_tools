@@ -65,19 +65,44 @@ async def enforce_step_capability(
         нельзя).
 
     """
-    capabilities = processor._declared_capabilities()
-    if not capabilities:
+    declared = getattr(processor, "_declared_capabilities", None)
+    if declared is None or not callable(declared):
+        # Объект не является DSL-процессором (например, callable-шаг в
+        # saga) — capability-декларации у него нет, enforcement не применяется.
+        return True
+
+    capabilities = declared()
+    if not isinstance(capabilities, tuple) or not capabilities:
         # Шаг не объявляет capability → enforcement не применяется.
         return True
 
+    # Действие запроса — то же, которое запросит сам процессор
+    # (``read``/``write``/``execute``): иначе audit-событие
+    # ``capability.check`` запишет ``execute`` вместо фактического
+    # действия, а внутренний ``auth_check()`` процессора не совпадёт
+    # с проверкой движка (ADR-0456).
+    action_getter = getattr(processor, "_capability_action", None)
+    if callable(action_getter):
+        action = action_getter(exchange)
+    else:
+        action = getattr(processor, "capability_action", "execute")
+
     # Маркер проверки сбрасывается перед каждым шагом: иначе повторное
     # использование того же экземпляра процессора в pipeline пропустило бы
-    # проверку (маркер ставится в ``auth_check``).
+    # проверку (маркер ставится в ``auth_check``). Сбрасывается и ключ
+    # проверки — он привязан к exchange, а не к шагу.
     processor.capability_verified = False
+    if hasattr(processor, "_capability_verified_key"):
+        processor._capability_verified_key = None
 
-    action = getattr(processor, "capability_action", "execute")
     allowed = await processor.auth_check(exchange, action=action)
     if not allowed:
+        # Явный маркер отказа: retry/fallback-обвязки не должны повторять
+        # шаг, решение по capability детерминировано.
+        try:
+            exchange.set_property("_capability_denied", True)
+        except Exception:  # pragma: no cover — exchange-заглушка
+            pass
         _logger.warning(
             "dsl_capability_denied: processor=%s capabilities=%s route=%s error=%s",
             processor.name,

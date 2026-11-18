@@ -128,6 +128,19 @@ class InfraDbQueryProcessor(BaseProcessor):
         """Действие capability-гейта (``read`` / ``write``)."""
         return "read" if self.required_capability == "db.read" else "write"
 
+    def _capability_action(self, exchange: Exchange[Any]) -> str:
+        """Действие capability-запроса шага (ADR-0456).
+
+        Args:
+            exchange: Текущий Exchange (не используется).
+
+        Returns:
+            ``read`` или ``write`` — по виду SQL.
+
+        """
+        del exchange
+        return self._action()
+
     @staticmethod
     def _flag_enabled() -> bool:
         """Читает feature-flag ``infra_db_query_enabled`` (fail-closed).

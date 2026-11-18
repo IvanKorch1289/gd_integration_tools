@@ -6,7 +6,7 @@ import orjson
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.base import BaseProcessor, run_gated_step
 from src.backend.dsl.registry import processor
 
 # S50 M2-#11 swarm audit (A4 DSL #1 / A2 Infra #7): inline imports от
@@ -246,7 +246,8 @@ class FallbackChainProcessor(BaseProcessor):
             exchange.properties.pop("_stopped", None)
 
             try:
-                await proc.process(exchange, context)
+                # ADR-0456: fallback-шаги — под capability-гейтом.
+                await run_gated_step(proc, exchange, context)
                 if exchange.status != ExchangeStatus.failed:
                     exchange.set_property("fallback_used", i)
                     return

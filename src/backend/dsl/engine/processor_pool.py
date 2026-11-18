@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any
 
 from src.backend.core.utils.task_registry import get_task_registry
 from src.backend.dsl.engine.capability_guard import enforce_step_capability
+from src.backend.dsl.engine.exchange import ExchangeStatus
 
 if TYPE_CHECKING:
     from src.backend.dsl.engine.context import ExecutionContext
@@ -230,6 +231,20 @@ class ProcessorPool:
                     "status": "stopped",
                 }
             async with self._semaphore:
+                # ADR-0456: состояние exchange перечитывается **после**
+                # получения семафора — отказ capability-гейта (или провал
+                # соседнего шага) не должен приводить к выполнению
+                # оставшихся шагов параллельной пачки.
+                if (
+                    getattr(exchange, "stopped", False)
+                    or getattr(exchange, "status", None) == ExchangeStatus.failed
+                ):
+                    return {
+                        "processor": proc.name,
+                        "type": type(proc).__name__,
+                        "duration_ms": 0.0,
+                        "status": "stopped",
+                    }
                 _, result = await self._execute_one(proc, exchange, context, timeout)
                 self._metrics.inc_completed(
                     failed=result["status"] == "error",

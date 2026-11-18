@@ -36,7 +36,11 @@ from typing import Any, Protocol
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.dsl.engine.processors.base import (
+    BaseProcessor,
+    handle_processor_error,
+    run_gated_step,
+)
 from src.backend.dsl.registry import processor
 
 __all__ = ("ProcessorRegistry", "RoutingSlipProcessor", "SimpleRegistry")
@@ -187,7 +191,8 @@ class RoutingSlipProcessor(BaseProcessor):
             _log.debug(
                 "RoutingSlip[%d/%d]: executing %s", idx + 1, len(steps), step_name
             )
-            await processor.process(exchange, context)
+            # ADR-0456: routing-slip шаги — под capability-гейтом.
+            await run_gated_step(processor, exchange, context)
             exchange.set_property("routing_slip.remaining", list(steps[idx + 1 :]))
             exchange.set_property("routing_slip.current_step", step_name)
 

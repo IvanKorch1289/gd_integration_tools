@@ -71,6 +71,8 @@ class CsvReadProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "rpa.file.csv.read"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "read"
     audit_event: str | None = "rpa.file.csv.read"
 
     def __init__(

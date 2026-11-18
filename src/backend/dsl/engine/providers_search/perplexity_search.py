@@ -37,6 +37,8 @@ class PerplexitySearchProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "web_search.perplexity.invoke"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "invoke"
     audit_event: str | None = "web_search.perplexity.invoked"
 
     VALID_MODELS = ("sonar", "sonar-pro", "sonar-reasoning")

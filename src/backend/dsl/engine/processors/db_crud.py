@@ -54,7 +54,11 @@ from src.backend.core.types.side_effect import SideEffectKind
 from src.backend.core.utils.sql_identifiers import validate_identifier
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange
-from src.backend.dsl.engine.processors.base import BaseProcessor, handle_processor_error
+from src.backend.dsl.engine.processors.base import (
+    BaseProcessor,
+    handle_processor_error,
+    run_gated_step,
+)
 
 __all__ = (
     "SUPPORTED_DIALECTS",
@@ -595,7 +599,8 @@ class DbCrudProcessor(BaseProcessor):
             result_property=self._result_property,
             capability_scope=self._table,
         )
-        await query_proc.process(exchange, context)
+        # ADR-0456: вложенный query-шаг — под capability-гейтом.
+        await run_gated_step(query_proc, exchange, context)
 
     def _apply_tenant_scope(
         self, exchange: Exchange[Any], sql: str, params: dict[str, Any], *, dialect: str

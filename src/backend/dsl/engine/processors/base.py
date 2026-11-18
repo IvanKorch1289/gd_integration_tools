@@ -20,6 +20,7 @@ __all__ = (
     "ProcessorCallable",
     "SubPipelineExecutor",
     "emit_data_access_audit",
+    "run_gated_step",
     "run_sub_processors",
 )
 
@@ -207,6 +208,17 @@ class BaseProcessor(ABC):
         #: проверку идемпотентной — внутренний вызов ``auth_check()`` из
         #: ``process()`` не проверяет capability второй раз.
         self.capability_verified = False
+        #: ADR-0456 (hardening): маркер проверки **привязан к exchange**.
+        #: Простой boolean жил на экземпляре и не сбрасывался между
+        #: запросами — один и тот же экземпляр процессора (роуты живут в
+        #: process-wide registry, экземпляры переиспользуются) мог «помнить»
+        #: успешную проверку чужого exchange и пропустить свою.
+        #: Ключ: ``(exchange_id, capabilities, action, scope)`` — проверка
+        #: действительна только для конкретного exchange **и** конкретного
+        #: запроса (действие + scope).
+        self._capability_verified_key: (
+            tuple[str, tuple[str, ...], str, str | None] | None
+        ) = None
 
     def set_result(self, exchange, target: str, value) -> None:  # type: ignore[no-untyped-def]
         """Записать значение в Exchange (body.<field> или property).
@@ -331,14 +343,26 @@ class BaseProcessor(ABC):
         if not capabilities:
             return True
 
-        if getattr(self, "capability_verified", False):
-            # ADR-0456: capability этого шага уже проверена движком
-            # (engine-wide enforcement) — повторная проверка не нужна.
-            # Без этого каждый шаг давал бы два audit-события
-            # ``capability.check`` и два обхода гейта.
-            return True
-
         capability = capabilities[0]
+        try:
+            scope = self._capability_scope(exchange)
+        except Exception as exc:  # pragma: no cover — fail-closed
+            exchange.fail(f"{self.name}: auth_check error: {exc}")
+            exchange.stop()
+            return False
+
+        # ADR-0456: capability этого шага уже проверена **для этого же
+        # exchange и этого же запроса** (действие + scope) — повторная
+        # проверка не нужна. Ключ включает exchange_id: экземпляры
+        # процессоров переиспользуются между запросами (process-wide
+        # registry роутов), и «помнить» проверку чужого exchange нельзя.
+        if self._capability_verification_key(exchange, capabilities, action, scope) == (
+            getattr(self, "_capability_verified_key", None)
+        ):
+            self.capability_verified = True
+            return True
+        self.capability_verified = False
+
         meta_principal = getattr(exchange.meta, "principal", None)
         resolved_principal = (
             principal
@@ -356,6 +380,7 @@ class BaseProcessor(ABC):
                     action=action,
                     principal=resolved_principal,
                     tenant_id=tenant_id,
+                    scope=scope,
                 )
             else:
                 allowed = await self._check_via_legacy_gateway(
@@ -387,6 +412,7 @@ class BaseProcessor(ABC):
                 action=action,
                 principal=resolved_principal,
                 tenant_id=tenant_id,
+                scope=scope,
             )
             if not extra_ok:
                 suffix = f" ({extra_reason})" if extra_reason else ""
@@ -394,10 +420,42 @@ class BaseProcessor(ABC):
                 exchange.stop()
                 return False
 
-        # ADR-0456: capability проверена — помечаем шаг, чтобы внутренний
-        # вызов ``auth_check()`` из ``process()`` не проверял её повторно.
+        # ADR-0456: capability проверена — помечаем шаг (с привязкой к
+        # exchange и точному запросу), чтобы внутренний вызов
+        # ``auth_check()`` из ``process()`` не проверял её повторно.
+        self._capability_verified_key = self._capability_verification_key(
+            exchange, capabilities, action, scope
+        )
         self.capability_verified = True
         return True
+
+    def _capability_verification_key(
+        self,
+        exchange: Exchange[Any],
+        capabilities: tuple[str, ...],
+        action: str,
+        scope: str | None,
+    ) -> tuple[str, tuple[str, ...], str, str | None]:
+        """Ключ идемпотентности capability-проверки (ADR-0456).
+
+        Ключ включает ``exchange_id``: экземпляры процессоров переиспользуются
+        между запросами (process-wide registry роутов), поэтому «помнить»
+        успешную проверку чужого exchange нельзя — иначе внутренний
+        ``auth_check()`` пропустил бы проверку для нового запроса.
+
+        Args:
+            exchange: Текущий Exchange.
+            capabilities: Проверяемые capability.
+            action: Действие запроса (``read`` / ``write`` / ``execute``).
+            scope: Запрошенный scope.
+
+        Returns:
+            Кортеж-ключ проверки.
+
+        """
+        meta = getattr(exchange, "meta", None)
+        exchange_id = str(getattr(meta, "exchange_id", "") or "")
+        return (exchange_id, tuple(capabilities), action, scope)
 
     def _declared_capabilities(self) -> tuple[str, ...]:
         """Capability, которые процессор обязан иметь (ADR-0449).
@@ -440,11 +498,23 @@ class BaseProcessor(ABC):
         action: str,
         principal: str,
         tenant_id: str | None,
+        scope: str | None = None,
     ) -> tuple[bool, str]:
         """Проверка capability через runtime-резолвер (ADR-0366).
 
+        Args:
+            exchange: Текущий Exchange (namespace capability-гейта).
+            capability: Имя capability.
+            action: Действие запроса.
+            principal: Кто выполняет действие (для аудита).
+            tenant_id: Tenant решения.
+            scope: Scope запроса; ``None`` — вычислить через
+                :meth:`_capability_scope` (значение ``None`` — scope не
+                уточнён, это разные состояния).
+
         Returns:
             Кортеж ``(allowed, reason)``.
+
         """
         from src.backend.core.security.capabilities import runtime_resolver
         from src.backend.core.security.capabilities.tenant import SYSTEM_TENANT_ID
@@ -453,7 +523,7 @@ class BaseProcessor(ABC):
             capability=capability,
             action=action,
             plugin=self._capability_namespace(exchange),
-            scope=self._capability_scope(exchange),
+            scope=scope if scope is not None else self._capability_scope(exchange),
             tenant=tenant_id or SYSTEM_TENANT_ID,
         )
         decision = runtime_resolver.check(request, principal=principal)
@@ -492,6 +562,29 @@ class BaseProcessor(ABC):
         """
         del exchange
         return None
+
+    def _capability_action(self, exchange: Exchange[Any]) -> str:
+        """Действие capability-запроса шага (ADR-0456).
+
+        Движок проверяет capability **до** ``process()`` — значит, он должен
+        запросить то же действие, которое запросит сам процессор, иначе
+        audit-событие ``capability.check`` запишет ``execute`` вместо
+        ``read``/``write`` и внутренний ``auth_check()`` процессора не
+        совпадёт с проверкой движка.
+
+        По умолчанию — классовый :attr:`capability_action`. Наследник
+        переопределяет, если действие вычисляется динамически (например,
+        ``read``/``write`` для БД-процессоров по типу SQL).
+
+        Args:
+            exchange: Текущий Exchange.
+
+        Returns:
+            Имя действия (``"read"`` / ``"write"`` / ``"execute"``).
+
+        """
+        del exchange
+        return self.capability_action
 
     @abstractmethod
     async def process(self, exchange: Exchange[Any], context: ExecutionContext) -> None:
@@ -610,7 +703,20 @@ class CapabilityGuardedProcessor(BaseProcessor):
         """
         if not await self.auth_check(exchange, action=self._action):
             return
-        await self._inner.process(exchange, context)
+        await run_gated_step(self._inner, exchange, context)
+
+    def _capability_action(self, exchange: Exchange[Any]) -> str:
+        """Действие capability-гейта обёртки (``invoke`` / ``read`` / ...).
+
+        Args:
+            exchange: Текущий Exchange (не используется).
+
+        Returns:
+            Действие, заданное при создании обёртки.
+
+        """
+        del exchange
+        return self._action
 
 
 def emit_data_access_audit(
@@ -694,6 +800,33 @@ class SubPipelineExecutor:
             return route_id, None, str(exc)
 
 
+async def run_gated_step(
+    processor: BaseProcessor, exchange: Exchange[Any], context: ExecutionContext
+) -> bool:
+    """Выполнить один вложенный шаг **под capability-гейтом** (ADR-0456).
+
+    Единая точка enforcement'а для вложенных шагов: проверка capability
+    выполняется до ``processor.process()``; при отказе шаг не выполняется,
+    exchange переводится в ``failed`` + ``stopped``.
+
+    Args:
+        processor: Вложенный шаг (процессор DSL).
+        exchange: Текущий Exchange.
+        context: Контекст исполнения DSL-маршрута.
+
+    Returns:
+        ``True`` — шаг выполнен; ``False`` — capability-гейт отказал
+        (шаг не выполнялся, exchange → ``failed`` + ``stopped``).
+
+    """
+    from src.backend.dsl.engine.capability_guard import enforce_step_capability
+
+    if not await enforce_step_capability(processor, exchange, context):
+        return False
+    await processor.process(exchange, context)
+    return True
+
+
 async def run_sub_processors(
     processors: list[BaseProcessor], exchange: Exchange[Any], context: ExecutionContext
 ) -> None:
@@ -702,15 +835,13 @@ async def run_sub_processors(
     ADR-0456: вложенные шаги проходят тот же capability-гейт, что и
     шаги верхнего уровня (движок проверяет capability до вызова шага).
     """
-    from src.backend.dsl.engine.capability_guard import enforce_step_capability
     from src.backend.dsl.engine.exchange import ExchangeStatus
 
     for proc in processors:
         if exchange.status == ExchangeStatus.failed or exchange.stopped:
             break
-        if not await enforce_step_capability(proc, exchange, context):
+        if not await run_gated_step(proc, exchange, context):
             break
-        await proc.process(exchange, context)
 
 
 def collect_route_results(

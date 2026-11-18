@@ -13,13 +13,13 @@ from datetime import datetime
 
 from pathlib import Path
 
+from src.backend.core.engine.exchange import Exchange
+
 from src.backend.core.interfaces.watermark_store import WatermarkStore
 
 from src.backend.dsl.adapters.types import ProtocolType, TransportConfig
 
 from src.backend.dsl.builders.data_store_mixin import DataStore
-
-from src.backend.dsl.engine.exchange import Exchange
 
 from src.backend.dsl.engine.middleware import ProcessorMiddleware
 
@@ -377,6 +377,22 @@ class RouteBuilder:
         """Отмена workflow по ``workflow_id`` (Sprint 12 K3 W7)."""
         ...
 
+    def cdc_capture(
+        self,
+        *,
+        profile: str,
+        tables: list[str],
+        strategy: str = ...,
+        result_property: str = ...,
+        interval: float = ...,
+        timestamp_column: str = ...,
+        batch_size: int = ...,
+        channel: Union[str, None] = ...,
+        include_schema: bool = ...,
+    ) -> RouteBuilder:
+        """Подписаться на CDC-события внешней БД (YAML-шаг ``cdc_capture``)."""
+        ...
+
     def cdc_transform(
         self,
         *,
@@ -620,7 +636,7 @@ class RouteBuilder:
         profile: str,
         name: str,
         *,
-        schema: str = ...,
+        schema: Union[str, None] = ...,
         params_from: str = ...,
         result_property: str = ...,
         dialect: Union[str, None] = ...,
@@ -652,7 +668,7 @@ class RouteBuilder:
         params_from: str = ...,
         result_property: str = ...,
         fetch: str = ...,
-        commit: bool = ...,
+        commit: Union[bool, None] = ...,
     ) -> RouteBuilder:
         """Выполняет произвольный SQL во внешней БД по profile-имени."""
         ...
@@ -674,9 +690,10 @@ class RouteBuilder:
         data: dict[str, Any],
         conflict_keys: list[str],
         *,
+        dialect: Union[str, None] = ...,
         result_property: str = ...,
     ) -> RouteBuilder:
-        """Safe UPSERT (INSERT ... ON CONFLICT DO UPDATE, PostgreSQL)."""
+        """Safe UPSERT (INSERT ... ON CONFLICT DO UPDATE по умолчанию)."""
         ...
 
     def dead_letter(
@@ -722,6 +739,31 @@ class RouteBuilder:
 
     def depends(self, *deps: Union[str, tuple[str, str]]) -> Self:
         """Добавляет DI-зависимости к последнему processor (call_function/process_fn)."""
+        ...
+
+    def desktop_pyautogui(
+        self,
+        *,
+        action: str,
+        x: Union[int, None] = ...,
+        y: Union[int, None] = ...,
+        text: Union[str, None] = ...,
+        key: Union[str, None] = ...,
+        duration: float = ...,
+        result_property: str = ...,
+    ) -> RouteBuilder:
+        """Desktop-автоматизация через pyautogui (Linux/macOS)."""
+        ...
+
+    def desktop_rpa(
+        self,
+        *,
+        app: str,
+        action: str,
+        params: Union[dict[str, Any], None] = ...,
+        to: str = ...,
+    ) -> RouteBuilder:
+        """Desktop UI-автоматизация через windows-worker sidecar."""
         ...
 
     def diff(self, other: list[Any]) -> RouteBuilder:
@@ -904,7 +946,7 @@ class RouteBuilder:
         operation: str,
         table: str,
         *,
-        dialect: str = ...,
+        dialect: Union[str, None] = ...,
         data: Union[dict[str, Any], None] = ...,
         where: Union[dict[str, Any], None] = ...,
         conflict_keys: Union[list[str], None] = ...,

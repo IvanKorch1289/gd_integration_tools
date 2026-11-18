@@ -41,7 +41,7 @@ from src.backend.dsl.engine.processors._path_safety import (
     PathTraversalError,
     validate_path,
 )
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.base import BaseProcessor, run_gated_step
 from src.backend.dsl.engine.processors.rpa.operations.filtereddirectoryscanprocessor import (
     FilteredDirectoryScanProcessor,
 )
@@ -216,7 +216,8 @@ class DirectoryScanProcessor(BaseProcessor):
         inner.set_result = _capture_set_result  # type: ignore[assignment,method-assign]
         try:
             # Используем self-collected exchange через перехват.
-            await inner.process(exchange, context)
+            # ADR-0456: inner-шаг — под capability-гейтом.
+            await run_gated_step(inner, exchange, context)
         finally:
             inner.set_result = original_set_result  # type: ignore[method-assign]
 

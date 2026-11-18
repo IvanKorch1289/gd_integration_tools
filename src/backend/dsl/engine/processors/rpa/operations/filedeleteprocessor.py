@@ -31,6 +31,8 @@ class FileDeleteProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "rpa.file.delete"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "write"
     audit_event: str | None = "rpa.file.delete"
 
     def __init__(

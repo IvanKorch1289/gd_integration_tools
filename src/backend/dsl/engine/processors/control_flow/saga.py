@@ -12,7 +12,7 @@ from typing import Any
 from src.backend.core.logging import get_logger
 from src.backend.dsl.engine.context import ExecutionContext
 from src.backend.dsl.engine.exchange import Exchange, ExchangeStatus
-from src.backend.dsl.engine.processors.base import BaseProcessor
+from src.backend.dsl.engine.processors.base import BaseProcessor, run_gated_step
 
 _cf_logger = get_logger("dsl.control_flow")
 
@@ -71,7 +71,8 @@ class SagaProcessor(BaseProcessor):
 
         for i, step in enumerate(self._steps):
             try:
-                await step.forward.process(exchange, context)
+                # ADR-0456: saga-шаги — под capability-гейтом.
+                await run_gated_step(step.forward, exchange, context)
 
                 if exchange.status == ExchangeStatus.failed:
                     raise RuntimeError(exchange.error or f"Step {i} failed")
@@ -98,7 +99,10 @@ class SagaProcessor(BaseProcessor):
                         try:
                             exchange.status = ExchangeStatus.processing
                             exchange.error = None
-                            await comp_step.compensate.process(exchange, context)
+                            # ADR-0456: компенсация — тоже под capability-гейтом.
+                            await run_gated_step(
+                                comp_step.compensate, exchange, context
+                            )
                         except Exception as comp_exc:
                             any_failed = True
                             _cf_logger.error("Saga compensation failed: %s", comp_exc)

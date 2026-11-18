@@ -78,6 +78,8 @@ class FtpUploadProcessor(BaseProcessor):
     """
 
     required_capability: ClassVar[str | None] = "rpa.ftp.upload"
+    # ADR-0456: действие capability-запроса (совпадает с auth_check в process()).
+    capability_action: ClassVar[str] = "write"
     audit_event: str | None = "rpa.ftp.upload"
 
     def __init__(

@@ -427,6 +427,7 @@ class ExecutionEngine:
                     break
 
                 try:
+                    step_start = time.monotonic()
                     entry = await self._execute_processor(
                         processor,
                         current_exchange,
@@ -438,7 +439,9 @@ class ExecutionEngine:
                     )
                     trace_log.append(entry)
                 except Exception as exc:
-                    duration_ms = (time.monotonic() - pipeline_start) * 1000
+                    # Длительность **шага**, а не всего pipeline: раньше
+                    # trace падающего шага содержал суммарное время маршрута.
+                    duration_ms = (time.monotonic() - step_start) * 1000
                     if runtime_context.logger is not None:
                         runtime_context.logger.exception(
                             "Processor '%s' failed in route '%s'",
