@@ -31,7 +31,9 @@
 
 from __future__ import annotations
 
+import importlib.machinery
 import importlib.util
+import logging
 import os
 import sys
 from collections.abc import Iterator
@@ -192,12 +194,45 @@ def _cleanup_polluted_modules() -> int:
             del sys.modules[k]
             removed += 1
             if k == "polars":
-                for sub in [m for m in sys.modules if m.startswith("polars.")]:
-                    del sys.modules[sub]
-                    removed += 1
                 if polars_installed:
+                    # Пакет установлен: его подмодули НЕ трогаем — они
+                    # кэшированы с начала сессии (см. _preload_polars) и
+                    # консистентны. Снос подмодулей оставлял «частично
+                    # инициализированные» (волна 33/34: ImportError
+                    # '_is_generator', RecursionError).
                     importlib.import_module("polars")
+                else:
+                    for sub in [m for m in sys.modules if m.startswith("polars.")]:
+                        del sys.modules[sub]
+                        removed += 1
     return removed
+
+
+def _preload_polars() -> None:
+    """Кэширует полный граф модулей polars один раз на воркер.
+
+    Зачем: фронтенд-тесты подменяют ``sys.modules["polars"]`` на stub. Если
+    в этот момент импортируется ``polars.lazyframe`` / ``polars.dataframe``,
+    их подмодули попадают в ``sys.modules`` «частично инициализированными»
+    (импорт упал на stub'е корня). Позже, когда настоящий polars импортируется
+    заново, кэшированный ``polars._utils.construction.dataframe`` требует
+    ``polars._utils.various`` из модуля, который прямо сейчас инициализируется
+    → ``ImportError: cannot import name '_is_generator'`` (волна 34,
+    CI-режим xdist).
+
+    Полный граф, кэшированный ДО подмен, делает состояние polars
+    консистентным на весь прогон: во время подмены все подмодули уже
+    загружены, новых частичных импортов не возникает.
+    """
+    if not _module_installed("polars"):
+        return
+    for name in ("polars", "polars.dataframe", "polars.lazyframe"):
+        try:
+            importlib.import_module(name)
+        except Exception:  # noqa: BLE001 — битый optional-extra не должен ронять прогон
+            logging.getLogger(__name__).debug(
+                "preload_polars: не удалось импортировать %s", name
+            )
 
 
 def _module_installed(name: str) -> bool:
@@ -212,8 +247,18 @@ def _module_installed(name: str) -> bool:
     """
     try:
         return importlib.util.find_spec(name) is not None
-    except ImportError, ValueError:  # pragma: no cover — битый spec
-        return False
+    except ImportError, ValueError:
+        # В ``sys.modules`` лежит stub без ``__spec__`` → ``find_spec`` бросает
+        # ValueError ("<name>.__spec__ is None"). Так happens ровно в тот
+        # момент, когда пакет подменён фронтенд-тестом: cleanup считал, что
+        # polars «не установлен», и сносил его подмодули → следующий ленивый
+        # импорт ``polars.lazyframe`` падал с ImportError '_is_generator'
+        # (волна 34, CI-режим xdist). PathFinder ищет по sys.path напрямую
+        # и sys.modules не смотрит — ответ честный.
+        try:
+            return importlib.machinery.PathFinder.find_spec(name) is not None
+        except Exception:  # pragma: no cover — битый spec
+            return False
 
 
 def _ensure_structlog_backend() -> None:
@@ -544,3 +589,7 @@ def _restore_task_registry():
 
     yield
     _get_reg().reset_for_tests()
+
+
+# Кэш полного графа polars — один раз на воркер (см. _preload_polars).
+_preload_polars()

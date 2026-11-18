@@ -25,10 +25,13 @@ def test_debt_and_contract_are_disjoint() -> None:
     Пересечение означало бы, что одна зависимость одновременно «осознанный
     контракт» и «долг, который надо снизить» — метрика перестала бы быть
     однозначной.
+
+    Пустой долг — целевое состояние (ADR-0457: инверсия ``src/ → extensions``
+    закрыла весь долг), поэтому он допустим; пустой контракт — нет: в нём
+    должны быть зафиксированы осознанные зависимости ``services → dsl``.
     """
     debt, contract = check_layers._load_baselines()
 
-    assert debt, "debt baseline не должен быть пустым"
     assert contract, "contract baseline не должен быть пустым"
     assert not (debt & contract), (
         f"пересечение debt/contract: {sorted(debt & contract)}"
