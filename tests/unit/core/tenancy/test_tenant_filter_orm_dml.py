@@ -24,6 +24,7 @@
 
 from __future__ import annotations
 
+import itertools
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -42,6 +43,14 @@ from src.backend.core.tenancy.sqlalchemy_filter import TenantIsolationError
 
 TENANT_A = "tenant-a"
 TENANT_B = "tenant-b"
+
+#: Счётчик имени таблицы для сущности без tenant_id. Таблица объявляется
+#: внутри теста, а модуль может быть собран дважды (например, в рабочей
+#: копии mutmut'а: mutants/tests/... и tests/... импортируются под одним
+#: именем) → повторное объявление того же ``__tablename__`` в том же
+#: MetaData даёт «Table 'am_plain' is already defined». Уникальное имя
+#: снимает коллизию, не меняя смысл проверки.
+_PLAIN_TABLE_SEQ = itertools.count()
 
 
 class Base(DeclarativeBase):
@@ -274,7 +283,7 @@ def test_non_tenant_entity_not_filtered(tmp_path: Path) -> None:
     class Plain(Base):
         """Сущность без TenantMixin."""
 
-        __tablename__ = "am_plain"
+        __tablename__ = f"am_plain_{next(_PLAIN_TABLE_SEQ)}"
 
         id: Mapped[int] = mapped_column(primary_key=True)
 
