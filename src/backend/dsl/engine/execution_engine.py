@@ -1,5 +1,6 @@
 import asyncio
 import time
+from collections import OrderedDict
 from typing import Any, Callable, cast
 
 from src.backend.core.errors import RouteDisabledError, TenantContextRequiredError
@@ -31,6 +32,13 @@ __all__ = ("ExecutionEngine",)
 # ADR-0368: таймаут выполнения finalizers exchange. Cleanup не должен
 # держать маршрут вечно (browser-контекст возвращается в пул).
 _FINALIZER_TIMEOUT_SECONDS = 5.0
+
+#: Максимум записей в кэше валидации pipeline'ов (LRU, D-A7-13).
+#:
+#: Без границы кэш рос бесконечно при hot-reload роутов: каждая новая
+#: сигнатура процессоров добавляла ключ ``(route_id, processors)``, а
+#: инвалидация была только ручной.
+_VALIDATION_CACHE_MAX_SIZE = 512
 
 
 def _resolve_tenant_id() -> str | None:
@@ -89,7 +97,9 @@ class ExecutionEngine:
         self._middleware = middleware or _default_middleware_factory()
         self._validate = validate_before_execute
         self._pool = pool or get_processor_pool()
-        self._validation_cache: dict[tuple[str, tuple[str, ...]], Any] = {}
+        self._validation_cache: OrderedDict[tuple[str, tuple[str, ...]], Any] = (
+            OrderedDict()
+        )
 
     @staticmethod
     def _find_timeout_middleware_in(chain: MiddlewareChain) -> TimeoutMiddleware | None:
@@ -129,14 +139,21 @@ class ExecutionEngine:
 
         Cache key = ``(route_id, tuple(proc.name for proc in pipeline.processors))``
         — adding/removing процессора инвалидирует запись для конкретного route.
+
+        Кэш ограничен :data:`_VALIDATION_CACHE_MAX_SIZE` записями: при
+        переполнении вытесняется наименее недавно использованная запись
+        (LRU). Без границы кэш рос неограниченно при hot-reload роутов.
         """
         proc_sig = tuple(p.name for p in pipeline.processors)
         key = (pipeline.route_id, proc_sig)
         cached = self._validation_cache.get(key)
         if cached is not None:
+            self._validation_cache.move_to_end(key)
             return cached
         result = pipeline_validator.validate(pipeline)
         self._validation_cache[key] = result
+        if len(self._validation_cache) > _VALIDATION_CACHE_MAX_SIZE:
+            self._validation_cache.popitem(last=False)
         return result
 
     def invalidate_validation_cache(self, route_id: str | None = None) -> None:
@@ -373,6 +390,12 @@ class ExecutionEngine:
         processor через middleware-chain с tracing. При ошибке любого processor
         exchange переводится в ``failed`` и выполнение останавливается.
 
+        ADR-0430: на время исполнения привязывается namespace вызывающего
+        (``route_id``) — capability-проверки фасадов идут под декларациями
+        роута. Привязка выполняется **только** если у роута есть
+        декларации capability; иначе проверка идёт под платформенным
+        namespace'ом (прежнее поведение). Привязка снимается в ``finally``.
+
         Args:
             pipeline: Конфигурация маршрута (route_id, processors, middleware).
             exchange: Существующий exchange (если ``None`` — создаётся новый).
@@ -417,6 +440,12 @@ class ExecutionEngine:
 
         middleware_chain = self._build_chain(pipeline)
         timeout_mw = self._find_timeout_middleware_in(middleware_chain)
+
+        # ADR-0430: namespace вызывающего для capability-проверок. Привязывается
+        # только если у роута есть декларации — иначе проверка идёт под
+        # платформенным namespace'ом (регрессия не ломает существующие роуты).
+        # Последовательный путь — симметрично параллельному (execute_parallel).
+        namespace_token = bind_caller_namespace(self._caller_namespace(pipeline))
 
         try:
             for processor in pipeline.processors:
@@ -467,7 +496,10 @@ class ExecutionEngine:
         finally:
             # ADR-0368: finalizers выполняются всегда (в т.ч. после падения
             # процессора) — иначе ресурсы пула не возвращаются.
-            await self._run_finalizers(current_exchange)
+            try:
+                await self._run_finalizers(current_exchange)
+            finally:
+                reset_caller_namespace(namespace_token)
         return current_exchange
 
     async def execute_parallel(

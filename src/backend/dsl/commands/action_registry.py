@@ -454,6 +454,24 @@ class ActionHandlerRegistry:
         """
         return self._metadata.get(action)
 
+    def get_handler(self, action: str) -> ActionHandlerSpec | None:
+        """Возвращает спецификацию обработчика action'а.
+
+        Нужен адаптерам реестра (``services/plugins/registries.py``), чтобы
+        при повторной регистрации **сохранить** ``payload_model`` ядра:
+        без этого адаптер затирал модель валидации request-body (аудит
+        F-01e).
+
+        Args:
+            action: Имя действия.
+
+        Returns:
+            :class:`ActionHandlerSpec` или ``None``, если action не
+            зарегистрирован.
+
+        """
+        return self._handlers.get(action)
+
     def list_metadata(self, transport: str | None = None) -> tuple[ActionMetadata, ...]:
         """Возвращает список метаданных всех зарегистрированных actions.
 

@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
 from src.backend.core.di import app_state_singleton
@@ -25,6 +26,7 @@ from src.backend.core.logging import get_logger
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Iterable
 
+    from src.backend.core.interfaces.action_dispatcher import ActionMetadata
     from src.backend.dsl.commands.action_registry import (
         ActionHandlerRegistry,
         ActionHandlerSpec,
@@ -214,13 +216,33 @@ class ActionRegistryAdapter:
 
         Если `spec` предоставлен (`ActionMetadata`) — используется как есть,
         иначе создаётся минимальный stub.
-        """
-        from src.backend.core.interfaces.action_dispatcher import ActionMetadata
 
-        metadata = (
-            spec
-            if isinstance(spec, ActionMetadata)
-            else ActionMetadata(action=action_id, input_model=None)
+        Аудит F-01e: **не затирать** уже зарегистрированное ядром. Раньше
+        адаптер всегда создавал `ActionHandlerSpec(payload_model=None)` и
+        перезаписывал запись ядра — валидация request-body для actions,
+        объявленных ядром (`orders.create_skb_order` и др.), молча
+        отключалась (fail-open на границе доверия). Здесь сохраняются:
+
+        * ``payload_model`` существующей записи (валидация payload);
+        * метаданные существующей записи (``input_model`` + требуемые
+          права ``permissions``), если плагин не объявил свои.
+
+        Новый action (не зарегистрирован ранее) регистрируется как раньше —
+        с пустым ``payload_model`` и stub-метаданными.
+        """
+        existing_handler = self._target.get_handler(action_id)
+        existing_metadata = self._target.get_metadata(action_id)
+        # F-01e: payload_model ядра не затирается — иначе валидация
+        # request-body отключается (fail-open).
+        payload_model = (
+            existing_handler.payload_model if existing_handler is not None else None
+        )
+
+        metadata = self._merge_metadata(
+            spec=spec,
+            existing=existing_metadata,
+            payload_model=payload_model,
+            action_id=action_id,
         )
         carrier = _PluginCallableCarrier(handler)
 
@@ -231,12 +253,54 @@ class ActionRegistryAdapter:
             action=action_id,
             service_getter=_carrier_getter,
             service_method="call",
-            payload_model=None,
+            payload_model=payload_model,
         )
         self._target.register_with_metadata(
             action=action_id, handler=handler_spec, metadata=metadata
         )
         logger.info("Plugin registered action: %s", action_id)
+
+    @staticmethod
+    def _merge_metadata(
+        *,
+        spec: Any | None,
+        existing: ActionMetadata | None,
+        payload_model: type[Any] | None,
+        action_id: str,
+    ) -> ActionMetadata:
+        """Собирает метаданные регистрации, не теряя данные ядра (F-01e).
+
+        Args:
+            spec: Метаданные, объявленные плагином (``ActionMetadata``)
+                либо ``None``.
+            existing: Метаданные, уже зарегистрированные ядром.
+            payload_model: Payload-модель существующей записи.
+            action_id: Имя регистрируемого action'а.
+
+        Returns:
+            Итоговые :class:`ActionMetadata` для регистрации.
+
+        """
+        from src.backend.core.interfaces.action_dispatcher import ActionMetadata
+
+        if isinstance(spec, ActionMetadata):
+            metadata = spec
+        elif existing is not None:
+            # Ядро уже описало action — сохраняем его метаданные
+            # (input_model, transports, требуемые права).
+            metadata = existing
+        else:
+            metadata = ActionMetadata(action=action_id, input_model=None)
+
+        # ``input_model`` не теряем: иначе OpenAPI/документация action'а
+        # теряют модель payload.
+        if metadata.input_model is None and payload_model is not None:
+            metadata = replace(metadata, input_model=payload_model)
+        # Требуемые права (``permissions`` — аналог required_capability для
+        # action'а) не теряем, если плагин их не объявил.
+        if not metadata.permissions and existing is not None and existing.permissions:
+            metadata = replace(metadata, permissions=existing.permissions)
+        return metadata
 
 
 class _PluginCallableCarrier:
