@@ -40,5 +40,26 @@ scope = "orders"
 
 # ─── Декларативный inventory ──────────────────────────────────────
 [provides]
+# Публичный action-инвентарь домена (регистрацию CRUD делает ядро —
+# ``dsl/commands/setup/registers_domains``, ADR-0457).
+actions = [
+    "orders.add",
+    "orders.get",
+    "orders.update",
+    "orders.delete",
+    "orders.list",
+    "orders.create_skb_order",
+    "orders.get_result",
+    "orders.get_file_and_json",
+    "orders.get_file_from_storage",
+    "orders.get_file_base64",
+    "orders.get_file_link",
+    "orders.send_order_data",
+]
 repositories = ["orders"]
-schemas = ["OrderSchemaIn", "OrderSchemaOut", "OrderVersionSchemaOut"]
+schemas = [
+    "OrderFilter",
+    "OrderSchemaIn",
+    "OrderSchemaOut",
+    "OrderVersionSchemaOut",
+]

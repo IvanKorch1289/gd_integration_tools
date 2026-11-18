@@ -38,5 +38,10 @@ scope = "s3://*"
 
 # ─── Декларативный inventory ──────────────────────────────────────
 [provides]
+# Публичный action-инвентарь домена. Регистрацию CRUD-actions делает ядро
+# (``dsl/commands/setup/registers_domains`` — сервис расширения берётся
+# через ``get_extension_resource``, ADR-0457); здесь — декларация
+# публичной поверхности плагина (marketplace-UI + детект коллизий).
+actions = ["files.add", "files.get", "files.update", "files.delete", "files.list"]
 repositories = ["files"]
-schemas = ["FileSchemaIn", "FileSchemaOut", "FileVersionSchemaOut"]
+schemas = ["FileFilter", "FileSchemaIn", "FileSchemaOut", "FileVersionSchemaOut"]

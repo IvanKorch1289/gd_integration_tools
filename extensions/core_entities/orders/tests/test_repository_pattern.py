@@ -7,6 +7,7 @@
 
 S171 M9 final (T52.4): coverage для repository layer.
 """
+
 # ruff: noqa: S101
 from __future__ import annotations
 
@@ -15,12 +16,14 @@ def test_repository_inherits_sqlalchemy_base() -> None:
     """OrderRepository наследует SQLAlchemyRepository из core."""
     from extensions.core_entities.orders.repositories.orders import OrderRepository
     from src.backend.core.api import SQLAlchemyRepository
+
     assert issubclass(OrderRepository, SQLAlchemyRepository)
 
 
 def test_repository_protocol_satisfied() -> None:
     """OrderRepository удовлетворяет OrderRepositoryProtocol."""
     from extensions.core_entities.orders.repositories.orders import OrderRepository
+
     # Protocol — duck typing проверка
     assert hasattr(OrderRepository, "add")
     assert hasattr(OrderRepository, "update")
@@ -38,6 +41,7 @@ def test_repository_class_instantiable() -> None:
 
     from extensions.core_entities.orders.domain.models import Order
     from extensions.core_entities.orders.repositories.orders import OrderRepository
+
     order_kind_repo = MagicMock()
     repo = OrderRepository(model=Order, order_kind_repo=order_kind_repo)
     assert repo.model is Order
@@ -50,6 +54,7 @@ def test_repository_load_joined_models_default_false() -> None:
 
     from extensions.core_entities.orders.domain.models import Order
     from extensions.core_entities.orders.repositories.orders import OrderRepository
+
     order_kind_repo = MagicMock()
     repo = OrderRepository(model=Order, order_kind_repo=order_kind_repo)
     assert repo.load_joined_models is True  # default-ON для joined models
@@ -62,8 +67,9 @@ def test_repository_respects_facade_boundary() -> None:
     import inspect
 
     import extensions.core_entities.orders.repositories.orders as mod
+
     src = inspect.getsource(mod)
-    assert "core.repositories.base" in src, (
+    assert "from src.backend.core.api import SQLAlchemyRepository" in src, (
         "OrderRepository должен импортировать через core facade (D102)"
     )
     assert "infrastructure.repositories.base" not in src, (
@@ -74,6 +80,7 @@ def test_repository_respects_facade_boundary() -> None:
 def test_order_admin_listed_in_plugin_capabilities() -> None:
     """plugin.toml содержит db.read+write на orders."""
     from pathlib import Path
+
     manifest_path = Path(__file__).parent.parent / "plugin.toml"
     content = manifest_path.read_text()
     assert "orders" in content

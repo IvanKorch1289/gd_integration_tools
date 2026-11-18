@@ -30,5 +30,21 @@ scope = "users"
 
 # ─── Декларативный inventory ──────────────────────────────────────
 [provides]
+# Публичный action-инвентарь домена (регистрацию CRUD делает ядро —
+# ``dsl/commands/setup/registers_domains``, ADR-0457). ``users.login``
+# регистрирует сам плагин (``on_register_actions``).
+actions = [
+    "users.add",
+    "users.get",
+    "users.update",
+    "users.delete",
+    "users.list",
+    "users.login",
+]
 repositories = ["users"]
-schemas = ["UserSchemaIn", "UserSchemaOut", "UserVersionSchemaOut"]
+schemas = [
+    "UserFilter",
+    "UserSchemaIn",
+    "UserSchemaOut",
+    "UserVersionSchemaOut",
+]

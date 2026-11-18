@@ -28,8 +28,9 @@ logger = logging.getLogger("extensions.core_entities.orders")
 class OrdersPlugin(BasePlugin):
     """V11-плагин Order CRUD.
 
-    Регистрирует сервис ``get_order_service`` и репозиторий
-    ``get_order_repo`` через стандартные lifecycle-хуки.
+    Регистрация ``orders.*`` actions — за ядром (ADR-0457, см.
+    :meth:`on_register_actions`); плагин отдаёт сервис/схемы в
+    core-реестр расширений (``extensions/core_entities/orders/resources.py``).
     """
 
     name = "core_entities_orders"
@@ -41,59 +42,33 @@ class OrdersPlugin(BasePlugin):
         logger.info("core_entities_orders plugin loaded")
 
     async def on_register_actions(self, registry: Any) -> None:
-        """Регистрирует ``orders.*`` actions в реестре.
+        """НЕ регистрирует ``orders.*`` actions — это делает ядро.
 
-        Layer-violation fix: ранее регистрация была прямой в
-        ``dsl/commands/setup.py`` (нарушение слоя). Теперь — через
-        PluginLoader lifecycle hook.
+        ADR-0457: каноническая регистрация доменных actions живёт в
+        ``src.backend.dsl.commands.setup.registers_domains`` — она получает
+        сервис/схемы расширения через core-реестр
+        (``get_extension_resource``) и регистрирует ``orders.*`` **с
+        payload-моделью** (``OrderIdQuerySchema`` для
+        ``create_skb_order`` / ``get_file_*`` / ``send_order_data``).
+
+        Раньше этот хук дублировал регистрацию. Дублирование было
+        безвредным только наполовину: ``ActionRegistryAdapter`` (ядро)
+        оборачивает handler плагина в ``ActionHandlerSpec`` **без**
+        ``payload_model`` и перезаписывает spec из ``registers_domains``
+        (см. ``ActionHandlerRegistry.register_with_metadata``: при
+        ``metadata.input_model is None`` conflict-check пропускается, а
+        ``self._handlers[action] = handler`` затирает payload-модель).
+        Итог: при включённом ``v11.plugin_loader_enabled`` валидация
+        request-body для 6 actions молча отключалась — маршрут отдавал
+        422 по OpenAPI-схеме, но в рантайме принимал мусорный payload.
+
+        Не добавлять здесь регистрации ``orders.*`` повторно: единственный
+        владелец action'а — ``registers_domains``.
         """
-        from extensions.core_entities.orders.services.orders import get_order_service
-
-        async def _add(**kwargs: Any) -> Any:
-            return await get_order_service().add(**kwargs)
-
-        async def _get(**kwargs: Any) -> Any:
-            return await get_order_service().get(**kwargs)
-
-        async def _update(**kwargs: Any) -> Any:
-            return await get_order_service().update(**kwargs)
-
-        async def _delete(**kwargs: Any) -> Any:
-            return await get_order_service().delete(**kwargs)
-
-        async def _create_skb_order(**kwargs: Any) -> Any:
-            return await get_order_service().create_skb_order(**kwargs)
-
-        async def _get_result(**kwargs: Any) -> Any:
-            return await get_order_service().get_order_result(**kwargs)
-
-        async def _get_file_and_json(**kwargs: Any) -> Any:
-            return await get_order_service().get_order_file_and_json_from_skb(**kwargs)
-
-        async def _get_file_from_storage(**kwargs: Any) -> Any:
-            return await get_order_service().get_order_file_from_storage(**kwargs)
-
-        async def _get_file_base64(**kwargs: Any) -> Any:
-            return await get_order_service().get_order_file_from_storage_base64(**kwargs)
-
-        async def _get_file_link(**kwargs: Any) -> Any:
-            return await get_order_service().get_order_file_from_storage_link(**kwargs)
-
-        async def _send_order_data(**kwargs: Any) -> Any:
-            return await get_order_service().send_order_data(**kwargs)
-
-        registry.register("orders.add", _add)
-        registry.register("orders.get", _get)
-        registry.register("orders.update", _update)
-        registry.register("orders.delete", _delete)
-        registry.register("orders.create_skb_order", _create_skb_order)
-        registry.register("orders.get_result", _get_result)
-        registry.register("orders.get_file_and_json", _get_file_and_json)
-        registry.register("orders.get_file_from_storage", _get_file_from_storage)
-        registry.register("orders.get_file_base64", _get_file_base64)
-        registry.register("orders.get_file_link", _get_file_link)
-        registry.register("orders.send_order_data", _send_order_data)
-        logger.info("orders actions registered via plugin")
+        logger.info(
+            "orders actions: registration owned by dsl/commands/setup "
+            "(ADR-0457) — plugin hook is a no-op by design"
+        )
 
     async def on_shutdown(self) -> None:
         """Логирует факт выключения плагина."""

@@ -20,10 +20,15 @@ steps:
   # call_function: прямой вызов module-level функции (ADR-0395).
   # Функция принимает payload (содержимое args) и возвращает результат.
   # Замените ref на свою функцию — формат строго `module.path:function_name`.
+  #
+  # ВАЖНО (волна 34): контракт шага — `fn(payload: dict) -> Any`, payload
+  # передаётся ОДНИМ позиционным аргументом. То есть в `args` кладутся
+  # сами данные, а не обёртка: раньше здесь было `args: {payload: {}}`,
+  # и `dumps_str` сериализовал обёртку (`'{"payload":{}}'`) вместо
+  # payload. Ключи `args` — это и есть payload функции.
   - type: call_function
     ref: src.backend.core.utils.json_utils:dumps_str
-    args:
-      payload: {}
+    args: {}
     timeout_s: 30
     output_key: canonical_json
   - type: activity

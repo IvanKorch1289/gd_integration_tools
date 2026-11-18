@@ -28,5 +28,22 @@ scope = "orderkinds"
 
 # ─── Декларативный inventory ──────────────────────────────────────
 [provides]
+# Публичный action-инвентарь домена (регистрацию CRUD делает ядро —
+# ``dsl/commands/setup/registers_domains``, ADR-0457).
+# ``orderkinds.sync_from_skb`` регистрирует сам плагин
+# (``on_register_actions``).
+actions = [
+    "orderkinds.add",
+    "orderkinds.get",
+    "orderkinds.update",
+    "orderkinds.delete",
+    "orderkinds.list",
+    "orderkinds.sync_from_skb",
+]
 repositories = ["orderkinds"]
-schemas = ["OrderKindSchemaIn", "OrderKindSchemaOut", "OrderKindVersionSchemaOut"]
+schemas = [
+    "OrderKindFilter",
+    "OrderKindSchemaIn",
+    "OrderKindSchemaOut",
+    "OrderKindVersionSchemaOut",
+]

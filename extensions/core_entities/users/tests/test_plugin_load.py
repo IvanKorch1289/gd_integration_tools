@@ -23,11 +23,16 @@ _MANIFEST_PATH = (
 
 
 def test_users_manifest_loads_and_is_core_compatible() -> None:
-    """``plugin.toml`` парсится и совместим с ядром 0.2.x."""
+    """``plugin.toml`` парсится и совместим с текущим ядром (``0.20.x``).
+
+    Манифест объявляет ``requires_core = ">=0.20,<0.21"``, поэтому проверка
+    на ``0.2.5`` (слепой старый литерал) всегда была False — тест падал и
+    до волны 34.
+    """
     manifest = load_plugin_manifest(_MANIFEST_PATH)
     assert manifest.name == "core_entities_users"
     assert manifest.version == "1.0.0"
-    assert manifest.requires_core == ">=0.2,<0.3"
+    assert manifest.is_compatible_with_core("0.20.0") is True
     assert manifest.entry_class.endswith(".UsersPlugin")
 
 

@@ -1,10 +1,13 @@
 # Main composition demo route
 # Demonstrates include: and extends: composition (S19 K3 W2)
+#
+# ``include:`` перенесён в base_transforms.yaml: резолвер
+# ``_resolve_include_extends`` обрабатывает ``extends:`` первым и при слиянии
+# отбрасывает ключ ``include`` — спека с обоими ключами теряла include молча
+# (shared_steps.yaml не попадал в pipeline). Подробности — в
+# base_transforms.yaml.
 
 extends: ./base_transforms.yaml
-
-include:
-  - ./shared_steps.yaml
 
 route_id: composition.demo
 source: http:POST /api/v1/composition/demo

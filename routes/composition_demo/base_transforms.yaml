@@ -1,5 +1,21 @@
 # Base route for extends: demonstration
 # Child routes can extend this and override specific fields
+#
+# ``include:`` живёт здесь, а не в main.dsl.yaml: резолвер
+# ``src.backend.dsl.yaml_loader.resolve._resolve_include_extends`` обрабатывает
+# ``extends:`` первым и при слиянии отбрасывает ключ ``include`` до того, как
+# он будет прочитан. Спека с одновременно ``extends:`` и ``include:``
+# (как было в main.dsl.yaml) теряла include молча — shared_steps.yaml не
+# попадал в pipeline вообще. Перенос include в базовый файл сохраняет
+# демонстрацию обеих возможностей (extends + include) и включает
+# shared_steps.yaml в итоговый pipeline.
+#
+# Дефект резолвера — вне зоны extensions/routes; при его исправлении
+# (сохранение ключа ``include`` при merge) эта схема продолжит работать
+# без изменений.
+
+include:
+  - ./shared_steps.yaml
 
 route_id: base.composition.route
 source: timer:300s

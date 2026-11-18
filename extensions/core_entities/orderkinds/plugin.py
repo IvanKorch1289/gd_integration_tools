@@ -28,8 +28,8 @@ logger = logging.getLogger("extensions.core_entities.orderkinds")
 class OrderKindsPlugin(BasePlugin):
     """V11-плагин OrderKind CRUD.
 
-    Регистрирует ``orderkinds`` actions (add/get/update/delete + sync_from_skb)
-    через ``on_register_actions`` — минуя ``dsl/commands/setup.py``.
+    CRUD-actions регистрирует ядро (ADR-0457); плагин регистрирует
+    только ``orderkinds.sync_from_skb`` — см. :meth:`on_register_actions`.
     """
 
     name = "core_entities_orderkinds"
@@ -41,39 +41,31 @@ class OrderKindsPlugin(BasePlugin):
         logger.info("core_entities_orderkinds plugin loaded")
 
     async def on_register_actions(self, registry: Any) -> None:
-        """Регистрирует ``orderkinds.*`` actions в реестре.
+        """Регистрирует action ``orderkinds.sync_from_skb`` в реестре.
 
-        Layer-violation fix: ранее регистрация была прямой в
-        ``dsl/commands/setup.py`` (нарушение слоя). Теперь — через
-        PluginLoader lifecycle hook.
+        ADR-0457: CRUD-actions (``orderkinds.add/get/update/delete/list``)
+        регистрирует ядро — ``src.backend.dsl.commands.setup.registers_domains``
+        (сервис расширения берётся через ``get_extension_resource``).
+        Дублировать их здесь нельзя: ``ActionRegistryAdapter`` (ядро)
+        оборачивает handler плагина в spec **без** ``payload_model`` и
+        перезаписывает spec из ``registers_domains``, молча отключая
+        валидацию request-body (подробности — в
+        ``extensions/core_entities/orders/plugin.py``).
+
+        ``orderkinds.sync_from_skb`` ядро не регистрирует — action
+        принадлежит плагину.
         """
         from extensions.core_entities.orderkinds.services.orderkinds import (
             get_order_kind_service,
         )
-
-        async def _add(**kwargs: Any) -> Any:
-            return await get_order_kind_service().add(**kwargs)
-
-        async def _get(**kwargs: Any) -> Any:
-            return await get_order_kind_service().get(**kwargs)
-
-        async def _update(**kwargs: Any) -> Any:
-            return await get_order_kind_service().update(**kwargs)
-
-        async def _delete(**kwargs: Any) -> Any:
-            return await get_order_kind_service().delete(**kwargs)
 
         async def _sync_from_skb(**kwargs: Any) -> Any:
             return await get_order_kind_service().create_or_update_kinds_from_skb(
                 **kwargs
             )
 
-        registry.register("orderkinds.add", _add)
-        registry.register("orderkinds.get", _get)
-        registry.register("orderkinds.update", _update)
-        registry.register("orderkinds.delete", _delete)
         registry.register("orderkinds.sync_from_skb", _sync_from_skb)
-        logger.info("orderkinds actions registered via plugin")
+        logger.info("orderkinds.sync_from_skb action registered via plugin")
 
     async def on_shutdown(self) -> None:
         """Логирует факт выключения плагина."""

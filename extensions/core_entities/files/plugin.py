@@ -28,8 +28,9 @@ logger = logging.getLogger("extensions.core_entities.files")
 class FilesPlugin(BasePlugin):
     """V11-плагин File CRUD.
 
-    Регистрирует сервис ``get_file_service`` и репозиторий
-    ``get_file_repo`` через стандартные lifecycle-хуки.
+    Регистрация ``files.*`` actions — за ядром (ADR-0457, см.
+    :meth:`on_register_actions`); плагин отдаёт сервис/схемы в
+    core-реестр расширений (``extensions/core_entities/files/resources.py``).
     """
 
     name = "core_entities_files"
@@ -41,31 +42,20 @@ class FilesPlugin(BasePlugin):
         logger.info("core_entities_files plugin loaded")
 
     async def on_register_actions(self, registry: Any) -> None:
-        """Регистрирует ``files.*`` actions в реестре.
+        """НЕ регистрирует ``files.*`` actions — это делает ядро.
 
-        Layer-violation fix: ранее регистрация была прямой в
-        ``dsl/commands/setup.py`` (нарушение слоя). Теперь — через
-        PluginLoader lifecycle hook.
+        ADR-0457: каноническая регистрация доменных actions живёт в
+        ``src.backend.dsl.commands.setup.registers_domains`` (сервис
+        расширения берётся через ``get_extension_resource``). Этот хук
+        дублировал регистрацию; дублирование затирало payload-модель
+        action'а (см. подробный комментарий в
+        ``extensions/core_entities/orders/plugin.py``) — не добавлять
+        здесь регистрации ``files.*`` повторно.
         """
-        from extensions.core_entities.files.services.files import get_file_service
-
-        async def _add(**kwargs: Any) -> Any:
-            return await get_file_service().add(**kwargs)
-
-        async def _get(**kwargs: Any) -> Any:
-            return await get_file_service().get(**kwargs)
-
-        async def _update(**kwargs: Any) -> Any:
-            return await get_file_service().update(**kwargs)
-
-        async def _delete(**kwargs: Any) -> Any:
-            return await get_file_service().delete(**kwargs)
-
-        registry.register("files.add", _add)
-        registry.register("files.get", _get)
-        registry.register("files.update", _update)
-        registry.register("files.delete", _delete)
-        logger.info("files actions registered via plugin")
+        logger.info(
+            "files actions: registration owned by dsl/commands/setup "
+            "(ADR-0457) — plugin hook is a no-op by design"
+        )
 
     async def on_shutdown(self) -> None:
         """Логирует факт выключения плагина."""
