@@ -19,4 +19,6 @@ def register() -> None:
     """Регистрирует схему геолокации DaData в core-реестре."""
     from extensions.dadata.schemas.route import DadataGeolocateQuerySchema
 
-    register_extension_resource(DOMAIN, "schema", "geolocate", DadataGeolocateQuerySchema)
+    register_extension_resource(
+        DOMAIN, "schema", "geolocate", DadataGeolocateQuerySchema
+    )

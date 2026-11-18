@@ -8,9 +8,7 @@
 from __future__ import annotations
 
 from src.backend.core.ai.multi_agent import AgentSpec as AgentSpec
-from src.backend.core.ai.multi_agent import (
-    MultiAgentSupervisor as MultiAgentSupervisor,
-)
+from src.backend.core.ai.multi_agent import MultiAgentSupervisor as MultiAgentSupervisor
 from src.backend.core.ai.multi_agent import (
     MultiAgentSupervisorUnavailable as MultiAgentSupervisorUnavailable,
 )

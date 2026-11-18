@@ -26,7 +26,9 @@ def register() -> None:
     )
     from extensions.skb.services.waf_route import resolve_waf_route
 
-    register_extension_resource(DOMAIN, "schema", "api_skb_order_in", APISKBOrderSchemaIn)
+    register_extension_resource(
+        DOMAIN, "schema", "api_skb_order_in", APISKBOrderSchemaIn
+    )
     register_extension_resource(
         DOMAIN, "schema", "objects_by_address", SKBObjectsByAddressQuerySchema
     )
@@ -34,4 +36,6 @@ def register() -> None:
         DOMAIN, "schema", "orders_list", SKBOrdersListQuerySchema
     )
     register_extension_resource(DOMAIN, "schema", "result", SKBResultQuerySchema)
-    register_extension_resource(DOMAIN, "service", "resolve_waf_route", resolve_waf_route)
+    register_extension_resource(
+        DOMAIN, "service", "resolve_waf_route", resolve_waf_route
+    )

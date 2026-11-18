@@ -30,6 +30,8 @@ def register() -> None:
     register_extension_resource(DOMAIN, "schema", "filter", UserFilter)
     register_extension_resource(DOMAIN, "schema", "schema_in", UserSchemaIn)
     register_extension_resource(DOMAIN, "schema", "schema_out", UserSchemaOut)
-    register_extension_resource(DOMAIN, "schema", "version_schema", UserVersionSchemaOut)
+    register_extension_resource(
+        DOMAIN, "schema", "version_schema", UserVersionSchemaOut
+    )
     register_extension_resource(DOMAIN, "service", "users", get_user_service)
     register_extension_resource(DOMAIN, "model", "user", User)

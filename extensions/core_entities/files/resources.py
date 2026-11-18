@@ -28,5 +28,7 @@ def register() -> None:
     register_extension_resource(DOMAIN, "schema", "filter", FileFilter)
     register_extension_resource(DOMAIN, "schema", "schema_in", FileSchemaIn)
     register_extension_resource(DOMAIN, "schema", "schema_out", FileSchemaOut)
-    register_extension_resource(DOMAIN, "schema", "version_schema", FileVersionSchemaOut)
+    register_extension_resource(
+        DOMAIN, "schema", "version_schema", FileVersionSchemaOut
+    )
     register_extension_resource(DOMAIN, "service", "files", get_file_service)

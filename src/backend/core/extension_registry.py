@@ -186,9 +186,7 @@ def get_extension_registry() -> ExtensionResourceRegistry:
     return _registry
 
 
-def register_extension_resource(
-    domain: str, kind: str, name: str, obj: Any
-) -> None:
+def register_extension_resource(domain: str, kind: str, name: str, obj: Any) -> None:
     """Регистрирует ресурс расширения в process-wide реестре.
 
     Args:
@@ -245,7 +243,7 @@ def _discover_package(package_name: str, *, depth: int) -> None:
         return
     try:
         spec = importlib.util.find_spec(package_name)
-    except (ImportError, ValueError):
+    except ImportError, ValueError:
         return
     if spec is None or not spec.submodule_search_locations:
         return
@@ -289,8 +287,7 @@ def _load_extension(package_name: str, *, depth: int) -> None:
     register = getattr(module, "register", None)
     if register is None:
         logger.warning(
-            "extension_resources: у расширения %s нет функции register()",
-            package_name,
+            "extension_resources: у расширения %s нет функции register()", package_name
         )
         return
     try:

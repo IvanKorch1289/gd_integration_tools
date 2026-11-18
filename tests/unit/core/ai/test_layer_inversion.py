@@ -137,10 +137,7 @@ class TestServicesShimsPreservePublicApi:
 
     def test_multi_agent_shim(self) -> None:
         """``services.ai.multi_agent.supervisor`` отдаёт core-объекты."""
-        from src.backend.core.ai.multi_agent import (
-            AgentSpec,
-            MultiAgentSupervisor,
-        )
+        from src.backend.core.ai.multi_agent import AgentSpec, MultiAgentSupervisor
         from src.backend.services.ai.multi_agent.supervisor import AgentSpec as ShimSpec
         from src.backend.services.ai.multi_agent.supervisor import (
             MultiAgentSupervisor as ShimSupervisor,
