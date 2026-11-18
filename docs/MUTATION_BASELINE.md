@@ -1,133 +1,71 @@
 # Mutation Testing Baseline Report
 
-**Date**: 2026-06-04 | **v17 Sprint 39 W4** | **Tool**: mutmut 2.16
+**Обновлено:** 2026-11-18 (волна 34) · **Инструмент:** mutmut 3.7.0 (`python -m mutmut`)
 
-## Status: ACTIVE (baseline зафиксирован 2026-11-17, ADR-0452)
+## Статус: ACTIVE — гейт рабочий, fail-closed
 
-**Обновление 2026-11-17 (ADR-0452):** гейт разблокирован. Причины блокировки
-были в обвязке, а не в коде: бинарник `mutmut` не в PATH (теперь
-`python -m mutmut`), рабочая копия `mutants/` не обновлялась (теперь
-синхронизируются `src/`, `tests/`, `deploy/`, `config/`, `config_profiles/`,
-`docs/`, `extensions/`, `routes/`, `ops/`, `.env.example`), ошибки сбора из-за
-отсутствующих optional-зависимостей устранены (зависимости установлены).
+Волна 33 разблокировала гейт (ADR-0452): были починены обвязка (бинарник
+`mutmut` не в PATH, рассинхрон рабочей копии `mutants/`, ошибки сбора из-за
+optional-зависимостей). Волна 34 (ADR-0452, доработка) закрыла **честность**
+гейта: до неё «зелёный» статус гейта мог означать «прогон не состоялся».
 
-Первый рабочий замер: **21.6 %** → baseline `.baselines/mutation.json`;
-порог гейта берётся из baseline (рэтчет «не хуже baseline»), гейт включён в
-CI (`lint.yml`).
+### Что было сломано (найдено и исправлено в волне 34)
 
-### Tooling Status (READY, committed in `b3ee023e`)
+| Дефект | Механизм | Исправление |
+|---|---|---|
+| Fail-open на устаревших данных | `mutmut export-cicd-stats` при отсутствии результатов печатает «No previous mutation data found» и выходит с кодом 0, **не перезаписывая** stats-файл → гейт сравнивал score прошлого прогона | stats-файл удаляется перед экспортом; устаревшая статистика → SKIPPED с причиной |
+| Кэш вердиктов стирался | `rsync --delete` удалял `mutants/**/*.meta` → каждый прогон с нуля (холодный ≈ 8–9 мин вместо тёплых 80 с) | `rsync --exclude=*.meta` |
+| Бинарник не в PATH | wrapper звал `mutmut` из PATH (там только `.venv/bin/mutmut`) | `sys.executable -m mutmut` |
+| Битый baseline → тихий fallback | при нечитаемом baseline подставлялось 55.0 % | явная ошибка |
+| CI-шаг без таймаута | падение job на каждом PR | `timeout-minutes: 6`, `MUTATION_GATE_TIMEOUT=240` |
+| Обёртка не работала с mutmut 3.x | флагов `--use-coverage/--coverage-data-file` больше нет, `mutmut results` не печатает score → score всегда 0 | `tools/run_mutation_tests.sh` переписан под 3.x |
+| Нулевой score маскировался как измерение | нет тестов / прерванный прогон → score 0.0 % | SKIPPED с явной причиной |
 
-- ✅ `pyproject.toml` — `[tool.mutmut]` section with 3 critical modules
-- ✅ `scripts/run_mutation_tests.sh` — bash wrapper
-- ✅ `.mutmut-ignore` — skip patterns
-- ✅ `docs/MUTATION_TESTING.md` — user docs
+### Контракт гейта
 
-### Blocker: 361 pytest collection errors
+| Код | Значение |
+|---|---|
+| 0 | PASS — score ≥ порога из baseline |
+| 1 | FAIL — score ниже порога (блокирует PR) |
+| 2 | SKIPPED — score не измерен (причина в выводе шага) |
+| 3 | ERROR — ошибка запуска гейта |
 
-Attempted baseline run on 2026-06-04. Result:
+Порог берётся из `.baselines/mutation.json` (single source of truth): гейт
+требует «не хуже baseline». SKIPPED — **не** «зелёный» результат и не
+маскируется под PASS: CI-шаг печатает warning и не блокирует PR, но и не
+выдаёт ложного подтверждения.
 
-```
-$ .venv/bin/python -m mutmut run ...
-!!!!!!!!!!!!!!!!!!!! Interrupted: 361 errors during collection !!!!!!!!!!!!!!!!!!!!
-1 error in 0.16s
-```
+### Запуск
 
-**Root cause**: 361 tests fail at import time due to missing optional dependencies:
-
-| Missing dep | Tests affected |
-|-------------|--------------:|
-| `cachetools` | 1 |
-| `orjson` | 4 |
-| `watchfiles` | 2 |
-| `fastapi` | ~80 |
-| `faststream` | 1 |
-| `pyrate_limiter` | 1 |
-| `sqlalchemy_continuum` | 1 |
-| `msgspec` | 1 |
-| `hypothesis` | 2 |
-| `purgatory` | 2 |
-| `granian` | 1 |
-| `redis` | 1 |
-| `aiosqlite` | 2 |
-| `croniter` | 1 |
-| `presidio_analyzer` | 1 |
-| ... | (etc) |
-
-The `.venv/` was installed with core deps only. Many integration/property/smoke tests
-require extras: `uv sync --all-extras` или `uv sync --extra workflow --extra ai --extra integration`.
-
-### Fix Path (3 options)
-
-**Option A: Full extras install** (recommended, simple)
 ```bash
-cd /home/user/dev/gd_integration_tools
-uv sync --all-extras  # installs all optional deps
-.venv/bin/python -m mutmut run --paths-to-mutate src/backend/core/config/features/__init__.py --tests-dir tests/unit --runner 'pytest tests/unit/core/config -q --tb=no'
+.venv/bin/python tools/checks/check_mutmut.py --help
+.venv/bin/python tools/checks/check_mutmut.py --timeout 900   # полный прогон
+.venv/bin/python tools/checks/check_mutmut.py --no-run         # по накопленным .meta
+.venv/bin/python tools/checks/check_mutmut.py --update-baseline
+make mutation-gate                                             # CI-цель (порог из baseline)
 ```
 
-**Option B: Targeted module test (manual subset)**
-```bash
-# Single known-good test file
-.venv/bin/python -m mutmut run \
-  --paths-to-mutate src/backend/dsl/builders/data_store_mixin.py \
-  --tests-dir tests/unit/dsl/builders \
-  --runner 'pytest tests/unit/dsl/builders/test_data_store_mixin.py -q --tb=no' \
-  --simple-output --no-progress
-```
+### Известные ограничения
 
-**Option C: Fix venv first, then baseline**
-```bash
-uv pip install cachetools orjson watchfiles fastapi faststream pyrate-limiter \
-  sqlalchemy-continuum msgspec hypothesis purgatory granian redis aiosqlite \
-  croniter presidio-analyzer temporalio aiomcache
-```
+* **Холодный прогон не укладывается в CI-бюджет.** Полный прогон мутаций
+  занимает ≈ 8–9 минут, а шаг в `.github/workflows/lint.yml` ограничен
+  240 с → в CI гейт честно даёт SKIPPED. Тёплый прогон (кэш `mutants/*.meta`
+  сохранён) — ≈ 80 с. Для настоящего enforcement в CI нужен отдельный job с
+  таймаутом ~15 мин **или** кэш `mutants/` между прогонами.
+* `mutants/` (~294 МБ) — локальный кэш вердиктов, в git не попадает; стирать
+  его нельзя (см. дефект с `rsync --delete`).
+* `also_copy = [".env"]` копирует `.env` в `mutants/` — локально и в
+  gitignored-каталоге; секреты в репозиторий не попадают.
 
-### Recommended Next Step
+### Baseline
 
-Run Option A (`uv sync --all-extras`), then Option B (focused baseline on 3 critical modules).
-Generate numeric mutation score (target: 55% per v17 §7).
+Текущее значение и история ratchet'а — `.baselines/mutation.json`.
+Score зависит от набора мутируемых модулей (`[tool.mutmut].source_paths` в
+`pyproject.toml`): изменение набора **обязательно** требует пересчёта
+baseline.
 
-### Pre-Fix Metrics (estimated)
+## Связанные документы
 
-Per v17 §3.1:
-- Branch coverage: 38% (pre-mutation baseline)
-- Test count: ~5500 unit tests
-- Critical modules (3 selected for mutation):
-  - `src/backend/core/config/features/__init__.py` (FeatureFlags)
-  - `src/backend/dsl/builders/base.py` (RouteBuilder, 700+ LOC)
-  - `src/backend/core/resilience/breaker.py` (CircuitBreaker)
-
-### Why This Matters (v17 §3.1)
-
-The single `🔴 Poor` rating in v17 score matrix is "Тесты (50)" — branch coverage 38%.
-Mutation testing is the v17 §7 Sprint 39 W4 prescribed mechanism to close this gap:
-mutations caught by tests = real branch coverage.
-
-Without mutation testing baseline, branch coverage number itself is unverified
-(tests may pass without exercising all branches).
-
-### Workaround Used This Session
-
-**Branch coverage proxy** = existing test pass rate + coverage estimates from audits:
-- Vulture audit (e28f7731): 7 100%-confidence unused variables → 7 unverified branches
-- Dead code audit (1bd14947): 17 TODOs → ~17 unverified branches
-- Security audit (c5761d42): 0 secrets, 0 eval/exec → 0 unverified security branches
-- Estimated branch coverage: ~75% (from proxy metrics, NOT verified by mutation)
-
-**Goal**: 78% branch coverage (v17 §8 target), verified by mutation testing post-fix.
-
-## Action Items
-
-1. ⏳ **Owner**: project owner → run `uv sync --all-extras`
-2. ⏳ **Then**: orchestrator runs `mutmut run` on 3 critical modules
-3. ⏳ **Then**: identify SURVIVED mutants → add tests
-4. ⏳ **Re-run**: confirm mutation score >= 55%
-5. ⏳ **Update**: this doc with actual baseline numbers
-
-## References
-
-- v17 §3.1 (branch coverage gap)
-- v17 §7 Sprint 39 W4 (mutation testing prescribed)
-- VULTURE_AUDIT.md (e28f7731) — proxy for unused code
-- DEAD_CODE_AUDIT.md (1bd14947) — proxy for unverified branches
-- MUTATION_TESTING.md — tooling docs
+* `docs/adr/0452-mutation-gate-unblocked.md` — решение по разблокировке.
+* `tools/checks/check_mutmut.py` — гейт; `tools/checks/run_mutmut.py` — обвязка.
+* `tools/run_mutation_tests.sh` — shell-обёртка.

@@ -69,21 +69,26 @@
 
 ## Проверка
 
-* `tools/check_layers.py` — 0 новых нарушений, записи долга
-  `entrypoints/dsl/services → extensions` становятся stale и удаляются из
-  baseline (`--prune-allowlist`).
+* `tools/check_layers.py` — 0 новых нарушений; все 27 записей долга
+  `entrypoints/dsl/services → extensions` стали stale и удалены из
+  baseline (`--prune-allowlist`). Итог по слоям: **долг 0** + 3
+  осознанных контракта `services → dsl` (`tools/check_layers_contract.txt`,
+  ADR-0348 вариант C).
 * Количество путей OpenAPI не меняется: **447** (до и после инверсии) —
   это и есть проверка, что HTTP-поверхность не поехала.
-* Точечные тесты: `tests/unit/entrypoints/**`, `tests/unit/dsl/**`,
-  `tests/unit/services/**`, `tests/unit/extensions/**`.
+* Точечные тесты: `tests/unit/entrypoints/**` (1757 passed),
+  `tests/unit/dsl/**`, `tests/unit/services/**` (4757 passed суммарно по
+  трём зонам), `tests/unit/core/test_extension_registry.py` (11 passed).
 * Новый контракт-тест реестра: регистрация/поиск/отсутствие/идемпотентность
   загрузки/пропуск битого расширения.
 
 ## Последствия
 
-* Межслойный долг: **30 → 0 записей** extension-facing (было 27 долга +
-  3 контракта; после волны 34 остаются только осознанные контракты
-  `services → dsl`, см. `tools/check_layers_contract.txt`).
+* Межслойный долг: **37 → 0 записей**. Из 40 записей (долг 37 + контракты 3)
+  остались только 3 осознанных контракта `services → dsl`
+  (`tools/check_layers_contract.txt`, ADR-0348 вариант C) — публичные
+  фасады, намеренно отдающие DSL-примитивы наружу; их устранение требует
+  решения по матрице слоёв (перенос `BaseProcessor` в core), а не правки кода.
 * Ядро больше не знает про домены `core_entities` / `skb` / `dadata` /
   `core_admin`.
 * Расширение без модуля `resources.py` не отдаёт ресурсов — потребитель

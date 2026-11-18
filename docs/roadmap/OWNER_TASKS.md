@@ -450,6 +450,25 @@
 
 ---
 
+## 19. Волна 34 (2026-11-17/18) — закрытие долгов волны 33
+
+| # | Пункт | Статус |
+|---|---|---|
+| 1 | **Межслойные нарушения** | ✅ **ADR-0457**: долг **37 → 0**. Инверсия через core-реестр ресурсов расширений (`core/extension_registry.py` + `extensions/*/resources.py`): `src/` больше не импортирует `extensions.*` — ни entrypoints (18), ни dsl (7), ни services (3). Отдельно: инверсия `core → services.ai` (6) и `infrastructure/workflow → dsl` (4). Итог по гейту: **долг 0 + 3 осознанных контракта** `services → dsl` (ADR-0348, вариант C) |
+| 2 | **Capability-контур (engine-wide)** | ✅ **ADR-0456**: проверка capability шага перенесена из процессоров в движок (`dsl/engine/capability_guard.py`) — отказ = `failed` + `stopped`, шаг не выполняется. Закрыта открытая позиция №1 роевого отчёта волны 33 |
+| 3 | **`function.call` в манифестах** | ✅ capability объявлена в `routes/jupyter_hub_run` и `routes/osint_agent`; `function.call` — public в vocabulary (как `audit.write`): плагина-владельца нет, runtime-контроль не ослаблен |
+| 4 | **Mutation-гейт** | ✅ гейт переведён в fail-closed: контракт exit-кодов (0/1/2/3), SKIPPED с причиной вместо «пустого» PASS, починены stats-файл, кэш вердиктов (`mutants/**/*.meta`), PATH-бинарник и обёртка под mutmut 3.x. Baseline **21.6 % переподтверждён холодным прогоном** (killed 247 / total 1142) |
+| 5 | **Coverage-перемер** | ✅ grouped-прогон переведён в канонический CI-режим (`-n 2 --dist loadfile`, без OOM); baseline перемерен: **77.68 %** line-rate (branch 75 %), приведено к метрике гейта |
+| 6 | **Инфраструктура (6 действий)** | ◐ **кодовая часть закрыта**: в `ops/compose/docker-compose.prod.yml` добавлены сервисы `clickhouse`, `open-webui`, `jupyterhub` (pinned-образы, healthcheck, без секретов в compose); профиль prod и `.env.example` приведены к реальным env-именам; новый гейт `make infra-readiness` проверяет конфигурацию всех 6 пунктов. **За владельцем**: развёртывание (keypair+JWKS https, роль БД + DSN снапшота, ClickHouse/OpenWebUI/JupyterHub в кластере, `DB_REPLICA_DSN`) |
+| 7 | **CI-режим (xdist)** | ✅ найден корень падения `polars` в CI-режиме: `_module_installed()` считал пакет «не установленным», когда в `sys.modules` лежал stub → cleanup сносил подмодули → циклический импорт `polars.lazyframe`. Полный граф polars кэшируется один раз на воркер |
+
+**Проверки волны 34:** регрессия `tests/unit` в каноническом CI-режиме
+(`-n 2 --dist loadfile`) — **0 failed**; OpenAPI — **447 путей** (не изменилось);
+гейты: layers (0 новых), decorative capabilities (0 новых), route capabilities,
+docstrings (0 missing), ruff, mypy (12 = baseline), mutation, coverage.
+
+---
+
 ## Связанные документы
 
 * [ADR-0405](../adr/0405-route-capabilities-namespace-migration.md) — миграция capability-деклараций роутов.
