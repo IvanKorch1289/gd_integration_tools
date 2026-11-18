@@ -178,28 +178,28 @@
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
-    "line": 54,
+    "line": 71,
     "qualified_name": "FeatureFlagService.is_enabled"
   },
   {
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
-    "line": 69,
+    "line": 86,
     "qualified_name": "FeatureFlagService.get_string"
   },
   {
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
-    "line": 79,
+    "line": 96,
     "qualified_name": "FeatureFlagService.get_int"
   },
   {
     "annotation": "str | None",
     "arg": "tenant_id",
     "file": "src/backend/core/feature_flags/service.py",
-    "line": 95,
+    "line": 112,
     "qualified_name": "FeatureFlagService.has_override"
   },
   {
