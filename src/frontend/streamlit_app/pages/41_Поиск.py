@@ -52,7 +52,11 @@ st.caption("Единый поиск по audit-логам, заказам и not
 
 q = st.text_input(
     "Запрос",
-    value=st.session_state.get("search_q", "", key="search_text_1"),  # type: ignore[call-overload]
+    # key belongs to st.text_input, not to session_state.get(): передача
+    # key= в .get() давала TypeError ("multiple values for argument 'key'")
+    # и роняла страницу при каждой загрузке.
+    value=st.session_state.get("search_q", ""),
+    key="search_text_1",
 )
 st.session_state["search_q"] = q
 

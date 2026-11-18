@@ -7,6 +7,7 @@ S169: Управление JWT token в ``st.session_state``. ``BaseAPIClient`` 
 
 from __future__ import annotations
 
+import hashlib
 import time
 from typing import Any, Literal
 
@@ -15,6 +16,7 @@ import streamlit as st
 from src.frontend.streamlit_app.api_clients.auth import AuthClient
 
 __all__ = (
+    "get_auth_cache_scope",
     "get_current_auth_method",
     "get_current_token",
     "get_current_username",
@@ -55,6 +57,30 @@ def is_authenticated() -> bool:
 def get_current_token() -> str | None:
     """Получить текущий JWT token (для ``api_client.set_token``)."""
     return st.session_state.get(_SESSION_KEY_TOKEN)
+
+
+def get_auth_cache_scope() -> str:
+    """Ключ области кэша для текущей сессии.
+
+    ``st.cache_data`` — процесс-глобальный кэш (данные делятся между всеми
+    пользователями портала). Если scope не входит в ключ кэша, ответ,
+    полученный для одного пользователя/тенанта, отдаётся другому.
+
+    Scope = sha256 от текущего JWT. Сам токен в ключ не попадает — в кэш
+    уходит только необратимый digest. Для анонимной сессии — ``"anonymous"``.
+
+    Returns:
+        Строковый scope для включения в ключ кэша.
+
+    """
+    session_state = getattr(st, "session_state", None)
+    if session_state is None:
+        # Вне runtime Streamlit (bare-mode / тестовые моки) — общая область.
+        return "anonymous"
+    token = session_state.get(_SESSION_KEY_TOKEN)
+    if not isinstance(token, str) or not token:
+        return "anonymous"
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def get_current_username() -> str | None:

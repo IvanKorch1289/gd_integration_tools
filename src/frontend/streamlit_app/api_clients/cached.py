@@ -11,6 +11,11 @@ Tradeoffs:
 - ❌ Cache instance-based (Streamlit reruns invalidate)
 
 Не подходит для: POST/PUT/DELETE, user-specific data (auth-token scoped).
+
+S174: ``st.cache_data`` — процесс-глобальный кэш (записи видны всем
+пользователям портала). Все обёртки ниже используют ``user_scoped_cache_data``
+— scope (JWT-digest) входит в ключ, поэтому ответ, полученный для одного
+пользователя, не отдаётся другому.
 """
 
 from __future__ import annotations
@@ -24,6 +29,7 @@ from src.frontend.streamlit_app.api_clients.base import (
     CLIENT_SAFE_DEFAULT_ERRORS,
     BaseAPIClient,
 )
+from src.frontend.streamlit_app.hooks.cache import user_scoped_cache_data
 
 # Cache TTLs — configurable via env, sensible defaults.
 # Production: set via STREAMLIT_CACHE_TTL_METRICS etc.
@@ -37,7 +43,7 @@ __all__ = ("cached_get_health", "cached_get_metrics", "cached_get_orders")
 # ──────────── Cached wrappers (module-level для cache_data) ────────────
 
 
-@st.cache_data(ttl=TTL_METRICS, show_spinner=False)
+@user_scoped_cache_data(ttl=TTL_METRICS, show_spinner=False)
 def cached_get_metrics() -> dict[str, Any]:
     """Metrics dashboard: route counts, actions, services.
 
@@ -61,7 +67,7 @@ def cached_get_metrics() -> dict[str, Any]:
         return {}
 
 
-@st.cache_data(ttl=TTL_HEALTH, show_spinner=False)
+@user_scoped_cache_data(ttl=TTL_HEALTH, show_spinner=False)
 def cached_get_health() -> dict[str, Any]:
     """Health components: per-service up/down status.
 
@@ -81,7 +87,7 @@ def cached_get_health() -> dict[str, Any]:
         return {}
 
 
-@st.cache_data(ttl=TTL_ORDERS, show_spinner=False)
+@user_scoped_cache_data(ttl=TTL_ORDERS, show_spinner=False)
 def cached_get_orders(page: int = 1, size: int = 50) -> Any:
     """Orders list с pagination.
 

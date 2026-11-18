@@ -72,8 +72,20 @@ def test_streamlit_imports_resolve_with_pythonpath() -> None:
     import sys
     from unittest.mock import MagicMock
 
+    original = sys.modules.get("streamlit")
     sys.modules["streamlit"] = MagicMock()
+    try:
+        _assert_streamlit_sources_compile()
+    finally:
+        # Мок не должен утекать в остальные тесты сессии.
+        if original is not None:
+            sys.modules["streamlit"] = original
+        else:
+            sys.modules.pop("streamlit", None)
 
+
+def _assert_streamlit_sources_compile() -> None:
+    """Compile-only проверка страниц портала (без исполнения page-level кода)."""
     # Запускаем с PYTHONPATH=project_root
     env = os.environ.copy()
     env["PYTHONPATH"] = str(PROJECT_ROOT)

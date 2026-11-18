@@ -17,6 +17,7 @@ from typing import Any, Protocol, runtime_checkable
 
 import streamlit as st
 
+from src.frontend.streamlit_app.hooks.cache import user_scoped_cache_data
 from src.frontend.streamlit_app.shared.components import (
     related_pages_footer,
     setup_page,
@@ -96,7 +97,7 @@ with st.sidebar:
     top_n = st.slider("Топ N", min_value=5, max_value=100, value=20)
 
 
-@st.cache_data(ttl=60)
+@user_scoped_cache_data(ttl=60)
 def _fetch_snapshot(
     window_hours: int,
     tenant_id: str | None,
@@ -150,11 +151,12 @@ except (
     ValueError,
     TypeError,
     KeyError,
+    PermissionError,
 ) as fetch_exc:
     # cycle-9/D-AUDIT-1052: narrow exceptions + observability.
     # ConnectionError/TimeoutError — server unreachable, RuntimeError —
     # API failure, ValueError — invalid response, TypeError — wrong type,
-    # KeyError — missing key.
+    # KeyError — missing key, PermissionError — 401 (нет прав).
     import logging
 
     logging.getLogger(__name__).debug(

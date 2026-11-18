@@ -16,7 +16,27 @@ import streamlit as st
 
 from src.frontend.streamlit_app.config import get_api_base_url
 
-__all__ = ("CLIENT_SAFE_DEFAULT_ERRORS", "BaseAPIClient", "get_base_client")
+__all__ = (
+    "CLIENT_SAFE_DEFAULT_ERRORS",
+    "BaseAPIClient",
+    "UnauthorizedError",
+    "get_base_client",
+)
+
+
+class UnauthorizedError(httpx.HTTPStatusError, PermissionError):
+    """401 Unauthorized — наследует и ``PermissionError``, и ``httpx.HTTPError``.
+
+    Исторически 401 поднимался как голый ``PermissionError``. Страницы
+    портала ловят ``httpx.HTTPError`` (единый «narrow» except для HTTP-сбоев),
+    а ``PermissionError`` не является его подклассом — 401 пролетал мимо
+    обработчика и пользователь видел traceback вместо сообщения.
+
+    Наследование от обоих классов сохраняет старый контракт
+    ``except PermissionError`` (login-flow, ``hooks/error.py``) и закрывает
+    ``except httpx.HTTPError`` во всех страницах.
+    """
+
 
 # Ошибки, при которых клиент возвращает безопасный default вместо падения UI.
 #
@@ -27,6 +47,10 @@ __all__ = ("CLIENT_SAFE_DEFAULT_ERRORS", "BaseAPIClient", "get_base_client")
 # контракт «показать пустое состояние вместо краша при недоступном API» не
 # работал для двух самых частых режимов отказа: бэкенд не в сети и 5xx.
 #
+# UnauthorizedError (401) — тоже штатный режим для портала: админ-разделы
+# закрыты для неавторизованных. Клиент возвращает пустой default, страница
+# показывает «нет данных», а не traceback.
+#
 # Хранится здесь, а не дублируется по 39 except-блокам в 10 клиентах, чтобы
 # список ошибок не разъезжался между методами.
 CLIENT_SAFE_DEFAULT_ERRORS: tuple[type[BaseException], ...] = (
@@ -36,6 +60,7 @@ CLIENT_SAFE_DEFAULT_ERRORS: tuple[type[BaseException], ...] = (
     ValueError,
     TypeError,
     httpx.HTTPError,
+    UnauthorizedError,
 )
 
 _BASE_URL = get_api_base_url()
@@ -61,7 +86,7 @@ class BaseAPIClient:
     - Does NOT retry on 4xx client errors (except 408/429) — won't help
     - Exponential backoff: 0.5s, 1s, 2s, 4s, 8s (capped)
     - Max retries configurable via ``max_retries`` constructor arg (default 3)
-    - 401 → PermissionError (NOT retried, auth issue)
+    - 401 → UnauthorizedError (NOT retried, auth issue)
     """
 
     def __init__(
@@ -178,7 +203,8 @@ class BaseAPIClient:
             Parsed JSON or text response.
 
         Raises:
-            PermissionError: 401 Unauthorized (NOT retried).
+            UnauthorizedError: 401 Unauthorized (NOT retried). Наследует
+                ``PermissionError`` и ``httpx.HTTPStatusError``.
             httpx.HTTPStatusError: 4xx (other than 401/408/429) — won't help.
             httpx.TransportError: after max_retries exhausted on 5xx/transport.
 
@@ -195,7 +221,9 @@ class BaseAPIClient:
                 # 401 = auth issue, не retry (won't help)
                 if response.status_code == 401:
                     msg = f"Unauthorized: {path}"
-                    raise PermissionError(msg)
+                    raise UnauthorizedError(
+                        msg, request=response.request, response=response
+                    )
                 # 5xx, 408, 429 = retryable
                 if response.status_code in _RETRYABLE_STATUS_CODES:
                     if attempt < max_retries:

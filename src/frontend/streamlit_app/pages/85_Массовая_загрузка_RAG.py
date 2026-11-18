@@ -42,11 +42,13 @@ def _check_feature_flag() -> bool:
         ValueError,
         TypeError,
         AttributeError,
+        PermissionError,
     ) as ff_exc:
         # cycle-9/D-AUDIT-1063: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
         # — API failure, ValueError — invalid response, TypeError —
-        # wrong type, AttributeError — _client API change.
+        # wrong type, AttributeError — _client API change,
+        # PermissionError — 401 (нет прав).
         import logging
 
         logging.getLogger(__name__).debug(

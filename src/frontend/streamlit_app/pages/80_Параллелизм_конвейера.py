@@ -39,10 +39,12 @@ with tab_route:
         RuntimeError,
         ValueError,
         TypeError,
+        PermissionError,
     ) as routes_exc:
         # cycle-9/D-AUDIT-1060: narrow exceptions + observability.
         # ConnectionError/TimeoutError — server unreachable, RuntimeError
-        # — API failure, ValueError — invalid response, TypeError — wrong.
+        # — API failure, ValueError — invalid response, TypeError — wrong,
+        # PermissionError — 401 (нет прав).
         import logging
 
         logging.getLogger(__name__).debug(

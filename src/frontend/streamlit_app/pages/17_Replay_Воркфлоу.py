@@ -27,6 +27,7 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
+from src.frontend.streamlit_app.hooks.cache import user_scoped_cache_data
 from src.frontend.streamlit_app.shared import (  # Sprint 43 W2 (TD-008 Group 3)
     dataframe_view,
     date_range_filter,
@@ -40,7 +41,7 @@ setup_page()
 client = get_api_client()
 
 
-@st.cache_data(ttl=15)
+@user_scoped_cache_data(ttl=15)
 def _list_workflow_ids(limit: int = 50) -> list[str]:
     """Получить список workflow IDs (cache-friendly)."""
     try:

@@ -95,15 +95,26 @@ with tab_step:
         key="step_limit",
     )
 
-    with st.spinner("Загрузка step-логов..."):
-        rows = api.list_step_logs(
-            workflow_name=workflow_name or None,
-            tenant_id=tenant_id or None,
-            date_from=str(date_from),
-            date_to=str(date_to),
-            status=status_filter or None,
-            limit=int(limit),
+    try:
+        with st.spinner("Загрузка step-логов..."):
+            rows = api.list_step_logs(
+                workflow_name=workflow_name or None,
+                tenant_id=tenant_id or None,
+                date_from=str(date_from),
+                date_to=str(date_to),
+                status=status_filter or None,
+                limit=int(limit),
+            )
+    except (RuntimeError, PermissionError) as logs_exc:
+        # Клиент нормализует любой сбой backend в RuntimeError, 401 (нет прав)
+        # приходит как PermissionError — раньше исключение уходило в traceback.
+        import logging
+
+        logging.getLogger(__name__).debug(
+            "streamlit_66_Логи.step_logs_failed", extra={"error": str(logs_exc)}
         )
+        st.error("Не удалось загрузить step-логи — проверьте доступ к backend.")
+        st.stop()
 
     if rows and any(r.get("__stub__") for r in rows):
         st.info(

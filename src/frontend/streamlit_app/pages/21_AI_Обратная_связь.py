@@ -143,8 +143,11 @@ def _render_index_tab() -> None:
     agent_filter = st.text_input("agent_id (опционально)", key="idx_agent")
     limit = st.number_input(
         "Максимум документов",
-        min_value=0,
-        max_value=1,
+        # Границы — по контракту backend (IndexRequest.limit: ge=1, le=1000).
+        # Раньше стояло max_value=1 при value=1000 → StreamlitValueAboveMaxError
+        # на каждой загрузке страницы, а min_value=0 давало 422 от сервера.
+        min_value=1,
+        max_value=1000,
         value=1000,
         step=100,
         key="idx_limit",

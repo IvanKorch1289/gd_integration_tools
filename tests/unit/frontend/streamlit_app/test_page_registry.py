@@ -11,13 +11,19 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
 from unittest.mock import MagicMock
 
+import pytest
+
 # Mock streamlit (registry не использует, но требуется для page_registry imports)
+# Оригинал запоминаем ДО подмены — иначе мок утекает в остальные тесты сессии
+# (портит ``st.session_state``/``st.cache_data`` в других фронт-тестах).
+_ORIGINAL_STREAMLIT = sys.modules.get("streamlit")
 _streamlit_mock = ModuleType("streamlit")
-_streamlit_mock.set_page_config = MagicMock()
+setattr(_streamlit_mock, "set_page_config", MagicMock())
 sys.modules["streamlit"] = _streamlit_mock
 
 # Now safe to import
@@ -25,6 +31,16 @@ from src.frontend.streamlit_app.shared.page_registry import (
     PAGE_METADATA,
     get_page_metadata,
 )
+
+
+@pytest.fixture(autouse=True)
+def _restore_streamlit() -> Iterator[None]:
+    """Вернуть настоящий ``streamlit`` после модуля — мок не должен утекать."""
+    yield
+    if _ORIGINAL_STREAMLIT is not None:
+        sys.modules["streamlit"] = _ORIGINAL_STREAMLIT
+    else:
+        sys.modules.pop("streamlit", None)
 
 
 def test_registry_has_71_pages() -> None:

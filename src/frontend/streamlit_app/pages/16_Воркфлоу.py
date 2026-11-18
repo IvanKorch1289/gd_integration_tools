@@ -22,6 +22,7 @@ from typing import Any
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
+from src.frontend.streamlit_app.hooks.cache import user_scoped_cache_data
 from src.frontend.streamlit_app.shared import (
     metric_row,
     related_pages_footer,
@@ -65,7 +66,7 @@ EVENT_ICONS: dict[str, str] = {
 }
 
 
-@st.cache_data(ttl=5)
+@user_scoped_cache_data(ttl=5)
 def _cached_list(
     status: str | None, name: str | None, tenant: str | None, limit: int
 ) -> list[dict[str, Any]]:
@@ -77,12 +78,12 @@ def _cached_list(
     )
 
 
-@st.cache_data(ttl=3)
+@user_scoped_cache_data(ttl=3)
 def _cached_instance(instance_id: str) -> dict[str, Any] | None:
     return client.get_workflow(instance_id)
 
 
-@st.cache_data(ttl=3)
+@user_scoped_cache_data(ttl=3)
 def _cached_events(
     instance_id: str, after_seq: int, limit: int
 ) -> list[dict[str, Any]]:
@@ -238,7 +239,11 @@ with tab_list:
 with tab_timeline:
     focus_id = st.text_input(
         "ID экземпляра",
-        value=st.session_state.get("_workflow_focus_id", "", key="wf_id_3"),  # type: ignore[call-overload]
+        # key belongs to st.text_input, not to session_state.get(): передача
+        # key= в .get() даёт TypeError ("multiple values for argument 'key'")
+        # и роняет страницу.
+        value=st.session_state.get("_workflow_focus_id", ""),
+        key="wf_id_3",
         placeholder="UUID",
     )
     if not focus_id:

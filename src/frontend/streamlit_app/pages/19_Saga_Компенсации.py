@@ -16,6 +16,7 @@ from datetime import UTC, datetime, timedelta
 import streamlit as st
 
 from src.frontend.streamlit_app.api_clients import get_api_client
+from src.frontend.streamlit_app.hooks.cache import user_scoped_cache_data
 from src.frontend.streamlit_app.shared.components import (
     metric_row,
     related_pages_footer,
@@ -39,7 +40,7 @@ workflow_id = col3.text_input("ID Workflow (drill-down)", value="")
 _client = get_api_client()
 
 
-@st.cache_data(ttl=60)
+@user_scoped_cache_data(ttl=60)
 def _fetch_stats(tenant: str, days: int) -> dict:
     # Sprint 33 W1 (HTTP-migration close-out): aggregate_saga_stats
     # S170 CL-12-9/9: миграция с core.frontend_facade на services.dsl_portal
@@ -54,7 +55,7 @@ def _fetch_stats(tenant: str, days: int) -> dict:
     )
 
 
-@st.cache_data(ttl=60)
+@user_scoped_cache_data(ttl=60)
 def _fetch_history(wf_id: str) -> list:
     # Sprint 33 W1 (HTTP-migration close-out): use WorkflowsClient
     # instead of ``get_saga_history`` facade direct import. HTTP
