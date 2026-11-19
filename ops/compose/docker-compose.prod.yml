@@ -46,7 +46,7 @@ services:
       - "4318:4318"   # OTLP HTTP
       - "8888:8888"   # Prometheus metrics
     networks:
-      - compose_default
+      - default
 
   jaeger:
     image: jaegertracing/all-in-one:1.57
@@ -57,7 +57,7 @@ services:
     ports:
       - "16686:16686" # Jaeger UI
     networks:
-      - compose_default
+      - default
 
   # ─── Kafka ────────────────────────────────────────────────────────────
   kafka:
@@ -67,6 +67,12 @@ services:
         condition: service_healthy
     environment:
       KAFKA_BROKER_ID: 1
+      # P0 (функциональный прогон compose, 2026-11-19): переменная была
+      # отсутствовала → confluent-образ завершался с «KAFKA_ZOOKEEPER_CONNECT
+      # is required» (код 1) → Kafka в проде не поднималась, а app/
+      # workflow-worker оставались в статусе Created (depends_on не
+      # выполнялся).
+      KAFKA_ZOOKEEPER_CONNECT: kafka-zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -81,7 +87,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - compose_default
+      - default
 
   kafka-zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
@@ -94,7 +100,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - compose_default
+      - default
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.6.0
@@ -108,7 +114,7 @@ services:
     ports:
       - "8081:8081"
     networks:
-      - compose_default
+      - default
 
   connect-distributed:
     image: debezium/connect:2.4
@@ -132,7 +138,7 @@ services:
     ports:
       - "8083:8083"
     networks:
-      - compose_default
+      - default
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -148,7 +154,7 @@ services:
     ports:
       - "8090:8080"
     networks:
-      - compose_default
+      - default
 
   # ─── Object Storage ────────────────────────────────────────────────────
   minio:
@@ -171,7 +177,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - compose_default
+      - default
 
   # ─── Secrets ──────────────────────────────────────────────────────────
   # ВНИМАНИЕ (P1, аудит 2026-11-18): dev-режим Vault (`server -dev`) —
@@ -190,7 +196,7 @@ services:
     cap_add:
       - IPC_LOCK
     networks:
-      - compose_default
+      - default
 
   # ─── Analytics ───────────────────────────────────────────────────────
   # ClickHouse — хранилище audit-трейла (features.audit_clickhouse_enabled
@@ -230,13 +236,105 @@ services:
           cpus: "2.0"
           memory: 4G
     networks:
-      - compose_default
+      - default
 
   # ─── AI ──────────────────────────────────────────────────────────────
   # OpenWebUI — внутренний LLM-сервер (ADR-0412). Endpoint приложения:
   # open_webui.base_url = http://open-webui:3000 (prod-профиль).
   # PORT=3000 задан явно: в текущих образах OpenWebUI дефолт — 8080,
   # а контракт ADR-0412 (и k8s-Service open-webui) — порт 3000.
+  # ─── RabbitMQ ────────────────────────────────────────────────────────
+  # P0 (функциональный прогон compose, 2026-11-19): prod-профиль включает
+  # очередь (``queue.enabled: true``, ``type: rabbitmq``, host
+  # ``rabbitmq-prod``), а сервиса в стеке не было → AMQPConnectionError
+  # ([Errno 111] Connection refused) → приложение падало на старте.
+  # Имя сервиса совпадает с host'ом из prod-профиля.
+  rabbitmq-prod:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      # P0 (функциональный прогон compose, 2026-11-19): пользователь
+      # «guest» в RabbitMQ подключается ТОЛЬКО с localhost → из контейнера
+      # приложения вход отклонялся (ACCESS_REFUSED). Нужен отдельный
+      # пользователь, те же учётные данные передаются приложению.
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-gd}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set for prod}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      default:
+        aliases:
+          - rabbitmq-prod
+
+  # ─── Redis ────────────────────────────────────────────────────────────
+  # P0 (функциональный прогон compose, 2026-11-19): dev-сервис Redis поднимался
+  # БЕЗ пароля, а приложение приходит с REDIS_PASSWORD (из env_file) → URL
+  # вида redis://:admin@redis:6379 → «ERR Client sent AUTH, but no password is
+  # set» → faststream-брокер не поднимался (таймаут 3 с) → приложение падало
+  # на старте. В prod пароль обязателен и задаётся оператором.
+  redis:
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --requirepass
+      - ${REDIS_PASSWORD:?REDIS_PASSWORD must be set for prod}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set for prod}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      default:
+        # prod-профиль обращается к хосту «redis-prod» — алиас делает имя
+        # разрешимым внутри docker-сети (P0, волна 36).
+        aliases:
+          - redis-prod
+
+  # ─── MongoDB ──────────────────────────────────────────────────────────
+  # P0 (функциональный прогон compose, 2026-11-19): config_profiles/prod.yml
+  # включает ``mongo.enabled: true`` с host'ом ``mongo-prod``, но сервиса
+  # MongoDB в стеке не было → lifecycle-операция ``start_mongo_client``
+  # (required) упиралась в таймаут 30 с → lifespan падал с
+  # «Остановка приложения из-за ошибки инициализации» — приложение в проде
+  # не стартовало вовсе.
+  #
+  # Имя сервиса совпадает с host'ом из prod-профиля (``mongo-prod``), чтобы
+  # приложение подключалось без env-переопределений.
+  mongo-prod:
+    image: mongo:8.0
+    command: ["mongod", "--bind_ip_all"]
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-mongo}
+      # P0 (функциональный прогон compose, 2026-11-19): сервис поднимался без
+      # аутентификации, а приложение подключается с MONGO_USERNAME/
+      # MONGO_PASSWORD (приходят из env_file) → «Authentication failed» →
+      # таймаут 30 с в start_mongo_client → lifespan падал. Учётные данные
+      # сервера должны совпадать с учётными данными приложения.
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:?MONGO_USERNAME must be set for prod}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?MONGO_PASSWORD must be set for prod}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - default
+
   open-webui:
     image: ghcr.io/open-webui/open-webui:v0.13.3
     environment:
@@ -261,7 +359,7 @@ services:
           cpus: "1.0"
           memory: 2G
     networks:
-      - compose_default
+      - default
 
   # ─── Notebooks ───────────────────────────────────────────────────────
   # JupyterHub — REST API для запуска ноутбуков (routes/jupyter_hub_run).
@@ -297,7 +395,7 @@ services:
           cpus: "1.0"
           memory: 2G
     networks:
-      - compose_default
+      - default
 
   # ─── Celery ───────────────────────────────────────────────────────────
   # P1 (аудит 2026-11-18): сервисы переведены за opt-in `profiles: [celery]`.
@@ -322,7 +420,30 @@ services:
       APP_PROFILE: prod
       # ADR-0446: явный путь к расширениям (иначе 0 workflow-деклараций).
       EXTENSIONS_DIR: /app/extensions
+      # P0 (функциональный прогон compose, 2026-11-19): prod-профиль
+      # рассчитан на внешние сервисы K8s (redis-prod, postgres-prod), а
+      # compose поднимает свои (redis, postgres). Без явного переопределения
+      # приложение шло на «redis-prod» → «Error 111 connecting to
+      # redis-prod:6379» → старт падал на scheduler-leader-election.
       DB_HOST: postgres
+      REDIS_HOST: redis
+      # Режим TLS для БД. По умолчанию — как в prod-профиле (require).
+      # Для стенда без TLS (compose-postgres) оператор задаёт
+      # DB_SSL_MODE=disable — иначе приложение не подключится
+      # («server does not support SSL, but SSL was required»).
+      DB_SSL_MODE: ${DB_SSL_MODE:-require}
+      # P0 (функциональный прогон compose, 2026-11-19): prod-профиль включает
+      # redis.use_ssl=true (схема rediss://), а compose-сервис Redis работает
+      # без TLS → клиент зависал на TLS-handshake → faststream-брокер не
+      # поднимался (таймаут 3 с) → granian-воркер падал и приложение
+      # уходило в рестарт-цикл. Для стенда: REDIS_USE_SSL=false; для
+      # прод-окружения с TLS-terminated Redis — true (значение по умолчанию).
+      REDIS_USE_SSL: ${REDIS_USE_SSL:-false}
+      # Аналогично для очереди: prod-профиль включает queue.use_ssl, а
+      # compose-RabbitMQ работает без TLS (P0, волна 36).
+      QUEUE_USE_SSL: ${QUEUE_USE_SSL:-false}
+      QUEUE_USERNAME: ${RABBITMQ_USER:-gd}
+      QUEUE_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set for prod}
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
     depends_on:
@@ -336,7 +457,7 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
     networks:
-      - compose_default
+      - default
 
   celery-beat:
     profiles: ["celery"]
@@ -351,7 +472,30 @@ services:
       APP_PROFILE: prod
       # ADR-0446: явный путь к расширениям (иначе 0 workflow-деклараций).
       EXTENSIONS_DIR: /app/extensions
+      # P0 (функциональный прогон compose, 2026-11-19): prod-профиль
+      # рассчитан на внешние сервисы K8s (redis-prod, postgres-prod), а
+      # compose поднимает свои (redis, postgres). Без явного переопределения
+      # приложение шло на «redis-prod» → «Error 111 connecting to
+      # redis-prod:6379» → старт падал на scheduler-leader-election.
       DB_HOST: postgres
+      REDIS_HOST: redis
+      # Режим TLS для БД. По умолчанию — как в prod-профиле (require).
+      # Для стенда без TLS (compose-postgres) оператор задаёт
+      # DB_SSL_MODE=disable — иначе приложение не подключится
+      # («server does not support SSL, but SSL was required»).
+      DB_SSL_MODE: ${DB_SSL_MODE:-require}
+      # P0 (функциональный прогон compose, 2026-11-19): prod-профиль включает
+      # redis.use_ssl=true (схема rediss://), а compose-сервис Redis работает
+      # без TLS → клиент зависал на TLS-handshake → faststream-брокер не
+      # поднимался (таймаут 3 с) → granian-воркер падал и приложение
+      # уходило в рестарт-цикл. Для стенда: REDIS_USE_SSL=false; для
+      # прод-окружения с TLS-terminated Redis — true (значение по умолчанию).
+      REDIS_USE_SSL: ${REDIS_USE_SSL:-false}
+      # Аналогично для очереди: prod-профиль включает queue.use_ssl, а
+      # compose-RabbitMQ работает без TLS (P0, волна 36).
+      QUEUE_USE_SSL: ${QUEUE_USE_SSL:-false}
+      QUEUE_USERNAME: ${RABBITMQ_USER:-gd}
+      QUEUE_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set for prod}
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
     depends_on:
@@ -361,7 +505,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - compose_default
+      - default
 
   # ─── Switch app + workers to prod profile ─────────────────────────────
   app:
@@ -369,8 +513,39 @@ services:
       APP_PROFILE: prod
       # ADR-0446: явный путь к расширениям (иначе 0 workflow-деклараций).
       EXTENSIONS_DIR: /app/extensions
+      # P0 (функциональный прогон compose, 2026-11-19): prod-профиль
+      # рассчитан на внешние сервисы K8s (redis-prod, postgres-prod), а
+      # compose поднимает свои (redis, postgres). Без явного переопределения
+      # приложение шло на «redis-prod» → «Error 111 connecting to
+      # redis-prod:6379» → старт падал на scheduler-leader-election.
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      # Режим TLS для БД. По умолчанию — как в prod-профиле (require).
+      # Для стенда без TLS (compose-postgres) оператор задаёт
+      # DB_SSL_MODE=disable — иначе приложение не подключится
+      # («server does not support SSL, but SSL was required»).
+      DB_SSL_MODE: ${DB_SSL_MODE:-require}
+      # P0 (функциональный прогон compose, 2026-11-19): prod-профиль включает
+      # redis.use_ssl=true (схема rediss://), а compose-сервис Redis работает
+      # без TLS → клиент зависал на TLS-handshake → faststream-брокер не
+      # поднимался (таймаут 3 с) → granian-воркер падал и приложение
+      # уходило в рестарт-цикл. Для стенда: REDIS_USE_SSL=false; для
+      # прод-окружения с TLS-terminated Redis — true (значение по умолчанию).
+      REDIS_USE_SSL: ${REDIS_USE_SSL:-false}
+      # Аналогично для очереди: prod-профиль включает queue.use_ssl, а
+      # compose-RabbitMQ работает без TLS (P0, волна 36).
+      QUEUE_USE_SSL: ${QUEUE_USE_SSL:-false}
+      QUEUE_USERNAME: ${RABBITMQ_USER:-gd}
+      QUEUE_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set for prod}
       APP_SERVER: ${APP_SERVER:-granian}
       APP_WORKERS: ${APP_WORKERS:-4}
+      # P0 (функциональный прогон compose, 2026-11-19): токен не
+      # пробрасывался в контейнер, а config_profiles/prod.yml включает
+      # jupyter_hub.enabled=true → JupyterHubSettings (fail-closed) падал при
+      # импорте настроек: «api_token обязателен при enabled=true» → app не
+      # стартовал вообще. Fail-closed на уровне compose: стек не поднимается
+      # без токена.
+      JUPYTER_HUB_API_TOKEN: ${JUPYTER_HUB_API_TOKEN:?JUPYTER_HUB_API_TOKEN must be set for prod}
     # D-A12-05 fix (cycle 22): mem_limit/cpus для production app
     # (консервативные defaults, override через APP_MEM_LIMIT/APP_CPUS env).
     # Cycle 1 audit (hypothesis #1) confirmed: ни в одном compose-файле не было
@@ -388,6 +563,8 @@ services:
         condition: service_started
       migration-runner:
         condition: service_completed_successfully
+      mongo-prod:
+        condition: service_healthy
     healthcheck:
       # P1 (аудит 2026-11-18): было `curl -sf http://localhost:8000/docs`.
       # Две поломки: (1) `curl` НЕ установлен в runtime-слой образа
@@ -399,7 +576,12 @@ services:
       # Канонический liveness-маршрут приложения — GET /health
       # (src/backend/plugins/composition/app_factory.py), он не требует
       # авторизации и не зависит от профиля.
-      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      # P0 (функциональный прогон compose, 2026-11-19): без Host-заголовка
+      # trusted-host middleware отвечал 400 («Invalid host header») →
+      # контейнер вечно unhealthy → depends_on: service_healthy не
+      # выполнялся. Liveness-маршрут /health опрашиваем с разрешённым
+      # доменом из prod-профиля (*.prod.local).
+      test: ["CMD", "curl", "-sf", "-H", "Host: api.prod.local", "http://localhost:8000/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -410,7 +592,34 @@ services:
       APP_PROFILE: prod
       # ADR-0446: явный путь к расширениям (иначе 0 workflow-деклараций).
       EXTENSIONS_DIR: /app/extensions
+      # P0 (функциональный прогон compose, 2026-11-19): prod-профиль
+      # рассчитан на внешние сервисы K8s (redis-prod, postgres-prod), а
+      # compose поднимает свои (redis, postgres). Без явного переопределения
+      # приложение шло на «redis-prod» → «Error 111 connecting to
+      # redis-prod:6379» → старт падал на scheduler-leader-election.
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      # Режим TLS для БД. По умолчанию — как в prod-профиле (require).
+      # Для стенда без TLS (compose-postgres) оператор задаёт
+      # DB_SSL_MODE=disable — иначе приложение не подключится
+      # («server does not support SSL, but SSL was required»).
+      DB_SSL_MODE: ${DB_SSL_MODE:-require}
+      # P0 (функциональный прогон compose, 2026-11-19): prod-профиль включает
+      # redis.use_ssl=true (схема rediss://), а compose-сервис Redis работает
+      # без TLS → клиент зависал на TLS-handshake → faststream-брокер не
+      # поднимался (таймаут 3 с) → granian-воркер падал и приложение
+      # уходило в рестарт-цикл. Для стенда: REDIS_USE_SSL=false; для
+      # прод-окружения с TLS-terminated Redis — true (значение по умолчанию).
+      REDIS_USE_SSL: ${REDIS_USE_SSL:-false}
+      # Аналогично для очереди: prod-профиль включает queue.use_ssl, а
+      # compose-RabbitMQ работает без TLS (P0, волна 36).
+      QUEUE_USE_SSL: ${QUEUE_USE_SSL:-false}
+      QUEUE_USERNAME: ${RABBITMQ_USER:-gd}
+      QUEUE_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set for prod}
       WORKFLOW_WORKER_EXECUTOR: ${WORKFLOW_WORKER_EXECUTOR:-dsl}
+      # P0 (функциональный прогон compose, 2026-11-19) — см. комментарий в
+      # сервисе app: без токена настройки не поднимаются (fail-closed).
+      JUPYTER_HUB_API_TOKEN: ${JUPYTER_HUB_API_TOKEN:?JUPYTER_HUB_API_TOKEN must be set for prod}
     # D-A12-05 fix (cycle 22): mem_limit/cpus для workflow-worker.
     mem_limit: ${WORKFLOW_WORKER_MEM_LIMIT:-2g}
     cpus: ${WORKFLOW_WORKER_CPUS:-1.0}
@@ -423,21 +632,65 @@ services:
         condition: service_healthy
       migration-runner:
         condition: service_completed_successfully
+      mongo-prod:
+        condition: service_healthy
 
   migration-runner:
     environment:
       APP_PROFILE: prod
       # ADR-0446: явный путь к расширениям (иначе 0 workflow-деклараций).
       EXTENSIONS_DIR: /app/extensions
+      # P0 (функциональный прогон compose, 2026-11-19): dev-compose задаёт
+      # ``REDIS_PASSWORD: ""`` (пароля у dev-Redis нет), а prod-Redis работает
+      # с паролем → миграции подключались без учётных данных → NOAUTH →
+      # клиент уходил в ретраи и падал с RecursionError. Учётные данные
+      # обязаны совпадать с сервисом Redis.
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set for prod}
+      # P0 (функциональный прогон compose, 2026-11-19): prod-профиль
+      # рассчитан на внешние сервисы K8s (redis-prod, postgres-prod), а
+      # compose поднимает свои (redis, postgres). Без явного переопределения
+      # приложение шло на «redis-prod» → «Error 111 connecting to
+      # redis-prod:6379» → старт падал на scheduler-leader-election.
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      # Режим TLS для БД. По умолчанию — как в prod-профиле (require).
+      # Для стенда без TLS (compose-postgres) оператор задаёт
+      # DB_SSL_MODE=disable — иначе приложение не подключится
+      # («server does not support SSL, but SSL was required»).
+      DB_SSL_MODE: ${DB_SSL_MODE:-require}
+      # P0 (функциональный прогон compose, 2026-11-19): prod-профиль включает
+      # redis.use_ssl=true (схема rediss://), а compose-сервис Redis работает
+      # без TLS → клиент зависал на TLS-handshake → faststream-брокер не
+      # поднимался (таймаут 3 с) → granian-воркер падал и приложение
+      # уходило в рестарт-цикл. Для стенда: REDIS_USE_SSL=false; для
+      # прод-окружения с TLS-terminated Redis — true (значение по умолчанию).
+      REDIS_USE_SSL: ${REDIS_USE_SSL:-false}
+      # Аналогично для очереди: prod-профиль включает queue.use_ssl, а
+      # compose-RabbitMQ работает без TLS (P0, волна 36).
+      QUEUE_USE_SSL: ${QUEUE_USE_SSL:-false}
+      QUEUE_USERNAME: ${RABBITMQ_USER:-gd}
+      QUEUE_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set for prod}
+      # P0 (функциональный прогон compose, 2026-11-19) — см. комментарий в
+      # сервисе app: без токена настройки не поднимаются (fail-closed).
+      JUPYTER_HUB_API_TOKEN: ${JUPYTER_HUB_API_TOKEN:?JUPYTER_HUB_API_TOKEN must be set for prod}
 
   # ─── Volumes ──────────────────────────────────────────────────────────
 volumes:
+  rabbitmq_data:
+  mongo_data:
   minio_data:
   clickhouse_data:
   open_webui_data:
   jupyterhub_data:
 
 networks:
-  compose_default:
+  # P0 (функциональный прогон compose, 2026-11-19): ключ сети должен
+  # совпадать с НЕЯВНОЙ сетью base-файла (``default``). При ключе
+  # ``compose_default`` merge давал ДВЕ сети: сервисы prod-файла —
+  # на ``compose_prod_network``, сервисы base-файла (app, workflow-worker,
+  # migration-runner, postgres, redis) — на ``compose_default`` → app не
+  # видел kafka/mongo/minio/vault (DNS резолвился, соединение отклонялось) →
+  # старт падал на ``start_mongo_client`` с таймаутом 30 с.
+  default:
     name: compose_prod_network
     driver: bridge

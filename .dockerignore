@@ -1,0 +1,58 @@
+# Контекст сборки образа (ops/compose/Dockerfile).
+#
+# Без этого файла docker отправляет в daemon ВЕСЬ репозиторий, включая
+# локальное окружение (.venv — 9+ ГБ) и кэши: сборка образа становилась
+# многосот-секундной, а лимит диска выедался за счёт файлов, которые в
+# образ не попадают.
+#
+# В образ копируются только: pyproject.toml, uv.lock, src/, extensions/,
+# config_profiles/, manage.py, alembic.ini — их исключать нельзя.
+
+# Локальное окружение и кэши
+.venv/
+venv/
+.mypy_cache/
+.mypy_cache_strict/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.deepeval/
+.coverage-parts/
+.audit/
+.baselines/
+.run/
+.cache/
+.agents/
+.kimi-code/
+.mimocode/
+.sentry-native/
+.worktrees/
+.mymetrics/
+.security/
+mutants/
+node_modules/
+
+# Git и CI-артефакты
+.git/
+.github/
+.gitlab/
+
+# Кэши Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Данные и временные файлы
+artifacts/
+docs/
+tests/
+tmp/
+*.log
+*.sqlite3
+*.db
+
+# Локальные секреты (в образ попадают только через docker secret/env)
+.env
+.env.*
+!.env.example

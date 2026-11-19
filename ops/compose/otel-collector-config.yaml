@@ -24,8 +24,13 @@ processors:
 exporters:
   debug:
     verbosity: detailed
-  jaeger:
-    endpoint: jaeger:14250
+  # Экспортер `jaeger` УДАЛЁН из otel-collector начиная с 0.86
+  # (валидные типы: otlphttp, file, kafka, prometheus, zipkin, logging, nop,
+  # opencensus, prometheusremotewrite, debug, otlp) → collector падал с
+  # «unknown type: jaeger» и НЕ СТАРТОВАЛ: телеметрия в проде была мертва.
+  # Jaeger all-in-one принимает OTLP/HTTP на 4318.
+  otlphttp/jaeger:
+    endpoint: http://jaeger:4318
     tls:
       insecure: true
 
@@ -34,7 +39,7 @@ service:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, batch]
-      exporters: [debug, jaeger]
+      exporters: [debug, otlphttp/jaeger]
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch]
