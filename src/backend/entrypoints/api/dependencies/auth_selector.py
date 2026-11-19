@@ -20,23 +20,70 @@ implementation to core.
         set_default_auth,
         verify_request,
     )
+
+Ленивый re-export (PEP 562), волна 36
+-------------------------------------
+Раньше шим делал eager-``from src.backend.core.auth.auth_selector import ...``,
+из-за чего объект-функция в шиме и в фасаде ``core.auth.gateway`` могли
+разъехаться: любой ``importlib.reload`` шима пересоздавал его re-export'ы,
+а фасад ``core.auth.gateway`` продолжал держать прежний объект. Инвариант
+«``gateway.verify_request is auth_selector.verify_request``» (его проверяет
+``tests/unit/core/auth/test_gateway_facade.py``) после reload'а становился
+ложным — order-dependent падение. Теперь шим резолвит имена **на лету**
+через канонический фасад ``core.auth.gateway``, поэтому объект всегда тот
+же самый, независимо от reload'ов.
 """
 
 from __future__ import annotations
 
+import importlib
 import warnings
+from typing import TYPE_CHECKING, Any
 
-# Re-export public API из канонической локации.
-# Эти импорты идут ПОСЛЕ warnings, чтобы import-time message сработал.
-# S162 W5: removed _VERIFIERS from re-exports — private symbol
-# must not leak through backward-compat shim. Per S93 W3 pattern.
-from src.backend.core.auth.auth_selector import (
-    AuthContext,
-    AuthMethod,
-    require_auth,
-    set_default_auth,
-    verify_request,
-)
+if TYPE_CHECKING:  # pragma: no cover — только для статического анализа (mypy)
+    from src.backend.core.auth.gateway import (
+        AuthContext,
+        AuthMethod,
+        require_auth,
+        set_default_auth,
+        verify_request,
+    )
+
+#: Имя символа → модуль-канон. Ленивый re-export (PEP 562).
+_LAZY_EXPORTS: dict[str, str] = {
+    "AuthContext": "src.backend.core.auth.gateway",
+    "AuthMethod": "src.backend.core.auth.gateway",
+    "require_auth": "src.backend.core.auth.gateway",
+    "set_default_auth": "src.backend.core.auth.gateway",
+    "verify_request": "src.backend.core.auth.gateway",
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Ленивый re-export публичного API канонического фасада (PEP 562).
+
+    Args:
+        name: Имя экспортируемого символа.
+
+    Returns:
+        Объект из ``src.backend.core.auth.gateway``.
+
+    Raises:
+        AttributeError: Символ не входит в публичный API шима.
+
+    """
+    module_name = _LAZY_EXPORTS.get(name)
+    if module_name is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(importlib.import_module(module_name), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    """Список публичных символов шима (для автодополнения)."""
+    return sorted(set(globals()) | set(_LAZY_EXPORTS))
+
 
 warnings.warn(
     "Importing from src.backend.entrypoints.api.dependencies.auth_selector "
