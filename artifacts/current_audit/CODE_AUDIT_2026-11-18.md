@@ -343,6 +343,30 @@ CTE; фронтенд кэшировал данные пользователя �
 
 ---
 
+## 9. Локализация открытых находок (волна 36, продолжение)
+
+Детальный отчёт — `artifacts/current_audit/LOCALIZATION_2026-11-18.md`. Здесь —
+сводка.
+
+| Позиция | Результат локализации |
+|---|---|
+| «Стриминг обрезается до первого чанка» | **Опровергнуто**: реальная цепочка middleware отдаёт 5/5 чанков; находка — артефакт измерения бесконечного SSE-потока (`/events/stream`, `while True` + heartbeat) блокирующим клиентом. Закрыто регресс-тестом `test_streaming_passthrough.py` |
+| PII-редирекция в SSE падает **fail-open**, а escape-hatch `FEATURE_PII_STREAMING_FAIL_CLOSED` не существовал | **Закрыто**: флаг реализован (`core/config/features/security.py`), fail-closed режим в `sse/handler.py`, 5 тестов |
+| KNOWN-01: повторный импорт падал с `KeyError: 'src.backend.core.resilience'` | **Закрыто**: локализован цикл импортов `core.resilience.__init__ → rate_limiter → infrastructure.resilience → coordinator → core.resilience`; на Python 3.14 он давал `_DeadlockError` (per-module импорт-лок), ошибка глушилась `emit_audit_safe` → **терялись события аудита**. Фикс: ленивый re-export пакета (PEP 562) |
+| `gateway.verify_request is auth_selector.verify_request` (order-dependent) | **Закрыто**: шим `auth_selector` переведён на ленивый re-export через канонический фасад `core.auth.gateway` |
+| `Bulkhead`/`get_bulkhead` в `core.resilience.__all__`, но не импортируются | **Закрыто**: убраны из API core (канон — `infrastructure.resilience.bulkhead`) |
+| P2-1 pre-load расширений | `plugins/composition/lifecycle/` (lifespan, `app_factory.py:92`) + `core/extension_registry.py:load_extension_resources` |
+| P2-6 мёртвые `basicAuth`/`samlSession` | `entrypoints/api/openapi_security.py` (`SECURITY_SCHEMES`) |
+| P2-8 `rglob("plugin.toml")` в capability-графе | `entrypoints/api/v1/endpoints/admin_capabilities.py:149` (`iterdir()` + `child / "plugin.toml"` — только верхний уровень) |
+| P2-9 `xfail_strict` + perf-профиль | `pyproject.toml` (ключа нет) + 48 XPASS (`core/security/test_pii_tokenizer_redis_persistence.py` и др.) |
+| P3 фаза `denied` в трейсере | статус `"denied"` есть (`dsl/engine/processor_pool.py:165`, `execution_engine.py:256`, `processors/base.py:122`) — не хватает фазы |
+| P3 `ProtocolType` → `core/types/` | `dsl/adapters/types.py:14` |
+| P3 `cache_resource` → `session_state` | SSE-очередь и `FakeOutbox` во фронтовых `st.cache_resource` |
+| `Cache-Control: public` без `Vary` | `entrypoints/middlewares/response_cache.py:215` |
+| host-glob vs URL в `net.outbound` | `routes/health_proxy_demo/route.toml`, `routes/composition_demo/route.toml` (scope — URL, гейт сверяет host) |
+
+---
+
 ## 7. Связанные документы
 
 * `docs/adr/0450-layer-violations-paydown.md`, `0452-mutation-gate-unblocked.md`, `0453-grouped-coverage-run.md` — секции «Уточнение волны 34/35»;
