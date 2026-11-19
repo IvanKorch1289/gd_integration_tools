@@ -159,12 +159,15 @@ class TestAuthRequiredMiddlewarePureASGI:
         mock_verify = AsyncMock(side_effect=lambda *a, **kw: fake_ctx)
 
         # Patch'уем оба пути (core.auth + deps.auth_selector).
+        # Патчим ТОЛЬКО канонический модуль: middleware импортирует
+        # verify_request из core.auth.auth_selector (function-level import).
+        # Раньше патчился и deprecated-шим — это (а) было избыточно и
+        # (б) «замораживало» его lazy-реэкспорт: setattr на модуль пишет в
+        # __dict__, после чего PEP 562 __getattr__ больше не вызывается, и
+        # шим навсегда отдавал бы старый объект (order-dependent падение
+        # инварианта «шим-объект == канон-объект»).
         monkeypatch.setattr(
             "src.backend.core.auth.auth_selector.verify_request", mock_verify
-        )
-        monkeypatch.setattr(
-            "src.backend.entrypoints.api.dependencies.auth_selector.verify_request",
-            mock_verify,
         )
 
         send = AsyncMock()

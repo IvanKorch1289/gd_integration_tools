@@ -61,6 +61,28 @@ _LAZY_EXPORTS: dict[str, str] = {
 }
 
 
+def _canonical(name: str) -> Any:
+    """Текущий объект канонического модуля (для внутренних вызовов фасада).
+
+    Внутри модуля глобальный поиск имени НЕ обращается к ``__getattr__``
+    (PEP 562 работает только для доступа ``module.attr`` снаружи), поэтому
+    собственные вызовы фасада идут через этот хелпер — он всегда отдаёт
+    **актуальный** объект канона (важно после reload'а/патча канона).
+
+    Args:
+        name: Имя канонического символа (``require_auth`` и др.).
+
+    Returns:
+        Объект из ``src.backend.core.auth.auth_selector``.
+
+    Raises:
+        KeyError: Символ не входит в канонический API.
+
+    """
+    module_name = _LAZY_EXPORTS[name]
+    return getattr(importlib.import_module(module_name), name)
+
+
 def __getattr__(name: str) -> Any:
     """Ленивый re-export канонического API аутентификации (PEP 562).
 
@@ -77,9 +99,10 @@ def __getattr__(name: str) -> Any:
     module_name = _LAZY_EXPORTS.get(name)
     if module_name is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    value = getattr(importlib.import_module(module_name), name)
-    globals()[name] = value
-    return value
+    # БЕЗ кэширования в globals(): кэш зафиксировал бы объект на момент
+    # первого обращения, и после reload'а/патча канона фасад «отставал» бы
+    # от него → инвариант «шм-объект == канон-объект» снова ломался бы.
+    return getattr(importlib.import_module(module_name), name)
 
 
 def __dir__() -> list[str]:
@@ -128,7 +151,7 @@ class AuthGateway:
 
         """
         effective = methods if methods is not None else self._default_method
-        return await verify_request(request, methods=effective)
+        return await _canonical("verify_request")(request, methods=effective)
 
     def require(
         self, methods: AuthMethod | list[AuthMethod] | None = None
@@ -146,4 +169,4 @@ class AuthGateway:
         Теперь AuthGateway использует свой configured default.
         """
         effective_methods = methods if methods is not None else self._default_method
-        return require_auth(methods=effective_methods)
+        return _canonical("require_auth")(methods=effective_methods)

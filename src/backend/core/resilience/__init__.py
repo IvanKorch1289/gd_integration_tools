@@ -178,9 +178,9 @@ def __getattr__(name: str) -> Any:
     module_name = _LAZY_EXPORTS.get(name)
     if module_name is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    value = getattr(importlib.import_module(f"{__name__}.{module_name}"), name)
-    globals()[name] = value
-    return value
+    # Без кэширования: кэш зафиксировал бы объект на момент первого
+    # обращения → после reload'а подмодуля пакет отдавал бы устаревший символ.
+    return getattr(importlib.import_module(f"{__name__}.{module_name}"), name)
 
 
 def __dir__() -> list[str]:
