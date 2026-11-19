@@ -645,7 +645,7 @@ frontend = [
     # Python 3.15+. Проект закреплён на >=3.14,<3.15 → 8 страниц портала
     # (chart-API) падали с TypeError. Пин до 5.4.x.
     "altair>=5.0.0,<5.5.0",
-    "plotly>=5.18.0,<6.0.0",
+    "plotly>=5.18.0,<8.0.0",
 ]
 
 # Sprint 5 — DOCX template engine (Word reports с подстановкой контекста).
