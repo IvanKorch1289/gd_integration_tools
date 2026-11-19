@@ -53,6 +53,7 @@ __all__ = (
     "ExtensionResource",
     "ExtensionResourceRegistry",
     "get_extension_resource",
+    "get_extension_load_errors",
     "get_extension_registry",
     "load_extension_resources",
     "register_extension_resource",
@@ -275,6 +276,18 @@ def load_extension_resources(*, force: bool = False) -> None:
             _loader_ident = None
             _loaded = True
             done.set()
+
+
+def get_extension_load_errors() -> dict[str, str]:
+    """Ошибки загрузки расширений (публичный доступ для startup-фазы).
+
+    Returns:
+        Соответствие ``имя модуля → причина``. Пусто, если все расширения
+        загрузились (или загрузка ещё не выполнялась).
+
+    """
+    with _load_lock:
+        return dict(_load_errors)
 
 
 def _load_error_summary() -> str:

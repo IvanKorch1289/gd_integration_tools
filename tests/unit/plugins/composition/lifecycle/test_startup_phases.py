@@ -23,14 +23,18 @@ from src.backend.plugins.composition.lifecycle.startup_phases import (
 
 @pytest.mark.unit
 def test_startup_phases_count() -> None:
-    """STARTUP_PHASES должен иметь 20 фаз (5 obs + 3 infra + 12 services).
+    """STARTUP_PHASES: 21 фаза (6 obs + 3 infra + 1 extensions + 11 services).
 
     Cycle 271: добавляется ``services.phase_ai_safety_cleanup`` — cleanup-loop
     для AI-workspace (R-V15-11) больше не остаётся незапущенным.
 
+    Волна 36 (P2-1): добавлена фаза ``extensions.phase_extension_resources`` —
+    pre-load ресурсов расширений (ADR-0457): тяжёлый импорт уходит из
+    request-path, поломка расширения видна в логах старта.
+
     Если добавляешь новую фазу, обнови этот test.
     """
-    assert len(STARTUP_PHASES) == 20, f"Expected 20 phases, got {len(STARTUP_PHASES)}"
+    assert len(STARTUP_PHASES) == 21, f"Expected 21 phases, got {len(STARTUP_PHASES)}"
 
 
 @pytest.mark.unit
@@ -71,6 +75,7 @@ def test_startup_phases_order_observability_first() -> None:
 def test_startup_phases_order_infrastructure_second() -> None:
     """Infrastructure фазы идут ПОСЛЕ observability, ДО services."""
     from src.backend.plugins.composition.lifecycle.startup_phases import (
+        extensions,
         infrastructure,
         observability,
         services,
@@ -81,22 +86,29 @@ def test_startup_phases_order_infrastructure_second() -> None:
     infra_count = sum(
         1 for p in STARTUP_PHASES if p.__module__ == infrastructure.__name__
     )
+    ext_count = sum(1 for p in STARTUP_PHASES if p.__module__ == extensions.__name__)
     # Infrastructure should immediately follow observability
     for i in range(obs_count, obs_count + infra_count):
         assert STARTUP_PHASES[i].__module__ == infrastructure.__name__, (
             f"Phase {i} should be infrastructure, got {STARTUP_PHASES[i].__module__}"
         )
-    # After infrastructure, should be different module (services)
+    # After infrastructure: фаза расширений (P2-1 волны 36), затем services.
     if obs_count + infra_count < len(STARTUP_PHASES):
         assert (
-            STARTUP_PHASES[obs_count + infra_count].__module__ == services.__name__
-        ), f"Phase {obs_count + infra_count} should be services"
+            STARTUP_PHASES[obs_count + infra_count].__module__ == extensions.__name__
+        ), f"Phase {obs_count + infra_count} should be extensions"
+    if obs_count + infra_count + ext_count < len(STARTUP_PHASES):
+        assert (
+            STARTUP_PHASES[obs_count + infra_count + ext_count].__module__
+            == services.__name__
+        ), f"Phase {obs_count + infra_count + ext_count} should be services"
 
 
 @pytest.mark.unit
 def test_startup_phases_order_services_last() -> None:
-    """Services фазы идут последними (after observability + infrastructure)."""
+    """Services фазы идут последними (после obs + infra + extensions)."""
     from src.backend.plugins.composition.lifecycle.startup_phases import (
+        extensions,
         infrastructure,
         observability,
         services,
@@ -107,15 +119,16 @@ def test_startup_phases_order_services_last() -> None:
     infra_count = sum(
         1 for p in STARTUP_PHASES if p.__module__ == infrastructure.__name__
     )
+    ext_count = sum(1 for p in STARTUP_PHASES if p.__module__ == extensions.__name__)
     services_count = sum(1 for p in STARTUP_PHASES if p.__module__ == services.__name__)
 
     # All services should be at the end
-    for i in range(obs_count + infra_count, len(STARTUP_PHASES)):
+    for i in range(obs_count + infra_count + ext_count, len(STARTUP_PHASES)):
         assert STARTUP_PHASES[i].__module__ == services.__name__, (
             f"Phase {i} should be services"
         )
     # Total must match
-    assert obs_count + infra_count + services_count == len(STARTUP_PHASES)
+    assert obs_count + infra_count + ext_count + services_count == len(STARTUP_PHASES)
 
 
 @pytest.mark.unit

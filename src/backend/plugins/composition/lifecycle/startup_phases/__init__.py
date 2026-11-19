@@ -7,6 +7,7 @@
 - :mod:`observability` — OTel, Sentry, LogSink, Audit HMAC, ConfigValidator
 - :mod:`infrastructure` — Redis cluster, setup_infra, EventBus
 - :mod:`services` — Service registration, AI Safety cleanup, AIGateway, DSL, PluginLoader, V11, Outbox, Workflow, Schema, FeatureFlag
+- :mod:`extensions` — pre-load ресурсов расширений (P2-1 волны 36)
 
 Принцип: best-effort startup (hard errors propagate, optional subsystems log+continue).
 Каждая фаза оборачивает свой critical path в try/except с понятным warning.
@@ -19,6 +20,7 @@ from collections.abc import Awaitable, Callable
 from fastapi import FastAPI
 
 from src.backend.plugins.composition.lifecycle.startup_phases import (
+    extensions,
     infrastructure,
     observability,
     services,
@@ -39,6 +41,10 @@ STARTUP_PHASES: tuple[Phase, ...] = (
     infrastructure.phase_redis_cluster,
     infrastructure.phase_setup_infra,
     infrastructure.phase_eventbus_startup,
+    # Расширения (1 phase) — P2-1 волны 36: ресурсы расширений грузятся на
+    # старте (после инфраструктуры, до сервисов), чтобы тяжёлый импорт не
+    # попадал в request-path, а поломка расширения была видна в логах старта.
+    extensions.phase_extension_resources,
     # Services (10 phases)
     services.phase_service_registration,
     services.phase_ai_safety_cleanup,
