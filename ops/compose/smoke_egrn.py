@@ -17,8 +17,8 @@ X-API-Key → валидация тела → диспетчеризация act
 (например «Нельзя создать запрос с указанным типом запроса»), если
 идентификатор вида запроса не из справочника ``orderkinds.skb_uuid``.
 """
+
 import asyncio
-import json
 import uuid
 
 import httpx
@@ -44,7 +44,10 @@ async def main() -> None:
         # 2) поиск объекта недвижимости по адресу (первый шаг выписки ЕГРН)
         r = await client.post(
             "/api/v1/skb/get-objects-by-address",
-            params={"query": "Москва, ул. Тверская, д. 1", "comment": "functional-test"},
+            params={
+                "query": "Москва, ул. Тверская, д. 1",
+                "comment": "functional-test",
+            },
             headers=key_headers(),
         )
         print(f"[2] POST /api/v1/skb/get-objects-by-address → {r.status_code}")
@@ -68,8 +71,8 @@ async def main() -> None:
             payload = r.json()
             if isinstance(payload, dict):
                 order_uuid = payload.get("order_uuid") or payload.get("OrderId")
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001 — ответ не-JSON: order_uuid неизвестен
+            order_uuid = None
 
         # 4) получение результата по заказу (второй шаг workflow'а)
         if order_uuid:
