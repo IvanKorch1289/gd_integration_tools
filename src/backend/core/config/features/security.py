@@ -60,5 +60,19 @@ class SecurityFlags(BaseSettings):
         ),
     )
 
+    pii_streaming_fail_closed: bool = Field(
+        default=False,
+        title="PII-redaction в SSE-потоках: fail-closed вместо best-effort",
+        description=(
+            "Локализация волны 36: в SSE-обработчике при сбое PII-редирекции "
+            "чunks прокидывались БЕЗ редактирования (fail-open), а в логе "
+            "указывалось «Set FEATURE_PII_STREAMING_FAIL_CLOSED=true» — такого "
+            "флага в реестре не было, escape-hatch молча ничего не делал. "
+            "True — сбой редирекции обрывает поток (fail-closed, данные не "
+            "уходят без редактирования); False (по умолчанию) — прежнее "
+            "best-effort поведение с warning-логом."
+        ),
+    )
+
 
 __all__ = ("SecurityFlags",)

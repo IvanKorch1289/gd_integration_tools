@@ -34,6 +34,26 @@ logger = get_logger(__name__)
 sse_router = APIRouter(prefix="/events", tags=["SSE"])
 
 
+def _pii_streaming_fail_closed() -> bool:
+    """Fail-closed ли PII-редирекция в SSE-потоках.
+
+    Флаг ``FEATURE_PII_STREAMING_FAIL_CLOSED`` (реализован в волне 36;
+    раньше он был только упомянут в логе и молча игнорировался).
+
+    Returns:
+        ``True`` — сбой редирекции должен обрывать поток (fail-closed);
+        ``False`` — прежнее best-effort-поведение с warning-логом.
+
+    """
+    try:
+        from src.backend.core.feature_flags import get_feature_flag_service
+
+        return get_feature_flag_service().is_enabled("pii_streaming_fail_closed")
+    except Exception as exc:  # noqa: BLE001 — флаг не должен ронять поток
+        logger.warning("SSE: не удалось прочитать флаг PII fail-closed: %s", exc)
+        return False
+
+
 def _to_primitive(value: Any) -> Any:
     """Приводит value к JSON-сериализуемым примитивам (BaseModel → dict)."""
     if isinstance(value, BaseModel):
@@ -153,6 +173,22 @@ async def sse_stream(request: Request) -> StreamingResponse:
         except Exception as exc:
             # S103 P2-7 fix: log warning при fail-OPEN fallback — раньше
             # проглатывалось silently, что маскировало баги в PII pipeline.
+            #
+            # Локализация волны 36: упомянутый в логе флаг
+            # FEATURE_PII_STREAMING_FAIL_CLOSED в реестре НЕ существовал —
+            # escape-hatch молча ничего не делал. Флаг реализован
+            # (core/config/features/security.py); при True сбой редирекции
+            # обрывает поток (fail-closed: неотредактированные данные не
+            # уходят клиенту), при False — прежнее best-effort-поведение.
+            fail_closed = _pii_streaming_fail_closed()
+            if fail_closed:
+                logger.error(
+                    "SSE PII stream_filter failed (exc=%s) — failing closed: "
+                    "stream terminated, no unredacted chunks are sent "
+                    "(FEATURE_PII_STREAMING_FAIL_CLOSED=true).",
+                    exc,
+                )
+                raise
             logger.warning(
                 "SSE PII stream_filter failed (exc=%s) — passing raw chunks "
                 "without redaction. Set FEATURE_PII_STREAMING_FAIL_CLOSED=true "
