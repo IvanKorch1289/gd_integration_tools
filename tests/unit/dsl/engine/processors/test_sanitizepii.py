@@ -46,9 +46,17 @@ async def test_sanitize_str_body() -> None:
 
 @pytest.mark.asyncio
 async def test_sanitize_non_str_body() -> None:
-    with patch(
-        "src.backend.infrastructure.security.ai_sanitizer.get_ai_sanitizer"
-    ) as mock_get:
+    # Feature-flag выключен → legacy-путь (async sanitize), как в первом тесте.
+    # Без патча флага provider отдаёт Presidio-адаптер, который делегирует
+    # legacy-фабрике — и мок ниже оказывается в другой ветке.
+    with (
+        patch(
+            "src.backend.infrastructure.security.ai_sanitizer.get_ai_sanitizer"
+        ) as mock_get,
+        patch(
+            "src.backend.core.config.features.feature_flags.presidio_pii_enabled", False
+        ),
+    ):
         sanitizer = AsyncMock()
         sanitizer.sanitize.return_value = MagicMock(
             sanitized_text="42", replacements={}

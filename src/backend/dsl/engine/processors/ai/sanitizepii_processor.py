@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from typing import Any
 
 from src.backend.dsl.engine.context import ExecutionContext
@@ -24,11 +25,25 @@ class SanitizePIIProcessor(BaseProcessor):
         from src.backend.core.di.providers.cache import get_ai_sanitizer_provider
 
         sanitizer = get_ai_sanitizer_provider()  # instance (fix 2026-09-23)
-        # Adapter (Presidio) — sync sanitize_text; legacy — async sanitize.
-        if hasattr(sanitizer, "sanitize_text"):
+        # Выбор ветки — по ТИПУ метода, а не по наличию атрибута: у моков
+        # (``AsyncMock``) любой атрибут «есть», и ``hasattr``-проверка
+        # уводила процессор в sync-ветку с awaitable-результатом →
+        # «'coroutine' object has no attribute 'replacements'» и PII не
+        # маскировалась (волна 36).
+        #
+        # * async-канон ``sanitize`` (legacy AIDataSanitizer) — если это
+        #   coroutine-функция;
+        # * sync-канон ``sanitize_text`` (Presidio-адаптер);
+        # * результат может оказаться awaitable — тогда ждём его.
+        sanitize = getattr(sanitizer, "sanitize", None)
+        if sanitize is not None and inspect.iscoroutinefunction(sanitize):
+            result = await sanitize(body)
+        elif hasattr(sanitizer, "sanitize_text"):
             result = sanitizer.sanitize_text(body)
+            if inspect.isawaitable(result):
+                result = await result
         else:
-            result = await sanitizer.sanitize(body)
+            result = await sanitize(body)
         exchange.set_property("_pii_original", exchange.in_message.body)
         exchange.set_property("_pii_mapping", result.replacements)
         exchange.in_message.set_body(result.sanitized_text)
