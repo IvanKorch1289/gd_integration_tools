@@ -484,7 +484,21 @@ docstrings (0 missing), ruff, mypy (12 = baseline), mutation, coverage.
 | 9 | **P2-10** `logout()` чистит API-кэш | ✅ best-effort очистка кэша + session state; **замечание:** кнопки выхода в портале нет — фикс не сработает, пока её не добавят |
 | 10 | **P3** LRU `_validation_cache` (512), единый `SYSTEM_TENANT_ID`, удаление мёртвого `dsl/engine/process` | ✅ |
 | 11 | Регрессы волны 36 | ✅ FK `orders.order_kind_id → orderkinds.id` (модели orderkinds импортируются в моделях заказов); удалён мёртвый модуль регистрации actions в `entrypoints/api/generator/` с конфликтующим `payload_model` |
-| 12 | Открыто (требует решения владельца) | pre-load расширений в lifespan; мёртвые `basicAuth`/`samlSession` в схеме; `rglob(plugin.toml)` в capability-графе; `xfail_strict` + perf-профиль; фаза `denied` в трейсере; `ProtocolType` → `core/types`; `cache_resource` → `session_state`; 9 библиотечных правок (почти все — lock, требует согласования); `Cache-Control: public` для аутентифицированных ответов; стриминговая регрессия HTTP-цепочки (pre-existing) |
+| 12 | Открыто (требует решения владельца) |
+
+---
+
+## 22. Волна 36 (продолжение) — локализация открытых находок
+
+| # | Позиция | Результат |
+|---|---|---|
+| 1 | «Стриминговый ответ обрезается до первого чанка» | ✅ **опровергнуто**: реальная цепочка middleware отдаёт все чанки (5/5, 200). Находка — артефакт измерения бесконечного SSE-потока (`/events/stream`: `while True` + heartbeat) блокирующим клиентом. Закрыто регресс-тестом `test_streaming_passthrough.py` |
+| 2 | PII-редирекция в SSE падала **fail-open**, а escape-hatch `FEATURE_PII_STREAMING_FAIL_CLOSED` не существовал | ✅ флаг реализован (`core/config/features/security.py`), fail-closed режим в `sse/handler.py`, 5 тестов |
+| 3 | KNOWN-01: повторный импорт падал с `KeyError` по родительскому пакету | ✅ **закрыто**: локализован цикл импортов `core.resilience.__init__ → rate_limiter → infrastructure.resilience → coordinator → core.resilience`; на Python 3.14 — `_DeadlockError` (per-module импорт-лок), ошибка глушилась `emit_audit_safe` → **терялись события аудита**. Фикс: ленивый re-export пакета (PEP 562) |
+| 4 | `gateway.verify_request is auth_selector.verify_request` (order-dependent) | ✅ **закрыто**: шим `auth_selector` переведён на ленивый re-export через канонический фасад `core.auth.gateway` |
+| 5 | `Bulkhead`/`get_bulkhead` в `core.resilience.__all__`, но не импортируются | ✅ убраны из API core (канон — `infrastructure.resilience.bulkhead`) |
+| 6 | P2-8 capability-граф не видел вложенные расширения | ✅ обход по `rglob("plugin.toml")`: 12 плагинов (было 8), 3 теста |
+| 7 | Остальные открытые пункты плана | 📍 **локализованы до file:line** — `artifacts/current_audit/LOCALIZATION_2026-11-18.md` §4 (pre-load расширений, `basicAuth`/`samlSession`, `xfail_strict`, фаза `denied` в трейсере, `ProtocolType`, `cache_resource`, `Cache-Control: public`, host-glob vs URL) | pre-load расширений в lifespan; мёртвые `basicAuth`/`samlSession` в схеме; `rglob(plugin.toml)` в capability-графе; `xfail_strict` + perf-профиль; фаза `denied` в трейсере; `ProtocolType` → `core/types`; `cache_resource` → `session_state`; 9 библиотечных правок (почти все — lock, требует согласования); `Cache-Control: public` для аутентифицированных ответов; стриминговая регрессия HTTP-цепочки (pre-existing) |
 
 ---
 
