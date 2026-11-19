@@ -168,7 +168,30 @@ Bulkhead` → ImportError); каноническое место — `infrastruct
 
 ---
 
-## 5. Сводка
+## 5. Побочная находка: ветка выбора санитайзера PII выбиралась по `hasattr`
+
+**Где:** `src/backend/dsl/engine/processors/ai/sanitizepii_processor.py`.
+
+**Симптом:** `AttributeError: 'coroutine' object has no attribute 'replacements'` —
+шаг санитизации PII падал, PII **не маскировалась**.
+
+**Локализация:** процессор выбирал ветку вызова по `hasattr(sanitizer,
+"sanitize_text")`. У `AsyncMock` (и любого mock'а) любой атрибут «есть» →
+процессор уходил в sync-ветку, а получал awaitable-результат. Явление
+проявилось после того, как provider стал отдавать Presidio-адаптер
+(flag `presidio_pii_enabled`), который делегирует legacy-фабрике: при
+наличии мока на legacy-фабрике адаптер возвращал coroutine.
+
+**Фикс:** ветка выбирается **по типу метода** (`inspect.iscoroutinefunction`):
+async-канон `sanitize` → sync-канон `sanitize_text` → fallback; awaitable-
+результат дожидается. Это защищает и от смены реализации под адаптером.
+
+**Проверка:** `tests/unit/dsl/**` + `core/ai/**` + `services/ai/**` —
+**7501 passed**.
+
+---
+
+## 6. Сводка
 
 | Позиция | Было | Стало |
 |---|---|---|
@@ -178,3 +201,7 @@ Bulkhead` → ImportError); каноническое место — `infrastruct
 | Identity `gateway`/`auth_selector` | order-dependent падение | **закрыто** (ленивый шим) |
 | `Bulkhead` в `core.resilience.__all__` | ImportError | **закрыто** (убрано из API core) |
 | Остальные открытые пункты | «требует решения» | **локализованы до file:line** (таблица §4) |
+| Побочно: выбор ветки санитайзера PII по `hasattr` | — | **закрыто**: выбор по типу метода + awaitable-guard (§5) |
+| Побочно: `core.resilience.__all__` объявлял неимпортируемые `Bulkhead` | ImportError | **закрыто** (§2) |
+| Побочно: capability-граф не видел вложенные расширения | 8 плагинов вместо 12 | **закрыто** (P2-8, `admin_capabilities.py:149`) |
+| Побочно: pre-load расширений в request-path | ленивая загрузка | **закрыто** (P2-1, startup-фаза `phase_extension_resources`) |
