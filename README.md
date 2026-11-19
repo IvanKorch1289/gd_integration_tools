@@ -58,18 +58,18 @@ Inline-числа в тексте README могут разойтись с фак
      Проверка актуальности (CI-гейт): `... --check` → exit 1 при расхождении с кодом.
      Правьте код, а не этот блок. -->
 
-**Снимок кода:** `26165c1984cc` · сгенерировано 2026-11-19 07:43 UTC
+**Снимок кода:** `d0079bdb2bcd` · сгенерировано 2026-11-19 11:39 UTC
 
 | Метрика | Значение | Источник |
 |---|---:|---|
-| HEAD | `26165c1984cc` | `git rev-parse HEAD` |
+| HEAD | `d0079bdb2bcd` | `git rev-parse HEAD` |
 | Actions (runtime) | 132 | `ActionHandlerRegistry.list_actions()` после `create_app()` |
 | DSL-маршрутов (runtime) | 0 | `RouteRegistry.list_routes()` после `create_app()` |
 | Route-пакетов (static) | 7 | `routes/<name>/route.toml` на диске |
 | Протоколов | 17 | пакеты entrypoints: api, asyncapi, cdc, email, express, filewatcher, graphql, grpc, http3, mcp, mqtt, scheduler, soap, sse, stream, webhook, websocket |
 | Middleware в стеке | 37 | `len(app.user_middleware)` |
 | OpenAPI paths / schemas | 447 / 146 | `app.openapi()` |
-| Тестов собрано | 25849 | `pytest --collect-only -q` |
+| Тестов собрано | 25856 | `pytest --collect-only -q` |
 | Порог покрытия | 70% | `[tool.coverage.report] fail_under` |
 | Layer baseline | Нарушений: 0 новых  (файлов: 2601; debt: 0 legacy; contract: 3) | `tools/check_layers.py` |
 

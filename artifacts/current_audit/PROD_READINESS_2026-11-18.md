@@ -158,7 +158,7 @@ action'а → реальный сетевой вызов внешнего СКБ
 
 ### 5.1. Что готово
 
-* регрессия `tests/unit` — **24 538 passed, 0 failed** в CI-режиме;
+* регрессия `tests/unit` — **24 545 passed, 0 failed** в CI-режиме (723 с, `-n 2 --dist loadfile`);
 * гейты: layers (0 новых), decorative/route/action-ownership/workflow-specs,
   docstrings (0 missing), ruff, mypy (12 = baseline), coverage (77.68 %),
   mutation (**PASS 21.6 %**, baseline повышен);
