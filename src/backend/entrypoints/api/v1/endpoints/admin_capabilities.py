@@ -145,10 +145,12 @@ async def get_capability_graph() -> dict[str, Any]:
     except ImportError:
         return {"nodes": [], "edges": []}
 
-    for child in sorted(extensions_dir.iterdir()):
-        toml_path = child / "plugin.toml"
-        if not toml_path.is_file():
-            continue
+    # P2-8 (волна 36): манифесты лежат и во ВЛОЖЕННЫХ расширениях
+    # (extensions/core_entities/<domain>/plugin.toml) — прежний обход по
+    # верхнему уровню их не видел, и в графе capability отсутствовали
+    # декларации вложенных плагинов (core_entities: db.read/db.write,
+    # fs.*, mq.publish, net.outbound).
+    for toml_path in sorted(extensions_dir.rglob("plugin.toml")):
         try:
             manifest = load_plugin_manifest(toml_path)
         except PluginManifestError:
