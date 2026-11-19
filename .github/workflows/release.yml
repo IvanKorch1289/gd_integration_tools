@@ -46,6 +46,18 @@ jobs:
       - name: Build distribution (sdist + wheel)
         run: uv build
 
+      - name: Release notes (changelog_autogen)
+        # Пункт плана волны 35/36: инструмент release-notes был реализован,
+        # но не был подключён — `make release-notes` падала (инструмента нет),
+        # и notes не генерировались вовсе.
+        run: |
+          uv run python tools/changelog_autogen.py \
+            --from "${PREV_TAG:-}" \
+            --output dist/release-notes.md \
+            --title "Release notes" || \
+            echo "release notes skipped (нет предыдущего тега)"
+        continue-on-error: true
+
       - name: Twine check (метаданные dist/*)
         # Dry-run верификация артефактов; реальная публикация — отложена на R3.
         run: uv run twine check dist/*
