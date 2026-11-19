@@ -40,7 +40,12 @@ JUPYTERHUB_CONFIG: Final[Path] = (
     PROJECT_ROOT / "ops" / "compose" / "jupyterhub" / "jupyterhub_config.py"
 )
 
-COMPOSE_NETWORK: Final[str] = "compose_default"
+#: Ключ сети в compose-файлах. ВАЖНО: он должен совпадать с НЕЯВНОЙ сетью
+#: base-файла (``default``) — иначе merge prod+base даёт ДВЕ сети: сервисы
+#: prod-файла не видят сервисы base-файла (app не достучался до
+#: mongo/kafka/minio/vault). Имя сети на диске — ``compose_prod_network``.
+COMPOSE_NETWORK: Final[str] = "default"
+COMPOSE_NETWORK_NAME: Final[str] = "compose_prod_network"
 
 INFRA_SERVICES: Final[tuple[str, ...]] = ("clickhouse", "open-webui", "jupyterhub")
 
@@ -187,6 +192,33 @@ class TestProdComposeInfraServices:
         networks = _compose_services()[service].get("networks") or []
 
         assert COMPOSE_NETWORK in networks
+
+    def test_all_services_share_one_network(self) -> None:
+        """Все сервисы стека — в одной сети (иначе app не видит инфраструктуру).
+
+        Сервис без явного ``networks`` попадает в неявную сеть ``default`` —
+        это тоже корректно; важно, чтобы НИ ОДИН сервис не был уведён в
+        другую сеть (merge prod+base с разными ключами давал две сети).
+        """
+        services = _compose_services()
+
+        for name, spec in services.items():
+            networks = spec.get("networks") or []
+            if not networks:
+                continue  # неявная сетя default
+            assert COMPOSE_NETWORK in networks, (
+                f"{name}: сервис вне общей сети {COMPOSE_NETWORK!r} — "
+                "merge compose-файлов разорвал сеть"
+            )
+
+    def test_network_name_is_stable(self) -> None:
+        """Имя сети на диске фиксировано (compose_prod_network)."""
+        compose = yaml.safe_load(PROD_COMPOSE.read_text(encoding="utf-8"))
+
+        networks = compose.get("networks") or {}
+
+        assert COMPOSE_NETWORK in networks
+        assert networks[COMPOSE_NETWORK].get("name") == COMPOSE_NETWORK_NAME
 
     @pytest.mark.parametrize("service", INFRA_SERVICES)
     def test_no_hardcoded_secrets(self, service: str) -> None:

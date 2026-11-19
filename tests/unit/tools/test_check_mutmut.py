@@ -150,12 +150,18 @@ class TestExitCodes:
     ) -> None:
         """Без --threshold порог берётся из baseline (рэтчет «не хуже baseline»)."""
         baseline = check_mutmut._load_baseline()
-        # score ровно на уровне baseline — PASS; на 0.1 п.п. ниже — FAIL.
-        stats = _write_stats(Path(gate_env["stats"]), killed=216, total=1000)  # type: ignore[arg-type]
+        # score ровно на уровне baseline — PASS (значение baseline берётся из
+        # файла, а не из константы в тесте: baseline рэтчится по мере роста
+        # покрытия, и зашитый литерал ломался на каждом обновлении).
+        total = 1000
+        killed = round(baseline * total / 100)
+        stats = _write_stats(Path(gate_env["stats"]), killed=killed, total=total)  # type: ignore[arg-type]
         monkeypatch.setattr(check_mutmut, "_export_cicd_stats", lambda *_a, **_k: stats)
         monkeypatch.setattr(sys, "argv", ["check_mutmut.py"])
         assert check_mutmut.main() == check_mutmut.EXIT_PASS
-        assert baseline == pytest.approx(21.6, abs=0.05)
+        # Baseline обязан оставаться в разумном диапазоне (защита от
+        # ошибочного значения в .baselines/mutation.json).
+        assert 15.0 <= baseline <= 30.0
 
     def test_skipped_when_no_mutation_data(
         self, monkeypatch: pytest.MonkeyPatch, gate_env: dict[str, object]

@@ -3,8 +3,29 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from collections.abc import AsyncIterator
 from typing import Any
 from unittest.mock import AsyncMock, patch
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+async def _clear_response_cache() -> AsyncIterator[None]:
+    """Сбрасывает response-cache до/после каждого теста.
+
+    Сервис DaData обёрнут декоратором ``@response_cache`` (Redis → memory →
+    disk). Кэш живёт между тестами процесса, поэтому второй тест с теми же
+    координатами получал кэш-хит и мок ``_request`` не вызывался вовсе —
+    тест падал («Awaited 0 times») в зависимости от порядка и от того,
+    поднят ли локальный Redis. Тесты не должны зависеть от внешнего кэша.
+    """
+    from src.backend.infrastructure.decorators.caching import get_response_cache
+
+    cache = get_response_cache()
+    await cache.invalidate_pattern("cache:*")
+    yield
+    await cache.invalidate_pattern("cache:*")
 
 import pytest
 
