@@ -30,15 +30,62 @@ violation (``core/ → entrypoints/``).
 
 from __future__ import annotations
 
+import importlib
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.backend.core.auth import AuthContext, AuthMethod
-from src.backend.core.auth.auth_selector import (
-    require_auth,
-    set_default_auth,
-    verify_request,
-)
+
+if TYPE_CHECKING:  # pragma: no cover — только для статического анализа (mypy)
+    from src.backend.core.auth.auth_selector import (
+        require_auth,
+        set_default_auth,
+        verify_request,
+    )
+
+#: Имя символа → модуль-канон. Ленивый re-export (PEP 562), волна 36.
+#:
+#: Раньше фасад eagerly импортировал канонические функции/классы, поэтому
+#: его биндинги «отставали» от ``core.auth.auth_selector`` после любого
+#: reload'а или monkeypatch'а канона. Из-за этого инвариант
+#: «``core.auth.gateway.verify_request is
+#: entrypoints...auth_selector.verify_request``» (его проверяет
+#: ``tests/unit/core/auth/test_gateway_facade.py``) становился ложным —
+#: order-dependent падение в CI-режиме.
+#:
+#: Ленивый re-export: фасад и шим всегда отдают **текущий** объект канона.
+_LAZY_EXPORTS: dict[str, str] = {
+    "require_auth": "src.backend.core.auth.auth_selector",
+    "set_default_auth": "src.backend.core.auth.auth_selector",
+    "verify_request": "src.backend.core.auth.auth_selector",
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Ленивый re-export канонического API аутентификации (PEP 562).
+
+    Args:
+        name: Имя экспортируемого символа.
+
+    Returns:
+        Объект из канонического модуля.
+
+    Raises:
+        AttributeError: Символ не входит в публичный API фасада.
+
+    """
+    module_name = _LAZY_EXPORTS.get(name)
+    if module_name is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(importlib.import_module(module_name), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    """Список публичных символов фасада (для автодополнения)."""
+    return sorted(set(globals()) | set(_LAZY_EXPORTS))
+
 
 __all__ = (
     "AuthContext",
