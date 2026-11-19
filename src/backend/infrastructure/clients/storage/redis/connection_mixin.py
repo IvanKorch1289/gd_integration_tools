@@ -101,7 +101,13 @@ class ConnectionMixin(_RedisClientProtocol):
         return Redis.from_url(
             self._base_url(),
             db=self._db_for_kind(kind),
-            password=self.settings.password or None,
+            # P0 (функциональный прогон compose, 2026-11-19): передавался
+            # объект SecretStr, а не строка → redis-py отвечал
+            # «DataError: Invalid input of type: 'SecretStr'». С пустым
+            # паролем (dev-профиль) ветка не срабатывала, поэтому дефект
+            # был не виден до prod-пароля. Ветка sentinel уже использовала
+            # secret_value() — здесь исправление то же.
+            password=secret_value(self.settings.password) or None,
             encoding=self.settings.encoding,
             socket_timeout=self.settings.socket_timeout,
             socket_connect_timeout=self.settings.socket_connect_timeout,

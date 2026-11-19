@@ -144,6 +144,63 @@ def test_ssl_mode_enables_tls(ssl_mode: str) -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("ssl_mode", "expected_libpq_mode"),
+    [
+        ("require", "verify-ca"),
+        ("verify-ca", "verify-ca"),
+        ("verify-full", "verify-full"),
+    ],
+)
+def test_ssl_option_key_matches_driver(ssl_mode: str, expected_libpq_mode: str) -> None:
+    """Способ включения TLS зависит от драйвера (P0, волна 36).
+
+    ``asyncpg`` принимает ``ssl=`` (SSLContext), psycopg (v3, libpq) —
+    ``sslmode=`` (+ ``sslrootcert=``). Ни ``ssl=``, ни ``ssl_context=``
+    psycopg не принимает («invalid connection option») → с prod-профилем
+    (``ssl_mode: require``) приложение не подключалось к БД и падало на
+    старте.
+    """
+
+    settings = _pg_settings(ssl_mode)
+    settings.async_driver = "psycopg"
+    settings.sync_driver = "psycopg"
+
+    args = _connect_args(settings, is_async=True)
+
+    assert "sslmode" in args, "psycopg (libpq) ждёт sslmode, а не ssl"
+    assert "ssl" not in args, "опция ssl недопустима для psycopg"
+    assert "ssl_context" not in args, "опция ssl_context недопустима для psycopg"
+    # Проект не допускает молчаливого перехода в plaintext: libpq-режим
+    # prefer/require заменяется на verify-ca (TLS + проверка сертификата).
+    assert args["sslmode"] == expected_libpq_mode
+
+
+def test_psycopg_sslmode_disable_means_no_tls() -> None:
+    """Явный ``ssl_mode=disable`` не добавляет TLS-опций (БД без TLS)."""
+    settings = _pg_settings("disable")
+    settings.async_driver = "psycopg"
+    settings.sync_driver = "psycopg"
+
+    args = _connect_args(settings, is_async=True)
+
+    assert "sslmode" not in args
+
+
+def test_asyncpg_uses_ssl_context_option() -> None:
+    """asyncpg получает ``ssl=`` с SSLContext (проверка сертификата)."""
+    import ssl as ssl_module
+
+    settings = _pg_settings("require")
+    settings.async_driver = "asyncpg"
+    settings.sync_driver = "asyncpg"
+
+    args = _connect_args(settings, is_async=True)
+
+    assert isinstance(args["ssl"], ssl_module.SSLContext)
+    assert args["ssl"].check_hostname is True
+
+
 @pytest.mark.parametrize("ssl_mode", ["disable", "allow"])
 def test_ssl_mode_disable_means_no_tls(ssl_mode: str) -> None:
     """Явное отключение TLS уважается (dev-профили)."""

@@ -368,13 +368,40 @@ class DatabaseInitializer:
                         "реализован (CLAUDE.md V1 запрещает ssl.CERT_NONE). "
                         "Если БД без TLS — задайте ssl_mode=disable явно."
                     )
-                if self.settings.ca_bundle:
-                    connect_args["ssl"] = ssl.create_default_context(
-                        cafile=self.settings.ca_bundle
-                    )
+                # P0 (функциональный прогон compose, 2026-11-19): способ
+                # включения TLS зависит от драйвера, и ни один из вариантов
+                # не подходит обоим:
+                #
+                # * asyncpg — ``ssl=`` (SSLContext);
+                # * psycopg (v3, libpq) — ``sslmode=`` + ``sslrootcert=``;
+                #   ни ``ssl=``, ни ``ssl_context=`` не принимаются
+                #   («invalid connection option»).
+                #
+                # Проект намеренно НЕ допускает молчаливого перехода в
+                # plaintext (CLAUDE.md V1): libpq-режим ``prefer`` заменяется
+                # на ``verify-ca`` (TLS + проверка сертификата), как и
+                # ``require``. БД без TLS → оператор задаёт
+                # ``ssl_mode=disable`` явно.
+                if driver == "asyncpg":
+                    if self.settings.ca_bundle:
+                        connect_args["ssl"] = ssl.create_default_context(
+                            cafile=self.settings.ca_bundle
+                        )
+                    else:
+                        # Системное хранилище CA: create_default_context без cafile.
+                        connect_args["ssl"] = ssl.create_default_context()
                 else:
-                    # Системное хранилище CA: create_default_context без cafile.
-                    connect_args["ssl"] = ssl.create_default_context()
+                    libpq_mode = {
+                        "disable": "disable",
+                        "allow": "allow",
+                        "prefer": "verify-ca",
+                        "require": "verify-ca",
+                        "verify-ca": "verify-ca",
+                        "verify-full": "verify-full",
+                    }[ssl_mode]
+                    connect_args["sslmode"] = libpq_mode
+                    if self.settings.ca_bundle:
+                        connect_args["sslrootcert"] = self.settings.ca_bundle
 
         elif self.settings.type == DatabaseTypeChoices.mysql:
             # ADR-0418: aiomysql/pymysql — ``connect_timeout`` (таймаут
