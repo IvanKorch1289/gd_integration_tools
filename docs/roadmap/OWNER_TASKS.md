@@ -488,6 +488,19 @@ docstrings (0 missing), ruff, mypy (12 = baseline), mutation, coverage.
 
 ---
 
+## 23. Волна 36 (продолжение) — функциональный прогон compose и сверка плана
+
+| # | Пункт | Результат |
+|---|---|---|
+| 1 | Пуш в origin/master | ✅ rejected-ошибка устранена: rebase на 1 коммит бота (`docs: sync ADR index`), конфликт `docs/adr/INDEX.md` разрешён пересборкой каноническим инструментом; push прошёл (`0165c4d28..96d2f8071`) |
+| 2 | Сверка плана доработки (§4 отчёта волны 35) | ◐ **14/19** кодовых, **1/10** библиотечных, **5/6** CI закрыты; остальное — решения владельца (публичный контракт схемы, lock-файл) и отдельные задачи (AST-гейт lazy-импортов, перф-профиль xfail, `ProtocolType` → `core/types`, SSE-очередь на `session_state`) |
+| 3 | Функциональное тестирование (docker compose, prod-профиль) | ✅ стек поднят (app healthy, worker ×4 healthy, миграции exit 0); workflow-запрос выписки ЕГРН (`ops/compose/smoke_egrn.py`) дошёл до внешнего СКБ-Техно и вернул бизнес-ответ с `correlation_id` |
+| 4 | Дефекты, найденные прогоном | **10 P0 + 2 P1**: экспортёр `jaeger` в otel-collector; `KAFKA_ZOOKEEPER_CONNECT`; **две сети** при merge compose-файлов; отсутствующие сервисы `mongo-prod`/`rabbitmq-prod`; пароль Redis и `REDIS_PASSWORD=""` у мигратора; непроброшенный `JUPYTER_HUB_API_TOKEN`; хосты `*-prod` против compose-хостов; **TLS-опция `ssl=` для psycopg**; `SecretStr` вместо строки в Redis-клиенте; healthcheck без Host-заголовка; отсутствие `.dockerignore` |
+| 5 | Готовность к проду | ⚠️ **код — да** (регрессия 24 538 passed, все гейты зелёные, стенд работоспособен); остаются **внешние** блокеры: недоступный образ `minio/minio` (Docker Hub отдаёт denied на весь namespace), TLS-сертификаты, справочник видов запросов реального СКБ, IdP для JupyterHub, сетевые ACL в K8s |
+| 6 | Отчёт | `artifacts/current_audit/PROD_READINESS_2026-11-18.md` |
+
+---
+
 ## 22. Волна 36 (продолжение) — локализация открытых находок
 
 | # | Позиция | Результат |
