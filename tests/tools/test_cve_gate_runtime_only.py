@@ -52,39 +52,55 @@ def _list_pyproject_optional_packages() -> set[str]:
     return packages
 
 
-def test_audit_deps_uses_uv_export_not_uv_freeze() -> None:
-    """`make/security.mk:audit-deps` ДОЛЖЕН использовать `uv export`,
-    а НЕ `uv pip freeze` (который включает optional-extras).
-
-    Аудит-контракт: cve-gate source-of-truth — `uv export --no-dev
-    --no-all-extras` (исключает [project.optional-dependencies]).
-    """
-    body = SECURITY_MK.read_text(encoding="utf-8")
-
-    # Найти recipe audit-deps до следующей строки верхнего уровня
-    lines = body.splitlines()
-    start = next(i for i, ln in enumerate(lines) if ln.startswith("audit-deps:"))
+def _target_recipe(lines: list[str], target: str) -> list[str]:
+    """Рецепт make-цели (до следующей строки верхнего уровня)."""
+    start = next(i for i, ln in enumerate(lines) if ln.startswith(f"{target}:"))
     recipe: list[str] = []
     for line in lines[start + 1 :]:
         if line and not line[0].isspace() and not line.startswith(("##", "#")):
             break
         recipe.append(line)
-    recipe_text = "\n".join(recipe)
+    return recipe
 
-    assert re.search(r"uv\s+export\s+--no-dev\s+--no-all-extras", recipe_text), (
-        "audit-deps recipe must use `uv export --no-dev --no-all-extras` "
+
+def test_audit_deps_uses_uv_export_not_uv_freeze() -> None:
+    """`make/security.mk` ДОЛЖЕН использовать `uv export`,
+    а НЕ `uv pip freeze` (который включает optional-extras).
+
+    Аудит-контракт: cve-gate source-of-truth — `uv export --no-dev
+    --no-all-extras` (исключает [project.optional-dependencies]).
+
+    P2 (аудит 2026-11-20): подготовка requirements вынесена в отдельную
+    цель `audit-requirements` (её использует и `sbom-diff-gate`, которому
+    файл раньше вообще не готовился) — `audit-deps` зависит от неё.
+    """
+    body = SECURITY_MK.read_text(encoding="utf-8")
+    lines = body.splitlines()
+
+    requirements_recipe = "\n".join(_target_recipe(lines, "audit-requirements"))
+
+    assert re.search(
+        r"uv\s+export\s+--no-dev\s+--no-all-extras", requirements_recipe
+    ), (
+        "audit-requirements recipe must use `uv export --no-dev --no-all-extras` "
         "to exclude [project.optional-dependencies] (redteam/ai/rag/mcp/rpa) "
         "from cve-gate."
     )
 
     # `uv pip freeze` допустим ТОЛЬКО как `||` fallback, не primary.
-    for line in recipe_text.splitlines():
+    for line in requirements_recipe.splitlines():
         if "uv pip freeze" in line and "||" not in line:
             pytest.fail(
-                f"`uv pip freeze` в audit-deps без `||` fallback: {line!r}. "
+                f"`uv pip freeze` в audit-requirements без `||` fallback: {line!r}. "
                 "freeze включает все установленные optional-extras (deepteam "
                 "и др.), которые ломают cve-gate на py3.14."
             )
+
+    # audit-deps сканирует подготовленный файл.
+    audit_deps_recipe = "\n".join(_target_recipe(lines, "audit-deps"))
+    assert "-r dist/audit-requirements.txt" in audit_deps_recipe, (
+        "audit-deps должен сканировать подготовленный dist/audit-requirements.txt"
+    )
 
 
 @pytest.mark.parametrize(

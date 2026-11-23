@@ -7,6 +7,10 @@ on:
   push:
     branches: [master]
   pull_request:
+  merge_group:
+    # Merge queue: обязательные workflow должны идти и на merge_group,
+    # иначе release-gate на merge_group не находит прогонов и падает
+    # структурно (аудит 2026-11-23, независимое ревью: MAJOR-1).
 
 permissions:
   contents: read

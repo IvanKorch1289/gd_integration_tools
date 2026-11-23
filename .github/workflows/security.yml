@@ -16,6 +16,10 @@ on:
   push:
     branches: [master]
   pull_request:
+  merge_group:
+    # Merge queue: обязательные workflow должны идти и на merge_group,
+    # иначе release-gate на merge_group не находит прогонов и падает
+    # структурно (аудит 2026-11-23, независимое ревью: MAJOR-1).
   schedule:
     # Каждый понедельник 03:00 UTC — еженедельный full scan.
     - cron: "0 3 * * 1"
@@ -67,8 +71,17 @@ jobs:
         # -r src — рекурсивно по всему src/
         # -c .bandit — skip false positives (см. .bandit comments)
         # --severity-level medium — SARIF includes medium (для отчёта)
+        #
+        # P2 (аудит 2026-11-20): bandit завершается с кодом 1, если найдены
+        # находки MEDIUM+ (в src их 2, HIGH — 0). Шаг идёт под `bash -e`,
+        # поэтому раньше он падал на ПЕРВОЙ команде: ни SARIF не собирался,
+        # ни блокирующий HIGH-гейт не выполнялся, а upload-sarif падал с
+        # «Path does not exist: bandit.sarif». Код 1 означает «находки
+        # есть», а не «скан упал» — падение самого скана ловится проверкой
+        # непустого bandit.json.
         run: |
-          uv run bandit -r src -c .bandit -q -f json -o bandit.json --severity-level medium
+          uv run bandit -r src -c .bandit -q -f json -o bandit.json --severity-level medium || true
+          test -s bandit.json || { echo "::error::bandit не создал bandit.json — скан упал"; exit 2; }
           uv run python tools/checks/bandit_json_to_sarif.py bandit.json bandit.sarif
           uv run bandit -r src -c .bandit --severity-level high  # blocking gate on HIGH
 

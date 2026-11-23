@@ -25,6 +25,10 @@ on:
     branches: [master]
     tags: ["v*.*.*"]
   pull_request:
+  merge_group:
+    # Merge queue: обязательные workflow должны идти и на merge_group,
+    # иначе release-gate на merge_group не находит прогонов и падает
+    # структурно (аудит 2026-11-23, независимое ревью: MAJOR-1).
   workflow_dispatch:
 
 permissions:
@@ -49,7 +53,14 @@ jobs:
     permissions:
       contents: read
     outputs:
-      image: ${{ steps.meta.outputs.image }}
+      # P2 (аудит 2026-11-20): было `steps.meta.outputs.image` — у
+      # docker/metadata-action НЕТ выхода 'image' (выходы: tags/version/
+      # digest/labels/annotations/json), поэтому ref был пустым: образ
+      # собирался без тега, а trivy и cosign получали пустую ссылку.
+      # image — первичный (одиночный) ref для scan/sign;
+      # tags — полный список тегов для push.
+      image: ${{ steps.ref.outputs.ref }}
+      tags: ${{ steps.meta.outputs.tags }}
       digest: ${{ steps.build.outputs.digest }}
       labels: ${{ steps.meta.outputs.labels }}
 
@@ -73,6 +84,21 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Resolve primary image ref
+        id: ref
+        # Первичный ref берётся из выхода metadata-action 'tags' (первый
+        # тег) — он уже нормализован (имя репозитория в lowercase), в отличие
+        # от `${{ github.repository }}`.
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          primary="$(printf '%s\n' "$IMAGE_TAGS" | grep -v '^[[:space:]]*$' | head -n 1)"
+          if [ -z "$primary" ]; then
+            echo "::error::docker/metadata-action не вернул ни одного тега"
+            exit 1
+          fi
+          echo "ref=$primary" >> "$GITHUB_OUTPUT"
+
       - name: Build (load to local)
         id: build
         uses: docker/build-push-action@v6
@@ -83,8 +109,28 @@ jobs:
           load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          tags: ${{ steps.meta.outputs.image }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Save image artifact
+        # P2 (независимое ревью 2026-11-23, MINOR-7): образ сохраняется
+        # артефактом, чтобы job'ы scan/sign/push работали с ТЕМ ЖЕ
+        # байтами, что были собраны. Раньше образ пересобирался в каждом
+        # job'е — скан проверял не тот артефакт, который уходит в registry.
+        env:
+          IMAGE_REF: ${{ steps.ref.outputs.ref }}
+        run: |
+          mkdir -p /tmp/image-artifact
+          docker save "${IMAGE_REF}" | zstd -q -o /tmp/image-artifact/image.tar.zst
+          ls -lh /tmp/image-artifact/image.tar.zst
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: image-artifact
+          path: /tmp/image-artifact/image.tar.zst
+          retention-days: 1
+          if-no-files-found: error
 
   scan:
     name: Scan (Trivy)
@@ -102,13 +148,34 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Download image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: image-artifact
+          path: /tmp/image-artifact
+
+      - name: Load image into Docker
+        # P2 (независимое ревью 2026-11-23, MINOR-7): сканируется ровно
+        # тот образ, который собран в job'е build (артефакт), а не свежая
+        # пересборка из того же контекста: пересборка даёт другие байты
+        # (таймстемпы слоёв), и скан переставал быть авторитетным.
+        env:
+          IMAGE_REF: ${{ needs.build.outputs.image }}
+        run: |
+          zstd -q -d -c /tmp/image-artifact/image.tar.zst | docker load
+          docker image inspect "${IMAGE_REF}" --format '{{.Id}}'
+
       - name: Run Trivy image scan
         # P2 (аудит 2026-11-18): был `@master` — подвижная ветка вместо
         # релизного тега (см. security.yml). Заменён на релизный тег.
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
-          image: ${{ needs.build.outputs.image }}
+          # P2 (аудит 2026-11-20): вход action'а называется `image-ref`
+          # (`image` удалён из trivy-action) — GitHub отбрасывал неизвестный
+          # вход, и trivy получал scan-ref по умолчанию '.' →
+          # «could not parse reference: .» + отсутствующий trivy-image.sarif.
+          image-ref: ${{ needs.build.outputs.image }}
           format: sarif
           output: trivy-image.sarif
           severity: HIGH,CRITICAL
@@ -126,7 +193,11 @@ jobs:
     name: Sign (cosign keyless)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [build, scan]
+    # P2 (независимое ревью 2026-11-23): подпись выполняется ПОСЛЕ push —
+    # cosign подписывает образ в registry, а до push его там нет. Раньше
+    # sign стоял перед push и подписывал локальный digest сборки, что
+    # неработало. Подписывается фактически запушенный digest.
+    needs: [build, scan, push]
     if: github.event_name != 'pull_request'
     permissions:
       contents: read
@@ -146,7 +217,7 @@ jobs:
           cosign sign --yes \
             --output-signature image.sig \
             --output-certificate image.pem \
-            "${{ needs.build.outputs.image }}@${{ needs.build.outputs.digest }}"
+            "${{ needs.build.outputs.image }}@${{ needs.push.outputs.digest }}"
 
       - name: Upload signature artifact
         if: always()
@@ -163,11 +234,15 @@ jobs:
     name: Push (ghcr.io)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [build, sign]
+    needs: [build, scan]
     if: github.event_name != 'pull_request'
     permissions:
       contents: read
       packages: write
+    outputs:
+      # P2 (независимое ревью 2026-11-23): digest запушенного образа —
+      # по нему cosign подписывает образ в registry (job sign идёт после).
+      digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - name: Checkout
@@ -184,6 +259,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
+        # P2 (независимое ревью 2026-11-23, MINOR-7): push выполняется
+        # buildx-сборкой из того же контекста, поэтому байты отличаются от
+        # просканированного артефакта (таймстемпы слоёв). Побайтовая
+        # идентичность потребовала бы `docker push` из сохранённого
+        # артефакта — ценой buildx-provenance; решение оставляем владельцу
+        # pipeline, а сканирование уже авторитетно для собранного артефакта.
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -192,5 +274,7 @@ jobs:
           load: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          tags: ${{ needs.build.outputs.image }}
+          # P2 (аудит 2026-11-20): пушим ВСЕ теги metadata-action
+          # (master/latest/sha-*), а не один первичный ref.
+          tags: ${{ needs.build.outputs.tags }}
           labels: ${{ needs.build.outputs.labels }}

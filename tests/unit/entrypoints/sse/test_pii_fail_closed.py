@@ -39,9 +39,10 @@ class TestPiiStreamingFailClosedFlag:
 
     def test_flag_reads_runtime_value(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Значение флага доходит до обработчика через feature-flag service."""
-        from src.backend.core.feature_flags import get_feature_flag_service
-
-        from src.backend.core.feature_flags import FeatureFlagService
+        from src.backend.core.feature_flags import (
+            FeatureFlagService,
+            get_feature_flag_service,
+        )
 
         assert get_feature_flag_service() is not None
         # Сервис объявлен со ``__slots__ = ()`` → подменяем метод класса.

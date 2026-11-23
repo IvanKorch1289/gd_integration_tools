@@ -4,7 +4,7 @@
 # таргеты — read-only (анализ кодовой базы), не модифицируют состояние.
 
 .PHONY: check-waf-coverage check-waf-coverage-strict secrets-check-broker check-ai-safety \
-        sbom audit-deps audit-zap bandit-strict bandit-tls security security-full \
+        sbom audit-deps audit-requirements audit-zap bandit-strict bandit-tls security security-full \
         cosign-sign cosign-sign-all supply-chain-strict supply-chain-strict-fast \
         supply-chain-finale \
         check-feature-flags check-team-ownership \
@@ -76,7 +76,7 @@ contract-baseline-accept: ## OP-6: принять текущие контрак�
 bootstrap-admin: ## P0: создать/сбросить суперпользователя (пароль через stdin: `make bootstrap-admin < pw.txt`)
 	@$(UV_RUN) python manage.py bootstrap-admin --password-stdin
 
-sbom-diff-gate: ## OP-3: SBOM diff gate — fail on new copyleft; unknown licenses = WARN
+sbom-diff-gate: audit-requirements ## OP-3: SBOM diff gate — fail on new copyleft; unknown licenses = WARN
 	@$(INFO) "Running SBOM diff gate (current vs baseline)..."
 	@mkdir -p dist/sbom
 	# Лицензионный SBOM (generate_sbom.py читает dist-метаданные: 338/356 с license);
@@ -89,8 +89,13 @@ sbom-diff-gate: ## OP-3: SBOM diff gate — fail on new copyleft; unknown licens
 	# Отчёт pip-audit ПЕРЕСОБИРАЕТСЯ на каждом прогоне. Раньше строка была
 	# `test -f ... ||` — файл, созданный в прошлом окружении, молча переиспользовался,
 	# и гейт рапортовал CVE для пакетов, которых нет ни в venv, ни в SBOM.
-	$(UV_RUN) pip-audit --format json --output dist/pip-audit.json -r dist/audit-requirements.txt $(ALLOW) \
-		|| { $(ERROR) "pip-audit не выполнился — свежий отчёт обязателен"; exit 2; }
+	# P2 (аудит 2026-11-20): код возврата pip-audit (1 = «найдены CVE») НЕ
+	# является вердиктом этого гейта — вердикт выносит sbom_diff_gate.py
+	# (новые CVE vs baseline минус allowlist). Поэтому код 1 допускается, а
+	# падение самого сканера ловится проверкой свежего непустого отчёта.
+	@rm -f dist/pip-audit.json
+	$(UV_RUN) pip-audit --format json --output dist/pip-audit.json -r dist/audit-requirements.txt $(ALLOW) || true
+	@test -s dist/pip-audit.json || { $(ERROR) "pip-audit не выполнился — свежий отчёт обязателен"; exit 2; }
 	@$(UV_RUN) python tools/checks/sbom_diff_gate.py \
 		--current dist/sbom/sbom.cdx.json \
 		--baseline .baselines/sbom.baseline.json \
@@ -112,10 +117,29 @@ sbom-baseline-accept: ## OP-3: принять текущий SBOM как baselin
 	@cp dist/sbom/sbom.cdx.json .baselines/sbom.baseline.json
 	@$(SUCCESS) "Baseline принят: .baselines/sbom.baseline.json"
 
-audit-deps: ## 2026-10-13 (P0-1): pip-audit с runtime-only deps, исключает optional extras (rpa/ai/rag/mcp тянут pin-conflicts в lockfile)
+audit-deps: audit-requirements ## 2026-10-13 (P0-1): pip-audit с runtime-only deps, исключает optional extras (rpa/ai/rag/mcp тянут pin-conflicts в lockfile)
 	@$(INFO) "Running pip-audit (dist/pip-audit.json) on runtime-only requirements..."
 	@mkdir -p dist
 	@rm -f dist/pip-audit.json
+	@ALLOW=""; \
+	if [ -f .security/pip-audit-allowlist.txt ]; then \
+		for v in $$(grep -v '^#' .security/pip-audit-allowlist.txt | grep -v '^$$' || true); do \
+			ALLOW="$$ALLOW --ignore-vuln $$v"; \
+		done; \
+	fi; \
+	$(UV_RUN) pip-audit --strict --format json --output dist/pip-audit.json -r dist/audit-requirements.txt $$ALLOW
+	@test -s dist/pip-audit.json || { $(ERROR) "pip-audit не создал dist/pip-audit.json"; exit 2; }
+	@$(SUCCESS) "pip-audit report generated (dist/pip-audit.json, runtime-only)"
+
+# P2 (аудит 2026-11-20): единая подготовка dist/audit-requirements.txt для
+# pip-audit. Раньше файл создавался только в целях `sbom` и `audit-deps`, а
+# `sbom-diff-gate` (зовёт pip-audit с `-r dist/audit-requirements.txt`)
+# в CI запускался без него → «invalid requirements input» → exit 2.
+# Цель вынесена отдельно, чтобы подготовка requirements и сканирование CVE
+# были независимыми шагами (CVE-гейт — отдельный concern).
+audit-requirements: ## Подготовить dist/audit-requirements.txt (runtime-only, пины) для pip-audit
+	@$(INFO) "Preparing dist/audit-requirements.txt (runtime-only, pinned)..."
+	@mkdir -p dist
 	# uv export --no-dev --no-all-extras исключает ВСЕ [project.optional-dependencies].
 	# Раньше примером был deepteam (удалён Proposal 1, commit 7b6c9772f);
 	# теперь актуальные pin-conflict источники — rpa, ai-eval, rag, mcp (каждый
@@ -134,15 +158,6 @@ audit-deps: ## 2026-10-13 (P0-1): pip-audit с runtime-only deps, исключа
 	  | awk -F"==" "{v[\$$1]=\$$2} END {for (p in v) print p \"==\" v[p]}" \
 	  > dist/audit-requirements.txt' || \
 	  { $(ERROR) "uv export --no-dev --no-all-extras failed"; exit 2; }
-	@ALLOW=""; \
-	if [ -f .security/pip-audit-allowlist.txt ]; then \
-		for v in $$(grep -v '^#' .security/pip-audit-allowlist.txt | grep -v '^$$' || true); do \
-			ALLOW="$$ALLOW --ignore-vuln $$v"; \
-		done; \
-	fi; \
-	$(UV_RUN) pip-audit --strict --format json --output dist/pip-audit.json -r dist/audit-requirements.txt $$ALLOW
-	@test -s dist/pip-audit.json || { $(ERROR) "pip-audit не создал dist/pip-audit.json"; exit 2; }
-	@$(SUCCESS) "pip-audit report generated (dist/pip-audit.json, runtime-only)"
 
 cve-gate: ## Audit 2026-10-09 (DEPENDENCIES-P0-002) — fail-stop CVE-гейт для make ci
 	@$(INFO) "Running CVE gate (pip-audit + tools/pip_audit_gate.py)..."

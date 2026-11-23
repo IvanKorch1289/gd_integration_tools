@@ -7,6 +7,10 @@ on:
   push:
     branches: [master]
   pull_request:
+  merge_group:
+    # Merge queue: обязательные workflow должны идти и на merge_group,
+    # иначе release-gate на merge_group не находит прогонов и падает
+    # структурно (аудит 2026-11-23, независимое ревью: MAJOR-1).
 
 permissions:
   contents: read
@@ -44,7 +48,12 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync --locked
+        # P2 (аудит 2026-11-20): extra sources-cdc обязателен — в нём живёт
+        # sync-драйвер PostgreSQL (psycopg, дефолт database.sync_driver).
+        # Без него settings.model_dump() падает с DatabaseDriverError
+        # (fail-fast DSN-конструктора, ADR-0385 A8) — юнит-тесты и
+        # admin-эндпоинт конфигурации отдают 500.
+        run: uv sync --locked --extra sources-cdc
 
       - name: Python compileall gate (syntax-first, до Ruff)
         # Аудит 2026-09-21: syntax-проверки должны идти первыми и быть
@@ -337,7 +346,11 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Sync deps
-        run: uv sync --locked
+        # P2 (аудит 2026-11-20): extra sources-cdc обязателен — mutmut
+        # собирает статистику прогоном тестов, а тесты трогают
+        # settings.model_dump() → нужен psycopg (sync-драйвер PostgreSQL).
+        # Без драйвера mutmut не собирает stats и гейт падает.
+        run: uv sync --locked --extra sources-cdc
 
       - name: Restore mutation cache (mutants/)
         # Ключ — по хэшу мутируемых модулей + набора тестов; префикс

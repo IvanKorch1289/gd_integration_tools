@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
 from collections.abc import AsyncIterator
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
@@ -26,6 +26,7 @@ async def _clear_response_cache() -> AsyncIterator[None]:
     await cache.invalidate_pattern("cache:*")
     yield
     await cache.invalidate_pattern("cache:*")
+
 
 import pytest
 
