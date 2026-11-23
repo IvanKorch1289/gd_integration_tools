@@ -1,24 +1,39 @@
 name: image
 
 # Sprint 6 Devops: container image pipeline — buildx + cosign + Trivy + GHCR.
-# Template-only, working pipeline. Single-arch (linux/amd64); multi-arch —
-# дорожная карта вне scope этой задачи (Sprint 6 W1).
+# Single-arch (linux/amd64); multi-arch — вне scope.
 #
-# Triggers:
-#   * push to master            — полный pipeline (build → scan → sign → push);
-#   * tag v*.*.*                — release build с тем же pipeline;
-#   * pull_request              — build + scan (sign/push пропускаются через if);
-#   * workflow_dispatch         — manual run для ad-hoc верификаций.
+# ДВЕ ветки pipeline (аудит 2026-11-23, ЭТАП 1):
 #
-# Pipeline ordering (явные needs — защита от регрессий в test_image_workflow.py):
-#   build ──► scan ──► sign ──► push
-#   scan   блокирует push (exit-code: 1 на HIGH/CRITICAL);
-#   sign   блокирует push (push не стартует без подписи);
-#   push   и sign пропускаются на PR (нет права писать в GHCR/PR).
+#   Ревью (pull_request, merge_group) — только build + scan:
+#       build ──► scan (локальный образ)
+#   Публикация (push в master, тег v*.*.*):
+#       build_release ──► scan_release ──► sign ──► verify ──► promote
+#           │                 │             │        │          └─ выдача
+#           │                 │             │        └─ проверка подписи
+#           │                 │             └─ cosign sign
+#           │                 └─ Trivy по digest'у из registry
+#           └─ buildx build + push ПО DIGEST (без пользовательских тегов)
 #
-# Идемпотентность: GHA cache (type=gha) используется в обоих buildx-шагах
-# (build + push) — второй build переиспользует слои из первого, ~5x быстрее
-# cold-cache. Cosign keyless (OIDC) — без long-lived секретов в репо.
+# Почему так:
+#   * push идёт ДО sign: cosign подписывает МАНИФЕСТ в registry — подписать
+#     ещё не запушенный образ невозможно (старый порядок «sign → push» падал
+#     на «no such manifest» и блокировал публикацию целиком);
+#   * пользовательские теги (master/latest/sha-*/semver) выдаются ТОЛЬКО в
+#     job'е promote — до verify ни один тег в registry не появляется;
+#   * скан идёт по digest'у, который затем подписывается и публикуется:
+#     сканируется ровно тот артефакт, который уходит в registry (раньше
+#     push пересобирал образ, и просканированные байты не совпадали с
+#     опубликованными);
+#   * merge_group и pull_request не публикуют ничего: временный merge-коммит
+#     merge queue не должен получать теги в registry.
+#
+# Идентичность подписи: verify сверяет Subject сертификата с ЯКОРНЫМ
+# regex (репозиторий + конкретный workflow + ref), а не с «любой репозиторий
+# на github.com» — иначе подпись чужого workflow принималась бы за нашу.
+#
+# Идемпотентность: GHA cache (type=gha) в buildx; cosign keyless (OIDC) —
+# без long-lived секретов в репо.
 
 on:
   push:
@@ -44,25 +59,28 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  # ЯКОРНЫЙ regex Subject'а сертификата cosign (keyless, GitHub OIDC):
+  #   https://github.com/<owner>/<repo>/.github/workflows/image.yml@<ref>
+  # Владелец в claim'ах GitHub сохраняет исходный регистр ("IvanKorch1289"),
+  # поэтому класс символов допускает оба варианта написания. Реальный
+  # Subject офлайн не проверен (в окружении нет OIDC/cosign) — см. отчёт
+  # аудита: ENV_BLOCKED.
+  COSIGN_IDENTITY_REGEXP: >-
+    ^https://github\.com/[Ii][Vv][Aa][Nn][Kk][Oo][Rr][Cc][Hh]1289/gd_integration_tools/\.github/workflows/image\.yml@refs/(heads/master|tags/v[0-9]+\.[0-9]+\.[0-9]+)$
 
 jobs:
+  # ── Ветка ревью (pull_request, merge_group): build + scan ────────────────
   build:
-    name: Build (docker buildx)
+    name: "Build (review: локальный образ)"
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Публикации на ревью нет: ни тегов, ни подписей (нет права писать в
+    # registry, а merge-коммит merge queue публиковать нельзя).
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
     outputs:
-      # P2 (аудит 2026-11-20): было `steps.meta.outputs.image` — у
-      # docker/metadata-action НЕТ выхода 'image' (выходы: tags/version/
-      # digest/labels/annotations/json), поэтому ref был пустым: образ
-      # собирался без тега, а trivy и cosign получали пустую ссылку.
-      # image — первичный (одиночный) ref для scan/sign;
-      # tags — полный список тегов для push.
       image: ${{ steps.ref.outputs.ref }}
-      tags: ${{ steps.meta.outputs.tags }}
-      digest: ${{ steps.build.outputs.digest }}
-      labels: ${{ steps.meta.outputs.labels }}
 
     steps:
       - name: Checkout
@@ -76,28 +94,22 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Локальная сборка ревью: одного sha-тега достаточно, он не
+          # публикуется и нужен только для сканирования.
           tags: |
             type=sha,prefix=sha-,format=short
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Resolve primary image ref
+      - name: Resolve image ref
         id: ref
-        # Первичный ref берётся из выхода metadata-action 'tags' (первый
-        # тег) — он уже нормализован (имя репозитория в lowercase), в отличие
-        # от `${{ github.repository }}`.
         env:
           IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
         run: |
           primary="$(printf '%s\n' "$IMAGE_TAGS" | grep -v '^[[:space:]]*$' | head -n 1)"
-          if [ -z "$primary" ]; then
+          if [ -z "${primary}" ]; then
             echo "::error::docker/metadata-action не вернул ни одного тега"
             exit 1
           fi
-          echo "ref=$primary" >> "$GITHUB_OUTPUT"
+          echo "ref=${primary}" >> "$GITHUB_OUTPUT"
 
       - name: Build (load to local)
         id: build
@@ -113,10 +125,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Save image artifact
-        # P2 (независимое ревью 2026-11-23, MINOR-7): образ сохраняется
-        # артефактом, чтобы job'ы scan/sign/push работали с ТЕМ ЖЕ
-        # байтами, что были собраны. Раньше образ пересобирался в каждом
-        # job'е — скан проверял не тот артефакт, который уходит в registry.
+        # Артефакт нужен, чтобы job scan просканировал РОВНО те байты,
+        # которые собраны (пересборка даёт другие таймстемпы слоёв).
         env:
           IMAGE_REF: ${{ steps.ref.outputs.ref }}
         run: |
@@ -133,13 +143,63 @@ jobs:
           if-no-files-found: error
 
   scan:
-    name: Scan (Trivy)
+    name: "Scan (review: Trivy, локальный образ)"
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: build
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       security-events: write
+
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: image-artifact
+          path: /tmp/image-artifact
+
+      - name: Load image into Docker
+        env:
+          IMAGE_REF: ${{ needs.build.outputs.image }}
+        run: |
+          zstd -q -d -c /tmp/image-artifact/image.tar.zst | docker load
+          docker image inspect "${IMAGE_REF}" --format '{{.Id}}'
+
+      - name: Run Trivy image scan
+        # Вход action'а — `image-ref` (в `image` удалён из trivy-action):
+        # GitHub отбрасывал неизвестный вход, и trivy получал scan-ref
+        # по умолчанию '.' → «could not parse reference: .».
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ needs.build.outputs.image }}
+          format: sarif
+          output: trivy-image.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Upload Trivy SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+  # ── Ветка публикации (push в master / тег v*.*.*) ────────────────────────
+  build_release:
+    name: "Build (release: push по digest)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+      tags: ${{ steps.meta.outputs.tags }}
+      image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
     steps:
       - name: Checkout
@@ -148,34 +208,69 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Download image artifact
-        uses: actions/download-artifact@v4
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
-          name: image-artifact
-          path: /tmp/image-artifact
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load image into Docker
-        # P2 (независимое ревью 2026-11-23, MINOR-7): сканируется ровно
-        # тот образ, который собран в job'е build (артефакт), а не свежая
-        # пересборка из того же контекста: пересборка даёт другие байты
-        # (таймстемпы слоёв), и скан переставал быть авторитетным.
-        env:
-          IMAGE_REF: ${{ needs.build.outputs.image }}
-        run: |
-          zstd -q -d -c /tmp/image-artifact/image.tar.zst | docker load
-          docker image inspect "${IMAGE_REF}" --format '{{.Id}}'
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Пользовательские теги выдаются ТОЛЬКО в job'е promote — после
+          # скана и проверки подписи.
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push by digest
+        # PUSH ПО DIGEST: в registry попадает манифест без пользовательских
+        # тегов — до verify ни один тег не существует. Именно этот digest
+        # затем сканируется, подписывается и публикуется под тегами.
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./ops/compose/Dockerfile
+          push: true
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: ${{ steps.meta.outputs.labels }}
+
+  scan_release:
+    name: "Scan (release: Trivy по digest'у)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build_release
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Trivy image scan
-        # P2 (аудит 2026-11-18): был `@master` — подвижная ветка вместо
-        # релизного тега (см. security.yml). Заменён на релизный тег.
+        # Сканируется ТОТ ЖЕ digest, который затем подписывается и
+        # публикуется: иначе «просканирован» был бы один образ, а в
+        # registry ушёл бы другой.
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
-          # P2 (аудит 2026-11-20): вход action'а называется `image-ref`
-          # (`image` удалён из trivy-action) — GitHub отбрасывал неизвестный
-          # вход, и trivy получал scan-ref по умолчанию '.' →
-          # «could not parse reference: .» + отсутствующий trivy-image.sarif.
-          image-ref: ${{ needs.build.outputs.image }}
+          image-ref: ${{ needs.build_release.outputs.image }}@${{ needs.build_release.outputs.digest }}
           format: sarif
           output: trivy-image.sarif
           severity: HIGH,CRITICAL
@@ -193,26 +288,27 @@ jobs:
     name: Sign (cosign keyless)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # P2 (независимое ревью 2026-11-23): подпись выполняется ПОСЛЕ push —
-    # cosign подписывает образ в registry, а до push его там нет. Раньше
-    # ПОРЯДОК: push идёт ПЕРЕД sign. cosign подписывает манифест в
-    # registry — подписать то, чего ещё нет, технически невозможно
-    # (старый порядок «sign → push» падал на «no such manifest» и
-    # блокировал публикацию целиком).
-    #
-    # Гарантия «не публикуем неподписанное» сохранена в следующем job'е
-    # verify: он проверяет подпись запушенного digest и роняет workflow,
-    # если подписи нет. Недопустимо подписанный образ → workflow красный
-    # → релиз не выходит.
-    needs: [build, scan, push]
-    if: github.event_name != 'pull_request'
+    # Подпись ПОСЛЕ push: cosign подписывает манифест в registry — того, что
+    # ещё нет, подписать нельзя.
+    needs: [build_release, scan_release]
+    if: github.event_name == 'push'
     permissions:
       contents: read
+      # packages: write — cosign keyless КЛАДЁТ подпись в registry, это
+      # отдельная запись в OCI (нужен write, не только read).
+      packages: write
       id-token: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
@@ -220,11 +316,13 @@ jobs:
       - name: Cosign keyless sign
         env:
           COSIGN_EXPERIMENTAL: "1"
+          IMAGE_REF: ${{ needs.build_release.outputs.image }}
+          DIGEST: ${{ needs.build_release.outputs.digest }}
         run: |
           cosign sign --yes \
             --output-signature image.sig \
             --output-certificate image.pem \
-            "${{ needs.build.outputs.image }}@${{ needs.push.outputs.digest }}"
+            "${IMAGE_REF}@${DIGEST}"
 
       - name: Upload signature artifact
         if: always()
@@ -241,47 +339,54 @@ jobs:
     name: Verify signature
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Проверка подписи запушенного образа: workflow зелёный только если
-    # образ ПОДПИСАН. Это переносит гарантию «не публикуем неподписанное»
-    # на форму, которую позволяет cosign (подпись требует присутствия
-    # манифеста в registry).
-    needs: [build, scan, push, sign]
-    if: github.event_name != 'pull_request'
+    # Проверка ПОДПИСИ запушенного digest с ЯКОРНЫм identity: принимается
+    # только подпись ЭТОГО репозитория, ЭТОГО workflow и ЭТОГО ref.
+    # Прежний regex «https://github.com/.*/.*» принимал подпись любого
+    # репозитория на github.com (независимое ревью 2026-11-23).
+    needs: [build_release, sign]
+    if: github.event_name == 'push'
     permissions:
       contents: read
-      id-token: write
+      # packages: read — verify тянет манифест и подпись из registry.
+      packages: read
 
     steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
 
       - name: Verify image signature
         env:
-          IMAGE_REF: ${{ needs.build.outputs.image }}
+          COSIGN_EXPERIMENTAL: "1"
+          IMAGE_REF: ${{ needs.build_release.outputs.image }}
+          DIGEST: ${{ needs.build_release.outputs.digest }}
+          IDENTITY_REGEXP: ${{ env.COSIGN_IDENTITY_REGEXP }}
         run: |
           cosign verify \
-            --certificate-identity-regexp "https://github.com/.*/.*" \
+            --certificate-identity-regexp "${IDENTITY_REGEXP}" \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            "${IMAGE_REF}@${{ needs.push.outputs.digest }}"
+            "${IMAGE_REF}@${DIGEST}"
 
-  push:
-    name: Push (ghcr.io)
+  promote:
+    name: Promote (выдача тегов)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [build, scan]
-    if: github.event_name != 'pull_request'
+    timeout-minutes: 10
+    # Пользовательские теги (master/latest/sha-*/semver) выдаются ТОЛЬКО
+    # здесь — то есть ПОСЛЕ скана и проверки подписи. До этого момента в
+    # registry лежит только манифест по digest, без тегов.
+    needs: [build_release, verify]
+    if: github.event_name == 'push'
     permissions:
       contents: read
       packages: write
-    outputs:
-      # P2 (независимое ревью 2026-11-23): digest запушенного образа —
-      # по нему cosign подписывает образ в registry (job sign идёт после).
-      digest: ${{ steps.build.outputs.digest }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -292,23 +397,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
-        # P2 (независимое ревью 2026-11-23, MINOR-7): push выполняется
-        # buildx-сборкой из того же контекста, поэтому байты отличаются от
-        # просканированного артефакта (таймстемпы слоёв). Побайтовая
-        # идентичность потребовала бы `docker push` из сохранённого
-        # артефакта — ценой buildx-provenance; решение оставляем владельцу
-        # pipeline, а сканирование уже авторитетно для собранного артефакта.
-        id: build
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./ops/compose/Dockerfile
-          push: true
-          load: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          # P2 (аудит 2026-11-20): пушим ВСЕ теги metadata-action
-          # (master/latest/sha-*), а не один первичный ref.
-          tags: ${{ needs.build.outputs.tags }}
-          labels: ${{ needs.build.outputs.labels }}
+      - name: Promote digest to tags
+        env:
+          IMAGE_REF: ${{ needs.build_release.outputs.image }}
+          DIGEST: ${{ needs.build_release.outputs.digest }}
+          IMAGE_TAGS: ${{ needs.build_release.outputs.tags }}
+        run: |
+          set -euo pipefail
+          source="${IMAGE_REF}@${DIGEST}"
+          echo "Promote ${source}"
+          while IFS= read -r tag; do
+            if [ -z "${tag}" ]; then
+              continue
+            fi
+            case "${tag}" in
+              *@*) continue ;;
+            esac
+            echo "  -> ${tag}"
+            docker buildx imagetools create --tag "${tag}" "${source}"
+          done <<< "${IMAGE_TAGS}"

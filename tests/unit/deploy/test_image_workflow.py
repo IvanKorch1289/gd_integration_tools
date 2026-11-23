@@ -1,8 +1,9 @@
 """AST-валидация GitHub Actions workflow для container image pipeline.
 
-Sprint 6 Devops: ловит регрессии, при которых ``.github/workflows/image.yml``
-отсутствует, потерял jobs (build/scan/sign/push) или переключился с
-buildx+cosign+Trivy на другой стек без явного согласования.
+Sprint 6 Devops + аудит 2026-11-23 (ЭТАП 1): ловит регрессии, при которых
+``.github/workflows/image.yml`` потерял jobs, разорвал порядок
+«build → push по digest → scan → sign → verify → promote» или вернул
+не-якорный identity-регексп подписи.
 
 Использует ``yaml.safe_load`` (parse tree YAML 1.1) — yaml-парсер строит
 token-stream → events → nodes (полноценный AST для YAML); Python-модуль
@@ -13,19 +14,23 @@ token-stream → events → nodes (полноценный AST для YAML); Pyth
 Проверки:
     * файл существует и парсится как YAML;
     * workflow имеет ``name``, ``on``, ``jobs``, ``concurrency``, ``permissions``;
-    * permissions включает ``packages: write`` (push в GHCR);
-    * присутствуют 4 job'а: ``build``, ``scan``, ``sign``, ``push``;
-    * каждый job имеет ``runs-on`` и непустой ``steps``;
-    * build использует ``docker/build-push-action`` и ``docker/setup-buildx-action``;
-    * scan использует ``aquasecurity/trivy-action`` с severity HIGH,CRITICAL;
-    * sign использует ``sigstore/cosign-installer`` и/или ``cosign sign``;
-    * push логинится в ``ghcr.io`` через ``docker/login-action`` и пушит
-      через ``docker/build-push-action``;
-    * pipeline ordering: scan ждёт build, sign ждёт build+scan, push ждёт sign.
+    * permissions включает ``packages: write`` (push в GHCR) и ``id-token: write``;
+    * присутствуют 7 job'ов: ревью-ветка (build, scan) и ветка публикации
+      (build_release, scan_release, sign, verify, promote);
+    * ревью-ветка не публикует: ``load: true`` и ``push: false``;
+    * публикация идёт ПО DIGEST (``push-by-digest=true``) — пользовательских
+      тегов в registry до проверки подписи не появляется;
+    * сканируется, подписывается и публикуется ОДИН И ТОТ ЖЕ digest;
+    * verify сверяет identity по ЯКОРНОМУ regex: чужой репозиторий/workflow/
+      ref не проходит (регексп проверяется офлайн — реальный сертификат
+      cosign в офлайн-окружении недоступен, см. отчёт аудита: ENV_BLOCKED);
+    * ветка публикации запускается только на ``push`` — ни pull_request, ни
+      merge_group не подписывают и не публикуют.
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +42,21 @@ import yaml
 PROJECT_ROOT: Path = Path(__file__).resolve().parents[3]
 IMAGE_WORKFLOW: Path = PROJECT_ROOT / ".github" / "workflows" / "image.yml"
 
-REQUIRED_JOBS: frozenset[str] = frozenset({"build", "scan", "push", "sign", "verify"})
+#: Ветка ревью: сборка локального образа + скан, без публикации.
+REVIEW_JOBS: frozenset[str] = frozenset({"build", "scan"})
+
+#: Ветка публикации: push по digest → скан → подпись → проверка → теги.
+RELEASE_JOBS: frozenset[str] = frozenset(
+    {"build_release", "scan_release", "sign", "verify", "promote"}
+)
+
+REQUIRED_JOBS: frozenset[str] = REVIEW_JOBS | RELEASE_JOBS
+
+#: Subject сертификата cosign (keyless, GitHub OIDC) — ожидаемая форма.
+EXPECTED_SUBJECT: str = (
+    "https://github.com/IvanKorch1289/gd_integration_tools/"
+    ".github/workflows/image.yml@refs/heads/master"
+)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────
@@ -71,6 +90,33 @@ def _step_with(job: dict[str, Any], action_substring: str) -> list[dict[str, Any
     ]
 
 
+def _run_steps(job: dict[str, Any]) -> list[str]:
+    """Тексты всех ``run:``-шагов job'а."""
+    return [
+        step["run"]
+        for step in (job.get("steps") or [])
+        if isinstance(step, dict) and isinstance(step.get("run"), str)
+    ]
+
+
+def _job_text(job: dict[str, Any]) -> str:
+    """Всё текстовое содержимое job'а: run-шаги + значения env.
+
+    Digest передаётся в шаг через ``env:`` (``DIGEST: ${{ ... }}``), поэтому
+    проверка «job оперирует digest'ом из build_release» должна смотреть и
+    в env (job-level и step-level), а не только в текст run-шага.
+    """
+    chunks: list[str] = list(_run_steps(job))
+    envs = [job.get("env") or {}]
+    for step in job.get("steps") or []:
+        if isinstance(step, dict):
+            envs.append(step.get("env") or {})
+    for env in envs:
+        if isinstance(env, dict):
+            chunks.extend(str(value) for value in env.values())
+    return " ".join(chunks)
+
+
 def _needs_set(job: dict[str, Any]) -> set[str]:
     """Нормализует ``needs`` (str | list[str] | None) в set."""
     needs = job.get("needs")
@@ -81,6 +127,12 @@ def _needs_set(job: dict[str, Any]) -> set[str]:
     if isinstance(needs, list):
         return {n for n in needs if isinstance(n, str)}
     return set()
+
+
+def _job_if(job: dict[str, Any]) -> str:
+    """Условие запуска job'а строкой (пустая строка — без условия)."""
+    value = job.get("if")
+    return value if isinstance(value, str) else ""
 
 
 # ── Fixtures ───────────────────────────────────────────────────────────
@@ -163,7 +215,7 @@ def test_workflow_has_id_token_for_cosign(workflow: dict[str, Any]) -> None:
 
 
 def test_workflow_jobs_keys(workflow: dict[str, Any]) -> None:
-    """Присутствуют все 4 job'а: build, scan, sign, push."""
+    """Присутствуют все job'ы обеих веток pipeline."""
     jobs = workflow["jobs"]
     assert isinstance(jobs, dict), f"jobs должен быть мапом, got {type(jobs).__name__}"
     actual = set(jobs.keys())
@@ -191,7 +243,7 @@ def test_job_has_runs_on_and_steps(workflow: dict[str, Any], job_name: str) -> N
     )
 
 
-# ── per-job contract ───────────────────────────────────────────────────
+# ── ревью-ветка: build + scan, без публикации ──────────────────────────
 
 
 def test_build_job_uses_buildx(workflow: dict[str, Any]) -> None:
@@ -206,20 +258,23 @@ def test_build_job_uses_buildx(workflow: dict[str, Any]) -> None:
     )
 
 
-def test_build_job_loads_image_locally(workflow: dict[str, Any]) -> None:
-    """build job загружает образ в local daemon (для scan без повторной сборки).
+def test_review_build_loads_locally_without_push(workflow: dict[str, Any]) -> None:
+    """Ревью-сборка загружается в локальный daemon и НЕ пушится.
 
-    Проверка ``with.load: true`` в step'ах docker/build-push-action.
-    Без load: true downstream-jobs (scan) не получат образ — придётся
-    делать повторный build с push, что удваивает время pipeline.
+    На pull_request/merge_group публикации быть не должно: merge-коммит
+    merge queue не должен получать теги в registry (аудит 2026-11-23).
     """
     build = workflow["jobs"]["build"]
     build_steps = _step_with(build, "docker/build-push-action")
     assert build_steps, "build job: нет шагов docker/build-push-action"
     loads = [step.get("with", {}).get("load") for step in build_steps]
+    pushes = [step.get("with", {}).get("push") for step in build_steps]
     assert any(load is True for load in loads), (
         f"build job: docker/build-push-action должен иметь load: true "
         f"(без него scan-jobs не получит локальный образ), got loads={loads}"
+    )
+    assert all(push in (False, None) for push in pushes), (
+        f"build job (ревью) не должен пушить в registry, got pushes={pushes}"
     )
 
 
@@ -232,31 +287,82 @@ def test_scan_job_uses_trivy(workflow: dict[str, Any]) -> None:
 
 
 def test_scan_job_severity_blocks_high_critical(workflow: dict[str, Any]) -> None:
-    """scan job сканирует на HIGH+CRITICAL — иначе trivy не блокирует push.
+    """scan job сканирует на HIGH+CRITICAL — иначе trivy не блокирует публикацию.
 
     Severity ``HIGH,CRITICAL`` — минимальный блокирующий порог для
     container image pipeline (LOW/MEDIUM — review, не gate).
     """
-    scan = workflow["jobs"]["scan"]
-    trivy_steps = _step_with(scan, "aquasecurity/trivy-action")
-    assert trivy_steps, "scan job: нет шагов aquasecurity/trivy-action"
-    severities = [step.get("with", {}).get("severity") for step in trivy_steps]
-    matched = [
-        s for s in severities if isinstance(s, str) and "HIGH" in s and "CRITICAL" in s
-    ]
-    assert matched, (
-        "scan job: severity должен включать HIGH и CRITICAL "
-        f"(иначе не блокирует push), got severities={severities}"
-    )
+    for job_name in ("scan", "scan_release"):
+        scan = workflow["jobs"][job_name]
+        trivy_steps = _step_with(scan, "aquasecurity/trivy-action")
+        assert trivy_steps, f"{job_name} job: нет шагов aquasecurity/trivy-action"
+        severities = [step.get("with", {}).get("severity") for step in trivy_steps]
+        matched = [
+            s
+            for s in severities
+            if isinstance(s, str) and "HIGH" in s and "CRITICAL" in s
+        ]
+        assert matched, (
+            f"{job_name} job: severity должен включать HIGH и CRITICAL "
+            f"(иначе не блокирует публикацию), got severities={severities}"
+        )
 
 
 def test_scan_job_uploads_sarif(workflow: dict[str, Any]) -> None:
     """scan job загружает SARIF в Security tab (видимость для reviewer'ов)."""
-    scan = workflow["jobs"]["scan"]
-    assert _uses_step(scan, "github/codeql-action/upload-sarif"), (
-        "scan job должен загружать trivy SARIF через "
-        "github/codeql-action/upload-sarif (видимость в Security tab)"
+    for job_name in ("scan", "scan_release"):
+        scan = workflow["jobs"][job_name]
+        assert _uses_step(scan, "github/codeql-action/upload-sarif"), (
+            f"{job_name} job должен загружать trivy SARIF через "
+            "github/codeql-action/upload-sarif (видимость в Security tab)"
+        )
+
+
+# ── ветка публикации: push по digest → scan → sign → verify → promote ───
+
+
+def test_release_build_pushes_by_digest_without_tags(workflow: dict[str, Any]) -> None:
+    """Публикация идёт ПО DIGEST: пользовательских тегов в registry нет.
+
+    ``push-by-digest=true`` кладёт в registry только манифест по digest —
+    теги (master/latest/sha-*) выдаются только после проверки подписи
+    (job promote). Старая схема публиковала теги ДО скана и подписи, и
+    пересобирала образ (просканированные байты ≠ опубликованные).
+    """
+    build = workflow["jobs"]["build_release"]
+    build_steps = _step_with(build, "docker/build-push-action")
+    assert build_steps, "build_release job: нет шагов docker/build-push-action"
+    outputs = [str(step.get("with", {}).get("outputs", "")) for step in build_steps]
+    assert any("push-by-digest=true" in out for out in outputs), (
+        "build_release job: docker/build-push-action должен использовать "
+        f"push-by-digest=true (иначе теги публикуются до проверки подписи), "
+        f"got outputs={outputs}"
     )
+    assert all(
+        step.get("with", {}).get("tags") in (None, "") for step in build_steps
+    ), "build_release job: не должен задавать пользовательские теги напрямую"
+
+
+def test_scan_release_scans_the_signed_digest(workflow: dict[str, Any]) -> None:
+    """Скан, подпись и публикация работают с ОДНИМ И ТЕМ ЖЕ digest'ом.
+
+    Иначе «просканирован» один артефакт, а в registry ушёл другой.
+    """
+    scan = workflow["jobs"]["scan_release"]
+    trivy_steps = _step_with(scan, "aquasecurity/trivy-action")
+    assert trivy_steps, "scan_release job: нет шагов aquasecurity/trivy-action"
+    refs = [str(step.get("with", {}).get("image-ref", "")) for step in trivy_steps]
+    assert any("needs.build_release.outputs.digest" in ref for ref in refs), (
+        "scan_release job: image-ref должен указывать на digest из "
+        f"build_release, got refs={refs}"
+    )
+    for job_name in ("sign", "verify", "promote"):
+        job = workflow["jobs"][job_name]
+        runs = _job_text(job)
+        assert "needs.build_release.outputs.digest" in runs, (
+            f"{job_name} job должен оперировать digest'ом из build_release "
+            "(иначе подписывается/публикуется другой артефакт)"
+        )
 
 
 def test_sign_job_uses_cosign(workflow: dict[str, Any]) -> None:
@@ -280,35 +386,185 @@ def test_sign_job_uses_cosign(workflow: dict[str, Any]) -> None:
     )
 
 
-def test_push_job_targets_ghcr(workflow: dict[str, Any]) -> None:
-    """push job логинится в ghcr.io и пушит через docker/build-push-action.
+def test_sign_job_has_registry_write_permission(workflow: dict[str, Any]) -> None:
+    """sign job имеет ``packages: write`` — подпись пишется в registry.
 
-    Принимает как литерал ``ghcr.io``, так и ссылку на ``env.REGISTRY``
-    (DRY через workflow-level env: ``REGISTRY: ghcr.io``) — оба варианта
-    корректны для GitHub Actions, парсер yaml.safe_load видит их как
-    строки без resolve'а выражений.
+    Job-level ``permissions`` ЗАМЕНЯЮТ workflow-level, а не дополняют их:
+    без ``packages: write`` в sign job'е cosign не сможет положить
+    подпись в OCI (ошибка прав доступа, а не «нет токена»).
     """
-    push = workflow["jobs"]["push"]
-    assert _uses_step(push, "docker/build-push-action"), (
-        "push job должен использовать docker/build-push-action"
+    perms = workflow["jobs"]["sign"].get("permissions") or {}
+    assert isinstance(perms, dict), "permissions job'а sign должен быть мапом"
+    assert perms.get("packages") == "write", (
+        "sign job: packages должен быть 'write' (подпись пишется в registry), "
+        f"got perms={perms}"
     )
-    login_steps = _step_with(push, "docker/login-action")
-    assert login_steps, "push job должен делать docker/login-action перед push в GHCR"
-    registries = [step.get("with", {}).get("registry", "") for step in login_steps]
-    env_registry = workflow.get("env", {}).get("REGISTRY", "")
-    # Разрешаем литерал ``ghcr.io`` или env-ссылку ``${{ env.REGISTRY }}``,
-    # которая должна указывать на env.REGISTRY == "ghcr.io" (yaml.safe_load
-    # не resolve'ит ${{ ... }}, проверяем оба паттерна на сырых строках).
-    matched = [
-        r
-        for r in registries
-        if "ghcr.io" in r or (env_registry == "ghcr.io" and "REGISTRY" in r)
-    ]
-    assert matched, (
-        f"push job login registry должен указывать на ghcr.io "
-        f"(литерал или через env.REGISTRY), "
-        f"got registries={registries}, env.REGISTRY={env_registry!r}"
+
+
+def test_promote_job_creates_tags_after_verify(workflow: dict[str, Any]) -> None:
+    """Теги выдаются ТОЛЬКО после проверки подписи (job promote).
+
+    До verify в registry лежит лишь манифест по digest — ни один
+    пользовательский тег (master/latest/sha-*) не существует.
+    """
+    promote = workflow["jobs"]["promote"]
+    needs_set = _needs_set(promote)
+    assert "verify" in needs_set, (
+        f"promote job должен depends_on: verify, got needs={sorted(needs_set)}"
     )
+    runs = " ".join(_run_steps(promote))
+    assert "imagetools create --tag" in runs, (
+        "promote job должен создавать теги через "
+        "'docker buildx imagetools create --tag' (перенос тега на "
+        "проверенный digest), "
+        f"got runs={runs!r}"
+    )
+
+
+def test_only_promote_issues_user_tags(workflow: dict[str, Any]) -> None:
+    """Ни один job, кроме promote, не выдаёт пользовательские теги.
+
+    Регрессия, которую закрывает проверка: теги появлялись в registry
+    до скана и подписи (job push в старой схеме).
+    """
+    for job_name, job in workflow["jobs"].items():
+        runs = " ".join(_run_steps(job))
+        creates_tag = "imagetools create --tag" in runs
+        if job_name == "promote":
+            continue
+        assert not creates_tag, (
+            f"job '{job_name}' не должен выдавать пользовательские теги "
+            "(это делает только promote — после verify)"
+        )
+
+
+# ── identity подписи ───────────────────────────────────────────────────
+
+
+def test_verify_uses_anchored_identity_regexp(workflow: dict[str, Any]) -> None:
+    """verify сверяет Subject по ЯКОРНОМУ regex, а не «любой репозиторий».
+
+    Прежний ``https://github.com/.*/.*`` принимал подпись ЛЮБОГО workflow
+    на github.com (независимое ревью 2026-11-23: MAJOR). Якорь обязателен:
+    репозиторий + конкретный workflow + ref.
+    """
+    env = workflow.get("env") or {}
+    pattern = env.get("COSIGN_IDENTITY_REGEXP")
+    assert isinstance(pattern, str) and pattern, (
+        "image.yml env.COSIGN_IDENTITY_REGEXP обязателен: verify должен "
+        f"сверять identity по якорному regex, got env={env}"
+    )
+    assert pattern.startswith("^") and pattern.endswith("$"), (
+        f"identity regex должен быть якоренным (^...$), got {pattern!r}"
+    )
+    assert ".*" not in pattern, (
+        "identity regex не должен содержать '.*' (принимает подпись любого "
+        f"репозитория), got {pattern!r}"
+    )
+    assert "gd_integration_tools" in pattern, (
+        f"identity regex должен фиксировать репозиторий, got {pattern!r}"
+    )
+    assert ".github/workflows/image.yml" in pattern.replace("\\", ""), (
+        f"identity regex должен фиксировать конкретный workflow, got {pattern!r}"
+    )
+
+
+def test_verify_step_passes_identity_regexp(workflow: dict[str, Any]) -> None:
+    """verify передаёт identity regex в cosign и проверяет OIDC issuer."""
+    verify = workflow["jobs"]["verify"]
+    runs = " ".join(_run_steps(verify))
+    assert "cosign verify" in runs, "verify job должен вызывать 'cosign verify'"
+    assert "--certificate-identity-regexp" in runs, (
+        "verify job должен передавать --certificate-identity-regexp в cosign, "
+        f"got runs={runs!r}"
+    )
+    assert "--certificate-oidc-issuer" in runs, (
+        "verify job должен передавать --certificate-oidc-issuer "
+        f"(иначе принимается подпись от другого issuer), got runs={runs!r}"
+    )
+
+
+def test_identity_regexp_accepts_expected_subject(workflow: dict[str, Any]) -> None:
+    """Регексп принимает Subject нашего workflow и оба регистра владельца.
+
+    Проверка офлайн: реальный сертификат cosign в офлайн-окружении
+    недоступен (нет OIDC/cosign) — поэтому проверяем сам регексп.
+    """
+    pattern = workflow["env"]["COSIGN_IDENTITY_REGEXP"]
+    compiled = re.compile(pattern)
+    assert compiled.match(EXPECTED_SUBJECT), (
+        f"identity regex должен принимать Subject нашего workflow: "
+        f"{EXPECTED_SUBJECT!r}, pattern={pattern!r}"
+    )
+    lowered = EXPECTED_SUBJECT.replace("IvanKorch1289", "ivankorch1289")
+    assert compiled.match(lowered), (
+        "identity regex должен принимать Subject с владельцем в нижнем "
+        f"регистре (claim'ы GitHub могут быть lowercased): {lowered!r}"
+    )
+
+
+@pytest.mark.parametrize(
+    "foreign_subject",
+    [
+        "https://github.com/attacker/evil/.github/workflows/image.yml@refs/heads/master",
+        "https://github.com/IvanKorch1289/gd_integration_tools/"
+        ".github/workflows/other.yml@refs/heads/master",
+        "https://github.com/IvanKorch1289/gd_integration_tools/"
+        ".github/workflows/image.yml@refs/heads/feature-x",
+        "https://github.com/IvanKorch1289/gd_integration_tools/"
+        ".github/workflows/image.yml@refs/tags/v1.2",
+    ],
+)
+def test_identity_regexp_rejects_foreign_subjects(
+    workflow: dict[str, Any], foreign_subject: str
+) -> None:
+    """Негативная проверка: чужая подпись не проходит verify.
+
+    Офлайн-проверка регексп'а (реальная подпись в офлайне недоступна —
+    ENV_BLOCKED). Чужой репозиторий, чужой workflow и недопустимый ref
+    обязаны отвергаться.
+    """
+    pattern = workflow["env"]["COSIGN_IDENTITY_REGEXP"]
+    compiled = re.compile(pattern)
+    assert not compiled.match(foreign_subject), (
+        f"identity regex не должен принимать чужой Subject: {foreign_subject!r}"
+    )
+
+
+# ── события: публикация только по push ─────────────────────────────────
+
+
+@pytest.mark.parametrize("job_name", sorted(RELEASE_JOBS))
+def test_release_jobs_only_on_push(workflow: dict[str, Any], job_name: str) -> None:
+    """Ветка публикации запускается только на ``push``.
+
+    Ни pull_request, ни merge_group не подписывают и не публикуют:
+    merge-коммит merge queue — временный, теги в registry ему не нужны
+    (аудит 2026-11-23).
+    """
+    condition = _job_if(workflow["jobs"][job_name])
+    assert "github.event_name == 'push'" in condition, (
+        f"job '{job_name}' должен запускаться только по push, got if={condition!r}"
+    )
+    assert "pull_request" not in condition, (
+        f"job '{job_name}' не должен запускаться на pull_request, got if={condition!r}"
+    )
+    assert "merge_group" not in condition, (
+        f"job '{job_name}' не должен запускаться на merge_group, got if={condition!r}"
+    )
+
+
+@pytest.mark.parametrize("job_name", sorted(RELEASE_JOBS))
+def test_release_jobs_not_needed_by_review_branch(
+    workflow: dict[str, Any], job_name: str
+) -> None:
+    """Ревью-ветка не зависит от ветки публикации."""
+    for review_job in sorted(REVIEW_JOBS):
+        needs_set = _needs_set(workflow["jobs"][review_job])
+        assert job_name not in needs_set, (
+            f"job '{review_job}' (ревью) не должен depends_on: {job_name} "
+            f"(на PR публикации нет), got needs={sorted(needs_set)}"
+        )
 
 
 # ── pipeline ordering (depends_on) ─────────────────────────────────────
@@ -323,50 +579,43 @@ def test_scan_depends_on_build(workflow: dict[str, Any]) -> None:
     )
 
 
-def test_sign_depends_on_build_scan_and_push(workflow: dict[str, Any]) -> None:
-    """sign ждёт build (образ), scan (блокирующая уязвимость = нет push) и push.
+def test_scan_release_depends_on_build_release(workflow: dict[str, Any]) -> None:
+    """scan_release ждёт build_release (нужен digest из registry)."""
+    needs_set = _needs_set(workflow["jobs"]["scan_release"])
+    assert "build_release" in needs_set, (
+        f"scan_release job должен depends_on: build_release, "
+        f"got needs={sorted(needs_set)}"
+    )
+
+
+def test_sign_depends_on_build_and_scan(workflow: dict[str, Any]) -> None:
+    """sign ждёт build (образ в registry) и scan (блокирующая уязвимость).
 
     Порядок «push → sign» вынужден: cosign подписывает МАНИФЕСТ в registry,
-    подписать ещё не запушенный образ технически невозможно (старый порядок
-    «sign → push» падал на «no such manifest» и блокировал публикацию).
-    Гарантия «не публикуем неподписанное» перенесена в job verify.
+    подписать ещё не запушенный образ технически невозможно.
     """
     needs_set = _needs_set(workflow["jobs"]["sign"])
-    for required in ("build", "scan", "push"):
+    for required in ("build_release", "scan_release"):
         assert required in needs_set, (
             f"sign job должен depends_on: {required}, got needs={sorted(needs_set)}"
         )
 
 
-def test_push_depends_on_scan_not_on_sign(workflow: dict[str, Any]) -> None:
-    """push ждёт scan (уязвимость блокирует публикацию), но не sign.
-
-    Связка push → sign означала бы, что публикация заблокирована до
-    подписи, а подписать непушенный образ нельзя: pipeline переставал
-    работать целиком. Подпись и проверка подписи идут после push
-    (см. test_signature_is_verified).
-    """
-    needs_set = _needs_set(workflow["jobs"]["push"])
-    assert "scan" in needs_set, (
-        f"push job должен depends_on: scan, got needs={sorted(needs_set)}"
-    )
-    assert "sign" not in needs_set, (
-        f"push не должен depends_on: sign (подпись идёт после публикации), "
-        f"got needs={sorted(needs_set)}"
+def test_verify_depends_on_sign(workflow: dict[str, Any]) -> None:
+    """verify ждёт sign — без подписи проверять нечего."""
+    needs_set = _needs_set(workflow["jobs"]["verify"])
+    assert "sign" in needs_set, (
+        f"verify job должен depends_on: sign, got needs={sorted(needs_set)}"
     )
 
 
 def test_signature_is_verified(workflow: dict[str, Any]) -> None:
-    """verify ждёт sign и проверяет подпись запушенного образа.
+    """verify job проверяет подпись запушенного образа.
 
     Это носитель гарантии «не выходит неподписанный образ»: workflow зелёный
     только если подпись предъявлена и проверена.
     """
     verify = workflow["jobs"]["verify"]
-    needs_set = _needs_set(verify)
-    assert "sign" in needs_set, (
-        f"verify job должен depends_on: sign, got needs={sorted(needs_set)}"
-    )
     has_verify_call = any(
         isinstance(step, dict)
         and isinstance(step.get("run"), str)
