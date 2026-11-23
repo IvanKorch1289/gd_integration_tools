@@ -105,6 +105,35 @@ def test_allowlist_filter_reduces_findings() -> None:
     )
 
 
+def test_all_findings_classified() -> None:
+    """Инвариант Round 12/13: 100 % findings классифицированы (0 unclassified).
+
+    Регрессия 2026-11-20: две рефакторизации разнесли код по новым файлам,
+    а allowlist остался с устаревшими путями — гейт увидел 40 unclassified
+    findings (инвариант «100 % classified» из 7e1e7c6e3 был нарушен без
+    явного сигнала). Тест фиксирует инвариант: любой новый unclassified
+    finding → падение теста → адресовать (fix либо versioned allowlist entry
+    с owner/reason/review_date).
+    """
+    result = _run_gate(["--json"])
+    import json
+
+    data = json.loads(result.stdout)
+    assert data["total_missing_filter_unclassified"] == 0, (
+        f"Есть unclassified missing-tenant-filter findings: "
+        f"{data['total_missing_filter_unclassified']}. "
+        f"Классифицируй их (fix или allowlist entry) до следующего прогона."
+    )
+    assert data["total_no_tenant_id_unclassified"] == 0, (
+        f"Есть unclassified ORM models без tenant_id: "
+        f"{data['total_no_tenant_id_unclassified']}."
+    )
+    assert data["total_direct_get_unclassified"] == 0, (
+        f"Есть unclassified прямых TenantContext.get(): "
+        f"{data['total_direct_get_unclassified']}."
+    )
+
+
 def test_orm_models_allowlisted() -> None:
     """ORM models без tenant_id column должны быть allowlisted (system-managed)."""
     result = _run_gate(["--json"])

@@ -1315,3 +1315,83 @@ allowlist:
     review_date: 2027-03-25
     added_at: 2026-09-25
 
+# === Round 13 additions (20.11.2026 — восстановление инварианта «100% classified») ===
+  #
+  # Round 12 закрыл классификацию (225 → 0 unclassified, коммит 7e1e7c6e3).
+  # Две последующие рефакторизации разнесли код по новым файлам и оставили
+  # allowlist с устаревшими путями → гейт снова увидел 40 unclassified
+  # findings. Это регрессия инварианта классификации, а не новая дыра
+  # в tenant-изоляции: ниже — доказательство по каждой позиции.
+
+  # --- Wave 4.3 (8712f3640): SQLAlchemyRepository разбит на миксины ---
+  # Код CRUD/версий переехал из allowlisted-файла base/sqlalchemy.py в новые
+  # модули. Tenant-скоупинг НЕ переносится в вызовы: он применяется централизованно
+  # глобальным listener'ом before_execute (apply_tenant_filter, ADR-0383/0428/0448),
+  # который добавляет tenant-предикат в _filter_statement для КАЖДОГО ORM-statement
+  # на main-скоупе. Сессии миксинов берутся из main_session_manager (main-скоуп) →
+  # guard применяется; явный предикат в миксине был бы дублированием.
+  - file: src/backend/infrastructure/repositories/base/crud_mixin.py
+    reason: >
+      Base CRUD-миксин SQLAlchemyRepository (generic get/list/count/add/update/delete).
+      Tenant-скоупинг применяется централизованно: глобальный before_execute
+      listener apply_tenant_filter() добавляет tenant-предикат в _filter_statement
+      для каждого ORM-statement на main-скоупе (ADR-0383/0428/0448).
+      Сессии — из main_session_manager, т.е. main-скоуп → guard применяется.
+      Явный предикат в миксине не нужен. Не user-data API callsite.
+    owner: core-infra
+    review_date: 2027-03-25
+    added_at: 2026-11-20
+
+  - file: src/backend/infrastructure/repositories/base/helpers.py
+    reason: >
+      RepositoryHelper (вынесен из SQLAlchemyRepository в Wave 4.3, 8712f3640) —
+      generic execute/insert/update helpers. Tenant-скоупинг применяется централизованно
+      глобальным before_execute listener apply_tenant_filter() (_filter_statement),
+      ADR-0383/0428/0448; сессии — main-скоуп.
+    owner: core-infra
+    review_date: 2027-03-25
+    added_at: 2026-11-20
+
+  - file: src/backend/infrastructure/repositories/base/versioning_mixin.py
+    reason: >
+      VersioningMixin (вынесен из SQLAlchemyRepository в Wave 4.3, 8712f3640) —
+      чтение/восстановление версий сущности. Tenant-скоупинг применяется
+      централизованно глобальным before_execute listener apply_tenant_filter()
+      (_filter_statement), ADR-0383/0428/0448; сессии — main-скоуп.
+    owner: core-infra
+    review_date: 2027-03-25
+    added_at: 2026-11-20
+
+  # --- Волна 33 (LAYERS-инверсия): реализация AI-gateway переехала в core ---
+  # allowlist Round 12 указывал на src/backend/services/ai/gateway/client.py —
+  # после инверсии зависимостей там остался шим (15 LOC), а реализация
+  # (328 LOC) живёт в src/backend/core/ai/gateway/client.py. Файл не содержит
+  # ни ORM, ни сессий: это HTTP-клиент к LLM-провайдеру.
+  - file: src/backend/core/ai/gateway/client.py
+    reason: >
+      Реализация LiteLLM-gateway (переехала из services/ai/gateway в core/ai/gateway
+      при LAYERS-инверсии волны 33; в services остался шим). ORM/сессий в файле
+      нет — HTTP-клиент к LLM-провайдеру. Сканер срабатывает на подстроке
+      «select» в имени метода _select_cost_callback.
+    owner: ai
+    review_date: 2027-03-25
+    added_at: 2026-11-20
+
+  # --- Эвристические срабатывания (не ORM) ---
+  - file: src/backend/core/utils/image_safety.py
+    reason: >
+      Утилита проверки изображений (Pillow): защита от decompression-bomb.
+      ORM/сессий нет. Сканер срабатывает на подстроке «filter» в вызове
+      warnings.simplefilter(...) — это не построение запроса.
+    owner: core-utils
+    review_date: 2027-03-25
+    added_at: 2026-11-20
+
+  - file: src/frontend/streamlit_app/api_clients/logs.py
+    reason: >
+      Frontend thin-client к лог-эндпоинту (HTTP, не ORM). Сканер срабатывает
+      на подстроке «filter» в локальной переменной status_filter.
+      Frontend-слой ходит только через HTTP-фасады (arch-ratchet).
+    owner: frontend
+    review_date: 2027-03-25
+    added_at: 2026-11-20

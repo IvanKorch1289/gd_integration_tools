@@ -30,13 +30,12 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src"
-ALLOWLIST_PATH = (
-    REPO_ROOT / ".baselines" / "tenant_isolation_allowlist.yaml"
-)
+ALLOWLIST_PATH = REPO_ROOT / ".baselines" / "tenant_isolation_allowlist.yaml"
 
 
 def _load_tenant_allowlist() -> set[tuple[str, int]]:
@@ -101,8 +100,7 @@ def _is_finding_allowlisted(
     # Directory wildcard: file entries ending with / match any file under that dir.
     for allowed_file, allowed_line in allowlist:
         if allowed_file.endswith("/") and (
-            file == allowed_file.rstrip("/") or
-            file.startswith(allowed_file)
+            file == allowed_file.rstrip("/") or file.startswith(allowed_file)
         ):
             return True
     return False
@@ -414,6 +412,8 @@ def main(argv: list[str] | None = None) -> int:
         "total_no_tenant_id": len(no_tenant_id_findings),
         "total_missing_filter_allowlisted": len(missing_filter_allowlisted),
         "total_missing_filter_unclassified": len(missing_filter_unclassified),
+        "total_direct_get_allowlisted": len(direct_get_allowlisted),
+        "total_direct_get_unclassified": len(direct_get_unclassified),
         "total_no_tenant_id_allowlisted": len(no_tenant_id_allowlisted),
         "total_no_tenant_id_unclassified": len(no_tenant_id_unclassified),
         "allowlist_path": str(ALLOWLIST_PATH.relative_to(REPO_ROOT))
@@ -434,17 +434,23 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  ℹ️  {n}")
         print()
         if direct_get_unclassified:
-            print(f"Direct TenantContext.get() UNCLASSIFIED ({len(direct_get_unclassified)}):")
+            print(
+                f"Direct TenantContext.get() UNCLASSIFIED ({len(direct_get_unclassified)}):"
+            )
             for f in direct_get_unclassified[:5]:
                 print(f"  - {f['file']}:{f['line']}: {f['snippet'][:60]}")
             print()
         if no_tenant_id_unclassified:
-            print(f"ORM models w/o tenant_id UNCLASSIFIED ({len(no_tenant_id_unclassified)}):")
+            print(
+                f"ORM models w/o tenant_id UNCLASSIFIED ({len(no_tenant_id_unclassified)}):"
+            )
             for f in no_tenant_id_unclassified[:5]:
                 print(f"  - {f['file']}:{f['line']}: {f['snippet'][:60]}")
             print()
         if missing_filter_unclassified:
-            print(f"Missing tenant filter UNCLASSIFIED ({len(missing_filter_unclassified)}):")
+            print(
+                f"Missing tenant filter UNCLASSIFIED ({len(missing_filter_unclassified)}):"
+            )
             for f in missing_filter_unclassified[:5]:
                 print(f"  - {f['file']}:{f['line']}: {f['snippet'][:60]}")
             print()
