@@ -99,14 +99,20 @@ RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin appuser && \
     mkdir -p /app /app/logs /app/.run && \
     chown -R appuser:appuser /app
 
-COPY --from=builder --chown=appuser:appuser /app/.venv ./.venv
-COPY --from=builder --chown=appuser:appuser /app/src ./src
-COPY --from=builder --chown=appuser:appuser /app/manage.py ./manage.py
-COPY --from=builder --chown=appuser:appuser /app/alembic.ini ./alembic.ini
-COPY --from=builder --chown=appuser:appuser /app/src/config_profiles ./src/config_profiles
-COPY --from=builder --chown=appuser:appuser /app/extensions ./extensions
+# P2 (аудит prod-readiness, «профиль ресурсов»): права выставляются на
+# COPY (--chmod=750), а НЕ отдельным `chmod -R 750 /app` после копирования.
+# `chmod -R` меняет метаданные КАЖДОГО файла → Docker вынужден скопировать
+# весь предыдущий слой заново: venv-слой (1.15 ГБ) дублировался вторым
+# слоем такого же размера, образ раздувался вдвое (2.42 ГБ). Проверено на
+# минимальном образе: chmod -R → +60 МБ дубликат, COPY --chmod → слоя нет.
+COPY --from=builder --chown=appuser:appuser --chmod=750 /app/.venv ./.venv
+COPY --from=builder --chown=appuser:appuser --chmod=750 /app/src ./src
+COPY --from=builder --chown=appuser:appuser --chmod=750 /app/manage.py ./manage.py
+COPY --from=builder --chown=appuser:appuser --chmod=750 /app/alembic.ini ./alembic.ini
+COPY --from=builder --chown=appuser:appuser --chmod=750 /app/src/config_profiles ./src/config_profiles
+COPY --from=builder --chown=appuser:appuser --chmod=750 /app/extensions ./extensions
 
-RUN chmod -R 750 /app && \
+RUN chmod 750 /app && \
     find / -xdev -perm /6000 -type f -exec chmod a-s {} \; || true
 
 USER appuser
