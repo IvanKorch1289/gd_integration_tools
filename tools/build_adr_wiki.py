@@ -152,8 +152,9 @@ def _main() -> int:
     lines.extend(
         [
             "",
-            "См. также: [CHANGELOG.md](../../CHANGELOG.md),",
-            "[TECH_DEBT.md](../../../.shared/context/TECH_DEBT.md).",
+            # Ссылки на файлы вне docs/ не резолвятся mkdocs (--strict падает),
+            # поэтому пути даём inline-кодом: читаемость в репозитории сохранена.
+            "См. также: `CHANGELOG.md`, `.shared/context/TECH_DEBT.md`.",
             "",
         ]
     )

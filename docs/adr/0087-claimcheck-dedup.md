@@ -5,7 +5,7 @@
 **Authors:** K3
 **Sources:** роевой аудит 2026-06-08 (verify-analysis-claims), CLAUDE.md §EIP coverage
 **Supersedes:** S38 W1 (S38-ClaimCheckProcessor-S3-DI)
-**See also:** ADR-0086 (aiocache, sibling scope-reduction pattern), [eip/transformation.py](../../src/backend/dsl/engine/processors/eip/transformation.py)
+**See also:** ADR-0086 (aiocache, sibling scope-reduction pattern), `src/backend/dsl/engine/processors/eip/transformation.py`
 
 ## Context
 

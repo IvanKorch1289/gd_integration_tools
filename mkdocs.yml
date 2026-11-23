@@ -62,27 +62,27 @@ nav:
   - Home: index.md
   - Architecture: ARCHITECTURE.md
   - Getting Started: tutorials/00_getting_started.md
-  - Tutorials: tutorials/
-  - How-to Guides: how-to/
-  - Cookbooks: cookbooks/
-  - Runbooks: runbooks/
-  - Reference: reference/
-  - Explanation: explanation/
-  - Domain DSL: dsl/
-  - AI Platform: ai/
-  - Workflows: workflows/
-  - EntryPoints: entrypoints/
-  - Operations: ops/
-  - Migration: migration/
-  - ADRs: adr/
-  - API Reference: api/
-  - Architecture Details: architecture/
-  - Configuration: config/
-  - Deployment: deployment/
+  - Tutorials: tutorials/index.md
+  - How-to Guides: how-to/index.md
+  - Cookbooks: cookbooks/README.md
+  - Runbooks: runbooks/index.md
+  - Reference: reference/index.md
+  - Explanation: explanation/index.md
+  - Domain DSL: dsl/index.md
+  - AI Platform: ai/index.md
+  - Workflows: workflows/index.md
+  - EntryPoints: entrypoints/index.md
+  - Operations: ops/index.md
+  - Migration: migration/index.md
+  - ADRs: adr/INDEX.md
+  - API Reference: api/index.md
+  - Architecture Details: architecture/index.md
+  - Configuration: config/index.md
+  - Deployment: deployment/index.md
   - Backends: backends.md
-  - Analysis: analysis/
-  - Lessons Learned: lessons/
-  - Security: security/
+  - Analysis: analysis/index.md
+  - Lessons Learned: lessons/index.md
+  - Security: security/index.md
 
 extra:
   generator: false

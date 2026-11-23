@@ -23,5 +23,7 @@ cosign verify \
 
 ## Связанные политики
 
-* [SBOM policy](../../.security/sbom.policy.md)
-* [Cosign policy](../../.security/cosign.policy.md)
+Политики лежат вне `docs/`, поэтому в собранном сайте даём путями, а не ссылками:
+
+* SBOM policy — `.security/sbom.policy.md`
+* Cosign policy — `.security/cosign.policy.md`

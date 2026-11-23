@@ -155,19 +155,52 @@
   * якоря с кириллицей в `docs/ai/AGENT_GUIDE.md` и `docs/workflows/index.md` —
     проставлены явные `{#…}` (mkdocs генерировал пустые `_N`, ссылки работали
     только в GitHub-рендере).
-- **Осталось**: mkdocs nav (`mkdocs.yml` — вне зоны правки документации): 20
-  разделов объявлены как «каталог», а mkdocs 1.6 резолвит только файлы → в
-  `--strict` это 20 предупреждений; нужен либо явный перечень файлов в nav,
-  либо плагин section-index. Плюс 7 ссылок из `docs/**` на файлы вне `docs/`
-  (`README.md`, `CHANGELOG.md`, `.security/*.policy.md`, `.shared/context/*`,
-  `src/**`) — они корректны для чтения в репозитории, но не резолвятся в
-  собранном сайте.
+- **Осталось (на 2026-11-20 закрыто)**: mkdocs nav (`mkdocs.yml` — вне зоны правки
+  документации): 20 разделов объявлены как «каталог», а mkdocs 1.6 резолвит
+  только файлы → в `--strict` это 20 предупреждений; нужен либо явный перечень
+  файлов в nav, либо плагин section-index. Плюс 7 ссылок из `docs/**` на файлы
+  вне `docs/` (`README.md`, `CHANGELOG.md`, `.security/*.policy.md`,
+  `.shared/context/*`, `src/**`) — они корректны для чтения в репозитории, но
+  не резолвятся в собранном сайте.
+- **Исправлено 2026-11-20 (хвост G8 закрыт, строгая сборка зелёная)**:
+  * Воспроизведён реальный дефект: `mkdocs build --strict` падал с
+    **27 warnings** → `Aborted with 27 warnings in strict mode!`. Тем самым
+    CI-джоб `docs-publish.yml` (`uv run mkdocs build --clean --strict`) был
+    красным — это не «документационный хвост», а сломанный гейт;
+  * **nav (20 записей)**: mkdocs 1.6 резолвит только файлы, а разделы были
+    объявлены каталогами (`dsl/`, `adr/`, …) → 20 × «A reference to '…' is
+    included in the 'nav' configuration, which is not found». Исправлено на
+    реальные файлы: 17 разделов → `<dir>/index.md`, `cookbooks/` →
+    `cookbooks/README.md` (в разделе нет `index.md`), `adr/` → `adr/INDEX.md`
+    (канонический slot-индекс со ссылками на все 400 ADR; `adr/WIKI.md` —
+    хронологическая сводка, остаётся доступен);
+  * **7 ссылок на файлы вне `docs/`** заменены на inline-код путей: в
+    собранном сайте такие ссылки всё равно не резолвятся, а читаемость в
+    репозитории сохранена. Для генерируемого `docs/adr/WIKI.md` правка
+    внесена в **генератор** (`tools/build_adr_wiki.py`), WIKI пересобран;
+  * **новый `docs/runbooks/index.md`** — у раздела Runbooks не было точки входа
+    (25 плоских файлов); добавлена посадочная страница с группировкой по
+    сценариям;
+  * пересобраны оба ADR-индекса (`tools/build_adr_index.py`,
+    `tools/build_adr_wiki.py`) — они отстали от фактических 421 ADR-файлов;
+  * **попутно**: `tools/checks/check_tenant_isolation.py` — в обработчике
+    ошибки загрузки allowlist'а использовался `sys.stderr` без `import sys`
+    (латентный NameError в пути ошибки гейта) → добавлен импорт;
+  * **Итог**: `uv run mkdocs build --strict` → **exit 0, 0 warnings**
+    (было: abort на 27 warnings).
+- **Остаток**: 18 «дополнительных» ADR-документов вида `0109a-…`,
+  `0352.1-…` не попадают в `adr/INDEX.md` — генератор выделяет слоты только
+  по шаблону `^(\d{3,4})-` (первичные ADR). Файлы собираются и доступны в
+  сайте, но не связаны с индексом. Требует решения владельца: расширять
+  слот-семантику генератора или завести отдельный индекс addenda.
 - **Шаг**: волна doc-fix по §8 navigation audit (каждая правка — атомарный
   commit; числа — только из `manage.py` inventory).
 - **Done**: 0 битых путей в CLAUDE.md/mkdocs nav; согласованные числа actions.
+  **Выполнено 2026-11-20**: `uv run mkdocs build --strict` → 0 warnings, exit 0;
+  nav-ссылки резолвятся; 7 внешних ссылок заменены на inline-код путей.
 - **Риск**: AI-агенты/новые разработчики ориентируются на «источник правды»,
   которого не существует.
-- **Срок**: следующий спринт.
+- **Срок**: закрыто 2026-11-20 (хвост: индекс addenda ADR — на решение владельца).
 
 ## G9. 8 S20-scaffold pre-prod gates в WARN (требуют прод-трафика)
 
@@ -319,3 +352,22 @@
 
 Оставшиеся инфраструктурные: G1/G2/G6 — требуют CI-runner, prod-стенд, брокеры.
 Оставшиеся кодовые: G5(a) proto v2 (backlog), G8 docs хвост (backlog), G10 nav debt (backlog).
+
+---
+
+## Обновление 2026-11-20 (re-verification)
+
+| Изменение | Статус |
+|---|---|
+| G8 docs хвост → закрыт: `mkdocs build --strict` 27 warnings → **0**, exit 0 (CI-джоб `docs-publish.yml` был красным) | ✅ |
+| Tenant-allowlist инвариант «100 % classified» → восстановлен (40 unclassified → 0): дрейф allowlist после Wave 4.3 (`8712f3640`, разбиение `SQLAlchemyRepository` на миксины) и волны 33 (LAYERS-инверсия AI-gateway) | ✅ |
+| `tools/checks/check_tenant_isolation.py`: латентный `NameError` (`sys` без импорта) в пути ошибки гейта | ✅ |
+| `tools/checks/check_tenant_isolation.py`: JSON-отчёт дополнен счётчиками `total_direct_get_allowlisted/unclassified` | ✅ |
+| Регрессионный тест инварианта классификации (`test_all_findings_classified`) | ✅ |
+| G10 nav debt — доказательство мёртвости кандидатов (`core/tool_sandbox`, `dsl/audit_versioning`, `dsl/setup`, `entrypoints/email`, `entrypoints/scheduler`): production-импортёров нет, только собственный тест | 📋 в работу |
+| G13 / G12 — статус без изменений | — |
+
+Актуальный статус: **G8 закрыт**; остальные кодовые позиции — G5(a) proto v2,
+G10 nav debt, GAP-WF-4.5 (`SlaTracker`), G12 (app-level OPA/Casbin gateway).
+Инфраструктурные G1/G2/G6/G9 — вне репозитория (CI-runner, prod-стенд,
+брокеры, прод-трафик).
