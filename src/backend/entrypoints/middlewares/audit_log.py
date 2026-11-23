@@ -100,7 +100,11 @@ class AuditLogMiddleware:
             if not body_sent:
                 body_sent = True
                 return {"type": "http.request", "body": body_bytes, "more_body": False}
-            return {"type": "http.disconnect"}
+            # Дальше — настоящий receive. Фабриковать http.disconnect нельзя:
+            # Starlette (StreamingResponse.listen_for_disconnect) трактует его
+            # как «клиент отвалился» и отменяет поток ответа — SSE/streaming
+            # обрывался после первого чанка. Волна 2026-11-20.
+            return await receive()
 
         # Capture response status для audit.
         response_status: dict[str, int] = {"status": 0}

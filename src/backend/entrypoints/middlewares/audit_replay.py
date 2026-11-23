@@ -112,12 +112,22 @@ class AuditReplayMiddleware:
         # Prod-fix 2026-09-09 (M6-#3): replay ИДЕМПОТЕНТЕН — один-shot +
         # http.disconnect ломал цепочку из нескольких потребителей
         # (последний — FastAPI-парсер — получал disconnect → 422).
+        body_replayed = False
+
         async def replay_receive() -> Message:
-            return {
-                "type": "http.request",
-                "body": request_body_bytes,
-                "more_body": False,
-            }
+            nonlocal body_replayed
+            if not body_replayed:
+                body_replayed = True
+                return {
+                    "type": "http.request",
+                    "body": request_body_bytes,
+                    "more_body": False,
+                }
+            # После replay — настоящий receive. Повторять «http.request» по
+            # кругу нельзя: Starlette ждёт disconnect в цикле и без реального
+            # события крутится без await-точки, блокируя event loop; а
+            # фабрикованный disconnect обрывает поток ответа. Волна 2026-11-20.
+            return await receive()
 
         # Capture response для audit record.
         response_status: dict[str, int] = {"status": 0}

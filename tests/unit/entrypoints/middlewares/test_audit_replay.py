@@ -257,6 +257,49 @@ class TestAuditReplayMiddleware:
         assert captured_body["body"] == b"important-payload"
 
     @pytest.mark.asyncio
+    async def test_replay_receive_does_not_fabricate_disconnect(self) -> None:
+        """После replay тела disconnect приходит только из настоящего receive.
+
+        Фабрикованный ``http.disconnect`` Starlette
+        (``StreamingResponse.listen_for_disconnect``) трактует как «клиент
+        отвалился» и **отменяет поток ответа** — SSE/streaming обрывался
+        после первого чанка. Второй вызов receive обязан вернуть событие
+        upstream, а не подделанный disconnect.
+        """
+        upstream: list[dict] = [
+            {"type": "http.request", "body": b"important-payload", "more_body": False},
+            {"type": "http.request", "body": b"", "more_body": False},
+        ]
+
+        async def receive():
+            return upstream.pop(0)
+
+        captured: list[dict] = []
+
+        async def downstream(scope, receive, send):
+            captured.append(await receive())
+            captured.append(await receive())
+            await send({"type": "http.response.start", "status": 200, "headers": []})
+            await send({"type": "http.response.body", "body": b"ok"})
+
+        app = AsyncMock()
+        app.side_effect = downstream
+        mw = AuditReplayMiddleware(app)
+
+        with patch(
+            "src.backend.core.di.providers.get_redis_stream_client_provider",
+            return_value=AsyncMock(),
+        ):
+            send = AsyncMock()
+            await mw(_make_scope("POST", "/api"), receive, send)
+
+        assert captured[0]["body"] == b"important-payload", "первый вызов — replay тела"
+        assert captured[1].get("body") == b"", (
+            "второй вызов — событие настоящего receive, а не повтор тела "
+            "(иначе disconnect никогда не наступит)"
+        )
+
+    @pytest.mark.asyncio
     async def test_audit_failure_does_not_break_request(self) -> None:
         """Cycle 45 invariant: audit error → request всё равно проходит."""
         app = AsyncMock()

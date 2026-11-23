@@ -11,6 +11,9 @@ JSON traffic ~60% (Brotli vs GZIP +20-30% при quality=4).
   (или ``application/*+json``) и размером ≥ ``brotli_minimum_size``;
 * в response добавляются заголовки ``Content-Encoding: br`` и
   ``Vary: Accept-Encoding``;
+* потоковые ответы (несколько сообщений тела, ``more_body=True``) **не
+  сжимаются** — сжатие требует полного тела и потому убивает
+  инкрементальную доставку (SSE/producer);
 * GZIP fallback всё ещё работает (если клиент послал ``gzip`` но не
   ``br`` — отвечаем тем же GZipMiddleware ниже в pipeline).
 
@@ -37,6 +40,12 @@ class BrotliCompressionMiddleware:
         app: внутренний ASGI app.
         minimum_size: минимальный размер ответа (байты) для активации.
         quality: уровень сжатия brotli (0-11).
+
+    Notes:
+        Потоковые ответы (SSE, бесконечный producer) не сжимаются: сжатие
+        требует полного тела, а значит клиент не получил бы ни одного
+        события до конца потока. Такие ответы пробрасываются чанк за
+        чанком без ``Content-Encoding``.
 
     """
 
@@ -85,6 +94,10 @@ class BrotliCompressionMiddleware:
         * brotli-библиотека доступна;
         * Content-Type — JSON-семейство;
         * Body ≥ minimum_size.
+
+        Потоковый ответ (несколько сообщений тела, ``more_body=True``)
+        пробрасывается без сжатия: сжатие требует полного тела и потому
+        убивает инкрементальную доставку событий (SSE/producer).
         """
         if scope.get("type") != "http" or self._brotli is None:
             await self.app(scope, receive, send)
@@ -99,11 +112,13 @@ class BrotliCompressionMiddleware:
         response_started: list[bool] = [False]
         captured_status: list[int] = [200]
         captured_headers: list[list[tuple[bytes, bytes]]] = [[]]
+        captured_start: list[dict[str, Any] | None] = [None]
         passthrough: list[bool] = [False]
 
         async def _send(message: dict[str, Any]) -> None:
             msg_type = message.get("type")
             if msg_type == "http.response.start":
+                captured_start[0] = message
                 captured_status[0] = int(message.get("status", 200))
                 captured_headers[0] = list(message.get("headers", []))
                 response_started[0] = True
@@ -123,80 +138,39 @@ class BrotliCompressionMiddleware:
 
             if msg_type == "http.response.body":
                 if passthrough[0]:
-                    # Ответ уже закодирован ниже — не трогаем тело.
+                    # Ответ уже уходит клиенту как есть — тело не трогаем.
                     await send(message)
                     return
-                buffer.append(bytes(message.get("body", b"")))
                 if message.get("more_body"):
-                    return
-                # final chunk — решаем, сжимать или нет
-                full_body = b"".join(buffer)
-                if (
-                    len(full_body) >= self.minimum_size
-                    and self._is_json(captured_headers[0])
-                    and self._brotli is not None
-                ):
-                    # PERF-6.6 P33: brotli.compress — CPU-heavy (5-50ms для
-                    # bodies 100KB-1MB). Offload в ExecutorThread pool чтобы
-                    # не блокировать event loop.
-                    if len(full_body) >= 1024:
-                        import functools
-
-                        loop = asyncio.get_running_loop()
-                        compressed = await loop.run_in_executor(
-                            None,
-                            functools.partial(  # type: ignore[union-attr]
-                                self._brotli.compress, full_body, quality=self.quality
-                            ),
+                    # Потоковый ответ (SSE, бесконечный producer): сжатие
+                    # отключается. Сжатие требует полного тела, поэтому
+                    # буферизация убила бы инкрементальную доставку — клиент
+                    # не получил бы ни одного события до конца потока (для
+                    # бесконечного producer'а — никогда). start уходит как
+                    # есть (без content-encoding/content-length), чанки — по
+                    # мере поступления.
+                    #
+                    # Накопленное до этого досылается ПЕРВЫМ (симметрично
+                    # gzip): формально ситуация «финальный чанк, затем
+                    # more_body» невалидна по ASGI, но при неё порядок байт
+                    # не должен нарушаться (независимое ревью 2026-11-23,
+                    # MINOR-5).
+                    passthrough[0] = True
+                    if captured_start[0] is not None:
+                        await send(captured_start[0])
+                    for buffered in buffer:
+                        await send(
+                            {
+                                "type": "http.response.body",
+                                "body": buffered,
+                                "more_body": True,
+                            }
                         )
-                    else:
-                        compressed = self._brotli.compress(
-                            full_body, quality=self.quality
-                        )  # type: ignore[union-attr]
-                    headers = [
-                        (n, v)
-                        for n, v in captured_headers[0]
-                        if n.lower() not in (b"content-encoding", b"content-length")
-                    ]
-                    headers.append((b"content-encoding", b"br"))
-                    headers.append(
-                        (b"content-length", str(len(compressed)).encode("latin-1"))
-                    )
-                    # Добавим Vary
-                    has_vary = any(n.lower() == b"vary" for n, _ in headers)
-                    if not has_vary:
-                        headers.append((b"vary", b"Accept-Encoding"))
-                    await send(
-                        {
-                            "type": "http.response.start",
-                            "status": captured_status[0],
-                            "headers": headers,
-                        }
-                    )
-                    await send(
-                        {
-                            "type": "http.response.body",
-                            "body": compressed,
-                            "more_body": False,
-                        }
-                    )
+                    buffer.clear()
+                    await send(message)
                     return
-
-                # passthrough без сжатия
-                await send(
-                    {
-                        "type": "http.response.start",
-                        "status": captured_status[0],
-                        "headers": captured_headers[0],
-                    }
-                )
-                await send(
-                    {
-                        "type": "http.response.body",
-                        "body": full_body,
-                        "more_body": False,
-                    }
-                )
+                # Обычный ответ — копим тело целиком.
+                buffer.append(bytes(message.get("body", b"")))
                 return
 
             # любые другие message-типы пробрасываем как есть
@@ -204,6 +178,70 @@ class BrotliCompressionMiddleware:
                 await send(message)
 
         await self.app(scope, receive, _send)
+
+        # Downstream завершился — тело известно целиком, решаем «сжимать или
+        # нет». Раньше решение принималось по последнему message, из-за чего
+        # многочанковый ответ терял накопленные чанки.
+        if passthrough[0] or captured_start[0] is None:
+            # Ответ уже отправлен (потоковый / уже закодированный) либо
+            # downstream не отправил start — отправлять нечего.
+            return
+
+        full_body = b"".join(buffer)
+        if (
+            len(full_body) >= self.minimum_size
+            and self._is_json(captured_headers[0])
+            and self._brotli is not None
+        ):
+            # PERF-6.6 P33: brotli.compress — CPU-heavy (5-50ms для
+            # bodies 100KB-1MB). Offload в ExecutorThread pool чтобы
+            # не блокировать event loop.
+            if len(full_body) >= 1024:
+                import functools
+
+                loop = asyncio.get_running_loop()
+                compressed = await loop.run_in_executor(
+                    None,
+                    functools.partial(  # type: ignore[union-attr]
+                        self._brotli.compress, full_body, quality=self.quality
+                    ),
+                )
+            else:
+                compressed = self._brotli.compress(full_body, quality=self.quality)  # type: ignore[union-attr]
+            headers = [
+                (n, v)
+                for n, v in captured_headers[0]
+                if n.lower() not in (b"content-encoding", b"content-length")
+            ]
+            headers.append((b"content-encoding", b"br"))
+            headers.append((b"content-length", str(len(compressed)).encode("latin-1")))
+            # Добавим Vary
+            has_vary = any(n.lower() == b"vary" for n, _ in headers)
+            if not has_vary:
+                headers.append((b"vary", b"Accept-Encoding"))
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": captured_status[0],
+                    "headers": headers,
+                }
+            )
+            await send(
+                {"type": "http.response.body", "body": compressed, "more_body": False}
+            )
+            return
+
+        # passthrough без сжатия — уходит накопленное тело целиком.
+        await send(
+            {
+                "type": "http.response.start",
+                "status": captured_status[0],
+                "headers": captured_headers[0],
+            }
+        )
+        await send(
+            {"type": "http.response.body", "body": full_body, "more_body": False}
+        )
 
 
 __all__ = ("BrotliCompressionMiddleware",)

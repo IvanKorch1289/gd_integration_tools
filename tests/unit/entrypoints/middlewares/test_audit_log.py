@@ -331,6 +331,56 @@ class TestAuditLogMiddleware:
         assert captured_body["body"] == b"audit-payload"
 
     @pytest.mark.asyncio
+    async def test_replay_receive_does_not_fabricate_disconnect(self) -> None:
+        """После replay тела disconnect приходит только из настоящего receive.
+
+        Фабрикованный ``http.disconnect`` Starlette
+        (``StreamingResponse.listen_for_disconnect``) трактует как «клиент
+        отвалился» и **отменяет поток ответа** — SSE/streaming обрывался
+        после первого чанка. Поэтому второй вызов receive обязан вернуть
+        событие upstream, а не подделанный disconnect.
+        """
+        upstream: list[dict] = [
+            {"type": "http.request", "body": b"audit-payload", "more_body": False},
+            {"type": "http.request", "body": b"", "more_body": False},
+        ]
+
+        async def receive():
+            return upstream.pop(0)
+
+        captured: list[dict] = []
+
+        async def downstream(scope, receive, send):
+            captured.append(await receive())
+            captured.append(await receive())
+            await send({"type": "http.response.start", "status": 200, "headers": []})
+            await send({"type": "http.response.body", "body": b"ok"})
+
+        app = AsyncMock()
+        app.side_effect = downstream
+        mw = AuditLogMiddleware(app=app)
+        mw.logger = MagicMock()
+
+        with (
+            patch(
+                "src.backend.core.di.providers.get_redis_stream_client_provider",
+                return_value=AsyncMock(),
+            ),
+            patch(
+                "src.backend.core.di.providers.get_clickhouse_client_provider",
+                return_value=AsyncMock(),
+            ),
+        ):
+            send = AsyncMock()
+            await mw(_make_scope("POST", "/api"), receive, send)
+
+        assert captured[0]["body"] == b"audit-payload", "первый вызов — replay тела"
+        assert captured[1].get("body") == b"", (
+            "второй вызов — событие настоящего receive, а не фабрикованный "
+            "disconnect (иначе поток ответа обрывается)"
+        )
+
+    @pytest.mark.asyncio
     async def test_query_string_in_audit_event(self) -> None:
         """Query string извлекается из ASGI scope и добавляется в audit."""
         app = AsyncMock()
