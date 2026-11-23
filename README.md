@@ -58,20 +58,22 @@ Inline-числа в тексте README могут разойтись с фак
      Проверка актуальности (CI-гейт): `... --check` → exit 1 при расхождении с кодом.
      Правьте код, а не этот блок. -->
 
-**Снимок кода:** `d0079bdb2bcd` · сгенерировано 2026-11-19 11:39 UTC
+**Снимок кода:** `e8b3254dde7d` · сгенерировано 2026-11-23 13:29 UTC
 
 | Метрика | Значение | Источник |
 |---|---:|---|
-| HEAD | `d0079bdb2bcd` | `git rev-parse HEAD` |
-| Actions (runtime) | 132 | `ActionHandlerRegistry.list_actions()` после `create_app()` |
-| DSL-маршрутов (runtime) | 0 | `RouteRegistry.list_routes()` после `create_app()` |
+| HEAD | `e8b3254dde7d` | `git rev-parse HEAD` |
+| Actions (после create_app) | 132 | `ActionHandlerRegistry.list_actions()` после `create_app()` (без ASGI lifespan — см. `--json`) |
+| DSL-маршрутов (после create_app) | 0 | `RouteRegistry.list_routes()` после `create_app()` (без ASGI lifespan — см. `--json`) |
+| Плагинов загружено | n/a | манифестов в extensions/: 12 |
+| Lifespan | custom (0 startup / 0 shutdown) | `app.router.lifespan_context` / `on_startup` / `on_shutdown` |
 | Route-пакетов (static) | 7 | `routes/<name>/route.toml` на диске |
 | Протоколов | 17 | пакеты entrypoints: api, asyncapi, cdc, email, express, filewatcher, graphql, grpc, http3, mcp, mqtt, scheduler, soap, sse, stream, webhook, websocket |
 | Middleware в стеке | 37 | `len(app.user_middleware)` |
 | OpenAPI paths / schemas | 447 / 146 | `app.openapi()` |
-| Тестов собрано | 25856 | `pytest --collect-only -q` |
+| Тестов собрано | 25981 | `pytest --collect-only -q` |
 | Порог покрытия | 70% | `[tool.coverage.report] fail_under` |
-| Layer baseline | Нарушений: 0 новых  (файлов: 2601; debt: 0 legacy; contract: 3) | `tools/check_layers.py` |
+| Layer baseline | Нарушений: 0 новых  (файлов: 2599; debt: 0 legacy; contract: 3) | `tools/check_layers.py` |
 
 <!-- END GENERATED METRICS -->
 

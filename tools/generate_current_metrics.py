@@ -43,8 +43,10 @@ layer baseline               вывод ``tools/check_layers.py``
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as dt
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -84,7 +86,7 @@ def _git(*args: str) -> str:
             timeout=60,
         )
         return proc.stdout.strip() if proc.returncode == 0 else ""
-    except (OSError, subprocess.SubprocessError):
+    except OSError, subprocess.SubprocessError:
         return ""
 
 
@@ -133,7 +135,7 @@ def _pytest_count() -> str:
             check=False,
             timeout=1800,
         )
-    except (OSError, subprocess.SubprocessError):
+    except OSError, subprocess.SubprocessError:
         return "unavailable"
     for line in reversed(proc.stdout.strip().splitlines()):
         if "collected" in line:
@@ -173,7 +175,7 @@ def _layer_baseline() -> str:
             check=False,
             timeout=600,
         )
-    except (OSError, subprocess.SubprocessError):
+    except OSError, subprocess.SubprocessError:
         return "unavailable"
     for line in proc.stdout.splitlines():
         if "Нарушений" in line:
@@ -210,6 +212,163 @@ def _static_route_packages() -> int:
     return count
 
 
+def _plugin_metrics() -> dict[str, object]:
+    """Собрать метрики плагинов (детерминированные: состав extensions/).
+
+    Returns:
+        Словарь с числом обнаруженных манифестов и загруженных плагинов.
+    """
+    result: dict[str, object] = {"plugin_manifests": "n/a", "plugins_loaded": "n/a"}
+    try:
+        extensions_dir = Path(
+            os.environ.get("EXTENSIONS_DIR", PROJECT_ROOT / "extensions")
+        )
+        if extensions_dir.is_dir():
+            result["plugin_manifests"] = len(list(extensions_dir.rglob("plugin.toml")))
+    except Exception as exc:  # noqa: BLE001 — метрики не должны ронять инструмент
+        result["plugin_error"] = f"{type(exc).__name__}: {exc}"
+    return result
+
+
+def _loaded_plugins(app: object) -> dict[str, object]:
+    """Число загруженных плагинов — только у ЗАПУЩЕННОГО приложения.
+
+    PluginLoader требует явного DI или ``app.state.plugin_loader``, который
+    выставляется в startup-фазе. У собранного (``create_app()``) приложения
+    загрузчика ещё нет — это и есть разница между «собранное» и «запущенное».
+
+    Args:
+        app: Приложение (может быть ``None``).
+
+    Returns:
+        Словарь с числом загруженных плагинов либо ``n/a`` с причиной.
+    """
+    state = getattr(app, "state", None)
+    loader = getattr(state, "plugin_loader", None)
+    if loader is None:
+        return {
+            "plugins_loaded": "n/a",
+            "plugins_loaded_note": "загрузчик появляется только после startup",
+        }
+    try:
+        return {"plugins_loaded": len(loader.loaded())}
+    except Exception as exc:  # noqa: BLE001 — метрики не должны ронять инструмент
+        return {
+            "plugins_loaded": "n/a",
+            "plugins_loaded_error": f"{type(exc).__name__}: {exc}",
+        }
+
+
+def _lifespan_metrics(app: object) -> dict[str, object]:
+    """Посчитать startup/shutdown-хуки lifespan зарегистрированного приложения.
+
+    Это «сколько фаз запуска приложение обещает выполнить», а не «сколько
+    памяти они съедят» — измеряется без запуска lifespan, поэтому детерминировано.
+
+    Args:
+        app: Приложение, собранное ``create_app()``.
+
+    Returns:
+        Словарь с числом startup/shutdown-хуков.
+    """
+    router = getattr(app, "router", None)
+    if router is None:
+        return {"lifespan": "n/a", "lifespan_startup_handlers": "n/a"}
+    custom = getattr(router, "lifespan_context", None) is not None
+    return {
+        "lifespan": "custom" if custom else "default",
+        "lifespan_startup_handlers": len(getattr(router, "on_startup", []) or []),
+        "lifespan_shutdown_handlers": len(getattr(router, "on_shutdown", []) or []),
+    }
+
+
+def _environment_metrics() -> dict[str, object]:
+    """Собрать окруженческие метрики (зависят от машины — только для --json).
+
+    Returns:
+        Словарь с профилем развёртывания и числом включённых фич-флагов.
+    """
+    result: dict[str, object] = {
+        "deployment_profile": "n/a",
+        "enabled_features": "n/a",
+        "feature_flags_total": "n/a",
+    }
+    try:
+        from src.backend.core.config.profile import get_active_profile
+
+        result["deployment_profile"] = str(get_active_profile())
+    except Exception as exc:  # noqa: BLE001 — метрики не должны ронять инструмент
+        result["profile_error"] = f"{type(exc).__name__}: {exc}"
+    try:
+        from src.backend.core.config.features import feature_flags
+
+        flags = [f for f in type(feature_flags).model_fields]
+        result["feature_flags_total"] = len(flags)
+        result["enabled_features"] = sum(
+            1 for name in flags if bool(getattr(feature_flags, name, False) is True)
+        )
+    except Exception as exc:  # noqa: BLE001 — метрики не должны ронять инструмент
+        result["features_error"] = f"{type(exc).__name__}: {exc}"
+    return result
+
+
+def _started_app_metrics(timeout: float = 90.0) -> dict[str, object]:
+    """Измерить приложение ПОСЛЕ выполнения ASGI lifespan.
+
+    ``create_app()`` собирает приложение, но не запускает его: lifespan
+    (БД, кэш, планировщик) выполняется уже при старте сервера. Поэтому
+    «runtime»-метрики собранного приложения не равны метрикам запущенного.
+    Чтобы не блокировать инструмент (lifespan может поднимать инфраструктуру
+    или висеть), замер идёт в отдельном процессе с жёстким таймаутом.
+
+    Args:
+        timeout: Таймаут подпроцесса, секунды.
+
+    Returns:
+        Словарь с признаком успеха, числом маршрутов/действий и ошибкой.
+    """
+    script = (
+        "import asyncio, json\n"
+        "from src.backend.plugins.composition.app_factory import create_app\n"
+        "from src.backend.dsl.commands.registry import action_handler_registry\n"
+        "from src.backend.dsl.registry import route_registry\n"
+        "async def main():\n"
+        "    app = create_app()\n"
+        "    async with app.router.lifespan_context(app):\n"
+        "        print(json.dumps({\n"
+        "            'routes': len(route_registry.list_routes()),\n"
+        "            'actions': len(action_handler_registry.list_actions()),\n"
+        "        }))\n"
+        "asyncio.run(main())\n"
+    )
+    try:
+        proc = subprocess.run(  # noqa: S603 — фиксированная команда
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=PROJECT_ROOT,
+        )
+    except subprocess.TimeoutExpired:
+        return {"started": False, "error": f"таймаут {timeout:.0f} с на lifespan"}
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {"started": False, "error": f"{type(exc).__name__}: {exc}"}
+    if proc.returncode != 0:
+        return {
+            "started": False,
+            "error": (proc.stderr or "").strip()[-300:] or "lifespan не завершился",
+        }
+    for line in reversed(proc.stdout.splitlines()):
+        line = line.strip()
+        if line.startswith("{"):
+            try:
+                payload = json.loads(line)
+            except ValueError:
+                continue
+            return {"started": True, **payload}
+    return {"started": False, "error": "не удалось разобрать ответ подпроцесса"}
+
+
 def collect_metrics() -> dict[str, object]:
     """Собрать все метрики из фактического состояния кода.
 
@@ -228,6 +387,7 @@ def collect_metrics() -> dict[str, object]:
     }
 
     actions = routes = middleware = paths = schemas = "n/a"
+    app = None
     try:
         from src.backend.plugins.composition.app_factory import create_app
 
@@ -249,6 +409,10 @@ def collect_metrics() -> dict[str, object]:
     metrics["middleware_count"] = middleware
     metrics["openapi_paths"] = paths
     metrics["openapi_schemas"] = schemas
+    metrics.update(_plugin_metrics())
+    metrics.update(_loaded_plugins(locals().get("app")))
+    metrics.update(_lifespan_metrics(locals().get("app")))
+    metrics.update(_environment_metrics())
     return metrics
 
 
@@ -278,10 +442,18 @@ def render_block(metrics: dict[str, object]) -> str:
         "| Метрика | Значение | Источник |",
         "|---|---:|---|",
         f"| HEAD | `{head}` | `git rev-parse HEAD` |",
-        f"| Actions (runtime) | {metrics.get('action_count')} | "
-        "`ActionHandlerRegistry.list_actions()` после `create_app()` |",
-        f"| DSL-маршрутов (runtime) | {metrics.get('dsl_route_count')} | "
-        "`RouteRegistry.list_routes()` после `create_app()` |",
+        f"| Actions (после create_app) | {metrics.get('action_count')} | "
+        "`ActionHandlerRegistry.list_actions()` после `create_app()` "
+        "(без ASGI lifespan — см. `--json`) |",
+        f"| DSL-маршрутов (после create_app) | {metrics.get('dsl_route_count')} | "
+        "`RouteRegistry.list_routes()` после `create_app()` "
+        "(без ASGI lifespan — см. `--json`) |",
+        f"| Плагинов загружено | {metrics.get('plugins_loaded')} | "
+        f"манифестов в extensions/: {metrics.get('plugin_manifests')} |",
+        f"| Lifespan | {metrics.get('lifespan')} "
+        f"({metrics.get('lifespan_startup_handlers')} startup / "
+        f"{metrics.get('lifespan_shutdown_handlers')} shutdown) | "
+        "`app.router.lifespan_context` / `on_startup` / `on_shutdown` |",
         f"| Route-пакетов (static) | {metrics.get('static_route_packages')} | "
         "`routes/<name>/route.toml` на диске |",
         f"| Протоколов | {metrics.get('protocol_count')} | "
@@ -342,11 +514,24 @@ def main(argv: list[str] | None = None) -> int:
         "--check", action="store_true", help="только проверить актуальность (CI-гейт)"
     )
     mode.add_argument("--json", action="store_true", help="вывести метрики в JSON")
+    parser.add_argument(
+        "--started",
+        action="store_true",
+        help=(
+            "в режиме --json дополнительно измерить приложение ПОСЛЕ ASGI "
+            "lifespan (в отдельном процессе, с таймаутом)"
+        ),
+    )
     args = parser.parse_args(argv)
 
-    metrics = collect_metrics()
+    # Вывод приложения (structlog пишет в stdout) не должен попадать в stdout
+    # инструмента: в режиме --json stdout — это машинно-читаемый JSON.
+    with contextlib.redirect_stdout(sys.stderr):
+        metrics = collect_metrics()
 
     if args.json:
+        if args.started:
+            metrics["started_app"] = _started_app_metrics()
         print(json.dumps(metrics, ensure_ascii=False, indent=2, default=str))
         return 0
 

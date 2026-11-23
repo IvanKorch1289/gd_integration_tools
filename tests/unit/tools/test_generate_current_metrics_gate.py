@@ -16,9 +16,12 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import re
 from pathlib import Path
 from types import ModuleType
+
+import pytest
 
 _ROOT = Path(__file__).resolve().parents[3]
 _TOOL = _ROOT / "tools" / "generate_current_metrics.py"
@@ -163,3 +166,84 @@ class TestGateIsReachableFromCI:
             "make pr обязан вызывать docs-current-metrics-check, иначе README-метрики "
             "молча устаревают и CI-гейт не выполняется"
         )
+
+
+# ──────────── Различение «собранное» и «запущенное» приложение ────────────
+#
+# Аудит prod-readiness 2026-11-20, §7: метрики «runtime» собирались из
+# create_app() — то есть из СОБРАННОГО приложения, без ASGI lifespan.
+# Числа выглядели полнее, чем способ их получения: плагины и lifespan
+# доступны только запущенному приложению. Инструмент теперь различает эти
+# состояния и печатает в stdout чистый JSON (логи приложения → stderr).
+
+
+def test_json_mode_output_is_machine_parseable(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """stdout в режиме --json — валидный JSON (логи приложения не попадают).
+
+    Логи приложения (structlog пишет в stdout) не должны попадать в stdout
+    инструмента: иначе JSON невозможно разобрать программно.
+
+    Args:
+        capsys: Захват вывода.
+        monkeypatch: Фикстура pytest.
+    """
+    mod = _load_tool()
+
+    def _stub_collect() -> dict[str, object]:
+        # Имитация вывода приложения в stdout.
+        print('{"event":"app-log-line"}')
+        return {"action_count": 132}
+
+    monkeypatch.setattr(mod, "collect_metrics", _stub_collect)
+    assert mod.main(["--json"]) == 0
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert isinstance(payload, dict)
+    assert payload["action_count"] == 132
+
+
+def test_metrics_separate_constructed_app_from_started() -> None:
+    """Метрики различают собранное приложение и окружение запуска.
+
+    Args:
+        None.
+    """
+    mod = _load_tool()
+
+    # Детерминированные метрики собранного приложения.
+    plugins = mod._plugin_metrics()
+    assert "plugin_manifests" in plugins
+
+    # Плагины у собранного приложения недоступны (загрузчик появляется
+    # только после startup) — это и есть разница между состояниями.
+    loaded = mod._loaded_plugins(None)
+    assert loaded["plugins_loaded"] == "n/a"
+    assert "startup" in str(loaded["plugins_loaded_note"])
+
+    # Lifespan: приложение с собственным lifespan (on_startup пуст).
+    class _Router:
+        lifespan_context = object()
+        on_startup: list[object] = []
+        on_shutdown: list[object] = []
+
+    class _App:
+        router = _Router()
+        state = type("S", (), {})()
+
+    lifespan = mod._lifespan_metrics(_App())
+    assert lifespan["lifespan"] == "custom"
+    assert lifespan["lifespan_startup_handlers"] == 0
+
+
+def test_started_app_measurement_is_reported_without_raising() -> None:
+    """Замер запущенного приложения не подвешивает инструмент.
+
+    Args:
+        None.
+    """
+    mod = _load_tool()
+    result = mod._started_app_metrics(timeout=30.0)
+    assert "started" in result
+    assert isinstance(result["started"], bool)
