@@ -49,7 +49,10 @@ COPY pyproject.toml uv.lock ./
 # регистрируется 0 workflow-деклараций, даже когда стенд использует
 # LiteTemporalBackend. Поэтому extra входит в дефолт.
 #   docker build --build-arg UV_EXTRAS="dev-light sources-cdc workflow" ...
-ARG UV_EXTRAS="dev-light sources-cdc workflow"
+# db_drivers ОБЯЗАТЕЛЕН для прод-образа: без него нет clickhouse-connect
+# (транспорт аудита ClickHouse → «audit_silent_loss»: события аудита терялись
+# безвозвратно) и нет бинарного psycopg для sync-движка БД.
+ARG UV_EXTRAS="dev-light sources-cdc workflow db_drivers"
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-project \
         $(for extra in $UV_EXTRAS; do printf -- "--extra %s " "$extra"; done) && \
