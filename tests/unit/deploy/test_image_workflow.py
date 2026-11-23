@@ -117,6 +117,27 @@ def _run_steps(job: dict[str, Any]) -> list[str]:
     ]
 
 
+def _step_ids(job: dict[str, Any]) -> list[str | None]:
+    """Список ``id`` шагов job'а (None — шаг без id)."""
+    return [
+        step.get("id") if isinstance(step, dict) else None
+        for step in (job.get("steps") or [])
+    ]
+
+
+def _consumer_indices(job: dict[str, Any], token: str) -> list[int]:
+    """Индексы шагов, в ``with``/``env`` которых встречается token."""
+    found: list[int] = []
+    for index, step in enumerate(job.get("steps") or []):
+        if not isinstance(step, dict):
+            continue
+        blob = " ".join(str(value) for value in (step.get("with") or {}).values())
+        blob += " " + " ".join(str(value) for value in (step.get("env") or {}).values())
+        if token in blob:
+            found.append(index)
+    return found
+
+
 def _job_text(job: dict[str, Any]) -> str:
     """Всё текстовое содержимое job'а: run-шаги + значения env.
 
@@ -432,6 +453,12 @@ def test_image_name_is_normalized_to_lowercase(workflow: dict[str, Any]) -> None
                 continue
             for key, value in (step.get("with") or {}).items():
                 values.append((f"{job_name}.with.{key}", str(value)))
+            # env шага — тоже docker-ссылка (IMAGE_REF в sign/verify/promote);
+            # исключение — сам шаг нормализации, где REPO — законный вход.
+            if step.get("id") == "imagename":
+                continue
+            for key, value in (step.get("env") or {}).items():
+                values.append((f"{job_name}.env.{key}", str(value)))
         for key, value in (job.get("outputs") or {}).items():
             values.append((f"{job_name}.outputs.{key}", str(value)))
         for where, text in values:
@@ -453,6 +480,29 @@ def test_image_name_is_normalized_to_lowercase(workflow: dict[str, Any]) -> None
         "image.yml должен нормализовать имя репозитория в нижний регистр "
         "(tr '[:upper:]' '[:lower:]') перед использованием в docker-ссылках"
     )
+
+
+def test_normalization_step_precedes_its_consumers(workflow: dict[str, Any]) -> None:
+    """Шаг нормализации объявлен и расположен ДО своих потребителей.
+
+    Иначе ``steps.imagename.outputs.name`` пуст → ссылка вида «ghcr.io/»
+    → invalid reference (независимое ревью 2026-11-23, MINOR-3).
+    """
+    for job_name, job in workflow["jobs"].items():
+        consumers = _consumer_indices(job, "steps.imagename.outputs.name")
+        if not consumers:
+            continue
+        ids = _step_ids(job)
+        assert "imagename" in ids, (
+            f"job '{job_name}' использует steps.imagename.outputs.name, "
+            f"но шага с id='imagename' нет, got ids={ids}"
+        )
+        position = ids.index("imagename")
+        for consumer in consumers:
+            assert consumer > position, (
+                f"job '{job_name}': шаг нормализации (позиция {position}) должен "
+                f"идти раньше потребителя (позиция {consumer}), got ids={ids}"
+            )
 
 
 def test_scan_job_uses_trivy(workflow: dict[str, Any]) -> None:
@@ -630,11 +680,13 @@ def test_promote_preserves_digest_of_source(workflow: dict[str, Any]) -> None:
         for line in runs.splitlines()
         if line.strip() and not line.strip().startswith("#")
     )
-    assert "--prefer-index=false" in commands, (
-        "promote job обязан использовать --prefer-index=false: иначе тег "
-        "указывает на новый index, а не на подписанный манифест, "
-        f"got commands={commands!r}"
-    )
+    if "imagetools create" in commands:
+        # Способ «crane tag» копирует манифест как есть — флаг не нужен.
+        assert "--prefer-index=false" in commands, (
+            "promote job обязан использовать --prefer-index=false: иначе тег "
+            "указывает на новый index, а не на подписанный манифест, "
+            f"got commands={commands!r}"
+        )
 
 
 def test_only_promote_issues_user_tags(workflow: dict[str, Any]) -> None:
@@ -645,7 +697,9 @@ def test_only_promote_issues_user_tags(workflow: dict[str, Any]) -> None:
     """
     for job_name, job in workflow["jobs"].items():
         runs = " ".join(_run_steps(job))
-        creates_tag = "imagetools create --tag" in runs
+        creates_tag = ("imagetools create" in runs and "--tag" in runs) or (
+            "crane tag" in runs
+        )
         if job_name == "promote":
             continue
         assert not creates_tag, (
@@ -833,6 +887,72 @@ def test_release_jobs_only_on_push(workflow: dict[str, Any], job_name: str) -> N
     assert _event_allowlist(condition) == {"push"}, (
         f"job '{job_name}': условие должно быть allow-list'ом ровно из "
         f"'push' (deny-list пропустил бы новое событие), got if={condition!r}"
+    )
+
+
+@pytest.mark.parametrize("job_name", sorted(REVIEW_JOBS))
+def test_review_jobs_cannot_publish(workflow: dict[str, Any], job_name: str) -> None:
+    """Ревью-джобы не имеют права писать в registry и минтить OIDC-токены.
+
+    Даже при ошибке в условиях ветка ревью не должна ничего публиковать
+    (независимое ревью 2026-11-23, MINOR-5).
+    """
+    perms = workflow["jobs"][job_name].get("permissions") or {}
+    assert perms.get("packages") != "write", (
+        f"job '{job_name}' (ревью) не должен иметь packages: write, got perms={perms}"
+    )
+    assert perms.get("id-token") != "write", (
+        f"job '{job_name}' (ревью) не должен иметь id-token: write, got perms={perms}"
+    )
+
+
+@pytest.mark.parametrize("job_name", ["scan", "scan_release"])
+def test_scan_jobs_checkout_for_sarif_fingerprints(
+    workflow: dict[str, Any], job_name: str
+) -> None:
+    """Scan-джобы делают checkout — без него SARIF теряет fingerprint'ы файлов.
+
+    Без checkout codeql-action не может сопоставить результат с исходником
+    (source-root в Security tab) (независимое ревью 2026-11-23, MINOR-6).
+    """
+    assert _uses_step(workflow["jobs"][job_name], "actions/checkout"), (
+        f"job '{job_name}' должен делать actions/checkout (fingerprint'ы "
+        f"файлов в SARIF)"
+    )
+
+
+def test_no_workflow_builds_image_ref_from_raw_repository() -> None:
+    """Ни один workflow не строит docker-ссылку из сырого ``github.repository``.
+
+    Владелец репозитория — «IvanKorch1289» (смешанный регистр), а
+    ghcr.io требует lowercase: «ghcr.io/IvanKorch1289/...» отвергается
+    («repository name must be lowercase»). Имя обязано быть нормализовано
+    (независимое ревью 2026-11-23, MINOR-INFO-2 — тот же класс, что и F1).
+    """
+    workflows_dir = PROJECT_ROOT / ".github" / "workflows"
+    offenders: list[str] = []
+    for path in sorted(workflows_dir.glob("*.yml")):
+        parsed = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if not isinstance(parsed, dict):
+            continue
+        jobs = parsed.get("jobs") or {}
+        if not isinstance(jobs, dict):
+            continue
+        for job_name, job in jobs.items():
+            if not isinstance(job, dict):
+                continue
+            for step in job.get("steps") or []:
+                if not isinstance(step, dict):
+                    continue
+                values = list((step.get("with") or {}).values())
+                values += list((step.get("env") or {}).values())
+                for value in values:
+                    text = str(value)
+                    if "ghcr.io" in text and "github.repository" in text:
+                        offenders.append(f"{path.name}:{job_name} ({text})")
+    assert not offenders, (
+        "docker-ссылки должны строиться из нормализованного имени "
+        f"(lowercase), найдено: {offenders}"
     )
 
 

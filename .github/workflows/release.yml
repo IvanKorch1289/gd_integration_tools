@@ -97,6 +97,15 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Resolve image name
+        id: imagename
+        # Владелец репозитория — «IvanKorch1289» (смешанный регистр),
+        # а ghcr.io требует lowercase.
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          echo "name=$(printf '%s' "$REPO" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
       - name: Release evidence manifest
         # Аудит prod-readiness (2026-11-20), этап 6: машинный manifest о
         # готовности релиза — вместо ручного «процента готовности» в отчётах.
@@ -107,7 +116,11 @@ jobs:
         # inspect): в release-джобе образа локально нет, он уже отправлен в
         # ghcr.io. Если образ недоступен — остаётся явный 'n/a', а не молчание.
         env:
-          IMAGE_REF: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          # Имя репозитория в ghcr.io обязано быть lowercase: иначе
+          # «docker buildx imagetools inspect» отвергает ссылку, и digest
+          # в манифесте остаётся 'n/a'. Шаг Resolve image name ниже
+          # приводит имя к нижнему регистру.
+          IMAGE_REF: ghcr.io/${{ steps.imagename.outputs.name }}:${{ github.ref_name }}
         run: |
           uv run python tools/checks/release_evidence.py \
             --profile release \

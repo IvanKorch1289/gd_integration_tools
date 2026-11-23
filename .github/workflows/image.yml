@@ -69,12 +69,15 @@ env:
   REPOSITORY: ${{ github.repository }}
   # ЯКОРНЫЙ regex Subject'а сертификата cosign (keyless, GitHub OIDC):
   #   https://github.com/<owner>/<repo>/.github/workflows/image.yml@<ref>
+  # Часть «tags/v[^/]+» шире, чем триггер «v*.*.*»: любой тег, который
+  # запускает pipeline, обязан пройти verify — иначе релиз падает на
+  # проверке подписи (например, тег «v1.2.3_build»).
   # Владелец в claim'ах GitHub сохраняет исходный регистр ("IvanKorch1289"),
   # поэтому класс символов допускает оба варианта написания. Реальный
   # Subject офлайн не проверен (в окружении нет OIDC/cosign) — см. отчёт
   # аудита: ENV_BLOCKED.
   COSIGN_IDENTITY_REGEXP: >-
-    ^https://github\.com/[Ii][Vv][Aa][Nn][Kk][Oo][Rr][Cc][Hh]1289/gd_integration_tools/\.github/workflows/image\.yml@refs/(heads/master|tags/v[0-9A-Za-z.+-]+)$
+    ^https://github\.com/[Ii][Vv][Aa][Nn][Kk][Oo][Rr][Cc][Hh]1289/gd_integration_tools/\.github/workflows/image\.yml@refs/(heads/master|tags/v[^/]+)$
 
 jobs:
   # ── Ветка ревью (pull_request, merge_group): build + scan ────────────────
