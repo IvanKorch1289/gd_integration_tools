@@ -311,12 +311,51 @@ def test_ratio_against_ref_returns_structure() -> None:
     result = mod.measure_ratio_against_ref("HEAD", 1)
     if result is None:
         pytest.skip("git worktree недоступен в окружении")
-    ratio, baseline_total, current_passes, baseline_passes = result
+    (
+        ratio,
+        baseline_total,
+        current_passes,
+        baseline_passes,
+        rss_current,
+        rss_baseline,
+    ) = result
     assert baseline_total > 0
     assert len(current_passes) == 1
     assert len(baseline_passes) == 1
     assert len(current_passes[0]) == len(mod.CRITICAL_MODULES)
     assert 0.5 < ratio < 2.0, f"самопроверка отношения HEAD/HEAD: {ratio}"
+    assert rss_current > 0
+    assert rss_baseline > 0
+    # RSS HEAD против HEAD — та же среда, отношение около 1.
+    assert 0.5 < rss_current / rss_baseline < 2.0
+
+
+def test_measure_rss_returns_positive_value() -> None:
+    """RSS-измерение возвращает положительное значение.
+
+    Args:
+        None.
+    """
+    rss = mod.measure_rss()
+    assert rss > 0
+    assert rss < mod.MAX_STARTUP_RSS_MB
+
+
+def test_main_reports_rss(isolated_baseline, monkeypatch, capsys) -> None:
+    """Гейт печатает RSS старта.
+
+    Args:
+        isolated_baseline: Фикстура изолированного baseline.
+        monkeypatch: Фикстура pytest.
+        capsys: Захват вывода.
+    """
+    mod.save_baseline(1.0)
+    monkeypatch.setattr(mod, "measure_import", lambda module: 0.01)
+    monkeypatch.setattr(mod, "measure_rss", lambda cwd=None: 42.0)
+    rc = mod.main(["--samples", "1"])
+    out = capsys.readouterr().out
+    assert "RSS (critical modules)" in out
+    assert rc == 0
 
 
 def test_main_reports_ratio_when_baseline_has_ref(

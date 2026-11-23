@@ -37,6 +37,10 @@ BASELINE_FILE = ROOT / ".baselines" / "startup-time.json"
 MAX_STARTUP_SECONDS_PER_MODULE = 3.0
 MAX_TOTAL_STARTUP_SECONDS = 3.0
 REGRESSION_TOLERANCE = 0.30  # 30% медленнее baseline → FAIL
+#: Абсолютный предел RSS на импорт critical-модулей, МБ (tripwire против
+#: возврата тяжёлых импортов — именно так в строй вернулся Presidio: +903 МБ
+#: в dev-venv, +107 МБ в прод-образе).
+MAX_STARTUP_RSS_MB = 512.0
 
 # Число полных прогонов, результат которых сводится к медиане.
 # Audit 2026-09-29: одиночный холодный прогон флейкал ~8% (13 замеров
@@ -114,6 +118,9 @@ def _run_measure(module: str, cwd: Path | None) -> float:
         "elapsed = time.monotonic() - start\n"
         # Marker-based output to avoid stdout pollution from structlog/etc.
         "sys.stdout.write(f'STARTUP_TIME_MARKER:{elapsed:.4f}\\n')\n"
+        # RSS подпроцесса: интерпретатор + импортированные модули.
+        "import resource as _r\n"
+        "sys.stdout.write(f'STARTUP_RSS_KB:{_r.getrusage(_r.RUSAGE_SELF).ru_maxrss}\\n')\n"
         "sys.stdout.flush()\n"
     )
     proc = subprocess.run(  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
@@ -164,6 +171,65 @@ def _extract_elapsed_from_stdout(stdout: str) -> float:
         return float("inf")
 
 
+_RSS_MARKER_PREFIX = "STARTUP_RSS_KB:"
+
+
+def _extract_rss_from_stdout(stdout: str) -> float:
+    """Извлечь RSS подпроцесса (МБ) из маркера в stdout.
+
+    Args:
+        stdout: raw subprocess stdout.
+
+    Returns:
+        RSS в мегабайтах (float) либо ``float('inf')``, если маркера нет.
+    """
+    for line in stdout.splitlines():
+        if line.startswith(_RSS_MARKER_PREFIX):
+            try:
+                return int(line[len(_RSS_MARKER_PREFIX) :]) / 1024
+            except ValueError:
+                continue
+    return float("inf")
+
+
+def measure_rss(cwd: Path | None = None) -> float:
+    """Измерить RSS процесса, импортировавшего все critical-модули.
+
+    Один подпроцесс импортирует весь набор CRITICAL_MODULES и печатает
+    свой максимальный RSS — это «стоимость памяти старта». Именно такой
+    замер поймал бы возврат тяжёлого импорта (например, Presidio: +903 МБ
+    в dev-venv), который до P1 тянулся из скана @register_action.
+
+    Args:
+        cwd: Каталог импорта (``None`` — текущее дерево).
+
+    Returns:
+        RSS в мегабайтах либо ``float('inf')`` при неудаче.
+    """
+    imports = "\n".join(f"import {module}" for module in CRITICAL_MODULES)
+    script = (
+        "import os, resource, sys\n"
+        "os.environ.setdefault('SEC_VAULT_ENABLED', 'false')\n"
+        "os.environ.setdefault('STRUCTLOG_CONSOLE', 'stderr')\n"
+        f"{imports}\n"
+        "sys.stdout.write(f'STARTUP_RSS_KB:{resource.getrusage(resource.RUSAGE_SELF).ru_maxrss}')\n"
+        "sys.stdout.flush()\n"
+    )
+    try:
+        proc = subprocess.run(  # noqa: S603 — фиксированная команда
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=str(cwd) if cwd is not None else None,
+        )
+    except OSError, subprocess.SubprocessError:
+        return float("inf")
+    if proc.returncode != 0:
+        return float("inf")
+    return _extract_rss_from_stdout(proc.stdout)
+
+
 def measure_pass(cwd: Path | None = None) -> list[float]:
     """Один полный прогон по ``CRITICAL_MODULES``.
 
@@ -181,7 +247,7 @@ def measure_pass(cwd: Path | None = None) -> list[float]:
 
 def measure_ratio_against_ref(
     ref: str, samples: int
-) -> tuple[float, float, list[list[float]], list[list[float]]] | None:
+) -> tuple[float, float, list[list[float]], list[list[float]], float, float] | None:
     """Сравнить текущее дерево с baseline-коммитом в одной среде.
 
     Замеры ИНТЕРЛИВИРУЮТСЯ: в каждом прогоне сначала меряется baseline-коммит,
@@ -197,7 +263,8 @@ def measure_ratio_against_ref(
 
     Returns:
         Кортеж ``(медиана отношений, медиана baseline, прогоны текущего
-        дерева, прогоны baseline)`` либо ``None``, если сравнение невозможно.
+        дерева, прогоны baseline, RSS текущего, RSS baseline)`` либо ``None``,
+        если сравнение невозможно.
     """
     tmp_dir = Path(tempfile.mkdtemp(prefix="startup-baseline-"))
     worktree = tmp_dir / "tree"
@@ -224,11 +291,15 @@ def measure_ratio_against_ref(
                 ratios.append(current_total / baseline_total)
         if not ratios:
             return None
+        rss_baseline = measure_rss(cwd=worktree)
+        rss_current = measure_rss()
         return (
             median_of(ratios),
             median_of(baseline_totals),
             current_passes,
             baseline_passes,
+            rss_current,
+            rss_baseline,
         )
     except OSError, subprocess.SubprocessError:
         return None
@@ -374,8 +445,17 @@ def main(argv: list[str] | None = None) -> int:
     if ref and not args.no_ratio:
         comparison = measure_ratio_against_ref(ref, args.samples)
     baseline_passes: list[list[float]] = []
+    rss_current = measure_rss()
+    rss_baseline: float | None = None
     if comparison is not None:
-        ratio, baseline_ref_total, passes, baseline_passes = comparison
+        (
+            ratio,
+            baseline_ref_total,
+            passes,
+            baseline_passes,
+            rss_current,
+            rss_baseline,
+        ) = comparison
     else:
         passes = [measure_pass() for _ in range(args.samples)]
     totals = [sum(p) for p in passes]
@@ -420,6 +500,20 @@ def main(argv: list[str] | None = None) -> int:
             cur_med = median_of([p[idx] for p in passes])
             comp = cur_med / base_med if base_med > 0 else float("inf")
             print(f"    {comp:5.2f}×  {module} ({cur_med:.3f}s / {base_med:.3f}s)")
+        # RSS печатается ДО вердикта по времени: обе метрики нужны вместе —
+        # иначе при провале времени владелец не увидит, что с памятью всё
+        # в порядке (и наоборот).
+        print(f"RSS (critical modules): {rss_current:.1f} MB")
+        if rss_baseline and rss_baseline > 0:
+            rss_ratio = rss_current / rss_baseline
+            print(f"RSS BASELINE REF: {rss_baseline:.1f} MB → ratio {rss_ratio:.3f}")
+            if rss_ratio > 1 + REGRESSION_TOLERANCE:
+                print(
+                    f"FAIL: RSS ratio {rss_ratio:.3f} > {1 + REGRESSION_TOLERANCE:.2f} "
+                    f"(baseline {rss_baseline:.1f} MB, current {rss_current:.1f} MB)",
+                    file=sys.stderr,
+                )
+                return 1
         if ratio > limit:
             print(
                 f"FAIL: current/baseline ratio {ratio:.3f} > {limit:.2f} "
@@ -430,6 +524,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
     elif baseline is not None:
         print(f"BASELINE: {baseline:.3f}s")
+        print(f"RSS (critical modules): {rss_current:.1f} MB")
         regression_limit = baseline * (1 + REGRESSION_TOLERANCE)
         print(
             f"REGRESSION LIMIT: {regression_limit:.3f}s "
@@ -448,6 +543,13 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"FAIL: {len(per_module_fail)} модулей превысили "
             f"{MAX_STARTUP_SECONDS_PER_MODULE}s",
+            file=sys.stderr,
+        )
+        return 1
+
+    if rss_current > MAX_STARTUP_RSS_MB:
+        print(
+            f"FAIL: RSS {rss_current:.1f} MB > лимит {MAX_STARTUP_RSS_MB} MB",
             file=sys.stderr,
         )
         return 1
