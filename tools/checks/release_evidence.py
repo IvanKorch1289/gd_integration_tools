@@ -137,6 +137,7 @@ class EvidenceManifest:
     platform: str = ""
     test_scope: list[str] = field(default_factory=list)
     commands: list[CommandResult] = field(default_factory=list)
+    recorded: list[CommandResult] = field(default_factory=list)
     artifacts: list[ArtifactResult] = field(default_factory=list)
     external_blockers: list[dict[str, str]] = field(default_factory=list)
     verdict: str = VERDICT_BLOCKED
@@ -188,9 +189,19 @@ def _sha256_file(path: Path) -> tuple[str, int] | None:
 def _resolve_image_digest(explicit: str | None, image: str | None) -> str:
     """Определить digest образа.
 
+    Порядок источников:
+
+    1. явно переданный digest;
+    2. переменная окружения ``IMAGE_DIGEST`` (CI прокидывает digest из
+       image-workflow);
+    3. локальный образ (``docker image inspect``);
+    4. registry без локального образа (``docker buildx imagetools inspect``) —
+       это то, что нужно в release-джобе: образ уже отправлен в ghcr.io,
+       но локально его нет.
+
     Args:
         explicit: Явно переданный digest.
-        image: Имя образа для ``docker image inspect``.
+        image: Имя образа (например ``ghcr.io/owner/repo:tag``).
 
     Returns:
         Digest либо ``"n/a"``.
@@ -202,16 +213,90 @@ def _resolve_image_digest(explicit: str | None, image: str | None) -> str:
         return env_digest
     if not image:
         return "n/a"
-    cmd = ["docker", "image", "inspect", image, "--format", "{{index .RepoDigests 0}}"]
+    local = _run_docker(
+        ["docker", "image", "inspect", image, "--format", "{{index .RepoDigests 0}}"]
+    )
+    if local:
+        return local
+    return _run_docker(
+        [
+            "docker",
+            "buildx",
+            "imagetools",
+            "inspect",
+            image,
+            "--format",
+            "{{.Manifest.Digest}}",
+        ]
+    )
+
+
+def _run_docker(cmd: list[str]) -> str:
+    """Выполнить команду docker и вернуть stdout (пустая строка при ошибке).
+
+    Args:
+        cmd: Команда.
+
+    Returns:
+        stdout без хвостовых пробелов либо ``""``.
+    """
     try:
         proc = subprocess.run(  # noqa: S603 — фиксированная команда docker
             cmd, capture_output=True, text=True, check=False, timeout=60
         )
     except OSError, subprocess.SubprocessError:
-        return "n/a"
+        return ""
     if proc.returncode != 0:
-        return "n/a"
-    return proc.stdout.strip() or "n/a"
+        return ""
+    return proc.stdout.strip()
+
+
+def _outcome_to_exit_code(outcome: str) -> int | None:
+    """Перевести outcome шага CI в код возврата.
+
+    Args:
+        outcome: ``success`` / ``failure`` / ``skipped`` / ``cancelled`` либо
+            числовой код.
+
+    Returns:
+        Код возврата (0 для success) либо ``None`` для пропущенного шага.
+    """
+    value = outcome.strip().lower()
+    if value in ("success", "0"):
+        return 0
+    if value in ("skipped", "cancelled", ""):
+        return None
+    if value in ("failure", "failed", "error"):
+        return 1
+    try:
+        return int(value)
+    except ValueError:
+        return 1
+
+
+def _parse_record(raw: str) -> tuple[str, str]:
+    """Разобрать ``метка=результат`` — деление по ПОСЛЕДНЕМУ ``=``.
+
+    Метки проверок содержат двоеточие сами (``dist:uv build``), поэтому
+    разделителем служит ``=``, а разбирается он с конца: метка может
+    содержать ``=``? Нет — но результат может содержать что угодно.
+
+    Args:
+        raw: Исходная строка.
+
+    Returns:
+        Кортеж ``(метка, результат)``.
+
+    Raises:
+        ValueError: Разделитель не найден.
+    """
+    name, sep, value = raw.rpartition("=")
+    if not sep or not name.strip() or not value.strip():
+        raise ValueError(
+            f"неверный формат зафиксированной проверки: {raw!r} "
+            "(ожидается 'метка=результат')"
+        )
+    return name.strip(), value.strip()
 
 
 def _parse_pair(raw: str, separator: str, what: str) -> tuple[str, str]:
@@ -321,6 +406,7 @@ def collect_manifest(
     image_digest: str | None,
     log_dir: Path | None,
     run_commands: bool = True,
+    recorded: list[tuple[str, str]] | None = None,
 ) -> EvidenceManifest:
     """Собрать manifest о готовности.
 
@@ -370,6 +456,19 @@ def collect_manifest(
         {"name": name, "reason": reason} for name, reason in blockers
     ]
 
+    # Проверки, выполненные ДРУГИМ шагом (например, самим workflow'ом):
+    # их результат известен, повторно запускать их не нужно.
+    for label, outcome in recorded or []:
+        code = _outcome_to_exit_code(outcome)
+        manifest.recorded.append(
+            CommandResult(
+                label=label,
+                command="(выполнено другим шагом CI)",
+                exit_code=code if code is not None else -1,
+                duration_s=0.0,
+            )
+        )
+
     if run_commands:
         for label, command in commands:
             manifest.commands.append(
@@ -383,7 +482,12 @@ def collect_manifest(
             "проверки завершились с ненулевым кодом: "
             + ", ".join(f"{cmd.label}={cmd.exit_code}" for cmd in failed)
         )
-    if not manifest.commands:
+    recorded_failed = [cmd for cmd in manifest.recorded if cmd.exit_code not in (0, -1)]
+    for cmd in recorded_failed:
+        reasons.append(
+            f"зафиксированная проверка неуспешна: {cmd.label}={cmd.exit_code}"
+        )
+    if not manifest.commands and not manifest.recorded:
         reasons.append("ни одна проверка не выполнена — доказательств нет")
     if not manifest.test_scope:
         reasons.append(
@@ -446,6 +550,18 @@ def main(argv: list[str] | None = None) -> int:
         help="Артефакт для фиксации (путь к файлу)",
     )
     parser.add_argument(
+        "--record",
+        action="append",
+        default=[],
+        metavar="МЕТКА=РЕЗУЛЬТАТ",
+        help=(
+            "Зафиксировать проверку, выполненную ДРУГИМ шагом CI "
+            "(метка=результат, где результат — success/failure/skipped или "
+            "код возврата). Команда не перезапускается, её исход берётся "
+            "из отчёта CI."
+        ),
+    )
+    parser.add_argument(
         "--blocker",
         action="append",
         default=[],
@@ -479,6 +595,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         commands = [_parse_pair(raw, ":", "проверки") for raw in args.command]
         blockers = [_parse_pair(raw, ":", "блокера") for raw in args.blocker]
+        recorded = [_parse_record(raw) for raw in args.record]
     except ValueError as exc:
         print(f"ОШИБКА: {exc}", file=sys.stderr)
         return 2
@@ -499,6 +616,7 @@ def main(argv: list[str] | None = None) -> int:
         image_digest=args.image_digest,
         log_dir=log_dir,
         run_commands=not args.no_run,
+        recorded=recorded,
     )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)

@@ -273,3 +273,73 @@ class TestCollectManifest:
         assert command.log_path is not None
         assert command.log_sha256 is not None
         assert "marker" in Path(command.log_path).read_text(encoding="utf-8")
+
+
+class TestRecordedChecks:
+    """Проверки, выполненные другим шагом CI (--record)."""
+
+    def test_record_parsing_uses_last_equals(self) -> None:
+        """Метка может содержать двоеточие: делим по последнему '='.
+
+        Args:
+            None.
+        """
+        assert evidence._parse_record("dist:uv build=success") == (
+            "dist:uv build",
+            "success",
+        )
+
+    def test_outcome_to_exit_code(self) -> None:
+        """Outcome шага CI переводится в код возврата.
+
+        Args:
+            None.
+        """
+        assert evidence._outcome_to_exit_code("success") == 0
+        assert evidence._outcome_to_exit_code("failure") == 1
+        assert evidence._outcome_to_exit_code("skipped") is None
+        assert evidence._outcome_to_exit_code("3") == 3
+
+    def test_recorded_success_does_not_block(self, tmp_path) -> None:
+        """Успешные зафиксированные проверки не блокируют вердикт.
+
+        Args:
+            tmp_path: Временный каталог.
+        """
+        manifest = evidence.collect_manifest(
+            root=tmp_path,
+            profile="release",
+            scopes=["dist:uv build"],
+            commands=[],
+            artifacts=[],
+            blockers=[],
+            image=None,
+            image_digest=None,
+            log_dir=None,
+            run_commands=False,
+            recorded=[("dist:uv build", "success")],
+        )
+        assert manifest.recorded[0].exit_code == 0
+        assert not any("неуспешна" in reason for reason in manifest.verdict_reasons)
+
+    def test_recorded_failure_blocks(self, tmp_path) -> None:
+        """Неуспешная зафиксированная проверка блокирует вердикт.
+
+        Args:
+            tmp_path: Временный каталог.
+        """
+        manifest = evidence.collect_manifest(
+            root=tmp_path,
+            profile="release",
+            scopes=["dist:uv build"],
+            commands=[],
+            artifacts=[],
+            blockers=[],
+            image=None,
+            image_digest=None,
+            log_dir=None,
+            run_commands=False,
+            recorded=[("dist:uv build", "failure")],
+        )
+        assert manifest.verdict == evidence.VERDICT_BLOCKED
+        assert any("неуспешна" in reason for reason in manifest.verdict_reasons)

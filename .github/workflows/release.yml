@@ -44,6 +44,7 @@ jobs:
         run: uv sync --locked
 
       - name: Build distribution (sdist + wheel)
+        id: build_dist
         run: uv build
 
       - name: Release notes (changelog_autogen)
@@ -60,9 +61,11 @@ jobs:
 
       - name: Twine check (метаданные dist/*)
         # Dry-run верификация артефактов; реальная публикация — отложена на R3.
+        id: twine_check
         run: uv run twine check dist/*
 
       - name: Generate SBOM (CycloneDX)
+        id: sbom
         # D-AUDIT-11-5 fix (cycle 1): canonical path — dist/sbom/sbom.cdx.json
         # (3-way drift fixed: make/security.mk + tools/checks/* теперь пишут в dist/sbom/,
         #  не в legacy dist/sbom.cdx.json).
@@ -72,12 +75,14 @@ jobs:
         continue-on-error: false
 
       - name: pip-audit dependency vulnerability scan
+        id: pip_audit
         run: |
           uv run pip-audit --strict --output dist/pip-audit.json \
             --format json || true
         continue-on-error: true
 
       - name: Cosign sign artifacts
+        id: cosign
         # Sprint 9 K1 W5: cosign keyless sign через OIDC
         # Активируется только если COSIGN_EXPERIMENTAL=1 и Sigstore доступен
         env:
@@ -92,6 +97,36 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Release evidence manifest
+        # Аудит prod-readiness (2026-11-20), этап 6: машинный manifest о
+        # готовности релиза — вместо ручного «процента готовности» в отчётах.
+        # Связывает в одном месте: SHA тега, профиль, образ (digest), состав
+        # проверок с кодами возврата, хеши артефактов и внешние блокеры.
+        #
+        # Digest образа резолвится из registry (docker buildx imagetools
+        # inspect): в release-джобе образа локально нет, он уже отправлен в
+        # ghcr.io. Если образ недоступен — остаётся явный 'n/a', а не молчание.
+        env:
+          IMAGE_REF: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+        run: |
+          uv run python tools/checks/release_evidence.py \
+            --profile release \
+            --image "${IMAGE_REF}" \
+            --scope "dist:uv build" \
+            --scope "metadata:twine check" \
+            --scope "sbom:generate_sbom.py" \
+            --scope "audit:pip-audit" \
+            --scope "sign:cosign_sign_all.py" \
+            --record "dist:uv build=${{ steps.build_dist.outcome }}" \
+            --record "metadata:twine check=${{ steps.twine_check.outcome }}" \
+            --record "sbom:generate_sbom.py=${{ steps.sbom.outcome }}" \
+            --record "audit:pip-audit=${{ steps.pip_audit.outcome }}" \
+            --record "sign:cosign=${{ steps.cosign.outcome }}" \
+            --artifact dist/sbom/sbom.cdx.json \
+            --artifact dist/pip-audit.json \
+            --artifact dist/release-notes.md \
+            --out dist/release-evidence.json
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v7
         with:
@@ -103,6 +138,15 @@ jobs:
             !dist/*.json
           retention-days: 30
           if-no-files-found: error
+
+      - name: Upload release evidence
+        # Манифест релиза: машинно-читаемое доказательство состава прогона.
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-evidence-${{ github.ref_name }}
+          path: dist/release-evidence.json
+          retention-days: 90
+          if-no-files-found: warn
 
       - name: Upload SBOM + signatures
         uses: actions/upload-artifact@v7
