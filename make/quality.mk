@@ -25,6 +25,27 @@ type-check-budget: check-env ## Sprint 10 K2: mypy budget gate (рэтчет о�
 	@$(UV_RUN) python tools/checks/mypy_budget.py
 	@$(SUCCESS) "Mypy budget OK"
 
+http-contract-smoke: check-env ## HTTP-контракт на живом uvicorn (кэш/SSE/сжатие/tenant)
+	@$(INFO) "Running HTTP contract smoke (live uvicorn)..."
+	@$(UV_RUN) python tools/checks/http_contract_smoke.py
+	@$(SUCCESS) "HTTP contract smoke OK"
+
+skb-mock-e2e: check-env ## Бизнес-workflow СКБ на детерминированном mock'е (заказ→результат→документ)
+	@$(INFO) "Running SKB mock E2E (create → poll → download)..."
+	@$(UV_RUN) python tools/checks/skb_mock_e2e.py
+	@$(SUCCESS) "SKB mock E2E OK"
+
+release-evidence: check-env ## Машинный manifest о готовности (SHA, профиль, коды, артефакты, блокеры)
+	@$(INFO) "Collecting release evidence manifest..."
+	@$(UV_RUN) python tools/checks/release_evidence.py \
+		--profile local \
+		--scope "contract:tools/checks/http_contract_smoke.py" \
+		--scope "business-workflow:tools/checks/skb_mock_e2e.py" \
+		--command "http-contract-smoke:python tools/checks/http_contract_smoke.py" \
+		--command "skb-mock-e2e:python tools/checks/skb_mock_e2e.py" \
+		--out artifacts/release/evidence.json
+	@$(SUCCESS) "Release evidence manifest written"
+
 migration-preview: check-env ## Sprint 175+ W3: SQL migration preview (CRITICAL/HIGH detection)
 	@$(INFO) "Running migration preview gate..."
 	@$(UV_RUN) python -m src.backend.core.migration_preview.cli_main \
