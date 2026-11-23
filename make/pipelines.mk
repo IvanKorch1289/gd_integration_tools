@@ -37,12 +37,9 @@ ci: ## К1 V15 — composite CI gate (lint + type + tests + security + WAF stric
 	@$(MAKE) unit-tests
 	@$(SUCCESS) "CI gate passed"
 
-unit-tests: ## К1 V15 — реальный прогогогон tests/unit (не только collection)
-	@$(INFO) "Running unit tests (tests/unit), jobs=$(UNIT_TEST_JOBS), per-test timeout $(UNIT_TEST_TIMEOUT)s..."
-	@$(UV_RUN) python -m pytest tests/unit -q \
-		--timeout=$(UNIT_TEST_TIMEOUT) \
-		-n $(UNIT_TEST_JOBS) --dist loadfile \
-		--no-header
+unit-tests: ## К1 V15 — реальный прогогон tests/unit по группам (P6: пик RSS ограничен)
+	@$(INFO) "Running unit tests (tests/unit, grouped), jobs=$(UNIT_TEST_JOBS), per-test timeout $(UNIT_TEST_TIMEOUT)s..."
+	@$(UV_RUN) bash tools/run_tests_grouped.sh --jobs $(UNIT_TEST_JOBS) --timeout $(UNIT_TEST_TIMEOUT)
 	@$(SUCCESS) "Unit tests passed"
 
 unit-tests-grouped: ## P6 — tests/unit по группам: пик RSS ограничен (~2.8 ГБ → ~1 ГБ на группу)

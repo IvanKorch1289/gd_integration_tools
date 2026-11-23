@@ -20,6 +20,7 @@
 # Использование:
 #   tools/run_tests_grouped.sh                       # tests/unit, -n 2
 #   tools/run_tests_grouped.sh --jobs 4              # больше воркеров
+#   tools/run_tests_grouped.sh --timeout 60          # per-test timeout (секунды)
 #   tools/run_tests_grouped.sh --path tests/smoke    # другой набор
 #   tools/run_tests_grouped.sh -- -k "some marker"   # остальные аргументы pytest
 #
@@ -33,12 +34,14 @@ cd "$REPO_ROOT"
 
 PYTHON="${PYTHON:-.venv/bin/python}"
 JOBS=2
+TIMEOUT="${UNIT_TEST_TIMEOUT:-120}"
 TARGET="tests/unit"
 PYTEST_ARGS=()
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --jobs) JOBS="$2"; shift 2 ;;
+        --timeout) TIMEOUT="$2"; shift 2 ;;
         --path) TARGET="$2"; shift 2 ;;
         --) shift; PYTEST_ARGS+=("$@"); break ;;
         *) PYTEST_ARGS+=("$1"); shift ;;
@@ -65,6 +68,7 @@ run_group() {
     fi
     echo "[tests] группа: ${name}"
     "$PYTHON" -m pytest "$@" \
+        --timeout="${TIMEOUT}" \
         -n "${JOBS}" --dist loadfile \
         --no-header -q \
         "${PYTEST_ARGS[@]}"
