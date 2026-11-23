@@ -25,6 +25,7 @@ API:
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 __all__ = ("mask_pii", "redact_for_observability")
@@ -43,6 +44,17 @@ from src.backend.core.security.pii_patterns import SNILS as _SNILS
 # сканировал строку линейно.
 from src.backend.core.security.pii_patterns import sub_email
 
+#: Быстрый путь (ADR-0401, продолжение): пять из шести паттернов требуют
+#: хотя бы одной цифры (SNILS, CARD, RU_PASSPORT, INN, PHONE). Если в строке
+#: цифр нет, все пять заведомо не совпадут → пять regex-проходов
+#: пропускаются. Подстановки не вводят цифр («<inn>», «<card>» …), поэтому
+#: наличие цифр инвариантно и проверка вычисляется один раз.
+#:
+#: Замер (2026-11-23, 300 запросов через полную цепочку middleware):
+#: redact вызывается 33 раза на запрос и даёт 174 regex-прохода; после
+#: fast-path остаётся 1 поиск цифр + 1 проход email на строку без цифр.
+_HAS_DIGIT = re.compile(r"\d")
+
 
 def redact_for_observability(value: Any) -> Any:
     """Рекурсивно заменяет PII-значения на маркеры.
@@ -56,12 +68,16 @@ def redact_for_observability(value: Any) -> Any:
         # Specific-first: разделительные форматы до сплошных цифр.
         # SNILS (дефисы) → CARD (13+ цифр) → PASSPORT (4 ws 6) → INN
         # (10/12 сплошных) → EMAIL → PHONE (общая цифровая ловушка).
-        v = _SNILS.sub("<snils>", v)
-        v = _CARD.sub("<card>", v)
-        v = _RU_PASSPORT.sub("<passport>", v)
-        v = _INN.sub("<inn>", v)
+        has_digit = _HAS_DIGIT.search(v) is not None
+        if has_digit:
+            v = _SNILS.sub("<snils>", v)
+            v = _CARD.sub("<card>", v)
+            v = _RU_PASSPORT.sub("<passport>", v)
+            v = _INN.sub("<inn>", v)
         v = sub_email("<email>", v)
-        return _PHONE.sub("<phone>", v)
+        if has_digit:
+            v = _PHONE.sub("<phone>", v)
+        return v
     if isinstance(value, dict):
         return {k: redact_for_observability(v) for k, v in value.items()}
     if isinstance(value, list):

@@ -244,3 +244,76 @@ class TestEdgeCases:
 
     def test_redact_empty_tuple(self) -> None:
         assert redact_for_observability(()) == ()
+
+
+class TestDigitFastPath:
+    """Fast-path по цифрам (аудит 2026-11-20, предложение P4).
+
+    Пять из шести паттернов требуют цифр. Если цифр нет, они заведомо не
+    совпадут → пять regex-проходов пропускаются. Подстановки цифр не
+    вводят, поэтому наличие цифр инвариантно.
+    """
+
+    def test_digitless_string_is_unchanged(self) -> None:
+        """Строка без цифр не меняется (и не тратит 5 regex-проходов).
+
+        Args:
+            None.
+        """
+        assert redact_for_observability("/api/v1/orders") == "/api/v1/orders"
+
+    def test_email_without_digits_still_masked(self) -> None:
+        """Email без цифр всё равно маскируется (email — не цифровой паттерн).
+
+        Args:
+            None.
+        """
+        result = redact_for_observability("user@example.com")
+        assert result == "<email>"
+
+    def test_digits_are_still_masked(self) -> None:
+        """Строки с цифрами маскируются как раньше.
+
+        Args:
+            None.
+        """
+        assert redact_for_observability("ИНН 7707083893") == "ИНН <inn>"
+        assert redact_for_observability("123-456-789 01") == "<snils>"
+
+    def test_fast_path_does_not_change_result(self) -> None:
+        """Результат fast-path совпадает с полным прогоном всех паттернов.
+
+        Args:
+            None.
+        """
+        from src.backend.core.security.pii_patterns import (
+            CARD,
+            INN,
+            PHONE,
+            RU_PASSPORT,
+            SNILS,
+            sub_email,
+        )
+
+        def _reference(value: str) -> str:
+            v = SNILS.sub("<snils>", value)
+            v = CARD.sub("<card>", v)
+            v = RU_PASSPORT.sub("<passport>", v)
+            v = INN.sub("<inn>", v)
+            v = sub_email("<email>", v)
+            return PHONE.sub("<phone>", v)
+
+        samples = [
+            "/api/v1/orders/42",
+            "user@example.com",
+            "ИНН 7707083893",
+            "123-456-789 01",
+            "+7 (495) 123-45-67",
+            "4111 1111 1111 1111",
+            "1234 567890",
+            "event без ничего",
+            "order 42 for user@example.com",
+            "",
+        ]
+        for sample in samples:
+            assert redact_for_observability(sample) == _reference(sample), sample
