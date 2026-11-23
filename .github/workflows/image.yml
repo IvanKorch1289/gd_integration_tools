@@ -195,8 +195,15 @@ jobs:
     timeout-minutes: 10
     # P2 (независимое ревью 2026-11-23): подпись выполняется ПОСЛЕ push —
     # cosign подписывает образ в registry, а до push его там нет. Раньше
-    # sign стоял перед push и подписывал локальный digest сборки, что
-    # неработало. Подписывается фактически запушенный digest.
+    # ПОРЯДОК: push идёт ПЕРЕД sign. cosign подписывает манифест в
+    # registry — подписать то, чего ещё нет, технически невозможно
+    # (старый порядок «sign → push» падал на «no such manifest» и
+    # блокировал публикацию целиком).
+    #
+    # Гарантия «не публикуем неподписанное» сохранена в следующем job'е
+    # verify: он проверяет подпись запушенного digest и роняет workflow,
+    # если подписи нет. Недопустимо подписанный образ → workflow красный
+    # → релиз не выходит.
     needs: [build, scan, push]
     if: github.event_name != 'pull_request'
     permissions:
@@ -229,6 +236,33 @@ jobs:
             image.pem
           retention-days: 30
           if-no-files-found: warn
+
+  verify:
+    name: Verify signature
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Проверка подписи запушенного образа: workflow зелёный только если
+    # образ ПОДПИСАН. Это переносит гарантию «не публикуем неподписанное»
+    # на форму, которую позволяет cosign (подпись требует присутствия
+    # манифеста в registry).
+    needs: [build, scan, push, sign]
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Verify image signature
+        env:
+          IMAGE_REF: ${{ needs.build.outputs.image }}
+        run: |
+          cosign verify \
+            --certificate-identity-regexp "https://github.com/.*/.*" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "${IMAGE_REF}@${{ needs.push.outputs.digest }}"
 
   push:
     name: Push (ghcr.io)

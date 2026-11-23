@@ -37,7 +37,7 @@ import yaml
 PROJECT_ROOT: Path = Path(__file__).resolve().parents[3]
 IMAGE_WORKFLOW: Path = PROJECT_ROOT / ".github" / "workflows" / "image.yml"
 
-REQUIRED_JOBS: frozenset[str] = frozenset({"build", "scan", "sign", "push"})
+REQUIRED_JOBS: frozenset[str] = frozenset({"build", "scan", "push", "sign", "verify"})
 
 
 # ── Helpers ────────────────────────────────────────────────────────────
@@ -323,18 +323,54 @@ def test_scan_depends_on_build(workflow: dict[str, Any]) -> None:
     )
 
 
-def test_sign_depends_on_build_and_scan(workflow: dict[str, Any]) -> None:
-    """sign ждёт build (digest) и scan (блокирующая уязвимость = нет push)."""
+def test_sign_depends_on_build_scan_and_push(workflow: dict[str, Any]) -> None:
+    """sign ждёт build (образ), scan (блокирующая уязвимость = нет push) и push.
+
+    Порядок «push → sign» вынужден: cosign подписывает МАНИФЕСТ в registry,
+    подписать ещё не запушенный образ технически невозможно (старый порядок
+    «sign → push» падал на «no such manifest» и блокировал публикацию).
+    Гарантия «не публикуем неподписанное» перенесена в job verify.
+    """
     needs_set = _needs_set(workflow["jobs"]["sign"])
-    for required in ("build", "scan"):
+    for required in ("build", "scan", "push"):
         assert required in needs_set, (
             f"sign job должен depends_on: {required}, got needs={sorted(needs_set)}"
         )
 
 
-def test_push_depends_on_sign(workflow: dict[str, Any]) -> None:
-    """push ждёт sign — не пушим неподписанный image."""
+def test_push_depends_on_scan_not_on_sign(workflow: dict[str, Any]) -> None:
+    """push ждёт scan (уязвимость блокирует публикацию), но не sign.
+
+    Связка push → sign означала бы, что публикация заблокирована до
+    подписи, а подписать непушенный образ нельзя: pipeline переставал
+    работать целиком. Подпись и проверка подписи идут после push
+    (см. test_signature_is_verified).
+    """
     needs_set = _needs_set(workflow["jobs"]["push"])
-    assert "sign" in needs_set, (
-        f"push job должен depends_on: sign, got needs={sorted(needs_set)}"
+    assert "scan" in needs_set, (
+        f"push job должен depends_on: scan, got needs={sorted(needs_set)}"
     )
+    assert "sign" not in needs_set, (
+        f"push не должен depends_on: sign (подпись идёт после публикации), "
+        f"got needs={sorted(needs_set)}"
+    )
+
+
+def test_signature_is_verified(workflow: dict[str, Any]) -> None:
+    """verify ждёт sign и проверяет подпись запушенного образа.
+
+    Это носитель гарантии «не выходит неподписанный образ»: workflow зелёный
+    только если подпись предъявлена и проверена.
+    """
+    verify = workflow["jobs"]["verify"]
+    needs_set = _needs_set(verify)
+    assert "sign" in needs_set, (
+        f"verify job должен depends_on: sign, got needs={sorted(needs_set)}"
+    )
+    has_verify_call = any(
+        isinstance(step, dict)
+        and isinstance(step.get("run"), str)
+        and "cosign verify" in step["run"]
+        for step in (verify.get("steps") or [])
+    )
+    assert has_verify_call, "verify job должен вызывать 'cosign verify'"
