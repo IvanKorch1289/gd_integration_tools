@@ -226,5 +226,22 @@ class DSLFlags(BaseSettings):
         ),
     )
 
+    dsl_auto_scan_actions: bool = Field(
+        default=False,
+        title="DSL: авто-скан @register_action-декораторов при старте",
+        description=(
+            "Волна 2026-11-20 (аудит prod-readiness, предложение P1 "
+            "«профиль ресурсов»). Скан импортирует ВСЕ модули пакета "
+            "src.backend.services (392 модуля) ради поиска @register_action; "
+            "в production-коде таких декораторов нет (лог приложения: "
+            "«Auto-registered 0 actions»), а импорт тянет presidio_analyzer "
+            "— 4.2 с на старте в прод-образе и 14.6 с в dev-venv. "
+            "default-OFF: включать (FEATURE_DSL_AUTO_SCAN_ACTIONS=1) только "
+            "если в коде снова появятся @register_action-декораторы. "
+            "Регистрация основных actions (service_dsl_registry."
+            "register_all_actions) от флага не зависит."
+        ),
+    )
+
 
 __all__ = ("DSLFlags",)

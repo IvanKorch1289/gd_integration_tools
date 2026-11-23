@@ -220,12 +220,25 @@ def _register_admin() -> None:
 
 def _register_servicedsl_auto_register() -> None:
 
+    from src.backend.core.config.features import feature_flags
     from src.backend.dsl.service_dsl import (
         scan_and_register_actions,
         service_dsl_registry,
     )
 
     service_dsl_registry.register_all_actions()
+
+    # Волна 2026-11-20 (аудит prod-readiness, предложение P1): скан
+    # @register_action обходит 392 модуля src.backend.services и тянет
+    # presidio_analyzer — 4.2 с на старте в прод-образе (14.6 с в dev-venv).
+    # В production-коде @register_action-декораторов нет (скан регистрирует
+    # 0 actions), поэтому скан вынесен под флаг
+    # FEATURE_DSL_AUTO_SCAN_ACTIONS (default-OFF). Наблюдаемый результат не
+    # меняется: число зарегистрированных actions одинаково при включённом и
+    # выключенном флаге (закреплено тестом).
+    if not getattr(feature_flags, "dsl_auto_scan_actions", False):
+        return
+
     scan_and_register_actions(
         [
             "src.backend.services",

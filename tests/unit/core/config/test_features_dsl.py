@@ -45,7 +45,8 @@ class TestDSLFlagsClass:
         fields = DSLFlags.model_fields
         names = list(fields.keys())
         # 13 K5 DSL + K3 sources + 2 флага capability-гейта (Wave 14, C1)
-        assert len(names) == 15
+        # + dsl_auto_scan_actions (аудит prod-readiness 2026-11-20, P1)
+        assert len(names) == 16
 
     def test_infra_db_query_flag_is_default_off(self) -> None:
         """infra_db_query — fail-closed по умолчанию (Wave 13/Q13, S-27)."""
