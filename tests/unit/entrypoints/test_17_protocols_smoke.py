@@ -16,6 +16,7 @@ If a protocol entrypoint is added/removed, this file must be updated.
 from __future__ import annotations
 
 import importlib
+import pkgutil
 import sys
 
 import pytest
@@ -70,6 +71,21 @@ def test_protocol_has_exports(protocol: str) -> None:
         pytest.xfail(f"{protocol} not importable in test env")
 
     exports = [name for name in dir(mod) if not name.startswith("_")]
+    if not exports:
+        # Пакет может не реэкспортировать символы в __init__, а хранить их
+        # в подмодулях. Раньше тест полагался на то, что подмодули уже
+        # импортированы другими тестами: под xdist (-n 2, канонический режим
+        # CI) порядок другой → 12 ложных падений. Обходим пакет явно.
+        pkg_path = getattr(mod, "__path__", None)
+        if pkg_path is not None:
+            for _, sub_name, _ in pkgutil.iter_modules(pkg_path):
+                try:
+                    sub = importlib.import_module(f"{full_name}.{sub_name}")
+                except ImportError:
+                    continue
+                exports = [name for name in dir(sub) if not name.startswith("_")]
+                if exports:
+                    break
     assert len(exports) > 0, (
         f"{protocol} module has no public exports (only dunders). "
         f"Check if package is empty or all symbols are private."

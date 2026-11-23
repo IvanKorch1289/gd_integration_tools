@@ -45,6 +45,11 @@ unit-tests: ## К1 V15 — реальный прогогогон tests/unit (н�
 		--no-header
 	@$(SUCCESS) "Unit tests passed"
 
+unit-tests-grouped: ## P6 — tests/unit по группам: пик RSS ограничен (~2.8 ГБ → ~1 ГБ на группу)
+	@$(INFO) "Running unit tests grouped (bounded peak RSS), jobs=$(UNIT_TEST_JOBS)..."
+	@$(UV_RUN) bash tools/run_tests_grouped.sh --jobs $(UNIT_TEST_JOBS)
+	@$(SUCCESS) "Unit tests passed (grouped)"
+
 pr: ## К1 V15 — composite PR gate (ci + docs)
 	@$(MAKE) ci
 	@$(MAKE) docs
