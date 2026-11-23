@@ -16,6 +16,7 @@ from src.backend.core.auth.api_key_backend import APIKeyAuth
 from src.backend.core.auth.auth_context_helpers import (
     extract_tenant_id,
     extract_user_groups,
+    resolve_impersonation_target,
 )
 from src.backend.core.auth.mtls_backend import (
     MtlsBackend,
@@ -70,6 +71,7 @@ __all__ = (
     "extract_user_groups",
     "require_sso_auth",
     "require_sso_capability",
+    "resolve_impersonation_target",
 )
 
 

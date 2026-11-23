@@ -29,6 +29,7 @@ import logging
 import uuid
 from typing import Any
 
+from src.backend.core.auth.auth_context_helpers import resolve_impersonation_target
 from src.backend.core.request_context import (
     RequestContext,
     bind_request_context,
@@ -73,6 +74,21 @@ def _authenticated_tenant(scope: dict[str, Any]) -> str | None:
     from src.backend.core.auth.auth_context_helpers import extract_tenant_id
 
     return extract_tenant_id(auth)
+
+
+def _auth_principal(scope: dict[str, Any]) -> Any:
+    """Достать аутентифицированного principal'а из ``scope['state']``.
+
+    Args:
+        scope: ASGI scope.
+
+    Returns:
+        Объект ``AuthContext`` (или duck-typed) либо ``None``.
+    """
+    state = scope.get("state")
+    if not isinstance(state, dict):
+        return None
+    return state.get("auth")
 
 
 def _otel_ids() -> tuple[str | None, str | None]:
@@ -164,7 +180,22 @@ class RequestContextMiddleware:
         # Без этого заголовок подделанного tenant попадал в RequestContext,
         # а DSL-движок (dsl/engine/execution_engine.py:26-40) берёт tenant
         # именно из RequestContext ПЕРВЫМ источником.
-        tenant_id = _authenticated_tenant(scope) or _get_header(headers, b"x-tenant-id")
+        #
+        # Аудит 2026-11-20: явная capability имперсонации
+        # (``metadata['tenant_impersonation']``) ПЕРЕКЛЮЧАЕТ effective tenant
+        # (контракт — в ``tenant.py``). Без этого RequestContext оставался с
+        # аутентифицированным tenant'ом, а state/ContextVar/ORM/RLS — с
+        # target'ом: инвариант «tenant один и тот же на всех слоях» рушился,
+        # и tenant-aware пайплайн видел не тот tenant.
+        auth_tenant = _authenticated_tenant(scope)
+        header_tenant = _get_header(headers, b"x-tenant-id")
+        tenant_id = auth_tenant or header_tenant
+        if auth_tenant and header_tenant and header_tenant != auth_tenant:
+            impersonation_target = resolve_impersonation_target(
+                _auth_principal(scope), header_tenant
+            )
+            if impersonation_target:
+                tenant_id = impersonation_target
         trace_id, span_id = _otel_ids()
         state = scope.setdefault("state", {})
         auth_value = state.get("auth") if isinstance(state, dict) else None

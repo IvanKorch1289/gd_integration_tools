@@ -32,6 +32,33 @@ tenant для всего запроса (в т.ч. через ``tenant_id_var`` 
 запрос отклоняется **403 tenant_mismatch**, если только на
 аутентифицированном principal не объявлена явная impersonation
 capability (``metadata['tenant_impersonation']``).
+
+IMPERSONATION-КОНТРАКТ (аудит 2026-11-20)
+------------------------------------------
+``metadata['tenant_impersonation']`` — это ЯВНОЕ разрешение principal'а
+работать в чужом tenant'е. Кто выдаёт: auth-слой (JWT/SAML/OIDC-провайдер
+или admin-контур), записывая ключ в ``AuthContext.metadata``; значение —
+строка (единственный target-tenant) либо коллекция строк (whitelist).
+
+Что происходит, когда capability совпадает с target из ``X-Tenant-ID``:
+
+1. ``scope['state']['tenant_id']`` = target;
+2. tenant-контекст (``core.tenancy.bind_tenant``) = target — ORM-фильтр
+   (``core/tenancy/sqlalchemy_filter.py``) и PostgreSQL RLS видят тот же
+   tenant;
+3. response-заголовок ``X-Tenant-ID`` = target;
+4. WARNING-аудит ``tenant IMPERSONATION path=... authenticated=... target=...``.
+
+Инвариант: ``state`` == ContextVar == ORM/RLS == response-header. До этой
+правки capability была объявлена, но НЕ действовала: effective tenant
+оставался аутентифицированным, а заголовок показывал auth-tenant —
+молчаливый no-op, вводящий в заблуждение.
+
+Fail-closed сохранён: capability невалидна (не строка и не коллекция) либо
+target в неё не входит → 403 ``tenant_mismatch`` (тело ответа не содержит
+значений tenant). Capability не действует для principal'а БЕЗ
+аутентифицированного tenant: такой principal работает в default-tenant, и
+заголовок его не расширяет.
 """
 
 from __future__ import annotations
@@ -41,7 +68,10 @@ import logging
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from src.backend.core.auth.auth_context_helpers import extract_tenant_id
+from src.backend.core.auth.auth_context_helpers import (
+    extract_tenant_id,
+    resolve_impersonation_target,
+)
 from src.backend.core.di.providers import get_correlation_context_setter_provider
 from src.backend.core.tenancy import TenantContext, bind_tenant, unbind_tenant
 
@@ -50,11 +80,12 @@ __all__ = ("TenantMiddleware",)
 _TENANT_HEADER = "X-Tenant-ID"
 _TENANT_HEADER_BYTES = _TENANT_HEADER.lower().encode("latin-1")
 
-#: Ключ в ``AuthContext.metadata`` для ЯВНОЙ impersonation capability.
-#: Строка — единственный разрешённый target-tenant; коллекция — whitelist.
-#: Без этой capability заголовок не может переопределить аутентифицированный
-#: tenant (fail-closed, по аналогии с SECURITY-P0-001 для SAML principal).
-_IMPERSONATION_META_KEY = "tenant_impersonation"
+#: Capability имперсонации — см. ``core.auth.auth_context_helpers``:
+#: ``IMPERSONATION_METADATA_KEY`` (ключ в ``AuthContext.metadata``) и
+#: ``resolve_impersonation_target`` (разбор capability). Здесь capability
+#: ПЕРЕКЛЮЧАЕТ effective tenant на target (контракт описан в docstring
+#: модуля): state, ContextVar, ORM/RLS и response-header обязаны видеть
+#: ОДИН и тот же tenant.
 
 
 def _authenticated_tenant(scope: Scope) -> str | None:
@@ -98,31 +129,6 @@ def _auth_present(scope: Scope) -> bool:
     return state.get("auth") is not None
 
 
-def _impersonation_allowed(auth: object, target_tenant: str) -> bool:
-    """Проверить явную impersonation capability на principal'е.
-
-    Fail-closed: отсутствие ключа, неверный тип или несовпадение
-    target-tenant → ``False``.
-
-    Args:
-        auth: :class:`AuthContext` (или duck-typed объект с ``metadata``).
-        target_tenant: tenant, запрошенный заголовком ``X-Tenant-ID``.
-
-    Returns:
-        ``True`` только при явном разрешении именно этого tenant.
-
-    """
-    metadata = getattr(auth, "metadata", None)
-    if not isinstance(metadata, dict):
-        return False
-    allowed = metadata.get(_IMPERSONATION_META_KEY)
-    if isinstance(allowed, str):
-        return allowed == target_tenant
-    if isinstance(allowed, (list, tuple, set, frozenset)):
-        return target_tenant in allowed
-    return False
-
-
 async def _send_tenant_mismatch(send: Send) -> None:
     """Отклонить запрос 403 ``tenant_mismatch`` (fail-closed).
 
@@ -142,7 +148,8 @@ async def _send_tenant_mismatch(send: Send) -> None:
             "error": "tenant_mismatch",
             "detail": (
                 "X-Tenant-ID не совпадает с tenant аутентифицированного "
-                "principal; impersonation capability не объявлена"
+                "principal; impersonation capability не объявлена или не "
+                "разрешает этот tenant"
             ),
         }
     ).encode()
@@ -170,6 +177,10 @@ class TenantMiddleware:
     3. Вызывает ``set_correlation_context(tenant_id=...)`` для
        propagation в structlog (все лог-события содержат tenant_id).
     4. Добавляет ``X-Tenant-ID`` в response headers (через send-wrapper).
+    5. Переключает effective tenant на target из явной impersonation
+       capability (``metadata['tenant_impersonation']``) — синхронно в
+       ``scope['state']``, tenant-контексте (ContextVar → ORM/RLS) и
+       response-заголовке; без capability — 403 ``tenant_mismatch``.
     """
 
     def __init__(self, app: ASGIApp, default_tenant: str = "default") -> None:
@@ -214,10 +225,16 @@ class TenantMiddleware:
         # (order 300) из-за LIFO-семантики add_middleware, поэтому к этому
         # моменту scope['state']['auth'] уже заполнен реальным principal'ом.
         auth_tenant = _authenticated_tenant(scope)
+        # Target-tenant явной impersonation capability (None — capability нет).
+        # Значение фиксируется ЗДЕСЬ, на request-time: effective tenant
+        # решается один раз на запрос, и все слои (state, ContextVar,
+        # ORM/RLS, response-header) обязаны видеть одно и то же значение.
+        impersonation_target: str | None = None
         if auth_tenant:
             header_value = _get_header(scope, _TENANT_HEADER_BYTES)
             if header_value and header_value != auth_tenant:
-                if not _impersonation_allowed(state.get("auth"), header_value):
+                target = resolve_impersonation_target(state.get("auth"), header_value)
+                if target is None:
                     logging.getLogger(__name__).warning(
                         "tenant DENY path=%s authenticated=%s requested=%s "
                         "reason=tenant_mismatch",
@@ -227,8 +244,19 @@ class TenantMiddleware:
                     )
                     await _send_tenant_mismatch(send)
                     return
-            # Авторитетный tenant: заголовок не может его переопределить.
-            state["tenant_id"] = auth_tenant
+                # Capability выдана явно → effective tenant = target.
+                # Аудит обязателен: подмена tenant'а — привилегированное
+                # действие, его нельзя оставить без следа.
+                impersonation_target = target
+                logging.getLogger(__name__).warning(
+                    "tenant IMPERSONATION path=%s authenticated=%s target=%s",
+                    scope.get("path"),
+                    auth_tenant,
+                    target,
+                )
+            # Авторитетный tenant: заголовок не может его переопределить
+            # (кроме явной impersonation capability — см. выше).
+            state["tenant_id"] = impersonation_target or auth_tenant
         elif _auth_present(scope):
             # Fail-closed (независимый re-аудит 2026-10-01, N-1): principal
             # аутентифицирован, но tenant не заявлен — так ведёт себя реальный
@@ -268,9 +296,11 @@ class TenantMiddleware:
                 "tenant.correlation_context_skipped: %s", corr_exc
             )
 
-        # Wrap send — response-резолв (header > state [уже с auth] >
-        # default) + X-Tenant-ID в response headers.
-        send_wrapper = _make_send_wrapper(send, scope, self._default)
+        # Wrap send — response-резолв (impersonation target > header > state
+        # [уже с auth] > default) + X-Tenant-ID в response headers.
+        send_wrapper = _make_send_wrapper(
+            send, scope, self._default, impersonation_target
+        )
         # F-D1 (CRITICAL, продолжение): привязка ЗДЕСЬ, а не только в
         # auth-middleware. К этому моменту state['tenant_id'] уже разрешён
         # окончательно для JWT-пути (AuthRequired идёт на позиции 15, то
@@ -286,7 +316,9 @@ class TenantMiddleware:
             unbind_tenant(tenant_token)
 
     @staticmethod
-    def _resolve_tenant_id(scope: Scope, default_tenant: str) -> str:
+    def _resolve_tenant_id(
+        scope: Scope, default_tenant: str, impersonation_target: str | None = None
+    ) -> str:
         """Резолвит tenant_id с авторитетным приоритетом.
 
         Вызывается INSIDE send-wrapper (cycle 38 retrospective) —
@@ -294,17 +326,35 @@ class TenantMiddleware:
         ``state['tenant_id']``.
 
         Приоритет (SECURITY-P0-002):
-        1. ``AuthContext.metadata['tenant_id']`` (аутентифицированный)
-        2. Header ``X-Tenant-ID``
-        3. ``scope['state']['tenant_id']``
-        4. ``default_tenant``
+        1. ``impersonation_target`` — effective tenant явной impersonation
+           capability (зафиксирован на request-time);
+        2. ``AuthContext.metadata['tenant_id']`` (аутентифицированный)
+        3. Header ``X-Tenant-ID``
+        4. ``scope['state']['tenant_id']``
+        5. ``default_tenant``
 
         Изменение против исходного контракта — ТОЛЬКО пункт 1: при
         наличии аутентифицированного principal'а он авторитетен, и
         подделанный ``X-Tenant-ID`` не может отравить response-заголовок
         и downstream-потребителей (кэш, фронтенд, сервисы). Взаимный
-        порядок header/state (пункты 2-3) сохранён без изменений.
+        порядок header/state (пункты 3-4) сохранён без изменений.
+
+        Пункт 1 обязателен для инварианта «state == ContextVar == ORM/RLS
+        == response-header»: при impersonation заголовок обязан показывать
+        target-tenant, а не аутентифицированный.
+
+        Args:
+            scope: ASGI scope.
+            default_tenant: tenant_id, если всё остальное пусто.
+            impersonation_target: target-tenant из impersonation capability
+                (``None`` — capability не применялась).
+
+        Returns:
+            Итоговый tenant_id для response-заголовка и correlation-контекста.
+
         """
+        if impersonation_target:
+            return impersonation_target
         auth_tenant = _authenticated_tenant(scope)
         if auth_tenant:
             return auth_tenant
@@ -335,7 +385,12 @@ def _get_header(scope: Scope, name: bytes) -> str | None:
     return None
 
 
-def _make_send_wrapper(send: Send, scope: Scope, default_tenant: str) -> Send:
+def _make_send_wrapper(
+    send: Send,
+    scope: Scope,
+    default_tenant: str,
+    impersonation_target: str | None = None,
+) -> Send:
     """Создаёт обёртку вокруг ``send``, добавляющую X-Tenant-ID в start.
 
     Header добавляется только в ``http.response.start`` сообщение.
@@ -349,11 +404,25 @@ def _make_send_wrapper(send: Send, scope: Scope, default_tenant: str) -> Send:
     Также вызывает ``set_correlation_context(tenant_id=...)`` для
     structlog propagation — здесь это безопасно (после __call__ —
     не блокирует request path, только logging payload).
+
+    Args:
+        send: исходный ASGI send-канал.
+        scope: ASGI scope текущего запроса.
+        default_tenant: tenant_id, если всё остальное пусто.
+        impersonation_target: target-tenant из impersonation capability —
+            приоритет над всеми остальными источниками (инвариант
+            «state == ContextVar == ORM/RLS == response-header»).
+
+    Returns:
+        Обёртка ``send``, добавляющая заголовок ``X-Tenant-ID``.
+
     """
 
     async def send_wrapper(message: Message) -> None:
         if message["type"] == "http.response.start":
-            tenant_id = TenantMiddleware._resolve_tenant_id(scope, default_tenant)
+            tenant_id = TenantMiddleware._resolve_tenant_id(
+                scope, default_tenant, impersonation_target
+            )
             tenant_id_bytes = tenant_id.encode("latin-1")
 
             existing: list[tuple[bytes, bytes]] = list(message.get("headers", []))

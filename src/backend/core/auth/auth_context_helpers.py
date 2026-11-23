@@ -20,7 +20,17 @@ from __future__ import annotations
 
 from typing import Any
 
-__all__ = ("extract_tenant_id", "extract_user_groups", "extract_user_permissions")
+__all__ = (
+    "extract_tenant_id",
+    "extract_user_groups",
+    "extract_user_permissions",
+    "resolve_impersonation_target",
+)
+
+#: Ключ в ``AuthContext.metadata`` — явная capability имперсонации.
+#: Значение — строка (единственный target-tenant) либо коллекция строк
+#: (whitelist).
+IMPERSONATION_METADATA_KEY = "tenant_impersonation"
 
 
 def extract_tenant_id(auth: Any) -> str | None:
@@ -40,6 +50,37 @@ def extract_tenant_id(auth: Any) -> str | None:
     if not isinstance(tenant_id, str) or not tenant_id:
         return None
     return tenant_id
+
+
+def resolve_impersonation_target(auth: Any, requested_tenant: str) -> str | None:
+    """Определить target-tenant, разрешённый capability имперсонации.
+
+    Единственный источник истины для capability ``tenant_impersonation``:
+    его используют ``TenantMiddleware``, ``RequestContextMiddleware`` и
+    ``TenantResourceIsolationMiddleware``. Если слои решают capability
+    по-разному, effective tenant расходится между ними (state ≠ ContextVar ≠
+    RequestContext ≠ ownership-checker).
+
+    Fail-closed: отсутствие ключа, неверный тип или несовпадение
+    target-tenant → ``None``.
+
+    Args:
+        auth: :class:`AuthContext` (или duck-typed объект с ``metadata``).
+        requested_tenant: tenant, запрошенный заголовком ``X-Tenant-ID``.
+
+    Returns:
+        Target-tenant, если capability явно разрешает именно его;
+        иначе ``None``.
+    """
+    metadata = getattr(auth, "metadata", None)
+    if not isinstance(metadata, dict):
+        return None
+    allowed = metadata.get(IMPERSONATION_METADATA_KEY)
+    if isinstance(allowed, str):
+        return requested_tenant if allowed == requested_tenant else None
+    if isinstance(allowed, (list, tuple, set, frozenset)):
+        return requested_tenant if requested_tenant in allowed else None
+    return None
 
 
 def extract_user_groups(auth: Any) -> list[str]:

@@ -18,7 +18,9 @@
 1. Аутентифицированный tenant авторитетен.
 2. Расхождение с заголовком → 403 ``tenant_mismatch`` (fail-closed).
 3. Явная impersonation capability (``metadata['tenant_impersonation']``)
-   разрешает подмену ровно на перечисленный tenant.
+   разрешает подмену ровно на перечисленный tenant; с 2026-11-20 подмена
+   РЕАЛЬНО переключает effective tenant (state == ContextVar == ORM/RLS ==
+   response-заголовок).
 4. Без аутентификации поведение не меняется (header > state > default).
 """
 
@@ -161,11 +163,18 @@ async def test_authenticated_tenant_is_used_without_header() -> None:
 
 
 async def test_explicit_impersonation_capability_allows_target() -> None:
-    """Явная capability разрешает подмену ровно на разрешённый tenant."""
+    """Явная capability переключает effective tenant на разрешённый tenant.
+
+    **Контракт изменён 2026-11-20 (аудит).** Раньше capability только
+    «разрешала» подмену, но effective tenant оставался аутентифицированным
+    (state = auth-tenant, заголовок = auth-tenant) — молчаливый no-op.
+    Теперь подмена РЕАЛЬНО происходит: state, tenant-контекст (ContextVar →
+    ORM/RLS) и response-заголовок показывают target.
+    """
     observed: dict[str, Any] = {}
     app = TenantMiddleware(_make_inner(observed))
 
-    status, _, _ = await _call(
+    status, headers, _ = await _call(
         app,
         _scope(
             tenant_header=HEADER_TENANT,
@@ -177,8 +186,9 @@ async def test_explicit_impersonation_capability_allows_target() -> None:
     )
 
     assert status == 200
-    # Impersonation НЕ меняет идентичность запроса: tenant остаётся tenant-a.
-    assert observed["state_tenant_id"] == AUTH_TENANT
+    # Effective tenant = target: state и response-заголовок совпадают.
+    assert observed["state_tenant_id"] == HEADER_TENANT
+    assert headers[b"x-tenant-id"] == HEADER_TENANT
 
 
 async def test_impersonation_capability_does_not_leak_to_other_tenants() -> None:

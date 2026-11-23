@@ -65,7 +65,7 @@ from dataclasses import dataclass
 import orjson as json
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from src.backend.core.auth import extract_tenant_id
+from src.backend.core.auth import extract_tenant_id, resolve_impersonation_target
 from src.backend.core.errors import BaseError
 
 logger = logging.getLogger(__name__)
@@ -209,6 +209,21 @@ class TenantResourceIsolationMiddleware:
         return ""
 
     @staticmethod
+    def _auth_principal(scope: Scope) -> object:
+        """Достать аутентифицированного principal'а из ``scope['state']``.
+
+        Args:
+            scope: ASGI scope текущего запроса.
+
+        Returns:
+            Объект ``AuthContext`` (или duck-typed) либо ``None``.
+        """
+        state = scope.get("state")
+        if not isinstance(state, dict):
+            return None
+        return state.get("auth")
+
+    @staticmethod
     def _header_tenant_id(scope: Scope) -> str | None:
         """Достаёт сырое значение заголовка ``X-Tenant-ID``.
 
@@ -279,28 +294,41 @@ class TenantResourceIsolationMiddleware:
         # Заголовок недоверенный: он обязан СОВПАДАТЬ с аутентифицированным
         # tenant'ом. Пустой заголовок тоже считается нарушением — иначе
         # «X-Tenant-ID: » был бы способом обойти проверку.
+        #
+        # Аудит 2026-11-20: явная capability имперсонации
+        # (``metadata['tenant_impersonation']``) ПЕРЕКЛЮЧАЕТ effective tenant
+        # на target (контракт — в ``tenant.py``). Тогда заголовок совпадает с
+        # effective tenant'ом, mismatch не применяется, а ownership-checker
+        # получает target (иначе под impersonation запрос к ресурсу отклонялся
+        # бы 403, хотя effective tenant = target).
         header_tenant = self._header_tenant_id(scope)
         if header_tenant is not None and header_tenant != tenant_id:
-            logger.warning(
-                "tenant_isolation DENY path=%s resource=%s/%s reason=tenant_mismatch "
-                "authenticated=%s header=%r",
-                path,
-                resource_type,
-                resource_id,
-                tenant_id,
-                header_tenant,
+            impersonation_target = resolve_impersonation_target(
+                self._auth_principal(scope), header_tenant
             )
-            await self._send_json(
-                send,
-                status=403,
-                body={
-                    "message": "tenant mismatch: X-Tenant-ID does not match authenticated tenant",
-                    "status_code": 403,
-                    "hasErrors": True,
-                    "error_type": "TenantIsolationDenied",
-                },
-            )
-            return
+            if impersonation_target:
+                tenant_id = impersonation_target
+            else:
+                logger.warning(
+                    "tenant_isolation DENY path=%s resource=%s/%s reason=tenant_mismatch "
+                    "authenticated=%s header=%r",
+                    path,
+                    resource_type,
+                    resource_id,
+                    tenant_id,
+                    header_tenant,
+                )
+                await self._send_json(
+                    send,
+                    status=403,
+                    body={
+                        "message": "tenant mismatch: X-Tenant-ID does not match authenticated tenant",
+                        "status_code": 403,
+                        "hasErrors": True,
+                        "error_type": "TenantIsolationDenied",
+                    },
+                )
+                return
 
         if not tenant_id:
             # Fail-closed: без tenant-идентичности ownership неверифицируем.
