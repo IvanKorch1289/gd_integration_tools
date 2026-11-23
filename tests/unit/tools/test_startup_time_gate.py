@@ -291,3 +291,79 @@ def test_default_samples_is_median_based() -> None:
     assert mod.SAMPLE_COUNT >= 3, (
         "одиночный замер флейкает; дефолт должен усреднять >=3 прогона"
     )
+
+
+# ──────────── Машинно-независимое сравнение с baseline-коммитом (P5) ──
+#
+# Абсолютные секунды зависят от машины: на коммите базовой линии гейт
+# показывал столько же, сколько на HEAD, и «регрессия» была экологической.
+# Критерием стало ОТНОШЕНИЕ к baseline-коммиту, измеренное в той же среде,
+# причём замеры интерливируются (baseline и текущее дерево по очереди) —
+# иначе дрейф нагрузки машины давал отношение 2.45 при отсутствии
+# регрессии.
+
+
+def test_ratio_against_ref_returns_structure() -> None:
+    """Сравнение с ref=HEAD возвращает отношение и прогоны обоих деревьев.
+
+    HEAD против HEAD → отношение около 1.0 (самопроверка методики).
+    """
+    result = mod.measure_ratio_against_ref("HEAD", 1)
+    if result is None:
+        pytest.skip("git worktree недоступен в окружении")
+    ratio, baseline_total, current_passes, baseline_passes = result
+    assert baseline_total > 0
+    assert len(current_passes) == 1
+    assert len(baseline_passes) == 1
+    assert len(current_passes[0]) == len(mod.CRITICAL_MODULES)
+    assert 0.5 < ratio < 2.0, f"самопроверка отношения HEAD/HEAD: {ratio}"
+
+
+def test_main_reports_ratio_when_baseline_has_ref(
+    isolated_baseline, monkeypatch, capsys
+) -> None:
+    """При наличии ref в baseline гейт печатает отношение и разбивку.
+
+    Args:
+        isolated_baseline: Фикстура изолированного baseline.
+        monkeypatch: Фикстура pytest.
+        capsys: Захват вывода.
+    """
+    mod.save_baseline(1.0, ref="HEAD")
+    monkeypatch.setattr(mod, "measure_import", lambda module: 0.01)
+    rc = mod.main(["--samples", "1"])
+    out = capsys.readouterr().out
+    assert "RATIO:" in out
+    assert "Покомпонентно" in out
+    assert rc in (0, 1)
+
+
+def test_main_without_ref_uses_absolute_comparison(
+    isolated_baseline, monkeypatch, capsys
+) -> None:
+    """Без ref в baseline работает прежнее абсолютное сравнение.
+
+    Args:
+        isolated_baseline: Фикстура изолированного baseline.
+        monkeypatch: Фикстура pytest.
+        capsys: Захват вывода.
+    """
+    mod.save_baseline(1.0)
+    monkeypatch.setattr(mod, "measure_import", lambda module: 0.01)
+    rc = mod.main(["--samples", "1"])
+    out = capsys.readouterr().out
+    assert "BASELINE:" in out
+    assert "RATIO:" not in out
+    assert rc == 0
+
+
+def test_baseline_stores_ref(isolated_baseline) -> None:
+    """Baseline хранит ревизию, на которой снят.
+
+    Args:
+        isolated_baseline: Фикстура изолированного baseline.
+    """
+    mod.save_baseline(2.5, ref="abc1234")
+    info = mod.load_baseline_info()
+    assert info["total"] == pytest.approx(2.5)
+    assert info["ref"] == "abc1234"

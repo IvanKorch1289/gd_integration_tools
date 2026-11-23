@@ -24,9 +24,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import statistics
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -72,6 +74,35 @@ def measure_import(module: str) -> float:
     3. ``-X importtime`` НЕ используем — overhead parsingа в разы больше
        самого import time и собьёт baseline.
     """
+    return _run_measure(module, None)
+
+
+def _measure_import_at(module: str, cwd: Path) -> float:
+    """Холодный импорт модуля из указанного каталога.
+
+    Используется для замера на baseline-коммите во временном worktree:
+    модуль должен резолвиться именно оттуда, а не из основного дерева.
+
+    Args:
+        module: Имя модуля.
+        cwd: Каталог, из которого выполняется импорт.
+
+    Returns:
+        Время импорта в секундах либо ``float('inf')``.
+    """
+    return _run_measure(module, cwd)
+
+
+def _run_measure(module: str, cwd: Path | None) -> float:
+    """Общая реализация замера импорта.
+
+    Args:
+        module: Имя модуля.
+        cwd: Рабочий каталог подпроцесса (``None`` — текущий).
+
+    Returns:
+        Время импорта в секундах либо ``float('inf')``.
+    """
     script = (
         "import time, sys, os\n"
         # Disable Vault env-flag + suppress structlog (writes to stdout
@@ -86,7 +117,11 @@ def measure_import(module: str) -> float:
         "sys.stdout.flush()\n"
     )
     proc = subprocess.run(  # noqa: S603  # trusted argv (controlled by tool, shell=False default)
-        [sys.executable, "-c", script], capture_output=True, text=True, timeout=30
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=str(cwd) if cwd is not None else None,
     )
     if proc.returncode != 0:
         sys.stderr.write(f"ERROR importing {module}: {proc.stderr}\n")
@@ -119,23 +154,90 @@ def _extract_elapsed_from_stdout(stdout: str) -> float:
     for line in stdout.splitlines():
         if line.startswith(_MARKER_PREFIX):
             try:
-                return float(line[len(_MARKER_PREFIX):])
+                return float(line[len(_MARKER_PREFIX) :])
             except ValueError:
                 continue
     # Fallback: legacy behavior (subprocess without marker).
     try:
         return float(stdout.strip().splitlines()[-1])
-    except (ValueError, IndexError):
+    except ValueError, IndexError:
         return float("inf")
 
 
-def measure_pass() -> list[float]:
+def measure_pass(cwd: Path | None = None) -> list[float]:
     """Один полный прогон по ``CRITICAL_MODULES``.
+
+    Args:
+        cwd: Каталог, из которого измеряется импорт (``None`` — текущее
+            дерево).
 
     Returns:
         Список замеров на модуль в порядке ``CRITICAL_MODULES``.
     """
-    return [measure_import(module) for module in CRITICAL_MODULES]
+    if cwd is None:
+        return [measure_import(module) for module in CRITICAL_MODULES]
+    return [_measure_import_at(module, cwd) for module in CRITICAL_MODULES]
+
+
+def measure_ratio_against_ref(
+    ref: str, samples: int
+) -> tuple[float, float, list[list[float]], list[list[float]]] | None:
+    """Сравнить текущее дерево с baseline-коммитом в одной среде.
+
+    Замеры ИНТЕРЛИВИРУЮТСЯ: в каждом прогоне сначала меряется baseline-коммит,
+    затем текущее дерево. Нагрузка машины (другие процессы, FS-кэш) влияет
+    на оба замера почти одинаково, поэтому отношение per-pair устойчиво к
+    дрейфу. Раздельные замеры (сначала всё текущее, потом всё baseline)
+    давали отношение 2.45 при фактическом отсутствии регрессии — разброс
+    одиночных замеров достигает ±50 %.
+
+    Args:
+        ref: Ревизия baseline.
+        samples: Число интерливированных прогонов.
+
+    Returns:
+        Кортеж ``(медиана отношений, медиана baseline, прогоны текущего
+        дерева, прогоны baseline)`` либо ``None``, если сравнение невозможно.
+    """
+    tmp_dir = Path(tempfile.mkdtemp(prefix="startup-baseline-"))
+    worktree = tmp_dir / "tree"
+    try:
+        cmd = ["git", "worktree", "add", "--detach", "-q", str(worktree), ref]
+        proc = subprocess.run(  # noqa: S603 — фиксированная команда git
+            cmd, cwd=ROOT, capture_output=True, text=True, timeout=120
+        )
+        if proc.returncode != 0:
+            return None
+        current_passes: list[list[float]] = []
+        baseline_passes: list[list[float]] = []
+        baseline_totals: list[float] = []
+        ratios: list[float] = []
+        for _ in range(samples):
+            baseline_pass = measure_pass(cwd=worktree)
+            baseline_total = sum(baseline_pass)
+            baseline_passes.append(baseline_pass)
+            current_pass = measure_pass()
+            current_total = sum(current_pass)
+            current_passes.append(current_pass)
+            baseline_totals.append(baseline_total)
+            if baseline_total > 0:
+                ratios.append(current_total / baseline_total)
+        if not ratios:
+            return None
+        return (
+            median_of(ratios),
+            median_of(baseline_totals),
+            current_passes,
+            baseline_passes,
+        )
+    except OSError, subprocess.SubprocessError:
+        return None
+    finally:
+        cleanup = ["git", "worktree", "remove", "--force", str(worktree)]
+        subprocess.run(  # noqa: S603 — фиксированная команда git
+            cleanup, cwd=ROOT, capture_output=True, text=True, timeout=60
+        )
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 def median_of(samples: list[float]) -> float:
@@ -151,22 +253,65 @@ def median_of(samples: list[float]) -> float:
     return statistics.median(samples)
 
 
-def load_baseline() -> float | None:
+def load_baseline_info() -> dict[str, object]:
+    """Прочитать baseline целиком (total + ref).
+
+    Returns:
+        Словарь с ключами ``total`` (float) и ``ref`` (str | None);
+        пустой словарь, если baseline отсутствует или нечитаем.
+    """
     if not BASELINE_FILE.exists():
-        return None
+        return {}
     try:
-        return float(
-            json.loads(BASELINE_FILE.read_text(encoding="utf-8")).get("total", 0)
-        )
-    except (ValueError, KeyError, json.JSONDecodeError):
-        return None
+        data = json.loads(BASELINE_FILE.read_text(encoding="utf-8"))
+    except ValueError, json.JSONDecodeError:
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    total = data.get("total")
+    if not isinstance(total, (int, float)):
+        return {}
+    ref = data.get("ref")
+    return {"total": float(total), "ref": ref if isinstance(ref, str) else None}
 
 
-def save_baseline(total: float) -> None:
+def load_baseline() -> float | None:
+    total = load_baseline_info().get("total")
+    return float(total) if isinstance(total, (int, float)) else None
+
+
+def save_baseline(total: float, ref: str | None = None) -> None:
+    """Записать baseline.
+
+    Args:
+        total: Суммарное время в секундах.
+        ref: Ревизия, на которой снят baseline (для машинно-независимого
+            сравнения). ``None`` — сравнение по абсолютному времени.
+    """
+    payload: dict[str, object] = {"total": round(total, 4), "tool": "startup_time"}
+    if ref:
+        payload["ref"] = ref
     BASELINE_FILE.write_text(
-        json.dumps({"total": round(total, 4), "tool": "startup_time"}, indent=2) + "\n",
-        encoding="utf-8",
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
+
+
+def current_ref() -> str | None:
+    """Текущая ревизия рабочего дерева (для baseline).
+
+    Returns:
+        Короткий SHA или ``None``, если git недоступен.
+    """
+    try:
+        cmd = ["git", "rev-parse", "--short", "HEAD"]
+        proc = subprocess.run(  # noqa: S603 — фиксированная команда git
+            cmd, cwd=ROOT, capture_output=True, text=True, timeout=30
+        )
+    except OSError, subprocess.SubprocessError:
+        return None
+    if proc.returncode != 0:
+        return None
+    return proc.stdout.strip() or None
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -192,6 +337,15 @@ def main(argv: list[str] | None = None) -> int:
             "1 = старое поведение (одиночный холодный замер)"
         ),
     )
+    parser.add_argument(
+        "--no-ratio",
+        action="store_true",
+        help=(
+            "не сравнивать с baseline-коммитом (только абсолютное время). "
+            "По умолчанию сравнение машинно-независимо: тот же набор модулей "
+            "меряется на коммите baseline'а в этой же среде"
+        ),
+    )
     args = parser.parse_args(argv)
     if args.samples < 1:
         parser.error("--samples должен быть >= 1")
@@ -203,19 +357,44 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Modules: {len(CRITICAL_MODULES)}")
     print()
 
+    baseline_info = load_baseline_info()
+    baseline = baseline_info.get("total")
+    if not isinstance(baseline, (int, float)):
+        baseline = None
+    ref = baseline_info.get("ref")
+    ref = ref if isinstance(ref, str) else None
+
     # samples[pass_index][module_index] — сырые замеры всех прогонов.
-    passes = [measure_pass() for _ in range(args.samples)]
+    # При наличии baseline-коммита замеры ИНТЕРЛИВИРУЮТСЯ (baseline и
+    # текущее дерево по очереди) — иначе дрейф нагрузки машины искажает
+    # отношение (наблюдалось 2.45 при отсутствии регрессии).
+    ratio: float | None = None
+    baseline_ref_total: float | None = None
+    comparison = None
+    if ref and not args.no_ratio:
+        comparison = measure_ratio_against_ref(ref, args.samples)
+    baseline_passes: list[list[float]] = []
+    if comparison is not None:
+        ratio, baseline_ref_total, passes, baseline_passes = comparison
+    else:
+        passes = [measure_pass() for _ in range(args.samples)]
     totals = [sum(p) for p in passes]
 
     # Медиана по каждому модулю и по total: вердикт выносится на медиану,
     # одиночный выброс холодного прогона больше не роняет гейт.
-    per_module_median = [median_of([p[i] for p in passes]) for i in range(len(CRITICAL_MODULES))]
+    per_module_median = [
+        median_of([p[i] for p in passes]) for i in range(len(CRITICAL_MODULES))
+    ]
     total = median_of(totals)
 
     for idx, module in enumerate(CRITICAL_MODULES):
         samples_txt = ", ".join(f"{p[idx]:.3f}" for p in passes)
-        status = "OK" if per_module_median[idx] < MAX_STARTUP_SECONDS_PER_MODULE else "FAIL"
-        print(f"  [{status}] {module}: median={per_module_median[idx]:.3f}s  [{samples_txt}]")
+        status = (
+            "OK" if per_module_median[idx] < MAX_STARTUP_SECONDS_PER_MODULE else "FAIL"
+        )
+        print(
+            f"  [{status}] {module}: median={per_module_median[idx]:.3f}s  [{samples_txt}]"
+        )
 
     per_module_fail = [
         (module, per_module_median[idx])
@@ -227,10 +406,29 @@ def main(argv: list[str] | None = None) -> int:
     print(f"TOTAL: {total:.3f}s (median of {args.samples})")
     print(f"SAMPLES: {', '.join(f'{t:.3f}' for t in totals)}")
     if args.samples > 1:
-        print(f"        min={min(totals):.3f}s max={max(totals):.3f}s spread={max(totals) - min(totals):.3f}s")
+        print(
+            f"        min={min(totals):.3f}s max={max(totals):.3f}s spread={max(totals) - min(totals):.3f}s"
+        )
 
-    baseline = load_baseline()
-    if baseline is not None:
+    if ratio is not None:
+        limit = 1 + REGRESSION_TOLERANCE
+        print(f"BASELINE REF: {ref} → {baseline_ref_total:.3f}s (в этой же среде)")
+        print(f"RATIO: {ratio:.3f} (лимит {limit:.2f} = baseline × {limit:.2f})")
+        print("  Покомпонентно (current / baseline):")
+        for idx, module in enumerate(CRITICAL_MODULES):
+            base_med = median_of([p[idx] for p in baseline_passes])
+            cur_med = median_of([p[idx] for p in passes])
+            comp = cur_med / base_med if base_med > 0 else float("inf")
+            print(f"    {comp:5.2f}×  {module} ({cur_med:.3f}s / {base_med:.3f}s)")
+        if ratio > limit:
+            print(
+                f"FAIL: current/baseline ratio {ratio:.3f} > {limit:.2f} "
+                f"(baseline {ref} = {baseline_ref_total:.3f}s, "
+                f"current = {total:.3f}s)",
+                file=sys.stderr,
+            )
+            return 1
+    elif baseline is not None:
         print(f"BASELINE: {baseline:.3f}s")
         regression_limit = baseline * (1 + REGRESSION_TOLERANCE)
         print(
@@ -254,13 +452,24 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
-    if total > args.max_total:
+    if ratio is None and total > args.max_total:
+        # Абсолютный лимит зависит от машины, поэтому он применяется только
+        # когда машинно-независимое сравнение недоступно (нет git-истории).
         print(f"FAIL: total {total:.3f}s > limit {args.max_total}s", file=sys.stderr)
         return 1
+    if ratio is not None and total > args.max_total:
+        print(
+            f"NOTE: total {total:.3f}s > абсолютный лимит {args.max_total}s, "
+            "но критерий — отношение к baseline-коммиту (машинно-независимо)"
+        )
 
-    if args.ratchet and (baseline is None or total < baseline):
-        save_baseline(total)
-        print(f"baseline updated: {total:.3f}s")
+    if args.ratchet:
+        # Семантика для ratio-режима: принять ТЕКУЩЕЕ состояние как новый
+        # baseline (ref = текущий HEAD). Следующие прогоны будут сравниваться
+        # с ним — то есть принятая деградация перестаёт «флажить».
+        ref_now = current_ref()
+        save_baseline(total, ref=ref_now)
+        print(f"baseline updated: {total:.3f}s (ref={ref_now})")
 
     print()
     print("OK: startup-time gate passed")
