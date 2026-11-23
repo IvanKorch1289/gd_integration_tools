@@ -247,13 +247,33 @@ class BaseExternalAPIClient:
                     )
                     raise
                 if response_type == "text":
-                    return response.text
-                if response_type == "bytes":
-                    return response.content
-                try:
-                    return response.json()
-                except ValueError:
-                    return response.text
+                    content = response.text
+                elif response_type == "bytes":
+                    content = response.content
+                else:
+                    try:
+                        content = response.json()
+                    except ValueError:
+                        content = response.text
+                # Конверт ДОЛЖЕН совпадать с обычной веткой (HttpClient):
+                # сервисы читают ``response["data"]`` (например, СКБ отдаёт
+                # документ через ``response.get("data")``). Раньше facade-ветка
+                # возвращала «сырой» payload — ветка PDF падала с
+                # AttributeError (независимое ревью 2026-11-23, MINOR-8).
+                raw_headers = getattr(response, "headers", None) or {}
+                return {
+                    "status_code": getattr(response, "status_code", None),
+                    "data": content,
+                    "headers": dict(raw_headers),
+                    "content_type": str(
+                        dict(raw_headers).get("Content-Type", "")
+                        or dict(raw_headers).get("content-type", "")
+                    )
+                    .lower()
+                    .split(";")[0]
+                    .strip(),
+                    "elapsed": time.monotonic() - start_monotonic,
+                }
 
             try:
                 return await self.client.make_request(

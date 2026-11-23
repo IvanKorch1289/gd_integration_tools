@@ -19,6 +19,7 @@ X-API-Key → валидация тела → диспетчеризация act
 """
 
 import asyncio
+import hashlib
 import uuid
 
 import httpx
@@ -70,7 +71,14 @@ async def main() -> None:
         try:
             payload = r.json()
             if isinstance(payload, dict):
-                order_uuid = payload.get("order_uuid") or payload.get("OrderId")
+                # Ответ сервиса — конверт HTTP-клиента: полезная нагрузка
+                # лежит в ``data`` (аудит 2026-11-20). Раньше читался только
+                # верхний уровень → order_uuid не находился, шаг [4]
+                # пропускался даже при успешном создании заказа.
+                data = payload.get("data")
+                if not isinstance(data, dict):
+                    data = payload
+                order_uuid = data.get("order_uuid") or data.get("OrderId")
         except Exception:  # noqa: BLE001 — ответ не-JSON: order_uuid неизвестен
             order_uuid = None
 
@@ -78,11 +86,26 @@ async def main() -> None:
         if order_uuid:
             r = await client.get(
                 "/api/v1/skb/get-result",
-                params={"order_uuid": str(order_uuid), "response_type": "json"},
+                # Значение — строго 'JSON'/'PDF' (enum ResponseTypeChoices);
+                # регистр важен, 'json' даёт 422.
+                params={"order_uuid": str(order_uuid), "response_type": "JSON"},
                 headers=key_headers(),
             )
             print(f"[4] GET /api/v1/skb/get-result → {r.status_code}")
             print("    " + r.text.strip()[:300])
+
+            # 4b) документ заказа (PDF) + контрольная сумма содержимого.
+            r = await client.get(
+                "/api/v1/skb/get-result",
+                params={"order_uuid": str(order_uuid), "response_type": "PDF"},
+                headers=key_headers(),
+            )
+            digest = hashlib.sha256(r.content).hexdigest()
+            print(f"[4b] GET /api/v1/skb/get-result (PDF) → {r.status_code}")
+            print(
+                f"    content-type={r.headers.get('content-type')!r} "
+                f"bytes={len(r.content)} sha256={digest}"
+            )
         else:
             print("[4] GET /api/v1/skb/get-result → пропущен (нет order_uuid)")
 

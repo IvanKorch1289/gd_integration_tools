@@ -128,6 +128,29 @@ async def test_get_response_by_order_returns_bytes_for_pdf(
         assert mock_req.await_args.kwargs["response_type"] == "bytes"
 
 
+@pytest.mark.asyncio
+async def test_get_response_by_order_returns_bytes_for_pdf_enum(
+    service: APISKBService,
+) -> None:
+    """Enum-член ``ResponseTypeChoices`` тоже включает PDF-ветку.
+
+    Аудит 2026-11-20: query-параметр FastAPI разбирается в enum, а
+    сравнение enum со строкой ``"PDF"`` даёт ``False`` → клиент получал
+    JSON вместо документа.
+    """
+    from src.backend.core.enums.skb import ResponseTypeChoices
+
+    with patch.object(service, "_request", new_callable=AsyncMock) as mock_req:
+        mock_req.return_value = {"data": b"pdf-content"}
+        result = await service.get_response_by_order(
+            UUID("12345678-1234-5678-1234-567812345678"),
+            response_type_str=ResponseTypeChoices.pdf,
+        )
+        assert result == b"pdf-content"
+        assert mock_req.await_args.kwargs["response_type"] == "bytes"
+        assert mock_req.await_args.kwargs["params"]["Type"] == "PDF"
+
+
 # ── get_orders_list ─────────────────────────────────────────────
 
 

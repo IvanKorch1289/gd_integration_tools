@@ -18,11 +18,15 @@ from typing import Any
 from uuid import UUID
 
 from src.backend.core.config.settings import SKBAPISettings, settings
+from src.backend.core.enums.skb import ResponseTypeChoices, response_type_value
 from src.backend.core.errors import ServiceError
 from src.backend.core.extension_registry import get_extension_resource
 from src.backend.services.core.base_external_api import BaseExternalAPIClient
 
 __all__ = ("APISKBService", "get_skb_service", "resolve_waf_route")
+
+#: Значение типа ответа, при котором возвращается документ (PDF).
+PDF_RESPONSE_TYPE = ResponseTypeChoices.pdf.value
 
 
 class APISKBService(BaseExternalAPIClient):
@@ -73,18 +77,33 @@ class APISKBService(BaseExternalAPIClient):
     async def get_response_by_order(
         self, order_uuid: UUID, response_type_str: str | None = None
     ) -> Any | dict[str, Any]:
-        """Получить результат по залогу из СКБ-Техно."""
+        """Получить результат по залогу из СКБ-Техно.
+
+        Args:
+            order_uuid: UUID заказа в СКБ-системе.
+            response_type_str: Тип ответа (``"JSON"`` / ``"PDF"``). Приходит
+                как enum-член :class:`ResponseTypeChoices` (query-параметр
+                FastAPI) либо строкой — значение нормализуется через
+                :func:`response_type_value`, иначе ветка «PDF» не срабатывала
+                и клиент получал JSON вместо документа.
+
+        Returns:
+            JSON-ответ либо bytes документа.
+        """
+        response_type = response_type_value(response_type_str)
         try:
             base = self._url("GET_RESULT").rstrip("/")
             url = f"{base}/{order_uuid}"
             response = await self._request(
                 "GET",
                 url,
-                params={"Type": response_type_str},
-                response_type="bytes" if response_type_str == "PDF" else "json",
+                params={"Type": response_type},
+                response_type="bytes" if response_type == PDF_RESPONSE_TYPE else "json",
                 raise_for_status=False,
             )
-            return response.get("data") if response_type_str == "PDF" else response
+            return (
+                response.get("data") if response_type == PDF_RESPONSE_TYPE else response
+            )
         except Exception as exc:
             raise ServiceError from exc
 

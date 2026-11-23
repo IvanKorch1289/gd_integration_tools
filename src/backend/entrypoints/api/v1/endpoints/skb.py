@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Response
 
-from src.backend.core.enums.skb import ResponseTypeChoices
+from src.backend.core.enums.skb import ResponseTypeChoices, response_type_value
 from src.backend.core.extension_registry import get_extension_resource
 from src.backend.entrypoints.api.dependencies.auth import require_api_key
 from src.backend.entrypoints.api.generator.actions import (
@@ -30,8 +30,17 @@ builder = ActionRouterBuilder(router)
 
 
 def build_skb_result_response(result: Any, action_kwargs: dict[str, Any]) -> Any:
-    """Формирует HTTP-ответ для результата запроса из СКБ-Техно."""
-    response_type = action_kwargs.get("response_type_str")
+    """Сформировать HTTP-ответ для результата запроса из СКБ-Техно.
+
+    Args:
+        result: Результат, полученный от сервиса (JSON или bytes документа).
+        action_kwargs: Аргументы вызова action'а; ``response_type_str`` —
+            тип ответа (enum-член или строка).
+
+    Returns:
+        PDF-ответ с вложением либо исходный результат.
+    """
+    response_type = response_type_value(action_kwargs.get("response_type_str"))
 
     if response_type == ResponseTypeChoices.pdf.value:
         return Response(
