@@ -28,9 +28,44 @@ order=710 — ВНЕШНЕ обоих маскеров (``data_masking`` 580,
 считался по сырому телу, а клиент получал замаскированное — иденти-
 фикатор не соответствовал контенту. Порядок регистрации зафиксирован
 тестом ``tests/unit/entrypoints/middlewares/test_etag_masking_order.py``.
+
+Волна 2026-11-20 (аудит prod-readiness, находки 3.1 и 3.2)
+------------------------------------------------------------------
+
+1. Политика кэширования. Раньше ``_cache_control()`` жёстко возвращал
+   ``public, max-age=N`` для ЛЮБОГО 200 JSON GET, а исходные
+   ``Cache-Control``/``ETag`` downstream удалялись. Итог: политика
+   endpoint'а (``no-store``) терялась, а персонализированные ответы
+   объявлялись публично кэшируемыми (CDN/proxy мог отдать чужой ответ).
+   Теперь политика считается одной функцией ``_cache_control()``
+   (и для 200, и для 304):
+
+   * ``public`` — ТОЛЬКО явный opt-in endpoint'а И анонимный запрос;
+   * персонализированный запрос (``Authorization`` / ``X-API-Key`` /
+     ``Cookie`` / ``scope['state']['auth']``) → ``private``;
+   * ``Set-Cookie`` в ответе → ``no-store`` (перекрывает opt-in);
+   * политика endpoint'а сохраняется; если в ней нет ``max-age`` /
+     ``s-maxage`` / ``no-store`` — добавляется ``max-age=N``;
+   * без политики endpoint'а → ``private, max-age=N`` (никогда не public).
+
+   ``Vary`` намеренно НЕ используется как замена авторизации: кэш
+   разделяется по директивам, а не по заголовкам запроса.
+
+2. Streaming. Раньше тело накапливалось в ``body_chunks`` для ВСЕХ
+   ответов, а проверка content-type выполнялась ПОСЛЕ накопления:
+   SSE отдавался только после завершения downstream, бесконечный
+   поток вешал ответ, большие ответы буферизовались в памяти.
+   Теперь решение «кэшировать или нет» принимается на
+   ``http.response.start``; не-кэшируемые ответы идут в passthrough
+   (без буферизации и без изменения заголовков), а кэшируемые при
+   первом признаке потоковости (``more_body=True``) или при превышении
+   ``max_body_size`` сбрасывают накопленное и переходят в passthrough
+   (ETag в этом случае не считается).
 """
 
 from __future__ import annotations
+
+from dataclasses import dataclass, field
 
 try:
     import xxhash
@@ -42,6 +77,23 @@ except ImportError:
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 __all__ = ("ResponseCacheMiddleware",)
+
+#: Лимит тела ответа (в байтах), выше которого ответ не кэшируется (1 MiB).
+DEFAULT_MAX_BODY_SIZE = 1024 * 1024
+
+#: Заголовки запроса, делающие его персонализированным.
+_PERSONAL_HEADERS = frozenset({b"authorization", b"x-api-key", b"cookie"})
+
+#: Заголовки, которые НЕ переносятся в ответ 304: у 304 нет тела, поэтому
+#: ни его длины, ни кодировки, ни способа передачи там быть не должно.
+#: Все остальные заголовки сохраняются — включая служебные
+#: ``x-request-id`` / ``x-correlation-id`` / ``x-tenant-id``: без них
+#: условный GET теряет корреляцию логов, а заголовок tenant'а — сам
+#: инвариант «tenant один и тот же на всех слоях» (независимое ревью
+#: 2026-11-23, MAJOR-2).
+_NOT_MODIFIED_EXCLUDED = frozenset(
+    {b"content-length", b"content-encoding", b"transfer-encoding"}
+)
 
 
 def _compute_etag(body: bytes) -> str:
@@ -61,25 +113,104 @@ def _compute_etag(body: bytes) -> str:
     return etag_hash(body)
 
 
+def _is_personalized(scope: Scope) -> bool:
+    """Определяет, персонализирован ли запрос.
+
+    Персонализация = заголовки ``authorization`` / ``x-api-key`` /
+    ``cookie`` в ``scope['headers']`` ИЛИ наличие ``scope['state']['auth']``.
+
+    ВАЖНО (независимое ревью 2026-11-23, MINOR-1): проверка выполняется
+    ЛЕНИВО, в момент формирования ответа, а не на входе в middleware.
+    ``auth_required`` (order 620) и ``api_key`` (order 110) стоят ВНУТРИ
+    ``response_cache`` (order 710) → на входе ``scope['state']['auth']``
+    ещё не установлен, и такой источник персонализации был недостижим.
+    К моменту ответа principal уже в state.
+
+    Args:
+        scope: ASGI scope.
+
+    Returns:
+        True — ответ содержит пользовательские данные и не должен быть
+        публично кэшируемым.
+
+    """
+    for header_name, _header_value in scope.get("headers", []):
+        if header_name.lower() in _PERSONAL_HEADERS:
+            return True
+    state = scope.get("state") or {}
+    return "auth" in state
+
+
+def _drop_headers(
+    headers: list[tuple[bytes, bytes]], names: tuple[bytes, ...]
+) -> list[tuple[bytes, bytes]]:
+    """Копия списка заголовков без указанных имён (без учёта регистра).
+
+    Args:
+        headers: Исходные заголовки ответа.
+        names: Имена заголовков, которые нужно убрать.
+
+    Returns:
+        Новый список заголовков.
+
+    """
+    return [(key, value) for key, value in headers if key.lower() not in names]
+
+
+@dataclass
+class _ResponseState:
+    """Состояние проксирования ответа внутри одного запроса.
+
+    Attributes:
+        mode: ``collect`` — тело копится; ``passthrough`` — тело идёт
+            клиенту как есть; ``done`` — ответ уже отправлен.
+        start: Оригинальное сообщение ``http.response.start``.
+        status: HTTP-статус ответа.
+        headers: Оригинальные заголовки ответа.
+        endpoint_policy: Значение ``Cache-Control``, заданное endpoint'ом.
+        set_cookie: True, если в ответе есть ``Set-Cookie``.
+        chunks: Накопленные чанки тела.
+
+    """
+
+    mode: str = "collect"
+    start: Message | None = None
+    status: int = 200
+    headers: list[tuple[bytes, bytes]] = field(default_factory=list)
+    endpoint_policy: str = ""
+    set_cookie: bool = False
+    chunks: list[bytes] = field(default_factory=list)
+
+
 class ResponseCacheMiddleware:
     """Pure ASGI middleware: HTTP-кэширование GET-ответов через ETag (cycle 55).
 
     Args:
         app: ASGI-приложение.
         max_age: TTL в секундах для Cache-Control.
+        max_body_size: Максимальный размер тела ответа (в байтах), при
+            котором ответ ещё кэшируется. Большие ответы отдаются в
+            passthrough (без ETag).
 
     """
 
-    def __init__(self, app: ASGIApp, max_age: int = 60) -> None:
+    def __init__(
+        self,
+        app: ASGIApp,
+        max_age: int = 60,
+        max_body_size: int = DEFAULT_MAX_BODY_SIZE,
+    ) -> None:
         """Инициализирует middleware.
 
         Args:
             app: ASGI-приложение.
             max_age: TTL в секундах для Cache-Control.
+            max_body_size: Максимальный размер кэшируемого тела (байт).
 
         """
         self.app = app
         self._max_age = max_age
+        self._max_body_size = max_body_size
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Process HTTP caching for GET responses.
@@ -94,73 +225,152 @@ class ResponseCacheMiddleware:
             await self.app(scope, receive, send)
             return
 
-        method = scope.get("method", "")
-
         # Non-GET requests skip caching.
-        if method != "GET":
+        if scope.get("method", "") != "GET":
             await self.app(scope, receive, send)
             return
 
-        # Cycle 55: ETag вычисляется ВСЕГДА для 200 JSON GET —
-        # If-None-Match используется только для 304 (Not Modified) ниже.
-        # Без этого ETag никогда не добавляется на первый запрос,
-        # кэширование не работает.
-
-        # Cycle 55 critical: collect body chunks через send-wrapper
-        # для вычисления ETag. Pure ASGI: body приходит через
-        # http.response.body messages.
-        body_chunks: list[bytes] = []
-        response_status: dict[str, int] = {"status": 0}
-        response_headers: list[tuple[bytes, bytes]] = []
-        content_type: dict[str, str] = {"value": ""}
+        state = _ResponseState()
 
         async def send_wrapper(message: Message) -> None:
-            if message["type"] == "http.response.start":
-                response_status["status"] = message.get("status", 200)
-                for k, v in message.get("headers", []):
-                    response_headers.append((k, v))
-                    if k.lower() == b"content-type":
-                        content_type["value"] = v.decode("latin-1", errors="replace")
-                # Suppress original start — мы отправим свой с ETag + Cache-Control.
-            elif message["type"] == "http.response.body":
-                # D-AUDIT-17301 fix (cycle 173): collect body для ALL
-                # content types. Original code only collected JSON,
-                # dropping non-JSON body (HTML / text / binary).
-                # /docs, /redoc, /metrics потеряли body → 500 'Internal
-                # server error'.
-                body_chunks.append(message.get("body", b""))
-            else:
-                pass  # ignore other message types
+            """Перехватывает ответ downstream: сбор тела или passthrough."""
+            if state.mode == "done":
+                return
+            if state.mode == "passthrough":
+                await send(message)
+                return
 
-        # Пробрасываем downstream (collect headers + body через send_wrapper).
+            if message["type"] == "http.response.start":
+                if not self._inspect_start(message, state):
+                    # Passthrough — отдаём ответ как есть: без буферизации
+                    # и без изменения заголовков.
+                    state.mode = "passthrough"
+                    await send(message)
+                return
+
+            if message["type"] == "http.response.body":
+                chunk = message.get("body", b"")
+                more = bool(message.get("more_body", False))
+                if more:
+                    # Потоковый ответ → сброс накопленного и passthrough.
+                    state.chunks.append(chunk)
+                    await self._flush(send, state)
+                    state.mode = "passthrough"
+                    return
+                body_len = sum(len(part) for part in state.chunks) + len(chunk)
+                if body_len > self._max_body_size:
+                    # Тело больше лимита → сброс + passthrough (ETag не считаем).
+                    await self._flush(send, state)
+                    state.mode = "passthrough"
+                    await send(message)
+                    return
+                state.chunks.append(chunk)
+                if not more:
+                    await self._finalize(send, scope, state)
+                    state.mode = "done"
+                return
+
+            await send(message)
+
         await self.app(scope, receive, send_wrapper)
 
-        # Cycle 55 logic: пропустить non-200 или non-JSON → отправляем original.
-        if response_status["status"] != 200:
-            # Skip caching — re-send original response.
-            await self._send_original(
-                send, response_status["status"], response_headers, body_chunks
-            )
-            return
+        # Downstream не прислал финальное тело — ответ обязан быть начат
+        # и завершён (ASGI-контракт). Если ответа не было вовсе —
+        # fabricating'а нет: ошибка остаётся ошибкой приложения.
+        if state.mode == "collect" and state.start is not None:
+            await self._finalize(send, scope, state)
+            state.mode = "done"
 
-        if "application/json" not in content_type["value"]:
-            # Non-JSON — skip caching.
-            await self._send_original(
-                send, response_status["status"], response_headers, body_chunks
-            )
-            return
+    def _inspect_start(self, message: Message, state: _ResponseState) -> bool:
+        """Разбирает ``http.response.start`` и решает, кэшируется ли ответ.
 
-        # Compute ETag (только если client поддерживает If-None-Match).
-        body = b"".join(body_chunks)
+        Кэшируется только 200 JSON-ответ без ``Content-Encoding`` и без
+        ``Content-Length`` больше ``max_body_size``.
+
+        Args:
+            message: Сообщение ``http.response.start``.
+            state: Состояние ответа (заполняется по ходу).
+
+        Returns:
+            True — ответ кэшируется (ETag + Cache-Control), False — passthrough.
+
+        """
+        state.start = message
+        state.status = int(message.get("status", 200))
+        state.headers = list(message.get("headers", []))
+        content_type = ""
+        content_encoding = ""
+        content_length: int | None = None
+        for key, value in state.headers:
+            name = key.lower()
+            if name == b"content-type":
+                content_type = value.decode("latin-1", errors="replace")
+            elif name == b"content-encoding":
+                content_encoding = value.decode("latin-1", errors="replace")
+            elif name == b"content-length":
+                try:
+                    content_length = int(value.decode("latin-1"))
+                except ValueError:
+                    content_length = None
+            elif name == b"cache-control":
+                state.endpoint_policy = value.decode("latin-1", errors="replace")
+            elif name == b"set-cookie":
+                state.set_cookie = True
+
+        has_encoding = content_encoding.strip().lower() not in ("", "identity")
+        return (
+            state.status == 200
+            and "application/json" in content_type
+            and not has_encoding
+            and (content_length is None or content_length <= self._max_body_size)
+        )
+
+    @staticmethod
+    async def _flush(send: Send, state: _ResponseState) -> None:
+        """Сбрасывает накопленное тело клиенту (original start + чанки).
+
+        Args:
+            send: ASGI send callable.
+            state: Состояние ответа.
+
+        """
+        if state.start is None:
+            return
+        await send(state.start)
+        for chunk in state.chunks:
+            await send({"type": "http.response.body", "body": chunk, "more_body": True})
+
+    async def _finalize(self, send: Send, scope: Scope, state: _ResponseState) -> None:
+        """Финализирует кэшируемый ответ: 304 (условный GET) или 200 с ETag.
+
+        Args:
+            send: ASGI send callable.
+            scope: ASGI scope (источник ``If-None-Match`` и признака
+                персонализации — она проверяется именно здесь, когда
+                ``scope['state']['auth']`` уже установлен).
+            state: Состояние ответа.
+
+        """
+        personalized = _is_personalized(scope)
+        policy = self._cache_control(
+            state.endpoint_policy, personalized, state.set_cookie
+        )
+        body = b"".join(state.chunks)
+
         if not body:
-            # Пустое тело кешировать нечего (ETag строим по body), но
-            # original start уже был подавлен — молчаливый ``return`` ронял
-            # ответ целиком: uvicorn писал «ASGI callable returned without
-            # starting response» и отдавал клиенту 500 вместо 200.
-            # Отправляем original response без ETag/Cache-Control.
-            await self._send_original(
-                send, response_status["status"], response_headers, body_chunks
+            # Пустое тело — ETag строить не по чему, но ответ обязан быть
+            # начат И завершён (ASGI-контракт: иначе uvicorn пишет
+            # «ASGI callable returned without completing response»).
+            headers = _drop_headers(state.headers, (b"etag", b"cache-control"))
+            headers.append((b"cache-control", policy.encode("latin-1")))
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": state.status,
+                    "headers": headers,
+                }
             )
+            await send({"type": "http.response.body", "body": b"", "more_body": False})
             return
 
         etag = _compute_etag(body)
@@ -168,76 +378,82 @@ class ResponseCacheMiddleware:
         # Cycle 55: If-None-Match check.
         if_none_match = _get_header_value(scope, b"if-none-match")
         if if_none_match and if_none_match == etag:
-            # 304 Not Modified.
+            # 304 Not Modified: тело пустое, политика Cache-Control —
+            # та же, что у 200 (единый код расчёта). Заголовки ответа
+            # сохраняются, кроме тех, что описывают тело (у 304 тела нет);
+            # служебные x-request-id / x-correlation-id / x-tenant-id остаются
+            # — иначе условный GET теряет корреляцию логов и заголовок
+            # tenant'а (независимое ревью 2026-11-23, MAJOR-2).
+            headers = [
+                (key, value)
+                for key, value in state.headers
+                if key.lower() not in _NOT_MODIFIED_EXCLUDED
+            ]
+            headers = [
+                (key, value)
+                for key, value in headers
+                if key.lower() not in (b"etag", b"cache-control")
+            ]
+            headers.append((b"etag", etag.encode("latin-1")))
+            headers.append((b"cache-control", policy.encode("latin-1")))
             await send(
-                {
-                    "type": "http.response.start",
-                    "status": 304,
-                    "headers": [
-                        (b"etag", etag.encode("latin-1")),
-                        (b"cache-control", self._cache_control().encode("latin-1")),
-                    ],
-                }
+                {"type": "http.response.start", "status": 304, "headers": headers}
             )
-            # ASGI-контракт: после ``http.response.start`` обязателен
-            # ``http.response.body`` — иначе ответ не «закрывается» и
-            # uvicorn пишет «ASGI callable returned without completing
-            # response» (проверено на живом uvicorn: каждый условный GET
-            # давал ERROR в логе сервера).
             await send({"type": "http.response.body", "body": b"", "more_body": False})
             return
 
-        # Cycle 55: new response с ETag + Cache-Control.
-        new_headers: list[tuple[bytes, bytes]] = []
-        for k, v in response_headers:
-            if k.lower() in (b"etag", b"cache-control"):
-                continue
-            new_headers.append((k, v))
-        new_headers.append((b"etag", etag.encode("latin-1")))
-        new_headers.append((b"cache-control", self._cache_control().encode("latin-1")))
-
+        headers = _drop_headers(state.headers, (b"etag", b"cache-control"))
+        headers.append((b"etag", etag.encode("latin-1")))
+        headers.append((b"cache-control", policy.encode("latin-1")))
         await send(
-            {
-                "type": "http.response.start",
-                "status": response_status["status"],
-                "headers": new_headers,
-            }
+            {"type": "http.response.start", "status": state.status, "headers": headers}
         )
-        await send({"type": "http.response.body", "body": body})
+        await send({"type": "http.response.body", "body": body, "more_body": False})
 
-    def _cache_control(self) -> str:
-        """Значение заголовка ``Cache-Control`` (одинаково для 200 и 304).
+    def _cache_control(
+        self, endpoint_policy: str, personalized: bool, has_set_cookie: bool
+    ) -> str:
+        """Вычисляет заголовок ``Cache-Control`` (единый код для 200 и 304).
+
+        Args:
+            endpoint_policy: Значение ``Cache-Control``, заданное endpoint'ом.
+            personalized: True — запрос персонализирован (auth/cookie).
+            has_set_cookie: True — в ответе есть ``Set-Cookie``.
 
         Returns:
-            Строка вида ``"public, max-age=60"``.
+            Значение заголовка ``Cache-Control``.
 
         """
-        return f"public, max-age={self._max_age}"
+        if has_set_cookie:
+            # Set-Cookie в ответе → кэшировать нельзя (персонализация).
+            return "no-store"
 
-    @staticmethod
-    async def _send_original(
-        send: Send,
-        status: int,
-        original_headers: list[tuple[bytes, bytes]],
-        body_chunks: list[bytes],
-    ) -> None:
-        """Re-send original response (cycle 55 helper для non-cached paths)."""
-        await send(
-            {
-                "type": "http.response.start",
-                "status": status,
-                "headers": original_headers,
-            }
-        )
-        # Body-сообщение обязательно даже для пустого тела: без него
-        # ответ не завершается (ASGI-контракт).
-        await send(
-            {
-                "type": "http.response.body",
-                "body": b"".join(body_chunks),
-                "more_body": False,
-            }
-        )
+        if not endpoint_policy.strip():
+            # Без политики endpoint'а — только private: public допустим
+            # лишь при явном opt-in endpoint'а (и для анонимных запросов).
+            return f"private, max-age={self._max_age}"
+
+        directives = [
+            part.strip() for part in endpoint_policy.split(",") if part.strip()
+        ]
+        if personalized:
+            # Персонализированный ответ не должен попадать в ОБЩИЙ кэш
+            # (CDN/proxy): директива ``public`` запрещена, ``s-maxage``
+            # (хранить в shared cache) выбрасывается, а ``private``
+            # добавляется, если его не было (независимое ревью 2026-11-23,
+            # MINOR-2).
+            directives = [
+                part for part in directives if not part.lower().startswith("s-maxage")
+            ]
+            directives = [
+                "private" if part.lower() == "public" else part for part in directives
+            ]
+            if not any(part.lower() == "private" for part in directives):
+                directives.insert(0, "private")
+        names = {part.split("=", 1)[0].strip().lower() for part in directives}
+        if not names & {"max-age", "s-maxage", "no-store"}:
+            directives.append(f"max-age={self._max_age}")
+        return ", ".join(directives)
 
 
 def _get_header_value(scope: Scope, name: bytes) -> str:

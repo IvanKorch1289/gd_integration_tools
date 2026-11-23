@@ -346,7 +346,11 @@ class TestConditionalGet:
         assert "http.response.body" in types, types
         # Заголовки 304 согласованы с ответом 200.
         assert (_header_of(second, "etag") or b"").decode("latin-1") == etag
-        assert _header_of(second, "cache-control") == b"public, max-age=60"
+        # Политика кэширования по умолчанию — private (волна 2026-11-20,
+        # дефект 3.1): public допустим только по явному opt-in endpoint'а
+        # и только для анонимных запросов. Здесь запрос анонимный, но
+        # endpoint политику не задавал → private.
+        assert _header_of(second, "cache-control") == b"private, max-age=60"
 
     async def test_conditional_get_by_client_side_etag_returns_304(
         self, pii_masking_on: Any

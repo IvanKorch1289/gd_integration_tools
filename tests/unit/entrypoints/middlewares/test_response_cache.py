@@ -152,7 +152,15 @@ class TestResponseCacheMiddleware:
     async def test_adds_etag_and_cache_control(
         self, middleware: ResponseCacheMiddleware
     ) -> None:
-        """JSON 200 GET adds ETag and Cache-Control headers."""
+        """JSON 200 GET adds ETag and Cache-Control headers.
+
+        Ожидание изменилось: было ``public, max-age=120``, стало
+        ``private, max-age=120``. Middleware больше не объявляет ответы
+        публично кэшируемыми по умолчанию: ``public`` допустим только
+        при ЯВНОМ opt-in endpoint'а (``Cache-Control: public``) и только
+        для анонимных запросов. Иначе персонализированный ответ мог
+        попасть в общий кэш (CDN/proxy) и быть отдан другому клиенту.
+        """
         app = AsyncMock()
         app.side_effect = _downstream_json(b'{"data":1}')
         middleware.app = app
@@ -164,7 +172,7 @@ class TestResponseCacheMiddleware:
         start = _start_message(send)
         headers = dict(start["headers"])
         assert b"etag" in headers
-        assert headers[b"cache-control"] == b"public, max-age=120"
+        assert headers[b"cache-control"] == b"private, max-age=120"
 
         # Body сохранён.
         body = _body_message(send)
@@ -238,7 +246,10 @@ class TestResponseCacheMiddleware:
         assert start["status"] == 200
         headers = dict(start["headers"])
         assert headers[b"etag"] != b'"old"'
-        assert headers[b"cache-control"] == b"public, max-age=120"
+        # Политика по умолчанию — private (public только по явному opt-in
+        # endpoint'а и для анонимных запросов), см. дефект 3.1 аудита
+        # 2026-11-18.
+        assert headers[b"cache-control"] == b"private, max-age=120"
 
 
 class TestResponseCacheMiddlewarePureASGI:
