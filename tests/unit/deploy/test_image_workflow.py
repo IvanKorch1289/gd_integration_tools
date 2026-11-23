@@ -52,6 +52,24 @@ RELEASE_JOBS: frozenset[str] = frozenset(
 
 REQUIRED_JOBS: frozenset[str] = REVIEW_JOBS | RELEASE_JOBS
 
+#: Минимальные права каждого job'а. Job-level ``permissions`` ЗАМЕНЯЮТ
+#: workflow-level, поэтому права проверяются именно здесь — иначе
+#: workflow-level блок создаёт ложное впечатление, что push в registry
+#: и OIDC-токен для cosign разрешены (F3 независимого ревью).
+JOB_PERMISSIONS: dict[str, dict[str, str]] = {
+    "build": {"contents": "read"},
+    "scan": {"contents": "read", "security-events": "write"},
+    "build_release": {"contents": "read", "packages": "write"},
+    "scan_release": {
+        "contents": "read",
+        "packages": "read",
+        "security-events": "write",
+    },
+    "sign": {"contents": "read", "packages": "write", "id-token": "write"},
+    "verify": {"contents": "read", "packages": "read"},
+    "promote": {"contents": "read", "packages": "write"},
+}
+
 #: Subject сертификата cosign (keyless, GitHub OIDC) — ожидаемая форма.
 EXPECTED_SUBJECT: str = (
     "https://github.com/IvanKorch1289/gd_integration_tools/"
@@ -135,6 +153,22 @@ def _job_if(job: dict[str, Any]) -> str:
     return value if isinstance(value, str) else ""
 
 
+def _event_allowlist(condition: str) -> set[str]:
+    """События, при которых условие ``job.if`` истинно.
+
+    Разбирается только форма ``github.event_name == 'a' || ... == 'b'``
+    (allow-list). Условие-запрет (``!= 'push'``) даёт пустое множество —
+    это и фиксируется тестом: deny-list рано или поздно пропустит новое
+    событие в ветку.
+    """
+    events: set[str] = set()
+    for part in condition.split("||"):
+        match = re.fullmatch(r"\s*github\.event_name\s*==\s*'([^']+)'\s*", part)
+        if match:
+            events.add(match.group(1))
+    return events
+
+
 # ── Fixtures ───────────────────────────────────────────────────────────
 
 
@@ -215,7 +249,12 @@ def test_workflow_has_id_token_for_cosign(workflow: dict[str, Any]) -> None:
 
 
 def test_workflow_jobs_keys(workflow: dict[str, Any]) -> None:
-    """Присутствуют все job'ы обеих веток pipeline."""
+    """Присутствуют все job'ы обеих веток pipeline.
+
+    Набор — нижняя граница (допускаются дополнительные job'ы, например
+    публикация SBOM): запрет на любые лишние job'ы ломался бы на
+    безобидном расширении pipeline.
+    """
     jobs = workflow["jobs"]
     assert isinstance(jobs, dict), f"jobs должен быть мапом, got {type(jobs).__name__}"
     actual = set(jobs.keys())
@@ -223,11 +262,6 @@ def test_workflow_jobs_keys(workflow: dict[str, Any]) -> None:
     assert not missing, (
         f"image.yml jobs отсутствуют: {sorted(missing)}. "
         f"Требуется {sorted(REQUIRED_JOBS)} (Sprint 6 Devops pipeline)"
-    )
-    extra = actual - REQUIRED_JOBS
-    assert not extra, (
-        f"image.yml: неожиданные jobs {sorted(extra)} "
-        f"(контракт строго {sorted(REQUIRED_JOBS)})"
     )
 
 
@@ -241,6 +275,90 @@ def test_job_has_runs_on_and_steps(workflow: dict[str, Any], job_name: str) -> N
     assert isinstance(steps, list) and steps, (
         f"job '{job_name}' должен иметь непустой steps"
     )
+
+
+@pytest.mark.parametrize("job_name", sorted(JOB_PERMISSIONS))
+def test_job_permissions_are_sufficient(
+    workflow: dict[str, Any], job_name: str
+) -> None:
+    """У каждого job'а объявлены достаточные права.
+
+    Job-level ``permissions`` ЗАМЕНЯЮТ workflow-level: если у job'а нет
+    ``packages: write``, push в ghcr.io вернёт 403, а без ``id-token:
+    write`` cosign keyless упадёт с «no IdToken in OIDC request».
+    """
+    perms = workflow["jobs"][job_name].get("permissions") or {}
+    assert isinstance(perms, dict), (
+        f"job '{job_name}': permissions должен быть мапом, got {type(perms).__name__}"
+    )
+    for scope, required in JOB_PERMISSIONS[job_name].items():
+        assert perms.get(scope) == required, (
+            f"job '{job_name}': permissions.{scope} должен быть '{required}', "
+            f"got perms={perms}"
+        )
+
+
+# ── триггеры ───────────────────────────────────────────────────────────
+
+
+def _triggers(workflow: dict[str, Any]) -> dict[str, Any]:
+    """Блок ``on:`` workflow (YAML 1.1 парсит ``on`` как boolean True)."""
+    value = workflow.get("on", workflow.get(True))
+    assert isinstance(value, dict), (
+        f"image.yml должен объявлять блок 'on', got {type(value).__name__}"
+    )
+    return value
+
+
+def test_push_trigger_is_master_and_version_tags(workflow: dict[str, Any]) -> None:
+    """Публикация запускается только push'ем в master и тегом v*.*.*.
+
+    Ветка публикации дополнительно ограничена ``if``-условиями job'ов,
+    но и триггер должен быть узким: иначе push в feature-ветку опубликует
+    образ (независимое ревью 2026-11-23, F2).
+    """
+    triggers = _triggers(workflow)
+    push = triggers.get("push") or {}
+    assert push.get("branches") == ["master"], (
+        f"on.push.branches должен быть ['master'], got {push.get('branches')}"
+    )
+    assert push.get("tags") == ["v*.*.*"], (
+        f"on.push.tags должен быть ['v*.*.*'], got {push.get('tags')}"
+    )
+
+
+def test_review_triggers_present(workflow: dict[str, Any]) -> None:
+    """Ревью-события объявлены: pull_request, merge_group, workflow_dispatch.
+
+    merge_group обязателен: без него обязательные workflow'ы не идут в
+    merge queue, и release-gate на merge_group не находит прогонов.
+    """
+    triggers = _triggers(workflow)
+    for event in ("pull_request", "merge_group", "workflow_dispatch"):
+        assert event in triggers, (
+            f"image.yml должен реагировать на '{event}', got {sorted(triggers)}"
+        )
+
+
+def test_review_triggers_are_unfiltered(workflow: dict[str, Any]) -> None:
+    """Ревью-события не фильтруются по веткам/путям.
+
+    Фильтр (``branches``/``paths``) сузил бы ревью до части PR — часть
+    merge-веток осталась бы без скана.
+    """
+    triggers = _triggers(workflow)
+    for event in ("pull_request", "merge_group"):
+        config = triggers.get(event)
+        if config is None:
+            continue
+        assert isinstance(config, dict), (
+            f"on.{event} должен быть мапом или пустым, got {type(config).__name__}"
+        )
+        for key in ("branches", "paths", "branches-ignore", "paths-ignore"):
+            assert key not in config, (
+                f"on.{event} не должен фильтровать по '{key}': "
+                f"часть ревью осталась бы без скана, got {config}"
+            )
 
 
 # ── ревью-ветка: build + scan, без публикации ──────────────────────────
@@ -275,6 +393,65 @@ def test_review_build_loads_locally_without_push(workflow: dict[str, Any]) -> No
     )
     assert all(push in (False, None) for push in pushes), (
         f"build job (ревью) не должен пушить в registry, got pushes={pushes}"
+    )
+
+
+def test_release_build_exposes_digest_and_image_outputs(
+    workflow: dict[str, Any],
+) -> None:
+    """build_release отдаёт digest и имя образа в outputs.
+
+    Без ``outputs.digest`` downstream-job'и получают пустую ссылку
+    «repo@» — «единый digest» перестаёт работать (независимое ревью F6).
+    """
+    outputs = workflow["jobs"]["build_release"].get("outputs") or {}
+    assert isinstance(outputs, dict) and outputs, (
+        "build_release job должен объявлять outputs (digest, tags, image)"
+    )
+    digest = str(outputs.get("digest") or "")
+    assert digest, f"build_release outputs.digest обязателен, got outputs={outputs}"
+    assert "steps.build.outputs.digest" in digest, (
+        f"build_release outputs.digest должен ссылаться на шаг сборки, got {digest!r}"
+    )
+    image = str(outputs.get("image") or "")
+    assert image, f"build_release outputs.image обязателен, got outputs={outputs}"
+
+
+def test_image_name_is_normalized_to_lowercase(workflow: dict[str, Any]) -> None:
+    """Имя образа нормализуется в нижний регистр перед попаданием в registry.
+
+    Владелец репозитория — «IvanKorch1289», поэтому ``github.repository``
+    приходит со смешанным регистром, а docker/distribution отвергает такие
+    ссылки («repository name must be lowercase»): публикация падала бы на
+    первом же шаге (независимое ревью 2026-11-23, F1 — MAJOR).
+    """
+    for job_name, job in workflow["jobs"].items():
+        values: list[tuple[str, str]] = []
+        for step in job.get("steps") or []:
+            if not isinstance(step, dict):
+                continue
+            for key, value in (step.get("with") or {}).items():
+                values.append((f"{job_name}.with.{key}", str(value)))
+        for key, value in (job.get("outputs") or {}).items():
+            values.append((f"{job_name}.outputs.{key}", str(value)))
+        for where, text in values:
+            # Ни «github.repository», ни ссылка на сырой env.REPOSITORY
+            # (это тот же необработанный репозиторий через indirection).
+            for forbidden in ("github.repository", "env.REPOSITORY"):
+                assert forbidden not in text, (
+                    f"{where}: docker-ссылка не должна собираться из "
+                    f"необработанного {forbidden} (регистр владельца "
+                    f"не приведён к нижнему), got {text!r}"
+                )
+    normalized = [
+        run
+        for job in workflow["jobs"].values()
+        for run in _run_steps(job)
+        if "[:lower:]" in run
+    ]
+    assert normalized, (
+        "image.yml должен нормализовать имя репозитория в нижний регистр "
+        "(tr '[:upper:]' '[:lower:]') перед использованием в docker-ссылках"
     )
 
 
@@ -413,11 +590,50 @@ def test_promote_job_creates_tags_after_verify(workflow: dict[str, Any]) -> None
         f"promote job должен depends_on: verify, got needs={sorted(needs_set)}"
     )
     runs = " ".join(_run_steps(promote))
-    assert "imagetools create --tag" in runs, (
+    # Способ выдачи тегов допускается любой из перечисленных заказчиком
+    # (imagetools/crane tag) — важен инвариант, а не конкретная утилита.
+    creates_tag = ("imagetools create" in runs and "--tag" in runs) or (
+        "crane tag" in runs
+    )
+    assert creates_tag, (
         "promote job должен создавать теги через "
-        "'docker buildx imagetools create --tag' (перенос тега на "
-        "проверенный digest), "
-        f"got runs={runs!r}"
+        "'docker buildx imagetools create --tag' или 'crane tag' "
+        f"(перенос тега на проверенный digest), got runs={runs!r}"
+    )
+
+
+def test_promote_publishes_the_signed_digest(workflow: dict[str, Any]) -> None:
+    """promote публикует ИМЕННО digest, а не изменяемый тег.
+
+    Публикация по тегу (например ``:latest``) означала бы, что подписан
+    один артефакт, а опубликован другой (независимое ревью F5).
+    """
+    runs = " ".join(_run_steps(workflow["jobs"]["promote"]))
+    assert "@${DIGEST}" in runs, (
+        "promote job должен строить ссылку вида '<image>@<digest>' "
+        f"(иначе публикуется неподписанный артефакт), got runs={runs!r}"
+    )
+
+
+def test_promote_preserves_digest_of_source(workflow: dict[str, Any]) -> None:
+    """Выдача тега сохраняет digest источника (``--prefer-index=false``).
+
+    Со значением по умолчанию buildx для ОДНОГО манифеста создаёт новый
+    index — digest тега перестал бы совпадать с подписанным digest'ом
+    (независимое ревью F7). Проверяется КОМАНДА (строки-комментарии
+    игнорируются — иначе флаг в комментарии маскировал бы его
+    отсутствие в вызове).
+    """
+    runs = " ".join(_run_steps(workflow["jobs"]["promote"]))
+    commands = " ".join(
+        line
+        for line in runs.splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    )
+    assert "--prefer-index=false" in commands, (
+        "promote job обязан использовать --prefer-index=false: иначе тег "
+        "указывает на новый index, а не на подписанный манифест, "
+        f"got commands={commands!r}"
     )
 
 
@@ -503,16 +719,57 @@ def test_identity_regexp_accepts_expected_subject(workflow: dict[str, Any]) -> N
     )
 
 
+def test_identity_regexp_pins_owner(workflow: dict[str, Any]) -> None:
+    """Регексп фиксирует ВЛАДЕЛЬЦА репозитория, а не «кого угодно».
+
+    Открытый владелец (``[^/]+``) — это уже не «подпись любого
+    репозитория на github.com», но и не «подпись нашего репозитория»
+    (независимое ревью 2026-11-23, F4).
+    """
+    pattern = workflow["env"]["COSIGN_IDENTITY_REGEXP"]
+    # В тексте регексп'а точка экранирована (github\.com), поэтому ищем
+    # с необязательным обратным слэшем.
+    owner_match = re.search(r"github\\?\.com/([^/]+)/", pattern)
+    assert owner_match, (
+        f"identity regex должен содержать сегмент владельца, got {pattern!r}"
+    )
+    owner = owner_match.group(1)
+    assert "1289" in owner, (
+        f"identity regex должен фиксировать владельца репозитория, got {owner!r}"
+    )
+    assert ".*" not in owner and "[^" not in owner, (
+        f"владелец в identity regex не должен быть открытым, got {owner!r}"
+    )
+
+
+def test_identity_regexp_is_re2_compatible(workflow: dict[str, Any]) -> None:
+    """Регексп остаётся валидным для Go RE2 (движок cosign).
+
+    Python-``re`` принимает lookahead/lookbehind/backreference, которых
+    нет в RE2: такой регексп молча сломал бы verify в рантайме
+    (независимое ревью 2026-11-23, F4).
+    """
+    pattern = workflow["env"]["COSIGN_IDENTITY_REGEXP"]
+    unsupported = ("(?=", "(?!", "(?<", "\\1", "\\2", "\\3", "\\4")
+    for construct in unsupported:
+        assert construct not in pattern, (
+            f"identity regex не должен содержать конструкцию {construct!r} "
+            f"(не поддерживается RE2), got {pattern!r}"
+        )
+
+
 @pytest.mark.parametrize(
     "foreign_subject",
     [
         "https://github.com/attacker/evil/.github/workflows/image.yml@refs/heads/master",
+        "https://github.com/other-owner/gd_integration_tools/"
+        ".github/workflows/image.yml@refs/heads/master",
         "https://github.com/IvanKorch1289/gd_integration_tools/"
         ".github/workflows/other.yml@refs/heads/master",
         "https://github.com/IvanKorch1289/gd_integration_tools/"
         ".github/workflows/image.yml@refs/heads/feature-x",
         "https://github.com/IvanKorch1289/gd_integration_tools/"
-        ".github/workflows/image.yml@refs/tags/v1.2",
+        ".github/workflows/image.yml@refs/tags/1.2.3",
     ],
 )
 def test_identity_regexp_rejects_foreign_subjects(
@@ -528,6 +785,27 @@ def test_identity_regexp_rejects_foreign_subjects(
     compiled = re.compile(pattern)
     assert not compiled.match(foreign_subject), (
         f"identity regex не должен принимать чужой Subject: {foreign_subject!r}"
+    )
+
+
+@pytest.mark.parametrize("version_tag", ["v1.2.3", "v1.2.3-rc.1", "v10.0.1"])
+def test_identity_regexp_accepts_triggered_version_tags(
+    workflow: dict[str, Any], version_tag: str
+) -> None:
+    """Регексп принимает теги, которые реально запускают pipeline.
+
+    Триггер ``v*.*.*`` шире, чем ``v[0-9]+\\.[0-9]+\\.[0-9]+``: релиз
+    ``v1.2.3-rc.1`` запустил бы pipeline, но его Subject не прошёл бы
+    verify → красный релиз (независимое ревью 2026-11-23, F8).
+    """
+    pattern = workflow["env"]["COSIGN_IDENTITY_REGEXP"]
+    compiled = re.compile(pattern)
+    subject = (
+        "https://github.com/IvanKorch1289/gd_integration_tools/"
+        f".github/workflows/image.yml@refs/tags/{version_tag}"
+    )
+    assert compiled.match(subject), (
+        f"identity regex должен принимать Subject для тега {version_tag!r}: {subject!r}"
     )
 
 
@@ -551,6 +829,32 @@ def test_release_jobs_only_on_push(workflow: dict[str, Any], job_name: str) -> N
     )
     assert "merge_group" not in condition, (
         f"job '{job_name}' не должен запускаться на merge_group, got if={condition!r}"
+    )
+    assert _event_allowlist(condition) == {"push"}, (
+        f"job '{job_name}': условие должно быть allow-list'ом ровно из "
+        f"'push' (deny-list пропустил бы новое событие), got if={condition!r}"
+    )
+
+
+@pytest.mark.parametrize("job_name", sorted(REVIEW_JOBS))
+def test_review_jobs_exclude_push(workflow: dict[str, Any], job_name: str) -> None:
+    """Ревью-ветка НЕ запускается на push — публикации там нет.
+
+    Условие разбирается как allow-list событий: ``push`` в списке быть
+    не должно, а ``pull_request``/``merge_group`` — должны.
+    """
+    events = _event_allowlist(_job_if(workflow["jobs"][job_name]))
+    assert events, (
+        f"job '{job_name}': условие должно быть allow-list'ом событий, "
+        f"got if={_job_if(workflow['jobs'][job_name])!r}"
+    )
+    assert "push" not in events, (
+        f"job '{job_name}' (ревью) не должен запускаться на push, "
+        f"got events={sorted(events)}"
+    )
+    assert {"pull_request", "merge_group"} <= events, (
+        f"job '{job_name}' (ревью) должен запускаться на pull_request и "
+        f"merge_group, got events={sorted(events)}"
     )
 
 
