@@ -2,8 +2,32 @@
 #
 # Аудит 2026-09-21: required checks должны проходить на последнем commit SHA.
 # GitHub требует merge_group для merge queue.
-# Этот workflow агрегирует lint + test + type + security + contract + sbom + image + smoke
-# и падает с ясным сообщением, если хоть один upstream failed/skipped.
+# Этот workflow агрегирует lint + test + type + security + sbom +
+# stubs-drift + image и падает с ясным сообщением, если хоть один upstream
+# не success.
+#
+# Аудит 2026-11-20 (волна исправлений, этап 3): логика агрегации вынесена в
+# `tools/checks/release_gate_check.py`. Прежняя inline-реализация содержала
+# три эмпирически подтверждённых дефекта
+# (docs/audit/2026-11-20-audit-factcheck.md §3):
+#
+#   1. `/actions/runs?head_sha=…&workflow_id=lint.yml` — параметр
+#      `workflow_id` GitHub ИГНОРИРУЕТ: возвращаются прогоны любых workflow
+#      (perf, chaos, zap…), поэтому `.workflow_runs[0]` мог быть прогоном
+#      чужого workflow. Скрипт ходит в документированный workflow-specific
+#      endpoint `/actions/workflows/{workflow_id}/runs` и дополнительно
+#      фильтрует ответ по `head_sha` и по пути workflow-файла.
+#   2. Гейт не ждал завершения прогонов: `jq '.conclusion // "missing"'`
+#      превращал `conclusion=null` (run ещё шёл) в "missing" → гейт был
+#      красным всегда, даже при полностью зелёных прогонах. Скрипт ждёт
+#      завершения `in_progress` до жёсткого дедлайна и по его истечении
+#      падает с внятной ошибкой (НЕ success).
+#   3. `2>/dev/null || echo '{"workflow_runs":[]}'` смешивал ошибку API с
+#      «прогона нет» и глушил диагностику. Скрипт различает `error`
+#      (код возврата 2) и `missing` (код 1) и не подавляет вывод.
+#
+# Коды возврата скрипта: 0 — все workflow зелёные; 1 — есть
+# failed/missing/не дождались завершения; 2 — ошибка API или конфигурации.
 
 name: release-gate
 
@@ -13,12 +37,15 @@ on:
   pull_request:
     branches: [master]
   merge_group:
+  # Ручной перезапуск гейта (например после починки upstream-пайплайна).
+  workflow_dispatch:
 
 # P2 (аудит 2026-11-18): блок permissions отсутствовал → workflow наследовал
 # дефолтные права токена. Гейт читает статусы прогонов через
-# `gh api /repos/{repo}/actions/runs` — нужен `actions: read`; без явного
-# блока (и при `permissions: contents: read` без actions) GitHub обрезал бы
-# права до `none` по умолчанию и запрос падал бы с 403.
+# `gh api /repos/{repo}/actions/workflows/{workflow_id}/runs` — нужен
+# `actions: read`; без явного блока (и при `permissions: contents: read` без
+# actions) GitHub обрезал бы права до `none` по умолчанию и запрос падал бы
+# с 403.
 permissions:
   contents: read
   actions: read
@@ -32,7 +59,11 @@ jobs:
   aggregate:
     name: aggregate-required-status
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Скрипт ждёт завершения 7 обязательных workflow до дедлайна 40 мин
+    # (--timeout 2400) + запас на checkout и старт раннера → 45 мин.
+    # Прежние 5 мин гарантированно обрывали ожидание: гейт был красным
+    # даже при зелёных прогонах.
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,8 +71,12 @@ jobs:
           fetch-depth: 1
 
       - name: Aggregate upstream checks
-        # S170 R-FIX (аудит 2026-09-21): все required jobs должны быть SUCCESS.
-        # GitHub API: checks API returns conclusion per check_run.
+        # Идентификаторы — ИМЕНА ФАЙЛОВ, а не `name:` из YAML и не имена
+        # job'ов. Контракт GitHub API: "The ID of the workflow. You can also
+        # pass the workflow file name as a string."
+        # (docs.github.com REST actions/workflow-runs).
+        # Список обязательных workflow — единый явный перечень `REQUIRED`
+        # ниже; он же передаётся скрипту, поэтому дублирования списка нет.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Аудит 2026-10-01 (F-Z): переменная REPO нигде не была объявлена,
@@ -50,16 +85,27 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          # Допустимые SHA для текущего события:
+          #   pull_request — head-коммит PR (подтверждено эмпирически:
+          #     прогоны pull_request пишутся с head_sha = head PR);
+          #   merge_group  — head-коммит merge-группы И временный
+          #     merge-коммит (github.sha): прогоны merge_group фиксируются
+          #     по одному из двух, поэтому принимается любой из них —
+          #     оба принадлежат этому же событию;
+          #   push         — github.sha.
+          # Чужой коммит не принимается никогда (фильтр по head_sha и
+          # по пути workflow-файла — в tools/checks/release_gate_check.py).
+          PR_SHA="${{ github.event.pull_request.head.sha }}"
+          MG_SHA="${{ github.event.merge_group.head_sha }}"
+          if [ -n "${PR_SHA}" ]; then
+            SHA="${PR_SHA}"
+          elif [ -n "${MG_SHA}" ]; then
+            SHA="${MG_SHA},${{ github.sha }}"
+          else
+            SHA="${{ github.sha }}"
+          fi
           echo "Aggregating checks for SHA=${SHA}"
 
-          # Required upstream workflows.
-          # Идентификаторы — ИМЕНА ФАЙЛОВ, а не `name:` из YAML.
-          # Контракт GitHub API: "The ID of the workflow. You can also pass the
-          # workflow file name as a string." (docs.github.com REST actions/workflow-runs).
-          # Аудит 2026-10-01 (F-Z): "build-and-deploy" — имя job'а из
-          # docs-publish.yml, а не workflow-файла; контейнерный pipeline живёт
-          # в image.yml и триггерится на pull_request.
           REQUIRED=(
             "lint.yml"
             "test.yml"
@@ -70,30 +116,12 @@ jobs:
             "image.yml"
           )
 
-          FAILED=()
-          for WORKFLOW in "${REQUIRED[@]}"; do
-            echo "--- ${WORKFLOW} ---"
-            # Get latest run for this workflow on this SHA.
-            RUN_JSON="$(gh api \
-              -H "Accept: application/vnd.github+json" \
-              "/repos/${REPO}/actions/runs?head_sha=${SHA}&workflow_id=${WORKFLOW}&per_page=1" \
-              2>/dev/null || echo '{"workflow_runs":[]}')"
-            CONCLUSION="$(echo "${RUN_JSON}" | jq -r '.workflow_runs[0].conclusion // "missing"')"
-            echo "  conclusion: ${CONCLUSION}"
-            if [[ "${CONCLUSION}" != "success" ]]; then
-              FAILED+=("${WORKFLOW}: ${CONCLUSION}")
-            fi
-          done
-
-          if [[ ${#FAILED[@]} -gt 0 ]]; then
-            echo ""
-            echo "❌ RELEASE GATE FAILED — upstream checks not green:"
-            for f in "${FAILED[@]}"; do
-              echo "  - ${f}"
-            done
-            echo ""
-            echo "Required: ${REQUIRED[*]}"
-            exit 1
-          fi
-
-          echo "✅ All upstream checks green — release gate PASS"
+          # Скрипт использует только stdlib → установка зависимостей не
+          # нужна, системного python3 раннера достаточно. Вывод скрипта не
+          # подавляется: в логе видно состояние каждого workflow.
+          python3 tools/checks/release_gate_check.py \
+            --repo "${REPO}" \
+            --sha "${SHA}" \
+            --workflows "${REQUIRED[@]}" \
+            --timeout 2400 \
+            --interval 30
