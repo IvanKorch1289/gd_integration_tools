@@ -88,7 +88,9 @@ jobs:
         # чистом дереве и отсутствии блокеров).
         #
         # Внутри выполняются локальные детерминированные проверки
-        # (без сети и БД): HTTP-контракт на живом uvicorn (политика кэша,
+        # (без сети и БД): HTTP-контракт на живом uvicorn И на Granian —
+        # продовом рантайме (ADR-0059); контракт зависит от HTTP-стека
+        # сервера, а не только от middleware (политика кэша,
         # условный GET, инкрементальная доставка SSE, сжатие, tenant) и
         # бизнес-workflow СКБ на mock'е внешнего сервиса (заказ → id →
         # результат → документ с контрольной суммой, идемпотентность,
@@ -100,6 +102,7 @@ jobs:
             --scope "business-workflow:tools/checks/skb_mock_e2e.py" \
             --scope "unit:tests/unit/entrypoints" \
             --command "http-contract-smoke:python tools/checks/http_contract_smoke.py" \
+            --command "http-contract-smoke-granian:python tools/checks/http_contract_smoke.py --server granian" \
             --command "skb-mock-e2e:python tools/checks/skb_mock_e2e.py" \
             --out artifacts/release/evidence.json
 

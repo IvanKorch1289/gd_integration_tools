@@ -28,15 +28,23 @@ pytestmark = [pytest.mark.smoke, pytest.mark.integration]
 class TestHttpContractSmoke:
     """HTTP-контракт на реальном сервере."""
 
+    @pytest.mark.parametrize(
+        "argv", ([], ["--server", "granian"]), ids=("uvicorn", "granian")
+    )
     def test_http_contract_smoke_passes(
-        self, capsys: pytest.CaptureFixture[str]
+        self, capsys: pytest.CaptureFixture[str], argv: list[str]
     ) -> None:
         """Все проверки HTTP-контракта проходят на живом сервере.
 
+        Проверяется оба рантайма: uvicorn (dev) и Granian (прод, ADR-0059) —
+        поведение SSE, gzip и условного GET зависит от HTTP-стека сервера,
+        а не только от middleware (аудит 2026-11-23, ЭТАП 2.3).
+
         Args:
             capsys: Захват вывода.
+            argv: Аргументы инструмента (рантайм).
         """
-        code = http_contract_smoke.main([])
+        code = http_contract_smoke.main(argv)
         captured = capsys.readouterr()
         assert code == 0, captured.out + captured.err
         assert "Все проверки пройдены" in captured.out

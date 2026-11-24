@@ -9,6 +9,14 @@ SSE-стриминг и сжатие ведут себя иначе под uvico
 ASGI-вызовах тестов. Этот скрипт поднимает настоящий сервер с РЕАЛЬНОЙ
 цепочкой middleware проекта и проверяет контракт настоящим HTTP-клиентом.
 
+Рантайм выбирается флагом ``--server``:
+
+* ``uvicorn`` (по умолчанию) — dev-рантайм;
+* ``granian`` — ПРОДОВЫЙ рантайм (ADR-0059). Контракт HTTP-сервера
+  проверяется на обоих: поведение SSE, gzip и условного GET зависит от
+  HTTP-стека сервера, а не только от middleware (аудит 2026-11-23,
+  ЭТАП 2.3).
+
 Что проверяется (дефекты аудита 2026-11-20, §3.1-3.2)
 -------------------------------------------------------
 1. ``Cache-Control`` персонализированного ответа — ``private`` (не
@@ -24,6 +32,10 @@ ASGI-вызовах тестов. Этот скрипт поднимает на�
 
     python tools/checks/http_contract_smoke.py
 
+Запуск::
+
+    python tools/checks/http_contract_smoke.py --server granian
+
 Код возврата: 0 — все проверки пройдены, 1 — есть провалы, 2 — ошибка
 окружения (сервер не поднялся).
 """
@@ -33,28 +45,28 @@ from __future__ import annotations
 import argparse
 import gzip
 import socket
+import subprocess
 import sys
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from tools.checks.http_contract_app import (
+    AUTH_TENANT,
+    OTHER_TENANT,
+    SSE_EVENTS,
+    SSE_INTERVAL,
+    build_app,
+)
+
 #: Таймаут одного HTTP-запроса, секунды.
 HTTP_TIMEOUT = 15.0
 #: Таймаут ожидания готовности сервера, секунды.
 STARTUP_TIMEOUT = 30.0
-#: Пауза между SSE-событиями, секунды (producer работает дольше первого чанка).
-SSE_INTERVAL = 0.4
-#: Сколько SSE-событий отдаёт producer.
-SSE_EVENTS = 3
-#: Размер «большого» JSON-тела (больше лимита кэша middleware — 1 MiB).
-LARGE_BODY_BYTES = 2 * 1024 * 1024
-#: Tenant аутентифицированного principal'а (подставной auth-слой).
-AUTH_TENANT = "tenant-a"
-#: Tenant в подделанном заголовке — должен быть отклонён.
-OTHER_TENANT = "tenant-b"
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,111 +82,6 @@ class CheckResult:
     name: str
     ok: bool
     detail: str
-
-
-def _build_app() -> Any:
-    """Собрать приложение с реальной цепочкой middleware проекта.
-
-    Отключаются только middleware, требующие внешней инфраструктуры
-    (аутентификация, IP/role-фильтры) — так же, как в
-    ``tests/unit/entrypoints/middlewares/test_streaming_passthrough.py``.
-    Вместо auth-слоя подставляется минимальный middleware-двойник: он
-    кладёт в ``scope['state']['auth']`` principal'а с tenant'ом
-    ``tenant-a`` — ровно то, что делает ``auth_required`` в проде.
-
-    Returns:
-        Starlette-приложение.
-    """
-    from starlette.applications import Starlette
-    from starlette.responses import JSONResponse, StreamingResponse
-    from starlette.routing import Route
-
-    from src.backend.core.auth import AuthContext, AuthMethod
-    from src.backend.entrypoints.middlewares.setup_middlewares import (
-        build_default_registry,
-    )
-
-    disabled = frozenset(
-        {
-            "auth_required",
-            "api_key",
-            "login_step_up",
-            "blocked_routes",
-            "ip_restriction",
-            "trusted_host",
-        }
-    )
-
-    class _FakeAuthMiddleware:
-        """Двойник auth-слоя: кладёт principal'а с tenant'ом ``tenant-a``.
-
-        Ровно то, что делает ``auth_required`` в проде: аутентифицированный
-        principal'а с ``metadata['tenant_id']``.
-        """
-
-        def __init__(self, app: Any) -> None:
-            """Сохранить downstream-приложение.
-
-            Args:
-                app: downstream-приложение.
-            """
-            self.app = app
-
-        async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
-            """Подставить principal'а и передать запрос дальше.
-
-            Args:
-                scope: ASGI scope.
-                receive: ASGI receive.
-                send: ASGI send.
-            """
-            state = scope.setdefault("state", {})
-            state["auth"] = AuthContext(
-                method=AuthMethod.JWT,
-                principal="smoke-user",
-                metadata={"tenant_id": AUTH_TENANT},
-            )
-            await self.app(scope, receive, send)
-
-    async def json_endpoint(request):
-        """JSON-ответ без собственной политики кэша."""
-        return JSONResponse({"ok": True, "tenant": request.headers.get("x-tenant-id")})
-
-    async def json_no_store_endpoint(request):
-        """JSON-ответ с явной политикой ``no-store`` (endpoint-контракт)."""
-        response = JSONResponse({"ok": True})
-        response.headers["Cache-Control"] = "no-store"
-        return response
-
-    async def large_endpoint(request):
-        """Большой JSON-ответ (больше лимита кэша middleware)."""
-        return JSONResponse({"blob": "x" * LARGE_BODY_BYTES})
-
-    async def sse_endpoint(request):
-        """SSE-поток: события с паузами (producer не завершается мгновенно)."""
-        import asyncio
-
-        async def events():
-            for index in range(SSE_EVENTS):
-                yield f"event: tick\ndata: {index}\n\n".encode()
-                await asyncio.sleep(SSE_INTERVAL)
-
-        return StreamingResponse(events(), media_type="text/event-stream")
-
-    routes = [
-        Route("/json", json_endpoint),
-        Route("/json-no-store", json_no_store_endpoint),
-        Route("/json-large", large_endpoint),
-        Route("/sse", sse_endpoint),
-    ]
-    app = Starlette(routes=routes)
-    registry = build_default_registry()
-    overrides = {name: {"enabled": False} for name in disabled}
-    registry.apply_to_app(app, route_overrides=overrides)
-    # Двойник auth-слоя — ВНЕШНЕ всех остальных (он кладёт principal'а
-    # до того, как tenant-middleware разберёт заголовок).
-    app.add_middleware(_FakeAuthMiddleware)
-    return app
 
 
 def _free_port() -> int:
@@ -405,6 +312,86 @@ def _wait_ready(base_url: str, deadline: float) -> bool:
     return False
 
 
+def _start_uvicorn(
+    app_factory: Callable[[], Any], host: str, port: int
+) -> tuple[Callable[[], None], Callable[[], None]]:
+    """Поднять uvicorn в фоновом потоке.
+
+    Args:
+        app_factory: Фабрика ASGI-приложения.
+        host: Адрес bind'а.
+        port: Порт.
+
+    Returns:
+        Пара ``(stop, join)`` — stop останавливает сервер, join дожидается
+        завершения фонового потока.
+    """
+    import uvicorn
+
+    config = uvicorn.Config(
+        app_factory(), host=host, port=port, log_level="warning", access_log=False
+    )
+    server = uvicorn.Server(config)
+    thread = threading.Thread(target=server.run, daemon=True)
+    thread.start()
+
+    def _stop() -> None:
+        # У uvicorn ``Server.shutdown`` — coroutine, вызывать его извне
+        # нельзя; остановка выполняется флагом ``should_exit``.
+        server.should_exit = True
+
+    return _stop, lambda: thread.join(timeout=10)
+
+
+def _start_granian(
+    app_factory: Callable[[], Any], host: str, port: int
+) -> tuple[Callable[[], None], Callable[[], None]]:
+    """Поднять Granian (продовый рантайм) отдельным процессом.
+
+    Granian устанавливает signal-handlers, поэтому в потоке не запускается
+    («signal only works in main thread») — как в production, процесс
+    поднимается отдельно (ADR-0059, ``tools/granian_runner.py``).
+
+    Args:
+        app_factory: Фабрика ASGI-приложения (в этом процессе не нужна:
+            приложение собирается в дочернем процессе).
+        host: Адрес bind'а.
+        port: Порт.
+
+    Returns:
+        Пара ``(stop, join)`` — stop останавливает сервер, join дожидается
+        завершения процесса.
+    """
+    del app_factory  # приложение собирается в дочернем процессе
+    cmd = [
+        sys.executable,
+        "-m",
+        "granian",
+        "--interface",
+        "asgi",
+        "--host",
+        host,
+        "--port",
+        str(port),
+        "--workers",
+        "1",
+        "--no-access-log",
+        "tools.checks.http_contract_app:app",
+    ]
+    process = subprocess.Popen(  # noqa: S603  # argv из контролируемых значений
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+    )
+
+    def _stop() -> None:
+        process.terminate()
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            process.kill()
+
+    return _stop, lambda: process.wait(timeout=10)
+
+
 def main(argv: list[str] | None = None) -> int:
     """Точка входа: поднять сервер, прогнать проверки, напечатать отчёт.
 
@@ -415,7 +402,7 @@ def main(argv: list[str] | None = None) -> int:
         0 — все проверки пройдены; 1 — есть провалы; 2 — сервер не поднялся.
     """
     parser = argparse.ArgumentParser(
-        description="HTTP contract smoke на живом uvicorn-сервере"
+        description="HTTP contract smoke на живом HTTP-сервере"
     )
     parser.add_argument(
         "--host", default="127.0.0.1", help="Адрес сервера (по умолчанию 127.0.0.1)"
@@ -423,22 +410,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--port", type=int, default=0, help="Порт (0 — свободный автоматически)"
     )
+    parser.add_argument(
+        "--server",
+        choices=("uvicorn", "granian"),
+        default="uvicorn",
+        help="HTTP-рантайм: uvicorn (dev) или granian (прод, ADR-0059)",
+    )
     args = parser.parse_args(argv)
-
-    import uvicorn
 
     port = args.port or _free_port()
     base_url = f"http://{args.host}:{port}"
 
-    config = uvicorn.Config(
-        _build_app(), host=args.host, port=port, log_level="warning", access_log=False
-    )
-    server = uvicorn.Server(config)
-    thread = threading.Thread(target=server.run, daemon=True)
-    thread.start()
+    starter = _start_granian if args.server == "granian" else _start_uvicorn
+    stop, join = starter(build_app, args.host, port)
 
     if not _wait_ready(base_url, time.monotonic() + STARTUP_TIMEOUT):
-        server.should_exit = True
+        stop()
         print("ОШИБКА: сервер не поднялся", file=sys.stderr)
         return 2
 
@@ -448,11 +435,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ОШИБКА: {exc}", file=sys.stderr)
         return 2
     finally:
-        server.should_exit = True
-        thread.join(timeout=10)
+        stop()
+        join()
 
     width = max(len(r.name) for r in results)
-    print(f"HTTP contract smoke: {base_url}")
+    print(f"HTTP contract smoke ({args.server}): {base_url}")
     for result in results:
         mark = "OK  " if result.ok else "FAIL"
         print(f"  [{mark}] {result.name.ljust(width)}  {result.detail}")
