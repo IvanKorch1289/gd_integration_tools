@@ -35,3 +35,17 @@ src/backend/services/storage/facade.py:85: unused variable 'multipart_threshold_
 # ясности сигнатуры, вызовы позиционные.
 src/backend/core/incident_analyst/analyst.py:433: unused variable 'hypothesis_title'
 src/backend/entrypoints/grpc/auto_servicer.py:277: unused variable 'input_type_name'
+# Аудит 2026-11-24 (ЭТАП 0, базовая линия: lint-гейт был красным): все шесть
+# имён заданы ЧУЖИМ API, а не оставлены по недосмотру:
+#   env_settings     — параметр settings_customise_sources (pydantic-settings);
+#   BotoClientError  — re-export с fallback-заглушкой (botocore опционален);
+#   dest_key,
+#   expiration       — параметры абстрактных методов пула S3;
+#   query_filter     — параметр in-memory fallback'а (совместимость с Qdrant);
+#   time_threshold   — параметр no-op fallback'а blacklist'а.
+src/backend/core/config/config_loader.py:997: unused variable 'env_settings'
+src/backend/infrastructure/clients/storage/s3_pool/base.py:14: unused import 'BotoClientError'
+src/backend/infrastructure/clients/storage/s3_pool/base.py:90: unused variable 'dest_key'
+src/backend/infrastructure/clients/storage/s3_pool/base.py:94: unused variable 'expiration'
+src/backend/services/ai/rag/docs_indexer.py:141: unused variable 'query_filter'
+src/backend/services/security/facade_blacklist.py:82: unused variable 'time_threshold'

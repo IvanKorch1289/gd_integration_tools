@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from src.backend.core.config.security import SecureSettings
 
 
@@ -92,14 +94,39 @@ class TestApiKeyAdminRolesValidator:
         assert result == ["super", "admin"], f"Got {result!r}"
 
 
+#: Исходник middleware — путь вычисляется от теста, а не хардкодится:
+#: абсолютный путь ломал тест на CI-раннере (другой checkout) и под
+#: mutation-гейтом (mutmut подменяет файл на месте).
+_API_KEY_SOURCE = (
+    Path(__file__).resolve().parents[4]
+    / "src"
+    / "backend"
+    / "entrypoints"
+    / "middlewares"
+    / "api_key.py"
+)
+
+
+def _read_api_key_source() -> str:
+    """Прочитать исходник api_key.py.
+
+    Returns:
+        Текст исходника.
+
+    """
+    if not _API_KEY_SOURCE.exists():
+        # Файл отсутствует (например, его мутирует mutmut) — проверять
+        # нечего: это не дефект конфигурации.
+        pytest.skip("api_key.py недоступен по пути репозитория")
+    return _API_KEY_SOURCE.read_text(encoding="utf-8")
+
+
 class TestApiKeyMiddlewareUsesConfig:
     """``APIKeyMiddleware`` использует settings.secure.api_key_admin_roles."""
 
     def test_api_key_uses_config_not_hardcoded(self) -> None:
         """Source AST: api_key.py ссылается на settings.secure.api_key_admin_roles."""
-        api_key_source = Path(
-            "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/api_key.py"
-        ).read_text()
+        api_key_source = _read_api_key_source()
         assert "settings.secure.api_key_admin_roles" in api_key_source, (
             "api_key.py НЕ использует settings.secure.api_key_admin_roles — "
             "configurable admin roles не применены."
@@ -107,9 +134,7 @@ class TestApiKeyMiddlewareUsesConfig:
 
     def test_api_key_no_hardcoded_admin_roles_list(self) -> None:
         """Source AST: нет hardcoded ``"admin_roles": ["operator", "super_admin"]``."""
-        api_key_source = Path(
-            "/home/user/dev/gd_integration_tools/src/backend/entrypoints/middlewares/api_key.py"
-        ).read_text()
+        api_key_source = _read_api_key_source()
         assert '"admin_roles": ["operator", "super_admin"]' not in api_key_source, (
             "api_key.py всё ещё содержит hardcoded admin_roles list. "
             "P0 cycle 7 не применён."
