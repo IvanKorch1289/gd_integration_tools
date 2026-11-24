@@ -1,7 +1,9 @@
 name: release
 
 # Sprint 3 W1 К5 / GAP-10: release dry-run.
-# PyPI publish + cosign attestation — отложены на R3.
+# PyPI publish — отложен на R3. Cosign attestation образа — реализована
+# (аудит 2026-11-23, ЭТАП 4): manifest связывается с digest'ом и
+# подписанным свидетельством.
 
 on:
   push:
@@ -20,6 +22,14 @@ jobs:
   release-dry-run:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    permissions:
+      contents: read
+      # cosign keyless → OIDC-токен (Fulcio) и запись attestation'а в
+      # registry (GHCR) — без них релизное свидетельство неполно
+      # (аудит 2026-11-23, ЭТАП 4).
+      id-token: write
+      packages: write
 
     steps:
       - name: Checkout
@@ -106,6 +116,31 @@ jobs:
         run: |
           echo "name=$(printf '%s' "$REPO" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Attest image (in-toto)
+        # Attestation связывает релизное свидетельство с конкретным образом
+        # по digest. Без него манифест не может считаться подтверждённым
+        # (tools/checks/release_evidence.py → вердикт BLOCKED).
+        id: attest
+        env:
+          IMAGE_REF: ghcr.io/${{ steps.imagename.outputs.name }}:${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          digest="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "${IMAGE_REF}" 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("digest",""))' 2>/dev/null || true)"
+          if [ -z "${digest}" ]; then
+            echo "::warning::digest образа не разрешён — attestation пропущена"
+            exit 0
+          fi
+          cosign attest --yes \
+            --predicate dist/sbom/sbom.cdx.json \
+            --type cyclonedx \
+            "${IMAGE_REF}@${digest}"
+          mkdir -p artifacts/release
+          printf '%s@%s' "${IMAGE_REF}" "${digest}" > artifacts/release/attestation.ref
+          echo "attestation=${IMAGE_REF}@${digest}" >> "$GITHUB_OUTPUT"
+
       - name: Release evidence manifest
         # Аудит prod-readiness (2026-11-20), этап 6: машинный manifest о
         # готовности релиза — вместо ручного «процента готовности» в отчётах.
@@ -118,8 +153,8 @@ jobs:
         env:
           # Имя репозитория в ghcr.io обязано быть lowercase: иначе
           # «docker buildx imagetools inspect» отвергает ссылку, и digest
-          # в манифесте остаётся 'n/a'. Шаг Resolve image name ниже
-          # приводит имя к нижнему регистру.
+          # в манифесте остаётся 'n/a'. Шаг Resolve image name приводит
+          # имя к нижнему регистру.
           IMAGE_REF: ghcr.io/${{ steps.imagename.outputs.name }}:${{ github.ref_name }}
         run: |
           uv run python tools/checks/release_evidence.py \
@@ -135,7 +170,9 @@ jobs:
             --record "sbom:generate_sbom.py=${{ steps.sbom.outcome }}" \
             --record "audit:pip-audit=${{ steps.pip_audit.outcome }}" \
             --record "sign:cosign=${{ steps.cosign.outcome }}" \
+            --record "attest:cosign_attest=${{ steps.attest.outcome }}" \
             --artifact dist/sbom/sbom.cdx.json \
+            --attestation "${{ steps.attest.outputs.attestation || 'n/a' }}" \
             --artifact dist/pip-audit.json \
             --artifact dist/release-notes.md \
             --out dist/release-evidence.json

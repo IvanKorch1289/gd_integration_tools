@@ -80,9 +80,10 @@ def _collect(repo: Path, **kwargs: object) -> evidence.EvidenceManifest:
         "artifacts": [],
         "blockers": [],
         "image": None,
-        "image_digest": None,
+        "image_digest": "sha256:" + "a" * 64,
         "log_dir": None,
         "run_commands": True,
+        "attestation": "https://ghcr.io/example/attestation.sig",
     }
     params.update(kwargs)
     return evidence.collect_manifest(**params)  # type: ignore[arg-type]
@@ -136,6 +137,74 @@ class TestParsePair:
             evidence._parse_pair("no-separator", ":", "проверки")
 
 
+class TestReleaseEvidenceAttestation:
+    """ЭТАП 4: вердикт требует подтверждённый digest И attestation."""
+
+    def test_missing_digest_blocks(self, clean_repo: Path) -> None:
+        """Без подтверждённого digest'а образа вердикт — BLOCKED.
+
+        Args:
+            clean_repo: Временный репозиторий.
+        """
+        manifest = _collect(
+            clean_repo,
+            commands=[("ok", f"{evidence.sys.executable} -c pass")],
+            image_digest=None,
+            image=None,
+        )
+        assert manifest.verdict == evidence.VERDICT_BLOCKED
+        assert any("digest" in reason for reason in manifest.verdict_reasons)
+
+    def test_missing_attestation_blocks(self, clean_repo: Path) -> None:
+        """Образ без attestation — BLOCKED (подписывать нечем).
+
+        Args:
+            clean_repo: Временный репозиторий.
+        """
+        manifest = _collect(
+            clean_repo,
+            commands=[("ok", f"{evidence.sys.executable} -c pass")],
+            attestation=None,
+        )
+        assert manifest.verdict == evidence.VERDICT_BLOCKED
+        assert any("attestation" in reason for reason in manifest.verdict_reasons)
+
+    def test_attestation_placeholder_is_treated_as_missing(
+        self, clean_repo: Path
+    ) -> None:
+        """Плейсхолдер «n/a» = attestation не предъявлена → BLOCKED.
+
+        Args:
+            clean_repo: Временный репозиторий.
+        """
+        manifest = _collect(
+            clean_repo,
+            commands=[("ok", f"{evidence.sys.executable} -c pass")],
+            attestation="n/a",
+        )
+        assert manifest.attestation == {}
+        assert manifest.verdict == evidence.VERDICT_BLOCKED
+        assert any("attestation" in reason for reason in manifest.verdict_reasons)
+
+    def test_attestation_file_is_hashed(self, clean_repo: Path, tmp_path: Path) -> None:
+        """Attestation-файл попадает в manifest со sha256 и размером.
+
+        Args:
+            clean_repo: Временный репозиторий.
+            tmp_path: Временный каталог.
+        """
+        predicate = tmp_path / "attestation.json"
+        predicate.write_text('{"_type": "https://in-toto.io/Statement/v1"}\n')
+        manifest = _collect(
+            clean_repo,
+            commands=[("ok", f"{evidence.sys.executable} -c pass")],
+            attestation=str(predicate),
+        )
+        assert manifest.attestation["ref"] == str(predicate)
+        assert len(manifest.attestation["sha256"]) == 64
+        assert manifest.verdict == evidence.VERDICT_READY
+
+
 class TestCollectManifest:
     """Правила вычисления вердикта."""
 
@@ -150,6 +219,8 @@ class TestCollectManifest:
         )
         assert manifest.verdict == evidence.VERDICT_READY
         assert manifest.verdict_reasons == []
+        assert manifest.image_digest.startswith("sha256:")
+        assert manifest.attestation["ref"]
         assert manifest.commands[0].exit_code == 0
         assert manifest.dirty is False
         assert len(manifest.sha) == 40

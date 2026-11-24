@@ -114,6 +114,8 @@ class EvidenceManifest:
         dirty: True — в рабочем дереве есть незакоммиченные правки.
         dirty_files: Количество изменённых файлов.
         image_digest: Digest образа либо ``n/a``.
+        attestation: Свидетельство (attestation) образа: путь/URI, sha256
+            и размер (пусто — образ не подписан как attestation).
         profile: Профиль развёртывания.
         python_version: Версия интерпретатора.
         platform: Платформа.
@@ -132,6 +134,7 @@ class EvidenceManifest:
     dirty: bool = False
     dirty_files: int = 0
     image_digest: str = "n/a"
+    attestation: dict[str, str] = field(default_factory=dict)
     profile: str = "n/a"
     python_version: str = ""
     platform: str = ""
@@ -394,6 +397,28 @@ def _run_command(
     )
 
 
+def _describe_attestation(attestation: str | None) -> dict[str, str]:
+    """Описать attestation образа (путь к предикату или URI).
+
+    Args:
+        attestation: Путь к файлу-предикату или URI attestation'а.
+
+    Returns:
+        Словарь ``{"ref": ..., "sha256": ..., "bytes": ...}`` (пустой —
+        attestation не предъявлен).
+    """
+    if not attestation or attestation.strip().lower() in ("n/a", "none", "null"):
+        return {}
+    ref = attestation
+    candidate = Path(attestation)
+    if candidate.is_file():
+        computed = _sha256_file(candidate)
+        if computed is None:
+            return {"ref": ref, "error": "нечитаемый файл attestation"}
+        return {"ref": ref, "sha256": computed[0], "bytes": str(computed[1])}
+    return {"ref": ref}
+
+
 def collect_manifest(
     *,
     root: Path,
@@ -407,6 +432,7 @@ def collect_manifest(
     log_dir: Path | None,
     run_commands: bool = True,
     recorded: list[tuple[str, str]] | None = None,
+    attestation: str | None = None,
 ) -> EvidenceManifest:
     """Собрать manifest о готовности.
 
@@ -422,6 +448,9 @@ def collect_manifest(
         log_dir: Каталог для логов команд.
         run_commands: Выполнять команды (False — только зафиксировать,
             что проверки не выполнялись).
+        recorded: Результаты проверок, выполненных другим шагом CI.
+        attestation: Attestation образа (путь к файлу-предикату или URI).
+            Путь → в manifest попадает sha256 и размер; URI → сам URI.
 
     Returns:
         Готовый manifest.
@@ -442,6 +471,7 @@ def collect_manifest(
         manifest.dirty = bool(changed)
 
     manifest.image_digest = _resolve_image_digest(image_digest, image)
+    manifest.attestation = _describe_attestation(attestation)
     manifest.test_scope = list(scopes)
 
     for path in artifacts:
@@ -503,6 +533,16 @@ def collect_manifest(
         reasons.append(
             "внешние блокеры: "
             + ", ".join(block["name"] for block in manifest.external_blockers)
+        )
+    if manifest.image_digest in ("", "n/a"):
+        reasons.append(
+            "digest образа не подтверждён — вердикт без привязки к "
+            "конкретному образу невалиден"
+        )
+    elif not manifest.attestation:
+        reasons.append(
+            "образ не подписан как attestation (cosign attest / GitHub "
+            "artifact attestations) — подтверждать релиз нечем"
         )
     manifest.verdict_reasons = reasons
     manifest.verdict = VERDICT_READY if not reasons else VERDICT_BLOCKED
@@ -571,6 +611,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--image", default=None, help="Имя образа для digest")
     parser.add_argument("--image-digest", default=None, help="Явный digest образа")
     parser.add_argument(
+        "--attestation",
+        default=None,
+        help=(
+            "Attestation образа (cosign attest / GitHub artifact attestations): "
+            "путь к файлу-предикату или URI. Без него образ не считается "
+            "подписанным свидетельством"
+        ),
+    )
+    parser.add_argument(
         "--out",
         default=str(DEFAULT_OUT),
         help=f"Путь к manifest'у (по умолчанию {DEFAULT_OUT})",
@@ -617,6 +666,7 @@ def main(argv: list[str] | None = None) -> int:
         log_dir=log_dir,
         run_commands=not args.no_run,
         recorded=recorded,
+        attestation=args.attestation,
     )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
