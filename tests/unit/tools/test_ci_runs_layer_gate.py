@@ -16,6 +16,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 PIPELINES = REPO_ROOT / "make" / "pipelines.mk"
+#: Сгруппированный раннер unit-тестов (заменяет прямой вызов pytest).
+GROUPED_RUNNER = REPO_ROOT / "tools" / "run_tests_grouped.sh"
 
 
 def _ci_recipe() -> list[str]:
@@ -106,22 +108,42 @@ def test_unit_tests_step_precedes_success_echo() -> None:
 
 
 def test_unit_tests_target_actually_runs_pytest_on_unit_suite() -> None:
-    """Цель `unit-tests` действительно зовёт pytest по tests/unit, а не заглушку."""
+    """Цель `unit-tests` действительно зовёт pytest по tests/unit, а не заглушку.
+
+    Прямой вызов pytest заменён на СГРУППИРОВАННЫЙ раннер
+    (``tools/run_tests_grouped.sh``): один процесс pytest на все tests/unit
+    держит ~2 ГБ RSS и упирается в OOM, поэтому прогон разбит на группы, а
+    каждая группа — отдельный процесс. Гейт проверяет, что РАННЕР действительно
+    зовёт pytest по tests/unit (иначе шаг в ci декоративен), а сам рецепт —
+    что он запускает этот раннер.
+    """
     text = PIPELINES.read_text(encoding="utf-8")
     match = re.search(r"^unit-tests:.*?\n((?:\t.*\n)+)", text, re.MULTILINE)
     assert match, "цель unit-tests не найдена в make/pipelines.mk"
     body = match.group(1)
-    pytest_lines = [ln for ln in body.splitlines() if "pytest" in ln]
-    assert pytest_lines, (
-        "цель unit-tests не запускает pytest — шаг в ci будет декоративным"
-    )
-    assert any("tests/unit" in ln for ln in pytest_lines), (
-        f"pytest вызывается не по tests/unit: {pytest_lines}. Подмена на tests/ "
-        "затянет в CI интеграционные тесты, которым нужны PG/Redis/MinIO"
-    )
+    if "run_tests_grouped.sh" in body:
+        runner = GROUPED_RUNNER.read_text(encoding="utf-8")
+        assert "pytest" in runner, (
+            "сгруппированный раннер не зовёт pytest — шаг в ci декоративен"
+        )
+        assert "tests/unit" in runner, (
+            "сгруппированный раннер должен гонять tests/unit: подмена на "
+            "tests/ затянет в CI интеграционные тесты, которым нужны "
+            "PG/Redis/MinIO"
+        )
+    else:
+        pytest_lines = [ln for ln in body.splitlines() if "pytest" in ln]
+        assert pytest_lines, (
+            "цель unit-tests не запускает pytest — шаг в ci будет декоративным"
+        )
+        assert any("tests/unit" in ln for ln in pytest_lines), (
+            f"pytest вызывается не по tests/unit: {pytest_lines}. Подмена на "
+            "tests/ затянет в CI интеграционные тесты, которым нужны "
+            "PG/Redis/MinIO"
+        )
     # --timeout может лежать на строке-продолжении (обратный слэш), поэтому
     # здесь проверяется весь рецепт, а не строка с pytest.
-    assert "--timeout=" in body, (
+    assert "--timeout" in body, (
         f"unit-tests обязан передавать --timeout. Рецепт: {body!r}. Без "
         "pytest-timeout зависший тест подвесит пайплайн без верхней границы"
     )
@@ -165,8 +187,12 @@ def test_unit_tests_jobs_is_bounded_not_auto() -> None:
         "ограничиваться UNIT_TEST_JOBS, иначе OOM-kill оставляет xdist-"
         "контроллер висеть на мёртвом воркере"
     )
-    assert "-n $(UNIT_TEST_JOBS)" in recipe, (
-        f"ожидался `-n $(UNIT_TEST_JOBS)` в рецепте, получено:\n{recipe}"
+    # Число воркеров задаётся либо напрямую (`-n $(UNIT_TEST_JOBS)`), либо
+    # через сгруппированный раннер (`--jobs $(UNIT_TEST_JOBS)`).
+    bounded = "-n $(UNIT_TEST_JOBS)" in recipe or "--jobs $(UNIT_TEST_JOBS)" in recipe
+    assert bounded, (
+        "ожидался явный лимит воркеров (`-n $(UNIT_TEST_JOBS)` или "
+        f"`--jobs $(UNIT_TEST_JOBS)`) в рецепте, получено:\n{recipe}"
     )
 
 

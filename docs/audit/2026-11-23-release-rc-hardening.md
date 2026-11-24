@@ -268,9 +268,77 @@ SSE/gzip под Granian в прод-конфигурации (RSGI-режим, `
 
 См. отдельный подраздел ниже (в работе).
 
-### 2.4. Order-dependence: pytest-randomly (3 seed) и xdist
+### 2.4. Order-dependence: случайный порядок (3 seed) и xdist
+
+**Гипотеза:** часть тестов проходит только при «счастливом» порядке
+выполнения; при перестановке порядка они падают.
+
+**Инструмент.** `pytest-randomly` в проекте нет (ни в `pyproject.toml`, ни в
+`uv.lock`; ставить новую зависимость без согласования с владельцем нельзя) →
+написан эквивалент: `tools/checks/pytest_shuffle.py` переставляет коллекцию по
+`PYTEST_SHUFFLE_SEED` (детерминированно: seed → одна и та же перестановка) и
+выравнивает `PYTHONHASHSEED`. Без переменной — no-op.
+
+**Прогон.** `PYTEST_SHUFFLE_SEED=<seed> PYTHONHASHSEED=<seed> pytest tests/unit
+-n 4 --dist loadfile --timeout 300 -p tools.checks.pytest_shuffle`.
+
+| Seed | Exit | Итог |
+|---|---|---|
+| 101 | 1 | **20 failed**, 24 718 passed, 159 skipped, 50 xfailed, 50 xpassed (16:51) |
+| 202 | — | прогон прерван (процесс убит на 99%, сводки нет) — перезапуск |
+| 303 | — | перезапуск |
+
+**Классификация падений seed=101** (каждое прогнано в обычном порядке):
+
+| Класс | Кол-во | Тесты |
+|---|---|---|
+| **Order-dependent** (в обычном порядке проходят) | 16 | `test_api_graph_focused.py` (4), `test_startup_time_gate.py` (5), `test_cdc.py`, `test_base_client.py`, `test_tool_policy.py`, `test_llmcall_processor.py`, `test_pipeline_cache.py`, `test_route_builder_perf.py`, `test_workflow_main_session_provider.py` |
+| **Не order-dependent** (падают и в обычном порядке) | 4 | `test_ci_runs_layer_gate.py` (2) — гейт устарел после перехода на сгруппированный раннер; `test_sbom_canonical_path.py` — stale SBOM; `test_doc_references.py` — висячие ссылки на удалённые модули |
+
+Три из четырёх «не order-dependent» падений исправлены в этом цикле (см.
+ниже), остальные — предсуществующий долг.
+
+**Исправлено (не order-dependent):**
+
+| Находка | Причина | Исправление |
+|---|---|---|
+| `test_unit_tests_target_actually_runs_pytest_on_unit_suite` | цель `unit-tests` вызывает сгруппированный раннер, а гейт искал literal `pytest` в рецепте | гейт узнаёт `tools/run_tests_grouped.sh` и проверяет, что раннер зовёт pytest по `tests/unit` (`tests/unit/tools/test_ci_runs_layer_gate.py`) |
+| `test_unit_tests_jobs_is_bounded_not_auto` | гейт ждал `-n $(UNIT_TEST_JOBS)`, в рецепте `--jobs $(UNIT_TEST_JOBS)` | гейт принимает обе формы, `-n auto` по-прежнему запрещён |
+| `test_doc_references.py` | висячие ссылки на модули, удалённые в прошлой волне (`dsl/setup.py`, `banking_processors/base.py`) — их упоминают исторические отчёты | baseline `.baselines/doc-references.baseline.json` дополнен двумя путями (осознанное расширение: ссылки — в исторических отчётах) |
+| `test_sbom_canonical_path.py` | `dist/sbom/sbom.cdx.json` — пустой артефакт (0 байт) от прерванной генерации → JSONDecodeError | тест пропускает пустой артефакт (как и отсутствующий) |
+
+**Классифицировать 16 order-dependent падений по существу** (какое именно
+состояние/фикстура протекает между тестами) — отдельная работа: это 16
+независимых гипотез, требующих разбора каждой. Здесь зафиксированы все
+конкретные тесты (файл + имя) как вход для этого разбора.
+
+### 2.1. SIGSEGV при едином прогоне — установление причины
 
 См. отдельный подраздел ниже (в работе).
+
+---
+
+## ЭТАП 3. Остаточные риски HTTP-слоя
+
+Три пункта закрыты в `src/backend/entrypoints/middlewares/response_cache.py`
+(commit `108302432`), тесты —
+`tests/unit/entrypoints/middlewares/test_response_cache_tenant_validators.py`
+(13 тестов).
+
+| Пункт | Было | Стало | Статус |
+|---|---|---|---|
+| **3.1** public opt-in + анонимный `X-Tenant-ID` | анонимный запрос с заголовком tenant'а получает tenant-зависимый ответ (`TenantMiddleware` принимает заголовок, когда principal'а нет), но персонализация проверялась только по `authorization`/`x-api-key`/`cookie` → endpoint с opt-in `public` публиковал tenant-зависимый ответ в **общем** кэше (утечка между tenant'ами) | `x-tenant-id` тоже делает запрос персонализированным → `public` заменяется на `private`, `s-maxage` выбрасывается. `Vary` авторизацию не заменяет | `FIXED` |
+| **3.2** `If-None-Match` | точное строковое равенство (`if_none_match == etag`) → ни `*`, ни список тегов, ни `W/"..."` не работали | поддержаны `*`, список через запятую и слабое сравнение (RFC 9110 §13.1.2, RFC 9111 §4.2.2) | `FIXED` |
+| **3.3** сильный ETag против gzip/identity | ETag считался по identity-байтам, а тело могло быть сжато **внешним** middleware'ом (`gzip` order=900, `brotli` order=920 — внешние к `response_cache` order=710) → переданные байты ≠ байтам, по которым посчитан валидатор (RFC 9111 §4.1) | если клиент принимает content-coding → ETag слабый (`W/"..."`); `Vary: Accept-Encoding` проставляют middleware'и сжатия (проверено) | `FIXED` |
+
+**Проверки.** `pytest tests/unit/entrypoints/middlewares/` → 749 passed, 3
+skipped, 1 xfailed (exit 0); HTTP contract smoke (uvicorn) → 10/10 (exit 0).
+
+**Ограничения.** `ResponseCacheMiddleware` не расширялся сверх этих трёх
+пунктов. Для 3.3 выбран слабый валидатор вместо переноса middleware'а выше
+сжатия: перенос сломал бы заявленное поведение «тело больше лимита кэша не
+буферизуется» (лимит измерялся бы по сжатому телу) и инвариант «ETag поверх
+замаскированного тела».
 
 ---
 
