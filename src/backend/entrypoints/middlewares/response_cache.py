@@ -82,7 +82,16 @@ __all__ = ("ResponseCacheMiddleware",)
 DEFAULT_MAX_BODY_SIZE = 1024 * 1024
 
 #: Заголовки запроса, делающие его персонализированным.
-_PERSONAL_HEADERS = frozenset({b"authorization", b"x-api-key", b"cookie"})
+#: Заголовки, делающие запрос персонализированным.
+#:
+#: ``x-tenant-id`` — тоже: анонимный запрос с заголовком tenant'а получает
+#: tenant-зависимый ответ (``TenantMiddleware`` принимает заголовок, если
+#: principal'а нет), и такой ответ нельзя публиковать в общем кэше
+#: (shared cache) — иначе один tenant получит данные другого
+#: (ЭТАП 3.1, аудит 2026-11-23). ``Vary`` авторизацию не заменяет.
+_PERSONAL_HEADERS = frozenset(
+    {b"authorization", b"x-api-key", b"cookie", b"x-tenant-id"}
+)
 
 #: Заголовки, которые НЕ переносятся в ответ 304: у 304 нет тела, поэтому
 #: ни его длины, ни кодировки, ни способа передачи там быть не должно.
@@ -111,6 +120,83 @@ def _compute_etag(body: bytes) -> str:
     from src.backend.entrypoints.middlewares._body_hash import etag_hash
 
     return etag_hash(body)
+
+
+def _strip_weak_prefix(tag: str) -> str:
+    """Убрать префикс ``W/`` из entity-tag.
+
+    Args:
+        tag: Значение entity-tag (например ``W/"abc"``).
+
+    Returns:
+        Tag без префикса слабости (``"abc"``).
+
+    """
+    if tag.startswith("W/"):
+        return tag[2:]
+    return tag
+
+
+def _if_none_match_matches(header_value: str, etag: str) -> bool:
+    """Сравнить ``If-None-Match`` с ETag ответа (RFC 9110 §13.1.2).
+
+    Поддерживаются все формы, которые обязаны поддерживаться сервером
+    (ЭТАП 3.2, аудит 2026-11-23):
+
+    * ``*`` — ресурс существует → условие выполнено (304);
+    * список entity-tag через запятую — совпадение любого элемента;
+    * слабый тег ``W/"..."`` — сравнивается по СЛАБОЙ функции сравнения
+      (RFC 9111 §4.2.2): ``W/"abc"`` совпадает с ``"abc"``.
+
+    Args:
+        header_value: Значение заголовка ``If-None-Match``.
+        etag: ETag текущего ответа.
+
+    Returns:
+        True — условие выполнено (ответ 304).
+
+    """
+    value = header_value.strip()
+    if value == "*":
+        return True
+    target = _strip_weak_prefix(etag)
+    for candidate in value.split(","):
+        candidate = candidate.strip()
+        if not candidate:
+            continue
+        if _strip_weak_prefix(candidate) == target:
+            return True
+    return False
+
+
+def _etag_value(scope: Scope, body: bytes) -> str:
+    """Сформировать ETag ответа с учётом возможного сжатия.
+
+    Если клиент принимает content-coding (gzip/br), тело может быть сжато
+    ВНЕШНИМ middleware'ом (``gzip`` order=900, ``brotli`` order=920 — внешние
+    к ``response_cache`` order=710) → переданные байты не равны байтам
+    identity-представления, по которым считается ETag. RFC 9111 §4.1 требует,
+    чтобы сильный валидатор идентифицировал именно переданное представление,
+    поэтому в этом случае ETag слабый (``W/"..."``) — RFC 9111 §4.2.2
+    (слабый валидатор применим к семантически эквивалентным представлениям,
+    каким является content-coding).
+
+    Различение вариантов по кодировке обеспечивают middleware'и сжатия:
+    они проставляют ``Vary: Accept-Encoding`` (ЭТАП 3.3).
+
+    Args:
+        scope: ASGI scope (источник ``Accept-Encoding``).
+        body: Байты тела ответа (identity-представление).
+
+    Returns:
+        ETag в кавычках (с ``W/``-префиксом, если ответ может быть сжат).
+
+    """
+    digest = _compute_etag(body)
+    accept_encoding = _get_header_value(scope, b"accept-encoding").lower()
+    if "gzip" in accept_encoding or "br" in accept_encoding:
+        return f"W/{digest}"
+    return digest
 
 
 def _is_personalized(scope: Scope) -> bool:
@@ -373,11 +459,12 @@ class ResponseCacheMiddleware:
             await send({"type": "http.response.body", "body": b"", "more_body": False})
             return
 
-        etag = _compute_etag(body)
+        etag = _etag_value(scope, body)
 
-        # Cycle 55: If-None-Match check.
+        # Cycle 55: If-None-Match check (RFC 9110 §13.1.2: ``*``, список
+        # тегов и слабое сравнение — ЭТАП 3.2).
         if_none_match = _get_header_value(scope, b"if-none-match")
-        if if_none_match and if_none_match == etag:
+        if if_none_match and _if_none_match_matches(if_none_match, etag):
             # 304 Not Modified: тело пустое, политика Cache-Control —
             # та же, что у 200 (единый код расчёта). Заголовки ответа
             # сохраняются, кроме тех, что описывают тело (у 304 тела нет);
