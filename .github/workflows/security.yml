@@ -45,7 +45,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python 3.14
         uses: actions/setup-python@v6
@@ -100,7 +100,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python 3.14
         uses: actions/setup-python@v6
@@ -137,7 +137,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python 3.14
         uses: actions/setup-python@v6
@@ -218,7 +218,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Полный history нужен для scan всех коммитов.
           fetch-depth: 0
@@ -240,7 +240,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run Trivy filesystem scan
         # P2 (аудит 2026-11-18): был `@master` — подвижная ветка, а не
@@ -270,7 +270,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Baseline контракты берутся из tracked файлов (.baselines/) —
           # history не нужен, но fetch-depth 0 безопаснее для будущих
