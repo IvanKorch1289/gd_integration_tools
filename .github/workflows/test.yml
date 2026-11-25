@@ -77,6 +77,38 @@ jobs:
           uv run tools/run_coverage_grouped.sh --out coverage.xml
           uv run coverage report | tail -20
 
+      - name: "Diagnostics: CLI help in CI environment"
+        # Диагностика для оставшихся env-специфичных падений группы
+        # tests/unit/tools (typer/rich-help): локально help отдаёт флаги, в CI
+        # — нет. Снимок вывода того же CLI в том же окружении позволяет
+        # сравнить рендеринг и найти различие (версия Python, состав extras,
+        # TTY) без спекулятивного ослабления проверок.
+        if: always()
+        run: |
+          mkdir -p artifacts/diagnostics
+          for cli in tools/check_coverage_gate.py tools/check_feature_flags.py tools/check_env_example.py; do
+            name="$(basename "${cli}" .py)"
+            uv run python "${cli}" --help > "artifacts/diagnostics/${name}.help.txt" 2>&1 || true
+          done
+          {
+            echo "--- python ---"
+            uv run python -VV 2>&1 || true
+            echo "--- packages ---"
+            uv run python -m pip list 2>/dev/null | grep -Ei "^(typer|click|rich|fastmcp|standardwebhooks|temporalio) " || true
+            echo "--- terminal env ---"
+            echo "COLUMNS=${COLUMNS:-<unset>} TERM=${TERM:-<unset>} CI=${CI:-<unset>}"
+          } > artifacts/diagnostics/env.txt 2>&1 || true
+          ls -la artifacts/diagnostics || true
+
+      - name: Upload CI diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-diagnostics
+          path: artifacts/diagnostics/
+          retention-days: 7
+          if-no-files-found: warn
+
       - name: Coverage gate ([wave:s19/k2-w4-coverage-ratchet-75])
         # S19 K2 W4 / ADR-0443 — coverage gate ratchet.
         # Порог берётся из baseline (.baselines/coverage.json) — single
