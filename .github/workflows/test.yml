@@ -60,7 +60,9 @@ jobs:
         # (эти группы не выполнялись, пока первая группа не падала).
         # dsl-extras-2: standardwebhooks (библиотечный путь проверки
         # подписи webhook'ов; без него тест реплея пропускается).
-        run: uv sync --locked --extra sources-cdc --extra db_drivers --extra workflow --extra dsl-extras-2
+        # mcp: fastmcp — без него MCP-тесты падают с «fastmcp is not
+        # installed» (extra лёгкий: только fastmcp).
+        run: uv sync --locked --extra sources-cdc --extra db_drivers --extra workflow --extra dsl-extras-2 --extra mcp
 
       - name: Run pytest with coverage (grouped, ADR-0453)
         # ADR-0453: монолитный `pytest tests --cov=src/backend` на 24k тестов

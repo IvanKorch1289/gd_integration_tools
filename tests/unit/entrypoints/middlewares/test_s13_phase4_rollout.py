@@ -206,10 +206,17 @@ def test_should_allow_defaults_true_when_flag_off() -> None:
 def test_preflight_script_exists() -> None:
     """Pre-flight script (verify_s13_phase4_readiness.sh) provides deployment readiness check."""
     import os
+    from pathlib import Path
 
+    # Путь вычисляется от теста: абсолютный путь к машине разработчика
+    # не существует на CI-раннере (другой checkout) — тест падал с
+    # «Pre-flight script not found».
     script_path = (
-        "/home/user/dev/gd_integration_tools/scripts/verify_s13_phase4_readiness.sh"
+        Path(__file__).resolve().parents[4]
+        / "scripts"
+        / "verify_s13_phase4_readiness.sh"
     )
+    script_path = str(script_path)
     assert os.path.exists(script_path), f"Pre-flight script not found at {script_path}"
     assert os.access(script_path, os.X_OK), (
         f"Pre-flight script not executable: {script_path}"
