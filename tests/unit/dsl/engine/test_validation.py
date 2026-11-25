@@ -81,9 +81,17 @@ class TestPipelineValidator:
 
     def test_restore_without_sanitize(self) -> None:
         pipeline = FakePipeline("r1", [FakeProcessor("restore", _target_route_id=None)])
-        # Use a processor whose class name triggers the check
-        pipeline.processors[0].__class__.__name__ = "RestorePIIProcessor"
-        result = PipelineValidator().validate(pipeline)
+        # Use a processor whose class name triggers the check.
+        # Имя класса меняется ВРЕМЕННО и восстанавливается: прямое присваивание
+        # ``__class__.__name__`` меняло ОБЩИЙ класс FakeProcessor, и все
+        # следующие тесты модуля получали «RestorePIIProcessor» — модуль
+        # становился порядок-зависимым (аудит 2026-11-25, ЭТАП 2.4).
+        original_name = FakeProcessor.__name__
+        try:
+            FakeProcessor.__name__ = "RestorePIIProcessor"
+            result = PipelineValidator().validate(pipeline)
+        finally:
+            FakeProcessor.__name__ = original_name
         assert any(
             "without preceding SanitizePIIProcessor" in i.message for i in result.issues
         )

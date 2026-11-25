@@ -127,14 +127,18 @@ def test_cache_info_shows_hits_and_misses() -> None:
     pipeline2 = Pipeline(route_id="info_route_2")
     pipeline2.add_processor(_DummyProcessor())
 
+    # Счётчики lru_cache общие для класса: измеряем ДЕЛЬТУ, иначе тест
+    # зависит от того, что запускался раньше (аудит 2026-11-25, ЭТАП 2.4 —
+    # порядок-зависимое падение).
+    before = compiler._compile_cached.cache_info()
     compiler.compile(pipeline1)  # miss
     compiler.compile(pipeline1)  # hit
     compiler.compile(pipeline2)  # miss (different route_id)
     compiler.compile(pipeline1)  # hit
 
     info = compiler._compile_cached.cache_info()
-    assert info.hits == 2
-    assert info.misses == 2
+    assert info.hits - before.hits == 2
+    assert info.misses - before.misses == 2
 
 
 def test_compiled_pipeline_is_frozen_and_hashable() -> None:
