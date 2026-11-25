@@ -121,11 +121,28 @@ def _is_altair(exc):
     return any("altair" in frame for frame in frames)
 
 
+def _is_missing_optional_dependency(exc):
+    """Отсутствует ОПЦИОНАЛЬНЫЙ внешний пакет (не проектный модуль).
+
+    polars/pyarrow и подобные живут в тяжёлых extras, которые CI не ставит.
+    Такое отсутствие — не дефект страницы, поэтому страница считается
+    пропущенной, а не упавшей. ModuleNotFoundError на проектный модуль
+    (src.*, extensions.*) остаётся ошибкой.
+    """
+    if not isinstance(exc, ModuleNotFoundError):
+        return False
+    name = getattr(exc, "name", "") or ""
+    if not name:
+        return False
+    return name.split(".")[0] not in ("src", "extensions")
+
+
 def main() -> int:
     pages = sorted(PAGES_DIR.rglob("*.py"))
     ok = 0
     altair = 0
     failures = []
+    optional_skipped = 0
     devnull = open(os.devnull, "w")
     old = sys.stderr
     sys.stderr = devnull
@@ -146,6 +163,12 @@ def main() -> int:
             except BaseException as exc:
                 if _is_altair(exc):
                     altair += 1
+                elif _is_missing_optional_dependency(exc):
+                    # Отсутствующий ОПЦИОНАЛЬНЫЙ пакет (polars и т.п. живут
+                    # в тяжёлых extras) — не дефект страницы: страница
+                    # импортируется в окружении, где этого пакета нет.
+                    # Ошибки импорта проектных модулей сюда не попадают.
+                    optional_skipped += 1
                 else:
                     buf = io.StringIO()
                     traceback.print_exception(
@@ -158,7 +181,10 @@ def main() -> int:
         sys.stderr = old
         devnull.close()
 
-    print(f"TOTAL={len(pages)} OK={ok} ALTAIR_SKIPPED={altair} FAIL={len(failures)}")
+    print(
+        f"TOTAL={len(pages)} OK={ok} ALTAIR_SKIPPED={altair} "
+        f"OPTIONAL_SKIPPED={optional_skipped} FAIL={len(failures)}"
+    )
     for rel, tb in failures:
         print("=" * 70)
         print("FAIL:", rel)
@@ -169,6 +195,42 @@ def main() -> int:
 if __name__ == "__main__":
     raise SystemExit(main())
 '''
+
+
+@pytest.mark.unit
+def test_optional_dependency_detector_distinguishes_project_modules() -> None:
+    """Отсутствие внешнего пакета — не ошибка; отсутствие модуля проекта — ошибка.
+
+    Проверяет логику harness'а: страница, требующая polars/pyarrow (тяжёлые
+    extras), в CI-окружении без них считается пропущенной, а реальный
+    ModuleNotFoundError на проектный модуль остаётся падением.
+    """
+    harness_ns: dict[str, object] = {"__name__": "harness_probe"}
+    # Harness читает корень репозитория из env — задаём его на время exec'а.
+    previous = os.environ.get("FRONTEND_IMPORT_REPO_ROOT")
+    os.environ["FRONTEND_IMPORT_REPO_ROOT"] = str(REPO_ROOT)
+    try:
+        exec(  # noqa: S102 — исполняем текст harness'а, чтобы проверить его же
+            compile(_HARNESS, "harness", "exec"), harness_ns
+        )
+    finally:
+        if previous is None:
+            os.environ.pop("FRONTEND_IMPORT_REPO_ROOT", None)
+        else:
+            os.environ["FRONTEND_IMPORT_REPO_ROOT"] = previous
+    check = harness_ns["_is_missing_optional_dependency"]
+    assert callable(check)
+
+    def _missing(name: str) -> ModuleNotFoundError:
+        exc = ModuleNotFoundError(f"No module named '{name}'")
+        exc.name = name
+        return exc
+
+    assert check(_missing("polars")) is True
+    assert check(_missing("pyarrow")) is True
+    assert check(_missing("src.backend.core.auth")) is False
+    assert check(_missing("extensions.orders")) is False
+    assert check(ValueError("boom")) is False
 
 
 @pytest.mark.unit
