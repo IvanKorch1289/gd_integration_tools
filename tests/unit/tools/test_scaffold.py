@@ -12,6 +12,11 @@ from __future__ import annotations
 
 import os
 import subprocess
+from pathlib import Path
+
+#: Корень репозитория: путь вычисляется от теста — абсолютный путь к
+#: машине разработчика на CI-раннере не существует.
+_REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 class TestScaffoldPaths:
@@ -30,7 +35,7 @@ class TestScaffoldPaths:
             ],
             capture_output=True,
             text=True,
-            cwd="/home/user/dev/gd_integration_tools",
+            cwd=str(_REPO_ROOT),
             # Rich переносит длинные строки по ширине терминала, из-за чего
             # путь в stdout разрывался как ".../testproc.p\ny" и проверка
             # падала на корректном выводе. Фиксируем широкую «консоль».
@@ -59,7 +64,7 @@ class TestScaffoldPaths:
             ],
             capture_output=True,
             text=True,
-            cwd="/home/user/dev/gd_integration_tools",
+            cwd=str(_REPO_ROOT),
         )
         assert "src/backend/dsl/routes/test_demo.py" in result.stdout, (
             f"Scaffold route должен создавать в src/backend/dsl/, "

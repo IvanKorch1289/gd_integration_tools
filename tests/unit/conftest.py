@@ -281,6 +281,26 @@ def _ensure_structlog_backend() -> None:
 
 
 @pytest.fixture(autouse=True)
+def _wide_console() -> Iterator[None]:
+    """Широкая «консоль» для CLI-help тестов (rich/typer).
+
+    В CI нет TTY → rich рисует help в колонке 80 символов и обрезает
+    длинные флаги, из-за чего проверки вроде «--allow-non-off in help»
+    падали. COLUMNS читается rich'ом при отрисовке, поэтому достаточно
+    переменной окружения на время теста.
+    """
+    previous = os.environ.get("COLUMNS")
+    os.environ["COLUMNS"] = "400"
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("COLUMNS", None)
+        else:
+            os.environ["COLUMNS"] = previous
+
+
+@pytest.fixture(autouse=True)
 def _restore_structlog_backend() -> Iterator[None]:
     """Возвращает structlog-backend перед каждым тестом (ADR-0404).
 

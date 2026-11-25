@@ -34,6 +34,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Полная история: часть тестов (changelog-autogen) работает с
+          # `git log HEAD~3..HEAD` — на shallow clone такого ref не существует.
+          fetch-depth: 0
 
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
