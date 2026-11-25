@@ -223,7 +223,11 @@ def _schedule_dispose(instance: Any, label: str) -> None:
             label,
         )
         return
-    task = loop.create_task(awaitable)
+    # Задача создаётся через TaskRegistry: «осиротевшие» create_task
+    # вне реестра не отменяются на shutdown (гейт orphan-create-task).
+    from src.backend.core.utils.task_registry import get_task_registry
+
+    task = get_task_registry().create_task(awaitable, name="db.pool.dispose")
     task.add_done_callback(_log_dispose_failure)
 
 
