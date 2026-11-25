@@ -554,7 +554,21 @@ stdlib/сторонние):
 |---|---|---|---|---|---|---|---|---|
 | `a9638db26` (база) | fail | fail | ok | fail | ok | ok | fail | — |
 | `e1b2701f5` | fail (vulture ×6, ruff format, workflow-specs, mutation) | fail (9 × dsl: нет temporalio/pytesseract) | ok | fail (pip-audit, SBOM diff) | ok | ok | fail (Trivy: HIGH/CRITICAL в образе) | ЭТАПЫ 1–4 |
-| `259088e92` | прогон | прогон | прогон | прогон | прогон | прогон | прогон | + починка lint-гейтов |
+| `259088e92` | fail (workflow-specs: конфиг не собирается без .env) | fail (2 env-зависимых) | ok | fail | ok | ok | fail | + починка lint-гейтов |
+| `28909f121` | fail (object authorization matrix — **намеренно красный**, см. ниже) | fail (2 env-зависимых) | ok | fail | ok | ok | fail | гейт workflow-specs починен |
+| `7d60d3658` (финальный) | fail (тот же намеренно-красный гейт) | fail (те же 2) | ok | fail | ok | ok | fail | + осиротевший create_task → TaskRegistry |
+
+**Почему `lint.yml` остаётся красным — это осознанное решение владельца, а не
+регрессия цикла.** Комментарий в самом workflow: «Гейт на текущем коде падает
+(покрытие ownership 10.7 %, 127 выборок без tenant-фильтра). Это ожидаемо:
+job будет красным до устранения D-4/D-4A/D-4C, и это честнее, чем зелёный
+job при ❌ в выводе». Фактические цифры на финальном SHA: покрытие
+ownership **13.4 %** (порог 50 %), **129** service-lookup'ов без
+tenant-фильтра (порог 20). До цикла гейт был SKIPPED (path-фильтр) и
+прятался; после правок `src/` он стал выполняться и показал долг.
+Базовализовать его (как doc-references) — значило бы спрятать известный
+долг по D-4, чего комментарий в workflow явно не хочет → оставлено красным,
+вынесено в блокеры.
 
 **Что закрыто за цикл (было красным на базе → стало зелёным/исправлено):**
 
@@ -732,7 +746,7 @@ workflow» держатся только на соглашении. Merge queue 
 | Чистое дерево | ✅ рабочее дерево чистое, все изменения закоммичены | выполнено |
 | Этапы 1–4 закрыты | ✅ ЭТАП 1 (image pipeline), 2.2/2.3/2.4 (гипотезы), 3 (HTTP-риски), 4 (свидетельство) | выполнено |
 | Независимое ревью без MAJOR | ✅ два ревью ЭТАПА 1 (MAJOR нет); ревью ЭТАПА 2–4 нашло 1 MAJOR — исправлен (`release.yml` искал тег `v1.2.3`, которого image pipeline не публиковал) и закрыт правкой + тестами | выполнено |
-| 7 зелёных required workflow на одном SHA | ❌ зелёные: `type`, `sbom`, `stubs-drift`; красные: `lint`, `test`, `security`, `image` | **не выполнено** |
+| 7 зелёных required workflow на одном SHA | ❌ на финальном SHA `7d60d3658` зелёные: `type`, `sbom`, `stubs-drift` (3 из 7); красные: `lint` (намеренно-красный гейт object authorization — долг D-4), `test` (2 env-зависимых падения), `security` (advisory + SBOM diff), `image` (Trivy) | **не выполнено** |
 | Подтверждённый digest образа | ❌ образ не собирался и не публиковался в этом окружении | `ENV_BLOCKED` |
 | Attestation | ❌ требует прогона release-workflow (cosign + OIDC + registry) | `ENV_BLOCKED` |
 | Отсутствие блокеров | ❌ см. ниже | **не выполнено** |
@@ -744,7 +758,8 @@ workflow» держатся только на соглашении. Merge queue 
 | B1 | 14 advisory сверх allowlist | `security.yml` → pip-audit | зависимости | `OWNER_DECISION` (O1) |
 | B2 | SBOM в репозитории расходится с пересобранным | `security.yml` → SBOM diff | процесс | требует решения: пересобрать SBOM или обновить baseline |
 | B3 | HIGH/CRITICAL-уязвимости в образе | `image.yml` → Trivy | образ | `OWNER_DECISION` (класс O1) |
-| B4 | 2 env-зависимых падения тестов (CSV-типы; replay-окно webhook) | `test.yml` → dsl-группа | тесты/окружение | `CONFIRMED` (ранее скрыты: группа не выполнялась) |
+| B4 | 2 env-зависимых падения тестов (`test_translate_csv_to_dict` — типы значений CSV; `test_replay_window_rejected_by_library` — replay-окно webhook) | `test.yml` → dsl-группа | тесты/окружение | `CONFIRMED` (ранее скрыты: группа не выполнялась); локально оба проходят |
+| B3a | `lint.yml` красный на гейте object authorization (ownership 13.4 % при пороге 50 %; 129 lookup'ов без tenant-фильтра) | `lint.yml` | долг D-4/D-4A/D-4C | `OWNER_DECISION` — в workflow прямо сказано, что красный job честнее зелёного при ❌ |
 | B5 | 16 order-dependent падений unit-тестов | `tests/unit` (api_graph, startup_time_gate, base_client, pipeline_cache, tool_policy и др.) | тесты | `CONFIRMED` — разобрать (вне текущего цикла) |
 | B6 | Причина SIGSEGV не установлена | единый прогон unit-suite | диагностика | `NOT_REPRODUCED` (ЭТАП 2.1) |
 | B7 | Ветка не защищена: branch protection выключена, rulesets пусты | репозиторий | процесс | `OWNER_DECISION` (O4) |
