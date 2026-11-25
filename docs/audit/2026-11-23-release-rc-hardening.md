@@ -264,6 +264,22 @@ ADR-0401). Property-тест на случайных лог-строках, ст
 SSE/gzip под Granian в прод-конфигурации (RSGI-режим, `workers>1`) не
 проверялось — в ADR-0059 RSGI выключен по умолчанию.
 
+#### Разбор order-dependence (продолжение повторного анализа)
+
+| # | Корневая причина | Где | Было | Стало | SHA |
+|---|---|---|---|---|---|
+| O1 | `OpenAPIGraph.clear()` делал `self._spec.clear()` — а граф держит **ссылку** на словарь спецификации вызывающего → вызов `clear()` уничтожал ЧУЖИЕ данные. Из-за этого все последующие построения графа получали пустую спецификацию (нет схем безопасности → нет рёбер) | `src/backend/core/api_graph/graph.py` | под перестановкой падало 12/6/11 тестов модуля `api_graph` | `clear()` переприсваивает `_spec = {}`; `import_openapi_graph` копирует спецификацию (`dict(spec)`) | `a0d9a06fe` |
+| O2 | `test_restore_without_sanitize` менял `FakeProcessor.__class__.__name__` и **не восстанавливал** → общий класс модуля получал «RestorePIIProcessor» для всех следующих тестов | `tests/unit/dsl/engine/test_validation.py` | `test_valid_single_processor` падал после него | имя класса меняется временно и восстанавливается в `finally` | `f4bbb84da` |
+| O3 | `test_cache_info_shows_hits_and_misses` проверял **абсолютные** счётчики `lru_cache`, общие для класса | `tests/unit/dsl/engine/test_pipeline_cache.py` | `hits == 2` превращалось в `hits == 3` | измеряется дельта | `f4bbb84da` |
+
+**Важно (O1):** это не «тестовая» проблема, а латентный баг продакшена —
+`clear()` уничтожал спецификацию вызывающего (например, при reload графа).
+Найдено именно потому, что order-dependence проверялась, а не обходилась.
+
+Осталось разобрать: `test_startup_time_gate.py` (4 теста) — падает локально в
+группе из-за измерения RSS под нагрузкой (в CI проходит); `test_base_client.py`
+и `test_tool_policy.py` — загрязнение из других модулей (в изоляции проходят).
+
 ### 2.1. SIGSEGV при едином прогоне — установление причины
 
 **Гипотеза (из прошлой волны):** единый прогон всех тестов в одном процессе
@@ -836,7 +852,7 @@ workflow» держатся только на соглашении. Merge queue 
 | B4 | 18 падений в группе `tests/unit/tools` (16 — проверки typer/rich-help, 1 — наличие `dist/sbom/sbom.cdx.json`, 1 — CLI-ошибка) | `test.yml` → tools-группа | тесты | `CONFIRMED` как **предсуществующий долг** (группа ранее не выполнялась: прогон прерывался на первой красной группе); корневая причина CI-специфичного поведения **не установлена** — см. «Повторный анализ» ниже |
 | B3a | `lint.yml` красный на гейте object authorization (ownership 13.4 % при пороге 50 %; 129 lookup'ов без tenant-фильтра) | `lint.yml` | долг D-4/D-4A/D-4C | `OWNER_DECISION` — в workflow прямо сказано, что красный job честнее зелёного при ❌ |
 | B4a | Уже закрыто в этом цикле: CSV-бэкенд (типы значений), replay-окно webhook (библиотека standardwebhooks), preflight-скрипт (хардкод пути), MCP-тесты (extra mcp), импорт страниц Streamlit (опциональные пакеты → skip), scaffold (хардкод пути), changelog-autogen (shallow clone) | — | — | `FIXED` (коммиты `129e35d23`, `1bcfcbd6d`, `f9ebefcd5`, `2582190c4`, `8ae38ed37`) |
-| B5 | 16 order-dependent падений unit-тестов | `tests/unit` (api_graph, startup_time_gate, base_client, pipeline_cache, tool_policy и др.) | тесты | `CONFIRMED` — разобрать (вне текущего цикла) |
+| B5 | Order-dependent падения unit-тестов: **разобрано частично** — найдено и устранено 3 корневые причины (см. ниже); остаток (startup_time_gate — чувствителен к нагрузке при измерении RSS; base_client, tool_policy — загрязнение из других модулей) в работе | `tests/unit` | тесты | `CONFIRMED` → 3 причины `FIXED` |
 | B6 | Причина SIGSEGV не установлена | единый прогон unit-suite | диагностика | `NOT_REPRODUCED` (ЭТАП 2.1) |
 | B7 | Ветка не защищена: branch protection выключена, rulesets пусты | репозиторий | процесс | `OWNER_DECISION` (O4) |
 | B8 | Политика маскирования PII в больших ответах; доступ к реальному СКБ; долг advisory | — | решения владельца | `OWNER_DECISION` (O3, O5, O1) |
