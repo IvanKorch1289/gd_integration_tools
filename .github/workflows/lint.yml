@@ -151,6 +151,12 @@ jobs:
         env:
           DB_USERNAME: ci_user
           DB_PASSWORD: ci_password
+          # Ключи внешних API: без них конфигурация не собирается
+          # (DadataAPISettings.api_key / SkbAPISettings.api_key — required).
+          # Значения фиктивные: гейт проверяет статические спецификации,
+          # сетевых обращений не делает.
+          DADATA_API_KEY: "00000000000000000000000000000000"
+          SKB_API_KEY: "00000000000000000000000000000000"
         run: uv run python tools/check_workflow_specs.py
 
       - name: Helm chart render gate (helm lint + template)

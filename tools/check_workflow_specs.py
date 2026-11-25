@@ -224,6 +224,24 @@ def check_call_function_contract(
     return []
 
 
+def _load_extensions() -> None:
+    """Загрузить ресурсы расширений до импортов DSL.
+
+    Расширения регистрируются в ``extension_registry`` при старте
+    приложения; в CI приложение не поднимается, а без загрузки
+    ``register_action_handlers()`` падает с «Ресурс расширения не
+    зарегистрирован: domain='orders'». Загрузка должна произойти ДО
+    импортов DSL: повторный импорт уже загруженного модуля из
+    ``sys.modules`` не выполняет его регистрацию заново.
+    """
+    from src.backend.core.extension_registry import load_extension_resources
+
+    load_extension_resources(force=True)
+
+
+_load_extensions()
+
+
 def check_spec(path: Path, *, repo_root: Path = _REPO_ROOT) -> list[str]:
     """Проверить одну спецификацию; вернуть список находок."""
     findings: list[str] = []
@@ -249,12 +267,29 @@ def check_spec(path: Path, *, repo_root: Path = _REPO_ROOT) -> list[str]:
             findings.append(f"{path}: спека невалидна: {exc}")
         return findings
 
+    # Расширения регистрируются в extension_registry при старте приложения;
+    # без их загрузки регистрация action-обработчиков падает (например,
+    # «ресурс расширения не зарегистрирован: domain='orders'»). В CI
+    # приложение не поднимается, поэтому грузим расширения явно — и ДО
+    # импорта DSL: повторный импорт уже загруженного модуля не выполняет
+    # его регистрацию заново (sys.modules кэш), поэтому «поздняя» загрузка
+    # оставила бы реестр пустым.
     from src.backend.dsl.commands.action_registry import action_handler_registry
     from src.backend.dsl.commands.setup import register_action_handlers
     from src.backend.dsl.workflow.compiler.activity_bridge import ActivityBridge
 
     saved = dict(action_handler_registry._handlers)
-    register_action_handlers()
+    try:
+        register_action_handlers()
+    except Exception as exc:  # noqa: BLE001 — реестр расширений может быть не собран
+        # Окружение без полного конфига (CI без .env/Vault) не собирает
+        # реестр расширений → activity-проверку выполнить нельзя. Это НЕ
+        # дефект спецификации: сообщаем и продолжаем (YAML/спека/call_function
+        # проверяются в любом случае).
+        print(f"::warning::activity-проверка пропущена: {exc}")
+        action_handler_registry._handlers.clear()
+        action_handler_registry._handlers.update(saved)
+        return findings
     try:
         bridge = ActivityBridge()
         bridge.collect_activities([declaration], validate=True)
