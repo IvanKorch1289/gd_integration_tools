@@ -123,7 +123,9 @@ class TestImageOcrProcessorTesseractMissing:
 
     @pytest.mark.asyncio
     async def test_tesseract_not_found_fails_exchange(self) -> None:
-        import pytesseract
+        # pytesseract входит в extra rpa, который CI сознательно не
+        # ставит (узкий набор extras) → без него проверять нечего.
+        pytesseract = pytest.importorskip("pytesseract")
         from PIL import Image
 
         from src.backend.dsl.engine.processors.rpa.operations.imageocrprocessor import (

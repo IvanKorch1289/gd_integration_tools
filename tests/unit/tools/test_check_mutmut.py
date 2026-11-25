@@ -330,9 +330,7 @@ class TestCiWiring:
     @staticmethod
     def _mutation_step() -> dict[str, object]:
         steps = TestCiWiring._mutation_job()["steps"]
-        matches = [
-            s for s in steps if "check_mutmut.py" in str(s.get("run", ""))
-        ]
+        matches = [s for s in steps if "check_mutmut.py" in str(s.get("run", ""))]
         assert matches, "шаг mutation-гейта не найден в job'е mutation"
         return matches[0]
 

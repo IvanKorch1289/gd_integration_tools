@@ -55,7 +55,10 @@ jobs:
         # db_drivers: без него 13 DSN-тестов падают с «Драйвер 'pyodbc'
         # объявлен в extra 'db_drivers', но не установлен в текущем
         # окружении» (базовая линия 2026-11-23).
-        run: uv sync --locked --extra sources-cdc --extra db_drivers
+        # workflow: Temporal SDK нужен dsl/workflow-тестам; без него они
+        # падают с ModuleNotFoundError: No module named 'temporalio'
+        # (эти группы не выполнялись, пока первая группа не падала).
+        run: uv sync --locked --extra sources-cdc --extra db_drivers --extra workflow
 
       - name: Run pytest with coverage (grouped, ADR-0453)
         # ADR-0453: монолитный `pytest tests --cov=src/backend` на 24k тестов
