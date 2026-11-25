@@ -186,6 +186,20 @@ class TestReleaseEvidenceAttestation:
         assert manifest.verdict == evidence.VERDICT_BLOCKED
         assert any("attestation" in reason for reason in manifest.verdict_reasons)
 
+    def test_attestation_for_another_image_blocks(self, clean_repo: Path) -> None:
+        """Attestation чужого образа → BLOCKED.
+
+        Свидетельство должно относиться к ТОМУ ЖЕ digest'у, что и образ в
+        манифесте, иначе можно приложить свидетельство другого образа.
+        """
+        manifest = _collect(
+            clean_repo,
+            commands=[("ok", f"{evidence.sys.executable} -c pass")],
+            attestation="ghcr.io/example/image@sha256:" + "b" * 64,
+        )
+        assert manifest.verdict == evidence.VERDICT_BLOCKED
+        assert any("другому образу" in reason for reason in manifest.verdict_reasons)
+
     def test_attestation_file_is_hashed(self, clean_repo: Path, tmp_path: Path) -> None:
         """Attestation-файл попадает в manifest со sha256 и размером.
 

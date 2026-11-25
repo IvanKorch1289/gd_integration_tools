@@ -169,6 +169,33 @@ def _if_none_match_matches(header_value: str, etag: str) -> bool:
     return False
 
 
+def _vary_accept_encoding(
+    headers: list[tuple[bytes, bytes]],
+) -> list[tuple[bytes, bytes]]:
+    """Добавить ``Vary: Accept-Encoding``, если его ещё нет.
+
+    Нужен, когда ETag слабый: представление зависит от content-coding, и
+    shared cache обязан различать варианты по кодировке (RFC 9111 §4.1).
+    Middleware'и сжатия добавляют ``Vary`` только когда реально сжали
+    тело — у ответа 304 тела нет, поэтому заголовок добавляется здесь.
+
+    Args:
+        headers: Исходные заголовки ответа.
+
+    Returns:
+        Новый список заголовков.
+    """
+    for key, value in headers:
+        if key.lower() == b"vary" and b"accept-encoding" in value.lower():
+            return headers
+        if key.lower() == b"vary":
+            return [
+                (k, v + b", Accept-Encoding" if k.lower() == b"vary" else v)
+                for k, v in headers
+            ]
+    return [*headers, (b"vary", b"Accept-Encoding")]
+
+
 def _etag_value(scope: Scope, body: bytes) -> str:
     """Сформировать ETag ответа с учётом возможного сжатия.
 
@@ -483,6 +510,8 @@ class ResponseCacheMiddleware:
             ]
             headers.append((b"etag", etag.encode("latin-1")))
             headers.append((b"cache-control", policy.encode("latin-1")))
+            if etag.startswith("W/"):
+                headers = _vary_accept_encoding(headers)
             await send(
                 {"type": "http.response.start", "status": 304, "headers": headers}
             )
@@ -492,6 +521,8 @@ class ResponseCacheMiddleware:
         headers = _drop_headers(state.headers, (b"etag", b"cache-control"))
         headers.append((b"etag", etag.encode("latin-1")))
         headers.append((b"cache-control", policy.encode("latin-1")))
+        if etag.startswith("W/"):
+            headers = _vary_accept_encoding(headers)
         await send(
             {"type": "http.response.start", "status": state.status, "headers": headers}
         )

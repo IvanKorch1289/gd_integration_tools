@@ -127,7 +127,7 @@ class EvidenceManifest:
         verdict_reasons: Почему такой вердикт.
     """
 
-    schema_version: int = 1
+    schema_version: int = 2
     generated_at: str = ""
     sha: str = ""
     sha_short: str = ""
@@ -397,6 +397,23 @@ def _run_command(
     )
 
 
+def _digest_from_ref(ref: str) -> str:
+    """Извлечь digest образа из ссылки вида ``repo@sha256:…``.
+
+    Args:
+        ref: Ссылка или путь.
+
+    Returns:
+        Digest (``sha256:…``) либо пустая строка, если digest'а в ссылке нет.
+    """
+    if "@" not in ref:
+        return ""
+    tail = ref.rsplit("@", 1)[-1]
+    if tail.startswith("sha256:") and len(tail) > len("sha256:"):
+        return tail
+    return ""
+
+
 def _describe_attestation(attestation: str | None) -> dict[str, str]:
     """Описать attestation образа (путь к предикату или URI).
 
@@ -544,6 +561,16 @@ def collect_manifest(
             "образ не подписан как attestation (cosign attest / GitHub "
             "artifact attestations) — подтверждать релиз нечем"
         )
+    else:
+        # Свидетельство должно относиться к ТОМУ ЖЕ образу: ref вида
+        # «repo@sha256:…» — сверяем digest; иначе можно было бы приложить
+        # свидетельство чужого образа и получить зелёный вердикт.
+        attested_digest = _digest_from_ref(manifest.attestation.get("ref", ""))
+        if attested_digest and attested_digest != manifest.image_digest:
+            reasons.append(
+                "attestation относится к другому образу: "
+                f"{attested_digest} != {manifest.image_digest}"
+            )
     manifest.verdict_reasons = reasons
     manifest.verdict = VERDICT_READY if not reasons else VERDICT_BLOCKED
     return manifest

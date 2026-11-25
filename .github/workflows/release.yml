@@ -120,25 +120,39 @@ jobs:
         uses: sigstore/cosign-installer@v3
 
       - name: Attest image (in-toto)
+        # continue-on-error: манифест свидетельства должен быть собран даже
+        # при провале подписи (в нём будет причина), а не отсутствовать.
         # Attestation связывает релизное свидетельство с конкретным образом
         # по digest. Без него манифест не может считаться подтверждённым
         # (tools/checks/release_evidence.py → вердикт BLOCKED).
         id: attest
+        continue-on-error: true
         env:
           IMAGE_REF: ghcr.io/${{ steps.imagename.outputs.name }}:${{ github.ref_name }}
         run: |
-          set -euo pipefail
-          digest="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "${IMAGE_REF}" 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("digest",""))' 2>/dev/null || true)"
+          set -uo pipefail
+          # Образ публикуется ДРУГИМ workflow'ом (image.yml), поэтому к
+          # моменту старта release тега может ещё не быть: ждём до 10 минут.
+          digest=""
+          for attempt in $(seq 1 20); do
+            digest="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "${IMAGE_REF}" 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("digest",""))' 2>/dev/null || true)"
+            if [ -n "${digest}" ]; then
+              break
+            fi
+            echo "::warning::digest образа ${IMAGE_REF} пока не разрешён (попытка ${attempt}/20)"
+            sleep 30
+          done
           if [ -z "${digest}" ]; then
-            echo "::warning::digest образа не разрешён — attestation пропущена"
-            exit 0
+            echo "::error::digest образа ${IMAGE_REF} не разрешён — attestation невозможна"
+            exit 1
           fi
           cosign attest --yes \
             --predicate dist/sbom/sbom.cdx.json \
             --type cyclonedx \
             "${IMAGE_REF}@${digest}"
-          mkdir -p artifacts/release
+          mkdir -p artifacts/release dist/release
           printf '%s@%s' "${IMAGE_REF}" "${digest}" > artifacts/release/attestation.ref
+          cp artifacts/release/attestation.ref dist/release/attestation.ref
           echo "attestation=${IMAGE_REF}@${digest}" >> "$GITHUB_OUTPUT"
 
       - name: Release evidence manifest
@@ -176,6 +190,16 @@ jobs:
             --artifact dist/pip-audit.json \
             --artifact dist/release-notes.md \
             --out dist/release-evidence.json
+
+      - name: Release gate (attestation обязательна)
+        # Релиз без подтверждённого attestation'а — не релиз: падаем явно,
+        # чтобы «зелёный CI» не означал «выпущено без свидетельства».
+        run: |
+          if [ -z "${{ steps.attest.outputs.attestation }}" ]; then
+            echo "::error::attestation образа не создана — релиз заблокирован"
+            exit 1
+          fi
+          echo "attestation: ${{ steps.attest.outputs.attestation }}"
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v7

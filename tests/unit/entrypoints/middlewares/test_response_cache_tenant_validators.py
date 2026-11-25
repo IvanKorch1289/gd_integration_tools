@@ -238,6 +238,37 @@ class TestWeakEtagWhenCompressionPossible:
         assert recorder.etag.startswith('"')
 
     @pytest.mark.asyncio
+    async def test_weak_etag_response_carries_vary(self) -> None:
+        """Слабый ETag → ответ несёт ``Vary: Accept-Encoding``.
+
+        Представление зависит от content-coding, значит shared cache обязан
+        различать варианты по кодировке (RFC 9111 §4.1). Middleware'и сжатия
+        добавляют ``Vary`` только когда реально сжали тело — у 304 тела нет,
+        поэтому заголовок добавляет сам response_cache.
+        """
+        recorder = await _run([(b"accept-encoding", b"gzip")])
+        assert recorder.etag.startswith("W/")
+        assert "accept-encoding" in recorder.headers[b"vary"].decode("latin-1").lower()
+
+    @pytest.mark.asyncio
+    async def test_304_carries_vary_with_weak_etag(self) -> None:
+        """304 со слабым ETag тоже несёт ``Vary: Accept-Encoding``."""
+        recorder = await _run([(b"accept-encoding", b"gzip")])
+        weak = recorder.etag
+        recorder = await _run(
+            [(b"accept-encoding", b"gzip"), (b"if-none-match", weak.encode("latin-1"))]
+        )
+        assert recorder.status == 304
+        assert "accept-encoding" in recorder.headers[b"vary"].decode("latin-1").lower()
+
+    @pytest.mark.asyncio
+    async def test_strong_etag_response_has_no_vary(self) -> None:
+        """Без content-coding ETag сильный — ``Vary`` не нужен."""
+        recorder = await _run([])
+        assert not recorder.etag.startswith("W/")
+        assert b"vary" not in recorder.headers
+
+    @pytest.mark.asyncio
     async def test_304_keeps_same_etag_form(self) -> None:
         """304 возвращает тот же ETag (в т.ч. слабую форму)."""
         recorder = await _run([(b"accept-encoding", b"gzip")])
