@@ -205,20 +205,17 @@ def test_optional_dependency_detector_distinguishes_project_modules() -> None:
     extras), в CI-окружении без них считается пропущенной, а реальный
     ModuleNotFoundError на проектный модуль остаётся падением.
     """
-    harness_ns: dict[str, object] = {"__name__": "harness_probe"}
-    # Harness читает корень репозитория из env — задаём его на время exec'а.
-    previous = os.environ.get("FRONTEND_IMPORT_REPO_ROOT")
-    os.environ["FRONTEND_IMPORT_REPO_ROOT"] = str(REPO_ROOT)
-    try:
-        exec(  # noqa: S102 — исполняем текст harness'а, чтобы проверить его же
-            compile(_HARNESS, "harness", "exec"), harness_ns
-        )
-    finally:
-        if previous is None:
-            os.environ.pop("FRONTEND_IMPORT_REPO_ROOT", None)
-        else:
-            os.environ["FRONTEND_IMPORT_REPO_ROOT"] = previous
-    check = harness_ns["_is_missing_optional_dependency"]
+    # Исполняем ТОЛЬКО функцию-детектор: весь harness при exec'е создаёт
+    # Streamlit-синглтоны (DeltaGenerator), и повторный exec в том же
+    # процессе падает с «DeltaGeneratorSingleton instance already exists».
+    marker = "def _is_missing_optional_dependency(exc):"
+    start = _HARNESS.index(marker)
+    end = _HARNESS.index("def main()", start)
+    scope: dict[str, object] = {}
+    exec(  # noqa: S102 — исполняем текст harness'а, чтобы проверить его же
+        compile(_HARNESS[start:end], "harness_detector", "exec"), scope
+    )
+    check = scope["_is_missing_optional_dependency"]
     assert callable(check)
 
     def _missing(name: str) -> ModuleNotFoundError:
