@@ -138,6 +138,7 @@ def test_no_new_circuit_breaker_files_since_s93() -> None:
                     ".cache",  # retro-gates.* snapshots
                     "mutants/",  # mutmut worktree
                     "graphify-out/",  # graphify cache
+                    "build/",  # артефакты uv build (копия src/, не источник)
                 )
             ):
                 rel = str(path.relative_to(PROJECT_ROOT))
