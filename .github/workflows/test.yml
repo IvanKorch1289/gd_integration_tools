@@ -58,7 +58,9 @@ jobs:
         # workflow: Temporal SDK нужен dsl/workflow-тестам; без него они
         # падают с ModuleNotFoundError: No module named 'temporalio'
         # (эти группы не выполнялись, пока первая группа не падала).
-        run: uv sync --locked --extra sources-cdc --extra db_drivers --extra workflow
+        # dsl-extras-2: standardwebhooks (библиотечный путь проверки
+        # подписи webhook'ов; без него тест реплея пропускается).
+        run: uv sync --locked --extra sources-cdc --extra db_drivers --extra workflow --extra dsl-extras-2
 
       - name: Run pytest with coverage (grouped, ADR-0453)
         # ADR-0453: монолитный `pytest tests --cov=src/backend` на 24k тестов
