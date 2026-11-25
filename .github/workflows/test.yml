@@ -90,6 +90,13 @@ jobs:
             name="$(basename "${cli}" .py)"
             uv run python "${cli}" --help > "artifacts/diagnostics/${name}.help.txt" 2>&1 || true
           done
+          # help КОМАНДЫ (не корня): именно его проверяют тесты
+          # (например test_cli_help_shows_update_ratchet_flag → `main --help`).
+          uv run python tools/check_coverage_gate.py main --help \
+            > artifacts/diagnostics/check_coverage_gate.main.help.txt 2>&1 || true
+          # ширина, которую видит rich в этом окружении
+          uv run python -c "import os,shutil; print('COLUMNS=%s TERM=%s size=%s' % (os.environ.get('COLUMNS'), os.environ.get('TERM'), shutil.get_terminal_size()))" \
+            > artifacts/diagnostics/width.txt 2>&1 || true
           {
             echo "--- python ---"
             uv run python -VV 2>&1 || true
