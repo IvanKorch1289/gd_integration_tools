@@ -234,11 +234,18 @@ class OpenAPIGraph:
         }
 
     def clear(self) -> None:
-        """Полный сброс графа (для тестов/reload)."""
+        """Полный сброс графа (для тестов/reload).
+
+        ``_spec`` переприсваивается, а не очищается на месте: до правки
+        ``self._spec.clear()`` уничтожал СПЕЦИФИКАЦИЮ ВЫЗЫВАЮЩЕГО (граф
+        держит ссылку на чужой dict) — это латентный баг, из-за которого
+        любой код, вызвавший ``clear()``, портил исходную спецификацию
+        (и делал последующие тесты/вызовы порядок-зависимыми).
+        """
         self._nodes.clear()
         self._edges.clear()
         self._endpoints.clear()
-        self._spec.clear()
+        self._spec = {}
 
 
 _REF_PATTERN = re.compile(r"#/components/(schemas|parameters|securitySchemes)/(\w+)")
@@ -267,7 +274,9 @@ def import_openapi_graph(spec: dict[str, Any]) -> OpenAPIGraph:
     endpoint→security (secured_by).
     """
     graph = OpenAPIGraph()
-    graph._spec = spec
+    # Копия верхнего уровня: граф не должен владеть и тем более мутировать
+    # словарь вызывающего (см. OpenAPIGraph.clear).
+    graph._spec = dict(spec)
 
     # 1. Schema nodes + ref edges.
     components = spec.get("components", {})

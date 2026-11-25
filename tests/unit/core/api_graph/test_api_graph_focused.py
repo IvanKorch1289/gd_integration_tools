@@ -361,6 +361,33 @@ class TestOpenAPIGraph:
         g.add_node(n)
         assert g.get_node("schema:X") is n
 
+    def test_clear_does_not_destroy_callers_spec(self) -> None:
+        """``clear()`` не уничтожает спецификацию вызывающего.
+
+        Регресс (аудит 2026-11-25, ЭТАП 2.4 — order-dependent падения):
+        граф держал ССЫЛКУ на словарь спецификации, и ``clear()`` очищал
+        его на месте. Из-за этого любой вызов ``clear()`` портил исходную
+        спецификацию — и тесты модуля становились порядок-зависимыми
+        (под перестановкой падало до 12 тестов).
+        """
+        spec = {
+            "openapi": "3.0.0",
+            "components": {"securitySchemes": {"bearerAuth": {"type": "http"}}},
+            "paths": {},
+        }
+        graph = import_openapi_graph(spec)
+        assert graph.spec  # спецификация привязана
+
+        graph.clear()
+
+        assert spec["components"]["securitySchemes"]["bearerAuth"] == {
+            "type": "http"
+        }, (
+            "clear() уничтожил спецификацию вызывающего — граф не должен "
+            "владеть чужим словарём"
+        )
+        assert graph.spec == {}
+
     def test_add_edge(self) -> None:
         g = OpenAPIGraph()
         g.add_node(GraphNode(id="A", type=GraphNodeType.SCHEMA, name="A"))
