@@ -555,6 +555,10 @@ stdlib/сторонние):
 | `a9638db26` (база) | fail | fail | ok | fail | ok | ok | fail | — |
 | `e1b2701f5` | fail (vulture ×6, ruff format, workflow-specs, mutation) | fail (9 × dsl: нет temporalio/pytesseract) | ok | fail (pip-audit, SBOM diff) | ok | ok | fail (Trivy: HIGH/CRITICAL в образе) | ЭТАПЫ 1–4 |
 | `259088e92` | fail (workflow-specs: конфиг не собирается без .env) | fail (2 env-зависимых) | ok | fail | ok | ok | fail | + починка lint-гейтов |
+| `7d60d3658` | fail (намеренно-красный object authorization) | fail (2) | ok | fail | ok | ok | fail | + осиротевший create_task → TaskRegistry |
+| `f9ebefcd5` | fail (тот же намеренно-красный гейт) | fail (1: страницы Streamlit без polars) | ok | fail | ok | ok | fail | + skip для отсутствующих опциональных пакетов |
+| `2582190c4` | fail (тот же) | fail (1: детектор в тесте) | ok | fail | ok | ok | fail | + exec только функции-детектора |
+| `8ae38ed37` | fail (тот же) | fail (18: typer/rich-help в группе tools) | ok | fail | ok | ok | fail | + COLUMNS-фикстура, scaffold-путь, fetch-depth: 0 |
 | `28909f121` | fail (object authorization matrix — **намеренно красный**, см. ниже) | fail (2 env-зависимых) | ok | fail | ok | ok | fail | гейт workflow-specs починен |
 | `7d60d3658` (финальный) | fail (тот же намеренно-красный гейт) | fail (те же 2) | ok | fail | ok | ok | fail | + осиротевший create_task → TaskRegistry |
 
@@ -758,8 +762,9 @@ workflow» держатся только на соглашении. Merge queue 
 | B1 | 14 advisory сверх allowlist | `security.yml` → pip-audit | зависимости | `OWNER_DECISION` (O1) |
 | B2 | SBOM в репозитории расходится с пересобранным | `security.yml` → SBOM diff | процесс | требует решения: пересобрать SBOM или обновить baseline |
 | B3 | HIGH/CRITICAL-уязвимости в образе | `image.yml` → Trivy | образ | `OWNER_DECISION` (класс O1) |
-| B4 | 2 env-зависимых падения тестов (`test_translate_csv_to_dict` — типы значений CSV; `test_replay_window_rejected_by_library` — replay-окно webhook) | `test.yml` → dsl-группа | тесты/окружение | `CONFIRMED` (ранее скрыты: группа не выполнялась); локально оба проходят |
+| B4 | 18 env-зависимых падений в группе `tests/unit/tools` (16 — проверки typer/rich-help, 1 — наличие `dist/sbom/sbom.cdx.json`, 1 — CLI-ошибка) | `test.yml` → tools-группа | тесты/окружение | `CONFIRMED`: ранее группа не выполнялась (прогон прерывался на первой красной); локально эти тесты проходят |
 | B3a | `lint.yml` красный на гейте object authorization (ownership 13.4 % при пороге 50 %; 129 lookup'ов без tenant-фильтра) | `lint.yml` | долг D-4/D-4A/D-4C | `OWNER_DECISION` — в workflow прямо сказано, что красный job честнее зелёного при ❌ |
+| B4a | Уже закрыто в этом цикле: CSV-бэкенд (типы значений), replay-окно webhook (библиотека standardwebhooks), preflight-скрипт (хардкод пути), MCP-тесты (extra mcp), импорт страниц Streamlit (опциональные пакеты → skip), scaffold (хардкод пути), changelog-autogen (shallow clone) | — | — | `FIXED` (коммиты `129e35d23`, `1bcfcbd6d`, `f9ebefcd5`, `2582190c4`, `8ae38ed37`) |
 | B5 | 16 order-dependent падений unit-тестов | `tests/unit` (api_graph, startup_time_gate, base_client, pipeline_cache, tool_policy и др.) | тесты | `CONFIRMED` — разобрать (вне текущего цикла) |
 | B6 | Причина SIGSEGV не установлена | единый прогон unit-suite | диагностика | `NOT_REPRODUCED` (ЭТАП 2.1) |
 | B7 | Ветка не защищена: branch protection выключена, rulesets пусты | репозиторий | процесс | `OWNER_DECISION` (O4) |
